@@ -6,6 +6,8 @@
 
     this.Cl_InitInput();
     this.R_Init(canvas, gl);
+
+    this.Cl_LoadMap('q3tourney2');
   };
 
   q3w.Cl_Frame = function () {
@@ -26,5 +28,9 @@
     refdef.fov = 45;
     refdef.origin = [0, 0, 0];
     refdef.angles = this.cl.viewangles;
+  };
+
+  q3w.Cl_LoadMap = function (mapName) {
+    this.R_LoadMap(mapName);
   };
 })(window.q3w = window.q3w || {});

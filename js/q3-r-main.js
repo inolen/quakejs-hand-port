@@ -112,13 +112,16 @@ function q3renderCreateSpeaker(speaker) {
   speaker.audio.play();
 };*/
 
-Q3RMain._buildLightmaps = function(gl, bsp) {
+Q3RMain._buildLightmaps = function(bsp) {
+  var gl = q3w.gl;
+
+  // TODO: Export this from Q3Bsp
   var lightmaps = bsp.data.lightmaps;
   var gridSize = 2;
   while(gridSize * gridSize < lightmaps.length) gridSize *= 2;
-  var textureSize = gridSize * LIGHTMAP_WIDTH;
+  var textureSize = gridSize * 128;
 
-  // TODO: Refactor this to use r-image.js
+  // TODO: Refactor this to use r-image.js better
   lightmapTexture = q3w.R_CreateImage('*lightmap', null, textureSize, textureSize);
 
   for (var i = 0; i < lightmaps.length; ++i) {
@@ -131,7 +134,67 @@ Q3RMain._buildLightmaps = function(gl, bsp) {
   }
 };
 
-Q3RMain._buildWorldBuffers = function (gl, bsp) {
+Q3RMain._buildSkyboxBuffers = function () {
+  var gl = q3w.gl;
+
+  var skyVerts = [
+    -128, 128, 128, 0, 0,
+    128, 128, 128, 1, 0,
+    -128, -128, 128, 0, 1,
+    128, -128, 128, 1, 1,
+
+    -128, 128, 128, 0, 1,
+    128, 128, 128, 1, 1,
+    -128, 128, -128, 0, 0,
+    128, 128, -128, 1, 0,
+
+    -128, -128, 128, 0, 0,
+    128, -128, 128, 1, 0,
+    -128, -128, -128, 0, 1,
+    128, -128, -128, 1, 1,
+
+    128, 128, 128, 0, 0,
+    128, -128, 128, 0, 1,
+    128, 128, -128, 1, 0,
+    128, -128, -128, 1, 1,
+
+    -128, 128, 128, 1, 0,
+    -128, -128, 128, 1, 1,
+    -128, 128, -128, 0, 0,
+    -128, -128, -128, 0, 1
+  ];
+
+  var skyIndices = [
+    0, 1, 2,
+    1, 2, 3,
+
+    4, 5, 6,
+    5, 6, 7,
+
+    8, 9, 10,
+    9, 10, 11,
+
+    12, 13, 14,
+    13, 14, 15,
+
+    16, 17, 18,
+    17, 18, 19
+  ];
+
+  skyboxBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyVerts), gl.STATIC_DRAW);
+
+  skyboxIndexBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(skyIndices), gl.STATIC_DRAW);
+
+  skyboxIndexCount = skyIndices.length;
+};
+
+Q3RMain._buildWorldBuffers = function (bsp) {
+  var gl = q3w.gl;
+
   var faces = bsp.data.faces,
     verts = bsp.data.verts,
     meshVerts = bsp.data.meshVerts,
@@ -210,65 +273,11 @@ Q3RMain._buildWorldBuffers = function (gl, bsp) {
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
   indexCount = indices.length;
-}
-
-Q3RMain._buildSkyboxBuffers = function (gl) {
-  var skyVerts = [
-    -128, 128, 128, 0, 0,
-    128, 128, 128, 1, 0,
-    -128, -128, 128, 0, 1,
-    128, -128, 128, 1, 1,
-
-    -128, 128, 128, 0, 1,
-    128, 128, 128, 1, 1,
-    -128, 128, -128, 0, 0,
-    128, 128, -128, 1, 0,
-
-    -128, -128, 128, 0, 0,
-    128, -128, 128, 1, 0,
-    -128, -128, -128, 0, 1,
-    128, -128, -128, 1, 1,
-
-    128, 128, 128, 0, 0,
-    128, -128, 128, 0, 1,
-    128, 128, -128, 1, 0,
-    128, -128, -128, 1, 1,
-
-    -128, 128, 128, 1, 0,
-    -128, -128, 128, 1, 1,
-    -128, 128, -128, 0, 0,
-    -128, -128, -128, 0, 1
-  ];
-
-  var skyIndices = [
-    0, 1, 2,
-    1, 2, 3,
-
-    4, 5, 6,
-    5, 6, 7,
-
-    8, 9, 10,
-    9, 10, 11,
-
-    12, 13, 14,
-    13, 14, 15,
-
-    16, 17, 18,
-    17, 18, 19
-  ];
-
-  skyboxBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(skyVerts), gl.STATIC_DRAW);
-
-  skyboxIndexBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(skyIndices), gl.STATIC_DRAW);
-
-  skyboxIndexCount = skyIndices.length;
 };
 
-Q3RMain._bindShaders = function (gl, bsp) {
+Q3RMain._bindShaders = function (bsp) {
+  var gl = q3w.gl;
+
   var shaders = bsp.data.shaders;
 
   for (var i = 0; i < shaders.length; ++i) {
@@ -305,7 +314,9 @@ Q3RMain._bindShaders = function (gl, bsp) {
 };
 
 // Draw the map
-Q3RMain._bindShaderAttribs = function(gl, shader, modelViewMat, projectionMat) {
+Q3RMain._bindShaderAttribs = function(shader, modelViewMat, projectionMat) {
+  var gl = q3w.gl;
+
   // Set uniforms
   gl.uniformMatrix4fv(shader.uniform.modelViewMat, false, modelViewMat);
   gl.uniformMatrix4fv(shader.uniform.projectionMat, false, projectionMat);
@@ -335,7 +346,9 @@ Q3RMain._bindShaderAttribs = function(gl, shader, modelViewMat, projectionMat) {
   }
 }
 
-Q3RMain._bindSkyAttribs = function(gl, shader, modelViewMat, projectionMat) {
+Q3RMain._bindSkyAttribs = function(shader, modelViewMat, projectionMat) {
+  var gl = q3w.gl;
+
   mat4.set(modelViewMat, skyboxMat);
 
   // Clear out the translation components
@@ -357,21 +370,6 @@ Q3RMain._bindSkyAttribs = function(gl, shader, modelViewMat, projectionMat) {
   }
 };
 
-Q3RMain.loadMap = function (gl, mapName, callback) {
-  var self = this,
-    bsp = new Q3Bsp();
-
-  bsp.load('maps/' + mapName +'.bsp', function () {
-    self._buildLightmaps(gl, bsp);
-    self._buildSkyboxBuffers(gl);
-    self._buildWorldBuffers(gl, bsp);
-    self._bindShaders(gl, bsp);
-    //this.clearLoadStatus();
-
-    callback(bsp);
-  });
-}
-
 Q3RMain.updateVisibility = function(pos) {
   this.buildVisibleList(Q3RMain.getLeaf(pos));
 };
@@ -384,7 +382,9 @@ Q3RMain.setVisibility = function(visibilityList) {
   }
 };
 
-Q3RMain.draw = function(gl, modelViewMat, projectionMat) {
+Q3RMain.draw = function(modelViewMat, projectionMat) {
+  var gl = q3w.gl;
+
   if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
 
   // Seconds passed since map was initialized
@@ -403,7 +403,7 @@ Q3RMain.draw = function(gl, modelViewMat, projectionMat) {
         var stage = skyShader.stages[j];
 
         q3w.R_SetShaderStage(skyShader, stage, time);
-        this._bindSkyAttribs(gl, stage.program, modelViewMat, projectionMat);
+        this._bindSkyAttribs(stage.program, modelViewMat, projectionMat);
 
         // Draw all geometry that uses this textures
         gl.drawElements(gl.TRIANGLES, skyboxIndexCount, gl.UNSIGNED_SHORT, 0);
@@ -421,7 +421,7 @@ Q3RMain.draw = function(gl, modelViewMat, projectionMat) {
     var defaultShader = q3w.R_FindShader('*default');
     q3w.R_SetShader(defaultShader);
     q3w.R_SetShaderStage(defaultShader, defaultShader.stages[0], time);
-    this._bindShaderAttribs(gl, defaultShader.stages[0].program, modelViewMat, projectionMat);
+    this._bindShaderAttribs(defaultShader.stages[0].program, modelViewMat, projectionMat);
 
     for (i = 0; i < unshadedSurfaces.length; i++) {
       var shader = unshadedSurfaces[i];
@@ -442,7 +442,7 @@ Q3RMain.draw = function(gl, modelViewMat, projectionMat) {
     var defaultShader = modelSurfaces[0].glshader;
     q3w.R_SetShader(defaultShader);
     q3w.R_SetShaderStage(defaultShader, defaultShader.stages[0], time);
-    this._bindShaderAttribs(gl, defaultShader.stages[0].program, modelViewMat, projectionMat);
+    this._bindShaderAttribs(defaultShader.stages[0].program, modelViewMat, projectionMat);
 
     for(i = 0; i < modelSurfaces.length; i++) {
       var shader = modelSurfaces[i];
@@ -468,7 +468,7 @@ Q3RMain.draw = function(gl, modelViewMat, projectionMat) {
       var stage = glshader.stages[j];
 
       q3w.R_SetShaderStage(glshader, stage, time);
-      this._bindShaderAttribs(gl, stage.program, modelViewMat, projectionMat);
+      this._bindShaderAttribs(stage.program, modelViewMat, projectionMat);
       gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
     }
   }

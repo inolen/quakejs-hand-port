@@ -51,10 +51,6 @@
     image.imgName = name;
     image.texnum = this.R_BuildTexture(buffer, width, height, clamp);
 
-    if (name.indexOf('*lightmap') !== -1) {
-      console.log(image);
-    }
-
     return image;
   };
 

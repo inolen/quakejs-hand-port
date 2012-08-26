@@ -48,12 +48,6 @@ function getQueryVariable(variable) {
 // Set up basic GL State up front
 function init(canvas, gl) {
     q3w.Com_Init(canvas, gl);
-
-    Q3RMain.loadMap(gl, 'q3tourney2', function (map) {
-        bsp = map;
-        respawnPlayer(0);
-        document.getElementById('viewport').style.display = 'block';
-    });
 }
 
 var lastIndex = 0;
@@ -130,9 +124,6 @@ function main() {
         init(canvas, gl);
         renderLoop(gl, canvas);
     }
-
-    var fpsCounter = document.getElementById("fps-counter");
-    var showFPS = document.getElementById("showFPS");
 
     /*if (map) {
         map.playMusic(playMusic.checked);
