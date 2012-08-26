@@ -20,7 +20,7 @@
     el.onload = function() {
       image.texnum = self.R_BuildTexture(el);
     };
-    el.src = Q3W_BASE_FOLDER + '/webgl/no-shader.png';
+    el.src = q3w.Q3W_BASE_FOLDER + '/webgl/no-shader.png';
   };
 
   q3w.R_BuildTexture = function (bufferOrImage, width, height, clamp) {
@@ -75,12 +75,12 @@
       var ext = name.indexOf('.png') === -1 ? '.png' : '.jpg';
       name = name.replace(/\.[^\.]+$/, ext);
       retry = false;
-      el.src = Q3W_BASE_FOLDER + '/' + name;
+      el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
     };
     el.onload = function() {
       image.texnum = self.R_BuildTexture(el, null, null, clamp);
     };
-    el.src = Q3W_BASE_FOLDER + '/' + name;
+    el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
 
     return image;
   };

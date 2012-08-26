@@ -400,7 +400,7 @@
     var self = this;
 
     for (var i = 0; i < allShaders.length; ++i) {
-      var path = Q3W_BASE_FOLDER + '/' + allShaders[i];
+      var path = q3w.Q3W_BASE_FOLDER + '/' + allShaders[i];
       LoadShader(path);
     }
   }

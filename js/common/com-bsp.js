@@ -531,7 +531,7 @@ q3w.Q3Bsp = (function () {
 
 		load: function (url, callback) {
 			var self = this;
-			var url = '../' + Q3W_BASE_FOLDER + '/' + url;
+			var url = '../' + q3w.Q3W_BASE_FOLDER + '/' + url;
 			var request = new XMLHttpRequest();
 
 			request.open('GET', url, true);

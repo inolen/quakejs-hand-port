@@ -1,4 +1,6 @@
 (function(q3w) {
+  q3w.Q3W_BASE_FOLDER = 'baseq3';
+
   q3w.usercmd_t = {
     angles: [0 , 0, 0]
   };
