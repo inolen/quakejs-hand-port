@@ -1,23 +1,32 @@
 <!DOCTYPE html>
-
 <html>
     <head>
-        <title>Quake 3 WebGL Demo</title>
+        <title>Quake 3 World</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
         <!-- Common Utilities -->
-        <script type="text/javascript" src="js/util/game-shim.js"></script>
-        <script type="text/javascript" src="js/util/keyboard.js"></script>
-        <script type="text/javascript" src="js/util/gl-matrix-min.js"></script>
-        <script type="text/javascript" src="js/util/js-struct.js"></script>
+        <script type="text/javascript" src="js/vendor/underscore-min.js"></script>
+        <script type="text/javascript" src="js/vendor/game-shim.js"></script>
+        <script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
+        <script type="text/javascript" src="js/vendor/js-struct.js"></script>
+        <script type="text/javascript" src="js/vendor/keyboard.js"></script>
 
         <!-- Quake3 Map Specific files -->
         <script type="text/javascript" src="js/main.js"></script>
+        <script type="text/javascript" src="js/input/in-main.js"></script>
+        <script type="text/javascript" src="js/common/com-inc.js"></script>
+        <script type="text/javascript" src="js/common/com-main.js"></script>
+        <script type="text/javascript" src="js/client/cl-inc.js"></script>
+        <script type="text/javascript" src="js/client/cl-input.js"></script>
+        <script type="text/javascript" src="js/client/cl-main.js"></script>
+        <script type="text/javascript" src="js/renderer/r-inc.js"></script>
+        <script type="text/javascript" src="js/renderer/r-main.js"></script>
+        <script type="text/javascript" src="js/renderer/r-image.js"></script>
+        <script type="text/javascript" src="js/renderer/r-shader.js"></script>
+        <script type="text/javascript" src="js/renderer/r-glshader.js"></script>
         <script type="text/javascript" src="js/q3-bsp.js"></script>
         <script type="text/javascript" src="js/q3-r-main.js"></script>
         <script type="text/javascript" src="js/q3-g-move.js"></script>
-        <script type="text/javascript" src="js/q3-glshader.js"></script>
-        <script type="text/javascript" src="js/q3-shader.js"></script>
         <script type="text/javascript" src="js/q3-trace.js"></script>
 
         <!-- Stylesheet -->
@@ -35,9 +44,6 @@
             </canvas>
             <div id="loading">
                 Loading...
-            </div>
-            <div id="fps-counter">
-                FPS: <span id="fps">0</span>
             </div>
         </div>
 

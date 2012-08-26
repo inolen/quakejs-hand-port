@@ -557,7 +557,7 @@ var Q3Bsp = (function () {
 
         load: function (url, callback) {
             var self = this;
-            var url = '../' + q3render_base_folder + '/' + url;
+            var url = '../' + Q3W_BASE_FOLDER + '/' + url;
             var request = new XMLHttpRequest();
 
             request.open('GET', url, true);
