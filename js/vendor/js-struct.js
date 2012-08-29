@@ -30,6 +30,13 @@
 // TODO: Ugh, this is messy. Do it differentely soon, please!
 var nextStructId = 0;
 
+function templatizeSetterCode(code, offset, value) {
+    code = code.replace(/\$view/g, "v");
+    code = code.replace(/\$offset/g, offset);
+    code = code.replace(/\$value/g, value);
+    return code;
+}
+
 var Struct = Object.create(Object, {
     /**
     * Defines a single byte integer value (byte/char).
@@ -37,7 +44,14 @@ var Struct = Object.create(Object, {
     */
     int8: {
         value: function(name) {
-            return { name: name, readCode: "v.getInt8(o, true);", byteLength: 1, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 1,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getInt8($offset, true);",
+                writeCode: "$view.setInt8($offset, $value, true);"
+            };
         }
     },
 
@@ -47,7 +61,14 @@ var Struct = Object.create(Object, {
     */
     uint8: {
         value: function(name) {
-            return { name: name, readCode: "v.getUint8(o, true);", byteLength: 1, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 1,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getUint8($offset, true);",
+                writeCode: "$view.setUint8($offset, $value, true);"
+            };
         }
     },
 
@@ -57,7 +78,14 @@ var Struct = Object.create(Object, {
     */
     int16: {
         value: function(name) {
-            return { name: name, readCode: "v.getInt16(o, true);", byteLength: 2, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 2,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getInt16($offset, true);",
+                writeCode: "$view.setInt16($offset, $value, true);"
+            };
         }
     },
 
@@ -67,7 +95,14 @@ var Struct = Object.create(Object, {
     */
     uint16: {
         value: function(name) {
-            return { name: name, readCode: "v.getUint16(o, true);", byteLength: 2, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 2,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getUint16($offset, true);",
+                writeCode: "$view.setUint16($offset, $value, true);"
+            };
         }
     },
 
@@ -77,7 +112,14 @@ var Struct = Object.create(Object, {
     */
     int32: {
         value: function(name) {
-            return { name: name, readCode: "v.getInt32(o, true);", byteLength: 4, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 4,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getInt32($offset, true);",
+                writeCode: "$view.setInt32($offset, $value, true);"
+            };
         }
     },
 
@@ -87,7 +129,14 @@ var Struct = Object.create(Object, {
     */
     uint32: {
         value: function(name) {
-            return { name: name, readCode: "v.getUint32(o, true);", byteLength: 4, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 4,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getUint32($offset, true);",
+                writeCode: "$view.setUint32($offset, $value, true);"
+            };
         }
     },
 
@@ -97,7 +146,14 @@ var Struct = Object.create(Object, {
     */
     float32: {
         value: function(name) {
-            return { name: name, readCode: "v.getFloat32(o, true);", byteLength: 4, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 4,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getFloat32($offset, true);",
+                writeCode: "$view.setFloat32($offset, $value, true);"
+            };
         }
     },
 
@@ -107,7 +163,14 @@ var Struct = Object.create(Object, {
     */
     float64: {
         value: function(name) {
-            return { name: name, readCode: "v.getFloat64(o, true);", byteLength: 8, defaultValue: 0, structProperty: true };
+            return {
+                name: name,
+                byteLength: 8,
+                defaultValue: 0,
+                structProperty: true,
+                readCode: "$value = $view.getFloat64($offset, true);",
+                writeCode: "$view.setFloat64($offset, $value, true);"
+            };
         }
     },
 
@@ -119,18 +182,21 @@ var Struct = Object.create(Object, {
     */
     string: {
         value: function(name, length) {
-            var code = "(function(o) {\n";
-            code += "   var str = \"\";\n";
-            code += "   for(var j = 0; j < " + length + "; ++j) {\n";
-            code += "       var char = v.getUint8(o+j, true);\n";
-            code += "       if(char === 0) { break; }\n";
-            code += "       str += String.fromCharCode(char);\n";
-            code += "   }\n";
-            code += "   return str;\n";
-            code += "})(o);\n";
+            var readCode = "$value = \"\";\n";
+            readCode += "for(var j = 0; j < " + length + "; ++j) {\n";
+            readCode += "  var char = $view.getUint8($offset+j, true);\n";
+            readCode += "  if (char === 0) { break; }\n";
+            readCode += "  $value += String.fromCharCode(char);\n";
+            readCode += "}";
+
+            var writeCode = "for(var j = 0; j < " + length + "; ++j) {\n";
+            writeCode += "  $view.setUint8($offset+j, $value.charCodeAt(j), true);\n";
+            writeCode += "}";
+
             return {
                 name: name,
-                readCode: code,
+                readCode: readCode,
+                writeCode: writeCode,
                 byteLength: length,
                 defaultValue: "",
                 structProperty: true
@@ -146,18 +212,25 @@ var Struct = Object.create(Object, {
     */
     array: {
         value: function(name, type, length) {
-            var code = "(function(o) {\n";
-            code += "   var aa = new Array(" + length + "), av;\n";
-            code += "   for(var j = 0; j < " + length + "; ++j) {\n";
-            code += "       av = " + type.readCode + "\n";
-            code += "       o += " + type.byteLength + ";\n";
-            code += "       aa[j] = av;\n";
-            code += "   }\n";
-            code += "   return aa;\n"
-            code += "})(o);\n";
+            var readCode = "(function (o) {\n";
+            readCode += "  $value = new Array(" + length + ");\n";
+            readCode += "  for(var j = 0; j < " + length + "; ++j) {\n";
+            readCode += templatizeSetterCode(type.readCode, "o", "$value[j]");
+            readCode += "o += " + type.byteLength + ";\n";
+            readCode += "  }\n";
+            readCode += "})($offset);";
+
+            var writeCode = "(function (o) {\n";
+            writeCode += "  for(var j = 0; j < " + length + "; ++j) {\n";
+            writeCode += templatizeSetterCode(type.writeCode, "o", "$value[j]");
+            writeCode += "o += " + type.byteLength + ";\n";
+            writeCode += "  }\n";
+            writeCode += "})($offset);";
+
             return {
                 name: name,
-                readCode: code,
+                readCode: readCode,
+                writeCode: writeCode,
                 byteLength: type.byteLength * length,
                 defaultValue: null,
                 array: true,
@@ -176,6 +249,7 @@ var Struct = Object.create(Object, {
             return {
                 name: name,
                 readCode: struct.readCode,
+                writeCode: struct.writeCode,
                 byteLength: struct.byteLength,
                 defaultValue: null,
                 struct: true,
@@ -207,15 +281,7 @@ var Struct = Object.create(Object, {
     */
     create: {
         value: function(/* collected via arguments */) {
-            var type;
-            var byteLength = 0;
             var properties = arguments[arguments.length-1].structProperty ? {} : arguments[arguments.length-1];
-            for(var key in properties) {
-                var property = properties[key];
-                if (!property.enumerable) property.enumerable = true;
-                if (!property.configurable) property.configurable = true;
-                if (!property.writable) property.writable = true;
-            }
             var struct = Object.create(Object.prototype, properties);
 
             // This new struct will be assigned a unique name so that instances can be easily constructed later.
@@ -225,38 +291,63 @@ var Struct = Object.create(Object, {
             Object.defineProperty(this, struct.struct_type_id, { value: struct, enumerable: false, configurable: false, writable: false });
             nextStructId += 1;
 
-            // Build the code to read a single struct, calculate byte lengths, and define struct properties
-            var readCode = "(function(o) { var st = Object.create(Struct." + struct.struct_type_id + ");\n";
-            for(var i = 0; i < arguments.length; ++i) {
-                type = arguments[i];
-                if(!type.structProperty) { continue; }
-                if(type.name) {
-                    Object.defineProperty(struct, type.name, { value: type.defaultValue, enumerable: true, configurable: true, writable: true });
-                    readCode += "st." + type.name + " = " + type.readCode + "\n";
+            // Add the types passed in to the new struct object.
+            var types = [];
+            for (var i = 0; i < arguments.length; i++) {
+                var type = arguments[i];
+                if (!type.name || !type.structProperty) {
+                    continue;
                 }
-                readCode += "o += " + type.byteLength + ";\n";
-                byteLength += type.byteLength;
+                Object.defineProperty(struct, type.name, { value: type.defaultValue, enumerable: true, configurable: true, writable: true });
+                types.push(type);
             }
-            readCode += "return st; })(o);";
 
-            // Build the code to read an array of this struct type
-            var parseScript = "var a = new Array(count);\n var s;\n";
-            parseScript += "var v = new DataView(arrayBuffer, offset);\n"; // TODO: I should be able to specify a length here (count * this.byteLength), but it consistently gives me an INDEX_SIZE_ERR. Wonder why?
-            parseScript += "var o = 0, so = 0;\n";
-            parseScript += "for(var i = 0; i < count; ++i) {\n";
-            parseScript += "    so = o;\n";
-            parseScript += "    s = " + readCode + "\n";
-            parseScript += "    o += this.byteLength;\n";
-            parseScript += "    if(callback) { callback(s, offset+so); }\n";
-            parseScript += "    a[i] = s;\n";
-            parseScript += "}\n";
-            parseScript += "return a;\n";
+            // Calculate the total length of this struct.
+            var byteLength = 0;
+            for(var i = 0; i < types.length; i++) {
+                byteLength += types[i].byteLength;
+            }
+
+            // Build the code to deserialize a single struct, calculate byte lengths, and define struct properties
+            var readCode = "$value = Object.create(Struct." + struct.struct_type_id + ");\n";
+            for (var i = 0, oo = 0; i < types.length; i++) {
+                var type = types[i];
+                readCode += templatizeSetterCode(type.readCode, "$offset + " + oo, "$value." + type.name) + "\n";
+                oo += type.byteLength;
+            }
+
+            var readFnCode =  "var a = new Array(count);\n";
+            readFnCode += "var v = new DataView(buffer, offset);\n"; // TODO: I should be able to specify a length here (count * this.byteLength), but it consistently gives me an INDEX_SIZE_ERR. Wonder why?
+            readFnCode += "for(var i = 0, o = 0; i < count; ++i) {\n";
+            readFnCode += templatizeSetterCode(readCode, "o", "a[i]") + "\n";
+            readFnCode += "if(callback) { callback(a[i], offset+o); }\n";
+            readFnCode += "o += " + byteLength + ";\n";
+            readFnCode += "}\n";
+            readFnCode += "return a;\n";
+
+            // Build the code to serialize a single struct.
+            var writeCode = "";
+            for(var i = 0, oo = 0; i < types.length; i++) {
+                var type = types[i];
+                writeCode += templatizeSetterCode(type.writeCode, "$offset + " + oo, "$value." + type.name) + "\n";
+                oo += type.byteLength;
+            }
+
+            var writeFnCode = "var buffer = new ArrayBuffer(" + byteLength + ");\n";
+            writeFnCode += "var v = new DataView(buffer);\n";
+            writeFnCode += "var self = this;\n"
+            writeFnCode += templatizeSetterCode(writeCode, 0, "self") + "\n";
+            writeFnCode += "return buffer;\n";
 
             Object.defineProperty(struct, "byteLength", { value: byteLength, enumerable: true, configurable: true, writable: true });
             Object.defineProperty(struct, "readCode", { value: readCode, enumerable: true, configurable: true, writable: true });
+            Object.defineProperty(struct, "writeCode", { value: writeCode, enumerable: true, configurable: true, writable: true });
 
-            var parseFunc = new Function("arrayBuffer", "offset", "count", "callback", parseScript);
-            Object.defineProperty(struct, "readStructs", { value: parseFunc, configurable: true, writable: true });
+            var deserializeFn = new Function("buffer", "offset", "count", "callback", readFnCode);
+            Object.defineProperty(struct, "deserialize", { value: deserializeFn, configurable: true, writable: true });
+
+            var serializeFn = new Function(writeFnCode);
+            Object.defineProperty(struct, "serialize", { value: serializeFn, configurable: true, writable: true });
 
             return struct;
         }

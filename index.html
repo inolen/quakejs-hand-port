@@ -9,24 +9,78 @@
         <script type="text/javascript" src="js/vendor/game-shim.js"></script>
         <script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
         <script type="text/javascript" src="js/vendor/js-struct.js"></script>
-        <script type="text/javascript" src="js/vendor/keyboard.js"></script>
+        <script type="text/javascript" src="js/vendor/socket.io.min.js"></script>
 
         <!-- Quake3 Map Specific files -->
         <script type="text/javascript" src="js/main.js"></script>
+        <script type="text/javascript" src="js/input/in-inc.js"></script>
         <script type="text/javascript" src="js/input/in-main.js"></script>
         <script type="text/javascript" src="js/common/com-inc.js"></script>
         <script type="text/javascript" src="js/common/com-main.js"></script>
         <script type="text/javascript" src="js/common/com-bsp.js"></script>
+        <script type="text/javascript" src="js/common/com-cvar.js"></script>
+        <script type="text/javascript" src="js/common/com-trace.js"></script>
         <script type="text/javascript" src="js/client/cl-inc.js"></script>
         <script type="text/javascript" src="js/client/cl-input.js"></script>
         <script type="text/javascript" src="js/client/cl-main.js"></script>
+        <script type="text/javascript" src="js/game/bg-inc.js"></script>
+        <script type="text/javascript" src="js/game/bg-pmove.js"></script>
         <script type="text/javascript" src="js/renderer/r-inc.js"></script>
         <script type="text/javascript" src="js/renderer/r-main.js"></script>
         <script type="text/javascript" src="js/renderer/r-image.js"></script>
         <script type="text/javascript" src="js/renderer/r-shader.js"></script>
         <script type="text/javascript" src="js/renderer/r-glshader.js"></script>
-        <script type="text/javascript" src="js/q3-g-move.js"></script>
-        <script type="text/javascript" src="js/q3-trace.js"></script>
+
+        <script type="text/javascript">
+            /*var dbrush_t = Struct.create(
+                Struct.int32('brushSide'),
+                Struct.int32('brushSideCount'),
+                Struct.int32('shader')
+            );
+
+            var foobar = Object.create(dbrush_t);
+            foobar.brushSide = 5;
+            foobar.brushSideCount = 7;
+            foobar.shader = 11;
+
+            var buffers = foobar.serialize();
+            console.log(buffers);
+            var bufferd = dbrush_t.deserialize(buffers, 0, 1);
+            console.log(bufferd);
+
+            var lump_t = Struct.create(
+                Struct.int32('fileofs'),
+                Struct.int32('filelen')
+            );
+
+            var dheader_t = Struct.create(
+                Struct.string('ident', 4),
+                Struct.int32('version'),
+                Struct.array('lumps', lump_t, 2)
+            );
+
+            var lumpa = Object.create(lump_t);
+            var lumpb = Object.create(lump_t);
+            lumpa.fileofs = 1;
+            lumpa.filelen = 2;
+            lumpb.fileofs = 3;
+            lumpb.filelen = 4;
+            var header = Object.create(dheader_t);
+            header.ident = "FUCK";
+            header.version = 999;
+            header.lumps = [lumpa, lumpb];
+
+            var buffers = header.serialize();
+            console.log(buffers);
+            var bufferd = dheader_t.deserialize(buffers, 0, 1);
+            console.log(bufferd);*/
+
+            /*var socket = io.connect('http://localhost', 9000);
+            socket.on('news', function (data) {
+                console.log(data);
+                socket.emit('my other event', { my: 'data' });
+            });*/
+        </script>
 
         <!-- Stylesheet -->
         <link href="css/q3demo.css" rel="stylesheet" type="text/css" />

@@ -18,7 +18,8 @@
     height: 0,
     fov: 0,
     origin: null,
-    angles: null
+    angles: null,
+    drawSurfs: null
   };
 
   q3w.image_t = {

@@ -1,16 +1,29 @@
-// Simple Node.js server that I use to test my projects.
-// To run, you need to have node and the express package installed
-// http://nodejs.org/
-// http://expressjs.com/
+var express = require('express'),
+	http = require('http'),
+	socketio = require('socket.io');
 
-// Then simply run "node server" from the command line in this directory
-// at that point you can view the demo by visiting http://localhost:900/index.html
+function createGameServer(server) {
+	var io = socketio.listen(server);
 
-var express = require('express');
+	io.sockets.on('connection', function (socket) {
+		socket.emit('news', { hello: 'world' });
+		socket.on('my other event', function (data) {
+			console.log(data);
+		});
+	});
+}
 
-var app = express.createServer();
-app.use(express.static(__dirname));
-app.use(express.directory(__dirname));
-app.listen(9000);
+function main() {
+	var app = express();
+	var server = http.createServer(app)
 
-console.log('Server is now listening on port 9000');
+	app.use(express.static(__dirname));
+	app.use(express.directory(__dirname));
+	server.listen(9000);
+
+	createGameServer(server);
+
+	console.log('Server is now listening on port 9000');
+}
+
+main();

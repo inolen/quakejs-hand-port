@@ -5,9 +5,13 @@
     angles: [0 , 0, 0]
   };
 
-  q3w.Com_EventTypes = {
+  q3w.inputEventTypes = {
     EVENT_KEYDOWN: 1,
     EVENT_KEYUP: 2,
-    EVENT_MOUSE: 3
+    EVENT_MOUSEMOVE: 3
+  };
+
+  q3w.playerState_t = {
+    viewheight: 0
   };
 })(window.q3w = window.q3w || {});

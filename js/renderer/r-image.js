@@ -80,7 +80,8 @@
     el.onload = function() {
       image.texnum = self.R_BuildTexture(el, null, null, clamp);
     };
-    el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
+    //el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
+    el.src = q3w.Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
 
     return image;
   };

@@ -21,24 +21,37 @@
 	q3w.R_Init = function (canvas, gl) {
 		this.canvas = canvas;
 		this.gl = gl;
+		this.refdef = Object.create(q3w.trRefdef_t);
+		// TODO: Make this a typed array
+		//this.refdef.drawSurfs = new Array(MAX_DRAWSURFS);
 
 		this.R_InitImages();
 		this.R_InitShaders();
 		this.R_InitGLShaders();
-
 		this.R_BuildSkyboxBuffers();
 	};
 
-	q3w.R_RenderScene = function (refdef) {
+	q3w.R_RenderScene = function (fd) {
+		var rd = this.refdef;
+
+		rd.gl = fd.gl;
+		rd.x = fd.x;
+		rd.y = fd.y
+		rd.width = fd.width;
+		rd.height = fd.height;
+		rd.fov = fd.fov;
+		rd.origin = fd.origin;
+		rd.angles = fd.angles;
+
 		var parms = Object.create(q3w.viewParms_t);
-		parms.gl = refdef.gl;
-		parms.x = refdef.x;
-		parms.y = refdef.y
-		parms.width = refdef.width;
-		parms.height = refdef.height;
-		parms.fov = refdef.fov;
-		parms.origin = refdef.origin;
-		parms.angles = refdef.angles;
+		parms.gl = fd.gl;
+		parms.x = fd.x;
+		parms.y = fd.y
+		parms.width = fd.width;
+		parms.height = fd.height;
+		parms.fov = fd.fov;
+		parms.origin = fd.origin;
+		parms.angles = fd.angles;
 
 		this.R_RenderView(parms);
 	};
@@ -72,6 +85,7 @@
 		gl.depthMask(true);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+		q3w.R_GenerateDrawSurfs();
 		q3w.R_DrawWorld(modelMatrix, projectionMatrix);
 	};
 
@@ -305,6 +319,29 @@
 		}
 	};
 
+	/*q3bsp.prototype.setVisibility = function(visibilityList) {
+		if (this.surfaces.length > 0) {
+			for(var i = 0; i < this.surfaces.length; ++i) {
+				this.surfaces[i].visible = (visibilityList[i] === true);
+			}
+		}
+	}*/
+
+	/*q3w.R_AddDrawSurf = function (face, shader) {
+		var rd = this.refdef;
+		var idx = rd.numDrawSurfs & DRAWSURF_MASK;
+		// the sort data is packed into a single 32 bit value so it can be
+		// compared quickly during the qsorting process
+		//tr.refdef.drawSurfs[index].sort = (shader->sortedIndex << QSORT_SHADERNUM_SHIFT)
+		//	| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
+		rd.drawSurfs[idx].surface = face;
+		rd.numDrawSurfs++;
+	}*/
+
+	q3w.R_GenerateDrawSurfs = function () {
+		//q3w.R_AddWorldSurfaces(map);
+	};
+
 	q3w.R_DrawWorld = function(modelViewMat, projectionMat) {
 		var gl = q3w.gl;
 
@@ -341,7 +378,7 @@
 		for (var i = 0; i < map.data.shaders.length; i++) {
 			var shader = map.data.shaders[i];
 
-			if (shader.elementCount == 0 || shader.visible !== true) {
+			if (!shader.elementCount || !shader.visible) {
 				continue;
 			}
 
