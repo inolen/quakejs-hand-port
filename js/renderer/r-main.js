@@ -1,4 +1,4 @@
-(function(q3w) {
+(function(q3_r) {
 	q3render_vertex_stride = 56;
 	q3render_sky_vertex_stride = 20;
 
@@ -18,20 +18,20 @@
 
 	var map;
 
-	q3w.R_Init = function (canvas, gl) {
+	q3_r.Init = function (canvas, gl) {
 		this.canvas = canvas;
 		this.gl = gl;
-		this.refdef = Object.create(q3w.trRefdef_t);
+		this.refdef = Object.create(q3_r.trRefdef_t);
 		// TODO: Make this a typed array
 		//this.refdef.drawSurfs = new Array(MAX_DRAWSURFS);
 
-		this.R_InitImages();
-		this.R_InitShaders();
-		this.R_InitGLShaders();
-		this.R_BuildSkyboxBuffers();
+		this.InitImages();
+		this.InitShaders();
+		this.InitGLShaders();
+		this.BuildSkyboxBuffers();
 	};
 
-	q3w.R_RenderScene = function (fd) {
+	q3_r.RenderScene = function (fd) {
 		var rd = this.refdef;
 
 		rd.gl = fd.gl;
@@ -43,7 +43,7 @@
 		rd.origin = fd.origin;
 		rd.angles = fd.angles;
 
-		var parms = Object.create(q3w.viewParms_t);
+		var parms = Object.create(q3_r.viewParms_t);
 		parms.gl = fd.gl;
 		parms.x = fd.x;
 		parms.y = fd.y
@@ -53,10 +53,10 @@
 		parms.origin = fd.origin;
 		parms.angles = fd.angles;
 
-		this.R_RenderView(parms);
+		this.RenderView(parms);
 	};
 
-	q3w.R_RenderView = function (parms) {
+	q3_r.RenderView = function (parms) {
 		var gl = parms.gl;
 
 		// Create projection matrix.
@@ -85,22 +85,22 @@
 		gl.depthMask(true);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-		q3w.R_GenerateDrawSurfs();
-		q3w.R_DrawWorld(modelMatrix, projectionMatrix);
+		q3_r.GenerateDrawSurfs();
+		q3_r.DrawWorld(modelMatrix, projectionMatrix);
 	};
 
-	q3w.R_LoadMap = function (mapName) {
+	q3_r.LoadMap = function (mapName) {
 		map = new q3w.Q3Bsp();
 
 		map.load('maps/' + mapName + '.bsp', function () {
-			q3w.R_LoadLightmaps();
-			q3w.R_BuildWorldBuffers();
+			q3_r.LoadLightmaps();
+			q3_r.BuildWorldBuffers();
 		});
 	};
 
 	// TODO: REFACTOR!!
-	q3w.R_BuildSkyboxBuffers = function () {
-		var gl = q3w.gl;
+	q3_r.BuildSkyboxBuffers = function () {
+		var gl = q3_r.gl;
 
 		var skyVerts = [
 			-128, 128, 128, 0, 0,
@@ -157,8 +157,8 @@
 		skyboxIndexCount = skyIndices.length;
 	};
 
-	q3w.R_LoadLightmaps = function() {
-		var gl = q3w.gl;
+	q3_r.LoadLightmaps = function() {
+		var gl = q3_r.gl;
 
 		// TODO: Export this from Q3Bsp
 		var lightmaps = map.data.lightmaps;
@@ -167,7 +167,7 @@
 		var textureSize = gridSize * 128;
 
 		// TODO: Refactor this to use r-image.js better
-		lightmapTexture = q3w.R_CreateImage('*lightmap', null, textureSize, textureSize);
+		lightmapTexture = q3_r.CreateImage('*lightmap', null, textureSize, textureSize);
 
 		for (var i = 0; i < lightmaps.length; ++i) {
 			var lightmap = lightmaps[i];
@@ -179,8 +179,8 @@
 		}
 	};
 
-	q3w.R_BuildWorldBuffers = function () {
-		var gl = q3w.gl;
+	q3_r.BuildWorldBuffers = function () {
+		var gl = q3_r.gl;
 
 		var faces = map.data.faces,
 			verts = map.data.verts,
@@ -264,7 +264,7 @@
 
 	// Draw the map
 	function _bindShaderAttribs(shader, modelViewMat, projectionMat) {
-		var gl = q3w.gl;
+		var gl = q3_r.gl;
 
 		// Set uniforms
 		gl.uniformMatrix4fv(shader.uniform.modelViewMat, false, modelViewMat);
@@ -296,7 +296,7 @@
 	}
 
 	function _bindSkyAttribs(shader, modelViewMat, projectionMat) {
-		var gl = q3w.gl;
+		var gl = q3_r.gl;
 
 		mat4.set(modelViewMat, skyboxMat);
 
@@ -327,7 +327,7 @@
 		}
 	}*/
 
-	/*q3w.R_AddDrawSurf = function (face, shader) {
+	/*q3_r.AddDrawSurf = function (face, shader) {
 		var rd = this.refdef;
 		var idx = rd.numDrawSurfs & DRAWSURF_MASK;
 		// the sort data is packed into a single 32 bit value so it can be
@@ -338,12 +338,12 @@
 		rd.numDrawSurfs++;
 	}*/
 
-	q3w.R_GenerateDrawSurfs = function () {
-		//q3w.R_AddWorldSurfaces(map);
+	q3_r.GenerateDrawSurfs = function () {
+		//q3_r.AddWorldSurfaces(map);
 	};
 
-	q3w.R_DrawWorld = function(modelViewMat, projectionMat) {
-		var gl = q3w.gl;
+	q3_r.DrawWorld = function(modelViewMat, projectionMat) {
+		var gl = q3_r.gl;
 
 		if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
 
@@ -358,16 +358,15 @@
 			gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
 
 			// Render Skybox
-			if (q3w.R_SetShader(skyShader)) {
-				for(var j = 0; j < skyShader.stages.length; j++) {
-					var stage = skyShader.stages[j];
+			q3_r.SetShader(skyShader);
+			for(var j = 0; j < skyShader.stages.length; j++) {
+				var stage = skyShader.stages[j];
 
-					q3w.R_SetShaderStage(skyShader, stage, time);
-					_bindSkyAttribs(stage.program, modelViewMat, projectionMat);
+				q3_r.SetShaderStage(skyShader, stage, time);
+				_bindSkyAttribs(stage.program, modelViewMat, projectionMat);
 
-					// Draw all geometry that uses this textures
-					gl.drawElements(gl.TRIANGLES, skyboxIndexCount, gl.UNSIGNED_SHORT, 0);
-				}
+				// Draw all geometry that uses this textures
+				gl.drawElements(gl.TRIANGLES, skyboxIndexCount, gl.UNSIGNED_SHORT, 0);
 			}
 		}
 
@@ -383,23 +382,23 @@
 			}
 
 			// Bind the surface shader
-			var glshader = shader.glshader || q3w.R_FindShader(shader.shaderName);
+			var glshader = shader.glshader || q3_r.FindShader(shader.shaderName);
 
 			// Store off sky shader.
 			if (glshader.sky) {
 				skyShader = glshader;
 			}
 
-			q3w.R_SetShader(glshader);
+			q3_r.SetShader(glshader);
 
 			for (var j = 0; j < glshader.stages.length; j++) {
 				var stage = glshader.stages[j];
 
-				q3w.R_SetShaderStage(glshader, stage, time);
+				q3_r.SetShaderStage(glshader, stage, time);
 				_bindShaderAttribs(stage.program, modelViewMat, projectionMat);
 				gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
 			}
 		}
 	};
 
-})(window.q3w = window.q3w || {});
+})(window.q3_r = window.q3_r || {});

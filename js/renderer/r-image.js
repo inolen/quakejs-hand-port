@@ -1,16 +1,16 @@
-(function(q3w) {
+(function(q3_r) {
   var _images = {};
 
-  q3w.R_InitImages = function () {
-    this.R_BuildWhiteTexture();
-    this.R_BuildDefaultTexture();
+  q3_r.InitImages = function () {
+    this.BuildWhiteTexture();
+    this.BuildDefaultTexture();
   };
 
-  q3w.R_BuildWhiteTexture = function () {
-    this.R_CreateImage('*white', new Uint8Array([255,255,255,255]), 1, 1);
+  q3_r.BuildWhiteTexture = function () {
+    this.CreateImage('*white', new Uint8Array([255,255,255,255]), 1, 1);
   };
 
-  q3w.R_BuildDefaultTexture = function () {
+  q3_r.BuildDefaultTexture = function () {
     var self = this;
 
     var image =  _images['*default'] = Object.create(this.image_t);
@@ -18,12 +18,12 @@
 
     var el = new Image();
     el.onload = function() {
-      image.texnum = self.R_BuildTexture(el);
+      image.texnum = self.BuildTexture(el);
     };
     el.src = q3w.Q3W_BASE_FOLDER + '/webgl/no-shader.png';
   };
 
-  q3w.R_BuildTexture = function (bufferOrImage, width, height, clamp) {
+  q3_r.BuildTexture = function (bufferOrImage, width, height, clamp) {
     var gl = this.gl,
       texture = gl.createTexture();
 
@@ -44,17 +44,17 @@
     return texture;
   };
 
-  q3w.R_CreateImage = function (name, buffer, width, height, clamp) {
+  q3_r.CreateImage = function (name, buffer, width, height, clamp) {
     var gl = this.gl;
 
     var image =  _images[name] = Object.create(this.image_t);
     image.imgName = name;
-    image.texnum = this.R_BuildTexture(buffer, width, height, clamp);
+    image.texnum = this.BuildTexture(buffer, width, height, clamp);
 
     return image;
   };
 
-  q3w.R_FindImage = function(name, clamp) {
+  q3_r.FindImage = function(name, clamp) {
     var self = this;
 
     // Try to find the image in our cache.
@@ -78,7 +78,7 @@
       el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
     };
     el.onload = function() {
-      image.texnum = self.R_BuildTexture(el, null, null, clamp);
+      image.texnum = self.BuildTexture(el, null, null, clamp);
     };
     //el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
     el.src = q3w.Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
@@ -86,4 +86,4 @@
     return image;
   };
 
-})(window.q3w = window.q3w || {});
+})(window.q3_r = window.q3_r || {});

@@ -26,238 +26,69 @@
  */
 
 
-//
-// Default Shaders
-//
-q3bsp_default_vertex = '\
-  #ifdef GL_ES \n\
-  precision highp float; \n\
-  #endif \n\
-  attribute vec3 position; \n\
-  attribute vec3 normal; \n\
-  attribute vec2 texCoord; \n\
-  attribute vec2 lightCoord; \n\
-  attribute vec4 color; \n\
-\n\
-  varying vec2 vTexCoord; \n\
-  varying vec2 vLightmapCoord; \n\
-  varying vec4 vColor; \n\
-\n\
-  uniform mat4 modelViewMat; \n\
-  uniform mat4 projectionMat; \n\
-\n\
-  void main(void) { \n\
-    vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
-    vTexCoord = texCoord; \n\
-    vColor = color; \n\
-    vLightmapCoord = lightCoord; \n\
-    gl_Position = projectionMat * worldPosition; \n\
-  } \n\
-';
+(function(q3_r) {
+  var defaultVertexShaderSrc = '\
+    #ifdef GL_ES \n\
+    precision highp float; \n\
+    #endif \n\
+    attribute vec3 position; \n\
+    attribute vec3 normal; \n\
+    attribute vec2 texCoord; \n\
+    attribute vec2 lightCoord; \n\
+    attribute vec4 color; \n\
+  \n\
+    varying vec2 vTexCoord; \n\
+    varying vec2 vLightmapCoord; \n\
+    varying vec4 vColor; \n\
+  \n\
+    uniform mat4 modelViewMat; \n\
+    uniform mat4 projectionMat; \n\
+  \n\
+    void main(void) { \n\
+      vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
+      vTexCoord = texCoord; \n\
+      vColor = color; \n\
+      vLightmapCoord = lightCoord; \n\
+      gl_Position = projectionMat * worldPosition; \n\
+    } \n\
+  ';
 
-q3bsp_default_fragment = '\
-  #ifdef GL_ES \n\
-  precision highp float; \n\
-  #endif \n\
-  varying vec2 vTexCoord; \n\
-  varying vec2 vLightmapCoord; \n\
-  uniform sampler2D texture; \n\
-  uniform sampler2D lightmap; \n\
-\n\
-  void main(void) { \n\
-    vec4 diffuseColor = texture2D(texture, vTexCoord); \n\
-    vec4 lightColor = texture2D(lightmap, vLightmapCoord); \n\
-    gl_FragColor = vec4(diffuseColor.rgb * lightColor.rgb, diffuseColor.a); \n\
-  } \n\
-';
+  var defaultFragmentShaderSrc = '\
+    #ifdef GL_ES \n\
+    precision highp float; \n\
+    #endif \n\
+    varying vec2 vTexCoord; \n\
+    varying vec2 vLightmapCoord; \n\
+    uniform sampler2D texture; \n\
+    uniform sampler2D lightmap; \n\
+  \n\
+    void main(void) { \n\
+      vec4 diffuseColor = texture2D(texture, vTexCoord); \n\
+      vec4 lightColor = texture2D(lightmap, vLightmapCoord); \n\
+      gl_FragColor = vec4(diffuseColor.rgb * lightColor.rgb, diffuseColor.a); \n\
+    } \n\
+  ';
 
-q3bsp_model_fragment = '\
-  #ifdef GL_ES \n\
-  precision highp float; \n\
-  #endif \n\
-  varying vec2 vTexCoord; \n\
-  varying vec4 vColor; \n\
-  uniform sampler2D texture; \n\
-\n\
-  void main(void) { \n\
-    vec4 diffuseColor = texture2D(texture, vTexCoord); \n\
-    gl_FragColor = vec4(diffuseColor.rgb * vColor.rgb, diffuseColor.a); \n\
-  } \n\
-';
+  var modelFragmnetShaderSrc = '\
+    #ifdef GL_ES \n\
+    precision highp float; \n\
+    #endif \n\
+    varying vec2 vTexCoord; \n\
+    varying vec4 vColor; \n\
+    uniform sampler2D texture; \n\
+  \n\
+    void main(void) { \n\
+      vec4 diffuseColor = texture2D(texture, vTexCoord); \n\
+      gl_FragColor = vec4(diffuseColor.rgb * vColor.rgb, diffuseColor.a); \n\
+    } \n\
+  ';
 
-(function(q3w) {
-  var _defaultProgram = null;
-  var _modelProgram = null;
-
-  q3w.R_InitGLShaders = function() {
-    var gl = this.gl;
-
-    _defaultProgram = CompileShaderProgram(gl, q3bsp_default_vertex, q3bsp_default_fragment);
-    _modelProgram = CompileShaderProgram(gl, q3bsp_default_vertex, q3bsp_model_fragment);
-  }
+  var defaultProgram = null;
+  var modelProgram = null;
 
   /**
-   * Setup render state
+   * WebGL Shader builder utility
    */
-  q3w.R_SetShader = function(shader) {
-    var gl = this.gl;
-
-    if (!shader) {
-      gl.enable(gl.CULL_FACE);
-      gl.cullFace(gl.BACK);
-    } else if (shader.cull && !shader.sky) {
-      gl.enable(gl.CULL_FACE);
-      gl.cullFace(shader.cull);
-    } else {
-      gl.disable(gl.CULL_FACE);
-    }
-
-    return true;
-  }
-
-  q3w.R_SetShaderStage = function(shader, stage, time) {
-    var gl = this.gl;
-
-    if (stage.animFreq) {
-      // Texture animation seems like a natural place for setInterval, but that approach has proved error prone.
-      // It can easily get out of sync with other effects (like rgbGen pulses and whatnot) which can give a
-      // jittery or flat out wrong appearance. Doing it this way ensures all effects are synced.
-      var animFrame = Math.floor(time*stage.animFreq) % stage.animTexture.length;
-      stage.texture = stage.animTexture[animFrame];
-    }
-
-    gl.blendFunc(stage.blendSrc, stage.blendDest);
-
-    if (stage.depthWrite && !shader.sky) {
-      gl.depthMask(true);
-    } else {
-      gl.depthMask(false);
-    }
-
-    gl.depthFunc(stage.depthFunc);
-
-    gl.useProgram(stage.program);
-
-    var texture = stage.texture || this.R_FindImage('*default');
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.uniform1i(stage.program.uniform.texture, 0);
-    gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
-
-    if (stage.program.uniform.lightmap) {
-      var lightmap = this.R_FindImage('*lightmap');
-      gl.activeTexture(gl.TEXTURE1);
-      gl.uniform1i(stage.program.uniform.lightmap, 1);;
-      gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
-    }
-
-    if (stage.program.uniform.time) {
-      gl.uniform1f(stage.program.uniform.time, time);
-    }
-  };
-
-  /**
-   * Shader compilation
-   */
-  function TranslateDepthFunc(gl, depth) {
-    if(!depth) { return gl.LEQUAL; }
-    switch(depth.toLowerCase()) {
-      case 'gequal': return gl.GEQUAL;
-      case 'lequal': return gl.LEQUAL;
-      case 'equal': return gl.EQUAL;
-      case 'greater': return gl.GREATER;
-      case 'less': return gl.LESS;
-      default: return gl.LEQUAL;
-    }
-  }
-
-  function TranslateCull(gl, cull) {
-    if (cull) {
-      cull = cull.toLowerCase();
-
-      if (cull == 'none' || cull == 'twosided' || cull == 'disable') {
-       return null;
-      } else if (cull == 'back' || cull == 'backside' || cull == 'backsided') {
-        return gl.BACK;
-      }
-    }
-
-    return gl.FRONT;
-  }
-
-  function TranslateBlend(gl, blend) {
-    if(!blend) { return gl.ONE; }
-    switch(blend.toUpperCase()) {
-      case 'GL_ONE': return gl.ONE;
-      case 'GL_ZERO': return gl.ZERO;
-      case 'GL_DST_COLOR': return gl.DST_COLOR;
-      case 'GL_ONE_MINUS_DST_COLOR': return gl.ONE_MINUS_DST_COLOR;
-      case 'GL_SRC_ALPHA ': return gl.SRC_ALPHA;
-      case 'GL_ONE_MINUS_SRC_ALPHA': return gl.ONE_MINUS_SRC_ALPHA;
-      case 'GL_SRC_COLOR': return gl.SRC_COLOR;
-      case 'GL_ONE_MINUS_SRC_COLOR': return gl.ONE_MINUS_SRC_COLOR;
-      default: return gl.ONE;
-    }
-  }
-
-  q3w.R_BuildGLShaderForShader = function (shader) {
-    var gl = this.gl;
-
-    var glshader = {
-      cull: TranslateCull(gl, shader.cull),
-      sort: shader.sort,
-      sky: shader.sky,
-      blend: shader.blend,
-      name: shader.name,
-      lightmap: shader.lightmap,
-      stages: []
-    };
-
-    for (var i = 0; i < shader.stages.length; i++) {
-      var stage = shader.stages[i],
-        vertexSrc = GenerateVertexShader(gl, shader, stage),
-        fragmentSrc = GenerateFragmentShader(gl, shader, stage);
-
-      var glstage = _.clone(stage);
-
-      glstage.blendSrc = TranslateBlend(gl, stage.blendSrc);
-      glstage.blendDest = TranslateBlend(gl, stage.blendDest);
-      glstage.depthFunc = TranslateDepthFunc(gl, stage.depthFunc);
-      glstage.program = CompileShaderProgram(gl, vertexSrc, fragmentSrc);
-
-      glshader.stages.push(glstage);
-    }
-
-    return glshader;
-  };
-
-  q3w.R_BuildGLShaderForTexture = function (texture) {
-    var gl = this.gl;
-
-    var glshader = {
-      cull: gl.FRONT,
-      blend: false,
-      sort: 3,
-      stages: [
-        {
-          map: texture,
-          isLightmap: false,
-          blendSrc: gl.ONE,
-          blendDest: gl.ZERO,
-          depthFunc: gl.LEQUAL,
-          depthWrite: true,
-          texture: this.R_FindImage(texture),
-          program: _defaultProgram
-        }
-      ]
-    };
-
-    return glshader;
-  };
-
-    //
-  // WebGL Shader builder utility
-  //
   var shaderBuilder = function() {
     this.attrib = {};
     this.varying = {};
@@ -367,9 +198,9 @@ q3bsp_model_fragment = '\
     ]);
   };
 
-  //
-  // Shader program compilation
-  //
+  /**
+   * WebGL Shader program compilation.
+   */
   function CompileShaderProgram(gl, vertexSrc, fragmentSrc) {
     var fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fragmentShader, fragmentSrc);
@@ -627,4 +458,175 @@ q3bsp_model_fragment = '\
 
     return shader.getSource();
   }
-})(window.q3w = window.q3w || {});
+
+  /**
+   * Helper translation functions.
+   */
+  function TranslateDepthFunc(gl, depth) {
+    if(!depth) { return gl.LEQUAL; }
+    switch(depth.toLowerCase()) {
+      case 'gequal': return gl.GEQUAL;
+      case 'lequal': return gl.LEQUAL;
+      case 'equal': return gl.EQUAL;
+      case 'greater': return gl.GREATER;
+      case 'less': return gl.LESS;
+      default: return gl.LEQUAL;
+    }
+  }
+
+  function TranslateCull(gl, cull) {
+    if (cull) {
+      cull = cull.toLowerCase();
+
+      if (cull == 'none' || cull == 'twosided' || cull == 'disable') {
+       return null;
+      } else if (cull == 'back' || cull == 'backside' || cull == 'backsided') {
+        return gl.BACK;
+      }
+    }
+
+    return gl.FRONT;
+  }
+
+  function TranslateBlend(gl, blend) {
+    if(!blend) { return gl.ONE; }
+    switch(blend.toUpperCase()) {
+      case 'GL_ONE': return gl.ONE;
+      case 'GL_ZERO': return gl.ZERO;
+      case 'GL_DST_COLOR': return gl.DST_COLOR;
+      case 'GL_ONE_MINUS_DST_COLOR': return gl.ONE_MINUS_DST_COLOR;
+      case 'GL_SRC_ALPHA ': return gl.SRC_ALPHA;
+      case 'GL_ONE_MINUS_SRC_ALPHA': return gl.ONE_MINUS_SRC_ALPHA;
+      case 'GL_SRC_COLOR': return gl.SRC_COLOR;
+      case 'GL_ONE_MINUS_SRC_COLOR': return gl.ONE_MINUS_SRC_COLOR;
+      default: return gl.ONE;
+    }
+  }
+
+  q3_r.InitGLShaders = function() {
+    var gl = this.gl;
+
+    defaultProgram = CompileShaderProgram(gl, defaultVertexShaderSrc, defaultFragmentShaderSrc);
+    modelProgram = CompileShaderProgram(gl, defaultVertexShaderSrc, modelFragmnetShaderSrc);
+  };
+
+  /**
+   * Setup render state
+   */
+  q3_r.SetShader = function(shader) {
+    var gl = this.gl;
+
+    if (!shader) {
+      gl.enable(gl.CULL_FACE);
+      gl.cullFace(gl.BACK);
+    } else if (shader.cull && !shader.sky) {
+      gl.enable(gl.CULL_FACE);
+      gl.cullFace(shader.cull);
+    } else {
+      gl.disable(gl.CULL_FACE);
+    }
+
+    return true;
+  }
+
+  q3_r.SetShaderStage = function(shader, stage, time) {
+    var gl = this.gl;
+
+    if (stage.animFreq) {
+      // Texture animation seems like a natural place for setInterval, but that approach has proved error prone.
+      // It can easily get out of sync with other effects (like rgbGen pulses and whatnot) which can give a
+      // jittery or flat out wrong appearance. Doing it this way ensures all effects are synced.
+      var animFrame = Math.floor(time*stage.animFreq) % stage.animTexture.length;
+      stage.texture = stage.animTexture[animFrame];
+    }
+
+    gl.blendFunc(stage.blendSrc, stage.blendDest);
+
+    if (stage.depthWrite && !shader.sky) {
+      gl.depthMask(true);
+    } else {
+      gl.depthMask(false);
+    }
+
+    gl.depthFunc(stage.depthFunc);
+
+    gl.useProgram(stage.program);
+
+    var texture = stage.texture || this.FindImage('*default');
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.uniform1i(stage.program.uniform.texture, 0);
+    gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+
+    if (stage.program.uniform.lightmap) {
+      var lightmap = this.FindImage('*lightmap');
+      gl.activeTexture(gl.TEXTURE1);
+      gl.uniform1i(stage.program.uniform.lightmap, 1);;
+      gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
+    }
+
+    if (stage.program.uniform.time) {
+      gl.uniform1f(stage.program.uniform.time, time);
+    }
+  };
+
+  /**
+   * Shader compilation
+   */
+
+  // TODO: Do we really have to have both of these?
+  q3_r.BuildGLShaderForShader = function (shader) {
+    var gl = this.gl;
+
+    var glshader = {
+      cull: TranslateCull(gl, shader.cull),
+      sort: shader.sort,
+      sky: shader.sky,
+      blend: shader.blend,
+      name: shader.name,
+      lightmap: shader.lightmap,
+      stages: []
+    };
+
+    for (var i = 0; i < shader.stages.length; i++) {
+      var stage = shader.stages[i],
+        vertexSrc = GenerateVertexShader(gl, shader, stage),
+        fragmentSrc = GenerateFragmentShader(gl, shader, stage);
+
+      var glstage = _.clone(stage);
+
+      glstage.blendSrc = TranslateBlend(gl, stage.blendSrc);
+      glstage.blendDest = TranslateBlend(gl, stage.blendDest);
+      glstage.depthFunc = TranslateDepthFunc(gl, stage.depthFunc);
+      glstage.program = CompileShaderProgram(gl, vertexSrc, fragmentSrc);
+
+      glshader.stages.push(glstage);
+    }
+
+    return glshader;
+  };
+
+  q3_r.BuildGLShaderForTexture = function (texture) {
+    var gl = this.gl;
+
+    var glshader = {
+      cull: gl.FRONT,
+      blend: false,
+      sort: 3,
+      stages: [
+        {
+          map: texture,
+          isLightmap: false,
+          blendSrc: gl.ONE,
+          blendDest: gl.ZERO,
+          depthFunc: gl.LEQUAL,
+          depthWrite: true,
+          texture: this.FindImage(texture),
+          program: defaultProgram
+        }
+      ]
+    };
+
+    return glshader;
+  };
+})(window.q3_r = window.q3_r || {});

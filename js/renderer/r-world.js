@@ -1,8 +1,8 @@
-(function(q3w) {
-	q3w.R_RecursiveWorldNode = function (nodes) {
+(function(q3_r) {
+	q3_r.RecursiveWorldNode = function (nodes) {
 	};
 
-	q3w.R_AddWorldSurfaces = function (map) {
-		q3w.R_RecursiveWorldNode(nodes);
+	q3_r.AddWorldSurfaces = function (map) {
+		this.RecursiveWorldNode(nodes);
 	};
-})(window.q3w = window.q3w || {});
+})(window.q3_r = window.q3_r || {});

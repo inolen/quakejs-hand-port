@@ -30,7 +30,7 @@
 // TODO: Ugh, this is messy. Do it differentely soon, please!
 var nextStructId = 0;
 
-function templatizeSetterCode(code, offset, value) {
+function setterTemplate(code, offset, value) {
     code = code.replace(/\$view/g, "v");
     code = code.replace(/\$offset/g, offset);
     code = code.replace(/\$value/g, value);
@@ -184,13 +184,13 @@ var Struct = Object.create(Object, {
         value: function(name, length) {
             var readCode = "$value = \"\";\n";
             readCode += "for(var j = 0; j < " + length + "; ++j) {\n";
-            readCode += "  var char = $view.getUint8($offset+j, true);\n";
+            readCode += "  var char = $view.getUint8($offset + j, true);\n";
             readCode += "  if (char === 0) { break; }\n";
             readCode += "  $value += String.fromCharCode(char);\n";
             readCode += "}";
 
             var writeCode = "for(var j = 0; j < " + length + "; ++j) {\n";
-            writeCode += "  $view.setUint8($offset+j, $value.charCodeAt(j), true);\n";
+            writeCode += "  $view.setUint8($offset + j, $value.charCodeAt(j), true);\n";
             writeCode += "}";
 
             return {
@@ -215,14 +215,14 @@ var Struct = Object.create(Object, {
             var readCode = "(function (o) {\n";
             readCode += "  $value = new Array(" + length + ");\n";
             readCode += "  for(var j = 0; j < " + length + "; ++j) {\n";
-            readCode += templatizeSetterCode(type.readCode, "o", "$value[j]");
+            readCode += setterTemplate(type.readCode, "o", "$value[j]");
             readCode += "o += " + type.byteLength + ";\n";
             readCode += "  }\n";
             readCode += "})($offset);";
 
             var writeCode = "(function (o) {\n";
             writeCode += "  for(var j = 0; j < " + length + "; ++j) {\n";
-            writeCode += templatizeSetterCode(type.writeCode, "o", "$value[j]");
+            writeCode += setterTemplate(type.writeCode, "o", "$value[j]");
             writeCode += "o += " + type.byteLength + ";\n";
             writeCode += "  }\n";
             writeCode += "})($offset);";
@@ -312,14 +312,14 @@ var Struct = Object.create(Object, {
             var readCode = "$value = Object.create(Struct." + struct.struct_type_id + ");\n";
             for (var i = 0, oo = 0; i < types.length; i++) {
                 var type = types[i];
-                readCode += templatizeSetterCode(type.readCode, "$offset + " + oo, "$value." + type.name) + "\n";
+                readCode += setterTemplate(type.readCode, "$offset + " + oo, "$value." + type.name) + "\n";
                 oo += type.byteLength;
             }
 
             var readFnCode =  "var a = new Array(count);\n";
             readFnCode += "var v = new DataView(buffer, offset);\n"; // TODO: I should be able to specify a length here (count * this.byteLength), but it consistently gives me an INDEX_SIZE_ERR. Wonder why?
             readFnCode += "for(var i = 0, o = 0; i < count; ++i) {\n";
-            readFnCode += templatizeSetterCode(readCode, "o", "a[i]") + "\n";
+            readFnCode += setterTemplate(readCode, "o", "a[i]") + "\n";
             readFnCode += "if(callback) { callback(a[i], offset+o); }\n";
             readFnCode += "o += " + byteLength + ";\n";
             readFnCode += "}\n";
@@ -329,14 +329,14 @@ var Struct = Object.create(Object, {
             var writeCode = "";
             for(var i = 0, oo = 0; i < types.length; i++) {
                 var type = types[i];
-                writeCode += templatizeSetterCode(type.writeCode, "$offset + " + oo, "$value." + type.name) + "\n";
+                writeCode += setterTemplate(type.writeCode, "$offset + " + oo, "$value." + type.name) + "\n";
                 oo += type.byteLength;
             }
 
             var writeFnCode = "var buffer = new ArrayBuffer(" + byteLength + ");\n";
             writeFnCode += "var v = new DataView(buffer);\n";
             writeFnCode += "var self = this;\n"
-            writeFnCode += templatizeSetterCode(writeCode, 0, "self") + "\n";
+            writeFnCode += setterTemplate(writeCode, 0, "self") + "\n";
             writeFnCode += "return buffer;\n";
 
             Object.defineProperty(struct, "byteLength", { value: byteLength, enumerable: true, configurable: true, writable: true });

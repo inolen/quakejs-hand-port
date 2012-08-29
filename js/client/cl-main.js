@@ -6,19 +6,19 @@
     this.pm = Object.create(q3w.pmove_t);
 
     this.Cl_InitInput();
-    this.R_Init(canvas, gl);
+    q3_r.Init(canvas, gl);
 
     this.Cl_LoadMap('q3tourney2');
   };
 
   q3w.Cl_Frame = function () {
-    var refdef = Object.create(q3w.trRefdef_t);
+    var refdef = Object.create(q3_r.trRefdef_t);
     refdef.gl = this.gl;
 
     q3w.Cl_SendCommand();
     q3w.Cl_CalcViewValues(refdef);
 
-    q3w.R_RenderScene(refdef);
+    q3_r.RenderScene(refdef);
   };
 
   q3w.Cl_CalcViewValues = function (refdef) {
@@ -35,6 +35,6 @@
   };
 
   q3w.Cl_LoadMap = function (mapName) {
-    this.R_LoadMap(mapName);
+    q3_r.LoadMap(mapName);
   };
 })(window.q3w = window.q3w || {});

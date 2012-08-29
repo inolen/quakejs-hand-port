@@ -25,7 +25,7 @@
  *    distribution.
  */
 
-(function(q3w) {
+(function(q3_r) {
   var _parsedShaders = {};
   var _compiledShaders = {};
 
@@ -113,17 +113,17 @@
         case 'map':
           stage.map = tokens.next().replace(/(\.jpg|\.tga)/, '.png');
           if (!stage.map) {
-            stage.texture = q3w.R_FindImage('*white');
+            stage.texture = q3_r.FindImage('*white');
           } else if (stage.map == '$lightmap') {
             if (shader.lightmap < 0) {
-              stage.texture = q3w.R_FindImage('*white');
+              stage.texture = q3_r.FindImage('*white');
             } else {
-              stage.texture = q3w.R_FindImage('*lightmap');
+              stage.texture = q3_r.FindImage('*lightmap');
             }
           } else if (stage.map == '$whiteimage') {
-            stage.texture = q3w.R_FindImage('*white');
+            stage.texture = q3_r.FindImage('*white');
           } else {
-            stage.texture = q3w.R_FindImage(stage.map, stage.clamp);
+            stage.texture = q3_r.FindImage(stage.map, stage.clamp);
           }
           break;
 
@@ -135,7 +135,7 @@
           while (nextMap.match(/(\.jpg|\.tga)/)) {
             var map = nextMap.replace(/(\.jpg|\.tga)/, '.png');
             stage.animMaps.push(map);
-            stage.animTexture.push(q3w.R_FindImage(map, stage.clamp));
+            stage.animTexture.push(q3_r.FindImage(map, stage.clamp));
             nextMap = tokens.next();
           }
           tokens.prev();
@@ -405,7 +405,7 @@
     }
   }
 
-  q3w.R_FindShader = function (shaderName) {
+  q3_r.FindShader = function (shaderName) {
     var gl = this.gl;
 
     var shader;
@@ -415,15 +415,15 @@
     }
 
     if ((shader = _parsedShaders[shaderName])) {
-      return (_compiledShaders[shaderName] = this.R_BuildGLShaderForShader(shader));
+      return (_compiledShaders[shaderName] = this.BuildGLShaderForShader(shader));
     }
 
     // Build default diffuse shader.
     var texture = shaderName !== '*default' ? shaderName + '.png' : shaderName;
-    return (_compiledShaders[shaderName] = this.R_BuildGLShaderForTexture(texture));
+    return (_compiledShaders[shaderName] = this.BuildGLShaderForTexture(texture));
   };
 
-  q3w.R_InitShaders = function () {
+  q3_r.InitShaders = function () {
     ScanAndLoadShaderFiles();
   };
-})(window.q3w = window.q3w || {});
+})(window.q3_r = window.q3_r || {});
