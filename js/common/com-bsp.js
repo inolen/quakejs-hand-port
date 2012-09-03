@@ -1,4 +1,4 @@
-define('common/com-bsp', ['common/com-shared'], function (q_shared) {
+define('common/com-bsp', ['common/com-defines'], function (q_com_def) {
 	var LUMP_ENTITIES     = 0,
 		LUMP_SHADERS      = 1,
 		LUMP_PLANES       = 2,
@@ -586,7 +586,7 @@ define('common/com-bsp', ['common/com-shared'], function (q_shared) {
 
 			load: function (url, callback) {
 				var self = this;
-				var url = '../' + q_shared.Q3W_BASE_FOLDER + '/' + url;
+				var url = '../' + q_com_def.Q3W_BASE_FOLDER + '/' + url;
 				var request = new XMLHttpRequest();
 
 				request.open('GET', url, true);

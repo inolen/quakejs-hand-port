@@ -1,5 +1,5 @@
-define('renderer/r-image', [], function () {
-	return function (q_shared) {
+define('renderer/r-image', ['common/com-defines'], function (q_com_def) {
+	return function () {
 		var images = {};
 
 		return {
@@ -22,7 +22,7 @@ define('renderer/r-image', [], function () {
 				el.onload = function() {
 					image.texnum = self.BuildTexture(el);
 				};
-				el.src = q_shared.Q3W_BASE_FOLDER + '/webgl/no-shader.png';
+				el.src = q_com_def.Q3W_BASE_FOLDER + '/webgl/no-shader.png';
 			},
 
 			BuildTexture: function (bufferOrImage, width, height, clamp) {
@@ -77,13 +77,13 @@ define('renderer/r-image', [], function () {
 					var ext = name.indexOf('.png') === -1 ? '.png' : '.jpg';
 					name = name.replace(/\.[^\.]+$/, ext);
 					retry = false;
-					el.src = q_shared.Q3W_BASE_FOLDER + '/' + name;
+					el.src = q_com_def.Q3W_BASE_FOLDER + '/' + name;
 				};
 				el.onload = function() {
 					image.texnum = self.BuildTexture(el, null, null, clamp);
 				};
-				//el.src = q_shared.Q3W_BASE_FOLDER + '/' + name;
-				el.src = q_shared.Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
+				//el.src = q_com_def.Q3W_BASE_FOLDER + '/' + name;
+				el.src = q_com_def.Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
 
 				return image;
 			}

@@ -1,5 +1,5 @@
 define('renderer/r-world', [], function () {
-	return function (q_shared) {
+	return function () {
 		return {
 			RecursiveWorldNode: function (nodes) {
 			},

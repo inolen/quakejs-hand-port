@@ -1,5 +1,5 @@
-define('client/cl-input', [], function () {
-	return function (q_shared, q_r, q_bg) {
+define('client/cl-input', ['common/com-defines'], function (q_com_def) {
+	return function (q_r, q_bg) {
 		var q_cl = this;
 		var kbLocals = {
 			'us': {
@@ -142,7 +142,7 @@ define('client/cl-input', [], function () {
 		}
 
 		return {
-			InitInput: function () {
+			InputInit: function () {
 				var self = this;
 
 				// Initialize system bindings.
@@ -171,7 +171,7 @@ define('client/cl-input', [], function () {
 			},
 
 			GetCommand: function () {
-				var cmd = Object.create(q_shared.usercmd_t);
+				var cmd = Object.create(q_com_def.usercmd_t);
 				this.MouseMove(cmd);
 			},
 

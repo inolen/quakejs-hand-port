@@ -26,7 +26,7 @@
  */
 
 define('game/bg-pmove', [], function () {
-	return function (q_shared) {
+	return function () {
 		// Much of this file is a simplified/dumbed-down version of the Q3 player movement code
 		// found in bg_pmove.c and bg_slidemove.c
 

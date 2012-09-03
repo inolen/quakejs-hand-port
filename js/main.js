@@ -25,107 +25,81 @@
  *    distribution.
  */
 
-requirejs(['client/cl'], function (q_cl) {
+requirejs(['server/sv', 'client/cl'], function (q_sv, q_cl) {
+	function initEvents() {
+		var viewport = document.getElementById('viewport');
+		var viewportFrame = document.getElementById('viewport-frame');
 
-// Set up basic GL State up front
-function init(canvas, gl) {
-    q_cl.Init(canvas, gl);
-}
+		// Request to lock the mouse cursor when the user clicks on the canvas.
+		viewport.addEventListener('click', function(event) {
+			viewport.requestPointerLock();
+		}, false);
 
-var lastIndex = 0;
-// "Respawns" the player at a specific spawn point. Passing -1 will move the player to the next spawn point.
-function respawnPlayer(index) {
-    var entities = bsp.data.entities;
+		// Handle fullscreen transition.
+		document.addEventListener('fullscreenchange', function() {
+			if (document.fullscreenEnabled) {
+				canvas.width = screen.width;
+				canvas.height = screen.height;
+				viewportFrame.requestPointerLock(); // Attempt to lock the mouse automatically on fullscreen
+			} else {
+				canvas.width = GL_WINDOW_WIDTH;
+				canvas.height = GL_WINDOW_HEIGHT;
+			}
+			gl.viewport(0, 0, canvas.width, canvas.height);
+			mat4.perspective(45.0, canvas.width/canvas.height, 1.0, 4096.0, projectionMat);
+		}, false);
+	}
 
-    if (index == -1) {
-        index = (lastIndex+1) % entities.info_player_deathmatch.length;
-    }
-    lastIndex = index;
+	function init(canvas, gl) {
+		initEvents();
 
-    var spawnPoint = entities.info_player_deathmatch[index];
+		q_sv.Init();
+		q_cl.Init(canvas, gl);
 
-    /*playerMover.position = [
-        spawnPoint.origin[0],
-        spawnPoint.origin[1],
-        spawnPoint.origin[2]+30 // Start a little ways above the floor
-    ];
-    playerMover.velocity = [0,0,0];*/
-}
+		function onRequestedFrame(timestamp) {
+			window.requestAnimationFrame(onRequestedFrame, canvas);
+			q_sv.Frame();
+			q_cl.Frame();
+		}
+		window.requestAnimationFrame(onRequestedFrame, canvas);
+	}
 
-// Set up event handling
-function initEvents() {
-    var viewport = document.getElementById('viewport');
-    var viewportFrame = document.getElementById('viewport-frame');
+	// Utility function that tests a list of webgl contexts and returns when one can be created
+	// Hopefully this future-proofs us a bit
+	function getAvailableContext(canvas, contextList) {
+		if (canvas.getContext) {
+			for (var i = 0; i < contextList.length; ++i) {
+				try {
+					var context = canvas.getContext(contextList[i], { antialias:false });
+					if(context !== null) {
+						return context;
+					}
+				} catch (ex) { }
+			}
+		}
+		return null;
+	}
 
-    viewport.addEventListener("click", function(event) {
-        viewport.requestPointerLock();
-    }, false);
-}
+	var GL_WINDOW_WIDTH = 854;
+	var GL_WINDOW_HEIGHT = 480;
 
-// Utility function that tests a list of webgl contexts and returns when one can be created
-// Hopefully this future-proofs us a bit
-function getAvailableContext(canvas, contextList) {
-    if (canvas.getContext) {
-        for(var i = 0; i < contextList.length; ++i) {
-            try {
-                var context = canvas.getContext(contextList[i], { antialias:false });
-                if(context !== null)
-                    return context;
-            } catch(ex) { }
-        }
-    }
-    return null;
-}
+	function main() {
+		var canvas = document.getElementById("viewport");
 
-function renderLoop(canvas, gl) {
-    function onRequestedFrame(timestamp) {
-        //console.log('in render loop');
-        window.requestAnimationFrame(onRequestedFrame, canvas);
-        q_cl.Frame();
-    }
-    window.requestAnimationFrame(onRequestedFrame, canvas);
-}
+		// Set the canvas size
+		canvas.width = GL_WINDOW_WIDTH;
+		canvas.height = GL_WINDOW_HEIGHT;
 
-var GL_WINDOW_WIDTH = 854;
-var GL_WINDOW_HEIGHT = 480;
+		// Get the GL Context (try 'webgl' first, then fallback)
+		var gl = getAvailableContext(canvas, ['webgl', 'experimental-webgl']);
 
-function main() {
-    var canvas = document.getElementById("viewport");
+		if (!gl) {
+			document.getElementById('webgl-error').style.display = 'block';
+		} else {
+			init(canvas, gl);
+		}
+	}
 
-    // Set the canvas size
-    canvas.width = GL_WINDOW_WIDTH;
-    canvas.height = GL_WINDOW_HEIGHT;
-
-    // Get the GL Context (try 'webgl' first, then fallback)
-    var gl = getAvailableContext(canvas, ['webgl', 'experimental-webgl']);
-
-    if (!gl) {
-        document.getElementById('webgl-error').style.display = 'block';
-    } else {
-        initEvents();
-        init(canvas, gl);
-        renderLoop(gl, canvas);
-    }
-
-    /*if (map) {
-        map.playMusic(playMusic.checked);
-    }*/
-
-    // Handle fullscreen transition
-    var viewportFrame = document.getElementById("viewport-frame");
-    document.addEventListener("fullscreenchange", function() {
-        if(document.fullscreenEnabled) {
-            canvas.width = screen.width;
-            canvas.height = screen.height;
-            viewportFrame.requestPointerLock(); // Attempt to lock the mouse automatically on fullscreen
-        } else {
-            canvas.width = GL_WINDOW_WIDTH;
-            canvas.height = GL_WINDOW_HEIGHT;
-        }
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        mat4.perspective(45.0, canvas.width/canvas.height, 1.0, 4096.0, projectionMat);
-    }, false);
-}
-window.addEventListener("load", main); // Fire this once the page is loaded up
-
+	// Fire this once the page is loaded up
+	window.addEventListener('load', main);
 });

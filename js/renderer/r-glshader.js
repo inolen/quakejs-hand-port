@@ -26,7 +26,7 @@
  */
 
 define('renderer/r-glshader', [], function () {
-	return function (q_shared) {
+	return function () {
 		var defaultVertexShaderSrc = '\
 			#ifdef GL_ES \n\
 			precision highp float; \n\

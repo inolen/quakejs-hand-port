@@ -9,7 +9,6 @@
 		<script type="text/javascript" src="js/vendor/game-shim.js"></script>
 		<script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
 		<script type="text/javascript" src="js/vendor/js-struct.js"></script>
-		<script type="text/javascript" src="js/vendor/socket.io.min.js"></script>
 
 		<!-- Quake3 Map Specific files -->
 		<script type="text/javascript" data-main="js/main.js" src="js/vendor/require.min.js"></script>
@@ -72,12 +71,6 @@
 			console.log(buffers);
 			var bufferd = dheader_t.deserialize(buffers, 0, 1);
 			console.log(bufferd);*/
-
-			var socket = io.connect('http://localhost', 9000);
-			socket.on('news', function (data) {
-				console.log(data);
-				socket.emit('my other event', { my: 'data' });
-			});
 		</script>
 
 		<!-- Stylesheet -->

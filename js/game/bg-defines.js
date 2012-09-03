@@ -1,9 +1,9 @@
-define('game/bg-main', [], function () {
-	return function (q_shared) {
+define('game/bg-defines', ['common/com-defines'], function (q_com_def) {
+	return function () {
 		return {
 			pmove_t: {
 				// state (in / out)
-				ps: Object.create(q_shared.playerState_t),
+				ps: Object.create(q_com_def.playerState_t),
 
 				// command (in)
 				cmd: null,
