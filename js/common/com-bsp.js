@@ -1,4 +1,4 @@
-(function () {
+define('common/com-bsp', ['shared/shared'], function (q_shared) {
 	var LUMP_ENTITIES     = 0,
 		LUMP_SHADERS      = 1,
 		LUMP_PLANES       = 2,
@@ -123,7 +123,7 @@
 		}
 	);
 
-	q3w.Q3Bsp = (function () {
+	var Q3Bsp = function () {
 		return {
 			_parseLump: function (buffer, lump, struct) {
 				return struct.deserialize(buffer, lump.fileofs, lump.filelen/struct.byteLength);
@@ -586,7 +586,7 @@
 
 			load: function (url, callback) {
 				var self = this;
-				var url = '../' + q3w.Q3W_BASE_FOLDER + '/' + url;
+				var url = '../' + q_shared.Q3W_BASE_FOLDER + '/' + url;
 				var request = new XMLHttpRequest();
 
 				request.open('GET', url, true);
@@ -597,5 +597,9 @@
 				request.send(null);
 			}
 		};
-	});
-})(window.q3w = window.q3w || {});
+	};
+
+	return {
+		Q3Bsp: Q3Bsp
+	};
+});

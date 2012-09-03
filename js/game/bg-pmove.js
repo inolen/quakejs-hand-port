@@ -25,345 +25,347 @@
  *    distribution.
  */
 
-(function () {
-	// Much of this file is a simplified/dumbed-down version of the Q3 player movement code
-	// found in bg_pmove.c and bg_slidemove.c
+define('game/bg-pmove', [], function () {
+	return function (q_shared) {
+		// Much of this file is a simplified/dumbed-down version of the Q3 player movement code
+		// found in bg_pmove.c and bg_slidemove.c
 
-	// Some movement constants ripped from the Q3 Source code
-	var q3movement_stopspeed = 100.0;
-	var q3movement_duckScale = 0.25;
-	var q3movement_jumpvelocity = 50;
+		// Some movement constants ripped from the Q3 Source code
+		var q3movement_stopspeed = 100.0;
+		var q3movement_duckScale = 0.25;
+		var q3movement_jumpvelocity = 50;
 
-	var q3movement_accelerate = 10.0;
-	var q3movement_airaccelerate = 0.1;
-	var q3movement_flyaccelerate = 8.0;
+		var q3movement_accelerate = 10.0;
+		var q3movement_airaccelerate = 0.1;
+		var q3movement_flyaccelerate = 8.0;
 
-	var q3movement_friction = 6.0;
-	var q3movement_flightfriction = 3.0;
+		var q3movement_friction = 6.0;
+		var q3movement_flightfriction = 3.0;
 
-	var q3movement_frameTime = 0.30;
-	var q3movement_overclip = 0.501;
-	var q3movement_stepsize = 18;
+		var q3movement_frameTime = 0.30;
+		var q3movement_overclip = 0.501;
+		var q3movement_stepsize = 18;
 
-	var q3movement_gravity = 20.0;
+		var q3movement_gravity = 20.0;
 
-	var q3movement_playerRadius = 10.0;
-	var q3movement_scale = 50;
+		var q3movement_playerRadius = 10.0;
+		var q3movement_scale = 50;
 
-	/*
-		this.velocity = [0, 0, 0];
-		this.position = [0, 0, 0];
-		this.onGround = false;
-
-		this.groundTrace = null;
-	*/
-
-	q3w.PM_Friction = function() {
-		if(!this.onGround) { return; }
-
-		var speed = vec3.length(this.velocity);
-
-		var drop = 0;
-
-		var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
-		drop += control*q3movement_friction*q3movement_frameTime;
-
-		var newSpeed = speed - drop;
-		if (newSpeed < 0) {
-			newSpeed = 0;
-		}
-		if(speed !== 0) {
-			newSpeed /= speed;
-			vec3.scale(this.velocity, newSpeed);
-		} else {
+		/*
 			this.velocity = [0, 0, 0];
-		}
-	};
-
-	q3w.PM_GroundTrace = function () {
-		var checkPoint = [this.position[0], this.position[1], this.position[2] - q3movement_playerRadius - 0.25];
-
-		this.groundTrace = Q3Trace.trace(bsp, this.position, checkPoint, q3movement_playerRadius);
-
-		if(this.groundTrace.fraction == 1.0) { // falling
+			this.position = [0, 0, 0];
 			this.onGround = false;
-			return;
-		}
 
-		if ( this.velocity[2] > 0 && vec3.dot( this.velocity, this.groundTrace.plane.normal ) > 10 ) { // jumping
-			this.onGround = false;
-			return;
-		}
+			this.groundTrace = null;
+		*/
+		return {
+			Friction: function() {
+				if(!this.onGround) { return; }
 
-		if(this.groundTrace.plane.normal[2] < 0.7) { // steep slope
-			this.onGround = false;
-			return;
-		}
+				var speed = vec3.length(this.velocity);
 
-		this.onGround = true;
-	};
+				var drop = 0;
 
-	q3w.PM_ClipVelocity = function(velIn, normal) {
-		var backoff = vec3.dot(velIn, normal);
+				var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
+				drop += control*q3movement_friction*q3movement_frameTime;
 
-		if ( backoff < 0 ) {
-			backoff *= q3movement_overclip;
-		} else {
-			backoff /= q3movement_overclip;
-		}
+				var newSpeed = speed - drop;
+				if (newSpeed < 0) {
+					newSpeed = 0;
+				}
+				if(speed !== 0) {
+					newSpeed /= speed;
+					vec3.scale(this.velocity, newSpeed);
+				} else {
+					this.velocity = [0, 0, 0];
+				}
+			},
 
-		var change = vec3.scale(normal, backoff, [0,0,0]);
-		return vec3.subtract(velIn, change, change);
-	};
+			GroundTrace: function () {
+				var checkPoint = [this.position[0], this.position[1], this.position[2] - q3movement_playerRadius - 0.25];
 
-	q3w.PM_Accelerate = function(dir, speed, accel) {
-		var currentSpeed = vec3.dot(this.velocity, dir);
-		var addSpeed = speed - currentSpeed;
-		if (addSpeed <= 0) {
-			return;
-		}
+				this.groundTrace = Q3Trace.trace(bsp, this.position, checkPoint, q3movement_playerRadius);
 
-		var accelSpeed = accel*q3movement_frameTime*speed;
-		if (accelSpeed > addSpeed) {
-			accelSpeed = addSpeed;
-		}
+				if(this.groundTrace.fraction == 1.0) { // falling
+					this.onGround = false;
+					return;
+				}
 
-		var accelDir = vec3.scale(dir, accelSpeed, [0,0,0]);
-		vec3.add(this.velocity, accelDir);
-	};
+				if ( this.velocity[2] > 0 && vec3.dot( this.velocity, this.groundTrace.plane.normal ) > 10 ) { // jumping
+					this.onGround = false;
+					return;
+				}
 
-	q3w.PM_SlideMove = function(gravity) {
-		var bumpcount;
-		var numbumps = 4;
-		var planes = [];
-		var endVelocity = [0,0,0];
+				if(this.groundTrace.plane.normal[2] < 0.7) { // steep slope
+					this.onGround = false;
+					return;
+				}
 
-		if ( gravity ) {
-			vec3.set(this.velocity, endVelocity );
-			endVelocity[2] -= q3movement_gravity * q3movement_frameTime;
-			this.velocity[2] = ( this.velocity[2] + endVelocity[2] ) * 0.5;
+				this.onGround = true;
+			},
 
-			if ( this.groundTrace && this.groundTrace.plane ) {
-				// slide along the ground plane
-				this.velocity = q3w.PM_ClipVelocity(this.velocity, this.groundTrace.plane.normal);
-			}
-		}
+			ClipVelocity: function(velIn, normal) {
+				var backoff = vec3.dot(velIn, normal);
 
-		// never turn against the ground plane
-		if ( this.groundTrace && this.groundTrace.plane ) {
-			planes.push(vec3.set(this.groundTrace.plane.normal, [0,0,0]));
-		}
+				if ( backoff < 0 ) {
+					backoff *= q3movement_overclip;
+				} else {
+					backoff /= q3movement_overclip;
+				}
 
-		// never turn against original velocity
-		planes.push(vec3.normalize(this.velocity, [0,0,0]));
+				var change = vec3.scale(normal, backoff, [0,0,0]);
+				return vec3.subtract(velIn, change, change);
+			},
 
-		var time_left = q3movement_frameTime;
-		var end = [0,0,0];
-		for(bumpcount=0; bumpcount < numbumps; ++bumpcount) {
+			Accelerate: function(dir, speed, accel) {
+				var currentSpeed = vec3.dot(this.velocity, dir);
+				var addSpeed = speed - currentSpeed;
+				if (addSpeed <= 0) {
+					return;
+				}
 
-			// calculate position we are trying to move to
-			vec3.add(this.position, vec3.scale(this.velocity, time_left, [0,0,0]), end);
+				var accelSpeed = accel*q3movement_frameTime*speed;
+				if (accelSpeed > addSpeed) {
+					accelSpeed = addSpeed;
+				}
 
-			// see if we can make it there
-			var trace = Q3Trace.trace(this.position, end, q3movement_playerRadius);
+				var accelDir = vec3.scale(dir, accelSpeed, [0,0,0]);
+				vec3.add(this.velocity, accelDir);
+			},
 
-			if (trace.allSolid) {
-				// entity is completely trapped in another solid
-				this.velocity[2] = 0;   // don't build up falling damage, but allow sideways acceleration
-				return true;
-			}
+			SlideMove: function(gravity) {
+				var bumpcount;
+				var numbumps = 4;
+				var planes = [];
+				var endVelocity = [0,0,0];
 
-			if (trace.fraction > 0) {
-				// actually covered some distance
-				vec3.set(trace.endPos, this.position);
-			}
+				if ( gravity ) {
+					vec3.set(this.velocity, endVelocity );
+					endVelocity[2] -= q3movement_gravity * q3movement_frameTime;
+					this.velocity[2] = ( this.velocity[2] + endVelocity[2] ) * 0.5;
 
-			if (trace.fraction == 1) {
-				 break;     // moved the entire distance
-			}
-
-			time_left -= time_left * trace.fraction;
-
-			planes.push(vec3.set(trace.plane.normal, [0,0,0]));
-
-			//
-			// modify velocity so it parallels all of the clip planes
-			//
-
-			// find a plane that it enters
-			for(var i = 0; i < planes.length; ++i) {
-				var into = vec3.dot(this.velocity, planes[i]);
-				if ( into >= 0.1 ) { continue; } // move doesn't interact with the plane
-
-				// slide along the plane
-				var clipVelocity = q3w.PM_ClipVelocity(this.velocity, planes[i]);
-				var endClipVelocity = q3w.PM_ClipVelocity(endVelocity, planes[i]);
-
-				// see if there is a second plane that the new move enters
-				for (var j = 0; j < planes.length; j++) {
-					if ( j == i ) { continue; }
-					if ( vec3.dot( clipVelocity, planes[j] ) >= 0.1 ) { continue; } // move doesn't interact with the plane
-
-					// try clipping the move to the plane
-					clipVelocity = q3w.PM_ClipVelocity( clipVelocity, planes[j] );
-					endClipVelocity = q3w.PM_ClipVelocity( endClipVelocity, planes[j] );
-
-					// see if it goes back into the first clip plane
-					if ( vec3.dot( clipVelocity, planes[i] ) >= 0 ) { continue; }
-
-					// slide the original velocity along the crease
-					var dir = [0,0,0];
-					vec3.cross(planes[i], planes[j], dir);
-					vec3.normalize(dir);
-					var d = vec3.dot(dir, this.velocity);
-					vec3.scale(dir, d, clipVelocity);
-
-					vec3.cross(planes[i], planes[j], dir);
-					vec3.normalize(dir);
-					d = vec3.dot(dir, endVelocity);
-					vec3.scale(dir, d, endClipVelocity);
-
-					// see if there is a third plane the the new move enters
-					for(var k = 0; k < planes.length; ++k) {
-						if ( k == i || k == j ) { continue; }
-						if ( vec3.dot( clipVelocity, planes[k] ) >= 0.1 ) { continue; } // move doesn't interact with the plane
-
-						// stop dead at a tripple plane interaction
-						this.velocity = [0,0,0];
-						return true;
+					if ( this.groundTrace && this.groundTrace.plane ) {
+						// slide along the ground plane
+						this.velocity = this.ClipVelocity(this.velocity, this.groundTrace.plane.normal);
 					}
 				}
 
-				// if we have fixed all interactions, try another move
-				vec3.set( clipVelocity, this.velocity );
-				vec3.set( endClipVelocity, endVelocity );
-				break;
-			}
-		}
-
-		if ( gravity ) {
-			vec3.set( endVelocity, this.velocity );
-		}
-
-		return ( bumpcount !== 0 );
-	};
-
-	q3w.PM_StepSlideMove = function (gravity) {
-		var start_o = vec3.set(this.position, [0,0,0]);
-		var start_v = vec3.set(this.velocity, [0,0,0]);
-
-		if (q3w.PM_SlideMove(gravity) === 0) { return; } // we got exactly where we wanted to go first try
-
-		var down = vec3.set(start_o, [0,0,0]);
-		down[2] -= q3movement_stepsize;
-		var trace = Q3Trace.trace(start_o, down, q3movement_playerRadius);
-
-		var up = [0,0,1];
-
-		// never step up when you still have up velocity
-		if ( this.velocity[2] > 0 && (trace.fraction == 1.0 || vec3.dot(trace.plane.normal, up) < 0.7)) { return; }
-
-		var down_o = vec3.set(this.position, [0,0,0]);
-		var down_v = vec3.set(this.velocity, [0,0,0]);
-
-		vec3.set(start_o, up);
-		up[2] += q3movement_stepsize;
-
-		// test the player position if they were a stepheight higher
-		trace = Q3Trace.trace(start_o, up, q3movement_playerRadius);
-		if ( trace.allSolid ) { return; } // can't step up
-
-		var stepSize = trace.endPos[2] - start_o[2];
-		// try slidemove from this position
-		vec3.set(trace.endPos, this.position);
-		vec3.set(start_v, this.velocity);
-
-		q3w.PM_SlideMove(gravity);
-
-		// push down the final amount
-		vec3.set(this.position, down);
-		down[2] -= stepSize;
-		trace = Q3Trace.trace(this.position, down, q3movement_playerRadius);
-		if ( !trace.allSolid ) {
-			vec3.set(trace.endPos, this.position);
-		}
-		if ( trace.fraction < 1.0 ) {
-			this.velocity = q3w.PM_ClipVelocity( this.velocity, trace.plane.normal );
-		}
-	};
-
-	q3w.PM_AirMove = function (dir) {
-		var speed = vec3.length(dir) * q3movement_scale;
-
-		q3w.PM_Accelerate(dir, speed, q3movement_airaccelerate);
-
-		q3w.PM_StepSlideMove(true);
-	};
-
-	q3w.PM_WalkMove = function (dir) {
-		q3w.PM_ApplyFriction();
-
-		var speed = vec3.length(dir) * q3movement_scale;
-
-		q3w.PM_Accelerate(dir, speed, q3movement_accelerate);
-
-		this.velocity = q3w.PM_ClipVelocity(this.velocity, this.groundTrace.plane.normal);
-
-		if(!this.velocity[0] && !this.velocity[1]) { return; }
-
-		q3w.PM_StepSlideMove(false);
-	};
-
-	/*Q3GMove.prototype.jump = function() {
-		if(!this.onGround) { return false; }
-
-		this.onGround = false;
-		this.velocity[2] = q3movement_jumpvelocity;
-
-		//Make sure that the player isn't stuck in the ground
-		var groundDist = vec3.dot( this.position, this.groundTrace.plane.normal ) - this.groundTrace.plane.distance - q3movement_playerRadius;
-		vec3.add(this.position, vec3.scale(this.groundTrace.plane.normal, groundDist + 5, [0, 0, 0]));
-
-		return true;
-	};*/
-
-	q3w.PM_UpdateViewAngles = function (ps, cmd) {
-		for (var i = 0; i < 3; i++) {
-			var temp = cmd.angles[i];// + ps->delta_angles[i];
-
-			// TODO: Remove this from client code, enable here.s
-			/*if (i == PITCH) {
-				// don't let the player look up or down more than 90 degrees
-				if ( temp > 16000 ) {
-					ps->delta_angles[i] = 16000 - cmd->angles[i];
-					temp = 16000;
-				} else if ( temp < -16000 ) {
-					ps->delta_angles[i] = -16000 - cmd->angles[i];
-					temp = -16000;
+				// never turn against the ground plane
+				if ( this.groundTrace && this.groundTrace.plane ) {
+					planes.push(vec3.set(this.groundTrace.plane.normal, [0,0,0]));
 				}
-			}*/
 
-			ps.viewangles[i] = temp;
-		}
+				// never turn against original velocity
+				planes.push(vec3.normalize(this.velocity, [0,0,0]));
+
+				var time_left = q3movement_frameTime;
+				var end = [0,0,0];
+				for(bumpcount=0; bumpcount < numbumps; ++bumpcount) {
+
+					// calculate position we are trying to move to
+					vec3.add(this.position, vec3.scale(this.velocity, time_left, [0,0,0]), end);
+
+					// see if we can make it there
+					var trace = Q3Trace.trace(this.position, end, q3movement_playerRadius);
+
+					if (trace.allSolid) {
+						// entity is completely trapped in another solid
+						this.velocity[2] = 0;   // don't build up falling damage, but allow sideways acceleration
+						return true;
+					}
+
+					if (trace.fraction > 0) {
+						// actually covered some distance
+						vec3.set(trace.endPos, this.position);
+					}
+
+					if (trace.fraction == 1) {
+						 break;     // moved the entire distance
+					}
+
+					time_left -= time_left * trace.fraction;
+
+					planes.push(vec3.set(trace.plane.normal, [0,0,0]));
+
+					//
+					// modify velocity so it parallels all of the clip planes
+					//
+
+					// find a plane that it enters
+					for(var i = 0; i < planes.length; ++i) {
+						var into = vec3.dot(this.velocity, planes[i]);
+						if ( into >= 0.1 ) { continue; } // move doesn't interact with the plane
+
+						// slide along the plane
+						var clipVelocity = this.ClipVelocity(this.velocity, planes[i]);
+						var endClipVelocity = this.ClipVelocity(endVelocity, planes[i]);
+
+						// see if there is a second plane that the new move enters
+						for (var j = 0; j < planes.length; j++) {
+							if ( j == i ) { continue; }
+							if ( vec3.dot( clipVelocity, planes[j] ) >= 0.1 ) { continue; } // move doesn't interact with the plane
+
+							// try clipping the move to the plane
+							clipVelocity = this.ClipVelocity( clipVelocity, planes[j] );
+							endClipVelocity = this.ClipVelocity( endClipVelocity, planes[j] );
+
+							// see if it goes back into the first clip plane
+							if ( vec3.dot( clipVelocity, planes[i] ) >= 0 ) { continue; }
+
+							// slide the original velocity along the crease
+							var dir = [0,0,0];
+							vec3.cross(planes[i], planes[j], dir);
+							vec3.normalize(dir);
+							var d = vec3.dot(dir, this.velocity);
+							vec3.scale(dir, d, clipVelocity);
+
+							vec3.cross(planes[i], planes[j], dir);
+							vec3.normalize(dir);
+							d = vec3.dot(dir, endVelocity);
+							vec3.scale(dir, d, endClipVelocity);
+
+							// see if there is a third plane the the new move enters
+							for(var k = 0; k < planes.length; ++k) {
+								if ( k == i || k == j ) { continue; }
+								if ( vec3.dot( clipVelocity, planes[k] ) >= 0.1 ) { continue; } // move doesn't interact with the plane
+
+								// stop dead at a tripple plane interaction
+								this.velocity = [0,0,0];
+								return true;
+							}
+						}
+
+						// if we have fixed all interactions, try another move
+						vec3.set( clipVelocity, this.velocity );
+						vec3.set( endClipVelocity, endVelocity );
+						break;
+					}
+				}
+
+				if ( gravity ) {
+					vec3.set( endVelocity, this.velocity );
+				}
+
+				return ( bumpcount !== 0 );
+			},
+
+			StepSlideMove: function (gravity) {
+				var start_o = vec3.set(this.position, [0,0,0]);
+				var start_v = vec3.set(this.velocity, [0,0,0]);
+
+				if (this.SlideMove(gravity) === 0) { return; } // we got exactly where we wanted to go first try
+
+				var down = vec3.set(start_o, [0,0,0]);
+				down[2] -= q3movement_stepsize;
+				var trace = Q3Trace.trace(start_o, down, q3movement_playerRadius);
+
+				var up = [0,0,1];
+
+				// never step up when you still have up velocity
+				if ( this.velocity[2] > 0 && (trace.fraction == 1.0 || vec3.dot(trace.plane.normal, up) < 0.7)) { return; }
+
+				var down_o = vec3.set(this.position, [0,0,0]);
+				var down_v = vec3.set(this.velocity, [0,0,0]);
+
+				vec3.set(start_o, up);
+				up[2] += q3movement_stepsize;
+
+				// test the player position if they were a stepheight higher
+				trace = Q3Trace.trace(start_o, up, q3movement_playerRadius);
+				if ( trace.allSolid ) { return; } // can't step up
+
+				var stepSize = trace.endPos[2] - start_o[2];
+				// try slidemove from this position
+				vec3.set(trace.endPos, this.position);
+				vec3.set(start_v, this.velocity);
+
+				this.SlideMove(gravity);
+
+				// push down the final amount
+				vec3.set(this.position, down);
+				down[2] -= stepSize;
+				trace = Q3Trace.trace(this.position, down, q3movement_playerRadius);
+				if ( !trace.allSolid ) {
+					vec3.set(trace.endPos, this.position);
+				}
+				if ( trace.fraction < 1.0 ) {
+					this.velocity = this.ClipVelocity( this.velocity, trace.plane.normal );
+				}
+			},
+
+			AirMove: function (dir) {
+				var speed = vec3.length(dir) * q3movement_scale;
+
+				this.Accelerate(dir, speed, q3movement_airaccelerate);
+
+				this.StepSlideMove(true);
+			},
+
+			WalkMove: function (dir) {
+				this.ApplyFriction();
+
+				var speed = vec3.length(dir) * q3movement_scale;
+
+				this.Accelerate(dir, speed, q3movement_accelerate);
+
+				this.velocity = this.ClipVelocity(this.velocity, this.groundTrace.plane.normal);
+
+				if(!this.velocity[0] && !this.velocity[1]) { return; }
+
+				this.StepSlideMove(false);
+			},
+
+			/*Q3GMove.prototype.jump = function() {
+				if(!this.onGround) { return false; }
+
+				this.onGround = false;
+				this.velocity[2] = q3movement_jumpvelocity;
+
+				//Make sure that the player isn't stuck in the ground
+				var groundDist = vec3.dot( this.position, this.groundTrace.plane.normal ) - this.groundTrace.plane.distance - q3movement_playerRadius;
+				vec3.add(this.position, vec3.scale(this.groundTrace.plane.normal, groundDist + 5, [0, 0, 0]));
+
+				return true;
+			};*/
+
+			UpdateViewAngles: function (ps, cmd) {
+				for (var i = 0; i < 3; i++) {
+					var temp = cmd.angles[i];// + ps->delta_angles[i];
+
+					// TODO: Remove this from client code, enable here.s
+					/*if (i == PITCH) {
+						// don't let the player look up or down more than 90 degrees
+						if ( temp > 16000 ) {
+							ps->delta_angles[i] = 16000 - cmd->angles[i];
+							temp = 16000;
+						} else if ( temp < -16000 ) {
+							ps->delta_angles[i] = -16000 - cmd->angles[i];
+							temp = -16000;
+						}
+					}*/
+
+					ps.viewangles[i] = temp;
+				}
+			},
+
+			Pmove: function(dir, frameTime) {
+				var pm = this.pm;
+
+				//q3movement_frameTime = frameTime*0.0075;
+
+				PM_UpdateViewAngles(pm.ps, cmd);
+				//PM_GroundTrace();
+
+				/*vec3.normalize(dir);
+
+				if (this.onGround) {
+					this.WalkMove(dir);
+				} else {
+					this.AirMove(dir);
+				}
+
+				return this.position;*/
+			}
+		};
 	};
-
-	q3w.Pmove = function(dir, frameTime) {
-		var pm = this.pm;
-
-		//q3movement_frameTime = frameTime*0.0075;
-
-		PM_UpdateViewAngles(pm.ps, cmd);
-		//PM_GroundTrace();
-
-		/*vec3.normalize(dir);
-
-		if (this.onGround) {
-			q3w.PM_WalkMove(dir);
-		} else {
-			q3w.PM_AirMove(dir);
-		}
-
-		return this.position;*/
-	};
-
-})(window.q3w = window.q3w || {});
+});

@@ -1,89 +1,92 @@
-(function(q3_r) {
-  var _images = {};
+define('renderer/r-image', [], function () {
+	return function (q_shared) {
+		var images = {};
 
-  q3_r.InitImages = function () {
-    this.BuildWhiteTexture();
-    this.BuildDefaultTexture();
-  };
+		return {
+			InitImages: function () {
+				this.BuildWhiteTexture();
+				this.BuildDefaultTexture();
+			},
 
-  q3_r.BuildWhiteTexture = function () {
-    this.CreateImage('*white', new Uint8Array([255,255,255,255]), 1, 1);
-  };
+			BuildWhiteTexture: function () {
+				this.CreateImage('*white', new Uint8Array([255,255,255,255]), 1, 1);
+			},
 
-  q3_r.BuildDefaultTexture = function () {
-    var self = this;
+			BuildDefaultTexture: function () {
+				var self = this;
 
-    var image =  _images['*default'] = Object.create(this.image_t);
-    image.imgName = name;
+				var image =  images['*default'] = Object.create(this.image_t);
+				image.imgName = name;
 
-    var el = new Image();
-    el.onload = function() {
-      image.texnum = self.BuildTexture(el);
-    };
-    el.src = q3w.Q3W_BASE_FOLDER + '/webgl/no-shader.png';
-  };
+				var el = new Image();
+				el.onload = function() {
+					image.texnum = self.BuildTexture(el);
+				};
+				el.src = q_shared.Q3W_BASE_FOLDER + '/webgl/no-shader.png';
+			},
 
-  q3_r.BuildTexture = function (bufferOrImage, width, height, clamp) {
-    var gl = this.gl,
-      texture = gl.createTexture();
+			BuildTexture: function (bufferOrImage, width, height, clamp) {
+				var gl = this.gl,
+					texture = gl.createTexture();
 
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    if (bufferOrImage instanceof Image) {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bufferOrImage);
-    } else {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, bufferOrImage);
-    }
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
-    if (clamp) {
-      gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    }
-    gl.generateMipmap(gl.TEXTURE_2D);
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				if (bufferOrImage instanceof Image) {
+					gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, bufferOrImage);
+				} else {
+					gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, bufferOrImage);
+				}
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+				if (clamp) {
+					gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+					gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				}
+				gl.generateMipmap(gl.TEXTURE_2D);
 
-    return texture;
-  };
+				return texture;
+			},
 
-  q3_r.CreateImage = function (name, buffer, width, height, clamp) {
-    var gl = this.gl;
+			CreateImage: function (name, buffer, width, height, clamp) {
+				var gl = this.gl;
 
-    var image =  _images[name] = Object.create(this.image_t);
-    image.imgName = name;
-    image.texnum = this.BuildTexture(buffer, width, height, clamp);
+				var image =  images[name] = Object.create(this.image_t);
+				image.imgName = name;
+				image.texnum = this.BuildTexture(buffer, width, height, clamp);
 
-    return image;
-  };
+				return image;
+			},
 
-  q3_r.FindImage = function(name, clamp) {
-    var self = this;
+			FindImage: function(name, clamp) {
+				var self = this;
 
-    // Try to find the image in our cache.
-    var image;
-    if ((image = _images[name])) {
-      return image;
-    } else {
-      var image =  _images[name] = Object.create(this.image_t);
-      image.imgName = name;
-    }
+				// Try to find the image in our cache.
+				var image;
+				if ((image = images[name])) {
+					return image;
+				} else {
+					var image =  images[name] = Object.create(this.image_t);
+					image.imgName = name;
+				}
 
-    // Load the image using the Image() class.
-    var el = new Image(),
-      retry = true;
-    el.onerror = function () {
-      if (!retry) return;
-      // If we failed to load the .png, try the .jpg (and vice versa)
-      var ext = name.indexOf('.png') === -1 ? '.png' : '.jpg';
-      name = name.replace(/\.[^\.]+$/, ext);
-      retry = false;
-      el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
-    };
-    el.onload = function() {
-      image.texnum = self.BuildTexture(el, null, null, clamp);
-    };
-    //el.src = q3w.Q3W_BASE_FOLDER + '/' + name;
-    el.src = q3w.Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
+				// Load the image using the Image() class.
+				var el = new Image(),
+					retry = true;
+				el.onerror = function () {
+					if (!retry) return;
+					// If we failed to load the .png, try the .jpg (and vice versa)
+					var ext = name.indexOf('.png') === -1 ? '.png' : '.jpg';
+					name = name.replace(/\.[^\.]+$/, ext);
+					retry = false;
+					el.src = q_shared.Q3W_BASE_FOLDER + '/' + name;
+				};
+				el.onload = function() {
+					image.texnum = self.BuildTexture(el, null, null, clamp);
+				};
+				//el.src = q_shared.Q3W_BASE_FOLDER + '/' + name;
+				el.src = q_shared.Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
 
-    return image;
-  };
-
-})(window.q3_r = window.q3_r || {});
+				return image;
+			}
+		};
+	};
+});

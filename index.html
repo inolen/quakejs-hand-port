@@ -1,111 +1,109 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>q3.js</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+	<head>
+		<title>q3.js</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
-        <!-- Common Utilities -->
-        <script type="text/javascript" src="js/vendor/underscore-min.js"></script>
-        <script type="text/javascript" src="js/vendor/game-shim.js"></script>
-        <script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
-        <script type="text/javascript" src="js/vendor/js-struct.js"></script>
-        <script type="text/javascript" src="js/vendor/socket.io.min.js"></script>
+		<!-- Common Utilities -->
+		<script type="text/javascript" src="js/vendor/underscore-min.js"></script>
+		<script type="text/javascript" src="js/vendor/game-shim.js"></script>
+		<script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
+		<script type="text/javascript" src="js/vendor/js-struct.js"></script>
+		<script type="text/javascript" src="js/vendor/socket.io.min.js"></script>
 
-        <!-- Quake3 Map Specific files -->
-        <script type="text/javascript" src="js/main.js"></script>
-        <script type="text/javascript" src="js/input/in-inc.js"></script>
-        <script type="text/javascript" src="js/input/in-main.js"></script>
-        <script type="text/javascript" src="js/common/com-inc.js"></script>
-        <script type="text/javascript" src="js/common/com-main.js"></script>
-        <script type="text/javascript" src="js/common/com-bsp.js"></script>
-        <script type="text/javascript" src="js/common/com-cvar.js"></script>
-        <script type="text/javascript" src="js/common/com-trace.js"></script>
-        <script type="text/javascript" src="js/client/cl-inc.js"></script>
-        <script type="text/javascript" src="js/client/cl-input.js"></script>
-        <script type="text/javascript" src="js/client/cl-main.js"></script>
-        <script type="text/javascript" src="js/game/bg-inc.js"></script>
-        <script type="text/javascript" src="js/game/bg-pmove.js"></script>
-        <script type="text/javascript" src="js/renderer/r-inc.js"></script>
-        <script type="text/javascript" src="js/renderer/r-main.js"></script>
-        <script type="text/javascript" src="js/renderer/r-image.js"></script>
-        <script type="text/javascript" src="js/renderer/r-shader.js"></script>
-        <script type="text/javascript" src="js/renderer/r-glshader.js"></script>
+		<!-- Quake3 Map Specific files -->
+		<script type="text/javascript" data-main="js/main.js" src="js/vendor/require.min.js"></script>
 
-        <script type="text/javascript">
-            /*var dbrush_t = Struct.create(
-                Struct.int32('brushSide'),
-                Struct.int32('brushSideCount'),
-                Struct.int32('shader')
-            );
+		<script type="text/javascript">
+		/*function
+			var el = doc.createElement("script"),
+				loaded = false;
+				el.onload = el.onreadystatechange = function () {
+					if ((el.readyState && el.readyState !== "complete" && el.readyState !== "loaded") || loaded) {
+					return false;
+				}
+				el.onload = el.onreadystatechange = null;
+				loaded = true;
+				// done!
+			};
+			el.async = true;
+			el.src = path;
+			document.getElementsByTagName('head')[0].insertBefore(el, head.firstChild);*/
 
-            var foobar = Object.create(dbrush_t);
-            foobar.brushSide = 5;
-            foobar.brushSideCount = 7;
-            foobar.shader = 11;
+			/*var dbrush_t = Struct.create(
+				Struct.int32('brushSide'),
+				Struct.int32('brushSideCount'),
+				Struct.int32('shader')
+			);
 
-            var buffers = foobar.serialize();
-            console.log(buffers);
-            var bufferd = dbrush_t.deserialize(buffers, 0, 1);
-            console.log(bufferd);
+			var foobar = Object.create(dbrush_t);
+			foobar.brushSide = 5;
+			foobar.brushSideCount = 7;
+			foobar.shader = 11;
 
-            var lump_t = Struct.create(
-                Struct.int32('fileofs'),
-                Struct.int32('filelen')
-            );
+			var buffers = foobar.serialize();
+			console.log(buffers);
+			var bufferd = dbrush_t.deserialize(buffers, 0, 1);
+			console.log(bufferd);
 
-            var dheader_t = Struct.create(
-                Struct.string('ident', 4),
-                Struct.int32('version'),
-                Struct.array('lumps', lump_t, 2)
-            );
+			var lump_t = Struct.create(
+				Struct.int32('fileofs'),
+				Struct.int32('filelen')
+			);
 
-            var lumpa = Object.create(lump_t);
-            var lumpb = Object.create(lump_t);
-            lumpa.fileofs = 1;
-            lumpa.filelen = 2;
-            lumpb.fileofs = 3;
-            lumpb.filelen = 4;
-            var header = Object.create(dheader_t);
-            header.ident = "FUCK";
-            header.version = 999;
-            header.lumps = [lumpa, lumpb];
+			var dheader_t = Struct.create(
+				Struct.string('ident', 4),
+				Struct.int32('version'),
+				Struct.array('lumps', lump_t, 2)
+			);
 
-            var buffers = header.serialize();
-            console.log(buffers);
-            var bufferd = dheader_t.deserialize(buffers, 0, 1);
-            console.log(bufferd);*/
+			var lumpa = Object.create(lump_t);
+			var lumpb = Object.create(lump_t);
+			lumpa.fileofs = 1;
+			lumpa.filelen = 2;
+			lumpb.fileofs = 3;
+			lumpb.filelen = 4;
+			var header = Object.create(dheader_t);
+			header.ident = "FUCK";
+			header.version = 999;
+			header.lumps = [lumpa, lumpb];
 
-            var socket = io.connect('http://localhost', 9000);
-            socket.on('news', function (data) {
-                console.log(data);
-                socket.emit('my other event', { my: 'data' });
-            });
-        </script>
+			var buffers = header.serialize();
+			console.log(buffers);
+			var bufferd = dheader_t.deserialize(buffers, 0, 1);
+			console.log(bufferd);*/
 
-        <!-- Stylesheet -->
-        <link href="css/q3demo.css" rel="stylesheet" type="text/css" />
-    </head>
-    <body>
-        <h2 id="mapTitle"></h2>
-        <div id="viewport-frame">
-            <canvas id="viewport">
-                Sorry, but your browser does not support WebGL or does not have it enabled.
-                To get a WebGL-enabled browser, please see:<br/>
-                <a href="http://get.webgl.org/" target="_blank">
-                    http://get.webgl.org/
-                </a>
-            </canvas>
-            <div id="loading">
-                Loading...
-            </div>
-        </div>
+			var socket = io.connect('http://localhost', 9000);
+			socket.on('news', function (data) {
+				console.log(data);
+				socket.emit('my other event', { my: 'data' });
+			});
+		</script>
 
-        <div id="webgl-error" style="display: none; text-align: center; vertical-align: middle;">
-            Sorry, but your browser does not support WebGL or does not have it enabled.<br/>
-            To get a WebGL-enabled browser, please see:<br/>
-            <a href="http://get.webgl.org/" target="_blank">
-                http://get.webgl.org/
-            </a>
-        </div>
-    </body>
+		<!-- Stylesheet -->
+		<link href="css/q3demo.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<h2 id="mapTitle"></h2>
+		<div id="viewport-frame">
+			<canvas id="viewport">
+				Sorry, but your browser does not support WebGL or does not have it enabled.
+				To get a WebGL-enabled browser, please see:<br/>
+				<a href="http://get.webgl.org/" target="_blank">
+					http://get.webgl.org/
+				</a>
+			</canvas>
+			<div id="loading">
+				Loading...
+			</div>
+		</div>
+
+		<div id="webgl-error" style="display: none; text-align: center; vertical-align: middle;">
+			Sorry, but your browser does not support WebGL or does not have it enabled.<br/>
+			To get a WebGL-enabled browser, please see:<br/>
+			<a href="http://get.webgl.org/" target="_blank">
+				http://get.webgl.org/
+			</a>
+		</div>
+	</body>
 </html>

@@ -1,8 +1,12 @@
-(function(q3_r) {
-	q3_r.RecursiveWorldNode = function (nodes) {
-	};
+define('renderer/r-world', [], function () {
+	return function (q_shared) {
+		return {
+			RecursiveWorldNode: function (nodes) {
+			},
 
-	q3_r.AddWorldSurfaces = function (map) {
-		this.RecursiveWorldNode(nodes);
+			AddWorldSurfaces: function (map) {
+				this.RecursiveWorldNode(nodes);
+			}
+		};
 	};
-})(window.q3_r = window.q3_r || {});
+});

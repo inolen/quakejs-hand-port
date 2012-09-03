@@ -25,29 +25,11 @@
  *    distribution.
  */
 
-
-// ===========================================
-// Everything below here is common to all maps
-var modelViewMat, projectionMat;
-var activeShader;
-var bsp;
-var playerMover;
-
-function getQueryVariable(variable) {
-    var query = window.location.search.substring(1);
-    var vars = query.split("&");
-    for (var i = 0; i < vars.length; i++) {
-        var pair = vars[i].split("=");
-        if (pair[0] == variable) {
-            return unescape(pair[1]);
-        }
-    }
-    return null;
-}
+requirejs(['common/com'], function (q_com) {
 
 // Set up basic GL State up front
 function init(canvas, gl) {
-    q3w.Com_Init(canvas, gl);
+    q_com.Init(canvas, gl);
 }
 
 var lastIndex = 0;
@@ -97,9 +79,9 @@ function getAvailableContext(canvas, contextList) {
 
 function renderLoop(canvas, gl) {
     function onRequestedFrame(timestamp) {
+        //console.log('in render loop');
         window.requestAnimationFrame(onRequestedFrame, canvas);
-        q3w.In_Frame();
-        q3w.Com_Frame();
+        q_com.Frame();
     }
     window.requestAnimationFrame(onRequestedFrame, canvas);
 }
@@ -145,3 +127,5 @@ function main() {
     }, false);
 }
 window.addEventListener("load", main); // Fire this once the page is loaded up
+
+});
