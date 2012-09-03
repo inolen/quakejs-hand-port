@@ -1,4 +1,4 @@
-define('shared/shared', [], function () {
+define('common/com-shared', [], function () {
 	return {
 		Q3W_BASE_FOLDER: 'baseq3',
 

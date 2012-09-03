@@ -1,7 +1,7 @@
 define(
 	'renderer/r',
 	[
-		'shared/shared',
+		'common/com-shared',
 		'renderer/r-main',
 		'renderer/r-image',
 		'renderer/r-shader',

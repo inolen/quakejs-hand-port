@@ -86,7 +86,6 @@ define('renderer/r-main',
 
 			return {
 				viewParms_t: {
-					gl: null,
 					x: 0,
 					y: 0,
 					width: 0,
@@ -97,7 +96,6 @@ define('renderer/r-main',
 				},
 
 				trRefdef_t: {
-					gl: null,
 					x: 0,
 					y: 0,
 					width: 0,
@@ -129,7 +127,6 @@ define('renderer/r-main',
 				RenderScene: function (fd) {
 					var rd = this.refdef;
 
-					rd.gl = fd.gl;
 					rd.x = fd.x;
 					rd.y = fd.y
 					rd.width = fd.width;
@@ -139,7 +136,6 @@ define('renderer/r-main',
 					rd.angles = fd.angles;
 
 					var parms = Object.create(this.viewParms_t);
-					parms.gl = fd.gl;
 					parms.x = fd.x;
 					parms.y = fd.y
 					parms.width = fd.width;
@@ -152,7 +148,7 @@ define('renderer/r-main',
 				},
 
 				RenderView: function (parms) {
-					var gl = parms.gl;
+					var gl = this.gl;
 
 					// Create projection matrix.
 					var projectionMatrix = mat4.create();
@@ -196,7 +192,7 @@ define('renderer/r-main',
 
 				// TODO: REFACTOR!!
 				BuildSkyboxBuffers: function () {
-					var gl = q_r.gl;
+					var gl = this.gl;
 
 					var skyVerts = [
 						-128, 128, 128, 0, 0,
@@ -254,7 +250,7 @@ define('renderer/r-main',
 				},
 
 				LoadLightmaps: function() {
-					var gl = q_r.gl;
+					var gl = this.gl;
 
 					// TODO: Export this from Q3Bsp
 					var lightmaps = map.data.lightmaps;
@@ -276,7 +272,7 @@ define('renderer/r-main',
 				},
 
 				BuildWorldBuffers: function () {
-					var gl = q_r.gl;
+					var gl = this.gl;
 
 					var faces = map.data.faces,
 						verts = map.data.verts,
@@ -382,7 +378,7 @@ define('renderer/r-main',
 				},
 
 				DrawWorld: function(modelViewMat, projectionMat) {
-					var gl = q_r.gl;
+					var gl = this.gl;
 
 					if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
 

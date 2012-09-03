@@ -1,7 +1,7 @@
 define(
 	'game/bg',
 	[
-		'shared/shared',
+		'common/com-shared',
 		'game/bg-main',
 		'game/bg-pmove'
 	],

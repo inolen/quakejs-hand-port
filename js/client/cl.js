@@ -1,7 +1,7 @@
 define(
 	'client/cl',
 	[
-		'shared/shared',
+		'common/com-shared',
 		'renderer/r',
 		'game/bg',
 		'client/cl-main',

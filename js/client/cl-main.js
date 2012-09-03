@@ -27,6 +27,8 @@ define('client/cl-main', [], function () {
 			Init: function (canvas, gl) {
 				this.canvas = canvas;
 				this.gl = gl;
+				this.frameTime = this.oldFrameTime = Date().now;
+				this.frameDelta = 0;
 				this.cl = Object.create(this.clientActive_t);
 				this.pm = Object.create(q_bg.pmove_t);
 				this.commands = {};
@@ -39,12 +41,13 @@ define('client/cl-main', [], function () {
 			},
 
 			Frame: function () {
-				var refdef = Object.create(q_r.trRefdef_t);
-				refdef.gl = this.gl;
+				this.oldFrameTime = this.frameTime;
+				this.frameTime = Date().now;
+				this.frameDelta = this.frameTime - this.oldFrameTime;
 
+				var refdef = Object.create(q_r.trRefdef_t);
 				this.SendCommand();
 				this.CalcViewValues(refdef);
-
 				q_r.RenderScene(refdef);
 			},
 

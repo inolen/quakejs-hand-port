@@ -25,11 +25,11 @@
  *    distribution.
  */
 
-requirejs(['common/com'], function (q_com) {
+requirejs(['client/cl'], function (q_cl) {
 
 // Set up basic GL State up front
 function init(canvas, gl) {
-    q_com.Init(canvas, gl);
+    q_cl.Init(canvas, gl);
 }
 
 var lastIndex = 0;
@@ -81,7 +81,7 @@ function renderLoop(canvas, gl) {
     function onRequestedFrame(timestamp) {
         //console.log('in render loop');
         window.requestAnimationFrame(onRequestedFrame, canvas);
-        q_com.Frame();
+        q_cl.Frame();
     }
     window.requestAnimationFrame(onRequestedFrame, canvas);
 }

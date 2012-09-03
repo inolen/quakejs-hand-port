@@ -1,4 +1,4 @@
-define('common/com-bsp', ['shared/shared'], function (q_shared) {
+define('common/com-bsp', ['common/com-shared'], function (q_shared) {
 	var LUMP_ENTITIES     = 0,
 		LUMP_SHADERS      = 1,
 		LUMP_PLANES       = 2,
