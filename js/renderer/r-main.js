@@ -1,4 +1,4 @@
-define('renderer/r-main', ['common/com-defines', 'common/com-bsp'], function (q_com_def, q_com_bsp) {
+define('renderer/r-main', ['common/com-defines', 'common/Q3Bsp'], function (q_com_def, Q3Bsp) {
 	return function () {
 		var q_r = this;
 
@@ -178,7 +178,7 @@ define('renderer/r-main', ['common/com-defines', 'common/com-bsp'], function (q_
 
 			LoadMap: function (mapName) {
 				var self = this;
-				map = new q_com_bsp.Q3Bsp();
+				map = new Q3Bsp();
 
 				map.load('maps/' + mapName + '.bsp', function () {
 					self.LoadLightmaps();
