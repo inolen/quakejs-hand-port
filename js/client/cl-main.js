@@ -13,10 +13,11 @@ define('client/cl-main', [], function () {
 				this.keys = {};
 
 				this.InputInit();
+				this.ConInit();
 				this.NetInit();
 				q_r.Init(canvas, gl);
 
-				this.LoadMap('q3tourney2');
+				this.Cmd_LoadMap('q3tourney2');
 			},
 
 			Frame: function () {
@@ -44,10 +45,6 @@ define('client/cl-main', [], function () {
 				refdef.fov = 45;
 				refdef.origin = /*pm.ps.origin ||*/ [0, 0, 0];
 				refdef.angles = cl.viewangles;
-			},
-
-			LoadMap: function (mapName) {
-				q_r.LoadMap(mapName);
 			}
 		};
 	};

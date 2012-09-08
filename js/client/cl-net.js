@@ -35,7 +35,9 @@ define('client/cl-net', ['common/com-defines', 'common/com-net'], function (q_co
 				struct.serialize(buffer, 1);
 
 				q_cl.clc.netchan.SendPacket(buffer);
-			}
+			},
+
+			//NetSendOOB: function (type, struct)
 		};
 	};
 });

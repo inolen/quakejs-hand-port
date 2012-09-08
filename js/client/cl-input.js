@@ -220,13 +220,6 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 			},
 
 			/**
-			 * Commands
-			 */
-			AddCommand: function (cmd, callback) {
-				this.commands[cmd] = callback;
-			},
-
-			/**
 			 * Key bindings
 			 */
 			ExecBinding: function (key) {
@@ -235,7 +228,7 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 				if (!cmdToExec) return;
 				if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-				var callback = this.commands[cmdToExec];
+				var callback = this.GetCommandCallback(cmdToExec);
 				if (callback) callback.call(this, key);
 			},
 
