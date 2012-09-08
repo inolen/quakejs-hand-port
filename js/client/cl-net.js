@@ -5,9 +5,9 @@ define('client/cl-net', ['common/com-defines', 'common/com-net'], function (q_co
 		function ProcessQueue() {
 			// manually send packet events for the loopback channel
 			var msg;
-			/*while ((msg = q_com_net.GetLoopPacket(q_com_def.netsrc_t.NS_CLIENT))) {
+			while ((msg = q_cl.clc.netchan.GetPacket())) {
 				PacketEvent(msg);
-			}*/
+			}
 		}
 
 		function PacketEvent(msg) {
@@ -15,7 +15,7 @@ define('client/cl-net', ['common/com-defines', 'common/com-net'], function (q_co
 		}
 
 		function ParseServerPacket(msg) {
-			console.log(msg);
+			console.log('cl received', msg);
 		}
 
 		return {
@@ -25,6 +25,16 @@ define('client/cl-net', ['common/com-defines', 'common/com-net'], function (q_co
 
 			NetFrame: function () {
 				ProcessQueue();
+			},
+
+			NetSend: function (type, struct) {
+				var buffer = new ArrayBuffer(1 + struct.byteLength);
+				var view = new DataView(buffer, 0);
+
+				view.setUint8(0, type, true);
+				struct.serialize(buffer, 1);
+
+				q_cl.clc.netchan.SendPacket(buffer);
 			}
 		};
 	};

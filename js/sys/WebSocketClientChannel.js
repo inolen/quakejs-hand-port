@@ -1,5 +1,5 @@
-define('sys/WebSocketChannel', [], function () {
-	var WebSocketChannel = function (addr, challenge) {
+define('sys/WebSocketClientChannel', [], function () {
+	var WebSocketClientChannel = function (addr, challenge) {
 		this.addr = addr;
 		this.challenge = challenge;
 
@@ -26,5 +26,5 @@ define('sys/WebSocketChannel', [], function () {
 		};
 	};
 
-	return WebSocketChannel;
+	return WebSocketClientChannel;
 });

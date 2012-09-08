@@ -7,44 +7,48 @@ define('sys/LoopbackChannel', [], function () {
 	// gamestate of maximum size
 	var MAX_LOOPBACK = 16;
 
-	var loopmsg_t = {
-		data: new Array(MAX_PACKETLEN),
-		datalen: 0,
+	var queue_t = {
+		msgs: new Array(MAX_LOOPBACK),
+		get: 0,
+		send: 0
 	};
 
-	var LoopbackChannel = function (addr, challenge) {
-		this.addr = addr;
-		this.challenge = challenge;
-		this.msgs = new Array(MAX_LOOPBACK);
-		this.get = 0;
-		this.send = 0;
+	var LoopbackChannel = function (challenge) {
+		var queues = new Array(2);
+		queues[0] = Object.create(queue_t);
+		queues[1] = Object.create(queue_t);
+
+		var _channel = function (sock) {
+			return {
+				GetPacket: function () {
+					var q = queues[sock];
+
+					if (q.send - q.get > MAX_LOOPBACK) {
+						q.get = q.send - MAX_LOOPBACK;
+					}
+
+					if (q.get >= q.send) {
+						return null;
+					}
+
+					var i = q.get & (MAX_LOOPBACK-1);
+					q.get++;
+
+					return q.msgs[i];
+				},
+
+				SendPacket: function (data) {
+					var q = queues[sock^1];
+					var i = q.send & (MAX_LOOPBACK-1);
+					q.send++;
+					q.msgs[i] = { data: data };
+				}
+			};
+		};
 
 		return {
-			GetPacket: function () {
-				if (this.send - this.get > MAX_LOOPBACK) {
-					this.get = this.send - MAX_LOOPBACK;
-				}
-
-				if (this.get >= this.send) {
-					return false;
-				}
-
-				var i = this.get & (MAX_LOOPBACK-1);
-				this.get++;
-
-				return {
-					data: this.msgs[i].data,
-					length: this.msgs[i].datalen
-				};
-			},
-
-			SendPacket: function (data, length) {
-				var i = this.send & (MAX_LOOPBACK-1);
-				this.send++;
-
-				this.msgs[i].data = data;
-				this.msgs[i].datalen = length;
-			}
+			Client: new _channel(0),
+			Server: new _channel(1)
 		};
 	};
 

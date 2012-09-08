@@ -1,9 +1,8 @@
-define('common/com-net', ['common/com-defines', 'sys/LoopbackChannel', 'sys/WebSocketChannel'], function (q_com_def, LoopbackChannel, WebSocketChannel) {
-	function GetPacket() {
-	}
+define('common/com-net',
+	['common/com-defines', 'sys/LoopbackChannel', 'sys/WebSocketClientChannel'],
+	function (q_com_def, LoopbackChannel, WebSocketClientChannel) {
 
-	function QueuePacket() {
-	}
+	var loopback;
 
 	function StringToAddr(str) {
 		var addr = Object.create(q_com_def.netadr_t);
@@ -30,18 +29,18 @@ define('common/com-net', ['common/com-defines', 'sys/LoopbackChannel', 'sys/WebS
 			var addr = StringToAddr(addrstr);
 
 			if (addr.type === q_com_def.netadrtype_t.NA_LOOPBACK) {
-				return new LoopbackChannel(addr, challenge);
+				if (!loopback) {
+					loopback = new LoopbackChannel(sock, challenge);
+				}
+
+				return sock === q_com_def.netsrc_t.NS_CLIENT ?
+					loopback.Client :
+					loopback.Server;
 			} else {
-				return new WebSocketChannel(addr, challenge);
+				return new WebSocketClientChannel(addr, challenge);
 			}
-		},
-
-		Transmit: function (channel, data, length) {
-			channel.SendPacket(channel, data, length);
-		},
-
-		Process: function () {
-			channel.GetPacket();
 		}
 	};
-});
+
+	}
+);

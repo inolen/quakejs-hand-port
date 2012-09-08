@@ -333,8 +333,8 @@ var Struct = Object.create(Object, {
                 oo += type.byteLength;
             }
 
-            var writeFnCode = "var buffer = new ArrayBuffer(" + byteLength + ");\n";
-            writeFnCode += "var v = new DataView(buffer);\n";
+            var writeFnCode = "var buffer = buffer || new ArrayBuffer(" + byteLength + ");\n";
+            writeFnCode += "var v = new DataView(buffer, offset || 0);\n";
             writeFnCode += "var self = this;\n"
             writeFnCode += setterTemplate(writeCode, 0, "self") + "\n";
             writeFnCode += "return buffer;\n";
@@ -346,7 +346,7 @@ var Struct = Object.create(Object, {
             var deserializeFn = new Function("buffer", "offset", "count", "callback", readFnCode);
             Object.defineProperty(struct, "deserialize", { value: deserializeFn, configurable: true, writable: true });
 
-            var serializeFn = new Function(writeFnCode);
+            var serializeFn = new Function("buffer", "offset", writeFnCode);
             Object.defineProperty(struct, "serialize", { value: serializeFn, configurable: true, writable: true });
 
             return struct;

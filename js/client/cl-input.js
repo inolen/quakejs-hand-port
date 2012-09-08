@@ -167,26 +167,29 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 			 * Process current input variables into userComamnd_t struct for transmission to server.
 			 */
 			SendCommand: function () {
-				this.GetCommand();
+				var cmd = this.CreateCommand();
+				this.NetSend(q_com_def.clc_ops_e.clc_move, cmd);
 			},
 
-			GetCommand: function () {
+			CreateCommand: function () {
 				var cmd = Object.create(q_com_def.usercmd_t);
+				this.KeyMove(cmd);
 				this.MouseMove(cmd);
+				return cmd;
 			},
 
 			KeyMove: function (cmd) {
 				var movespeed = 127;
 				var forward = 0, side = 0, up = 0;
 
-				side += movespeed * this.KeyState(this.rightKey);
-				side -= movespeed * this.KeyState(this.leftKey);
+				if (this.rightKey) side += movespeed * this.GetKeyState(this.rightKey);
+				if (this.leftKey) side -= movespeed * this.GetKeyState(this.leftKey);
 
 				//up += movespeed * KeyState();
 				//up -= movespeed * KeyState();
 
-				forward += movespeed * KeyState(this.forwardKey);
-				forward -= movespeed * KeyState(this.backKey);
+				if (this.forwardKey) forward += movespeed * this.GetKeyState(this.forwardKey);
+				if (this.backKey) forward -= movespeed * this.GetKeyState(this.backKey);
 
 				cmd.forwardmove = forward;
 				cmd.rightmove = side;
