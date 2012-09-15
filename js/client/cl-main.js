@@ -1,7 +1,9 @@
 define('client/cl-main', [], function () {
 	return function (q_r, q_bg) {
 		return {
-			Init: function (canvas, gl) {
+			Init: function (q_com, canvas, gl) {
+				this.q_com = q_com;
+
 				this.canvas = canvas;
 				this.gl = gl;
 				this.frameTime = this.oldFrameTime = Date().now;
@@ -13,11 +15,10 @@ define('client/cl-main', [], function () {
 				this.keys = {};
 
 				this.InputInit();
-				this.ConInit();
 				this.NetInit();
 				q_r.Init(canvas, gl);
 
-				this.Cmd_LoadMap('q3tourney2');
+				//this.Cmd_LoadMap('q3tourney2');
 			},
 
 			Frame: function () {

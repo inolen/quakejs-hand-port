@@ -1,4 +1,4 @@
-define('common/Q3Bsp', ['common/com-defines'], function (q_com_def) {
+define('shared/Q3Bsp', ['common/com-defines'], function (q_com_def) {
 	var LUMP_ENTITIES     = 0,
 		LUMP_SHADERS      = 1,
 		LUMP_PLANES       = 2,

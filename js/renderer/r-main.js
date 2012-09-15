@@ -1,4 +1,4 @@
-define('renderer/r-main', ['common/com-defines', 'common/Q3Bsp'], function (q_com_def, Q3Bsp) {
+define('renderer/r-main', ['common/com-defines', 'shared/Q3Bsp'], function (q_com_def, Q3Bsp) {
 	return function () {
 		var q_r = this;
 

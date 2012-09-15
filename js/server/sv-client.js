@@ -16,6 +16,10 @@ define('server/sv-client', [], function () {
 
 			UserMove: function (client, cmd) {
 				this.ClientThink(client, cmd);
+			},
+
+			ClientConnect: function () {
+
 			}
 		};
 	};

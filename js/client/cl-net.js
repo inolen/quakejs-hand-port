@@ -1,4 +1,4 @@
-define('client/cl-net', ['common/com-defines', 'common/com-net'], function (q_com_def, q_com_net) {
+define('client/cl-net', ['common/com-defines'], function (q_com_def) {
 	return function (q_r, q_bg) {
 		var q_cl = this;
 
@@ -20,7 +20,7 @@ define('client/cl-net', ['common/com-defines', 'common/com-net'], function (q_co
 
 		return {
 			NetInit: function () {
-				q_cl.clc.netchan = q_com_net.CreateChannel(q_com_def.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
+				q_cl.clc.netchan = q_cl.q_com.CreateChannel(q_com_def.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {

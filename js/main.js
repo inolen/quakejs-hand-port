@@ -1,31 +1,7 @@
-/*
- * main.js - Setup for Quake 3 WebGL demo
- */
+requirejs(['common/com'], function (q_com) {
+	var GL_WINDOW_WIDTH = 854;
+	var GL_WINDOW_HEIGHT = 480;
 
-/*
- * Copyright (c) 2011 Brandon Jones
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- *    1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- *
- *    2. Altered source versions must be plainly marked as such, and must not
- *    be misrepresented as being the original software.
- *
- *    3. This notice may not be removed or altered from any source
- *    distribution.
- */
-
-requirejs(['server/sv', 'client/cl'], function (q_sv, q_cl) {
 	function initEvents() {
 		var viewport = document.getElementById('viewport');
 		var viewportFrame = document.getElementById('viewport-frame');
@@ -50,20 +26,6 @@ requirejs(['server/sv', 'client/cl'], function (q_sv, q_cl) {
 		}, false);
 	}
 
-	function init(canvas, gl) {
-		initEvents();
-
-		q_sv.Init();
-		q_cl.Init(canvas, gl);
-
-		function onRequestedFrame(timestamp) {
-			window.requestAnimationFrame(onRequestedFrame, canvas);
-			q_sv.Frame();
-			q_cl.Frame();
-		}
-		window.requestAnimationFrame(onRequestedFrame, canvas);
-	}
-
 	// Utility function that tests a list of webgl contexts and returns when one can be created
 	// Hopefully this future-proofs us a bit
 	function getAvailableContext(canvas, contextList) {
@@ -80,9 +42,6 @@ requirejs(['server/sv', 'client/cl'], function (q_sv, q_cl) {
 		return null;
 	}
 
-	var GL_WINDOW_WIDTH = 854;
-	var GL_WINDOW_HEIGHT = 480;
-
 	function main() {
 		var canvas = document.getElementById("viewport");
 
@@ -96,7 +55,8 @@ requirejs(['server/sv', 'client/cl'], function (q_sv, q_cl) {
 		if (!gl) {
 			document.getElementById('webgl-error').style.display = 'block';
 		} else {
-			init(canvas, gl);
+			initEvents();
+			q_com.Init(canvas, gl);
 		}
 	}
 

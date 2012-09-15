@@ -1,4 +1,4 @@
-define('server/sv-net', ['common/com-defines', 'common/com-net'], function (q_com_def, q_com_net) {
+define('server/sv-net', ['common/com-defines'], function (q_com_def) {
 	return function (q_bg) {
 		var q_sv = this;
 		var channel;
@@ -30,7 +30,7 @@ define('server/sv-net', ['common/com-defines', 'common/com-net'], function (q_co
 
 		return {
 			NetInit: function () {
-				channel = q_com_net.CreateChannel(q_com_def.netsrc_t.NS_SERVER, 'ws://localhost:9000', 0);
+				channel = q_sv.q_com.CreateChannel(q_com_def.netsrc_t.NS_SERVER, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {

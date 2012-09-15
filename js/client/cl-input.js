@@ -153,10 +153,10 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 				viewportFrame.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
 				viewportFrame.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
 
-				this.AddCommand('+forward', function (key) { self.forwardKey = key; });
-				this.AddCommand('+left', function (key) { self.leftKey = key; });
-				this.AddCommand('+back', function (key) { self.backKey = key; });
-				this.AddCommand('+right', function (key) { self.rightKey = key; });
+				q_cl.q_com.CommandAdd('+forward', function (key) { self.forwardKey = key; });
+				q_cl.q_com.CommandAdd('+left', function (key) { self.leftKey = key; });
+				q_cl.q_com.CommandAdd('+back', function (key) { self.backKey = key; });
+				q_cl.q_com.CommandAdd('+right', function (key) { self.rightKey = key; });
 				this.Bind('w', '+forward');
 				this.Bind('a', '+left');
 				this.Bind('s', '+back');
@@ -228,7 +228,7 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 				if (!cmdToExec) return;
 				if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-				var callback = this.GetCommandCallback(cmdToExec);
+				var callback = q_cl.q_com.CommandGet(cmdToExec);
 				if (callback) callback.call(this, key);
 			},
 
