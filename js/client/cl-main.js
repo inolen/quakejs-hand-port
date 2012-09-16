@@ -1,51 +1,52 @@
 define('client/cl-main', [], function () {
-	return function (q_r, q_bg) {
+	return function (re, bg) {
+		var cl = this;
+
 		return {
-			Init: function (q_com, canvas, gl) {
-				this.q_com = q_com;
+			Init: function (canvas, gl) {
+				cl.canvas = canvas;
+				cl.gl = gl;
+				cl.frameTime = cl.oldFrameTime = Date().now;
+				cl.frameDelta = 0;
+				cl.cla = Object.create(cl.clientActive_t);
+				cl.clc = Object.create(cl.clientConnection_t);
+				cl.pm = Object.create(bg.pmove_t);
+				cl.commands = {};
+				cl.keys = {};
 
-				this.canvas = canvas;
-				this.gl = gl;
-				this.frameTime = this.oldFrameTime = Date().now;
-				this.frameDelta = 0;
-				this.cl = Object.create(this.clientActive_t);
-				this.clc = Object.create(this.clientConnection_t);
-				this.pm = Object.create(q_bg.pmove_t);
-				this.commands = {};
-				this.keys = {};
+				cl.InputInit();
+				cl.CommandInit();
+				cl.NetInit();
+				re.Init(canvas, gl);
 
-				this.InputInit();
-				this.NetInit();
-				q_r.Init(canvas, gl);
-
-				//this.Cmd_LoadMap('q3tourney2');
+				re.LoadMap('q3tourney2');
 			},
 
 			Frame: function () {
-				this.oldFrameTime = this.frameTime;
-				this.frameTime = Date().now;
-				this.frameDelta = this.frameTime - this.oldFrameTime;
+				cl.oldFrameTime = cl.frameTime;
+				cl.frameTime = Date().now;
+				cl.frameDelta = cl.frameTime - cl.oldFrameTime;
 
 				//
-				this.NetFrame();
+				cl.NetFrame();
 
-				var refdef = Object.create(q_r.trRefdef_t);
-				this.SendCommand();
-				this.CalcViewValues(refdef);
-				q_r.RenderScene(refdef);
+				var refdef = Object.create(re.trRefdef_t);
+				cl.SendCommand();
+				cl.CalcViewValues(refdef);
+				re.RenderScene(refdef);
 			},
 
 			CalcViewValues: function (refdef) {
-				var cl = this.cl;
-				var pm = this.pm;
+				var cla = cl.cla;
+				var pm = cl.pm;
 
 				refdef.x = 0;
 				refdef.y = 0;
-				refdef.width = this.canvas.width;
-				refdef.height = this.canvas.height;
+				refdef.width = cl.canvas.width;
+				refdef.height = cl.canvas.height;
 				refdef.fov = 45;
 				refdef.origin = /*pm.ps.origin ||*/ [0, 0, 0];
-				refdef.angles = cl.viewangles;
+				refdef.angles = cla.viewangles;
 			}
 		};
 	};

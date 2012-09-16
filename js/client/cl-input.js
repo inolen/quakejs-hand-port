@@ -1,6 +1,6 @@
-define('client/cl-input', ['common/com-defines'], function (q_com_def) {
-	return function (q_r, q_bg) {
-		var q_cl = this;
+define('client/cl-input', [], function () {
+	return function (re, bg) {
+		var cl = this;
 		var kbLocals = {
 			'us': {
 				'backspace': 8,
@@ -58,8 +58,8 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 		 * Key helpers
 		 */
 		function GetKey(keyName) {
-			var keys = q_cl.keys;
-			return keys[keyName] || (keys[keyName] = Object.create(q_cl.keyState_t));
+			var keys = cl.keys;
+			return keys[keyName] || (keys[keyName] = Object.create(cl.keyState_t));
 		}
 
 		function GetKeyNameForKeyCode(keyCode) {
@@ -86,20 +86,19 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 
 			key.active = true;
 			key.downtime = Date().now;
-			q_cl.ExecBinding(key);
+			cl.ExecBinding(key);
 		}
 
 		function KeyUp(keyName) {
 			var key = GetKey(keyName);
 			key.active = false; // Partial frame summing
 			key.partial += Date().now - key.downtime;
-			q_cl.ExecBinding(key);
+			cl.ExecBinding(key);
 		}
 
 		function MouseMove(dx, dy) {
-			var cl = q_cl.cl;
-			cl.mouseX += dx;
-			cl.mouseY += dy;
+			cl.cla.mouseX += dx;
+			cl.cla.mouseY += dy;
 		}
 
 		/**
@@ -143,8 +142,6 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 
 		return {
 			InputInit: function () {
-				var self = this;
-
 				// Initialize system bindings.
 				var viewportFrame = document.getElementById('viewport-frame');
 				document.addEventListener('keydown', function (ev) { SysKeyDownEvent(ev); });
@@ -153,28 +150,28 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 				viewportFrame.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
 				viewportFrame.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
 
-				q_cl.q_com.CommandAdd('+forward', function (key) { self.forwardKey = key; });
-				q_cl.q_com.CommandAdd('+left', function (key) { self.leftKey = key; });
-				q_cl.q_com.CommandAdd('+back', function (key) { self.backKey = key; });
-				q_cl.q_com.CommandAdd('+right', function (key) { self.rightKey = key; });
-				this.Bind('w', '+forward');
-				this.Bind('a', '+left');
-				this.Bind('s', '+back');
-				this.Bind('d', '+right');
+				cl.CommandAdd('+forward', function (key) { cl.forwardKey = key; });
+				cl.CommandAdd('+left', function (key) { cl.leftKey = key; });
+				cl.CommandAdd('+back', function (key) { cl.backKey = key; });
+				cl.CommandAdd('+right', function (key) { cl.rightKey = key; });
+				cl.Bind('w', '+forward');
+				cl.Bind('a', '+left');
+				cl.Bind('s', '+back');
+				cl.Bind('d', '+right');
 			},
 
 			/**
 			 * Process current input variables into userComamnd_t struct for transmission to server.
 			 */
 			SendCommand: function () {
-				var cmd = this.CreateCommand();
-				this.NetSend(q_com_def.clc_ops_e.clc_move, cmd);
+				var cmd = cl.CreateCommand();
+				cl.NetSend(cl.clc_ops_e.clc_move, cmd);
 			},
 
 			CreateCommand: function () {
-				var cmd = Object.create(q_com_def.usercmd_t);
-				this.KeyMove(cmd);
-				this.MouseMove(cmd);
+				var cmd = Object.create(cl.usercmd_t);
+				cl.KeyMove(cmd);
+				cl.MouseMove(cmd);
 				return cmd;
 			},
 
@@ -182,14 +179,14 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 				var movespeed = 127;
 				var forward = 0, side = 0, up = 0;
 
-				if (this.rightKey) side += movespeed * this.GetKeyState(this.rightKey);
-				if (this.leftKey) side -= movespeed * this.GetKeyState(this.leftKey);
+				if (cl.rightKey) side += movespeed * cl.GetKeyState(cl.rightKey);
+				if (cl.leftKey) side -= movespeed * cl.GetKeyState(cl.leftKey);
 
 				//up += movespeed * KeyState();
 				//up -= movespeed * KeyState();
 
-				if (this.forwardKey) forward += movespeed * this.GetKeyState(this.forwardKey);
-				if (this.backKey) forward -= movespeed * this.GetKeyState(this.backKey);
+				if (cl.forwardKey) forward += movespeed * cl.GetKeyState(cl.forwardKey);
+				if (cl.backKey) forward -= movespeed * cl.GetKeyState(cl.backKey);
 
 				cmd.forwardmove = forward;
 				cmd.rightmove = side;
@@ -197,26 +194,26 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 			},
 
 			MouseMove: function (cmd) {
-				var cl = this.cl,
+				var cla = cl.cla,
 					oldAngles = cl.viewangles;
 
-				cl.viewangles[1] += cl.mouseX * 0.0022;
-				while (cl.viewangles[1] < 0)
-						cl.viewangles[1] += Math.PI*2;
-				while (cl.viewangles[1] >= Math.PI*2)
-						cl.viewangles[1] -= Math.PI*2;
+				cla.viewangles[1] += cla.mouseX * 0.0022;
+				while (cla.viewangles[1] < 0)
+						cla.viewangles[1] += Math.PI*2;
+				while (cla.viewangles[1] >= Math.PI*2)
+						cla.viewangles[1] -= Math.PI*2;
 
-				cl.viewangles[0] += cl.mouseY * 0.0022;
-				while (cl.viewangles[0] < -Math.PI*0.5)
-						cl.viewangles[0] = -Math.PI*0.5;
-				while (cl.viewangles[0] > Math.PI*0.5)
-						cl.viewangles[0] = Math.PI*0.5;
+				cla.viewangles[0] += cla.mouseY * 0.0022;
+				while (cla.viewangles[0] < -Math.PI*0.5)
+						cla.viewangles[0] = -Math.PI*0.5;
+				while (cla.viewangles[0] > Math.PI*0.5)
+						cla.viewangles[0] = Math.PI*0.5;
 
 				// reset
-				cl.mouseX = 0;
-				cl.mouseY = 0;
+				cla.mouseX = 0;
+				cla.mouseY = 0;
 
-				cmd.angles = cl.viewangles;
+				cmd.angles = cla.viewangles;
 			},
 
 			/**
@@ -228,7 +225,7 @@ define('client/cl-input', ['common/com-defines'], function (q_com_def) {
 				if (!cmdToExec) return;
 				if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-				var callback = q_cl.q_com.CommandGet(cmdToExec);
+				var callback = cl.q_com.CommandGet(cmdToExec);
 				if (callback) callback.call(this, key);
 			},
 

@@ -1,14 +1,15 @@
-define('common/com-net', ['common/com-defines', 'sys/LoopbackChannel', 'sys/WebSocketClientChannel'], function (q_com_def, LoopbackChannel, WebSocketClientChannel) {
+define('common/com-net', ['sys/LoopbackChannel', 'sys/WebSocketClientChannel'], function (LoopbackChannel, WebSocketClientChannel) {
 	return function () {
+		var com = this;
 		var loopback;
 
 		function StringToAddr(str) {
-			var addr = Object.create(q_com_def.netadr_t);
+			var addr = Object.create(com.netadr_t);
 
 			if (str.indexOf('localhost') !== -1) {
-				addr.type = q_com_def.netadrtype_t.NA_LOOPBACK;
+				addr.type = com.netadrtype_t.NA_LOOPBACK;
 			} else {
-				addr.type = q_com_def.netadrtype_t.NA_IP;
+				addr.type = com.netadrtype_t.NA_IP;
 			}
 
 			// TODO: Add a default port support.
@@ -26,12 +27,12 @@ define('common/com-net', ['common/com-defines', 'sys/LoopbackChannel', 'sys/WebS
 			CreateChannel: function (sock, addrstr, challenge) {
 				var addr = StringToAddr(addrstr);
 
-				if (addr.type === q_com_def.netadrtype_t.NA_LOOPBACK) {
+				if (addr.type === com.netadrtype_t.NA_LOOPBACK) {
 					if (!loopback) {
 						loopback = new LoopbackChannel(sock, challenge);
 					}
 
-					return sock === q_com_def.netsrc_t.NS_CLIENT ?
+					return sock === com.netsrc_t.NS_CLIENT ?
 						loopback.Client :
 						loopback.Server;
 				} else {

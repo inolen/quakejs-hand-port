@@ -1,6 +1,6 @@
-define('renderer/r-main', ['common/com-defines', 'shared/Q3Bsp'], function (q_com_def, Q3Bsp) {
+define('renderer/r-main', [], function () {
 	return function () {
-		var q_r = this;
+		var re = this;
 
 		var q3render_vertex_stride = 56;
 		var q3render_sky_vertex_stride = 20;
@@ -25,7 +25,7 @@ define('renderer/r-main', ['common/com-defines', 'shared/Q3Bsp'], function (q_co
 		 * Helper functions to bind attributes to vertex arrays.
 		 */
 		function _bindShaderAttribs(shader, modelViewMat, projectionMat) {
-			var gl = q_r.gl;
+			var gl = re.gl;
 
 			// Set uniforms
 			gl.uniformMatrix4fv(shader.uniform.modelViewMat, false, modelViewMat);
@@ -57,7 +57,7 @@ define('renderer/r-main', ['common/com-defines', 'shared/Q3Bsp'], function (q_co
 		}
 
 		function _bindSkyAttribs(shader, modelViewMat, projectionMat) {
-			var gl = q_r.gl;
+			var gl = re.gl;
 
 			mat4.set(modelViewMat, skyboxMat);
 
@@ -178,7 +178,7 @@ define('renderer/r-main', ['common/com-defines', 'shared/Q3Bsp'], function (q_co
 
 			LoadMap: function (mapName) {
 				var self = this;
-				map = new Q3Bsp();
+				map = new re.Q3Bsp();
 
 				map.load('maps/' + mapName + '.bsp', function () {
 					self.LoadLightmaps();

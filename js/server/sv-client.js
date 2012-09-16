@@ -1,5 +1,5 @@
 define('server/sv-client', [], function () {
-	return function (q_bg) {
+	return function (bg) {
 		return {
 			ClientThink: function (client, cmd) {
 				client.lastUsercmd = cmd;

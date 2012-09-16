@@ -1,19 +1,21 @@
 define('server/sv-main', [], function () {
-	return function (q_bg) {
-		return {
-			Init: function (q_com) {
-				this.q_com = q_com;
-				this.clients = new Array();
+	return function (bg) {
+		var sv = this;
 
-				this.CommandInit();
-				this.NetInit();
+		return {
+			Init: function () {
+				sv.clients = new Array();
+
+				sv.CommandInit();
+				sv.NetInit();
 			},
 
 			Frame: function () {
-				this.NetFrame();
+				sv.NetFrame();
 			},
 
 			SpawnServer: function (map) {
+				sv.q_com.MapLoading();
 				// TODO CHECK IF CLIENT IS RUNNING LOCAL SERVER, IF SO CONNECT THEM
 				// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
 			}

@@ -1,4 +1,4 @@
-requirejs(['common/com'], function (q_com) {
+requirejs(['client/cl', 'server/sv'], function (cl, sv) {
 	var GL_WINDOW_WIDTH = 854;
 	var GL_WINDOW_HEIGHT = 480;
 
@@ -24,6 +24,26 @@ requirejs(['common/com'], function (q_com) {
 			gl.viewport(0, 0, canvas.width, canvas.height);
 			mat4.perspective(45.0, canvas.width/canvas.height, 1.0, 4096.0, projectionMat);
 		}, false);
+	}
+
+	function init(canvas, gl) {
+		sv.Init();
+		cl.Init(canvas, gl);
+
+		// Provide the user a way to interface with the client.
+		Object.defineProperty(window, '$', {
+			get: function () {
+				return null;//com.CommandGetAll();
+			}
+		});
+
+		// Main loop.
+		function onRequestedFrame(timestamp) {
+			window.requestAnimationFrame(onRequestedFrame, canvas);
+			sv.Frame();
+			cl.Frame();
+		}
+		window.requestAnimationFrame(onRequestedFrame, canvas);
 	}
 
 	// Utility function that tests a list of webgl contexts and returns when one can be created
@@ -56,7 +76,7 @@ requirejs(['common/com'], function (q_com) {
 			document.getElementById('webgl-error').style.display = 'block';
 		} else {
 			initEvents();
-			q_com.Init(canvas, gl);
+			init(canvas, gl);
 		}
 	}
 

@@ -27,7 +27,7 @@
 
 define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
 	return function () {
-		var q_r = this;
+		var re = this;
 		var parsedShaders = {};
 		var compiledShaders = {};
 
@@ -115,17 +115,17 @@ define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
 					case 'map':
 						stage.map = tokens.next().replace(/(\.jpg|\.tga)/, '.png');
 						if (!stage.map) {
-							stage.texture = q_r.FindImage('*white');
+							stage.texture = re.FindImage('*white');
 						} else if (stage.map == '$lightmap') {
 							if (shader.lightmap < 0) {
-								stage.texture = q_r.FindImage('*white');
+								stage.texture = re.FindImage('*white');
 							} else {
-								stage.texture = q_r.FindImage('*lightmap');
+								stage.texture = re.FindImage('*lightmap');
 							}
 						} else if (stage.map == '$whiteimage') {
-							stage.texture = q_r.FindImage('*white');
+							stage.texture = re.FindImage('*white');
 						} else {
-							stage.texture = q_r.FindImage(stage.map, stage.clamp);
+							stage.texture = re.FindImage(stage.map, stage.clamp);
 						}
 						break;
 
@@ -137,7 +137,7 @@ define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
 						while (nextMap.match(/(\.jpg|\.tga)/)) {
 							var map = nextMap.replace(/(\.jpg|\.tga)/, '.png');
 							stage.animMaps.push(map);
-							stage.animTexture.push(q_r.FindImage(map, stage.clamp));
+							stage.animTexture.push(re.FindImage(map, stage.clamp));
 							nextMap = tokens.next();
 						}
 						tokens.prev();
@@ -414,7 +414,7 @@ define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
 			},
 
 			FindShader: function (shaderName) {
-				var gl = q_r.gl;
+				var gl = re.gl;
 
 				var shader;
 
@@ -423,12 +423,12 @@ define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
 				}
 
 				if ((shader = parsedShaders[shaderName])) {
-					return (compiledShaders[shaderName] = q_r.BuildGLShaderForShader(shader));
+					return (compiledShaders[shaderName] = re.BuildGLShaderForShader(shader));
 				}
 
 				// Build default diffuse shader.
 				var texture = shaderName !== '*default' ? shaderName + '.png' : shaderName;
-				return (compiledShaders[shaderName] = q_r.BuildGLShaderForTexture(texture));
+				return (compiledShaders[shaderName] = re.BuildGLShaderForTexture(texture));
 			}
 		};
 	};

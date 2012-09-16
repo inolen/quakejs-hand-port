@@ -1,6 +1,6 @@
-define('server/sv-net', ['common/com-defines'], function (q_com_def) {
-	return function (q_bg) {
-		var q_sv = this;
+define('server/sv-net', [], function () {
+	return function (bg) {
+		var sv = this;
 		var channel;
 
 		function ProcessQueue() {
@@ -18,8 +18,8 @@ define('server/sv-net', ['common/com-defines'], function (q_com_def) {
 			var type = view.getUint8(0, true);
 			var struct = null;
 
-			if (type === q_com_def.clc_ops_e.clc_move) {
-				struct = q_com_def.usercmd_t.deserialize(buffer, 0, 1)[0];
+			if (type === sv.clc_ops_e.clc_move) {
+				struct = sv.usercmd_t.deserialize(buffer, 0, 1)[0];
 			}
 
 			//console.log('sv received: ' + type, struct);
@@ -30,7 +30,7 @@ define('server/sv-net', ['common/com-defines'], function (q_com_def) {
 
 		return {
 			NetInit: function () {
-				channel = q_sv.q_com.CreateChannel(q_com_def.netsrc_t.NS_SERVER, 'ws://localhost:9000', 0);
+				channel = sv.CreateChannel(sv.netsrc_t.NS_SERVER, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {

@@ -1,11 +1,11 @@
-define('client/cl-net', ['common/com-defines'], function (q_com_def) {
-	return function (q_r, q_bg) {
-		var q_cl = this;
+define('client/cl-net', ['common/com-defines'], function (com_def) {
+	return function (re, bg) {
+		var cl = this;
 
 		function ProcessQueue() {
 			// manually send packet events for the loopback channel
 			var msg;
-			while ((msg = q_cl.clc.netchan.GetPacket())) {
+			while ((msg = cl.clc.netchan.GetPacket())) {
 				PacketEvent(msg);
 			}
 		}
@@ -20,7 +20,7 @@ define('client/cl-net', ['common/com-defines'], function (q_com_def) {
 
 		return {
 			NetInit: function () {
-				q_cl.clc.netchan = q_cl.q_com.CreateChannel(q_com_def.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
+				cl.clc.netchan = cl.CreateChannel(com_def.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {
@@ -34,7 +34,7 @@ define('client/cl-net', ['common/com-defines'], function (q_com_def) {
 				view.setUint8(0, type, true);
 				struct.serialize(buffer, 1);
 
-				q_cl.clc.netchan.SendPacket(buffer);
+				cl.clc.netchan.SendPacket(buffer);
 			},
 
 			//NetSendOOB: function (type, struct)

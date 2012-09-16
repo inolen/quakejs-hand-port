@@ -5,10 +5,10 @@ define(
 		'game/bg-pmove'
 	],
 	function (bg_defines, bg_pmove) {
-		var q_bg = this;
-		return  _.extend(q_bg,
+		var bg = this;
+		return  _.extend(bg,
 			bg_defines,
-			bg_pmove.call(q_bg)
+			bg_pmove.call(bg)
 		);
 	}
 );
