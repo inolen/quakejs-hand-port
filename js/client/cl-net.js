@@ -1,4 +1,4 @@
-define('client/cl-net', ['common/com-defines'], function (com_def) {
+define('client/cl-net', [], function () {
 	return function (re, bg) {
 		var cl = this;
 
@@ -20,7 +20,7 @@ define('client/cl-net', ['common/com-defines'], function (com_def) {
 
 		return {
 			NetInit: function () {
-				cl.clc.netchan = cl.CreateChannel(com_def.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
+				cl.clc.netchan = cl.CreateChannel(cl.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {

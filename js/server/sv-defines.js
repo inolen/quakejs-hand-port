@@ -1,4 +1,4 @@
-define('server/sv-defines', ['common/com-defines'], function (q_com_def) {
+define('server/sv-defines', [], function () {
 	return {
 		client_t: {
 			challenge: 0,

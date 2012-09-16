@@ -1,4 +1,4 @@
-define('client/cl-defines', ['common/com-defines'], function (q_com_def) {
+define('client/cl-defines', [], function () {
 	return {
 		clientConnection_t: {
 			/*connstate_t	state;

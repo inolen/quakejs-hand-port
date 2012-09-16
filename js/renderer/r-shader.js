@@ -25,7 +25,7 @@
  *    distribution.
  */
 
-define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
+define('renderer/r-shader', [], function () {
 	return function () {
 		var re = this;
 		var parsedShaders = {};
@@ -403,7 +403,7 @@ define('renderer/r-shader', ['common/com-defines'], function (q_com_def) {
 			];
 
 			for (var i = 0; i < allShaders.length; ++i) {
-				var path = q_com_def.Q3W_BASE_FOLDER + '/' + allShaders[i];
+				var path = re.Q3W_BASE_FOLDER + '/' + allShaders[i];
 				LoadShader(path);
 			}
 		}

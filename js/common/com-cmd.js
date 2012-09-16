@@ -1,4 +1,4 @@
-define('common/com-cmd', ['common/com-defines'], function (q_com_def) {
+define('common/com-cmd', [], function () {
 	return function () {
 		var commands = {};
 
