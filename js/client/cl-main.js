@@ -8,9 +8,9 @@ define('client/cl-main', [], function () {
 				cl.gl = gl;
 				cl.frameTime = cl.oldFrameTime = Date().now;
 				cl.frameDelta = 0;
-				cl.cla = Object.create(cl.clientActive_t);
-				cl.clc = Object.create(cl.clientConnection_t);
-				cl.pm = Object.create(bg.pmove_t);
+				cl.cla = Object.create(cl.ClientActive);
+				cl.clc = Object.create(cl.ClientConnection);
+				cl.pm = Object.create(bg.Pmove);
 				cl.commands = {};
 				cl.keys = {};
 
@@ -30,7 +30,7 @@ define('client/cl-main', [], function () {
 				//
 				cl.NetFrame();
 
-				var refdef = Object.create(re.trRefdef_t);
+				var refdef = Object.create(re.ReRefDef);
 				cl.SendCommand();
 				cl.CalcViewValues(refdef);
 				re.RenderScene(refdef);

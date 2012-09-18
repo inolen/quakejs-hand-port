@@ -81,7 +81,7 @@ define('renderer/r-main', [], function () {
 		}
 
 		return {
-			viewParms_t: {
+			ReViewParms: {
 				x: 0,
 				y: 0,
 				width: 0,
@@ -91,7 +91,7 @@ define('renderer/r-main', [], function () {
 				angles: null
 			},
 
-			trRefdef_t: {
+			ReRefDef: {
 				x: 0,
 				y: 0,
 				width: 0,
@@ -102,7 +102,7 @@ define('renderer/r-main', [], function () {
 				drawSurfs: null
 			},
 
-			image_t: {
+			ReImage: {
 				imgName: null,
 				texnum: null
 			},
@@ -110,7 +110,7 @@ define('renderer/r-main', [], function () {
 			Init: function (canvas, gl) {
 				this.canvas = canvas;
 				this.gl = gl;
-				this.refdef = Object.create(this.trRefdef_t);
+				this.refdef = Object.create(this.ReRefDef);
 				// TODO: Make this a typed array
 				//this.refdef.drawSurfs = new Array(MAX_DRAWSURFS);
 
@@ -131,7 +131,7 @@ define('renderer/r-main', [], function () {
 				rd.origin = fd.origin;
 				rd.angles = fd.angles;
 
-				var parms = Object.create(this.viewParms_t);
+				var parms = Object.create(this.ReViewParms);
 				parms.x = fd.x;
 				parms.y = fd.y
 				parms.width = fd.width;

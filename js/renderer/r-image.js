@@ -16,7 +16,7 @@ define('renderer/r-image', [], function () {
 			BuildDefaultTexture: function () {
 				var self = this;
 
-				var image =  images['*default'] = Object.create(this.image_t);
+				var image =  images['*default'] = Object.create(this.ReImage);
 				image.imgName = name;
 
 				var el = new Image();
@@ -50,7 +50,7 @@ define('renderer/r-image', [], function () {
 			CreateImage: function (name, buffer, width, height, clamp) {
 				var gl = this.gl;
 
-				var image =  images[name] = Object.create(this.image_t);
+				var image =  images[name] = Object.create(this.ReImage);
 				image.imgName = name;
 				image.texnum = this.BuildTexture(buffer, width, height, clamp);
 
@@ -65,7 +65,7 @@ define('renderer/r-image', [], function () {
 				if ((image = images[name])) {
 					return image;
 				} else {
-					var image =  images[name] = Object.create(this.image_t);
+					var image =  images[name] = Object.create(this.ReImage);
 					image.imgName = name;
 				}
 

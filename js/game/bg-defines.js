@@ -1,8 +1,8 @@
-define('game/bg-defines', ['common/com-defines'], function (q_com_def) {
+define('game/bg-defines', ['common/com-defines'], function (com_def) {
 	return {
-		pmove_t: {
+		Pmove: {
 			// state (in / out)
-			ps: Object.create(q_com_def.playerState_t),
+			ps: Object.create(com_def.PlayerState),
 
 			// command (in)
 			cmd: null,

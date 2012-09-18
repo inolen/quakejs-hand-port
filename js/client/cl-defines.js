@@ -1,17 +1,17 @@
 define('client/cl-defines', [], function () {
 	return {
-		clientConnection_t: {
+		ClientConnection: {
 			/*connstate_t	state;
 			var clientNum;*/
 			challenge: 0,
 			netchan: null
 		},
 
-		clientActive_t: {
+		ClientActive: {
 			mouseX: 0,
 			mouseY: 0,
 
-			/*usercmd_t cmds[CMD_BACKUP]; // each mesage will send several old cmds
+			/*UserCmd cmds[CMD_BACKUP]; // each mesage will send several old cmds
 			int       cmdNumber;        // incremented each frame, because multiple
 																	// frames may need to be packed into a single packet*/
 
@@ -23,7 +23,7 @@ define('client/cl-defines', [], function () {
 			viewangles: [0, 0, 0]
 		},
 
-		keyState_t: {
+		KeyState: {
 			active: false,
 			downtime: 0,
 			partial: 0,

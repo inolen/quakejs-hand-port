@@ -15,7 +15,7 @@ define('server/sv-main', [], function () {
 			},
 
 			SpawnServer: function (map) {
-				sv.q_com.MapLoading();
+				sv.MapLoading();
 				// TODO CHECK IF CLIENT IS RUNNING LOCAL SERVER, IF SO CONNECT THEM
 				// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
 			}

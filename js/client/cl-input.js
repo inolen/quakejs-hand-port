@@ -59,7 +59,7 @@ define('client/cl-input', [], function () {
 		 */
 		function GetKey(keyName) {
 			var keys = cl.keys;
-			return keys[keyName] || (keys[keyName] = Object.create(cl.keyState_t));
+			return keys[keyName] || (keys[keyName] = Object.create(cl.KeyState));
 		}
 
 		function GetKeyNameForKeyCode(keyCode) {
@@ -165,11 +165,11 @@ define('client/cl-input', [], function () {
 			 */
 			SendCommand: function () {
 				var cmd = cl.CreateCommand();
-				cl.NetSend(cl.clc_ops_e.clc_move, cmd);
+				cl.NetSend(cl.ClcOps.clc_move, cmd);
 			},
 
 			CreateCommand: function () {
-				var cmd = Object.create(cl.usercmd_t);
+				var cmd = Object.create(cl.UserCmd);
 				cl.KeyMove(cmd);
 				cl.MouseMove(cmd);
 				return cmd;
@@ -225,7 +225,7 @@ define('client/cl-input', [], function () {
 				if (!cmdToExec) return;
 				if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-				var callback = cl.q_com.CommandGet(cmdToExec);
+				var callback = cl.CommandGet(cmdToExec);
 				if (callback) callback.call(this, key);
 			},
 

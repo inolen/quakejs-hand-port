@@ -18,8 +18,8 @@ define('server/sv-net', [], function () {
 			var type = view.getUint8(0, true);
 			var struct = null;
 
-			if (type === sv.clc_ops_e.clc_move) {
-				struct = sv.usercmd_t.deserialize(buffer, 0, 1)[0];
+			if (type === sv.ClcOps.clc_move) {
+				struct = sv.UserCmd.deserialize(buffer, 0, 1)[0];
 			}
 
 			//console.log('sv received: ' + type, struct);
@@ -30,7 +30,7 @@ define('server/sv-net', [], function () {
 
 		return {
 			NetInit: function () {
-				channel = sv.CreateChannel(sv.netsrc_t.NS_SERVER, 'ws://localhost:9000', 0);
+				channel = sv.CreateChannel(sv.NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {

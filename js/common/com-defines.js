@@ -5,18 +5,18 @@ define('common/com-defines', [], function () {
 		/**
 		 * NETWORKING
 		 */
-		netsrc_t: {
+		NetSrc: {
 			NS_CLIENT: 0,
 			NS_SERVER: 1
 		},
 
-		netadrtype_t: {
+		NetAdrType: {
 			NA_BAD: 0,
 			NA_LOOPBACK: 1,
 			NA_IP: 2
 		},
 
-		netadr_t: {
+		NetAdr: {
 			type: 0,
 			ip: null,
 			port: 0
@@ -25,13 +25,13 @@ define('common/com-defines', [], function () {
 		/**
 		 * PACKET TYPES
 		 */
-		packet_t: {
+		Packet: {
 			type: 0,
 			data: null
 		},
 
 		// server to client
-		svc_ops_e: {
+		SvcOps: {
 			svc_bad: 0,
 			svc_nop: 1,
 			svc_gamestate: 2,
@@ -44,11 +44,11 @@ define('common/com-defines', [], function () {
 		},
 
 		// client to server
-		clc_ops_e: {
+		ClcOps: {
 			clc_bad: 0,
 			clc_nop: 1,
-			clc_move: 2,					// [[usercmd_t]
-			clc_moveNoDelta: 3,				// [[usercmd_t]
+			clc_move: 2,					// [[UserCmd]
+			clc_moveNoDelta: 3,				// [[UserCmd]
 			clc_clientCommand: 4,			// [string] message
 			clc_EOF: 5
 		},
@@ -56,14 +56,14 @@ define('common/com-defines', [], function () {
 		/**
 		 * GAMESTATE
 		 */
-		usercmd_t: Struct.create(
+		UserCmd: Struct.create(
 			Struct.array('angles', Struct.float32(), 3),
 			Struct.uint8('forwardmove'),
 			Struct.uint8('rightmove'),
 			Struct.uint8('upmove')
 		),
 
-		playerState_t: {
+		PlayerState: {
 			viewheight: 0
 		}
 	};

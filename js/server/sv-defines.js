@@ -1,6 +1,6 @@
 define('server/sv-defines', [], function () {
 	return {
-		client_t: {
+		ClientState: {
 			challenge: 0,
 			lastUsercmd: null,
 			netchan: null

@@ -9,10 +9,6 @@ define('common/com-cmd', [], function () {
 
 			CommandGet: function (cmd) {
 				return commands[cmd];
-			},
-
-			CommandGetAll: function () {
-				return commands;
 			}
 		};
 	};

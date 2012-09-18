@@ -20,7 +20,7 @@ define('client/cl-net', [], function () {
 
 		return {
 			NetInit: function () {
-				cl.clc.netchan = cl.CreateChannel(cl.netsrc_t.NS_CLIENT, 'ws://localhost:9000', 0);
+				cl.clc.netchan = cl.CreateChannel(cl.NetSrc.NS_CLIENT, 'ws://localhost:9000', 0);
 			},
 
 			NetFrame: function () {

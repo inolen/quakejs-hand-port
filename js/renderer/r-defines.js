@@ -1,6 +1,6 @@
 define('renderer/r-defines', [], function () {
 	return {
-		viewParms_t: {
+		ReViewParms: {
 			x: 0,
 			y: 0,
 			width: 0,
@@ -10,7 +10,7 @@ define('renderer/r-defines', [], function () {
 			angles: null
 		},
 
-		trRefdef_t: {
+		ReRefDef: {
 			x: 0,
 			y: 0,
 			width: 0,
@@ -21,7 +21,7 @@ define('renderer/r-defines', [], function () {
 			drawSurfs: null
 		},
 
-		image_t: {
+		ReImage: {
 			imgName: null,
 			texnum: null
 		}
