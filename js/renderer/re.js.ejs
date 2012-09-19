@@ -1,0 +1,15 @@
+define('renderer/re', ['common/Q3Bsp'], function (Q3Bsp) {
+	<%- include ../common/com-defines.js %>
+	<%- include re-defines.js %>
+	<%- include re-main.js %>
+	<%- include re-image.js %>
+	<%- include re-shader.js %>
+	<%- include re-glshader.js %>
+	<%- include re-world.js %>
+
+	return {
+		Init: Init,
+		RenderScene: RenderScene,
+		LoadMap: LoadMap
+	};
+});

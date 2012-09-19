@@ -1,28 +1,18 @@
-define('server/sv-main', [], function () {
-	return function (bg) {
-		var sv = this;
+var cl;
 
-		function Init(cl) {
-			sv.cl = cl;
-			sv.clients = new Array();
+function Init(cl) {
+	cl = cl;
+	clients = new Array();
 
-			sv.CmdInit();
-			sv.NetInit();
-		}
+	CmdInit();
+	NetInit();
+}
 
-		function Frame() {
-			sv.NetFrame();
-		}
+function Frame() {
+	NetFrame();
+}
 
-		function SpawnServer(map) {
-			sv.cl.MapLoading();
-			// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
-		}
-
-		return {
-			Init: Init,
-			Frame: Frame,
-			SpawnServer: SpawnServer
-		};
-	};
-});
+function SpawnServer(map) {
+	cl.MapLoading();
+	// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
+}

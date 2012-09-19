@@ -1,0 +1,19 @@
+define('client/cl', ['renderer/re', 'game/bg', 'sys/LoopbackChannel', 'sys/WebSocketClientChannel'], function (re, bg, LoopbackChannel, WebSocketClientChannel) {
+	<%- include ../common/com-defines.js %>
+	<%- include ../common/com-cmd.js %>
+	<%- include ../common/com-net.js %>
+	<%- include ../game/bg-defines.js %>
+	<%- include ../renderer/re-defines.js %>
+	<%- include cl-defines.js %>
+	<%- include cl-main.js %>
+	<%- include cl-cmd.js %>
+	<%- include cl-input.js %>
+	<%- include cl-net.js %>
+	<%- include cl-servercmds.js %>
+
+	return {
+		Init: Init,
+		Frame: Frame,
+		MapLoading: MapLoading
+	};
+});

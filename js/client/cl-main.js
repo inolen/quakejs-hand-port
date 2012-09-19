@@ -1,62 +1,48 @@
-define('client/cl-main', [], function () {
-	return function (re, bg) {
-		var cl = this;
+var canvas, gl;
+var frameTime, oldFrameTime;
+var frameDelta = 0;
+var cla = Object.create(ClientActive);
+var clc = Object.create(ClientConnection);
+var pm = Object.create(Pmove);
+var commands = {};
+var keys = {};
 
-		function Init(canvas, gl) {
-			cl.canvas = canvas;
-			cl.gl = gl;
-			cl.frameTime = cl.oldFrameTime = Date().now;
-			cl.frameDelta = 0;
-			cl.cla = Object.create(cl.ClientActive);
-			cl.clc = Object.create(cl.ClientConnection);
-			cl.pm = Object.create(bg.Pmove);
-			cl.commands = {};
-			cl.keys = {};
+function Init(canvasCtx, glCtx) {
+	canvas = canvasCtx;
+	gl = glCtx;
+	frameTime = oldFrameTime = Date().now;
 
-			cl.InputInit();
-			cl.CmdInit();
-			cl.NetInit();
-			re.Init(canvas, gl);
+	InputInit();
+	CmdInit();
+	NetInit();
+	re.Init(canvas, gl);
+	re.LoadMap('q3tourney2');
+}
 
-			re.LoadMap('q3tourney2');
-		}
+function Frame() {
+	oldFrameTime = frameTime;
+	frameTime = Date().now;
+	frameDelta = frameTime - oldFrameTime;
 
-		function Frame() {
-			cl.oldFrameTime = cl.frameTime;
-			cl.frameTime = Date().now;
-			cl.frameDelta = cl.frameTime - cl.oldFrameTime;
+	//
+	NetFrame();
 
-			//
-			cl.NetFrame();
+	var refdef = Object.create(ReRefDef);
+	SendCommand();
+	CalcViewValues(refdef);
+	re.RenderScene(refdef);
+}
 
-			var refdef = Object.create(re.ReRefDef);
-			cl.SendCommand();
-			cl.CalcViewValues(refdef);
-			re.RenderScene(refdef);
-		}
+function MapLoading() {
+	NetConnect('localhost', 9000);
+}
 
-		function MapLoading() {
-			cl.NetConnect('localhost', 9000);
-		}
-
-		function CalcViewValues(refdef) {
-			var cla = cl.cla;
-			var pm = cl.pm;
-
-			refdef.x = 0;
-			refdef.y = 0;
-			refdef.width = cl.canvas.width;
-			refdef.height = cl.canvas.height;
-			refdef.fov = 45;
-			refdef.origin = /*pm.ps.origin ||*/ [0, 0, 0];
-			refdef.angles = cla.viewangles;
-		}
-
-		return {
-			Init: Init,
-			Frame: Frame,
-			MapLoading: MapLoading,
-			CalcViewValues: CalcViewValues
-		};
-	};
-});
+function CalcViewValues(refdef) {
+	refdef.x = 0;
+	refdef.y = 0;
+	refdef.width = canvas.width;
+	refdef.height = canvas.height;
+	refdef.fov = 45;
+	refdef.origin = /*pm.ps.origin ||*/ [0, 0, 0];
+	refdef.angles = cla.viewangles;
+}
