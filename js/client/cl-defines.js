@@ -1,12 +1,5 @@
 define('client/cl-defines', [], function () {
 	return {
-		ClientConnection: {
-			/*connstate_t	state;
-			var clientNum;*/
-			challenge: 0,
-			netchan: null
-		},
-
 		ClientActive: {
 			mouseX: 0,
 			mouseY: 0,
@@ -21,6 +14,13 @@ define('client/cl-defines', [], function () {
 			// tracked view angles to account for standing on rotating objects,
 			// and teleport direction changes
 			viewangles: [0, 0, 0]
+		},
+
+		ClientConnection: {
+			/*connstate_t	state;
+			var clientNum;*/
+			challenge: 0,
+			netchan: null
 		},
 
 		KeyState: {

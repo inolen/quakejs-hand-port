@@ -140,122 +140,132 @@ define('client/cl-input', [], function () {
 			MouseMove(deltaX, deltaY);
 		}
 
-		return {
-			InputInit: function () {
-				// Initialize system bindings.
-				var viewportFrame = document.getElementById('viewport-frame');
-				document.addEventListener('keydown', function (ev) { SysKeyDownEvent(ev); });
-				document.addEventListener('keyup', function (ev) { SysKeyUpEvent(ev); });
-				viewportFrame.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
-				viewportFrame.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
-				viewportFrame.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
+		function InputInit() {
+			// Initialize system bindings.
+			var viewportFrame = document.getElementById('viewport-frame');
+			document.addEventListener('keydown', function (ev) { SysKeyDownEvent(ev); });
+			document.addEventListener('keyup', function (ev) { SysKeyUpEvent(ev); });
+			viewportFrame.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
+			viewportFrame.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
+			viewportFrame.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
 
-				cl.CommandAdd('+forward', function (key) { cl.forwardKey = key; });
-				cl.CommandAdd('+left', function (key) { cl.leftKey = key; });
-				cl.CommandAdd('+back', function (key) { cl.backKey = key; });
-				cl.CommandAdd('+right', function (key) { cl.rightKey = key; });
-				cl.Bind('w', '+forward');
-				cl.Bind('a', '+left');
-				cl.Bind('s', '+back');
-				cl.Bind('d', '+right');
-			},
+			cl.CmdAdd('+forward', function (key) { cl.forwardKey = key; });
+			cl.CmdAdd('+left', function (key) { cl.leftKey = key; });
+			cl.CmdAdd('+back', function (key) { cl.backKey = key; });
+			cl.CmdAdd('+right', function (key) { cl.rightKey = key; });
+			cl.Bind('w', '+forward');
+			cl.Bind('a', '+left');
+			cl.Bind('s', '+back');
+			cl.Bind('d', '+right');
+		}
 
-			/**
-			 * Process current input variables into userComamnd_t struct for transmission to server.
-			 */
-			SendCommand: function () {
-				var cmd = cl.CreateCommand();
-				cl.NetSend(cl.ClcOps.clc_move, cmd);
-			},
+		/**
+		 * Process current input variables into userComamnd_t struct for transmission to server.
+		 */
+		function SendCommand() {
+			var cmd = cl.CreateCommand();
+			cl.NetSend(cl.ClcOps.clc_move, cmd);
+		}
 
-			CreateCommand: function () {
-				var cmd = Object.create(cl.UserCmd);
-				cl.KeyMove(cmd);
-				cl.MouseMove(cmd);
-				return cmd;
-			},
+		function CreateCommand() {
+			var cmd = Object.create(cl.UserCmd);
+			cl.KeyMove(cmd);
+			cl.MouseMove(cmd);
+			return cmd;
+		}
 
-			KeyMove: function (cmd) {
-				var movespeed = 127;
-				var forward = 0, side = 0, up = 0;
+		function KeyMove(cmd) {
+			var movespeed = 127;
+			var forward = 0, side = 0, up = 0;
 
-				if (cl.rightKey) side += movespeed * cl.GetKeyState(cl.rightKey);
-				if (cl.leftKey) side -= movespeed * cl.GetKeyState(cl.leftKey);
+			if (cl.rightKey) side += movespeed * cl.GetKeyState(cl.rightKey);
+			if (cl.leftKey) side -= movespeed * cl.GetKeyState(cl.leftKey);
 
-				//up += movespeed * KeyState();
-				//up -= movespeed * KeyState();
+			//up += movespeed * KeyState();
+			//up -= movespeed * KeyState();
 
-				if (cl.forwardKey) forward += movespeed * cl.GetKeyState(cl.forwardKey);
-				if (cl.backKey) forward -= movespeed * cl.GetKeyState(cl.backKey);
+			if (cl.forwardKey) forward += movespeed * cl.GetKeyState(cl.forwardKey);
+			if (cl.backKey) forward -= movespeed * cl.GetKeyState(cl.backKey);
 
-				cmd.forwardmove = forward;
-				cmd.rightmove = side;
-				cmd.upmove = up;
-			},
+			cmd.forwardmove = forward;
+			cmd.rightmove = side;
+			cmd.upmove = up;
+		}
 
-			MouseMove: function (cmd) {
-				var cla = cl.cla,
-					oldAngles = cl.viewangles;
+		function MouseMove(cmd) {
+			var cla = cl.cla,
+				oldAngles = cl.viewangles;
 
-				cla.viewangles[1] += cla.mouseX * 0.0022;
-				while (cla.viewangles[1] < 0)
-						cla.viewangles[1] += Math.PI*2;
-				while (cla.viewangles[1] >= Math.PI*2)
-						cla.viewangles[1] -= Math.PI*2;
+			cla.viewangles[1] += cla.mouseX * 0.0022;
+			while (cla.viewangles[1] < 0)
+					cla.viewangles[1] += Math.PI*2;
+			while (cla.viewangles[1] >= Math.PI*2)
+					cla.viewangles[1] -= Math.PI*2;
 
-				cla.viewangles[0] += cla.mouseY * 0.0022;
-				while (cla.viewangles[0] < -Math.PI*0.5)
-						cla.viewangles[0] = -Math.PI*0.5;
-				while (cla.viewangles[0] > Math.PI*0.5)
-						cla.viewangles[0] = Math.PI*0.5;
+			cla.viewangles[0] += cla.mouseY * 0.0022;
+			while (cla.viewangles[0] < -Math.PI*0.5)
+					cla.viewangles[0] = -Math.PI*0.5;
+			while (cla.viewangles[0] > Math.PI*0.5)
+					cla.viewangles[0] = Math.PI*0.5;
 
-				// reset
-				cla.mouseX = 0;
-				cla.mouseY = 0;
+			// reset
+			cla.mouseX = 0;
+			cla.mouseY = 0;
 
-				cmd.angles = cla.viewangles;
-			},
+			cmd.angles = cla.viewangles;
+		}
 
-			/**
-			 * Key bindings
-			 */
-			ExecBinding: function (key) {
-				var cmdToExec = key.binding;
+		/**
+		 * Key bindings
+		 */
+		function ExecBinding(key) {
+			var cmdToExec = key.binding;
 
-				if (!cmdToExec) return;
-				if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
+			if (!cmdToExec) return;
+			if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-				var callback = cl.CommandGet(cmdToExec);
-				if (callback) callback.call(this, key);
-			},
+			var callback = cl.CmdGet(cmdToExec);
+			if (callback) callback.call(this, key);
+		}
 
-			Bind: function (keyName, cmd) {
-				var key = GetKey(keyName);
-				key.binding = cmd;
-			},
+		function Bind(keyName, cmd) {
+			var key = GetKey(keyName);
+			key.binding = cmd;
+		}
 
-			Unbind: function (keyName, cmd) {
-				delete key.binding;
-			},
+		function Unbind(keyName, cmd) {
+			delete key.binding;
+		}
 
-			/**
-			 * Returns the fraction of the frame the input was down.
-			 */
-			GetKeyState: function (key) {
-				var msec = key.partial;
-				key.partial = 0;
+		/**
+		 * Returns the fraction of the frame the input was down.
+		 */
+		function GetKeyState(key) {
+			var msec = key.partial;
+			key.partial = 0;
 
-				if (key.active) {
-					msec += this.frameTime - key.downtime;
-				}
-
-				key.downtime = this.frameTime;
-
-				var val = msec / this.frameDelta;
-				if (val < 0) val = 0;
-				if (val > 1) val = 1;
-				return val;
+			if (key.active) {
+				msec += this.frameTime - key.downtime;
 			}
+
+			key.downtime = this.frameTime;
+
+			var val = msec / this.frameDelta;
+			if (val < 0) val = 0;
+			if (val > 1) val = 1;
+			return val;
+		}
+
+		return {
+			InputInit: InputInit,
+			SendCommand: SendCommand,
+			CreateCommand: CreateCommand,
+			KeyMove: KeyMove,
+			MouseMove: MouseMove,
+			ExecBinding: ExecBinding,
+			Bind: Bind,
+			Unbind: Unbind,
+			GetKeyState: GetKeyState
 		};
 	};
 });

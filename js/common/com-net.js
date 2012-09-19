@@ -23,22 +23,24 @@ define('common/com-net', ['sys/LoopbackChannel', 'sys/WebSocketClientChannel'], 
 			return addr;
 		}
 
-		return {
-			CreateChannel: function (sock, addrstr, challenge) {
-				var addr = StringToAddr(addrstr);
+		function CreateChannel(sock, addrstr, challenge) {
+			var addr = StringToAddr(addrstr);
 
-				if (addr.type === com.NetAdrType.NA_LOOPBACK) {
-					if (!loopback) {
-						loopback = new LoopbackChannel(sock, challenge);
-					}
-
-					return sock === com.NetSrc.NS_CLIENT ?
-						loopback.Client :
-						loopback.Server;
-				} else {
-					return new WebSocketClientChannel(addr, challenge);
+			if (addr.type === com.NetAdrType.NA_LOOPBACK) {
+				if (!loopback) {
+					loopback = new LoopbackChannel(sock, challenge);
 				}
+
+				return sock === com.NetSrc.NS_CLIENT ?
+					loopback.Client :
+					loopback.Server;
+			} else {
+				return new WebSocketClientChannel(addr, challenge);
 			}
+		}
+
+		return {
+			CreateChannel: CreateChannel
 		};
 	};
 });

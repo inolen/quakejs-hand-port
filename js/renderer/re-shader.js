@@ -25,7 +25,7 @@
  *    distribution.
  */
 
-define('renderer/r-shader', [], function () {
+define('renderer/re-shader', [], function () {
 	return function () {
 		var re = this;
 		var parsedShaders = {};
@@ -408,28 +408,31 @@ define('renderer/r-shader', [], function () {
 			}
 		}
 
-		return {
-			InitShaders: function () {
-				ScanAndLoadShaderFiles();
-			},
+		function InitShaders() {
+			ScanAndLoadShaderFiles();
+		}
 
-			FindShader: function (shaderName) {
-				var gl = re.gl;
+		function FindShader(shaderName) {
+			var gl = re.gl;
 
-				var shader;
+			var shader;
 
-				if ((shader = compiledShaders[shaderName])) {
-					return shader;
-				}
-
-				if ((shader = parsedShaders[shaderName])) {
-					return (compiledShaders[shaderName] = re.BuildGLShaderForShader(shader));
-				}
-
-				// Build default diffuse shader.
-				var texture = shaderName !== '*default' ? shaderName + '.png' : shaderName;
-				return (compiledShaders[shaderName] = re.BuildGLShaderForTexture(texture));
+			if ((shader = compiledShaders[shaderName])) {
+				return shader;
 			}
+
+			if ((shader = parsedShaders[shaderName])) {
+				return (compiledShaders[shaderName] = re.BuildGLShaderForShader(shader));
+			}
+
+			// Build default diffuse shader.
+			var texture = shaderName !== '*default' ? shaderName + '.png' : shaderName;
+			return (compiledShaders[shaderName] = re.BuildGLShaderForTexture(texture));
+		}
+
+		return {
+			InitShaders: InitShaders,
+			FindShader: FindShader
 		};
 	};
 });

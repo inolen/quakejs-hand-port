@@ -28,18 +28,22 @@ define('server/sv-net', [], function () {
 		function ParseClientMessage(msg) {
 		}
 
+		function NetInit() {
+			channel = sv.CreateChannel(sv.NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
+		}
+
+		function NetFrame() {
+			ProcessQueue();
+		}
+
+		function NetSend(data, length) {
+			channel.SendPacket(data, length);
+		}
+
 		return {
-			NetInit: function () {
-				channel = sv.CreateChannel(sv.NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
-			},
-
-			NetFrame: function () {
-				ProcessQueue();
-			},
-
-			NetSend: function (data, length) {
-				channel.SendPacket(data, length);
-			}
+			NetInit: NetInit,
+			NetFrame: NetFrame,
+			NetSend: NetSend
 		};
 	};
 });

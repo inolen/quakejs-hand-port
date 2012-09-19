@@ -1,14 +1,14 @@
 define(
-	'renderer/r',
+	'renderer/re',
 	[
 		'common/com-defines',
 		'common/com-bsp',
-		'renderer/r-defines',
-		'renderer/r-main',
-		'renderer/r-image',
-		'renderer/r-shader',
-		'renderer/r-glshader',
-		'renderer/r-world'
+		'renderer/re-defines',
+		'renderer/re-main',
+		'renderer/re-image',
+		'renderer/re-shader',
+		'renderer/re-glshader',
+		'renderer/re-world'
 	],
 	function (com_defines, com_bsp, re_defines, re_main, re_image, re_shader, re_glshader, re_world) {
 		var re = {};

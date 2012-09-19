@@ -2,17 +2,17 @@ define('client/cl-cmd', [], function () {
 	return function (re, bg) {
 		var cl = this;
 
-		return {
-			CommandInit: function () {
-				cl.CommandAdd('connect', cl.CommandConnect);
-			},
+		function CmdInit() {
+			cl.CmdAdd('connect', cl.CmdConnect);
+		}
 
-			/**
-			 * Commands
-			 */
-			CommandConnect: function (serverName) {
-				console.log('command connect: ' + serverName);
-			}
+		function CmdConnect(serverName) {
+			console.log('command connect: ' + serverName);
+		}
+
+		return {
+			CmdInit: CmdInit,
+			CmdConnect: CmdConnect
 		};
 	};
 });

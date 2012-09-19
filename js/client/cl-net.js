@@ -11,33 +11,36 @@ define('client/cl-net', [], function () {
 		}
 
 		function PacketEvent(msg) {
-			ParseServerPacket(msg);
+			cl.ParseServerPacket(msg);
 		}
 
-		function ParseServerPacket(msg) {
-			console.log('cl received', msg);
+		function NetInit() {
+			cl.NetConnect('localhost', 9000);
+		}
+
+		function NetFrame() {
+			ProcessQueue();
+		}
+
+		function NetConnect(host, port) {
+			cl.clc.netchan = cl.CreateChannel(cl.NetSrc.NS_CLIENT, 'ws://' + host + ':' + port, 0);
+		}
+
+		function NetSend(type, struct) {
+			var buffer = new ArrayBuffer(1 + struct.byteLength);
+			var view = new DataView(buffer, 0);
+
+			view.setUint8(0, type, true);
+			struct.serialize(buffer, 1);
+
+			cl.clc.netchan.SendPacket(buffer);
 		}
 
 		return {
-			NetInit: function () {
-				cl.clc.netchan = cl.CreateChannel(cl.NetSrc.NS_CLIENT, 'ws://localhost:9000', 0);
-			},
-
-			NetFrame: function () {
-				ProcessQueue();
-			},
-
-			NetSend: function (type, struct) {
-				var buffer = new ArrayBuffer(1 + struct.byteLength);
-				var view = new DataView(buffer, 0);
-
-				view.setUint8(0, type, true);
-				struct.serialize(buffer, 1);
-
-				cl.clc.netchan.SendPacket(buffer);
-			},
-
-			//NetSendOOB: function (type, struct)
+			NetInit: NetInit,
+			NetFrame: NetFrame,
+			NetConnect: NetConnect,
+			NetSend: NetSend
 		};
 	};
 });

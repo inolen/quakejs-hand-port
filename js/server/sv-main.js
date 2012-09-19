@@ -2,23 +2,27 @@ define('server/sv-main', [], function () {
 	return function (bg) {
 		var sv = this;
 
+		function Init(cl) {
+			sv.cl = cl;
+			sv.clients = new Array();
+
+			sv.CmdInit();
+			sv.NetInit();
+		}
+
+		function Frame() {
+			sv.NetFrame();
+		}
+
+		function SpawnServer(map) {
+			sv.cl.MapLoading();
+			// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
+		}
+
 		return {
-			Init: function () {
-				sv.clients = new Array();
-
-				sv.CommandInit();
-				sv.NetInit();
-			},
-
-			Frame: function () {
-				sv.NetFrame();
-			},
-
-			SpawnServer: function (map) {
-				sv.MapLoading();
-				// TODO CHECK IF CLIENT IS RUNNING LOCAL SERVER, IF SO CONNECT THEM
-				// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
-			}
+			Init: Init,
+			Frame: Frame,
+			SpawnServer: SpawnServer
 		};
 	};
 });

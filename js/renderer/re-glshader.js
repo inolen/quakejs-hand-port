@@ -25,7 +25,7 @@
  *    distribution.
  */
 
-define('renderer/r-glshader', [], function () {
+define('renderer/re-glshader', [], function () {
 	return function () {
 		var defaultVertexShaderSrc = '\
 			#ifdef GL_ES \n\
@@ -503,132 +503,138 @@ define('renderer/r-glshader', [], function () {
 			}
 		}
 
-		return {
-			InitGLShaders: function() {
-				var gl = this.gl;
+		function InitGLShaders() {
+			var gl = this.gl;
 
-				defaultProgram = CompileShaderProgram(gl, defaultVertexShaderSrc, defaultFragmentShaderSrc);
-				modelProgram = CompileShaderProgram(gl, defaultVertexShaderSrc, modelFragmnetShaderSrc);
-			},
+			defaultProgram = CompileShaderProgram(gl, defaultVertexShaderSrc, defaultFragmentShaderSrc);
+			modelProgram = CompileShaderProgram(gl, defaultVertexShaderSrc, modelFragmnetShaderSrc);
+		}
 
-			/**
-			 * Setup render state
-			 */
-			SetShader: function(shader) {
-				var gl = this.gl;
+		/**
+		 * Setup render state
+		 */
+		function SetShader(shader) {
+			var gl = this.gl;
 
-				if (!shader) {
-					gl.enable(gl.CULL_FACE);
-					gl.cullFace(gl.BACK);
-				} else if (shader.cull && !shader.sky) {
-					gl.enable(gl.CULL_FACE);
-					gl.cullFace(shader.cull);
-				} else {
-					gl.disable(gl.CULL_FACE);
-				}
-
-				return true;
-			},
-
-			SetShaderStage: function(shader, stage, time) {
-				var gl = this.gl;
-
-				if (stage.animFreq) {
-					// Texture animation seems like a natural place for setInterval, but that approach has proved error prone.
-					// It can easily get out of sync with other effects (like rgbGen pulses and whatnot) which can give a
-					// jittery or flat out wrong appearance. Doing it this way ensures all effects are synced.
-					var animFrame = Math.floor(time*stage.animFreq) % stage.animTexture.length;
-					stage.texture = stage.animTexture[animFrame];
-				}
-
-				gl.blendFunc(stage.blendSrc, stage.blendDest);
-
-				if (stage.depthWrite && !shader.sky) {
-					gl.depthMask(true);
-				} else {
-					gl.depthMask(false);
-				}
-
-				gl.depthFunc(stage.depthFunc);
-
-				gl.useProgram(stage.program);
-
-				var texture = stage.texture || this.FindImage('*default');
-
-				gl.activeTexture(gl.TEXTURE0);
-				gl.uniform1i(stage.program.uniform.texture, 0);
-				gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
-
-				if (stage.program.uniform.lightmap) {
-					var lightmap = this.FindImage('*lightmap');
-					gl.activeTexture(gl.TEXTURE1);
-					gl.uniform1i(stage.program.uniform.lightmap, 1);;
-					gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
-				}
-
-				if (stage.program.uniform.time) {
-					gl.uniform1f(stage.program.uniform.time, time);
-				}
-			},
-
-			/**
-			 * Shader compilation
-			 */
-			// TODO: Do we really have to have both of these?
-			BuildGLShaderForShader: function (shader) {
-				var gl = this.gl;
-
-				var glshader = {
-					cull: TranslateCull(gl, shader.cull),
-					sort: shader.sort,
-					sky: shader.sky,
-					blend: shader.blend,
-					name: shader.name,
-					lightmap: shader.lightmap,
-					stages: []
-				};
-
-				for (var i = 0; i < shader.stages.length; i++) {
-					var stage = shader.stages[i],
-						vertexSrc = GenerateVertexShader(gl, shader, stage),
-						fragmentSrc = GenerateFragmentShader(gl, shader, stage);
-
-					var glstage = _.clone(stage);
-
-					glstage.blendSrc = TranslateBlend(gl, stage.blendSrc);
-					glstage.blendDest = TranslateBlend(gl, stage.blendDest);
-					glstage.depthFunc = TranslateDepthFunc(gl, stage.depthFunc);
-					glstage.program = CompileShaderProgram(gl, vertexSrc, fragmentSrc);
-
-					glshader.stages.push(glstage);
-				}
-
-				return glshader;
-			},
-
-			BuildGLShaderForTexture: function (texture) {
-				var gl = this.gl;
-
-				var glshader = {
-					cull: gl.FRONT,
-					blend: false,
-					sort: 3,
-					stages: [
-						{
-							map: texture,
-							isLightmap: false,
-							blendSrc: gl.ONE,
-							blendDest: gl.ZERO,
-							depthFunc: gl.LEQUAL,
-							depthWrite: true,
-							texture: this.FindImage(texture),
-							program: defaultProgram
-						}
-					]
-				};
-
-				return glshader;
+			if (!shader) {
+				gl.enable(gl.CULL_FACE);
+				gl.cullFace(gl.BACK);
+			} else if (shader.cull && !shader.sky) {
+				gl.enable(gl.CULL_FACE);
+				gl.cullFace(shader.cull);
+			} else {
+				gl.disable(gl.CULL_FACE);
 			}
+
+			return true;
+		}
+
+		function SetShaderStage(shader, stage, time) {
+			var gl = this.gl;
+
+			if (stage.animFreq) {
+				// Texture animation seems like a natural place for setInterval, but that approach has proved error prone.
+				// It can easily get out of sync with other effects (like rgbGen pulses and whatnot) which can give a
+				// jittery or flat out wrong appearance. Doing it this way ensures all effects are synced.
+				var animFrame = Math.floor(time*stage.animFreq) % stage.animTexture.length;
+				stage.texture = stage.animTexture[animFrame];
+			}
+
+			gl.blendFunc(stage.blendSrc, stage.blendDest);
+
+			if (stage.depthWrite && !shader.sky) {
+				gl.depthMask(true);
+			} else {
+				gl.depthMask(false);
+			}
+
+			gl.depthFunc(stage.depthFunc);
+
+			gl.useProgram(stage.program);
+
+			var texture = stage.texture || this.FindImage('*default');
+
+			gl.activeTexture(gl.TEXTURE0);
+			gl.uniform1i(stage.program.uniform.texture, 0);
+			gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+
+			if (stage.program.uniform.lightmap) {
+				var lightmap = this.FindImage('*lightmap');
+				gl.activeTexture(gl.TEXTURE1);
+				gl.uniform1i(stage.program.uniform.lightmap, 1);;
+				gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
+			}
+
+			if (stage.program.uniform.time) {
+				gl.uniform1f(stage.program.uniform.time, time);
+			}
+		}
+
+		/**
+		 * Shader compilation
+		 */
+		// TODO: Do we really have to have both of these?
+		function BuildGLShaderForShader(shader) {
+			var gl = this.gl;
+
+			var glshader = {
+				cull: TranslateCull(gl, shader.cull),
+				sort: shader.sort,
+				sky: shader.sky,
+				blend: shader.blend,
+				name: shader.name,
+				lightmap: shader.lightmap,
+				stages: []
+			};
+
+			for (var i = 0; i < shader.stages.length; i++) {
+				var stage = shader.stages[i],
+					vertexSrc = GenerateVertexShader(gl, shader, stage),
+					fragmentSrc = GenerateFragmentShader(gl, shader, stage);
+
+				var glstage = _.clone(stage);
+
+				glstage.blendSrc = TranslateBlend(gl, stage.blendSrc);
+				glstage.blendDest = TranslateBlend(gl, stage.blendDest);
+				glstage.depthFunc = TranslateDepthFunc(gl, stage.depthFunc);
+				glstage.program = CompileShaderProgram(gl, vertexSrc, fragmentSrc);
+
+				glshader.stages.push(glstage);
+			}
+
+			return glshader;
+		}
+
+		function BuildGLShaderForTexture(texture) {
+			var gl = this.gl;
+
+			var glshader = {
+				cull: gl.FRONT,
+				blend: false,
+				sort: 3,
+				stages: [
+					{
+						map: texture,
+						isLightmap: false,
+						blendSrc: gl.ONE,
+						blendDest: gl.ZERO,
+						depthFunc: gl.LEQUAL,
+						depthWrite: true,
+						texture: this.FindImage(texture),
+						program: defaultProgram
+					}
+				]
+			};
+
+			return glshader;
+		}
+
+		return {
+			InitGLShaders: InitGLShaders,
+			SetShader: SetShader,
+			SetShaderStage: SetShaderStage,
+			BuildGLShaderForShader: BuildGLShaderForShader,
+			BuildGLShaderForTexture: BuildGLShaderForTexture
 		};
 	};
 });

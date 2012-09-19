@@ -5,9 +5,10 @@ define('common/com-defines', [], function () {
 		/**
 		 * NETWORKING
 		 */
-		NetSrc: {
-			NS_CLIENT: 0,
-			NS_SERVER: 1
+		NetAdr: {
+			type: 0,
+			ip: null,
+			port: 0
 		},
 
 		NetAdrType: {
@@ -16,10 +17,9 @@ define('common/com-defines', [], function () {
 			NA_IP: 2
 		},
 
-		NetAdr: {
-			type: 0,
-			ip: null,
-			port: 0
+		NetSrc: {
+			NS_CLIENT: 0,
+			NS_SERVER: 1
 		},
 
 		/**
@@ -28,6 +28,16 @@ define('common/com-defines', [], function () {
 		Packet: {
 			type: 0,
 			data: null
+		},
+
+		// client to server
+		ClcOps: {
+			clc_bad: 0,
+			clc_nop: 1,
+			clc_move: 2,					// [[UserCmd]
+			clc_moveNoDelta: 3,				// [[UserCmd]
+			clc_clientCommand: 4,			// [string] message
+			clc_EOF: 5
 		},
 
 		// server to client
@@ -43,28 +53,18 @@ define('common/com-defines', [], function () {
 			svc_EOF: 8
 		},
 
-		// client to server
-		ClcOps: {
-			clc_bad: 0,
-			clc_nop: 1,
-			clc_move: 2,					// [[UserCmd]
-			clc_moveNoDelta: 3,				// [[UserCmd]
-			clc_clientCommand: 4,			// [string] message
-			clc_EOF: 5
-		},
-
 		/**
 		 * GAMESTATE
 		 */
+		PlayerState: {
+			viewheight: 0
+		},
+
 		UserCmd: Struct.create(
 			Struct.array('angles', Struct.float32(), 3),
 			Struct.uint8('forwardmove'),
 			Struct.uint8('rightmove'),
 			Struct.uint8('upmove')
-		),
-
-		PlayerState: {
-			viewheight: 0
-		}
+		)
 	};
 });

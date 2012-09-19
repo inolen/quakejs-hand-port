@@ -27,15 +27,20 @@ requirejs(['client/cl', 'server/sv'], function (cl, sv) {
 	}
 
 	function init(canvas, gl) {
-		sv.Init();
 		cl.Init(canvas, gl);
+		sv.Init(cl);
 
 		// Provide the user a way to interface with the client.
-		Object.defineProperty(window, '$', {
-			get: function () {
-				return null;//com.CommandGetAll();
+		window.$ = function (cmd) {
+			var args = Array.prototype.slice.call(arguments, 1);
+			var callback;
+
+			if ((callback = sv.CmdGet(cmd))) {
+				callback.apply(sv, args);
+			} else if ((callback = cl.CmdGet(cmd))) {
+				callback.apply(cl, args);
 			}
-		});
+		};
 
 		// Main loop.
 		function onRequestedFrame(timestamp) {

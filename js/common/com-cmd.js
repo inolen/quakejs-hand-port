@@ -2,14 +2,17 @@ define('common/com-cmd', [], function () {
 	return function () {
 		var commands = {};
 
-		return {
-			CommandAdd: function (cmd, callback) {
-				commands[cmd] = callback;
-			},
+		function CmdAdd(cmd, callback) {
+			commands[cmd] = callback;
+		}
 
-			CommandGet: function (cmd) {
-				return commands[cmd];
-			}
+		function CmdGet(cmd) {
+			return commands[cmd];
+		}
+
+		return {
+			CmdAdd: CmdAdd,
+			CmdGet: CmdGet
 		};
 	};
 });

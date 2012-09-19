@@ -2,18 +2,18 @@ define('server/sv-cmd', [], function () {
 	return function (bg) {
 		var sv = this;
 
-		return {
-			CommandInit: function () {
-				sv.CommandAdd('map', sv.CommandLoadMap);
-			},
+		function CmdInit() {
+			sv.CmdAdd('map', sv.CmdLoadMap);
+		}
 
-			/**
-			 * Commands
-			 */
-			CommandLoadMap: function (mapName) {
-				console.log('command load map');
-				sv.SpawnServer(mapName);
-			}
+		function CmdLoadMap(mapName) {
+			console.log('command load map');
+			sv.SpawnServer(mapName);
+		}
+
+		return {
+			CmdInit: CmdInit,
+			CmdLoadMap: CmdLoadMap
 		};
 	};
 });
