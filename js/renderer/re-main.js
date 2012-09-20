@@ -83,7 +83,6 @@ function Init(canvasCtx, glCtx) {
 
 	InitImages();
 	InitShaders();
-	InitGLShaders();
 	BuildSkyboxBuffers();
 }
 
@@ -359,7 +358,7 @@ function DrawWorld(modelViewMat, projectionMat) {
 	// Map Geometry buffers
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-
+	
 	for (var i = 0; i < map.data.shaders.length; i++) {
 		var shader = map.data.shaders[i];
 
@@ -374,7 +373,7 @@ function DrawWorld(modelViewMat, projectionMat) {
 		if (glshader.sky) {
 			skyShader = glshader;
 		}
-
+	
 		SetShader(glshader);
 
 		for (var j = 0; j < glshader.stages.length; j++) {
