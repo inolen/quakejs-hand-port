@@ -1,13 +1,15 @@
 function ProcessQueue() {
-	// manually send packet events for the loopback channel
-	var msg;
-	while ((msg = clc.netchan.GetPacket())) {
-		PacketEvent(msg);
+	var packet;
+	while ((packet = clc.netchan.GetPacket())) {
+		PacketEvent(packet.buffer, packet.length);
 	}
 }
 
-function PacketEvent(msg) {
-	ParseServerPacket(msg);
+function PacketEvent(buffer, length) {
+	var msg = new Net.ServerOp();
+	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
+
+	ParseServerMessage(msg);
 }
 
 function NetInit() {
@@ -22,12 +24,15 @@ function NetConnect(host, port) {
 	clc.netchan = CreateChannel(NetSrc.NS_CLIENT, 'ws://' + host + ':' + port, 0);
 }
 
-function NetSend(type, struct) {
-	var buffer = new ArrayBuffer(1 + struct.byteLength);
-	var view = new DataView(buffer, 0);
+function NetSend(msg) {
+	// TODO: Validate message type.
+	/*if (!(msg instanceof PROTO.Message)) {
+		throw new Error('Message is not an instance of PROTO.Message');
+	}*/
 
-	view.setUint8(0, type, true);
-	struct.serialize(buffer, 1);
+	var serialized = new PROTO.ArrayBufferStream();
+	msg.SerializeToStream(serialized);
 
-	clc.netchan.SendPacket(buffer);
+	var buffer = serialized.getArrayBuffer();
+	clc.netchan.SendPacket(buffer, serialized.length());
 }

@@ -1,5 +1,5 @@
-function ParseServerPacket(msg) {
-	console.log('cl received', msg);
+function ParseServerMessage(msg) {
+	//console.log('cl received', msg);
 
 	/*
 	while ( 1 ) {

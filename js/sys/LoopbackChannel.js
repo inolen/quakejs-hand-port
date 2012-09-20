@@ -8,16 +8,20 @@ define('sys/LoopbackChannel', [], function () {
 	var MAX_LOOPBACK = 16;
 
 	var queue_t = {
-		msgs: new Array(MAX_LOOPBACK),
+		msgs: null,
 		get: 0,
 		send: 0
 	};
 
-	var LoopbackChannel = function (challenge) {
-		var queues = new Array(2);
-		queues[0] = Object.create(queue_t);
-		queues[1] = Object.create(queue_t);
+	var queues = new Array(2);
 
+	queues[0] = Object.create(queue_t);
+	queues[0].msgs = new Array(MAX_LOOPBACK);
+
+	queues[1] = Object.create(queue_t);
+	queues[1].msgs = new Array(MAX_LOOPBACK);
+
+	var LoopbackChannel = function (sock, challenge) {
 		var _channel = function (sock) {
 			return {
 				GetPacket: function () {
@@ -37,19 +41,19 @@ define('sys/LoopbackChannel', [], function () {
 					return q.msgs[i];
 				},
 
-				SendPacket: function (data) {
+				SendPacket: function (buffer, length) {
 					var q = queues[sock^1];
 					var i = q.send & (MAX_LOOPBACK-1);
 					q.send++;
-					q.msgs[i] = { data: data };
+					q.msgs[i] = {
+						buffer: buffer,
+						length: length
+					};
 				}
 			};
 		};
 
-		return {
-			Client: new _channel(0),
-			Server: new _channel(1)
-		};
+		return new _channel(sock);
 	};
 
 	return LoopbackChannel;

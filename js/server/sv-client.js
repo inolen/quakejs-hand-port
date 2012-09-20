@@ -13,12 +13,19 @@ function ClientEnterWorld(client, cmd) {
 
 function SendClientGameState(client) {
 	client.gameStateSent = true;
+
+	var svop = new Net.ServerOp();
+	svop.type = Net.ServerOp.Type.gamestate;
+	svop.svop_gamestate = new Net.ServerOp_Gamestate();
+	svop.svop_gamestate.configstrings.push('fuck u');
+
+	NetSend(svop);
 }
 
 function UserMove(client, cmd) {
 	// TODO If the user hasn't acknowleged the gamestate, send it.
 	if (!client.gameStateSent) {
-		sv.SendClientGameState(client);
+		SendClientGameState(client);
 	}
 
 	ClientThink(client, cmd);

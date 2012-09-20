@@ -142,11 +142,16 @@ function SysMouseMoveEvent(ev) {
  */
 function SendCommand() {
 	var cmd = CreateCommand();
-	NetSend(ClcOps.clc_move, cmd);
+
+	var clop = new Net.ClientOp();
+	clop.type = Net.ClientOp.Type.move;
+	clop.clop_move = cmd;
+
+	NetSend(clop);
 }
 
 function CreateCommand() {
-	var cmd = Object.create(UserCmd);
+	var cmd = new Net.ClientOp_UserCmd();
 	KeyMove(cmd);
 	MouseMove(cmd);
 	return cmd;
@@ -189,7 +194,7 @@ function MouseMove(cmd) {
 	cla.mouseX = 0;
 	cla.mouseY = 0;
 
-	cmd.angles = cla.viewangles;
+	//cmd.angles = cla.viewangles;
 }
 
 /**

@@ -1,0 +1,36 @@
+package Net;
+message ClientOp {
+  enum Type {
+    nop = 1;
+    move = 2;          // [[UserCmd]
+    moveNoDelta = 3;   // [[UserCmd]
+    clientCommand = 4; // [string] message
+  }
+
+  required Type type = 1;
+  optional ClientOp_UserCmd clop_move = 2;
+}
+
+message ClientOp_UserCmd {
+  repeated float angles = 1 [packed=true];
+  required uint32 forwardmove = 2;
+  required uint32 rightmove = 3;
+  required uint32 upmove = 4;
+}
+
+message ServerOp {
+  enum Type {
+    gamestate = 1;
+    configstring = 2;  // [short] [string] only in gamestate messages
+    baseline = 3;      // only in gamestate messages
+    serverCommand = 4; // [string] to be executed by client game module
+    snapshot = 5;
+  }
+
+  required Type type = 1;
+  optional ServerOp_Gamestate svop_gamestate = 2;
+}
+
+message ServerOp_Gamestate {
+  repeated string configstrings = 1;
+}

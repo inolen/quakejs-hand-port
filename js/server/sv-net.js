@@ -1,28 +1,23 @@
 var channel;
 
 function ProcessQueue() {
-	// manually send packet events for the loopback channel
-	var msg;
-	while ((msg = channel.GetPacket())) {
-		PacketEvent(msg);
+	var packet;
+	while ((packet = channel.GetPacket())) {
+		PacketEvent(packet.buffer, packet.length);
 	}
 }
 
-function PacketEvent(msg) {
-	var buffer = msg.data;
-	var view = new DataView(buffer, 0);
+function PacketEvent(buffer, length) {
+	var msg = new Net.ClientOp();
+	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
 
-	var type = view.getUint8(0, true);
-	var struct = null;
-
-	if (type === ClcOps.clc_move) {
-		struct = UserCmd.deserialize(buffer, 0, 1)[0];
-	}
-
-	//console.log('sv received: ' + type, struct);
+	ParseClientMessage(msg);
 }
 
 function ParseClientMessage(msg) {
+	if (msg.type === Net.ClientOp.Type.move) {
+		UserMove(msg.clop_move);
+	}
 }
 
 function NetInit() {
@@ -33,6 +28,16 @@ function NetFrame() {
 	ProcessQueue();
 }
 
-function NetSend(data, length) {
-	channel.SendPacket(data, length);
+// All communication is done with Protocol Buffers.
+function NetSend(msg) {
+	// TODO: Validate message type.
+	/*if (!(msg instanceof PROTO.Message)) {
+		throw new Error('Message is not an instance of PROTO.Message');
+	}*/
+
+	var serialized = new PROTO.ArrayBufferStream();
+	msg.SerializeToStream(serialized);
+
+	var buffer = serialized.getArrayBuffer();
+	channel.SendPacket(buffer, serialized.length());
 }

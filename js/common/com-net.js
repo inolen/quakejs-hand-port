@@ -1,5 +1,3 @@
-var loopback;
-
 function StringToAddr(str) {
 	var addr = Object.create(NetAdr);
 
@@ -24,13 +22,7 @@ function CreateChannel(sock, addrstr, challenge) {
 	var addr = StringToAddr(addrstr);
 
 	if (addr.type === NetAdrType.NA_LOOPBACK) {
-		if (!loopback) {
-			loopback = new LoopbackChannel(sock, challenge);
-		}
-
-		return sock === NetSrc.NS_CLIENT ?
-			loopback.Client :
-			loopback.Server;
+		return new LoopbackChannel(sock, challenge);
 	} else {
 		return new WebSocketClientChannel(addr, challenge);
 	}
