@@ -1,3 +1,4 @@
+// TODO: This shouldn't be calling FindImage, that should go down in GLShader.
 define('renderer/Q3Shader', [], function () {
 	/**
 	 * Shader Tokenizer
