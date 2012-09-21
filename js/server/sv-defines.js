@@ -1,5 +1,3 @@
-var ClientState = {
-	challenge: 0,
-	lastUsercmd: null,
+var Client = {
 	netchan: null
 }

@@ -1,20 +1,10 @@
 function ParseServerMessage(msg) {
-	//console.log('cl received', msg);
+	if (msg.type === Net.ServerOp.Type.gamestate) {
+		ParseGameState(msg.svop_gamestate);
+	}
 
 	/*
 	while ( 1 ) {
-		if ( msg->readcount > msg->cursize ) {
-			Com_Error (ERR_DROP,"CL_ParseServerMessage: read past end of server message");
-			break;
-		}
-
-		cmd = MSG_ReadByte( msg );
-
-		if (cmd == svc_EOF) {
-			SHOWNET( msg, "END OF MESSAGE" );
-			break;
-		}
-
 		// other commands
 		switch ( cmd ) {
 		default:
@@ -35,7 +25,8 @@ function ParseServerMessage(msg) {
 	*/
 }
 
-function ParseGameState() {
+function ParseGameState(gamestate) {
+	console.log('ParseGameState: got configstrings', gamestate.configstrings);
 }
 
 function ParseServerInfo() {

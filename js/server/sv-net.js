@@ -1,35 +1,28 @@
-var channel;
-
-function ProcessQueue() {
-	var packet;
-	while ((packet = channel.GetPacket())) {
-		PacketEvent(packet.buffer, packet.length);
-	}
-}
-
-function PacketEvent(buffer, length) {
-	var msg = new Net.ClientOp();
-	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
-
-	ParseClientMessage(msg);
-}
-
-function ParseClientMessage(msg) {
-	if (msg.type === Net.ClientOp.Type.move) {
-		UserMove(msg.clop_move);
-	}
-}
+var netchan;
 
 function NetInit() {
-	channel = CreateChannel(NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
+	var chan = NetChannelCreate(NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
+
+	chan.addListener('open', function () {
+		netchan = chan;
+	});
+
+	chan.addListener('accept', function (netchan) {
+		console.log('SV: Accepting incoming client connection.');
+		DirectConnect(netchan);
+	});
 }
 
 function NetFrame() {
 	ProcessQueue();
 }
 
-// All communication is done with Protocol Buffers.
 function NetSend(msg) {
+	if (!netchan) {
+		console.warn('SV: NetSend called with uninitialized channel');
+		return;
+	}
+
 	// TODO: Validate message type.
 	/*if (!(msg instanceof PROTO.Message)) {
 		throw new Error('Message is not an instance of PROTO.Message');
@@ -39,5 +32,41 @@ function NetSend(msg) {
 	msg.SerializeToStream(serialized);
 
 	var buffer = serialized.getArrayBuffer();
-	channel.SendPacket(buffer, serialized.length());
+	netchan.SendPacket(buffer, serialized.length());
+}
+
+function ProcessQueue() {
+	if (!netchan) {
+		console.warn('SV: ProcessQueue called with uninitialized channel');
+		return;
+	}
+
+	var packet;
+	while ((packet = netchan.GetPacket())) {
+		PacketEvent(packet.addr, packet.buffer, packet.length);
+	}
+}
+
+function PacketEvent(addr, buffer, length) {
+	var msg = new Net.ClientOp();
+	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
+
+	for (var i = 0; i < clients.length; i++) {
+		var cl = clients[i];
+
+		if (!_.isEqual(cl.netchan.addr, addr)) {
+			continue;
+		}
+
+		ParseClientMessage(cl, msg);
+		break;
+	}
+}
+
+function ParseClientMessage(cl, msg) {
+	//console.log('parsing client message from', cl);
+
+	if (msg.type === Net.ClientOp.Type.move) {
+		UserMove(cl, msg.clop_move);
+	}
 }

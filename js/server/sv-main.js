@@ -1,4 +1,5 @@
 var cl;
+var clients;
 
 function Init(cl) {
 	cl = cl;

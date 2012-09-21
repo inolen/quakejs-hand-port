@@ -17,8 +17,7 @@ var ClientActive = {
 var ClientConnection = {
 	/*connstate_t	state;
 	var clientNum;*/
-	challenge: 0,
-	netchan: null
+	challenge: 0
 };
 
 var KeyState = {

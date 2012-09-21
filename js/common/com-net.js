@@ -18,11 +18,11 @@ function StringToAddr(str) {
 	return addr;
 }
 
-function CreateChannel(sock, addrstr, challenge) {
+function NetChannelCreate(sock, addrstr, challenge, callback) {
 	var addr = StringToAddr(addrstr);
 
 	if (addr.type === NetAdrType.NA_LOOPBACK) {
-		return new LoopbackChannel(sock, challenge);
+		return new LoopbackChannel(sock, addr, challenge);
 	} else {
 		return new WebSocketClientChannel(addr, challenge);
 	}

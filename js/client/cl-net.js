@@ -1,16 +1,4 @@
-function ProcessQueue() {
-	var packet;
-	while ((packet = clc.netchan.GetPacket())) {
-		PacketEvent(packet.buffer, packet.length);
-	}
-}
-
-function PacketEvent(buffer, length) {
-	var msg = new Net.ServerOp();
-	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
-
-	ParseServerMessage(msg);
-}
+var netchan;
 
 function NetInit() {
 	NetConnect('localhost', 9000);
@@ -21,10 +9,19 @@ function NetFrame() {
 }
 
 function NetConnect(host, port) {
-	clc.netchan = CreateChannel(NetSrc.NS_CLIENT, 'ws://' + host + ':' + port, 0);
+	var chan = NetChannelCreate(NetSrc.NS_CLIENT, 'ws://' + host + ':' + port, 0);
+
+	chan.addListener('open', function () {
+		netchan = chan;
+	});
 }
 
 function NetSend(msg) {
+	if (!netchan) {
+		console.warn('CL: NetSend called with uninitialized channel');
+		return;
+	}
+
 	// TODO: Validate message type.
 	/*if (!(msg instanceof PROTO.Message)) {
 		throw new Error('Message is not an instance of PROTO.Message');
@@ -34,5 +31,24 @@ function NetSend(msg) {
 	msg.SerializeToStream(serialized);
 
 	var buffer = serialized.getArrayBuffer();
-	clc.netchan.SendPacket(buffer, serialized.length());
+	netchan.SendPacket(buffer, serialized.length());
+}
+
+function ProcessQueue() {
+	if (!netchan) {
+		console.warn('CL: ProcessQueue called with uninitialized channel');
+		return;
+	}
+
+	var packet;
+	while ((packet = netchan.GetPacket())) {
+		PacketEvent(packet.addr, packet.buffer, packet.length);
+	}
+}
+
+function PacketEvent(addr, buffer, length) {
+	var msg = new Net.ServerOp();
+	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
+
+	ParseServerMessage(msg);
 }

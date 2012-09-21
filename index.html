@@ -5,29 +5,13 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 		<script type="text/javascript" src="js/vendor/underscore-min.js"></script>
+		<script type="text/javascript" src="js/vendor/EventEmitter.min.js"></script>
 		<script type="text/javascript" src="js/vendor/game-shim.js"></script>
 		<script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
 		<script type="text/javascript" src="js/vendor/js-struct.js"></script>
 		<script type="text/javascript" src="js/vendor/protobuf.js"></script>
 		<script type="text/javascript" src="js/protocol/Net.pbj.js"></script>
 		<script type="text/javascript" data-main="js/main.js" src="js/vendor/require.min.js"></script>
-
-		<!--<script type="text/javascript">
-			var sop = new Net.ServerOp();
-			sop.type = Net.ServerOp.Type.gamestate;
-			sop.sop_gamestate = new Net.ServerOp_Gamestate();
-			sop.sop_gamestate.configstrings.push('fuck u');
-
-			var serialized = new PROTO.Base64Stream();
-			sop.SerializeToStream(serialized);
-			console.log(serialized.getString());
-
-			var deserialized = new Net.ServerOp();
-			deserialized.ParseFromStream(new PROTO.Base64Stream(serialized.getString()));
-			console.log(deserialized);
-			console.log(deserialized.type);
-			console.log(deserialized.sop_gamestate.configstrings);
-		</script>-->
 
 		<!-- Stylesheet -->
 		<link href="css/q3demo.css" rel="stylesheet" type="text/css" />

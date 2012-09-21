@@ -23,7 +23,6 @@ function SendClientGameState(client) {
 }
 
 function UserMove(client, cmd) {
-	// TODO If the user hasn't acknowleged the gamestate, send it.
 	if (!client.gameStateSent) {
 		SendClientGameState(client);
 	}
@@ -31,5 +30,8 @@ function UserMove(client, cmd) {
 	ClientThink(client, cmd);
 }
 
-function ClientConnect() {
+function DirectConnect(addr) {
+	var client = Object.create(Client);
+	client.netchan = netchan;
+	clients.push(client);
 }
