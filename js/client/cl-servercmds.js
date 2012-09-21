@@ -1,3 +1,5 @@
+var gamestate = {};
+
 function ParseServerMessage(msg) {
 	if (msg.type === Net.ServerOp.Type.gamestate) {
 		ParseGameState(msg.svop_gamestate);
@@ -26,7 +28,15 @@ function ParseServerMessage(msg) {
 }
 
 function ParseGameState(gamestate) {
-	console.log('ParseGameState: got configstrings', gamestate.configstrings);
+	for (var i = 0; i < gamestate.configstrings.length; i++) {
+		var cs = gamestate.configstrings[i];
+		gamestate[cs.key] = cs.value;
+	}
+
+	console.log('parsed gamestate', gamestate);
+
+	// TODO: Call our own version of CL_InitCGame
+	re.LoadMap(gamestate['map']);
 }
 
 function ParseServerInfo() {

@@ -52,6 +52,20 @@ Net.ServerOp = PROTO.Message("Net.ServerOp",{
 		baseline :3,
 		serverCommand :4,
 		snapshot :5	}),
+ConfigString : PROTO.Message("Net.ServerOp.ConfigString",{
+	key: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.string;},
+		id: 1
+	},
+	value: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.string;},
+		id: 2
+	}})
+,
 	type: {
 		options: {},
 		multiplicity: PROTO.required,
@@ -68,6 +82,6 @@ Net.ServerOp_Gamestate = PROTO.Message("Net.ServerOp_Gamestate",{
 	configstrings: {
 		options: {},
 		multiplicity: PROTO.repeated,
-		type: function(){return PROTO.string;},
+		type: function(){return Net.ServerOp.ConfigString;},
 		id: 1
 	}});

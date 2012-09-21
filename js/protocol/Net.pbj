@@ -27,10 +27,15 @@ message ServerOp {
     snapshot = 5;
   }
 
+  message ConfigString {
+    required string key = 1;
+    required string value = 2;
+  }
+
   required Type type = 1;
   optional ServerOp_Gamestate svop_gamestate = 2;
 }
 
 message ServerOp_Gamestate {
-  repeated string configstrings = 1;
+  repeated ServerOp.ConfigString configstrings = 1;
 }

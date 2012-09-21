@@ -16,7 +16,6 @@ function Init(canvasCtx, glCtx) {
 	CmdInit();
 	NetInit();
 	re.Init(canvas, gl);
-	re.LoadMap('q3tourney2');
 }
 
 function Frame() {

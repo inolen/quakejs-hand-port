@@ -17,7 +17,11 @@ function SendClientGameState(client) {
 	var svop = new Net.ServerOp();
 	svop.type = Net.ServerOp.Type.gamestate;
 	svop.svop_gamestate = new Net.ServerOp_Gamestate();
-	svop.svop_gamestate.configstrings.push('fuck u');
+	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and CS_SERVERINFO)
+	var cs = new Net.ServerOp.ConfigString();
+	cs.key = 'map';
+	cs.value = 'q3tourney2';
+	svop.svop_gamestate.configstrings.push(cs);
 
 	NetSend(svop);
 }
@@ -35,3 +39,5 @@ function DirectConnect(addr) {
 	client.netchan = netchan;
 	clients.push(client);
 }
+
+// TODO: Add disconnect support.
