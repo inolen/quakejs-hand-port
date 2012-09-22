@@ -1,5 +1,13 @@
 var Q3W_BASE_FOLDER = 'baseq3';
 
+var PITCH = 0; // up / down
+var YAW   = 1; // left / right
+var ROLL  = 2; // fall over
+
+var PACKET_BACKUP = 32; // number of old messages that must be kept on client and
+						// server for delta comrpession and ping estimation
+var PACKET_MASK = (PACKET_BACKUP-1);
+
 /**
  * NETWORKING
  */
@@ -23,6 +31,9 @@ var NetSrc = {
 /**
  * GAMESTATE
  */
-var PlayerState = {
-	viewheight: 0
+var PlayerState = function () {
+	this.origin = [0, 0, 0];
+	this.velocity = [0, 0, 0];
+	this.viewangles = [0, 0, 0];
+	this.speed = 0;
 };

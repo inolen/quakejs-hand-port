@@ -1,17 +1,33 @@
-var Pmove = {
-	// state (in / out)
-	ps: Object.create(PlayerState),
+var TrType = {
+	TR_STATIONARY: 1,
+	TR_INTERPOLATE: 2, // non-parametric, but interpolate between snapshots
+	TR_LINEAR: 3,
+	TR_LINEAR_STOP: 4,
+	TR_SINE: 5,        // value = base + sin( time / duration ) * delta
+	TR_GRAVITY: 6
+};
+
+var Trajectory = function () {
+	this.type = 0;
+	this.time = 0;
+	this.duration = 0;
+	this.base = [0, 0, 0];
+	this.delta = [0, 0, 0];
+};
+
+var PmoveInfo = function () {
+	this.ps = null;
 
 	// command (in)
-	cmd: null,
-	tracemask: 0, // collide against these surfaces
-	framecount: 0,
+	this.cmd = null;
+	//this.tracemask = 0; // collide against these surfaces
+	//this.framecount = 0;
 
 	// results (out)
-	numtouch: 0,
-	touchents: null, //[MAXTOUCH];
-	mins: [0, 0, 0],
-	maxs: [0, 0, 0]
+	//this.numtouch = 0;
+	//this.touchents = null; //[MAXTOUCH];
+	//this.mins = [0, 0, 0];
+	//this.maxs = [0, 0, 0];
 
 	// callbacks to test the world
 	// these will be different functions during game and cgame

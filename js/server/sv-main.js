@@ -1,9 +1,11 @@
 var cl;
-var clients;
+var svs;
+var sv;
 
 function Init(cl) {
 	cl = cl;
-	clients = new Array();
+	svs = new ServerStatic();
+	sv = new Server();
 
 	CmdInit();
 	NetInit();
@@ -11,6 +13,8 @@ function Init(cl) {
 
 function Frame() {
 	NetFrame();
+	//CheckTimeouts();
+	SendClientMessages();
 }
 
 function SpawnServer(map) {

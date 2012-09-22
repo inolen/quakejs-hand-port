@@ -51,22 +51,20 @@ function PacketEvent(addr, buffer, length) {
 	var msg = new Net.ClientOp();
 	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
 
-	for (var i = 0; i < clients.length; i++) {
-		var cl = clients[i];
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
 
-		if (!_.isEqual(cl.netchan.addr, addr)) {
+		if (!_.isEqual(client.netchan.addr, addr)) {
 			continue;
 		}
 
-		ParseClientMessage(cl, msg);
+		ParseClientMessage(client, msg);
 		break;
 	}
 }
 
-function ParseClientMessage(cl, msg) {
-	//console.log('parsing client message from', cl);
-
+function ParseClientMessage(client, msg) {
 	if (msg.type === Net.ClientOp.Type.move) {
-		UserMove(cl, msg.clop_move);
+		UserMove(client, msg.clop_move);
 	}
 }

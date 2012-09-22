@@ -1,19 +1,13 @@
-function ClientThink(client, cmd) {
-	client.lastUsercmd = cmd;
+function UserMove(client, cmd) {
+	if (!client.gameStateSent) {
+		SendClientGameState(client);
+		client.gameStateSent = true;
+	}
 
-	//VM_Call( gvm, GAME_CLIENT_THINK, cl - svs.clients );
-}
-
-function ClientEnterWorld(client, cmd) {
-	client.lastUsercmd = cmd;
-
-	// call the game begin function
-	//VM_Call( gvm, GAME_CLIENT_BEGIN, client - svs.clients );
+	ClientThink(client, cmd);
 }
 
 function SendClientGameState(client) {
-	client.gameStateSent = true;
-
 	var svop = new Net.ServerOp();
 	svop.type = Net.ServerOp.Type.gamestate;
 	svop.svop_gamestate = new Net.ServerOp_Gamestate();
@@ -26,18 +20,31 @@ function SendClientGameState(client) {
 	NetSend(svop);
 }
 
-function UserMove(client, cmd) {
-	if (!client.gameStateSent) {
-		SendClientGameState(client);
-	}
+function ClientThink(client, cmd) {
+	client.lastUsercmd = cmd;
 
-	ClientThink(client, cmd);
+	// TODO: Following q3 convention here.. seems weird.
+	client.ps.speed = 320;
+
+	var pm = new PmoveInfo();
+	pm.ps = client.ps;
+	pm.cmd = cmd;
+
+	bg.Pmove(pm);
+	//VM_Call( gvm, GAME_CLIENT_THINK, cl - svs.clients );
+}
+
+function ClientEnterWorld(client, cmd) {
+	client.lastUsercmd = cmd;
+
+	// call the game begin function
+	//VM_Call( gvm, GAME_CLIENT_BEGIN, client - svs.clients );
 }
 
 function DirectConnect(addr) {
-	var client = Object.create(Client);
+	var client = new Client();
 	client.netchan = netchan;
-	clients.push(client);
+	svs.clients.push(client);
 }
 
 // TODO: Add disconnect support.

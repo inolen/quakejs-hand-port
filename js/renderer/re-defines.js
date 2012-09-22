@@ -3,23 +3,31 @@ var ReImage = {
 	texnum: null
 };
 
-var ReRefDef = {
-	x: 0,
-	y: 0,
-	width: 0,
-	height: 0,
-	fov: 0,
-	origin: null,
-	angles: null,
-	drawSurfs: null
+var RefDef = function () {
+	this.x = 0;
+	this.y = 0;
+	this.width = 0;
+	this.height = 0;
+	this.fov = 0;
+	this.origin = [0, 0, 0];
+	this.viewaxis = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	this.drawSurfs = null;
 };
 
-var ReViewParms = {
-	x: 0,
-	y: 0,
-	width: 0,
-	height: 0,
-	fov: 0,
-	origin: null,
-	angles: null
+var ViewParms = function () {
+	this.x = 0;
+	this.y = 0;
+	this.width = 0;
+	this.height = 0;
+	this.fov = 0;
+	this.origin = [0, 0, 0];
+	this.viewaxis = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
 };

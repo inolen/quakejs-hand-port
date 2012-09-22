@@ -3,6 +3,8 @@ var gamestate = {};
 function ParseServerMessage(msg) {
 	if (msg.type === Net.ServerOp.Type.gamestate) {
 		ParseGameState(msg.svop_gamestate);
+	} else if (msg.type === Net.ServerOp.Type.snapshot) {
+		ParseSnapshot(msg.svop_snapshot);
 	}
 
 	/*
@@ -24,6 +26,7 @@ function ParseServerMessage(msg) {
 			CL_ParseSnapshot( msg );
 			break;
 		}
+	}
 	*/
 }
 
@@ -39,5 +42,7 @@ function ParseGameState(gamestate) {
 	re.LoadMap(gamestate['map']);
 }
 
-function ParseServerInfo() {
+function ParseSnapshot(snapshot) {
+	cg.ps.origin = snapshot.origin;
+	//console.log('got snapshot', snapshot);
 }

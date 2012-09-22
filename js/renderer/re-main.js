@@ -16,8 +16,15 @@ var skyShader = null;
 var startTime = new Date().getTime();
 
 var canvas, gl;
-var refdef = Object.create(ReRefDef);
+var refdef;
 var map;
+
+var flipMatrix = mat4.create([
+	0, 0, -1, 0,
+	-1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 0, 1
+]);
 
 /**
  * Helper functions to bind attributes to vertex arrays.
@@ -77,7 +84,7 @@ function _bindSkyAttribs(shader, modelViewMat, projectionMat) {
 function Init(canvasCtx, glCtx) {
 	canvas = canvasCtx;
 	gl = glCtx;
-	refdef = Object.create(ReRefDef);
+	refdef = new RefDef();
 	// TODO: Make this a typed array
 	//this.refdef.drawSurfs = new Array(MAX_DRAWSURFS);
 
@@ -93,16 +100,16 @@ function RenderScene(fd) {
 	refdef.height = fd.height;
 	refdef.fov = fd.fov;
 	refdef.origin = fd.origin;
-	refdef.angles = fd.angles;
+	refdef.viewaxis = fd.viewaxis;
 
-	var parms = Object.create(ReViewParms);
+	var parms = new ViewParms();
 	parms.x = fd.x;
 	parms.y = fd.y
 	parms.width = fd.width;
 	parms.height = fd.height;
 	parms.fov = fd.fov;
 	parms.origin = fd.origin;
-	parms.angles = fd.angles;
+	parms.viewaxis = fd.viewaxis;
 
 	RenderView(parms);
 }
@@ -111,15 +118,32 @@ function RenderView(parms) {
 	// Create projection matrix.
 	var projectionMatrix = mat4.create();
 	mat4.perspective(parms.fov, parms.width/parms.height, 1.0, 4096.0, projectionMatrix);
-	//parms.projectionMatrix = projectionMatrix;
 
 	// Create model view matrix.
 	var modelMatrix = mat4.create();
-	mat4.identity(modelMatrix);
-	mat4.rotateX(modelMatrix, parms.angles[0]-Math.PI/2);
-	mat4.rotateZ(modelMatrix, parms.angles[1]);
-	mat4.translate(modelMatrix, /*[-832, -128, -118]*/[64, -176, -54]);
-	//parms.modelMatrix = modelMatrix;
+	modelMatrix[0] = parms.viewaxis[0][0];
+	modelMatrix[4] = parms.viewaxis[0][1];
+	modelMatrix[8] = parms.viewaxis[0][2];
+	modelMatrix[12] = -parms.origin[0] * modelMatrix[0] + -parms.origin[1] * modelMatrix[4] + -parms.origin[2] * modelMatrix[8];
+
+	modelMatrix[1] = parms.viewaxis[1][0];
+	modelMatrix[5] = parms.viewaxis[1][1];
+	modelMatrix[9] = parms.viewaxis[1][2];
+	modelMatrix[13] = -parms.origin[0] * modelMatrix[1] + -parms.origin[1] * modelMatrix[5] + -parms.origin[2] * modelMatrix[9];
+
+	modelMatrix[2] = parms.viewaxis[2][0];
+	modelMatrix[6] = parms.viewaxis[2][1];
+	modelMatrix[10] = parms.viewaxis[2][2];
+	modelMatrix[14] = -parms.origin[0] * modelMatrix[2] + -parms.origin[1] * modelMatrix[6] + -parms.origin[2] * modelMatrix[10];
+
+	modelMatrix[3] = 0;
+	modelMatrix[7] = 0;
+	modelMatrix[11] = 0;
+	modelMatrix[15] = 1;
+
+	// convert from our coordinate system (looking down X)
+	// to OpenGL's coordinate system (looking down -Z)
+	mat4.multiply(flipMatrix, modelMatrix, modelMatrix);
 
 	// Setup
 	gl.viewport(0, 0, parms.width, parms.height);
