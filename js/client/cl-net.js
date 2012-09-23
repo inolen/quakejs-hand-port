@@ -1,7 +1,7 @@
 var netchan;
 
 function NetInit() {
-	NetConnect('localhost', 9000);
+	//NetConnect('localhost', 9000);
 }
 
 function NetFrame() {

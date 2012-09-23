@@ -19,7 +19,6 @@ define('sys/LoopbackChannel', [], function () {
 
 		// Trigger some fake events as if we're a real socket.
 		// Wait 1 frame so the consumer has time to bind.
-		console.log('Creating a new LoopbackChannel');
 		if (!sock) {
 			LoopbackChannel.Client = this;
 			setTimeout(function () {

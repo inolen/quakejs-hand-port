@@ -1,8 +1,8 @@
 var frameTime = lastFrameTime = Date.now();
 
 function Init(canvas, gl) {
+	sv.Init();
 	cl.Init(canvas, gl);
-	sv.Init(cl);
 
 	// Provide the user a way to interface with the client.
 	window.$ = function (cmd) {

@@ -1,7 +1,9 @@
+var sv;
 var level;
 
-function Init() {
+function Init(sv_interface) {
+	sv = sv_interface;
 	level = new LevelLocals();
 
-	SpawnEntities();
+	SpawnGameEntities();
 }

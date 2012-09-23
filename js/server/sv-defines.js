@@ -19,5 +19,5 @@ var ServerStatic = function () {
 };
 
 // Reset for each map.
-var Server = function () {
+var ServerLocals = function () {
 };
