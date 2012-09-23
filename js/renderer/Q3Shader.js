@@ -110,7 +110,7 @@ define('renderer/Q3Shader', [], function () {
 					stage.clamp = true;
 				case 'map':
 					stage.map = tokens.next().replace(/(\.jpg|\.tga)/, '.png');
-					if (!stage.map) {
+					/*if (!stage.map) {
 						stage.texture = findImage('*white');
 					} else if (stage.map == '$lightmap') {
 						if (shader.lightmap < 0) {
@@ -122,18 +122,17 @@ define('renderer/Q3Shader', [], function () {
 						stage.texture = findImage('*white');
 					} else {
 						stage.texture = findImage(stage.map, stage.clamp);
-					}
+					}*/
 					break;
 
 				case 'animmap':
 					stage.animFrame = 0;
-					stage.animTexture = [];
 					stage.animFreq = parseFloat(tokens.next());
 					var nextMap = tokens.next();
 					while (nextMap.match(/(\.jpg|\.tga)/)) {
 						var map = nextMap.replace(/(\.jpg|\.tga)/, '.png');
 						stage.animMaps.push(map);
-						stage.animTexture.push(findImage(map, stage.clamp));
+						//stage.animTexture.push(findImage(map, stage.clamp));
 						nextMap = tokens.next();
 					}
 					tokens.prev();

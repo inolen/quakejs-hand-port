@@ -27,7 +27,6 @@ function FindImage(name, clamp) {
 	};
 
 	el.src = Q3W_BASE_FOLDER + '/' + name;
-	//el.src = Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
 
 	return image;
 }

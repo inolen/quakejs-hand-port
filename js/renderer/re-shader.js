@@ -77,15 +77,42 @@ function SetShader(glshader) {
 	return true;
 }
 
-function SetShaderStage(glshader, stage, time) {
-	if (stage.animFreq) {
-		// Texture animation seems like a natural place for setInterval, but that approach has proved error prone.
-		// It can easily get out of sync with other effects (like rgbGen pulses and whatnot) which can give a
-		// jittery or flat out wrong appearance. Doing it this way ensures all effects are synced.
-		var animFrame = Math.floor(time*stage.animFreq) % stage.animTexture.length;
-		stage.texture = stage.animTexture[animFrame];
+// This function
+function LoadTextureForStage(glshader, stage, animFrame) {
+	if (animFrame !== undefined && stage.animTextures) {
+		return stage.animTextures[animFrame];
+	} else if (stage.texture) {
+		return stage.texture;
 	}
 
+	if (animFrame !== undefined) {
+		if (!stage.animTextures) {
+			stage.animTextures = _.map(stage.animMaps, function (map) {
+				return FindImage(map, stage.clamp);
+			});
+		}
+
+		return stage.animTextures[animFrame];
+	} else {
+		if (!stage.map) {
+			stage.texture = FindImage('*white');
+		} else if (stage.map == '$lightmap') {
+			if (glshader.lightmap < 0) {
+				stage.texture = FindImage('*white');
+			} else {
+				stage.texture = FindImage('*lightmap');
+			}
+		} else if (stage.map == '$whiteimage') {
+			stage.texture = FindImage('*white');
+		} else {
+			stage.texture = FindImage(stage.map, stage.clamp);
+		}
+
+		return stage.texture;
+	}
+}
+
+function SetShaderStage(glshader, stage, time) {
 	gl.blendFunc(stage.blendSrc, stage.blendDest);
 
 	if (stage.depthWrite && !glshader.sky) {
@@ -95,10 +122,15 @@ function SetShaderStage(glshader, stage, time) {
 	}
 
 	gl.depthFunc(stage.depthFunc);
-
 	gl.useProgram(stage.program);
 
-	var texture = stage.texture || FindImage('*default');
+	var texture;
+	if (stage.animFreq) {
+		var animFrame = Math.floor(time * stage.animFreq) % stage.animMaps.length;
+		texture = LoadTextureForStage(glshader, stage, animFrame);
+	} else {
+		texture = LoadTextureForStage(glshader, stage);
+	}
 
 	gl.activeTexture(gl.TEXTURE0);
 	gl.uniform1i(stage.program.uniform.texture, 0);
