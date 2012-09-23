@@ -9,10 +9,8 @@ function Init(canvas, gl) {
 		var args = Array.prototype.slice.call(arguments, 1);
 		var callback;
 
-		if ((callback = sv.CmdGet(cmd))) {
-			callback.apply(sv, args);
-		} else if ((callback = cl.CmdGet(cmd))) {
-			callback.apply(cl, args);
+		if ((callback = CmdGet(cmd))) {
+			callback(args);
 		}
 	};
 }

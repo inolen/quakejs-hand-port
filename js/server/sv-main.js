@@ -21,6 +21,10 @@ function Frame(frameTime, msec) {
 }
 
 function SpawnServer(map) {
+	console.log('SV: Spawning new server instance running: ' + map);
 	cl.MapLoading();
+	cm.LoadMap(map);
 	// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
+
+	gm.Init();
 }

@@ -1,6 +1,5 @@
-define('server/sv', ['common/com','client/cl', 'game/bg'], function (com, cl, bg) {
+define('server/sv', ['client/cl',  'common/cm', 'common/com', 'game/gm'], function (cl, cm, com, gm) {
 	<%- include ../common/com-defines.js %>
-	<%- include ../game/bg-defines.js %>
 	<%- include sv-defines.js %>
 	<%- include sv-main.js %>
 	<%- include sv-client.js %>

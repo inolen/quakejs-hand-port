@@ -1,8 +1,7 @@
 function CmdInit() {
-	com.CmdAdd('map', CmdLoadMap);
+	com.CmdAdd('map', _.bind(CmdLoadMap, this));
 }
 
 function CmdLoadMap(mapName) {
-	console.log('command load map');
 	SpawnServer(mapName);
 }

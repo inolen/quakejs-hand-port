@@ -3,12 +3,14 @@ define('common/com', ['server/sv', 'client/cl', 'sys/LoopbackChannel', 'sys/WebS
 	<%- include com-main.js %>
 	<%- include com-cmd.js %>
 	<%- include com-net.js %>
+	<%- include com-pmove.js %>
 
 	return {
 		Init: Init,
 		Frame: Frame,
 		CmdAdd: CmdAdd,
 		CmdGet: CmdGet,
-		NetChannelCreate: NetChannelCreate
+		NetChannelCreate: NetChannelCreate,
+		Pmove: Pmove
 	};
 });

@@ -1,3 +1,11 @@
+// TODO: Add disconnect support.
+function DirectConnect(netchan) {
+	console.log('SV: A client is direct connecting', netchan);
+	var client = new Client();
+	client.netchan = netchan;
+	svs.clients.push(client);
+}
+
 function UserMove(client, cmd) {
 	if (!client.gameStateSent) {
 		SendClientGameState(client);
@@ -14,7 +22,7 @@ function SendClientGameState(client) {
 	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and CS_SERVERINFO)
 	var cs = new Net.ServerOp.ConfigString();
 	cs.key = 'map';
-	cs.value = 'q3tourney2';
+	cs.value = 'q3dm6';
 	svop.svop_gamestate.configstrings.push(cs);
 
 	NetSend(svop);
@@ -30,21 +38,36 @@ function ClientThink(client, cmd) {
 	pm.ps = client.ps;
 	pm.cmd = cmd;
 
-	bg.Pmove(pm);
+	com.Pmove(pm);
 	//VM_Call( gvm, GAME_CLIENT_THINK, cl - svs.clients );
 }
 
 function ClientEnterWorld(client, cmd) {
 	client.lastUsercmd = cmd;
 
+	ClientSpawn(client);
 	// call the game begin function
 	//VM_Call( gvm, GAME_CLIENT_BEGIN, client - svs.clients );
 }
 
-function DirectConnect(addr) {
-	var client = new Client();
-	client.netchan = netchan;
-	svs.clients.push(client);
-}
+function ClientSpawn() {
+	/*if (!map.entities) {
+		return;
+	}
 
-// TODO: Add disconnect support.
+	if (index == -1) {
+		index = (lastIndex+1)% map.entities.info_player_deathmatch.length;
+	}
+	lastIndex = index;
+
+	var spawnPoint = map.entities.info_player_deathmatch[index];
+	playerMover.position = [
+		spawnPoint.origin[0],
+		spawnPoint.origin[1],
+		spawnPoint.origin[2]+30 // Start a little ways above the floor
+	];
+	playerMover.velocity = [0,0,0];
+
+	zAngle = -spawnPoint.angle * (3.1415/180) + (3.1415*0.5); // Negative angle in radians + 90 degrees
+	xAngle = 0;*/
+}

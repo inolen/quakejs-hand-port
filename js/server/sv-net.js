@@ -8,7 +8,7 @@ function NetInit() {
 	});
 
 	chan.addListener('accept', function (netchan) {
-		console.log('SV: Accepting incoming client connection.');
+		console.log('SV: Accepting incoming client connection.', netchan);
 		DirectConnect(netchan);
 	});
 }
