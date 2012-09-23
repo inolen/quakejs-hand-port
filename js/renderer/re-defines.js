@@ -1,6 +1,6 @@
 var Texture = function () {
 	this.name = null;
-	this.texnum = 0;
+	this.texnum = null;
 };
 
 var RefDef = function () {

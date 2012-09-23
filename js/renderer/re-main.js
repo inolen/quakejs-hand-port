@@ -236,17 +236,17 @@ function LoadLightmaps() {
 	while(gridSize * gridSize < lightmaps.length) gridSize *= 2;
 	var textureSize = gridSize * 128;
 
-	// TODO: Refactor this to use r-image.js better
-	lightmapTexture = CreateImage('*lightmap', null, textureSize, textureSize);
+	var lightmapSubTextures = _.map(lightmaps, function (lightmap) {
+		return {
+			x: lightmap.x,
+			y: lightmap.y,
+			width: lightmap.width,
+			height: lightmap.height,
+			buffer: new Uint8Array(lightmap.bytes)
+		};
+	});
 
-	for (var i = 0; i < lightmaps.length; ++i) {
-		var lightmap = lightmaps[i];
-
-		gl.texSubImage2D(
-			gl.TEXTURE_2D, 0, lightmap.x, lightmap.y, lightmap.width, lightmap.height,
-			gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(lightmap.bytes)
-		);
-	}
+	lightmapTexture = CreateImage('*lightmap', lightmapSubTextures, textureSize, textureSize);
 }
 
 function BuildWorldBuffers() {
