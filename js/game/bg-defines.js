@@ -18,7 +18,6 @@ var Trajectory = function () {
 var PmoveInfo = function () {
 	this.ps = null;
 	this.cmd = null;
-	this.msec = 0;
 	this.frameTime = 0;
 	//this.tracemask = 0; // collide against these surfaces
 	//this.framecount = 0;

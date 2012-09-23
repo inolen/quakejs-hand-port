@@ -22,7 +22,8 @@ var ClientGame = function () {
 };
 
 var ClientStatic = function () {
-	this.realtime = 0;
+	this.frameTime = 0;
+	this.realTime = 0;
 };
 
 var KeyState = {

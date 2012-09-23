@@ -117,7 +117,7 @@ function RenderScene(fd) {
 function RenderView(parms) {
 	// Create projection matrix.
 	var projectionMatrix = mat4.create();
-	mat4.perspective(parms.fov, parms.width/parms.height, 1.0, 4096.0, projectionMatrix);
+	mat4.perspective(parms.fov, parms.width/parms.height, 1.0, 1024.0, projectionMatrix);
 
 	// Create model view matrix.
 	var modelMatrix = mat4.create();

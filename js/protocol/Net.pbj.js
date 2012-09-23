@@ -21,29 +21,35 @@ Net.ClientOp = PROTO.Message("Net.ClientOp",{
 		id: 2
 	}});
 Net.ClientOp_UserCmd = PROTO.Message("Net.ClientOp_UserCmd",{
+	serverTime: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 1
+	},
 	angles: {
 		options: {packed:true},
 		multiplicity: PROTO.repeated,
 		type: function(){return PROTO.Float;},
-		id: 1
+		id: 2
 	},
 	forwardmove: {
 		options: {},
 		multiplicity: PROTO.required,
 		type: function(){return PROTO.int32;},
-		id: 2
+		id: 3
 	},
 	rightmove: {
 		options: {},
 		multiplicity: PROTO.required,
 		type: function(){return PROTO.int32;},
-		id: 3
+		id: 4
 	},
 	upmove: {
 		options: {},
 		multiplicity: PROTO.required,
 		type: function(){return PROTO.int32;},
-		id: 4
+		id: 5
 	}});
 Net.ServerOp = PROTO.Message("Net.ServerOp",{
 	Type: PROTO.Enum("Net.ServerOp.Type",{

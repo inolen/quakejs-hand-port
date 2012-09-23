@@ -43,7 +43,7 @@ function CreateCommand() {
 
 	// send the current server time so the amount of movement
 	// can be determined without allowing cheating
-	cmd.serverTime = cla.serverTime;
+	cmd.serverTime = cl.serverTime;
 
 	return cmd;
 }
@@ -67,24 +67,24 @@ function KeyMove(cmd) {
 }
 
 function MouseMove(cmd) {
-	var oldAngles = cla.viewangles;
+	var oldAngles = cl.viewangles;
 
-	cla.viewangles[YAW] -= cla.mouseX * 0.022;
-	cla.viewangles[PITCH] += cla.mouseY * 0.022;
+	cl.viewangles[YAW] -= cl.mouseX * 0.022;
+	cl.viewangles[PITCH] += cl.mouseY * 0.022;
 
-	if (cla.viewangles[PITCH] - oldAngles[PITCH] > 90) {
-		cla.viewangles[PITCH] = oldAngles[PITCH] + 90;
-	} else if (oldAngles[PITCH] - cla.viewangles[PITCH] > 90) {
-		cla.viewangles[PITCH] = oldAngles[PITCH] - 90;
+	if (cl.viewangles[PITCH] - oldAngles[PITCH] > 90) {
+		cl.viewangles[PITCH] = oldAngles[PITCH] + 90;
+	} else if (oldAngles[PITCH] - cl.viewangles[PITCH] > 90) {
+		cl.viewangles[PITCH] = oldAngles[PITCH] - 90;
 	}
 
 	// reset
-	cla.mouseX = 0;
-	cla.mouseY = 0;
+	cl.mouseX = 0;
+	cl.mouseY = 0;
 
-	cmd.angles.push(cla.viewangles[0]);
-	cmd.angles.push(cla.viewangles[1]);
-	cmd.angles.push(cla.viewangles[2]);
+	cmd.angles.push(cl.viewangles[0]);
+	cmd.angles.push(cl.viewangles[1]);
+	cmd.angles.push(cl.viewangles[2]);
 }
 
 /**
@@ -129,8 +129,8 @@ function KeyUpEvent(keyName) {
 }
 
 function MouseMoveEvent(dx, dy) {
-	cla.mouseX += dx;
-	cla.mouseY += dy;
+	cl.mouseX += dx;
+	cl.mouseY += dy;
 }
 
 /**
@@ -180,12 +180,12 @@ function GetKeyState(key) {
 	key.partial = 0;
 
 	if (key.active) {
-		msec += frameTime - key.downtime;
+		msec += cls.frameTime - key.downtime;
 	}
 
-	key.downtime = frameTime;
+	key.downtime = cls.frameTime;
 
-	var val = msec / frameDelta;
+	var val = msec / cls.frameDelta;
 	if (val < 0) val = 0;
 	if (val > 1) val = 1;
 	return val;

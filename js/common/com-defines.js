@@ -32,4 +32,5 @@ var PlayerState = function () {
 	this.velocity = [0, 0, 0];
 	this.viewangles = [0, 0, 0];
 	this.speed = 0;
+	this.commandTime = 0;
 };

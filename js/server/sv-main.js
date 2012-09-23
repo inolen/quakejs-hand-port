@@ -14,7 +14,7 @@ function Init() {
 	NetInit();
 }
 
-function Frame(msec) {
+function Frame(frameTime, msec) {
 	NetFrame();
 	//CheckTimeouts();
 	SendClientMessages();

@@ -143,20 +143,20 @@ function ClipVelocity(velIn, normal) {
 
 function Accelerate(pm, wishdir, wishspeed, accel) {
 	var ps = pm.ps;
-	var currentspeed = vec3.dot(ps.velocity, dir);
-	var addspeed = wishspeed - currentSpeed;
+	var currentspeed = vec3.dot(ps.velocity, wishdir);
+	var addspeed = wishspeed - currentspeed;
 
 	if (addspeed <= 0) {
 		return;
 	}
 
-	var accelspeed = accel * pm.frametime * speed;
+	var accelspeed = accel * pm.frameTime * wishspeed;
+
 	if (accelspeed > addspeed) {
 		accelspeed = addspeed;
 	}
 
-	var acceldir = vec3.scale(dir, accelSpeed, [0,0,0]);
-	vec3.add(ps.velocity, acceldir);
+	vec3.add(ps.velocity, vec3.scale(wishdir, accelspeed, [0,0,0]));
 }
 
 function SlideMove(pm, gravity) {
@@ -165,7 +165,7 @@ function SlideMove(pm, gravity) {
 	var planes = [];
 	var endVelocity = [0,0,0];
 
-	if ( gravity ) {
+	/*if ( gravity ) {
 		vec3.set(pm.ps.velocity, endVelocity );
 		endVelocity[2] -= q3movement_gravity * q3movement_frameTime;
 		pm.ps.velocity[2] = ( pm.ps.velocity[2] + endVelocity[2] ) * 0.5;
@@ -174,7 +174,7 @@ function SlideMove(pm, gravity) {
 			// slide along the ground plane
 			pm.ps.velocity = ClipVelocity(pm.ps.velocity, this.groundTrace.plane.normal);
 		}
-	}
+	}*/
 
 	// never turn against the ground plane
 	/*if ( this.groundTrace && this.groundTrace.plane ) {
@@ -182,14 +182,16 @@ function SlideMove(pm, gravity) {
 	}*/
 
 	// never turn against original velocity
-	planes.push(vec3.normalize(pm.ps.velocity, [0,0,0]));
+	//planes.push(vec3.normalize(pm.ps.velocity, [0,0,0]));
 
-	var time_left = q3movement_frameTime;
+	var time_left = pm.frameTime;
 	var end = [0,0,0];
-	for(bumpcount=0; bumpcount < numbumps; ++bumpcount) {
+	//for(bumpcount=0; bumpcount < numbumps; ++bumpcount) {
 
 		// calculate position we are trying to move to
 		vec3.add(pm.ps.origin, vec3.scale(pm.ps.velocity, time_left, [0,0,0]), end);
+
+		//console.log(vec3.scale(pm.ps.velocity, time_left, [0,0,0]));
 
 		vec3.set(end, pm.ps.origin);
 
@@ -268,11 +270,11 @@ function SlideMove(pm, gravity) {
 			vec3.set( endClipVelocity, endVelocity );
 			break;
 		}*/
-	}
+	//}
 
-	if ( gravity ) {
+	/*if ( gravity ) {
 		vec3.set( endVelocity, pm.ps.velocity );
-	}
+	}*/
 
 	return ( bumpcount !== 0 );
 }
@@ -329,15 +331,13 @@ function FlyMove(pm, forward, right, up) {
 	Friction(pm);
 
 	var scale = CmdScale(cmd, ps.speed);
-	var wishdir = [0, 0, 0];
+	var wishvel = [0, 0, 0];
 	for (i=0 ; i < 3; i++) {
-		wishdir[i] = scale * forward[i]*cmd.forwardmove + scale * right[i]*cmd.rightmove;
+		wishvel[i] = scale * forward[i]*cmd.forwardmove + scale * right[i]*cmd.rightmove;
 	}
-	wishdir[2] += cmd.upmove;
-
-	var wishspeed = vec3.length(vec3.normalize(wishdir));
-
-	//console.log('wishdir', forward);
+	wishvel[2] += cmd.upmove;
+	var wishspeed = vec3.length(wishvel);
+	var wishdir = vec3.normalize(wishvel);
 
 	Accelerate(pm, wishdir, wishspeed, q3movement_flyaccelerate);
 	StepSlideMove(pm, false);
@@ -401,29 +401,25 @@ function UpdateViewAngles(pm) {
 	}
 }
 
-function PmoveSingle(pm) {
+function PmoveSingle(pm, msec) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
 	// determine the time
-	pm.msec = cmd.serverTime - ps.commandTime;
-	if (pm.msec < 1) {
-		pm.msec = 1;
-	} else if (pm.msec > 200) {
-		pm.msec = 200;
+	if (msec < 1) {
+		msec = 1;
+	} else if (msec > 200) {
+		msec = 200;
 	}
 	ps.commandTime = cmd.serverTime;
-	pm.frametime = pm.msec * 0.001;
+	pm.frameTime = msec * 0.001;
 
-	//console.log('before', pm.ps.origin, pm.cmd.forwardmove);
 	UpdateViewAngles(pm);
 
 	var forward = [0, 0, 0], right = [0, 0, 0], up = [0, 0, 0];
 	vec3.anglesToVectors(pm.ps.viewangles, forward, right, up);
-	//console.log('forward', pm.ps.viewangles, forward);
 
 	FlyMove(pm, forward, right, up);
-	//console.log('after', pm.ps.origin[0], pm.ps.origin[1], pm.ps.origin[2]);
 
 	//PM_GroundTrace();
 
@@ -443,9 +439,7 @@ function Pmove(pm) {
 	var cmd = pm.cmd;
 	var finalTime = cmd.serverTime;
 
-	//console.log(cmd.serverTime);
-
-	if (finalTime < ps.commandTime ) {
+	if (finalTime < ps.commandTime) {
 		return;	// should not happen
 	}
 
@@ -464,7 +458,7 @@ function Pmove(pm) {
 
 		cmd.serverTime = ps.commandTime + msec;
 
-		PmoveSingle(pm);
+		PmoveSingle(pm, msec);
 
 		/*if ( pmove->ps->pm_flags & PMF_JUMP_HELD ) {
 			pmove->cmd.upmove = 20;

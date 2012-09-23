@@ -1,8 +1,7 @@
 var canvas, gl;
-var frameTime, oldFrameTime;
-var frameDelta = 0;
-var cla = new ClientActive();
+var cl = new ClientActive();
 var clc = new ClientConnection();
+var cls = new ClientStatic();
 var cg = new ClientGame();
 var commands = {};
 var keys = {};
@@ -15,7 +14,6 @@ function Init(canvasCtx, glCtx) {
 
 	canvas = canvasCtx;
 	gl = glCtx;
-	frameTime = oldFrameTime = Date.now();
 
 	InputInit();
 	CmdInit();
@@ -23,10 +21,13 @@ function Init(canvasCtx, glCtx) {
 	re.Init(canvas, gl);
 }
 
-function Frame(msec) {
-	oldFrameTime = frameTime;
-	frameTime = Date.now();
-	frameDelta = frameTime - oldFrameTime;
+function Frame(frameTime, msec) {
+	cls.frameTime = frameTime;
+	cls.frameDelta = msec;
+	cls.realTime += msec;
+
+	// TODO Do fancy stuff like Q3.
+	cl.serverTime = cls.realTime;
 
 	//
 	NetFrame();
@@ -47,5 +48,5 @@ function CalcViewValues(refdef) {
 	refdef.height = canvas.height;
 	refdef.fov = 45;
 	refdef.origin = cg.ps.origin;
-	vec3.anglesToAxis(cla.viewangles, refdef.viewaxis);
+	vec3.anglesToAxis(cl.viewangles, refdef.viewaxis);
 }
