@@ -35,7 +35,7 @@ var q3movement_jumpvelocity = 50;
 
 var q3movement_accelerate = 10.0;
 var q3movement_airaccelerate = 0.1;
-var q3movement_flyaccelerate = 28.0;
+var q3movement_flyaccelerate = 8.0;
 
 var q3movement_friction = 6.0;
 var q3movement_flightfriction = 3.0;
@@ -141,20 +141,22 @@ function ClipVelocity(velIn, normal) {
 	return vec3.subtract(velIn, change, change);
 }
 
-function Accelerate(pm, dir, speed, accel) {
-	var currentSpeed = vec3.dot(pm.ps.velocity, dir);
-	var addSpeed = speed - currentSpeed;
-	if (addSpeed <= 0) {
+function Accelerate(pm, wishdir, wishspeed, accel) {
+	var ps = pm.ps;
+	var currentspeed = vec3.dot(ps.velocity, dir);
+	var addspeed = wishspeed - currentSpeed;
+
+	if (addspeed <= 0) {
 		return;
 	}
 
-	var accelSpeed = accel * q3movement_frameTime * speed;
-	if (accelSpeed > addSpeed) {
-		accelSpeed = addSpeed;
+	var accelspeed = accel * pm.frametime * speed;
+	if (accelspeed > addspeed) {
+		accelspeed = addspeed;
 	}
 
-	var accelDir = vec3.scale(dir, accelSpeed, [0,0,0]);
-	vec3.add(pm.ps.velocity, accelDir);
+	var acceldir = vec3.scale(dir, accelSpeed, [0,0,0]);
+	vec3.add(ps.velocity, acceldir);
 }
 
 function SlideMove(pm, gravity) {
@@ -320,15 +322,18 @@ function StepSlideMove(pm, gravity) {
 }
 
 function FlyMove(pm, forward, right, up) {
+	var ps = pm.ps;
+	var cmd = pm.cmd;
+
 	// normal slowdown
 	Friction(pm);
 
-	var scale = CmdScale(pm.cmd, pm.ps.speed);
+	var scale = CmdScale(cmd, ps.speed);
 	var wishdir = [0, 0, 0];
 	for (i=0 ; i < 3; i++) {
-		wishdir[i] = scale * forward[i]*pm.cmd.forwardmove + scale * right[i]*pm.cmd.rightmove;
+		wishdir[i] = scale * forward[i]*cmd.forwardmove + scale * right[i]*cmd.rightmove;
 	}
-	wishdir[2] += pm.cmd.upmove;
+	wishdir[2] += cmd.upmove;
 
 	var wishspeed = vec3.length(vec3.normalize(wishdir));
 
@@ -374,8 +379,11 @@ function WalkMove(dir) {
 };*/
 
 function UpdateViewAngles(pm) {
+	var ps = pm.ps;
+	var cmd = pm.cmd;
+
 	for (var i = 0; i < 3; i++) {
-		var temp = pm.cmd.angles[i];// + ps->delta_angles[i];
+		var temp = cmd.angles[i];// + ps->delta_angles[i];
 
 		// TODO: Remove this from client code, enable here.s
 		/*if (i == PITCH) {
@@ -389,12 +397,23 @@ function UpdateViewAngles(pm) {
 			}
 		}*/
 
-		pm.ps.viewangles[i] = temp;
+		ps.viewangles[i] = temp;
 	}
 }
 
-function Pmove(pm) {
-	//q3movement_frameTime = frameTime*0.0075;
+function PmoveSingle(pm) {
+	var ps = pm.ps;
+	var cmd = pm.cmd;
+
+	// determine the time
+	pm.msec = cmd.serverTime - ps.commandTime;
+	if (pm.msec < 1) {
+		pm.msec = 1;
+	} else if (pm.msec > 200) {
+		pm.msec = 200;
+	}
+	ps.commandTime = cmd.serverTime;
+	pm.frametime = pm.msec * 0.001;
 
 	//console.log('before', pm.ps.origin, pm.cmd.forwardmove);
 	UpdateViewAngles(pm);
@@ -417,4 +436,38 @@ function Pmove(pm) {
 	}
 
 	return this.position;*/
+}
+
+function Pmove(pm) {
+	var ps = pm.ps;
+	var cmd = pm.cmd;
+	var finalTime = cmd.serverTime;
+
+	//console.log(cmd.serverTime);
+
+	if (finalTime < ps.commandTime ) {
+		return;	// should not happen
+	}
+
+	if (finalTime > ps.commandTime + 1000) {
+		ps.commandTime = finalTime - 1000;
+	}
+
+	// chop the move up if it is too long, to prevent framerate
+	// dependent behavior
+	while (ps.commandTime != finalTime) {
+		var msec = finalTime - ps.commandTime;
+
+		if (msec > 66) {
+			msec = 66;
+		}
+
+		cmd.serverTime = ps.commandTime + msec;
+
+		PmoveSingle(pm);
+
+		/*if ( pmove->ps->pm_flags & PMF_JUMP_HELD ) {
+			pmove->cmd.upmove = 20;
+		}*/
+	}
 }

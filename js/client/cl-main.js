@@ -8,6 +8,11 @@ var commands = {};
 var keys = {};
 
 function Init(canvasCtx, glCtx) {
+	// Due to sv/cl/com having a circular dependency on eachother,
+	// we need to re-grab com now that we're all loaded.
+	// http://requirejs.org/docs/api.html#circular
+	com = require('common/com');
+
 	canvas = canvasCtx;
 	gl = glCtx;
 	frameTime = oldFrameTime = Date.now();
@@ -18,7 +23,7 @@ function Init(canvasCtx, glCtx) {
 	re.Init(canvas, gl);
 }
 
-function Frame() {
+function Frame(msec) {
 	oldFrameTime = frameTime;
 	frameTime = Date.now();
 	frameDelta = frameTime - oldFrameTime;

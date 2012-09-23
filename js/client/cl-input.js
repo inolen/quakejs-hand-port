@@ -12,10 +12,10 @@ function InputInit() {
 	viewportFrame.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
 	viewportFrame.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
 
-	CmdAdd('+forward', function (key) { forwardKey = key; });
-	CmdAdd('+left', function (key) { leftKey = key; });
-	CmdAdd('+back', function (key) { backKey = key; });
-	CmdAdd('+right', function (key) { rightKey = key; });
+	com.CmdAdd('+forward', function (key) { forwardKey = key; });
+	com.CmdAdd('+left', function (key) { leftKey = key; });
+	com.CmdAdd('+back', function (key) { backKey = key; });
+	com.CmdAdd('+right', function (key) { rightKey = key; });
 	Bind('w', '+forward');
 	Bind('a', '+left');
 	Bind('s', '+back');
@@ -37,8 +37,14 @@ function SendCommand() {
 
 function CreateCommand() {
 	var cmd = new Net.ClientOp_UserCmd();
+
 	KeyMove(cmd);
 	MouseMove(cmd);
+
+	// send the current server time so the amount of movement
+	// can be determined without allowing cheating
+	cmd.serverTime = cla.serverTime;
+
 	return cmd;
 }
 
@@ -65,7 +71,7 @@ function MouseMove(cmd) {
 
 	cla.viewangles[YAW] -= cla.mouseX * 0.022;
 	cla.viewangles[PITCH] += cla.mouseY * 0.022;
-	
+
 	if (cla.viewangles[PITCH] - oldAngles[PITCH] > 90) {
 		cla.viewangles[PITCH] = oldAngles[PITCH] + 90;
 	} else if (oldAngles[PITCH] - cla.viewangles[PITCH] > 90) {
@@ -194,7 +200,7 @@ function ExecBinding(key) {
 	if (!cmdToExec) return;
 	if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-	var callback = CmdGet(cmdToExec);
+	var callback = com.CmdGet(cmdToExec);
 	if (callback) callback.call(this, key);
 }
 

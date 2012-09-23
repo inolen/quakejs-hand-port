@@ -1,5 +1,5 @@
 function CmdInit() {
-	CmdAdd('map', CmdLoadMap);
+	com.CmdAdd('map', CmdLoadMap);
 }
 
 function CmdLoadMap(mapName) {

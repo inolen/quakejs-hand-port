@@ -1,7 +1,7 @@
 var netchan;
 
 function NetInit() {
-	var chan = NetChannelCreate(NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
+	var chan = com.NetChannelCreate(NetSrc.NS_SERVER, 'ws://localhost:9000', 0);
 
 	chan.addListener('open', function () {
 		netchan = chan;

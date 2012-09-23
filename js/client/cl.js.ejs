@@ -1,7 +1,5 @@
-define('client/cl', ['renderer/re', 'game/bg', 'sys/LoopbackChannel', 'sys/WebSocketClientChannel'], function (re, bg, LoopbackChannel, WebSocketClientChannel) {
+define('client/cl', ['common/com', 'renderer/re', 'game/bg'], function (com, re, bg, LoopbackChannel, WebSocketClientChannel) {
 	<%- include ../common/com-defines.js %>
-	<%- include ../common/com-cmd.js %>
-	<%- include ../common/com-net.js %>
 	<%- include ../game/bg-defines.js %>
 	<%- include ../renderer/re-defines.js %>
 	<%- include cl-defines.js %>

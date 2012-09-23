@@ -1,7 +1,5 @@
-define('server/sv', ['game/bg', 'sys/LoopbackChannel', 'sys/WebSocketClientChannel'], function (bg, LoopbackChannel, WebSocketClientChannel) {
+define('server/sv', ['common/com','client/cl', 'game/bg'], function (com, cl, bg) {
 	<%- include ../common/com-defines.js %>
-	<%- include ../common/com-cmd.js %>
-	<%- include ../common/com-net.js %>
 	<%- include ../game/bg-defines.js %>
 	<%- include sv-defines.js %>
 	<%- include sv-main.js %>

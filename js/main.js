@@ -1,8 +1,8 @@
-requirejs(['client/cl', 'server/sv'], function (cl, sv) {
+requirejs(['common/com'], function (com) {
 	var GL_WINDOW_WIDTH = 854;
 	var GL_WINDOW_HEIGHT = 480;
 
-	function initEvents() {
+	function InitEvents() {
 		var viewport = document.getElementById('viewport');
 		var viewportFrame = document.getElementById('viewport-frame');
 
@@ -26,34 +26,20 @@ requirejs(['client/cl', 'server/sv'], function (cl, sv) {
 		}, false);
 	}
 
-	function init(canvas, gl) {
-		cl.Init(canvas, gl);
-		sv.Init(cl);
-
-		// Provide the user a way to interface with the client.
-		window.$ = function (cmd) {
-			var args = Array.prototype.slice.call(arguments, 1);
-			var callback;
-
-			if ((callback = sv.CmdGet(cmd))) {
-				callback.apply(sv, args);
-			} else if ((callback = cl.CmdGet(cmd))) {
-				callback.apply(cl, args);
-			}
-		};
+	function Init(canvas, gl) {
+		com.Init(canvas, gl);
 
 		// Main loop.
 		function onRequestedFrame(timestamp) {
 			window.requestAnimationFrame(onRequestedFrame, canvas);
-			sv.Frame();
-			cl.Frame();
+			com.Frame();
 		}
 		window.requestAnimationFrame(onRequestedFrame, canvas);
 	}
 
 	// Utility function that tests a list of webgl contexts and returns when one can be created
 	// Hopefully this future-proofs us a bit
-	function getAvailableContext(canvas, contextList) {
+	function GetAvailableContext(canvas, contextList) {
 		if (canvas.getContext) {
 			for (var i = 0; i < contextList.length; ++i) {
 				try {
@@ -75,13 +61,13 @@ requirejs(['client/cl', 'server/sv'], function (cl, sv) {
 		canvas.height = GL_WINDOW_HEIGHT;
 
 		// Get the GL Context (try 'webgl' first, then fallback)
-		var gl = getAvailableContext(canvas, ['webgl', 'experimental-webgl']);
+		var gl = GetAvailableContext(canvas, ['webgl', 'experimental-webgl']);
 
 		if (!gl) {
 			document.getElementById('webgl-error').style.display = 'block';
 		} else {
-			initEvents();
-			init(canvas, gl);
+			InitEvents();
+			Init(canvas, gl);
 		}
 	}
 

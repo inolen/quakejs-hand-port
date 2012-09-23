@@ -1,3 +1,7 @@
+var PITCH = 0; // up / down
+var YAW   = 1; // left / right
+var ROLL  = 2; // fall over
+
  vec3.anglesToVectors = function (angles, forward, right, up) {
 	var angle;
 	var sr, sp, sy, cr, cp, cy;

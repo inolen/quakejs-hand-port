@@ -1,9 +1,12 @@
-var cl;
 var svs;
 var sv;
 
-function Init(cl) {
-	cl = cl;
+function Init() {
+	// Due to sv/cl/com having a circular dependency on eachother,
+	// we need to re-grab com now that we're all loaded.
+	// http://requirejs.org/docs/api.html#circular
+	com = require('common/com');
+	
 	svs = new ServerStatic();
 	sv = new Server();
 
@@ -11,7 +14,7 @@ function Init(cl) {
 	NetInit();
 }
 
-function Frame() {
+function Frame(msec) {
 	NetFrame();
 	//CheckTimeouts();
 	SendClientMessages();
