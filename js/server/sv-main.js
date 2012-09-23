@@ -29,17 +29,12 @@ function Frame(frameTime, msec) {
 function SpawnServer(mapName) {
 	console.log('SV: Spawning new server instance running: ' + mapName);
 	cl.MapLoading(); // This function name sucks.
-	//cm.LoadMap(map);
+	cm.LoadMap(mapName);
 
 	com.CvarSet('sv_mapname', mapName);
 
-	map = new Q3Bsp();
-	map.Load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {
-		gm.Init({
-			GetEntities: GetEntities
-		});
-
-		// TODO RE-CONNECT ALL CLIENTS AND HAVE THEM LOAD MAP
+	gm.Init({
+		GetEntities: GetEntities
 	});
 }
 
@@ -47,5 +42,5 @@ function SpawnServer(mapName) {
  * Interface functions passed to the game module.
  */
 function GetEntities() {
-	return map.data.entities;
+	return cm.GetEntities();
 }

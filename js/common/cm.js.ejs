@@ -1,7 +1,9 @@
 define('common/cm', ['common/Q3Bsp'], function (Q3Bsp) {
+	<%- include com-defines.js %>
 	<%- include cm-main.js %>
 
 	return {
-		LoadMap: LoadMap
+		LoadMap: LoadMap,
+		GetEntities: GetEntities
 	};
 });
