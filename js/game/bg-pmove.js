@@ -87,22 +87,24 @@ function CmdScale(cmd, speed) {
 
 function Friction(pm) {
 	//if(!this.onGround) { return; }
-	var speed = vec3.length(pm.ps.velocity);	
+	var ps = pm.ps;
+	var speed = vec3.length(ps.velocity);
+
+	if (speed < 1) {
+		return;
+	}
+
 	var drop = 0;
-
 	var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
-	drop += control*q3movement_friction*q3movement_frameTime;
+	drop += control * q3movement_friction * pm.frameTime;
 
-	var newSpeed = speed - drop;
-	if (newSpeed < 0) {
-		newSpeed = 0;
+	var newspeed = speed - drop;
+	if (newspeed < 0) {
+		newspeed = 0;
 	}
-	if(speed !== 0) {
-		newSpeed /= speed;
-		vec3.scale(pm.ps.velocity, newSpeed);
-	} else {
-		pm.ps.velocity = [0, 0, 0];
-	}
+	newspeed /= speed;
+
+	vec3.scale(ps.velocity, newspeed);
 }
 
 /*function GroundTrace() {
@@ -190,8 +192,6 @@ function SlideMove(pm, gravity) {
 
 		// calculate position we are trying to move to
 		vec3.add(pm.ps.origin, vec3.scale(pm.ps.velocity, time_left, [0,0,0]), end);
-
-		//console.log(vec3.scale(pm.ps.velocity, time_left, [0,0,0]));
 
 		vec3.set(end, pm.ps.origin);
 
