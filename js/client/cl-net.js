@@ -9,6 +9,11 @@ function NetFrame() {
 }
 
 function NetConnect(host, port) {
+	if (netchan) {
+		com.NetChannelDestroy(netchan);
+		netchan = null;
+	}
+
 	var chan = com.NetChannelCreate(NetSrc.NS_CLIENT, 'ws://' + host + ':' + port, 0);
 
 	chan.addListener('open', function () {

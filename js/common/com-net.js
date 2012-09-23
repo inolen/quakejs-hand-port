@@ -27,3 +27,7 @@ function NetChannelCreate(sock, addrstr, challenge, callback) {
 		return new WebSocketClientChannel(addr, challenge);
 	}
 }
+
+function NetChannelDestroy(netchan) {
+	netchan.Close();
+}

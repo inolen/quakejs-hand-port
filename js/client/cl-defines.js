@@ -1,4 +1,4 @@
-var ClientActive = function () {
+var ClientLocals = function () {
 	this.serverTime = 0;
 	this.mouseX = 0;
 	this.mouseY = 0;

@@ -1,9 +1,31 @@
-// TODO: Add disconnect support.
-function DirectConnect(netchan) {
+function ClientConnect(netchan) {
 	console.log('SV: A client is direct connecting', netchan);
 	var client = new Client();
 	client.netchan = netchan;
 	svs.clients.push(client);
+}
+
+function ClientDisconnect(client) {
+	// TODO we need to store a client number or something,
+	// checking by address is lame.
+	var idx;
+
+	for (var i = 0; i < svs.clients.length; i++) {
+		var c = svs.clients[i];
+
+		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
+			idx = i;
+			break;
+		}
+	}
+
+	if (idx === undefined) {
+		console.warn('SV: No client found to disconnect.');
+		return;
+	}
+
+	// 2L2Q
+	svs.clients.splice(idx, 1);
 }
 
 function UserMove(client, cmd) {
@@ -22,7 +44,7 @@ function SendClientGameState(client) {
 	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and CS_SERVERINFO)
 	var cs = new Net.ServerOp.ConfigString();
 	cs.key = 'map';
-	cs.value = 'q3dm6';
+	cs.value = com.CvarGet('sv_mapname');
 	svop.svop_gamestate.configstrings.push(cs);
 
 	NetSend(svop);

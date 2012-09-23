@@ -7,9 +7,18 @@ function NetInit() {
 		netchan = chan;
 	});
 
+	// TODO This accept/close is clearly some perfect world bullshit,
+	// we'll have to fix this once we add in real networking.
 	chan.addListener('accept', function (netchan) {
-		console.log('SV: Accepting incoming client connection.', netchan);
-		DirectConnect(netchan);
+		console.log('SV: Accepting incoming client connection', netchan);
+		ClientConnect(netchan);
+	});
+
+	chan.addListener('close', function (netchan) {
+		console.log('SV: Closing connection for', netchan);
+
+		var client = GetClientForAddr(netchan.addr);
+		ClientDisconnect(client);
 	});
 }
 
@@ -51,20 +60,24 @@ function PacketEvent(addr, buffer, length) {
 	var msg = new Net.ClientOp();
 	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
 
-	for (var i = 0; i < svs.clients.length; i++) {
-		var client = svs.clients[i];
-
-		if (!_.isEqual(client.netchan.addr, addr)) {
-			continue;
-		}
-
-		ParseClientMessage(client, msg);
-		break;
-	}
+	var client = GetClientForAddr(addr);
+	ParseClientMessage(client, msg);
 }
 
 function ParseClientMessage(client, msg) {
 	if (msg.type === Net.ClientOp.Type.move) {
 		UserMove(client, msg.clop_move);
 	}
+}
+
+function GetClientForAddr(addr) {
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (_.isEqual(client.netchan.addr, addr)) {
+			return client;
+		}
+	}
+
+	return client;
 }

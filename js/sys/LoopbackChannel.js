@@ -66,6 +66,16 @@ define('sys/LoopbackChannel', [], function () {
 		};
 	};
 
+	LoopbackChannel.prototype.Close = function () {
+		if (!this.sock) {
+			LoopbackChannel.Server.emitEvent('close', [LoopbackChannel.Client]);
+			LoopbackChannel.Client = null;
+		} else {
+			LoopbackChannel.Client.emitEvent('close');
+			LoopbackChannel.Server = null;
+		}
+	};
+
 	_.extend(LoopbackChannel.prototype, EventEmitter.prototype);
 
 	return LoopbackChannel;

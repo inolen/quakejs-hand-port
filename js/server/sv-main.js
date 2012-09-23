@@ -1,5 +1,5 @@
-var svs;
-var sv;
+var sv = new ServerLocals();
+var svs = new ServerStatic();
 
 // TODO move this out
 var map;
@@ -10,8 +10,7 @@ function Init() {
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
 	
-	svs = new ServerStatic();
-	sv = new ServerLocals();
+	com.CvarAdd('sv_mapname', 'nomap');
 
 	CmdInit();
 	NetInit();
@@ -24,16 +23,15 @@ function Init() {
 
 function Frame(frameTime, msec) {
 	NetFrame();
-	//CheckTimeouts();
 	SendClientMessages();
 }
 
 function SpawnServer(mapName) {
 	console.log('SV: Spawning new server instance running: ' + mapName);
-	cl.MapLoading();
+	cl.MapLoading(); // This function name sucks.
 	//cm.LoadMap(map);
 
-	console.log('ARE WE SPAWNING A SERVER OR WHAT MOTHER FUCKER?!?!?!');
+	com.CvarSet('sv_mapname', mapName);
 
 	map = new Q3Bsp();
 	map.load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {

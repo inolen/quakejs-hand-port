@@ -1,5 +1,5 @@
 var canvas, gl;
-var cl = new ClientActive();
+var cl = new ClientLocals();
 var clc = new ClientConnection();
 var cls = new ClientStatic();
 var cg = new ClientGame();
