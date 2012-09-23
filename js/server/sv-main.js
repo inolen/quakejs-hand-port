@@ -34,7 +34,7 @@ function SpawnServer(mapName) {
 	com.CvarSet('sv_mapname', mapName);
 
 	map = new Q3Bsp();
-	map.load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {
+	map.Load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {
 		gm.Init({
 			GetEntities: GetEntities
 		});

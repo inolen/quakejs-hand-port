@@ -31,3 +31,20 @@ var ViewParms = function () {
 		[0, 0, 0]
 	];
 };
+
+var WorldData = function () {
+	this.name = null;
+	this.path = null;
+	this.lightmaps = null;
+	this.shaders = [];
+	this.verts = [];
+	this.meshVerts = [];
+	this.faces = [];
+	this.entities = {};
+
+	/*vec3_t		lightGridOrigin;
+	vec3_t		lightGridSize;
+	vec3_t		lightGridInverseSize;
+	int			lightGridBounds[3];
+	byte		*lightGridData;*/
+};

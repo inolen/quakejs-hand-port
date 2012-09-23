@@ -24,7 +24,6 @@ function ClientDisconnect(client) {
 		return;
 	}
 
-	// 2L2Q
 	svs.clients.splice(idx, 1);
 }
 
