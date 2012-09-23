@@ -15,8 +15,9 @@ function FindImage(name, clamp) {
 	if ((image = images[name])) {
 		return image;
 	} else {
-		var image =  images[name] = Object.create(ReImage);
-		image.imgName = name;
+		var image = images[name] = new Texture();
+		image.name = name;
+		image.texnum = FindImage('*default').texnum;
 	}
 
 	// Load the image using the Image() class.
@@ -24,6 +25,7 @@ function FindImage(name, clamp) {
 	el.onload = function() {
 		image.texnum = BuildTexture(el, null, null, clamp);
 	};
+
 	el.src = Q3W_BASE_FOLDER + '/' + name;
 	//el.src = Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
 
@@ -35,8 +37,8 @@ function BuildWhiteTexture() {
 }
 
 function BuildDefaultTexture() {
-	var image =  images['*default'] = Object.create(ReImage);
-	image.imgName = name;
+	var image = images['*default'] = new Texture();
+	image.name = name;
 
 	var el = new Image();
 	el.onload = function() {
@@ -66,8 +68,15 @@ function BuildTexture(bufferOrImage, width, height, clamp) {
 }
 
 function CreateImage(name, buffer, width, height, clamp) {
-	var image =  images[name] = Object.create(ReImage);
-	image.imgName = name;
+	var image;
+
+	// Since we load images asynchronously, if we're creating an image that
+	// some surfaces may already reference, don't trash the reference.
+	if (!(image = images[name])) {
+		image = images[name] = new Texture();
+		image.name = name;
+	}
+
 	image.texnum = BuildTexture(buffer, width, height, clamp);
 
 	return image;

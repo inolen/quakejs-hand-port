@@ -1,6 +1,6 @@
-var ReImage = {
-	imgName: null,
-	texnum: null
+var Texture = function () {
+	this.name = null;
+	this.texnum = 0;
 };
 
 var RefDef = function () {
