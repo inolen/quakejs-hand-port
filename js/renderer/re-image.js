@@ -6,6 +6,10 @@ function InitImages() {
 }
 
 function FindImage(name, clamp) {
+	// Only load .png files. Retrying on missing files is an expensive
+	// operation in the browser.
+	name = name.replace(/\.[^\.]+$/, '.png');
+
 	// Try to find the image in our cache.
 	var image;
 	if ((image = images[name])) {
@@ -16,21 +20,12 @@ function FindImage(name, clamp) {
 	}
 
 	// Load the image using the Image() class.
-	var el = new Image(),
-		retry = true;
-	el.onerror = function () {
-		if (!retry) return;
-		// If we failed to load the .png, try the .jpg (and vice versa)
-		var ext = name.indexOf('.png') === -1 ? '.png' : '.jpg';
-		name = name.replace(/\.[^\.]+$/, ext);
-		retry = false;
-		el.src = Q3W_BASE_FOLDER + '/' + name;
-	};
+	var el = new Image();
 	el.onload = function() {
 		image.texnum = BuildTexture(el, null, null, clamp);
 	};
-	//el.src = Q3W_BASE_FOLDER + '/' + name;
-	el.src = Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
+	el.src = Q3W_BASE_FOLDER + '/' + name;
+	//el.src = Q3W_BASE_FOLDER + '/' + '/webgl/no-shader.png';
 
 	return image;
 }
