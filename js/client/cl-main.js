@@ -15,6 +15,8 @@ function Init(canvasCtx, glCtx) {
 	canvas = canvasCtx;
 	gl = glCtx;
 
+	com.CvarAdd('cl_sensitivity', '2');
+
 	InputInit();
 	CmdInit();
 	NetInit();
@@ -49,4 +51,11 @@ function CalcViewValues(refdef) {
 	refdef.fov = 45;
 	refdef.origin = cg.ps.origin;
 	vec3.anglesToAxis(cl.viewangles, refdef.viewaxis);
+
+	OffsetFirstPersonView(refdef);
+}
+
+function OffsetFirstPersonView(refdef) {
+	// add view height
+	refdef.origin[2] += DEFAULT_VIEWHEIGHT;//cg.ps.viewheight;
 }

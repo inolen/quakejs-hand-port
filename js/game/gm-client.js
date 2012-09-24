@@ -1,3 +1,6 @@
+var playerMins = [-15, -15, -24];
+var playerMaxs = [15, 15, 32];
+
 function ClientBegin(clientNum) {
 	var client = level.clients[clientNum] = new GameClient();
 
@@ -14,6 +17,7 @@ function ClientThink(clientNum, cmd) {
 	var pm = new PmoveInfo();
 	pm.ps = client.ps;
 	pm.cmd = cmd;
+	pm.tracemask = MASK_PLAYERSOLID;
 	pm.trace = sv.Trace;
 
 	com.Pmove(pm);
@@ -28,6 +32,7 @@ function ClientSpawn(client) {
 	var spawnPoint = SelectRandomDeathmatchSpawnPoint();
 
 	client.ps.origin = spawnPoint.origin;
+	client.ps.origin[2] += 70;
 	client.ps.velocity = [0, 0, 0];
 }
 

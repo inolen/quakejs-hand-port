@@ -102,7 +102,7 @@ define('common/Q3Bsp', [], function () {
 
 	Q3Bsp.dplane_t = Struct.create(
 		Struct.array('normal', Struct.float32(), 3),
-		Struct.float32('distance')
+		Struct.float32('dist')
 	);
 
 	Q3Bsp.dnode_t = Struct.create(
@@ -124,13 +124,13 @@ define('common/Q3Bsp', [], function () {
 	);
 
 	Q3Bsp.dbrushside_t = Struct.create(
-		Struct.int32('plane'),
+		Struct.int32('planeNum'),
 		Struct.int32('shader')
 	);
 
 	Q3Bsp.dbrush_t = Struct.create(
-		Struct.int32('brushSide'),
-		Struct.int32('brushSideCount'),
+		Struct.int32('side'),
+		Struct.int32('numsides'),
 		Struct.int32('shader')
 	);
 

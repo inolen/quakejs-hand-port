@@ -70,9 +70,12 @@ function KeyMove(cmd) {
 
 function MouseMove(cmd) {
 	var oldAngles = cl.viewangles;
+	var sensitivity = com.CvarGet('cl_sensitivity');
+	var mx = cl.mouseX * sensitivity;
+	var my = cl.mouseY * sensitivity;
 
-	cl.viewangles[YAW] -= cl.mouseX * 0.022;
-	cl.viewangles[PITCH] += cl.mouseY * 0.022;
+	cl.viewangles[YAW] -= mx * 0.022;
+	cl.viewangles[PITCH] += my * 0.022;
 
 	if (cl.viewangles[PITCH] - oldAngles[PITCH] > 90) {
 		cl.viewangles[PITCH] = oldAngles[PITCH] + 90;

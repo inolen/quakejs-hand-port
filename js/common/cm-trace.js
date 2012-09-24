@@ -1,6 +1,19 @@
 var q3bsptree_trace_offset = 0.03125;
 
-function TraceThroughTree(output, num, startFraction, endFraction, start, end, radius) {
+function BoundsIntersect(mins, maxs, mins2, maxs2) {
+	if (maxs[0] < mins2[0] - SURFACE_CLIP_EPSILON ||
+		maxs[1] < mins2[1] - SURFACE_CLIP_EPSILON ||
+		maxs[2] < mins2[2] - SURFACE_CLIP_EPSILON ||
+		mins[0] > maxs2[0] + SURFACE_CLIP_EPSILON ||
+		mins[1] > maxs2[1] + SURFACE_CLIP_EPSILON ||
+		mins[2] > maxs2[2] + SURFACE_CLIP_EPSILON) {
+		return false;
+	}
+
+	return true;
+}
+
+function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	var brushes = cm.brushes;
 	var leaves = cm.leaves;
 	var leafBrushes = cm.leafBrushes;
@@ -8,156 +21,325 @@ function TraceThroughTree(output, num, startFraction, endFraction, start, end, r
 	var planes = cm.planes;
 	var shaders = cm.shaders;
 
+	if (tw.trace.fraction <= p1f) {
+		return; // already hit something nearer
+	}
+
 	if (num < 0) { // Leaf node?
-		var leaf = leaves[-(num + 1)];
-		TraceThroughLeaf(output, leaf, start, end, radius);
+		TraceThroughLeaf(tw, leaves[-(num + 1)]);
 		return;
 	}
 
-	// Tree node
+	//
+	// find the point distances to the seperating plane
+	// and the offset for the size of the box
+	//
 	var node = nodes[num];
 	var plane = planes[node.plane];
 
-	var startDist = vec3.dot(plane.normal, start) - plane.distance;
-	var endDist = vec3.dot(plane.normal, end) - plane.distance;
+	// adjust the plane distance apropriately for mins/maxs
+	var t1, t2, offset;
 
-	if (startDist >= radius && endDist >= radius) {
-		TraceThroughTree(output, node.children[0], startFraction, endFraction, start, end, radius);
-	} else if (startDist < -radius && endDist < -radius) {
-		TraceThroughTree(output, node.children[1], startFraction, endFraction, start, end, radius);
+	if (plane.type < 3) {
+		t1 = p1[plane.type] - plane.dist;
+		t2 = p2[plane.type] - plane.dist;
+		offset = tw.extents[plane.type];
 	} else {
-		var side;
-		var fraction1, fraction2, middleFraction;
-		var middle = [0, 0, 0];
-
-		if (startDist < endDist) {
-			side = 1; // back
-			var iDist = 1 / (startDist - endDist);
-			fraction1 = (startDist - radius + q3bsptree_trace_offset) * iDist;
-			fraction2 = (startDist + radius + q3bsptree_trace_offset) * iDist;
-		} else if (startDist > endDist) {
-			side = 0; // front
-			var iDist = 1 / (startDist - endDist);
-			fraction1 = (startDist + radius + q3bsptree_trace_offset) * iDist;
-			fraction2 = (startDist - radius - q3bsptree_trace_offset) * iDist;
+		t1 = vec3.dot(plane.normal, p1) - plane.dist;
+		t2 = vec3.dot(plane.normal, p2) - plane.dist;
+		if (tw.isPoint) {
+			offset = 0;
 		} else {
-			side = 0; // front
-			fraction1 = 1;
-			fraction2 = 0;
+			// this is silly
+			offset = 2048;
 		}
-
-		if (fraction1 < 0) fraction1 = 0;
-		else if (fraction1 > 1) fraction1 = 1;
-		if (fraction2 < 0) fraction2 = 0;
-		else if (fraction2 > 1) fraction2 = 1;
-
-		middleFraction = startFraction + (endFraction - startFraction) * fraction1;
-
-		for (var i = 0; i < 3; i++) {
-			middle[i] = start[i] + fraction1 * (end[i] - start[i]);
-		}
-
-		TraceThroughTree(output, node.children[side], startFraction, middleFraction, start, middle, radius);
-
-		middleFraction = startFraction + (endFraction - startFraction) * fraction2;
-
-		for (var i = 0; i < 3; i++) {
-			middle[i] = start[i] + fraction2 * (end[i] - start[i]);
-		}
-
-		TraceThroughTree(output, node.children[side===0?1:0], middleFraction, endFraction, middle, end, radius);
 	}
+
+	// see which sides we need to consider
+	if (t1 >= offset + 1 && t2 >= offset + 1) {
+		TraceThroughTree(tw, node.children[0], p1f, p2f, p1, p2);
+		return;
+	}
+	if (t1 < -offset - 1 && t2 < -offset - 1) {
+		TraceThroughTree(tw, node.children[1], p1f, p2f, p1, p2);
+		return;
+	}
+
+	// put the crosspoint SURFACE_CLIP_EPSILON pixels on the near side
+	var idist, side, frac, frac2;
+
+	if (t1 < t2) {
+		idist = 1.0/(t1-t2);
+		side = 1;
+		frac2 = (t1 + offset + SURFACE_CLIP_EPSILON)*idist;
+		frac = (t1 - offset + SURFACE_CLIP_EPSILON)*idist;
+	} else if (t1 > t2) {
+		idist = 1.0/(t1-t2);
+		side = 0;
+		frac2 = (t1 - offset - SURFACE_CLIP_EPSILON)*idist;
+		frac = (t1 + offset + SURFACE_CLIP_EPSILON)*idist;
+	} else {
+		side = 0;
+		frac = 1;
+		frac2 = 0;
+	}
+
+	// move up to the node
+	var mid = [0, 0, 0], midf;
+
+	if (frac < 0) {
+		frac = 0;
+	} else if (frac > 1) {
+		frac = 1;
+	}
+		
+	midf = p1f + (p2f - p1f)*frac;
+	mid[0] = p1[0] + frac*(p2[0] - p1[0]);
+	mid[1] = p1[1] + frac*(p2[1] - p1[1]);
+	mid[2] = p1[2] + frac*(p2[2] - p1[2]);
+
+	TraceThroughTree(tw, node.children[side], p1f, midf, p1, mid);
+
+	// go past the node
+	if (frac2 < 0) {
+		frac2 = 0;
+	}
+	if (frac2 > 1) {
+		frac2 = 1;
+	}
+		
+	midf = p1f + (p2f - p1f)*frac2;
+	mid[0] = p1[0] + frac2*(p2[0] - p1[0]);
+	mid[1] = p1[1] + frac2*(p2[1] - p1[1]);
+	mid[2] = p1[2] + frac2*(p2[2] - p1[2]);
+
+	TraceThroughTree(tw, node.children[side^1], midf, p2f, mid, p2);
 }
 
-function TraceThroughLeaf(output, leaf, start, end, radius) {
+function TraceThroughLeaf(tw, leaf) {
 	var brushes = cm.brushes;
 	var leafBrushes = cm.leafBrushes;
 	var shaders = cm.shaders;
 
+	// trace line against all brushes in the leaf
 	for (var i = 0; i < leaf.leafBrushCount; i++) {
 		var brush = brushes[leafBrushes[leaf.leafBrush + i]];
-		var shader = shaders[brush.shader];
-		if (brush.brushSideCount > 0 && shader.contents & 1) {
-			TraceThroughBrush(output, brush, start, end, radius);
+
+		if (brush.checkcount === cm.checkcount) {
+			continue;	// already checked this brush in another leaf
+		}
+
+		brush.checkcount = cm.checkcount;
+
+		// TODO Support this
+		if ( !(brush.contents & tw.contents) ) {
+			continue;
+		}
+
+		if (!BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1])) {
+			continue;
+		}
+
+		TraceThroughBrush(tw, brush);
+
+		if (!tw.trace.fraction) {
+			return;
 		}
 	}
 }
 
-function TraceThroughBrush(output, brush, start, end, radius) {
+function TraceThroughBrush(tw, brush) {
 	var brushSides = cm.brushSides;
-	var planes = cm.planes;
-	var startFraction = -1;
-	var endFraction = 1;
-	var startsOut = false;
-	var endsOut = false;
-	var collisionPlane = null;
+	var trace = tw.trace;
+	var leadside;
+	var clipplane;
+	var getout = false;
+	var startout = false;
+	var enterFrac = -1.0;
+	var leaveFrac = 1.0;
 
-	for (var i = 0; i < brush.brushSideCount; i++) {
-		var brushSide = brushSides[brush.brushSide + i];
-		var plane = planes[brushSide.plane];
-
-		var startDist = vec3.dot( start, plane.normal ) - (plane.distance + radius);
-		var endDist = vec3.dot( end, plane.normal ) - (plane.distance + radius);
-
-		if (startDist > 0) startsOut = true;
-		if (endDist > 0) endsOut = true;
-
-		// make sure the trace isn't completely on one side of the brush
-		if (startDist > 0 && endDist > 0) { return; }
-		if (startDist <= 0 && endDist <= 0) { continue; }
-
-		if (startDist > endDist) { // line is entering into the brush
-			var fraction = (startDist - q3bsptree_trace_offset) / (startDist - endDist);
-			if (fraction > startFraction) {
-				startFraction = fraction;
-				collisionPlane = plane;
-			}
-		} else { // line is leaving the brush
-			var fraction = (startDist + q3bsptree_trace_offset) / (startDist - endDist);
-			if (fraction < endFraction)
-				endFraction = fraction;
-		}
-	}
-
-	if (startsOut === false) {
-		output.startSolid = true;
-		if (endsOut === false)
-			output.allSolid = true;
+	if (!brush.numsides) {
 		return;
 	}
 
-	if (startFraction < endFraction) {
-		if (startFraction > -1 && startFraction < output.fraction) {
-			output.plane = collisionPlane;
-			if (startFraction < 0)
-				startFraction = 0;
-			output.fraction = startFraction;
+	//
+	// compare the trace against all planes of the brush
+	// find the latest time the trace crosses a plane towards the interior
+	// and the earliest time the trace crosses a plane towards the exterior
+	//
+	for (var i = 0; i < brush.numsides; i++) {
+		var side = brush.sides[i];
+		var plane = side.plane;
+
+		// adjust the plane distance apropriately for mins/maxs
+		var dist = plane.dist - vec3.dot(tw.offsets[plane.signbits], plane.normal);
+		var d1 = vec3.dot(tw.start, plane.normal) - dist;
+		var d2 = vec3.dot(tw.end, plane.normal) - dist;
+
+		if (d2 > 0) {
+			getout = true; // endpoint is not in solid
+		}
+		if (d1 > 0) {
+			startout = true;
+		}
+
+		// if completely in front of face, no intersection with the entire brush
+		if (d1 > 0 && (d2 >= SURFACE_CLIP_EPSILON || d2 >= d1)) {
+			return;
+		}
+
+		// if it doesn't cross the plane, the plane isn't relevent
+		if (d1 <= 0 && d2 <= 0) {
+			continue;
+		}
+
+		// crosses face
+		if (d1 > d2) {	// enter
+			var f = (d1-SURFACE_CLIP_EPSILON) / (d1-d2);
+			if (f < 0) {
+				f = 0;
+			}
+			if (f > enterFrac) {
+				enterFrac = f;
+				clipplane = plane;
+				leadside = side;
+			}
+		} else {	// leave
+			var f = (d1+SURFACE_CLIP_EPSILON) / (d1-d2);
+			if (f > 1) {
+				f = 1;
+			}
+			if (f < leaveFrac) {
+				leaveFrac = f;
+			}
 		}
 	}
 
-	return;
+	//
+	// all planes have been checked, and the trace was not
+	// completely outside the brush
+	//
+	if (!startout) {	// original point was inside brush
+		tw.trace.startSolid = true;
+		if (!getout) {
+			tw.trace.allSolid = true;
+			tw.trace.fraction = 0;
+			tw.trace.contents = brush.contents;
+		}
+		return;
+	}
+	
+	if (enterFrac < leaveFrac) {
+		if (enterFrac > -1 && enterFrac < tw.trace.fraction) {
+			if (enterFrac < 0) {
+				enterFrac = 0;
+			}
+			tw.trace.fraction = enterFrac;
+			tw.trace.plane = clipplane;
+			// TODO
+			//tw.trace.surfaceFlags = leadside.surfaceFlags;
+			tw.trace.contents = brush.contents;
+		}
+	}
 }
 
-function Trace(start, end, radius) {
-	var output = {
+function Trace(start, end, mins, maxs, brushmask, tw) {
+	tw = tw || new TraceWork();
+	var trace = tw.trace;
+
+	if (!cm.checkcount) cm.checkcount = 0;
+	cm.checkcount++; // for multi-check avoidance
+
+	// set basic parms
+	tw.contents = brushmask;
+
+	// adjust so that mins and maxs are always symetric, which
+	// avoids some complications with plane expanding of rotated
+	// bmodels
+	var offset = [0, 0, 0];
+	for (var i = 0 ; i < 3 ; i++) {
+		offset[i] = (mins[i] + maxs[i]) * 0.5;
+		tw.size[0][i] = mins[i] - offset[i];
+		tw.size[1][i] = maxs[i] - offset[i];
+		tw.start[i] = start[i] + offset[i];
+		tw.end[i] = end[i] + offset[i];
+	}
+
+	tw.maxOffset = tw.size[1][0] + tw.size[1][1] + tw.size[1][2];
+
+	// tw.offsets[signbits] = vector to apropriate corner from origin
+	tw.offsets[0][0] = tw.size[0][0];
+	tw.offsets[0][1] = tw.size[0][1];
+	tw.offsets[0][2] = tw.size[0][2];
+
+	tw.offsets[1][0] = tw.size[1][0];
+	tw.offsets[1][1] = tw.size[0][1];
+	tw.offsets[1][2] = tw.size[0][2];
+
+	tw.offsets[2][0] = tw.size[0][0];
+	tw.offsets[2][1] = tw.size[1][1];
+	tw.offsets[2][2] = tw.size[0][2];
+
+	tw.offsets[3][0] = tw.size[1][0];
+	tw.offsets[3][1] = tw.size[1][1];
+	tw.offsets[3][2] = tw.size[0][2];
+
+	tw.offsets[4][0] = tw.size[0][0];
+	tw.offsets[4][1] = tw.size[0][1];
+	tw.offsets[4][2] = tw.size[1][2];
+
+	tw.offsets[5][0] = tw.size[1][0];
+	tw.offsets[5][1] = tw.size[0][1];
+	tw.offsets[5][2] = tw.size[1][2];
+
+	tw.offsets[6][0] = tw.size[0][0];
+	tw.offsets[6][1] = tw.size[1][1];
+	tw.offsets[6][2] = tw.size[1][2];
+
+	tw.offsets[7][0] = tw.size[1][0];
+	tw.offsets[7][1] = tw.size[1][1];
+	tw.offsets[7][2] = tw.size[1][2];
+
+	//
+	// calculate bounds
+	//
+	for (var i = 0 ; i < 3 ; i++) {
+		if (tw.start[i] < tw.end[i]) {
+			tw.bounds[0][i] = tw.start[i] + tw.size[0][i];
+			tw.bounds[1][i] = tw.end[i] + tw.size[1][i];
+		} else {
+			tw.bounds[0][i] = tw.end[i] + tw.size[0][i];
+			tw.bounds[1][i] = tw.start[i] + tw.size[1][i];
+		}
+	}
+
+	//
+	// check for point special case
+	//
+	if (tw.size[0][0] == 0 && tw.size[0][1] == 0 && tw.size[0][2] == 0) {
+		tw.isPoint = true;
+		tw.extents = [0, 0, 0];
+	} else {
+		tw.isPoint = false;
+		tw.extents[0] = tw.size[1][0];
+		tw.extents[1] = tw.size[1][1];
+		tw.extents[2] = tw.size[1][2];
+	}
+
+	TraceThroughTree(tw, 0, 0, 1, tw.start, tw.end);
+
+	// generate endpos from the original, unmodified start/end
+	for (var i = 0; i < 3; i++) {
+		tw.trace.endPos[i] = start[i] + tw.trace.fraction * (end[i] - start[i]);
+	}
+
+	/*return output = {
 		allSolid: false,
 		startSolid: false,
 		fraction: 1.0,
 		endPos: end,
 		plane: null
-	};
+	};*/
 
-	if (!radius) {
-		radius = 0;
-	}
-
-	TraceThroughTree(output, 0, 0, 1, start, end, radius);
-
-	if (output.fraction != 1.0) { // collided with something
-		for (var i = 0; i < 3; i++) {
-			output.endPos[i] = start[i] + output.fraction * (end[i] - start[i]);
-		}
-	}
-
-	return output;
+	return trace;
 }

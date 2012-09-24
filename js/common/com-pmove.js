@@ -1,34 +1,3 @@
-/*
- * Q3GMove.js - Handles player movement through a bsp structure
- */
-
-/*
- * Copyright (c) 2009 Brandon Jones
- *
- * This software is provided 'as-is', without any express or implied
- * warranty. In no event will the authors be held liable for any damages
- * arising from the use of this software.
- *
- * Permission is granted to anyone to use this software for any purpose,
- * including commercial applications, and to alter it and redistribute it
- * freely, subject to the following restrictions:
- *
- *    1. The origin of this software must not be misrepresented; you must not
- *    claim that you wrote the original software. If you use this software
- *    in a product, an acknowledgment in the product documentation would be
- *    appreciated but is not required.
- *
- *    2. Altered source versions must be plainly marked as such, and must not
- *    be misrepresented as being the original software.
- *
- *    3. This notice may not be removed or altered from any source
- *    distribution.
- */
-
-// Much of this file is a simplified/dumbed-down version of the Q3 player movement code
-// found in bg_pmove.c and bg_slidemove.c
-
-// Some movement constants ripped from the Q3 Source code
 var q3movement_stopspeed = 100.0;
 var q3movement_duckScale = 0.25;
 var q3movement_jumpvelocity = 50;
@@ -42,6 +11,7 @@ var q3movement_flightfriction = 3.0;
 
 var q3movement_playerRadius = 10.0;
 
+// TODO Move these into a PmoveLocals structure?
 var forward = [0, 0, 0], right = [0, 0, 0], up = [0, 0, 0];
 var groundTrace;
 var groundPlane;
@@ -76,7 +46,7 @@ function CmdScale(cmd, speed) {
 	return scale;
 }
 
-function Friction(pm) {
+function Friction(pm, flying) {
 	var ps = pm.ps;
 
 	var vec = vec3.create(ps.velocity);
@@ -96,6 +66,8 @@ function Friction(pm) {
 	if (walking) {
 		var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
 		drop += control * q3movement_friction * pm.frameTime;
+	} else if (flying) {
+		drop += speed * q3movement_flightfriction * pm.frameTime;
 	}
 
 	var newspeed = speed - drop;
@@ -107,16 +79,87 @@ function Friction(pm) {
 	vec3.scale(ps.velocity, newspeed);
 }
 
-function GroundTraceMissed(pm) {
-	pm.ps.groundEntityNum = ENTITYNUM_NONE;
-	groundPlane = false;
+function ClipVelocity(vel, normal, overbounce) {
+	var backoff = vec3.dot(vel, normal);
+
+	if ( backoff < 0 ) {
+		backoff *= overbounce;
+	} else {
+		backoff /= overbounce;
+	}
+
+	var change = vec3.scale(normal, backoff, [0,0,0]);
+	return vec3.subtract(vel, change, change);
+}
+
+function Accelerate(pm, wishdir, wishspeed, accel) {
+	var ps = pm.ps;
+	var currentspeed = vec3.dot(ps.velocity, wishdir);
+	var addspeed = wishspeed - currentspeed;
+
+	if (addspeed <= 0) {
+		return;
+	}
+
+	var accelspeed = accel * pm.frameTime * wishspeed;
+
+	if (accelspeed > addspeed) {
+		accelspeed = addspeed;
+	}
+
+	vec3.add(ps.velocity, vec3.scale(wishdir, accelspeed, [0,0,0]));
+}
+
+function CheckDuck(pm) {
+	pm.mins[0] = -15;
+	pm.mins[1] = -15;
+	pm.mins[2] = -24;
+
+	pm.maxs[0] = 15;
+	pm.maxs[1] = 15;
+	pm.maxs[2] = 32;
+
+	pm.ps.viewheight = DEFAULT_VIEWHEIGHT;
+}
+
+function CheckJump(pm) {
+	var ps = pm.ps;
+
+	if (pm.cmd.upmove < 10) {
+		// not holding jump
+		return false;
+	}
+
+	// must wait for jump to be released
+	if (ps.pm_flags & PMF_JUMP_HELD) {
+		// clear upmove so cmdscale doesn't lower running speed
+		pm.cmd.upmove = 0;
+		return false;
+	}
+
+	groundPlane = false; // jumping away
 	walking = false;
+	ps.pm_flags |= PMF_JUMP_HELD;
+
+	ps.groundEntityNum = ENTITYNUM_NONE;
+	ps.velocity[2] = JUMP_VELOCITY;
+	/*PM_AddEvent( EV_JUMP );
+
+	if ( pm->cmd.forwardmove >= 0 ) {
+		PM_ForceLegsAnim( LEGS_JUMP );
+		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+	} else {
+		PM_ForceLegsAnim( LEGS_JUMPB );
+		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+	}*/
+
+	return true;
 }
 
 function GroundTrace(pm) {
 	var ps = pm.ps;
-	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - q3movement_playerRadius - 3];//0.25];
-	var trace = groundTrace = pm.trace(ps.origin, point, q3movement_playerRadius);
+	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
+	var trace = groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, pm.tracemask);
 
 	// if the trace didn't hit anything, we are in free fall
 	if (trace.fraction == 1.0) {
@@ -152,69 +195,10 @@ function GroundTrace(pm) {
 	walking = true;
 }
 
-function ClipVelocity(vel, normal, overbounce) {
-	var backoff = vec3.dot(vel, normal);
-
-	if ( backoff < 0 ) {
-		backoff *= overbounce;
-	} else {
-		backoff /= overbounce;
-	}
-
-	var change = vec3.scale(normal, backoff, [0,0,0]);
-	return vec3.subtract(vel, change, change);
-}
-
-function Accelerate(pm, wishdir, wishspeed, accel) {
-	var ps = pm.ps;
-	var currentspeed = vec3.dot(ps.velocity, wishdir);
-	var addspeed = wishspeed - currentspeed;
-
-	if (addspeed <= 0) {
-		return;
-	}
-
-	var accelspeed = accel * pm.frameTime * wishspeed;
-
-	if (accelspeed > addspeed) {
-		accelspeed = addspeed;
-	}
-
-	vec3.add(ps.velocity, vec3.scale(wishdir, accelspeed, [0,0,0]));
-}
-
-function CheckJump(pm) {
-	var ps = pm.ps;
-
-	if (pm.cmd.upmove < 10) {
-		// not holding jump
-		return false;
-	}
-
-	// must wait for jump to be released
-	if (ps.pm_flags & PMF_JUMP_HELD) {
-		// clear upmove so cmdscale doesn't lower running speed
-		pm.cmd.upmove = 0;
-		return false;
-	}
-
-	groundPlane = false; // jumping away
+function GroundTraceMissed(pm) {
+	pm.ps.groundEntityNum = ENTITYNUM_NONE;
+	groundPlane = false;
 	walking = false;
-	//ps.pm_flags |= PMF_JUMP_HELD;
-
-	ps.groundEntityNum = ENTITYNUM_NONE;
-	ps.velocity[2] = JUMP_VELOCITY;
-	/*PM_AddEvent( EV_JUMP );
-
-	if ( pm->cmd.forwardmove >= 0 ) {
-		PM_ForceLegsAnim( LEGS_JUMP );
-		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
-	} else {
-		PM_ForceLegsAnim( LEGS_JUMPB );
-		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
-	}*/
-
-	return true;
 }
 
 function SlideMove(pm, gravity) {
@@ -249,7 +233,7 @@ function SlideMove(pm, gravity) {
 		vec3.add(ps.origin, vec3.scale(ps.velocity, time_left, [0,0,0]), end);
 
 		// see if we can make it there
-		var trace = pm.trace(ps.origin, end, q3movement_playerRadius);
+		var trace = pm.trace(ps.origin, end, pm.mins, pm.maxs, pm.tracemask);
 
 		if (trace.allSolid) {
 			// entity is completely trapped in another solid
@@ -379,11 +363,11 @@ function StepSlideMove(pm, gravity) {
 	
 	var down = vec3.create(start_o);
 	down[2] -= STEPSIZE;
-	var trace = pm.trace(start_o, down, q3movement_playerRadius);
-	var up = [0,0,1];
+	var trace = pm.trace(start_o, down, pm.mins, pm.maxs, pm.tracemask);
+	var up = [0, 0, 1];
 
 	// never step up when you still have up velocity
-	if (ps.velocity[2] > 0 && (trace.fraction == 1.0 || vec3.dot(trace.plane.normal, up) < 0.7)) {
+	if (ps.velocity[2] > 0 && (trace.fraction === 1.0 || vec3.dot(trace.plane.normal, up) < 0.7)) {
 		return;
 	}
 
@@ -391,21 +375,21 @@ function StepSlideMove(pm, gravity) {
 	up[2] += STEPSIZE;
 
 	// test the player position if they were a stepheight higher
-	trace = pm.trace(start_o, up, q3movement_playerRadius);
+	trace = pm.trace(start_o, up, pm.mins, pm.maxs, pm.tracemask);
 	if (trace.allSolid) {
 		return; // can't step up
 	}
 
+	var stepSize = trace.endPos[2] - start_o[2];
 	// try slidemove from this position
 	vec3.set(trace.endPos, ps.origin);
 	vec3.set(start_v, ps.velocity);
 	SlideMove(pm, gravity);
 
 	// push down the final amount
-	var stepSize = trace.endPos[2] - start_o[2];
 	vec3.set(ps.origin, down);
 	down[2] -= stepSize;
-	trace = pm.trace(ps.origin, down, q3movement_playerRadius);
+	trace = pm.trace(ps.origin, down, pm.mins, pm.maxs, pm.tracemask);
 	if (!trace.allSolid) {
 		vec3.set(trace.endPos, ps.origin);
 	}
@@ -435,7 +419,7 @@ function FlyMove(pm) {
 	var cmd = pm.cmd;
 
 	// normal slowdown
-	Friction(pm);
+	Friction(pm, true);
 
 	var scale = CmdScale(cmd, ps.speed);
 	var wishvel = [0, 0, 0];
@@ -534,19 +518,6 @@ function WalkMove(pm) {
 	StepSlideMove(pm, false);
 }
 
-/*Q3GMove.prototype.jump = function() {
-	if(!this.onGround) { return false; }
-
-	this.onGround = false;
-	this.velocity[2] = q3movement_jumpvelocity;
-
-	//Make sure that the player isn't stuck in the ground
-	var groundDist = vec3.dot( this.position, this.groundTrace.plane.normal ) - this.groundTrace.plane.distance - q3movement_playerRadius;
-	vec3.add(this.position, vec3.scale(this.groundTrace.plane.normal, groundDist + 5, [0, 0, 0]));
-
-	return true;
-};*/
-
 function UpdateViewAngles(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
@@ -585,13 +556,14 @@ function PmoveSingle(pm, msec) {
 
 	// Update our view angles.
 	UpdateViewAngles(pm);
-	vec3.anglesToVectors(pm.ps.viewangles, forward, right, up);
+	vec3.anglesToVectors(ps.viewangles, forward, right, up);
 
 	if (pm.cmd.upmove < 10) {
 		// not holding jump
 		ps.pm_flags &= ~PMF_JUMP_HELD;
 	}
 
+	CheckDuck(pm);
 	GroundTrace(pm);
 
 	//FlyMove(pm);
