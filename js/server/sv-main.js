@@ -36,14 +36,8 @@ function SpawnServer(mapName) {
 		cl.MapLoading();
 
 		gm.Init({
-			GetEntities: GetEntities
+			GetEntities: cm.GetEntities,
+			Trace: cm.Trace
 		});
 	}, this));
-}
-
-/**
- * Interface functions passed to the game module.
- */
-function GetEntities() {
-	return cm.GetEntities();
 }

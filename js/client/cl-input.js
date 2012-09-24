@@ -1,7 +1,7 @@
 var activeKeys = {};
 var lastPageX = 0;
 var lastPageY = 0;
-var forwardKey, leftKey, backKey, rightKey;
+var forwardKey, leftKey, backKey, rightKey, upKey;
 
 function InputInit() {
 	// Initialize system bindings.
@@ -16,10 +16,12 @@ function InputInit() {
 	com.CmdAdd('+left', function (key) { leftKey = key; });
 	com.CmdAdd('+back', function (key) { backKey = key; });
 	com.CmdAdd('+right', function (key) { rightKey = key; });
+	com.CmdAdd('+jump', function (key) { upKey = key; });
 	Bind('w', '+forward');
 	Bind('a', '+left');
 	Bind('s', '+back');
 	Bind('d', '+right');
+	Bind('space', '+jump');
 }
 
 /**
@@ -55,8 +57,8 @@ function KeyMove(cmd) {
 	if (rightKey) side += movespeed * GetKeyState(rightKey);
 	if (leftKey) side -= movespeed * GetKeyState(leftKey);
 
-	//up += movespeed * KeyState();
-	//up -= movespeed * KeyState();
+	if (upKey) up += movespeed * GetKeyState(upKey);
+	if (upKey) up -= movespeed * GetKeyState(upKey);
 
 	if (forwardKey) forward += movespeed * GetKeyState(forwardKey);
 	if (backKey) forward -= movespeed * GetKeyState(backKey);

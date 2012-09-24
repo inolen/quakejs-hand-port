@@ -7,11 +7,14 @@ function ClientBegin(clientNum) {
 function ClientThink(clientNum, cmd) {
 	var client = level.clients[clientNum];
 
+
+	client.ps.gravity = 800;
 	client.ps.speed = 320;
 
 	var pm = new PmoveInfo();
 	pm.ps = client.ps;
 	pm.cmd = cmd;
+	pm.trace = sv.Trace;
 
 	com.Pmove(pm);
 }
