@@ -11,7 +11,9 @@ copies off the playerstate and areabits.
 */
 function BuildClientSnapshot(client, msg) {
 	var frame = client.frames[0];
-	frame.ps = client.ps;
+
+	var clientNum = GetClientNum(client);
+	frame.ps = gm.GetClientPlayerstate(clientNum);
 
 	msg.origin.push(frame.ps.origin[0]);
 	msg.origin.push(frame.ps.origin[1]);

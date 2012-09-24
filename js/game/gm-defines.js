@@ -24,6 +24,11 @@ var GameEntity = function () {
 	void		(*die)(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod);*/
 };
 
+var GameClient = function () {
+	this.ps = new PlayerState();
+};
+
 var LevelLocals = function () {
 	this.gentities = [];
+	this.clients = {};
 };

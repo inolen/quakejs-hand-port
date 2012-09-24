@@ -1,25 +1,53 @@
-function ClientBegin() {
+function ClientBegin(clientNum) {
+	var client = level.clients[clientNum] = new GameClient();
 
+	ClientSpawn(client);
 }
 
-function ClientSpawn() {
-	/*if (!map.entities) {
-		return;
-	}
+function ClientThink(clientNum, cmd) {
+	var client = level.clients[clientNum];
 
-	if (index == -1) {
-		index = (lastIndex+1)% map.entities.info_player_deathmatch.length;
-	}
-	lastIndex = index;
+	client.ps.speed = 320;
 
-	var spawnPoint = map.entities.info_player_deathmatch[index];
-	playerMover.position = [
-		spawnPoint.origin[0],
-		spawnPoint.origin[1],
-		spawnPoint.origin[2]+30 // Start a little ways above the floor
-	];
-	playerMover.velocity = [0,0,0];
+	var pm = new PmoveInfo();
+	pm.ps = client.ps;
+	pm.cmd = cmd;
 
-	zAngle = -spawnPoint.angle * (3.1415/180) + (3.1415*0.5); // Negative angle in radians + 90 degrees
-	xAngle = 0;*/
+	com.Pmove(pm);
+}
+
+function GetClientPlayerstate(clientNum) {
+	var client = level.clients[clientNum];
+	return client.ps;
+}
+
+function ClientSpawn(client) {
+	var spawnPoint = SelectRandomDeathmatchSpawnPoint();
+
+	client.ps.origin = spawnPoint.origin;
+	client.ps.velocity = [0, 0, 0];
+}
+
+function SelectNearestDeathmatchSpawnPoint(from) {
+	var nearestDist = 999999;
+	var nearestSpot = null;
+	var entities = sv.GetEntities();
+
+	_.each(entities.info_player_deathmatch, function (spawnpoint) {
+		var dist = vec3.length(vec3.subtract(spawnpoint.origin, from, [0, 0, 0]));
+
+		if (dist < nearestDist) {
+			nearestDist = dist;
+			nearestSpot = spawnpoint;
+		}
+	});
+
+	return nearestSpot;
+}
+
+function SelectRandomDeathmatchSpawnPoint() {
+	var entities = sv.GetEntities();
+	var spawnpoints = entities.info_player_deathmatch;
+
+	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }

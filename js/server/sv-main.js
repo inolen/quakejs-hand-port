@@ -28,14 +28,17 @@ function Frame(frameTime, msec) {
 
 function SpawnServer(mapName) {
 	console.log('SV: Spawning new server instance running: ' + mapName);
-	cl.MapLoading(); // This function name sucks.
-	cm.LoadMap(mapName);
+	cm.LoadMap(mapName, _.bind(function () {
+		com.CvarSet('sv_mapname', mapName);
 
-	com.CvarSet('sv_mapname', mapName);
+		// Let the local client now to reconnect.
+		// This function name sucks btw.
+		cl.MapLoading();
 
-	gm.Init({
-		GetEntities: GetEntities
-	});
+		gm.Init({
+			GetEntities: GetEntities
+		});
+	}, this));
 }
 
 /**

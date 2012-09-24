@@ -1,10 +1,11 @@
 var entities;
 
-function LoadMap(mapName) {
+function LoadMap(mapName, callback) {
 	var map = new Q3Bsp();
 
 	map.Load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {
 		LoadEntities(map);
+		callback();
 	});
 }
 

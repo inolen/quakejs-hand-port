@@ -1,8 +1,12 @@
 function ClientConnect(netchan) {
 	console.log('SV: A client is direct connecting', netchan);
-	var client = new Client();
+
+	var client = new ServerClient();
 	client.netchan = netchan;
 	svs.clients.push(client);
+
+	var clientNum = GetClientNum(client);
+	gm.ClientBegin(clientNum);
 }
 
 function ClientDisconnect(client) {
@@ -50,21 +54,18 @@ function SendClientGameState(client) {
 }
 
 function ClientThink(client, cmd) {
-	client.lastUsercmd = cmd;
-
-	// TODO: Following q3 convention here.. seems weird.
-	client.ps.speed = 320;
-
-	var pm = new PmoveInfo();
-	pm.ps = client.ps;
-	pm.cmd = cmd;
-
-	com.Pmove(pm);
-	//VM_Call( gvm, GAME_CLIENT_THINK, cl - svs.clients );
+	var clientNum = GetClientNum(client);
+	gm.ClientThink(clientNum, cmd);
 }
 
-function ClientEnterWorld(client, cmd) {
-	client.lastUsercmd = cmd;
+function GetClientNum(client) {
+	for (var i = 0; i < svs.clients.length; i++) {
+		var c = svs.clients[i];
 
-	gm.ClientBegin();
+		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
+			return i;
+		}
+	}
+
+	return -1;
 }

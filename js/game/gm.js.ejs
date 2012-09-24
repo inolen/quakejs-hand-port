@@ -1,10 +1,14 @@
-define('game/gm', [], function () {
+define('game/gm', ['common/com'], function (com) {
 	<%- include ../common/com-defines.js %>
 	<%- include ../game/gm-defines.js %>
 	<%- include ../game/gm-main.js %>
+	<%- include ../game/gm-client.js %>
 	<%- include ../game/gm-spawn.js %>
 
 	return {
-		Init: Init
+		Init: Init,
+		ClientBegin: ClientBegin,
+		ClientThink: ClientThink,
+		GetClientPlayerstate: GetClientPlayerstate
 	};
 });
