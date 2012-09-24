@@ -70,9 +70,8 @@ function CmdScale(cmd, speed) {
 		return 0;
 	}
 
-	total = Math.sqrt(cmd.forwardmove * cmd.forwardmove
-		+ cmd.rightmove * cmd.rightmove + cmd.upmove * cmd.upmove);
-	scale = speed * max / ( 127.0 * total );
+	total = Math.sqrt(cmd.forwardmove * cmd.forwardmove + cmd.rightmove * cmd.rightmove + cmd.upmove * cmd.upmove);
+	scale = speed * max / (127.0 * total);
 
 	return scale;
 }
@@ -94,8 +93,10 @@ function Friction(pm) {
 	}
 
 	var drop = 0;
-	var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
-	drop += control * q3movement_friction * pm.frameTime;
+	if (walking) {
+		var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
+		drop += control * q3movement_friction * pm.frameTime;
+	}
 
 	var newspeed = speed - drop;
 	if (newspeed < 0) {
@@ -114,7 +115,7 @@ function GroundTraceMissed(pm) {
 
 function GroundTrace(pm) {
 	var ps = pm.ps;
-	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - q3movement_playerRadius - 5];//0.25];
+	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - q3movement_playerRadius - 3];//0.25];
 	var trace = groundTrace = pm.trace(ps.origin, point, q3movement_playerRadius);
 
 	// if the trace didn't hit anything, we are in free fall
@@ -191,11 +192,11 @@ function CheckJump(pm) {
 	}
 
 	// must wait for jump to be released
-	/*if (ps.pm_flags & PMF_JUMP_HELD) {
+	if (ps.pm_flags & PMF_JUMP_HELD) {
 		// clear upmove so cmdscale doesn't lower running speed
 		pm.cmd.upmove = 0;
 		return false;
-	}*/
+	}
 
 	groundPlane = false; // jumping away
 	walking = false;
@@ -592,12 +593,15 @@ function PmoveSingle(pm, msec) {
 	}
 
 	GroundTrace(pm);
+
 	//FlyMove(pm);
 	if (walking) {
 		WalkMove(pm);
 	} else {
 		AirMove(pm);
 	}
+
+	GroundTrace(pm);
 }
 
 function Pmove(pm) {
