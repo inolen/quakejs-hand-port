@@ -5,7 +5,6 @@ define('common/com', ['system/sys', 'server/sv', 'client/cl', 'system/LoopbackCh
 	<%- include com-cmd.js %>
 	<%- include com-cvar.js %>
 	<%- include com-net.js %>
-	<%- include com-pmove.js %>
 
 	return {
 		Init: Init,
@@ -16,7 +15,6 @@ define('common/com', ['system/sys', 'server/sv', 'client/cl', 'system/LoopbackCh
 		CvarGet: CvarGet,
 		CvarSet: CvarSet,
 		NetChannelCreate: NetChannelCreate,
-		NetChannelDestroy: NetChannelDestroy,
-		Pmove: Pmove
+		NetChannelDestroy: NetChannelDestroy
 	};
 });

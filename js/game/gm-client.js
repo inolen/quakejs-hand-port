@@ -27,7 +27,7 @@ function ClientThink(clientNum, cmd) {
 	pm.tracemask = MASK_PLAYERSOLID;
 	pm.trace = sv.Trace;
 
-	com.Pmove(pm);
+	bg.Pmove(pm);
 }
 
 function GetClientPlayerstate(clientNum) {

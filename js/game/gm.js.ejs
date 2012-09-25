@@ -1,9 +1,10 @@
-define('game/gm', ['common/com'], function (com) {
+define('game/gm', ['common/com', 'game/bg'], function (com, bg) {
 	<%- include ../common/com-defines.js %>
-	<%- include ../game/gm-defines.js %>
-	<%- include ../game/gm-main.js %>
-	<%- include ../game/gm-client.js %>
-	<%- include ../game/gm-spawn.js %>
+	<%- include bg-defines.js %>
+	<%- include gm-defines.js %>
+	<%- include gm-main.js %>
+	<%- include gm-client.js %>
+	<%- include gm-spawn.js %>
 
 	return {
 		Init: Init,

@@ -1,0 +1,9 @@
+define('game/bg', [], function () {
+	<%- include ../common/com-defines.js %>
+	<%- include bg-defines.js %>
+	<%- include bg-pmove.js %>
+	
+	return {
+		Pmove: Pmove
+	};
+});
