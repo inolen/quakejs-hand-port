@@ -1,4 +1,4 @@
-var frameTime = lastFrameTime = Date.now();
+var frameTime = lastFrameTime = sys.GetMilliseconds();
 
 function Init(canvas, gl) {
 	sv.Init();
@@ -17,7 +17,7 @@ function Init(canvas, gl) {
 
 function GetMsec() {
 	lastFrameTime = frameTime;
-	frameTime = Date.now();
+	frameTime = sys.GetMilliseconds();
 	return frameTime - lastFrameTime;
 }
 

@@ -10,6 +10,13 @@ function ClientBegin(clientNum) {
 function ClientThink(clientNum, cmd) {
 	var client = level.clients[clientNum];
 
+	// sanity check the command time to prevent speedup cheating
+	/*if (cmd->serverTime > level.time + 200) {
+		cmd->serverTime = level.time + 200;
+	}
+	if (cmd->serverTime < level.time - 1000) {
+		cmd->serverTime = level.time - 1000;
+	}*/
 
 	client.ps.gravity = 800;
 	client.ps.speed = 320;

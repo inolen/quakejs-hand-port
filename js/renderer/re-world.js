@@ -530,12 +530,12 @@ function AddWorldSurfaces(map) {
 	RecursiveWorldNode(nodes);
 }
 
-var startTime = Date.now();
+var startTime = sys.GetMilliseconds();
 function RenderWorld(modelViewMat, projectionMat) {
 	if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
 
 	// Seconds passed since map was initialized
-	var time = (Date.now() - startTime)/1000.0;
+	var time = (sys.GetMilliseconds() - startTime)/1000.0;
 	var i = 0;
 
 	// If we have a skybox, render it first

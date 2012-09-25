@@ -1,7 +1,7 @@
 /**
  * For a local server, don't actually send the packets over the WebSocket
  */
-define('sys/LoopbackChannel', [], function () {
+define('system/LoopbackChannel', [], function () {
 	var MAX_PACKETLEN = 1400;
 	// there needs to be enough loopback messages to hold a complete
 	// gamestate of maximum size

@@ -50,6 +50,17 @@ function CreateCommand() {
 	return cmd;
 }
 
+// TODO Move somewhere generic
+function ClampChar(i) {
+	if ( i < -128 ) {
+		return -128;
+	}
+	if ( i > 127 ) {
+		return 127;
+	}
+	return i;
+}
+
 function KeyMove(cmd) {
 	var movespeed = 127;
 	var forward = 0, side = 0, up = 0;
@@ -63,9 +74,9 @@ function KeyMove(cmd) {
 	if (forwardKey) forward += movespeed * GetKeyState(forwardKey);
 	if (backKey) forward -= movespeed * GetKeyState(backKey);
 
-	cmd.forwardmove = forward;
-	cmd.rightmove = side;
-	cmd.upmove = up;
+	cmd.forwardmove = ClampChar(forward);
+	cmd.rightmove = ClampChar(side);
+	cmd.upmove = ClampChar(up);
 }
 
 function MouseMove(cmd) {
@@ -122,14 +133,14 @@ function KeyDownEvent(keyName) {
 	if (key.active) return;
 
 	key.active = true;
-	key.downtime = Date().now;
+	key.downtime = sys.GetMilliseconds();
 	ExecBinding(key);
 }
 
 function KeyUpEvent(keyName) {
 	var key = GetKey(keyName);
 	key.active = false; // Partial frame summing
-	key.partial += Date().now - key.downtime;
+	key.partial += sys.GetMilliseconds() - key.downtime;
 	ExecBinding(key);
 }
 

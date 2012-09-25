@@ -28,14 +28,14 @@ var NetSrc = {
  * GAMESTATE
  */
 var PlayerState = function () {
-	this.commandTime = 0;
+	this.commandTime = 0;			// cmd->serverTime of last executed command
 	this.origin = [0, 0, 0];
 	this.velocity = [0, 0, 0];
 	this.viewangles = [0, 0, 0];
 	this.speed = 0;
 	this.gracity = 0;
-	this.groundEntityNum = -1;
-	this.pm_flags = 0;
+	this.groundEntityNum = -1;		// ENTITYNUM_NONE = in air
+	this.pm_flags = 0;				// ducked, jump_held, etc
 };
 
 /**

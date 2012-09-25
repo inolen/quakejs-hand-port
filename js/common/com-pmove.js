@@ -27,9 +27,7 @@ without getting a sqrt(2) distortion in speed.
 ============
 */
 function CmdScale(cmd, speed) {
-	var max, total, scale;
-
-	max = Math.abs(cmd.forwardmove);
+	var max = Math.abs(cmd.forwardmove);
 	if (Math.abs(cmd.rightmove) > max) {
 		max = Math.abs(cmd.rightmove);
 	}
@@ -40,8 +38,8 @@ function CmdScale(cmd, speed) {
 		return 0;
 	}
 
-	total = Math.sqrt(cmd.forwardmove * cmd.forwardmove + cmd.rightmove * cmd.rightmove + cmd.upmove * cmd.upmove);
-	scale = speed * max / (127.0 * total);
+	var total = Math.sqrt(cmd.forwardmove * cmd.forwardmove + cmd.rightmove * cmd.rightmove + cmd.upmove * cmd.upmove);
+	var scale = speed * max / (127.0 * total);
 
 	return scale;
 }
@@ -89,7 +87,7 @@ function ClipVelocity(vel, normal, overbounce) {
 	}
 
 	var change = vec3.scale(normal, backoff, [0,0,0]);
-	return vec3.subtract(vel, change, change);
+	return vec3.subtract(vel, change, [0, 0, 0]);
 }
 
 function Accelerate(pm, wishdir, wishspeed, accel) {
@@ -211,7 +209,7 @@ function SlideMove(pm, gravity) {
 
 	if (gravity) {
 		vec3.set(ps.velocity, endVelocity);
-		endVelocity[2] -= ps.gravity * pm.frameTime;
+		endVelocity[2] -= ps.gravity * time_left;
 		ps.velocity[2] = (ps.velocity[2] + endVelocity[2]) * 0.5;
 
 		if (groundPlane) {
@@ -343,23 +341,24 @@ function SlideMove(pm, gravity) {
 		}
 	}
 
-	if (gravity ) {
+	if (gravity) {
 		vec3.set(endVelocity, ps.velocity);
 	}
 
-	return (bumpcount !== 0);
+	return bumpcount === 0;
 }
 
 function StepSlideMove(pm, gravity) {
 	var ps = pm.ps;
 
-	// we got exactly where we wanted to go first try
-	if (SlideMove(pm, gravity) === 0) {
-		return;
-	}
-
+	// Make sure these are stored BEFORE the initial SlideMove.
 	var start_o = vec3.create(ps.origin);
 	var start_v = vec3.create(ps.velocity);
+
+	// we got exactly where we wanted to go first try
+	if (SlideMove(pm, gravity)) {
+		return;
+	}
 	
 	var down = vec3.create(start_o);
 	down[2] -= STEPSIZE;
@@ -579,26 +578,23 @@ function PmoveSingle(pm, msec) {
 function Pmove(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
-	var finalTime = cmd.serverTime;
 
-	if (finalTime < ps.commandTime) {
+	if (cmd.serverTime < ps.commandTime) {
 		return;	// should not happen
 	}
 
-	if (finalTime > ps.commandTime + 1000) {
-		ps.commandTime = finalTime - 1000;
+	if (cmd.serverTime > ps.commandTime + 1000) {
+		ps.commandTime = cmd.serverTime - 1000;
 	}
 
 	// chop the move up if it is too long, to prevent framerate
 	// dependent behavior
-	while (ps.commandTime != finalTime) {
-		var msec = finalTime - ps.commandTime;
+	while (ps.commandTime != cmd.serverTime) {
+		var msec = cmd.serverTime - ps.commandTime;
 
 		if (msec > 66) {
 			msec = 66;
 		}
-
-		cmd.serverTime = ps.commandTime + msec;
 
 		PmoveSingle(pm, msec);
 

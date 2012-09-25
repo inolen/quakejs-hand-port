@@ -19,4 +19,5 @@ var ServerStatic = function () {
 
 // Reset for each map.
 var ServerLocals = function () {
+	this.timeResidual = 0;			// <= 1000 / sv_frame->value
 };
