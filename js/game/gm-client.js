@@ -23,7 +23,7 @@ function ClientThink(clientNum, cmd) {
 		cmd->serverTime = level.time - 1000;
 	}*/
 
-	client.ps.gravity = 800;
+	client.ps.gravity = g_gravity();
 	client.ps.speed = 320;
 
 	var pm = new PmoveInfo();
@@ -65,7 +65,7 @@ function ClientSpawn(ent) {
 function SelectNearestDeathmatchSpawnPoint(from) {
 	var nearestDist = 999999;
 	var nearestSpot = null;
-	var spawnpoints = EntityFindByClassname('info_player_deathmatch');
+	var spawnpoints = EntityFind('classname', 'info_player_deathmatch');
 
 	for (var i = 0; i < spawnpoints.length; i++) {
 		var spawnpoint = spawnpoints[i];
@@ -81,7 +81,7 @@ function SelectNearestDeathmatchSpawnPoint(from) {
 }
 
 function SelectRandomDeathmatchSpawnPoint() {
-	var spawnpoints = EntityFindByClassname('info_player_deathmatch');
+	var spawnpoints = EntityFind('classname', 'info_player_deathmatch');
 
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }

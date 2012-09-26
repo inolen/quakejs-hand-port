@@ -1,0 +1,30 @@
+function AimAtTarget(self) {
+	var origin = vec3.add(self.absmin, self.absmax, [0, 0, 0]);
+	vec3.scale(origin, 0.5);
+
+	var ent = EntityPickTarget(self.target);
+	if (!ent) {
+		EntityFree(self);
+		return;
+	}
+
+	var height = ent.s.origin[2] - origin[2];
+	var gravity = g_gravity();
+	var time = Math.sqrt(height / (0.5 * gravity));
+	if (!time) {
+		EntityFree(self);
+		return;
+	}
+
+	// set s.origin2 to the push velocity
+	vec3.subtract(ent.s.origin, origin, self.s.origin2 );
+	self.s.origin2[2] = 0;
+
+	var dist = vec3.length(self.s.origin2);
+	vec3.normalize(self.s.origin2);
+
+	var forward = dist / time;
+	vec3.scale(self.s.origin2, forward);
+
+	self.s.origin2[2] = time * gravity;
+}

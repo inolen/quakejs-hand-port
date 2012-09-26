@@ -1,13 +1,20 @@
 entityEvents['trigger_push'] = {
-	spawn: function () {
-		var gent = this;
-		console.log('spawning trigger_push', gent);
-		sv.SetBrushModel(gent, gent.model);
-		gent.contents = CONTENTS_TRIGGER; // replaces the -1 from trap_SetBrushModel
-		sv.LinkEntity(gent);
+	spawn: function (self) {
+		sv.SetBrushModel(self, self.model);
+		self.contents = CONTENTS_TRIGGER;
+		self.nextthink = level.time + FRAMETIME;
+		sv.LinkEntity(self);
 	},
 
-	touch: function () {
-		console.log('touch');
+	think: function (self) {
+		AimAtTarget(self);
+	},
+
+	touch: function (self, other) {
+		if (!other.client) {
+			return;
+		}
+
+		bg.TouchJumpPad(other.client.ps, self.s);
 	}
 };

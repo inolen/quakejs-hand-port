@@ -133,8 +133,10 @@ function LoadEntities(map) {
 		};
 
 		entitySrc.replace(/"(.+)" "(.+)"$/mg, function($0, key, value) {
-			switch(key) {
+
+			switch (key) {
 				case 'origin':
+				case 'origin2':
 					value.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
 						entity[key] = [
 							parseFloat(x),

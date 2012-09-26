@@ -587,6 +587,8 @@ function Pmove(pm) {
 		ps.commandTime = cmd.serverTime - 1000;
 	}
 
+	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
+
 	// chop the move up if it is too long, to prevent framerate
 	// dependent behavior
 	while (ps.commandTime != cmd.serverTime) {

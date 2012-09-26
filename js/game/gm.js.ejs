@@ -6,10 +6,12 @@ define('game/gm', ['common/com', 'game/bg'], function (com, bg) {
 	<%- include gm-active.js %>
 	<%- include gm-client.js %>
 	<%- include gm-entities.js %>
+	<%- include gm-trigger.js %>
 	<%- include entities/gm-trigger_push.js %>
 
 	return {
 		Init: Init,
+		Frame: Frame,
 		ClientBegin: ClientBegin,
 		ClientThink: ClientThink,
 		GetClientPlayerstate: GetClientPlayerstate

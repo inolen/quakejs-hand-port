@@ -26,24 +26,28 @@ var NetSrc = {
 /**
  * GAMESTATE
  */
-var MAX_CLIENTS          = 64;                   // absolute limit
-var MAX_LOCATIONS        = 64;
+var MAX_CLIENTS            = 64;                 // absolute limit
+var MAX_LOCATIONS          = 64;
+var MAX_GENTITIES          = 1024;
 
-var MAX_GENTITIES        = 1024;
+var ENTITYNUM_NONE         = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
 
-var ENTITYNUM_NONE       = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD      = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL = MAX_GENTITIES-2;
+var PS_PMOVEFRAMECOUNTBITS = 6;
 
 var PlayerState = function () {
-	this.commandTime     = 0;                    // cmd->serverTime of last executed command
-	this.origin          = [0, 0, 0];
-	this.velocity        = [0, 0, 0];
-	this.viewangles      = [0, 0, 0];
-	this.speed           = 0;
-	this.gracity         = 0;
-	this.groundEntityNum = -1;                   // ENTITYNUM_NONE = in air
-	this.pm_flags        = 0;                    // ducked, jump_held, etc
+	this.commandTime      = 0;                   // cmd->serverTime of last executed command
+	this.origin           = [0, 0, 0];
+	this.velocity         = [0, 0, 0];
+	this.viewangles       = [0, 0, 0];
+	this.speed            = 0;
+	this.gracity          = 0;
+	this.groundEntityNum  = -1;                  // ENTITYNUM_NONE = in air
+	this.pm_flags         = 0;                   // ducked, jump_held, etc
+	this.jumppad_ent      = 0;                   // jumppad entity hit this frame
+	this.jumppad_frame    = 0;
+	this.pmove_framecount = 0;
 };
 
 /**

@@ -8,18 +8,18 @@ function Init() {
 	com = require('common/com');
 	
 	com.CvarAdd('sv_mapname', 'nomap');
-	//com.CvarAdd('sv_fps',     '20');
+	com.CvarAdd('sv_fps',     '20');
 
 	CmdInit();
 	NetInit();
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		CmdLoadMap('q3dm7');
+		CmdLoadMap('q3dm17');
 	}, 0);
 }
 
-/*function FrameMsec() {
+function FrameMsec() {
 	var fps = com.CvarGet('sv_fps');
 	var frameMsec = 1000 / fps;
 
@@ -28,23 +28,23 @@ function Init() {
 	}
 
 	return frameMsec;
-}*/
+}
 
 function Frame(frameTime, msec) {
-	/*var frameMsec = FrameMsec();
-	sv.timeResidual += msec;*/
+	var frameMsec = FrameMsec();
+	sv.timeResidual += msec;
 
 	NetFrame();
 
-	/*// run the game simulation in chunks
-	while ( sv.timeResidual >= frameMsec ) {
+	// run the game simulation in chunks
+	while (sv.timeResidual >= frameMsec) {
 		sv.timeResidual -= frameMsec;
 		svs.time += frameMsec;
 		sv.time += frameMsec;
 
 		// let everything in the world think and move
-		VM_Call (gvm, GAME_RUN_FRAME, sv.time);
-	}*/
+		gm.Frame(sv.time);
+	}
 
 	SendClientMessages();
 }

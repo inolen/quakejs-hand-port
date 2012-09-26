@@ -28,8 +28,8 @@ function TouchTriggers(ent) {
 	vec3.add(ps.origin, ent.r.mins, mins);
 	vec3.add(ps.origin, ent.r.maxs, maxs);*/
 
-	for (var i = 0; i < entityNums; i++) {
-		var hit = level.entities[entityNums[i]];
+	for (var i = 0; i < entityNums.length; i++) {
+		var hit = level.gentities[entityNums[i]];
 
 		// If they don't have callbacks.
 		if (!hit.touch) {
@@ -44,7 +44,7 @@ function TouchTriggers(ent) {
 			continue;
 		}*/
 
-		hit.touch.call(hit, ent);
+		hit.touch.call(this, hit, ent);
 	}
 
 	// if we didn't touch a jump pad this pmove frame

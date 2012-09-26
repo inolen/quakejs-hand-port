@@ -4,12 +4,10 @@ function ClientConnect(netchan) {
 	// Find a slot for the client.
 	var clientNum;
 	for (var i = 0; i < MAX_CLIENTS; i++) {
-		if (svs.clients[i]) {
-			continue;
+		if (!svs.clients[i]) {
+			clientNum = i;
+			break;
 		}
-
-		clientNum = i;
-		break;
 	}
 	if (clientNum === undefined) {
 		throw new Error('Server is full');
@@ -28,6 +26,10 @@ function ClientDisconnect(client) {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var c = svs.clients[i];
 
+		if (!c) {
+			continue;
+		}
+
 		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
 			idx = i;
 			break;
@@ -39,7 +41,7 @@ function ClientDisconnect(client) {
 		return;
 	}
 
-	svs.clients.splice(idx, 1);
+	delete svs.clients[idx];
 }
 
 function UserMove(client, cmd) {
@@ -72,6 +74,10 @@ function ClientThink(client, cmd) {
 function GetClientNum(client) {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var c = svs.clients[i];
+
+		if (!c) {
+			continue;
+		}
 
 		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
 			return i;

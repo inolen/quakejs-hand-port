@@ -71,7 +71,7 @@ function RenderView(parms) {
 
 	// Setup
 	gl.viewport(0, 0, parms.width, parms.height);
-	gl.clearColor(0.0, 1.0, 0.0, 1.0);
+	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	gl.clearDepth(1.0);
 
 	gl.enable(gl.DEPTH_TEST);

@@ -1,3 +1,5 @@
+var FRAMETIME = 100; // msec
+
 var GameEntity = function () {
 	/**
 	 * Shared by the engine and game.
@@ -27,6 +29,9 @@ var GameEntity = function () {
 	this.classname     = 'noclass';
 	this.model         = null;
 	this.model2        = null;
+	this.target        = null;
+	this.targetname    = null;
+	this.nextthink     = 0;
 };
 
 var GameClient = function () {
@@ -34,6 +39,9 @@ var GameClient = function () {
 };
 
 var LevelLocals = function () {
-	this.gentities = {};
-	this.clients   = {};
+	this.framenum     = 0;
+	this.previousTime = 0;
+	this.time         = 0;
+	this.gentities    = new Array(MAX_GENTITIES);
+	this.clients      = new Array(MAX_CLIENTS);
 };

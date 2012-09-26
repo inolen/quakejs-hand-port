@@ -275,14 +275,7 @@ function LinkEntity(gent) {
 	// link it in
 	gent.linked = true;
 	ent.worldSector = node;
-
 	node.entities[ent.number] = ent;
-
-	if (gent.classname == 'trigger_push') {
-		console.log('Linking trigger_push', gent, ent);
-	}
-
-	//console.log('LINKING MOTHERFUCKER', node);
 }
 
 function UnlinkEntity(gent) {
