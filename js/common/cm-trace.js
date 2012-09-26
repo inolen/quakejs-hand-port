@@ -122,8 +122,9 @@ function TraceThroughLeaf(tw, leaf) {
 	var shaders = cm.shaders;
 
 	// trace line against all brushes in the leaf
-	for (var i = 0; i < leaf.leafBrushCount; i++) {
-		var brush = brushes[leafBrushes[leaf.leafBrush + i]];
+	for (var i = 0; i < leaf.numLeafBrushes; i++) {
+		var brushNum = leafBrushes[leaf.firstLeafBrush + i];
+		var brush = brushes[brushNum];
 
 		if (brush.checkcount === cm.checkcount) {
 			continue;	// already checked this brush in another leaf

@@ -5,6 +5,7 @@ var SURFACE_CLIP_EPSILON = 0.125;
 var ClipMap = function () {
 	this.shaders = null;
 	this.brushes = null;
+	this.cmodels = null;
 	this.leaves = null;
 	this.leafBrushes = null;
 	this.nodes = null;

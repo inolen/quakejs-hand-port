@@ -1,27 +1,32 @@
 var GameEntity = function () {
-	//entityState_t  s;				// communicated by server to clients
-	//entityShared_t r;				// shared by both the server system and game
+	/**
+	 * Shared by the engine and game.
+	 */
+	this.s             = new EntityState();
+	this.linked        = false;
+	// if false, assume an explicit mins / maxs bounding box only set by trap_SetBrushModel
+	this.bmodel        = false;
+	this.mins          = [0, 0, 0];
+	this.maxs          = [0, 0, 0];
+	// CONTENTS_TRIGGER, CONTENTS_SOLID, CONTENTS_BODY (non-solid ent should be 0)
+	this.contents      = 0;
+	// derived from mins/maxs and origin + rotation
+	this.absmin        = [0, 0, 0];
+	this.absmax        = [0, 0, 0];
+	// currentOrigin will be used for all collision detection and world linking.
+	// it will not necessarily be the same as the trajectory evaluation for the current
+	// time, because each entity must be moved one at a time after time is advanced
+	// to avoid simultanious collision issues
+	this.currentOrigin = [0, 0, 0];
+	this.currentAngles = [0, 0, 0];
+	this.client        = null;
 
-	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
-	// EXPECTS THE FIELDS IN THAT ORDER!
-	//================================
-
-	//struct gclient_s	*client;	// NULL if not a client
-
-	this.classname = null;			// set in QuakeEd
-	this.spawnflags = 0;			// set in QuakeEd
-	this.clipmask = 0;				// brushes with this content value will be collided against
-									// when moving.  items and corpses do not collide against
-									// players, for instance
-
-	/*int			nextthink;
-	void		(*think)(gentity_t *self);
-	void		(*reached)(gentity_t *self);	// movers call this when hitting endpoint
-	void		(*blocked)(gentity_t *self, gentity_t *other);
-	void		(*touch)(gentity_t *self, gentity_t *other, trace_t *trace);
-	void		(*use)(gentity_t *self, gentity_t *other, gentity_t *activator);
-	void		(*pain)(gentity_t *self, gentity_t *attacker, int damage);
-	void		(*die)(gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod);*/
+	/**
+	 * Game only
+	 */
+	this.classname     = 'noclass';
+	this.model         = null;
+	this.model2        = null;
 };
 
 var GameClient = function () {
@@ -29,6 +34,6 @@ var GameClient = function () {
 };
 
 var LevelLocals = function () {
-	this.gentities = [];
-	this.clients = {};
+	this.gentities = {};
+	this.clients   = {};
 };

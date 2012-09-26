@@ -3,8 +3,10 @@ define('game/gm', ['common/com', 'game/bg'], function (com, bg) {
 	<%- include bg-defines.js %>
 	<%- include gm-defines.js %>
 	<%- include gm-main.js %>
+	<%- include gm-active.js %>
 	<%- include gm-client.js %>
-	<%- include gm-spawn.js %>
+	<%- include gm-entities.js %>
+	<%- include entities/gm-trigger_push.js %>
 
 	return {
 		Init: Init,

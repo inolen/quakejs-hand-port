@@ -115,12 +115,12 @@ define('common/Q3Bsp', [], function () {
 	Q3Bsp.dleaf_t = Struct.create(
 		Struct.int32('cluster'),
 		Struct.int32('area'),
-		Struct.array('min', Struct.int32(), 3),
-		Struct.array('max', Struct.int32(), 3),
-		Struct.int32('leafFace'),
-		Struct.int32('leafFaceCount'),
-		Struct.int32('leafBrush'),
-		Struct.int32('leafBrushCount')
+		Struct.array('mins', Struct.int32(), 3),
+		Struct.array('maxs', Struct.int32(), 3),
+		Struct.int32('firstLeafSurface'),
+		Struct.int32('numLeafSurfaces'),
+		Struct.int32('firstLeafBrush'),
+		Struct.int32('numLeafBrushes')
 	);
 
 	Q3Bsp.dbrushside_t = Struct.create(

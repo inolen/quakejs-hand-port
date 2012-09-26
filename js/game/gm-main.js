@@ -10,5 +10,8 @@ function Init(sv_interface) {
 	sv = sv_interface;
 	level = new LevelLocals();
 
-	SpawnGameEntities();
+	// let the server system know where the entites are
+	sv.LocateGameData(level.gentities, level.clients);
+
+	EntitySpawnAllDefs();
 }

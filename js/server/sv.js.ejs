@@ -4,8 +4,20 @@ define('server/sv', ['client/cl',  'common/cm', 'common/com', 'game/gm', 'common
 	<%- include sv-main.js %>
 	<%- include sv-client.js %>
 	<%- include sv-cmd.js %>
+	<%- include sv-game.js %>
 	<%- include sv-net.js %>
 	<%- include sv-snapshot.js %>
+	<%- include sv-world.js %>
+
+	var gmExports = {
+		GetEntityDefs: cm.EntityDefs,
+		LocateGameData: LocateGameData,
+		SetBrushModel: SetBrushModel,
+		LinkEntity: LinkEntity,
+		UnlinkEntity: UnlinkEntity,
+		FindEntitiesInBox: FindEntitiesInBox,
+		Trace: cm.Trace
+	};
 
 	return {
 		Init: Init,

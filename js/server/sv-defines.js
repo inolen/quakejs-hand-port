@@ -1,5 +1,21 @@
-var ClientSnapshot = function () {
-	this.ps = new PlayerState();
+// Persistent across all maps.
+var ServerStatic = function () {
+	this.time = 0;
+	this.clients = [];
+};
+
+// Reset for each map.
+var ServerLocals = function () {
+	this.timeResidual = 0;			// <= 1000 / sv_frame->value
+	this.svEntities = new Array(MAX_GENTITIES);
+	this.gameEntities = new Array(MAX_GENTITIES);
+	this.gameEntities = new Array(MAX_GENTITIES);
+};
+
+var ServerEntity = function (number) {
+	this.worldSector = null;
+	this.baseline = new EntityState();
+	this.number = number;
 };
 
 var ServerClient = function () {
@@ -11,13 +27,6 @@ var ServerClient = function () {
 	}
 };
 
-// Persistent across all maps.
-var ServerStatic = function () {
-	this.time = 0;
-	this.clients = [];
-};
-
-// Reset for each map.
-var ServerLocals = function () {
-	this.timeResidual = 0;			// <= 1000 / sv_frame->value
+var ClientSnapshot = function () {
+	this.ps = new PlayerState();
 };

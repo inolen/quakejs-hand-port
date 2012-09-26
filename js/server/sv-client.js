@@ -1,11 +1,22 @@
 function ClientConnect(netchan) {
 	console.log('SV: A client is direct connecting', netchan);
 
-	var client = new ServerClient();
-	client.netchan = netchan;
-	svs.clients.push(client);
+	// Find a slot for the client.
+	var clientNum;
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		if (svs.clients[i]) {
+			continue;
+		}
 
-	var clientNum = GetClientNum(client);
+		clientNum = i;
+		break;
+	}
+	if (clientNum === undefined) {
+		throw new Error('Server is full');
+	}
+
+	var client = svs.clients[clientNum] = new ServerClient();
+	client.netchan = netchan;
 	gm.ClientBegin(clientNum);
 }
 

@@ -1,5 +1,6 @@
 /**
- * For a local server, don't actually send the packets over the WebSocket
+ * For a local server, don't actually send the packets over the WebSocket.
+ * This thing is a complete piece of shit currently, but it kind of works.
  */
 define('system/LoopbackChannel', [], function () {
 	var MAX_PACKETLEN = 1400;

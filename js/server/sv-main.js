@@ -1,9 +1,6 @@
 var sv = new ServerLocals();
 var svs = new ServerStatic();
 
-// TODO move this out
-var map;
-
 function Init() {
 	// Due to sv/cl/com having a circular dependency on eachother,
 	// we need to re-grab com now that we're all loaded.
@@ -57,13 +54,13 @@ function SpawnServer(mapName) {
 	cm.LoadMap(mapName, _.bind(function () {
 		com.CvarSet('sv_mapname', mapName);
 
+		// clear physics interaction links
+		ClearWorld();
+
 		// Let the local client now to reconnect.
 		// This function name sucks btw.
 		cl.MapLoading();
 
-		gm.Init({
-			GetEntities: cm.GetEntities,
-			Trace: cm.Trace
-		});
+		gm.Init(gmExports);
 	}, this));
 }
