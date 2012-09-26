@@ -1,13 +1,19 @@
 var ClientLocals = function () {
 	this.serverTime = 0;
-	this.mouseX = 0;
-	this.mouseY = 0;
+	this.mouseX     = 0;
+	this.mouseY     = 0;
 
 	/*UserCmd cmds[CMD_BACKUP]; // each mesage will send several old cmds
 	int       cmdNumber;        // incremented each frame, because multiple
 								// frames may need to be packed into a single packet*/
 								
 	this.viewangles = [0, 0, 0];
+};
+
+var ClientStatic = function () {
+	this.initialized = false;
+	this.frameTime   = 0;
+	this.realTime    = 0;
 };
 
 var ClientConnection = function () {
@@ -17,20 +23,15 @@ var ClientConnection = function () {
 };
 
 var ClientGame = function () {
-	this.ps = new PlayerState();
+	this.ps     = new PlayerState();
 	this.refdef = new RefDef();
 };
 
-var ClientStatic = function () {
-	this.frameTime = 0;
-	this.realTime = 0;
-};
-
-var KeyState = {
-	active: false,
-	downtime: 0,
-	partial: 0,
-	binding: null
+var KeyState = function () {
+	this.active   = false,
+	this.downtime = 0;
+	this.partial  = 0;
+	this.binding  = null;
 };
 
 var KbLocals = {

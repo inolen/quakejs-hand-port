@@ -21,9 +21,15 @@ function Init(canvasCtx, glCtx) {
 	CmdInit();
 	NetInit();
 	re.Init(canvas, gl);
+
+	cls.initialized = true;
 }
 
 function Frame(frameTime, msec) {
+	if (!cls.initialized) {
+		return;
+	}
+
 	cls.frameTime = frameTime;
 	cls.frameDelta = msec;
 	cls.realTime += msec;
@@ -39,7 +45,7 @@ function Frame(frameTime, msec) {
 	re.RenderScene(cg.refdef);
 }
 
-function MapLoading() {
+function ServerSpawning() {
 	NetConnect('localhost', 9000);
 }
 

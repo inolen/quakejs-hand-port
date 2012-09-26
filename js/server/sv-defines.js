@@ -1,7 +1,8 @@
 // Persistent across all maps.
 var ServerStatic = function () {
-	this.time    = 0;
-	this.clients = [];
+	this.initialized = false;
+	this.time        = 0;
+	this.clients     = [];
 };
 
 // Reset for each map.
