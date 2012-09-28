@@ -47,28 +47,38 @@ define('common/Q3Bsp', [], function () {
 		};
 	};
 
-	Q3Bsp.LUMP_ENTITIES     = 0;
-	Q3Bsp.LUMP_SHADERS      = 1;
-	Q3Bsp.LUMP_PLANES       = 2;
-	Q3Bsp.LUMP_NODES        = 3;
-	Q3Bsp.LUMP_LEAFS        = 4;
-	Q3Bsp.LUMP_LEAFSURFACES = 5;
-	Q3Bsp.LUMP_LEAFBRUSHES  = 6;
-	Q3Bsp.LUMP_MODELS       = 7;
-	Q3Bsp.LUMP_BRUSHES      = 8;
-	Q3Bsp.LUMP_BRUSHSIDES   = 9;
-	Q3Bsp.LUMP_DRAWVERTS    = 10;
-	Q3Bsp.LUMP_DRAWINDEXES  = 11;
-	Q3Bsp.LUMP_FOGS         = 12;
-	Q3Bsp.LUMP_SURFACES     = 13;
-	Q3Bsp.LUMP_LIGHTMAPS    = 14;
-	Q3Bsp.LUMP_LIGHTGRID    = 15;
-	Q3Bsp.LUMP_VISIBILITY   = 16;
-	Q3Bsp.HEADER_LUMPS      = 17;
+	Q3Bsp.SurfaceTypes = {
+		MST_BAD          : 0,
+		MST_PLANAR       : 1,
+		MST_PATCH        : 2,
+		MST_TRIANGLE_SOUP: 3,
+		MST_FLARE        : 4
+	};
+
+	Q3Bsp.Lumps = {
+		LUMP_ENTITIES     : 0,
+		LUMP_SHADERS      : 1,
+		LUMP_PLANES       : 2,
+		LUMP_NODES        : 3,
+		LUMP_LEAFS        : 4,
+		LUMP_LEAFSURFACES : 5,
+		LUMP_LEAFBRUSHES  : 6,
+		LUMP_MODELS       : 7,
+		LUMP_BRUSHES      : 8,
+		LUMP_BRUSHSIDES   : 9,
+		LUMP_DRAWVERTS    : 10,
+		LUMP_DRAWINDEXES  : 11,
+		LUMP_FOGS         : 12,
+		LUMP_SURFACES     : 13,
+		LUMP_LIGHTMAPS    : 14,
+		LUMP_LIGHTGRID    : 15,
+		LUMP_VISIBILITY   : 16,
+		HEADER_LUMPS      : 17
+	};
 
 	var MAX_QPATH = 64;
 
-	Q3Bsp.lump_t = Struct.create(
+	Q3Bsp.Lumps.LUMP_t = Struct.create(
 		Struct.int32('fileofs'),
 		Struct.int32('filelen')
 	);
@@ -76,7 +86,7 @@ define('common/Q3Bsp', [], function () {
 	Q3Bsp.dheader_t = Struct.create(
 		Struct.string('ident', 4),
 		Struct.int32('version'),
-		Struct.array('lumps', Q3Bsp.lump_t, Q3Bsp.HEADER_LUMPS)
+		Struct.array('lumps', Q3Bsp.Lumps.LUMP_t, Q3Bsp.Lumps.HEADER_LUMPS)
 	);
 
 	Q3Bsp.dmodel_t = Struct.create(
@@ -162,10 +172,8 @@ define('common/Q3Bsp', [], function () {
 		Struct.array('lmOrigin', Struct.float32(), 3),
 		Struct.array('lmVecs', Struct.float32(), 6),
 		Struct.array('normal', Struct.float32(), 3),
-		Struct.array('size', Struct.int32(), 2),
-		{
-			indexOffset: { value: -1, enumerable: true, configurable: true, writable: true }
-		}
+		Struct.int32('patchWidth'),
+		Struct.int32('patchHeight')
 	);
 
 	return Q3Bsp;

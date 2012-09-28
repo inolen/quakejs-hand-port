@@ -38,7 +38,6 @@ function EntityThink(ent) {
 
 function EntityFree(ent) {
 	sv.UnlinkEntity(ent); // unlink from world
-	ent.inuse = false;
 	delete level.gentities[ent.s.number];
 }
 

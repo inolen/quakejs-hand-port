@@ -68,46 +68,15 @@ function ColorToVec(color) {
 	return [r, g, b, color[3] / 255];
 }
 
-function GetCurvePoint3(c0, c1, c2, dist) {
-	var b = 1.0 - dist;
-
-	return vec3.add(
-		vec3.add(
-			vec3.scale(c0, (b*b), [0, 0, 0]),
-			vec3.scale(c1, (2*b*dist), [0, 0, 0])
-		),
-		vec3.scale(c2, (dist*dist), [0, 0, 0])
-	);
-}
-
-// This is kinda ugly. Clean it up at some point?
-function GetCurvePoint2(c0, c1, c2, dist) {
-	var b = 1.0 - dist;
-
-	c30 = [c0[0], c0[1], 0];
-	c31 = [c1[0], c1[1], 0];
-	c32 = [c2[0], c2[1], 0];
-
-	var res = vec3.add(
-		vec3.add(
-			vec3.scale(c30, (b*b), [0, 0, 0]),
-			vec3.scale(c31, (2*b*dist), [0, 0, 0])
-		),
-		vec3.scale(c32, (dist*dist), [0, 0, 0])
-	);
-
-	return [res[0], res[1]];
-}
-
 function LoadShaders(map) {
-	world.shaders = map.ParseLump(Q3Bsp.LUMP_SHADERS, Q3Bsp.dshader_t);
+	world.shaders = map.ParseLump(Q3Bsp.Lumps.LUMP_SHADERS, Q3Bsp.dshader_t);
 }
 
 function LoadLightmaps(map) {
 	var LIGHTMAP_WIDTH  = 128,
 		LIGHTMAP_HEIGHT = 128;
 
-	var lump = map.GetLump(Q3Bsp.LUMP_LIGHTMAPS);
+	var lump = map.GetLump(Q3Bsp.Lumps.LUMP_LIGHTMAPS);
 	var lightmapSize = LIGHTMAP_WIDTH * LIGHTMAP_HEIGHT;
 	var count = lump.filelen / (lightmapSize*3);
 	var data = Struct.readUint8Array(map.GetBuffer(), lump.fileofs, lump.filelen);
@@ -160,107 +129,102 @@ function LoadLightmaps(map) {
 	CreateImage('*lightmap', world.lightmaps, textureSize, textureSize);
 }
 
-function Tesselate(face, verts, meshVerts, level) {
-	var off = face.vertex;
-	var count = face.vertCount;
+// (1–t)^2*P0 + 2*(1–t)*t*P1 + t^2*P2
+function GetCurvePoint(c0, c1, c2, t) {
+	var result = [];
+	var dims = c0.length;
 
-	var L1 = level + 1;
+	for (var i = 0; i < dims; i++) {
+		result[i] = (Math.pow(1-t, 2)*c0[i]) + (2*(1-t)*t*c1[i]) + (Math.pow(t, 2)*c2[i]);
+	}
 
-	face.vertex = verts.length;
-	face.meshVert = meshVerts.length;
+	return result;
+}
 
-	face.vertCount = 0;
-	face.meshVertCount = 0;
+function ParseMesh(face, verts, meshVerts, level) {
+	var width = face.patchWidth;
+	var height = face.patchHeight;
+	var firstControlPoint = face.vertex;
 
-	for(var py = 0; py < face.size[1]-2; py += 2) {
-		for(var px = 0; px < face.size[0]-2; px += 2) {
+	// Build 3x3 biquadtratic bezier patches.
+	// http://www.gamedev.net/page/resources/_/technical/math-and-physics/bezier-patches-r1584
+	var cp = function (x, y) {
+		return verts[firstControlPoint+y*width+x];
+	};
+	var build3x3 = function (x, y) {
+		// Create the new verts.
+		for (var j = 0; j <= level; j++) {
+			var v = j / level;
 
-			var rowOff = (py*face.size[0]);
+			var c = [
+				{
+					pos:      GetCurvePoint(cp(x,  y).pos,      cp(x,  y+1).pos,      cp(x,  y+2).pos,      v),
+					lmCoord:  GetCurvePoint(cp(x,  y).lmCoord,  cp(x,  y+1).lmCoord,  cp(x,  y+2).lmCoord,  v),
+					texCoord: GetCurvePoint(cp(x,  y).texCoord, cp(x,  y+1).texCoord, cp(x,  y+2).texCoord, v),
+					color:    GetCurvePoint(cp(x,  y).color,    cp(x,  y+1).color,    cp(x,  y+2).color,    v)
+				},
+				{
+					pos:      GetCurvePoint(cp(x+1,y).pos,      cp(x+1,y+1).pos,      cp(x+1,y+2).pos,      v),
+					lmCoord:  GetCurvePoint(cp(x+1,y).lmCoord,  cp(x+1,y+1).lmCoord,  cp(x+1,y+2).lmCoord,  v),
+					texCoord: GetCurvePoint(cp(x+1,y).texCoord, cp(x+1,y+1).texCoord, cp(x+1,y+2).texCoord, v),
+					color:    GetCurvePoint(cp(x+1,y).color,    cp(x+1,y+1).color,    cp(x+1,y+2).color,    v)
+				},				
+				{
+					pos:      GetCurvePoint(cp(x+2,y).pos,      cp(x+2,y+1).pos,      cp(x+2,y+2).pos,      v),
+					lmCoord:  GetCurvePoint(cp(x+2,y).lmCoord,  cp(x+2,y+1).lmCoord,  cp(x+2,y+2).lmCoord,  v),
+					texCoord: GetCurvePoint(cp(x+2,y).texCoord, cp(x+2,y+1).texCoord, cp(x+2,y+2).texCoord, v),
+					color:    GetCurvePoint(cp(x+2,y).color,    cp(x+2,y+1).color,    cp(x+2,y+2).color,    v)
+				}
+			];
 
-			// Store control points
-			var c0 = verts[off+rowOff+px], c1 = verts[off+rowOff+px+1], c2 = verts[off+rowOff+px+2];
-			rowOff += face.size[0];
-			var c3 = verts[off+rowOff+px], c4 = verts[off+rowOff+px+1], c5 = verts[off+rowOff+px+2];
-			rowOff += face.size[0];
-			var c6 = verts[off+rowOff+px], c7 = verts[off+rowOff+px+1], c8 = verts[off+rowOff+px+2];
-
-			var indexOff = face.vertCount;
-			face.vertCount += L1 * L1;
-
-			// Tesselate!
-			for(var i = 0; i < L1; ++i) {
-				var a = i / level;
-
-				var pos = GetCurvePoint3(c0.pos, c3.pos, c6.pos, a);
-				var lmCoord = GetCurvePoint2(c0.lmCoord, c3.lmCoord, c6.lmCoord, a);
-				var texCoord = GetCurvePoint2(c0.texCoord, c3.texCoord, c6.texCoord, a);
-				var color = GetCurvePoint3(c0.color, c3.color, c6.color, a);
+			for (var i = 0; i <= level; i++) {
+				var u = i / level;
 
 				var vert = {
-					pos: pos,
-					texCoord: texCoord,
-					lmCoord: lmCoord,
-					color: [color[0], color[1], color[2], 1],
-					normal: [0, 0, 1]
+					pos:      GetCurvePoint(c[0].pos,      c[1].pos,      c[2].pos,      u),
+					lmCoord:  GetCurvePoint(c[0].lmCoord,  c[1].lmCoord,  c[2].lmCoord,  u),
+					texCoord: GetCurvePoint(c[0].texCoord, c[1].texCoord, c[2].texCoord, u),
+					color:    GetCurvePoint(c[0].color,    c[1].color,    c[2].color,    u),
+					normal:   [0, 0, 1]
 				};
 
 				verts.push(vert);
 			}
+		}
 
-			for(var i = 1; i < L1; i++) {
-				var a = i / level;
+		var faceOffset = face.vertCount;
+		face.vertCount += (level+1) * (level + 1);
+		
+		// Add vert indexes.
+		for (var j = 0; j < level; j++) {
+			for (var i = 0; i < level; i++) {
+				// vertex order to be reckognized as tristrips
+				var v1 = faceOffset + j*(level+1) + i+1;
+				var v2 = v1 - 1;
+				var v3 = v2 + (level+1);
+				var v4 = v3 + 1;
 
-				var pc0 = GetCurvePoint3(c0.pos, c1.pos, c2.pos, a);
-				var pc1 = GetCurvePoint3(c3.pos, c4.pos, c5.pos, a);
-				var pc2 = GetCurvePoint3(c6.pos, c7.pos, c8.pos, a);
-
-				var tc0 = GetCurvePoint3(c0.texCoord, c1.texCoord, c2.texCoord, a);
-				var tc1 = GetCurvePoint3(c3.texCoord, c4.texCoord, c5.texCoord, a);
-				var tc2 = GetCurvePoint3(c6.texCoord, c7.texCoord, c8.texCoord, a);
-
-				var lc0 = GetCurvePoint3(c0.lmCoord, c1.lmCoord, c2.lmCoord, a);
-				var lc1 = GetCurvePoint3(c3.lmCoord, c4.lmCoord, c5.lmCoord, a);
-				var lc2 = GetCurvePoint3(c6.lmCoord, c7.lmCoord, c8.lmCoord, a);
-
-				var cc0 = GetCurvePoint3(c0.color, c1.color, c2.color, a);
-				var cc1 = GetCurvePoint3(c3.color, c4.color, c5.color, a);
-				var cc2 = GetCurvePoint3(c6.color, c7.color, c8.color, a);
-
-				for(j = 0; j < L1; j++)
-				{
-					var b = j / level;
-
-					var pos = GetCurvePoint3(pc0, pc1, pc2, b);
-					var texCoord = GetCurvePoint2(tc0, tc1, tc2, b);
-					var lmCoord = GetCurvePoint2(lc0, lc1, lc2, b);
-					var color = GetCurvePoint3(cc0, cc1, cc2, a);
-
-					var vert = {
-						pos: pos,
-						texCoord: texCoord,
-						lmCoord: lmCoord,
-						color: [color[0], color[1], color[2], 1],
-						normal: [0, 0, 1]
-					};
-
-					verts.push(vert);
-				}
+				meshVerts.push(v2);
+				meshVerts.push(v3);
+				meshVerts.push(v1);
+				
+				meshVerts.push(v1);
+				meshVerts.push(v3);
+				meshVerts.push(v4);
 			}
+		}
 
-			face.meshVertCount += level * level * 6;
+		face.meshVertCount += level * level * 6;
+	};
 
-			for(var row = 0; row < level; ++row) {
-				for(var col = 0; col < level; ++col) {
-					meshVerts.push(indexOff + (row + 1) * L1 + col);
-					meshVerts.push(indexOff + row * L1 + col);
-					meshVerts.push(indexOff + row * L1 + (col+1));
+	face.vertex = verts.length;
+	face.vertCount = 0;
+	face.meshVert = meshVerts.length;
+	face.meshVertCount = 0;
 
-					meshVerts.push(indexOff + (row + 1) * L1 + col);
-					meshVerts.push(indexOff + row * L1 + (col+1));
-					meshVerts.push(indexOff + (row + 1) * L1 + (col+1));
-				}
-			}
-
+	for (var j = 0; j + 2 < height; j += 2) {
+		for (var i = 0; i + 2 < width; i += 2) {
+			build3x3(i, j);
 		}
 	}
 }
@@ -268,16 +232,16 @@ function Tesselate(face, verts, meshVerts, level) {
 function LoadSurfaces(map) {
 	var lightmaps = world.lightmaps;
 	var shaders = world.shaders;
-	var faces = world.faces = map.ParseLump(Q3Bsp.LUMP_SURFACES, Q3Bsp.dsurface_t);
+	var faces = world.faces = map.ParseLump(Q3Bsp.Lumps.LUMP_SURFACES, Q3Bsp.dsurface_t);
 
 	// Load verts.
-	var verts = world.verts = map.ParseLump(Q3Bsp.LUMP_DRAWVERTS, Q3Bsp.drawVert_t);
+	var verts = world.verts = map.ParseLump(Q3Bsp.Lumps.LUMP_DRAWVERTS, Q3Bsp.drawVert_t);
 	for (var i = 0, length = verts.length; i < length; i++) {
 		verts[i].color = ColorToVec(BrightnessAdjust(verts[i].color, 4.0));
 	}
 
 	// Load vert indexes.
-	var meshVertLump = map.GetLump(Q3Bsp.LUMP_DRAWINDEXES);
+	var meshVertLump = map.GetLump(Q3Bsp.Lumps.LUMP_DRAWINDEXES);
 	var meshVerts = world.meshVerts = [];
 	var idxs = Struct.readUint32Array(map.GetBuffer(), meshVertLump.fileofs, meshVertLump.filelen/4);
 	for (var i = 0, length = idxs.length; i < length; i++) {
@@ -290,8 +254,8 @@ function LoadSurfaces(map) {
 		var face = faces[i];
 
 		// Tesselate patches.
-		if (face.type === 2) {
-			Tesselate(face, verts, meshVerts, 5);
+		if (face.type === Q3Bsp.SurfaceTypes.MST_PATCH) {
+			ParseMesh(face, verts, meshVerts, 5);
 		}
 
 		var shader = shaders[face.shader];
@@ -400,14 +364,16 @@ function BuildWorldBuffers() {
 		}
 
 		var shader = shaders[face.shader];
+
 		if (!facesForShader[face.shader]) {
 			facesForShader[face.shader] = [];
 		}
+
 		facesForShader[face.shader].push(face);
 	}
 
 	// Compile vert list
-	var vertices = new Array(verts.length*10);
+	var vertices = new Array(verts.length*14);
 	var offset = 0;
 	for (var i = 0; i < verts.length; ++i) {
 		var vert = verts[i];
@@ -444,12 +410,13 @@ function BuildWorldBuffers() {
 
 		shader.indexOffset = indices.length * 2; // Offset is in bytes
 
-		for (var j = 0; j < shaderFaces.length; ++j) {
+		for (var j = 0; j < shaderFaces.length; j++) {
 			var face = shaderFaces[j];
-			face.indexOffset = indices.length * 2;
-			for(var k = 0; k < face.meshVertCount; ++k) {
+
+			for(var k = 0; k < face.meshVertCount; k++) {
 				indices.push(face.vertex + meshVerts[face.meshVert + k]);
 			}
+
 			shader.elementCount += face.meshVertCount;
 		}
 	}
@@ -531,6 +498,33 @@ function AddWorldSurfaces(map) {
 }
 
 var startTime = sys.GetMilliseconds();
+var v = '\
+		#ifdef GL_ES \n\
+		precision highp float; \n\
+		#endif \n\
+		attribute vec3 position; \n\
+	\n\
+		uniform mat4 modelViewMat; \n\
+		uniform mat4 projectionMat; \n\
+	\n\
+		void main(void) { \n\
+			vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
+			gl_Position = projectionMat * worldPosition; \n\
+		} \n\
+	';
+
+var f = '\
+		#ifdef GL_ES \n\
+		precision highp float; \n\
+		#endif \n\
+	\n\
+		void main(void) { \n\
+			gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);\n\
+		} \n\
+	';
+
+//var vs, fs, program;
+
 function RenderWorld(modelViewMat, projectionMat) {
 	if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
 
@@ -586,4 +580,69 @@ function RenderWorld(modelViewMat, projectionMat) {
 			gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
 		}
 	}
+
+	/*if (!program) {
+		vs = gl.createShader(gl.VERTEX_SHADER);
+		gl.shaderSource(vs, v);
+		gl.compileShader(vs);
+		
+		fs = gl.createShader(gl.FRAGMENT_SHADER);
+		gl.shaderSource(fs, f);
+		gl.compileShader(fs);
+
+		program = gl.createProgram();
+		gl.attachShader(program, vs);
+		gl.attachShader(program, fs);
+		gl.linkProgram(program);
+	} else {
+		for (var i = 0; i < world.faces.length; ++i) {
+			var face = world.faces[i];
+
+			if (face.type !== Q3Bsp.SurfaceTypes.MST_PATCH) {
+				continue;
+			}
+
+			if (!face.vb) {
+				var vertices = [];
+				for (var i = 0; i < face.vertCount; i++) {
+					var vert = world.verts[face.vertex + i];
+
+					vertices.push(vert.pos[0]);
+					vertices.push(vert.pos[1]);
+					vertices.push(vert.pos[2]);
+				}
+
+				face.vb = gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, face.vb);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+				var indices = [];
+				for(var k = 0; k < face.meshVertCount; k++) {
+					indices.push(world.meshVerts[face.meshVert + k]);
+				}
+
+				face.ib = gl.createBuffer();
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, face.ib);
+				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+			}
+
+			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, face.ib);
+			gl.bindBuffer(gl.ARRAY_BUFFER, face.vb);
+
+			gl.useProgram(program);
+
+			// Set uniforms
+			var uniModelViewMat = gl.getUniformLocation(program, 'modelViewMat');
+			var uniProjectionMat = gl.getUniformLocation(program, 'projectionMat');
+			gl.uniformMatrix4fv(uniModelViewMat, false, modelViewMat);
+			gl.uniformMatrix4fv(uniProjectionMat, false, projectionMat);
+
+			// Setup vertex attributes
+			var attrPosition = gl.getAttribLocation(program, 'position');
+			gl.enableVertexAttribArray(attrPosition);
+			gl.vertexAttribPointer(attrPosition, 3, gl.FLOAT, false, 12, 0);
+
+			//gl.drawElements(gl.TRIANGLES, face.meshVertCount, gl.UNSIGNED_SHORT, 0);
+		}
+	}*/
 }

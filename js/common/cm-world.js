@@ -20,15 +20,15 @@ function LoadMap(mapName, callback) {
 }
 
 function LoadShaders(map) {
-	cm.shaders = map.ParseLump(Q3Bsp.LUMP_SHADERS, Q3Bsp.dshader_t);
+	cm.shaders = map.ParseLump(Q3Bsp.Lumps.LUMP_SHADERS, Q3Bsp.dshader_t);
 }
 
 function LoadLeafs(map) {
-	cm.leaves = map.ParseLump(Q3Bsp.LUMP_LEAFS, Q3Bsp.dleaf_t);
+	cm.leaves = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);
 }
 
 function LoadLeafBrushes(map) {
-	var lump = map.GetLump(Q3Bsp.LUMP_LEAFBRUSHES);
+	var lump = map.GetLump(Q3Bsp.Lumps.LUMP_LEAFBRUSHES);
 	cm.leafBrushes = Struct.readUint32Array(map.GetBuffer(), lump.fileofs, lump.filelen/4);
 }
 
@@ -43,7 +43,7 @@ function PlaneTypeForNormal(x) {
 }
 
 function LoadPlanes(map) {
-	var planes = cm.planes = map.ParseLump(Q3Bsp.LUMP_PLANES, Q3Bsp.dplane_t);
+	var planes = cm.planes = map.ParseLump(Q3Bsp.Lumps.LUMP_PLANES, Q3Bsp.dplane_t);
 
 	for (var i = 0; i < cm.planes.length; i++) {
 		var plane = planes[i];
@@ -61,7 +61,7 @@ function LoadPlanes(map) {
 }
 
 function LoadBrushSides(map) {
-	cm.brushSides = map.ParseLump(Q3Bsp.LUMP_BRUSHSIDES, Q3Bsp.dbrushside_t);
+	cm.brushSides = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHSIDES, Q3Bsp.dbrushside_t);
 
 	for (var i = 0; i < cm.brushSides.length; i++) {
 		var side = cm.brushSides[i];
@@ -72,7 +72,7 @@ function LoadBrushSides(map) {
 
 function LoadBrushes(map) {
 	var shaders = cm.shaders;
-	var brushes = cm.brushes = map.ParseLump(Q3Bsp.LUMP_BRUSHES, Q3Bsp.dbrush_t);
+	var brushes = cm.brushes = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHES, Q3Bsp.dbrush_t);
 
 	for (var i = 0; i < brushes.length; i++) {
 		var brush = brushes[i];
@@ -87,7 +87,7 @@ function LoadBrushes(map) {
 }
 
 function LoadSubmodels(map) {
-	var cmodels = cm.cmodels = map.ParseLump(Q3Bsp.LUMP_MODELS, Q3Bsp.dmodel_t);
+	var cmodels = cm.cmodels = map.ParseLump(Q3Bsp.Lumps.LUMP_MODELS, Q3Bsp.dmodel_t);
 
 	for (var i = 0; i < cmodels.length; i++) {
 		var model = cmodels[i];
@@ -118,11 +118,11 @@ function LoadSubmodels(map) {
 }
 
 function LoadNodes(map) {
-	cm.nodes = map.ParseLump(Q3Bsp.LUMP_NODES, Q3Bsp.dnode_t);
+	cm.nodes = map.ParseLump(Q3Bsp.Lumps.LUMP_NODES, Q3Bsp.dnode_t);
 }
 
 function LoadEntities(map) {
-	var lump = map.GetLump(Q3Bsp.LUMP_ENTITIES);
+	var lump = map.GetLump(Q3Bsp.Lumps.LUMP_ENTITIES);
 	var entityStr = Struct.readString(map.GetBuffer(), lump.fileofs, lump.filelen);
 
 	var entities = cm.entities = [];
