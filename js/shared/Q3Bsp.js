@@ -1,4 +1,4 @@
-define('common/Q3Bsp', [], function () {
+define('shared/Q3Bsp', [], function () {
 	var Q3Bsp = function () {
 		/*function ParseVisData(buffer, lump) {
 			var numClusters = Struct.readUint32Array(buffer, lump.fileofs, 1)[0];

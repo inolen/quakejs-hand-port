@@ -4,19 +4,21 @@ var lastPageY = 0;
 var forwardKey, leftKey, backKey, rightKey, upKey;
 
 function InputInit() {
-	// Initialize system bindings.
-	var viewportFrame = document.getElementById('viewport-frame');
 	document.addEventListener('keydown', function (ev) { SysKeyDownEvent(ev); });
 	document.addEventListener('keyup', function (ev) { SysKeyUpEvent(ev); });
-	viewportFrame.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
-	viewportFrame.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
-	viewportFrame.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
+	canvas.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
+	canvas.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
+	canvas.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
+	canvas.addEventListener('click', function(event) {
+		canvas.requestPointerLock();
+	}, false);
 
 	com.CmdAdd('+forward', function (key) { forwardKey = key; });
 	com.CmdAdd('+left', function (key) { leftKey = key; });
 	com.CmdAdd('+back', function (key) { backKey = key; });
 	com.CmdAdd('+right', function (key) { rightKey = key; });
 	com.CmdAdd('+jump', function (key) { upKey = key; });
+
 	Bind('w', '+forward');
 	Bind('a', '+left');
 	Bind('s', '+back');
@@ -154,6 +156,12 @@ function MouseMoveEvent(dx, dy) {
  */
 function SysKeyDownEvent(ev) {
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
+
+	// Special check for fullscreen.
+	if (ev.altKey && keyName == 'enter') {
+		canvas.requestFullscreen();
+	}
+
 	KeyDownEvent(keyName);
 }
 

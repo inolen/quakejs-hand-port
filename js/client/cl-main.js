@@ -22,6 +22,22 @@ function Init(canvasCtx, glCtx) {
 	NetInit();
 	re.Init(canvas, gl);
 
+	// Handle fullscreen transition.
+	var defaultWidth = canvas.width,
+		defaultHeight = canvas.height;
+
+	document.addEventListener('fullscreenchange', function() {
+		if (document.fullscreenEnabled) {
+			canvas.width = screen.width;
+			canvas.height = screen.height;
+			// Request automatically on fullscreen.
+			canvas.requestPointLock();
+		} else {
+			canvas.width = defaultWidth;
+			canvas.height = defaultHeight;
+		}
+	}, false);
+
 	cls.initialized = true;
 }
 

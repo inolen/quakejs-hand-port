@@ -2,30 +2,6 @@ requirejs(['common/com'], function (com) {
 	var GL_WINDOW_WIDTH = 854;
 	var GL_WINDOW_HEIGHT = 480;
 
-	function InitEvents() {
-		var viewport = document.getElementById('viewport');
-		var viewportFrame = document.getElementById('viewport-frame');
-
-		// Request to lock the mouse cursor when the user clicks on the canvas.
-		viewport.addEventListener('click', function(event) {
-			viewport.requestPointerLock();
-		}, false);
-
-		// Handle fullscreen transition.
-		document.addEventListener('fullscreenchange', function() {
-			if (document.fullscreenEnabled) {
-				canvas.width = screen.width;
-				canvas.height = screen.height;
-				viewportFrame.requestPointerLock(); // Attempt to lock the mouse automatically on fullscreen
-			} else {
-				canvas.width = GL_WINDOW_WIDTH;
-				canvas.height = GL_WINDOW_HEIGHT;
-			}
-			gl.viewport(0, 0, canvas.width, canvas.height);
-			mat4.perspective(45.0, canvas.width/canvas.height, 1.0, 4096.0, projectionMat);
-		}, false);
-	}
-
 	function Init(canvas, gl) {
 		com.Init(canvas, gl);
 
@@ -54,7 +30,7 @@ requirejs(['common/com'], function (com) {
 	}
 
 	function main() {
-		var canvas = document.getElementById("viewport");
+		var canvas = document.getElementById('viewport');
 
 		// Set the canvas size
 		canvas.width = GL_WINDOW_WIDTH;
@@ -66,7 +42,6 @@ requirejs(['common/com'], function (com) {
 		if (!gl) {
 			document.getElementById('webgl-error').style.display = 'block';
 		} else {
-			InitEvents();
 			Init(canvas, gl);
 		}
 	}
