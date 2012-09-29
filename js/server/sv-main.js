@@ -18,7 +18,7 @@ function Init() {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		CmdLoadMap('q3dm17');
+		CmdLoadMap('q3dm6');
 	}, 0);
 }
 

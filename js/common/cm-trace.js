@@ -35,7 +35,7 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	// and the offset for the size of the box
 	//
 	var node = nodes[num];
-	var plane = planes[node.plane];
+	var plane = node.plane;
 
 	// adjust the plane distance apropriately for mins/maxs
 	var t1, t2, offset;
@@ -57,11 +57,11 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 
 	// see which sides we need to consider
 	if (t1 >= offset + 1 && t2 >= offset + 1) {
-		TraceThroughTree(tw, node.children[0], p1f, p2f, p1, p2);
+		TraceThroughTree(tw, node.childrenNum[0], p1f, p2f, p1, p2);
 		return;
 	}
 	if (t1 < -offset - 1 && t2 < -offset - 1) {
-		TraceThroughTree(tw, node.children[1], p1f, p2f, p1, p2);
+		TraceThroughTree(tw, node.childrenNum[1], p1f, p2f, p1, p2);
 		return;
 	}
 
@@ -98,7 +98,7 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	mid[1] = p1[1] + frac*(p2[1] - p1[1]);
 	mid[2] = p1[2] + frac*(p2[2] - p1[2]);
 
-	TraceThroughTree(tw, node.children[side], p1f, midf, p1, mid);
+	TraceThroughTree(tw, node.childrenNum[side], p1f, midf, p1, mid);
 
 	// go past the node
 	if (frac2 < 0) {
@@ -113,7 +113,7 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	mid[1] = p1[1] + frac2*(p2[1] - p1[1]);
 	mid[2] = p1[2] + frac2*(p2[2] - p1[2]);
 
-	TraceThroughTree(tw, node.children[side^1], midf, p2f, mid, p2);
+	TraceThroughTree(tw, node.childrenNum[side^1], midf, p2f, mid, p2);
 }
 
 function TraceThroughLeaf(tw, leaf) {

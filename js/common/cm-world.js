@@ -32,20 +32,10 @@ function LoadLeafBrushes(map) {
 	cm.leafBrushes = Struct.readUint32Array(map.GetBuffer(), lump.fileofs, lump.filelen/4);
 }
 
-// TODO Move this into some shared area
-var PLANE_X			= 0;
-var PLANE_Y			= 1;
-var PLANE_Z			= 2;
-var PLANE_NON_AXIAL	= 3;
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL))
-}
-
 function LoadPlanes(map) {
 	var planes = cm.planes = map.ParseLump(Q3Bsp.Lumps.LUMP_PLANES, Q3Bsp.dplane_t);
 
-	for (var i = 0; i < cm.planes.length; i++) {
+	for (var i = 0; i < planes.length; i++) {
 		var plane = planes[i];
 		var bits = 0;
 
@@ -61,23 +51,26 @@ function LoadPlanes(map) {
 }
 
 function LoadBrushSides(map) {
-	cm.brushSides = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHSIDES, Q3Bsp.dbrushside_t);
+	var planes = cm.planes;
 
-	for (var i = 0; i < cm.brushSides.length; i++) {
-		var side = cm.brushSides[i];
+	var brushSides = cm.brushSides = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHSIDES, Q3Bsp.dbrushside_t);
 
-		side.plane = cm.planes[side.planeNum];
+	for (var i = 0; i < brushSides.length; i++) {
+		var side = brushSides[i];
+
+		side.plane = planes[side.planeNum];
 	}
 }
 
 function LoadBrushes(map) {
 	var shaders = cm.shaders;
+	var brushSides = cm.brushSides;
 	var brushes = cm.brushes = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHES, Q3Bsp.dbrush_t);
 
 	for (var i = 0; i < brushes.length; i++) {
 		var brush = brushes[i];
 
-		brush.sides = cm.brushSides.slice(brush.side, brush.side + brush.numsides);
+		brush.sides = brushSides.slice(brush.side, brush.side + brush.numsides);
 		brush.bounds = [
 			[-brush.sides[0].plane.dist, -brush.sides[2].plane.dist, -brush.sides[4].plane.dist],
 			[brush.sides[1].plane.dist, brush.sides[3].plane.dist, brush.sides[5].plane.dist]
@@ -118,7 +111,13 @@ function LoadSubmodels(map) {
 }
 
 function LoadNodes(map) {
-	cm.nodes = map.ParseLump(Q3Bsp.Lumps.LUMP_NODES, Q3Bsp.dnode_t);
+	var planes = cm.planes;
+	var nodes = cm.nodes = map.ParseLump(Q3Bsp.Lumps.LUMP_NODES, Q3Bsp.dnode_t);
+
+	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
+		var node = nodes[i];
+		node.plane = planes[node.planeNum];
+	}
 }
 
 function LoadEntities(map) {

@@ -14,17 +14,18 @@ var skyShader = null;
 /**
  * Loading
  */
-var world;
-
 function LoadMap(mapName) {
 	var map = new Q3Bsp();
 
 	map.Load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {
-		world = new WorldData();
+		re.world = new WorldData();
 
 		LoadShaders(map);
 		LoadLightmaps(map);
 		LoadSurfaces(map);
+		LoadPlanes(map);
+		LoadNodesAndLeafs(map);
+		LoadVisibility(map);
 
 		BuildSkyboxBuffers();
 		BuildWorldBuffers();
@@ -69,7 +70,7 @@ function ColorToVec(color) {
 }
 
 function LoadShaders(map) {
-	world.shaders = map.ParseLump(Q3Bsp.Lumps.LUMP_SHADERS, Q3Bsp.dshader_t);
+	re.world.shaders = map.ParseLump(Q3Bsp.Lumps.LUMP_SHADERS, Q3Bsp.dshader_t);
 }
 
 function LoadLightmaps(map) {
@@ -88,7 +89,7 @@ function LoadLightmaps(map) {
 	var xOffset = 0;
 	var yOffset = 0;
 
-	world.lightmaps = [];
+	re.world.lightmaps = [];
 
 	for(var i = 0, rgbIdx = 0; i < count; ++i) {
 		var elements = new Array(lightmapSize*4);
@@ -104,7 +105,7 @@ function LoadLightmaps(map) {
 			elements[j+3] = 255;
 		}
 
-		world.lightmaps.push({
+		re.world.lightmaps.push({
 			x: xOffset,
 			y: yOffset,
 			width: LIGHTMAP_WIDTH,
@@ -126,7 +127,7 @@ function LoadLightmaps(map) {
 		}
 	}
 
-	CreateImage('*lightmap', world.lightmaps, textureSize, textureSize);
+	CreateImage('*lightmap', re.world.lightmaps, textureSize, textureSize);
 }
 
 // (1–t)^2*P0 + 2*(1–t)*t*P1 + t^2*P2
@@ -230,19 +231,19 @@ function ParseMesh(face, verts, meshVerts, level) {
 }
 
 function LoadSurfaces(map) {
-	var lightmaps = world.lightmaps;
-	var shaders = world.shaders;
-	var faces = world.faces = map.ParseLump(Q3Bsp.Lumps.LUMP_SURFACES, Q3Bsp.dsurface_t);
+	var lightmaps = re.world.lightmaps;
+	var shaders = re.world.shaders;
+	var faces = re.world.faces = map.ParseLump(Q3Bsp.Lumps.LUMP_SURFACES, Q3Bsp.dsurface_t);
 
 	// Load verts.
-	var verts = world.verts = map.ParseLump(Q3Bsp.Lumps.LUMP_DRAWVERTS, Q3Bsp.drawVert_t);
+	var verts = re.world.verts = map.ParseLump(Q3Bsp.Lumps.LUMP_DRAWVERTS, Q3Bsp.drawVert_t);
 	for (var i = 0, length = verts.length; i < length; i++) {
 		verts[i].color = ColorToVec(BrightnessAdjust(verts[i].color, 4.0));
 	}
 
 	// Load vert indexes.
 	var meshVertLump = map.GetLump(Q3Bsp.Lumps.LUMP_DRAWINDEXES);
-	var meshVerts = world.meshVerts = [];
+	var meshVerts = re.world.meshVerts = [];
 	var idxs = Struct.readUint32Array(map.GetBuffer(), meshVertLump.fileofs, meshVertLump.filelen/4);
 	for (var i = 0, length = idxs.length; i < length; i++) {
 		meshVerts.push(idxs[i]);
@@ -290,6 +291,93 @@ function LoadSurfaces(map) {
 			}
 		}
 	}
+}
+
+function LoadPlanes(map) {
+	var planes = re.world.planes = map.ParseLump(Q3Bsp.Lumps.LUMP_PLANES, Q3Bsp.dplane_t);
+
+	for (var i = 0; i < planes.length; i++) {
+		var plane = planes[i];
+		var bits = 0;
+
+		for (var j = 0; j < 3; j++) {
+			if (plane.normal[j] < 0) {
+				bits |= 1 << j;
+			}
+		}
+
+		plane.type = PlaneTypeForNormal(plane.normal);
+		plane.signbits = bits;
+	}
+}
+
+function LoadNodesAndLeafs(map) {
+	var world = re.world;
+	var planes = world.planes;
+
+	var setParent_r = function (node, parent) {
+		node.parent = parent;
+		if (node.contents !== -1) {
+			return;
+		}
+		setParent_r(node.children[0], node);
+		setParent_r(node.children[1], node);
+	};
+
+	// load leaf surfaces
+	var leafSurfacesLump = map.GetLump(Q3Bsp.Lumps.LUMP_LEAFSURFACES);
+	var idxs = Struct.readUint32Array(map.GetBuffer(), leafSurfacesLump.fileofs, leafSurfacesLump.filelen/4);
+	var leafSurfaces = world.leafSurfaces = new Array(idxs.length);
+	for (var i = 0, length = idxs.length; i < length; i++) {
+		leafSurfaces[i] = idxs[i];
+	}
+
+	// TODO Factor out this concat.
+	var nodes = map.ParseLump(Q3Bsp.Lumps.LUMP_NODES, Q3Bsp.dnode_t);
+	var leafs = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);	
+	var allNodes = world.nodes = nodes.concat(leafs);
+
+	// load nodes
+	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
+		var node = allNodes[i];
+	
+		node.contents = -1; // differentiate from leafs
+		node.plane = planes[node.planeNum];
+
+		node.children = new Array(2);
+		for (var j = 0; j < 2; j++) {
+			var p = node.childrenNum[j];
+
+			if (p >= 0) {
+				node.children[j] = allNodes[p];
+			} else {
+				node.children[j] =  allNodes[numNodes + (-1 - p)];
+			}
+		}
+	}
+
+	// load leafs
+
+	for (var i = numNodes, numLeafs = leafs.length; i < numNodes + numLeafs; i++) {
+		var leaf = allNodes[i];
+
+		leaf.contents = 1; // differentiate from nodes
+
+		if (leaf.cluster >= world.numClusters ) {
+			world.numClusters = leaf.cluster + 1;
+		}
+	}
+
+	// chain decendants
+	setParent_r(nodes[0], null);
+}
+
+function LoadVisibility(map) {
+	var world = re.world;
+	var lump = map.GetLump(Q3Bsp.Lumps.LUMP_VISIBILITY);
+	world.numClusters = Struct.readUint32Array(map.GetBuffer(), lump.fileofs, 1)[0];
+	world.clusterBytes = Struct.readUint32Array(map.GetBuffer(), lump.fileofs + 4, 1)[0];
+	world.vis = Struct.readUint8Array(map.GetBuffer(), lump.fileofs + 8, world.numClusters * world.clusterBytes);
 }
 
 function BuildSkyboxBuffers() {
@@ -349,10 +437,10 @@ function BuildSkyboxBuffers() {
 }
 
 function BuildWorldBuffers() {
-	var faces = world.faces,
-		verts = world.verts,
-		meshVerts = world.meshVerts,
-		shaders = world.shaders,
+	var faces = re.world.faces,
+		verts = re.world.verts,
+		meshVerts = re.world.meshVerts,
+		shaders = re.world.shaders,
 		facesForShader = new Array(shaders.length);
 
 	// Add faces to the appropriate texture face list.
@@ -490,42 +578,253 @@ function BindSkyAttribs(shader, modelViewMat, projectionMat) {
 /**
  *
  */
-function RecursiveWorldNode(nodes) {
+function PointInLeaf(p) {
+	if (!re.world) {
+		throw new Error('PointInLeaf: bad model');
+	}
+
+	var node = re.world.nodes[0];
+
+	while (1) {
+		if (node.contents !== -1) {
+			break;
+		}
+		var plane = node.plane;
+		var d = vec3.dot(p, plane.normal) - plane.dist;
+
+		if (d > 0) {
+			node = node.children[0];
+		} else {
+			node = node.children[1];
+		}
+	}
+	
+	return node;
+}
+
+function CheckClusterVis(current, test) {
+	var world = re.world;
+
+	if (!world || !world.vis || current === test || current == -1) {
+		return true;
+	}
+
+	var i = (current * world.clusterBytes) + (test >> 3);
+	return (world.vis[i] & (1 << (test & 7)) !== 0);
+}
+
+function MarkLeaves() {
+	var world = re.world;
+	var nodes = world.nodes;
+
+	// current viewcluster
+	var leaf = PointInLeaf(re.viewParms.pvsOrigin);
+	var cluster = leaf.cluster;
+
+	// if the cluster is the same and the area visibility matrix
+	// hasn't changed, we don't need to mark everything again
+	if (re.viewCluster === cluster) {
+		return;
+	}
+
+	re.viewCluster = cluster;
+	re.visCount++;
+
+	if (re.viewCluster == -1 ) {
+		for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
+			if (nodes[i].contents != CONTENTS_SOLID) {
+				nodes[i].visframe = re.visCount;
+			}
+		}
+		return;
+	}
+
+	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
+		var leaf = nodes[i];
+		var cluster = leaf.cluster;
+
+		if (cluster < 0 || cluster >= world.numClusters) {
+			continue;
+		}
+
+		// check general pvs
+		if (!CheckClusterVis(re.viewCluster, cluster)) {
+			continue;
+		}
+
+		// check for door connection
+		/*if ( (tr.refdef.areamask[leaf->area>>3] & (1<<(leaf->area&7)) ) ) {
+			continue;		// not visible
+		}*/
+
+		var parent = leaf;
+		while (parent) {
+			if (parent.visframe == re.visCount) {
+				break;
+			}
+			parent.visframe = re.visCount;
+			parent = parent.parent;
+		}
+	}
+}
+
+function AddWorldSurface(surf/*, dlightBits*/) {
+	if (surf.viewCount === re.viewCount) {
+		return; // already in this view
+	}
+
+	surf.viewCount = re.viewCount;
+
+	// try to cull before dlighting or adding
+	/*if (CullSurface(surf.data, surf.shader)) {
+		return;
+	}*/
+
+	// check for dlighting
+	/*if (dlightBits ) {
+		dlightBits = DlightSurface(surf, dlightBits);
+		dlightBits = (dlightBits !== 0);
+	}*/
+
+	AddDrawSurf(surf/*.data*/, surf.shader/*, surf.fogIndex, dlightBits*/);
+}
+
+function RecursiveWorldNode(node) {
+	while (1) {
+		// if the node wasn't marked as potentially visible, exit
+		//console.log(node.visframe, re.visCount);
+		if (node.visframe != re.visCount) {
+			return;
+		}
+
+		// if the bounding volume is outside the frustum, nothing
+		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
+		/*if ( !r_nocull->integer ) {
+			int		r;
+
+			if ( planeBits & 1 ) {
+				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[0]);
+				if (r == 2) {
+					return;						// culled
+				}
+				if ( r == 1 ) {
+					planeBits &= ~1;			// all descendants will also be in front
+				}
+			}
+
+			if ( planeBits & 2 ) {
+				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[1]);
+				if (r == 2) {
+					return;						// culled
+				}
+				if ( r == 1 ) {
+					planeBits &= ~2;			// all descendants will also be in front
+				}
+			}
+
+			if ( planeBits & 4 ) {
+				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[2]);
+				if (r == 2) {
+					return;						// culled
+				}
+				if ( r == 1 ) {
+					planeBits &= ~4;			// all descendants will also be in front
+				}
+			}
+
+			if ( planeBits & 8 ) {
+				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[3]);
+				if (r == 2) {
+					return;						// culled
+				}
+				if ( r == 1 ) {
+					planeBits &= ~8;			// all descendants will also be in front
+				}
+			}
+		}*/
+
+		if (node.contents !== -1) {
+			break;
+		}
+
+		// node is just a decision point, so go down both sides
+		// since we don't care about sort orders, just go positive to negative
+
+		// determine which dlights are needed
+		/*var newDlights = [0, 0];
+
+		if (dlightBits) {
+			int	i;
+
+			for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
+				dlight_t	*dl;
+				float		dist;
+
+				if ( dlightBits & ( 1 << i ) ) {
+					dl = &tr.refdef.dlights[i];
+					dist = DotProduct( dl->origin, node->plane->normal ) - node->plane->dist;
+					
+					if ( dist > -dl->radius ) {
+						newDlights[0] |= ( 1 << i );
+					}
+					if ( dist < dl->radius ) {
+						newDlights[1] |= ( 1 << i );
+					}
+				}
+			}
+		}*/
+
+		// recurse down the children, front side first
+		RecursiveWorldNode(node.children[0]/*, planeBits, newDlights[0]*/);
+
+		// tail recurse
+		node = node.children[1];
+		/*dlightBits = newDlights[1];*/
+	}
+
+	// leaf node, so add mark surfaces
+
+	/*// add to z buffer bounds
+	if ( node->mins[0] < tr.viewParms.visBounds[0][0] ) {
+		tr.viewParms.visBounds[0][0] = node->mins[0];
+	}
+	if ( node->mins[1] < tr.viewParms.visBounds[0][1] ) {
+		tr.viewParms.visBounds[0][1] = node->mins[1];
+	}
+	if ( node->mins[2] < tr.viewParms.visBounds[0][2] ) {
+		tr.viewParms.visBounds[0][2] = node->mins[2];
+	}
+
+	if ( node->maxs[0] > tr.viewParms.visBounds[1][0] ) {
+		tr.viewParms.visBounds[1][0] = node->maxs[0];
+	}
+	if ( node->maxs[1] > tr.viewParms.visBounds[1][1] ) {
+		tr.viewParms.visBounds[1][1] = node->maxs[1];
+	}
+	if ( node->maxs[2] > tr.viewParms.visBounds[1][2] ) {
+		tr.viewParms.visBounds[1][2] = node->maxs[2];
+	}*/
+
+	// add the individual surfaces
+	var faces = re.world.faces;
+	var leafSurfaces = re.world.leafSurfaces;
+
+	for (var i = node.firstLeafSurface, c = i + node.numLeafSurfaces; i < c; i++) {
+		var face = faces[leafSurfaces[i]];
+		// The surface may have already been added if it spans multiple leafs.
+		AddWorldSurface(face/*, dlightBits*/);
+	}
 }
 
 function AddWorldSurfaces(map) {
-	RecursiveWorldNode(nodes);
+	MarkLeaves();
+	RecursiveWorldNode(re.world.nodes[0]);
 }
 
 var startTime = sys.GetMilliseconds();
-var v = '\
-		#ifdef GL_ES \n\
-		precision highp float; \n\
-		#endif \n\
-		attribute vec3 position; \n\
-	\n\
-		uniform mat4 modelViewMat; \n\
-		uniform mat4 projectionMat; \n\
-	\n\
-		void main(void) { \n\
-			vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
-			gl_Position = projectionMat * worldPosition; \n\
-		} \n\
-	';
-
-var f = '\
-		#ifdef GL_ES \n\
-		precision highp float; \n\
-		#endif \n\
-	\n\
-		void main(void) { \n\
-			gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);\n\
-		} \n\
-	';
-
-//var vs, fs, program;
-
 function RenderWorld(modelViewMat, projectionMat) {
+	var world = re.world;
+
 	if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
 
 	// Seconds passed since map was initialized
@@ -555,7 +854,7 @@ function RenderWorld(modelViewMat, projectionMat) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 	
-	for (var i = 0; i < world.shaders.length; i++) {
+	/*for (var i = 0; i < world.shaders.length; i++) {
 		var shader = world.shaders[i];
 
 		if (!shader.elementCount || !shader.visible) {
@@ -579,9 +878,59 @@ function RenderWorld(modelViewMat, projectionMat) {
 			BindShaderAttribs(stage.program, modelViewMat, projectionMat);
 			gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
 		}
+	}*/
+
+	var refdef = re.refdef;
+	var drawSurfs = refdef.drawSurfs;
+	var shaders = world.shaders;
+
+	for (var i = 0; i < refdef.numDrawSurfs; i++) {
+		var surface = drawSurfs[i].surface;
+		var shader = shaders[surface.shader];
+
+		// Bind the surface shader
+		var glshader = shader.glshader || FindShader(shader.shaderName);
+
+		SetShader(glshader);
+		
+		for (var j = 0; j < glshader.stages.length; j++) {
+			var stage = glshader.stages[j];
+
+			SetShaderStage(glshader, stage, time);
+			BindShaderAttribs(stage.program, modelViewMat, projectionMat);
+
+			gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
+		}
 	}
 
-	/*if (!program) {
+	/*var v = '\
+			#ifdef GL_ES \n\
+			precision highp float; \n\
+			#endif \n\
+			attribute vec3 position; \n\
+		\n\
+			uniform mat4 modelViewMat; \n\
+			uniform mat4 projectionMat; \n\
+		\n\
+			void main(void) { \n\
+				vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
+				gl_Position = projectionMat * worldPosition; \n\
+			} \n\
+		';
+
+	var f = '\
+			#ifdef GL_ES \n\
+			precision highp float; \n\
+			#endif \n\
+		\n\
+			void main(void) { \n\
+				gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);\n\
+			} \n\
+		';
+
+	var vs, fs, program;
+
+	if (!program) {
 		vs = gl.createShader(gl.VERTEX_SHADER);
 		gl.shaderSource(vs, v);
 		gl.compileShader(vs);

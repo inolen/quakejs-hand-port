@@ -71,7 +71,7 @@ function CalcViewValues(refdef) {
 	refdef.width = canvas.width;
 	refdef.height = canvas.height;
 	refdef.fov = 45;
-	refdef.origin = cg.ps.origin;
+	refdef.vieworg = cg.ps.origin;
 	vec3.anglesToAxis(cl.viewangles, refdef.viewaxis);
 
 	OffsetFirstPersonView(refdef);
@@ -79,5 +79,5 @@ function CalcViewValues(refdef) {
 
 function OffsetFirstPersonView(refdef) {
 	// add view height
-	refdef.origin[2] += DEFAULT_VIEWHEIGHT;//cg.ps.viewheight;
+	refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//cg.ps.viewheight;
 }

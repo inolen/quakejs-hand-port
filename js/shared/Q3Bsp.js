@@ -1,17 +1,5 @@
 define('shared/Q3Bsp', [], function () {
 	var Q3Bsp = function () {
-		/*function ParseVisData(buffer, lump) {
-			var numClusters = Struct.readUint32Array(buffer, lump.fileofs, 1)[0];
-			var clusterBytes = Struct.readUint32Array(buffer, lump.fileofs + 4, 1)[0];
-
-			var elements = Struct.readUint8Array(buffer, lump.fileofs + 8, numClusters * clusterBytes);
-
-			return {
-				buffer: elements,
-				size: clusterBytes
-			};
-		}*/
-
 		return {
 			Load: function (url, callback) {
 				var self = this;
@@ -116,10 +104,10 @@ define('shared/Q3Bsp', [], function () {
 	);
 
 	Q3Bsp.dnode_t = Struct.create(
-		Struct.int32('plane'),
-		Struct.array('children', Struct.int32(), 2),
-		Struct.array('min', Struct.int32(), 3),
-		Struct.array('max', Struct.int32(), 3)
+		Struct.int32('planeNum'),
+		Struct.array('childrenNum', Struct.int32(), 2),
+		Struct.array('mins', Struct.int32(), 3),
+		Struct.array('maxs', Struct.int32(), 3)
 	);
 
 	Q3Bsp.dleaf_t = Struct.create(
@@ -178,61 +166,3 @@ define('shared/Q3Bsp', [], function () {
 
 	return Q3Bsp;
 });
-
-
-/*
-function CheckVis(visCluster, testCluster) {
-	if (visCluster == testCluster || visCluster == -1) { return true; }
-	var i = (visCluster * this.data.visData.size) + (testCluster >> 3);
-	var visSet = this.data.visData.buffer[i];
-	return (visSet & (1 << (testCluster & 7)) !== 0);
-},
-
-function GetLeaf(pos) {
-	var index = 0;
-
-	var node = null;
-	var plane = null;
-	var distance = 0;
-
-	while (index >= 0) {
-		node = this.data.nodes[index];
-		plane = this.data.planes[node.plane];
-		distance = vec3.dot(plane.normal, pos) - plane.distance;
-
-		if (distance >= 0) {
-			index = node.children[0];
-		} else {
-			index = node.children[1];
-		}
-	}
-
-	return -(index+1);
-},
-
-function BuildVisibleList(leafIndex) {
-	// Determine visible faces
-	if (this.lastLeaf && leafIndex === this.lastLeaf) {
-		return;
-	}
-	this.lastLeaf = leafIndex;
-
-	var curLeaf = this.bspTree.leaves[leafIndex];
-
-	var visibleShaders = new Array(shaders.length);
-
-	for (var i = 0; i < this.data.leaves.length; ++i) {
-		var leaf = this.data.leaves[i];
-		if (this.checkVis(curLeaf.cluster, leaf.cluster)) {
-			for(var j = 0; j < leaf.leafFaceCount; ++j) {
-				var face = faces[this.data.leafFaces[[j + leaf.leafFace]]];
-				if(face) {
-					visibleShaders[face.shader] = true;
-				}
-			}
-		}
-	}
-
-	return visibleShaders;
-}
-*/
