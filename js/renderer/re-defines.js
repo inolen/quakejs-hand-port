@@ -10,6 +10,13 @@ var RenderLocals = function () {
 	this.sceneCount    = 0;                      // incremented every scene
 	this.viewCount     = 0;                      // incremented every view (twice a scene if portaled)
 	this.frameSceneNum = 0;                      // zeroed at RE_BeginFrame
+	this.pc            = new PerformanceCounter();
+};
+
+var PerformanceCounter = function () {
+	this.surfs = 0;
+	this.leafs = 0;
+	this.verts = 0;
 };
 
 var WorldData = function () {

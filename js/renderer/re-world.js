@@ -317,7 +317,7 @@ function LoadNodesAndLeafs(map) {
 
 	var setParent_r = function (node, parent) {
 		node.parent = parent;
-		if (node.contents !== -1) {
+		if (!node.children) {
 			return;
 		}
 		setParent_r(node.children[0], node);
@@ -326,22 +326,17 @@ function LoadNodesAndLeafs(map) {
 
 	// load leaf surfaces
 	var leafSurfacesLump = map.GetLump(Q3Bsp.Lumps.LUMP_LEAFSURFACES);
-	var idxs = Struct.readUint32Array(map.GetBuffer(), leafSurfacesLump.fileofs, leafSurfacesLump.filelen/4);
-	var leafSurfaces = world.leafSurfaces = new Array(idxs.length);
-	for (var i = 0, length = idxs.length; i < length; i++) {
-		leafSurfaces[i] = idxs[i];
-	}
+	var leafSurfaces = world.leafSurfaces = Struct.readUint32Array(map.GetBuffer(), leafSurfacesLump.fileofs, leafSurfacesLump.filelen/4);
 
 	// TODO Factor out this concat.
 	var nodes = map.ParseLump(Q3Bsp.Lumps.LUMP_NODES, Q3Bsp.dnode_t);
-	var leafs = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);	
+	var leafs = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);
 	var allNodes = world.nodes = nodes.concat(leafs);
 
 	// load nodes
 	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
 		var node = allNodes[i];
 	
-		node.contents = -1; // differentiate from leafs
 		node.plane = planes[node.planeNum];
 
 		node.children = new Array(2);
@@ -357,11 +352,8 @@ function LoadNodesAndLeafs(map) {
 	}
 
 	// load leafs
-
 	for (var i = numNodes, numLeafs = leafs.length; i < numNodes + numLeafs; i++) {
 		var leaf = allNodes[i];
-
-		leaf.contents = 1; // differentiate from nodes
 
 		if (leaf.cluster >= world.numClusters ) {
 			world.numClusters = leaf.cluster + 1;
@@ -369,7 +361,7 @@ function LoadNodesAndLeafs(map) {
 	}
 
 	// chain decendants
-	setParent_r(nodes[0], null);
+	setParent_r(allNodes[0], null);
 }
 
 function LoadVisibility(map) {
@@ -443,23 +435,6 @@ function BuildWorldBuffers() {
 		shaders = re.world.shaders,
 		facesForShader = new Array(shaders.length);
 
-	// Add faces to the appropriate texture face list.
-	for (var i = 0; i < faces.length; ++i) {
-		var face = faces[i];
-
-		if (face.type !== 1 && face.type !==2 && face.type !== 3) {
-			continue;
-		}
-
-		var shader = shaders[face.shader];
-
-		if (!facesForShader[face.shader]) {
-			facesForShader[face.shader] = [];
-		}
-
-		facesForShader[face.shader].push(face);
-	}
-
 	// Compile vert list
 	var vertices = new Array(verts.length*14);
 	var offset = 0;
@@ -488,24 +463,14 @@ function BuildWorldBuffers() {
 
 	// Compile index list
 	var indices = new Array();
-	for(var i = 0; i < shaders.length; ++i) {
-		var shader = shaders[i],
-			shaderFaces = facesForShader[i];
 
-		if (!shaderFaces || !shaderFaces.length) {
-			continue;
-		}
+	for (var i = 0; i < faces.length; i++) {
+		var face = faces[i];
 
-		shader.indexOffset = indices.length * 2; // Offset is in bytes
+		face.indexOffset = indices.length * 2; // Offset is in bytes
 
-		for (var j = 0; j < shaderFaces.length; j++) {
-			var face = shaderFaces[j];
-
-			for(var k = 0; k < face.meshVertCount; k++) {
-				indices.push(face.vertex + meshVerts[face.meshVert + k]);
-			}
-
-			shader.elementCount += face.meshVertCount;
+		for(var j = 0; j < face.meshVertCount; j++) {
+			indices.push(face.vertex + meshVerts[face.meshVert + j]);
 		}
 	}
 
@@ -516,8 +481,6 @@ function BuildWorldBuffers() {
 	indexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-
-	indexCount = indices.length;
 }
 
 /**
@@ -585,8 +548,8 @@ function PointInLeaf(p) {
 
 	var node = re.world.nodes[0];
 
-	while (1) {
-		if (node.contents !== -1) {
+	while (1) {		
+		if (!node.children) {
 			break;
 		}
 		var plane = node.plane;
@@ -602,15 +565,15 @@ function PointInLeaf(p) {
 	return node;
 }
 
-function CheckClusterVis(current, test) {
+function ClusterVisible(current, test) {
 	var world = re.world;
 
 	if (!world || !world.vis || current === test || current == -1) {
 		return true;
 	}
 
-	var i = (current * world.clusterBytes) + (test >> 3);
-	return (world.vis[i] & (1 << (test & 7)) !== 0);
+	var offset = current * world.clusterBytes;
+	return (world.vis[offset + (test >> 3)] & (1 << (test & 7))) !== 0;
 }
 
 function MarkLeaves() {
@@ -630,36 +593,36 @@ function MarkLeaves() {
 	re.viewCluster = cluster;
 	re.visCount++;
 
-	if (re.viewCluster == -1 ) {
+	/*if (re.viewCluster == -1 ) {
 		for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
 			if (nodes[i].contents != CONTENTS_SOLID) {
 				nodes[i].visframe = re.visCount;
 			}
 		}
 		return;
-	}
+	}*/
 
 	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
-		var leaf = nodes[i];
-		var cluster = leaf.cluster;
+		var node = nodes[i];
+		var cluster = node.cluster;
 
 		if (cluster < 0 || cluster >= world.numClusters) {
 			continue;
 		}
 
 		// check general pvs
-		if (!CheckClusterVis(re.viewCluster, cluster)) {
+		if (!ClusterVisible(re.viewCluster, cluster)) {
 			continue;
 		}
 
 		// check for door connection
-		/*if ( (tr.refdef.areamask[leaf->area>>3] & (1<<(leaf->area&7)) ) ) {
+		/*if ( (tr.refdef.areamask[node->area>>3] & (1<<(node->area&7)) ) ) {
 			continue;		// not visible
 		}*/
 
-		var parent = leaf;
+		var parent = node;
 		while (parent) {
-			if (parent.visframe == re.visCount) {
+			if (parent.visframe === re.visCount) {
 				break;
 			}
 			parent.visframe = re.visCount;
@@ -692,7 +655,6 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 function RecursiveWorldNode(node) {
 	while (1) {
 		// if the node wasn't marked as potentially visible, exit
-		//console.log(node.visframe, re.visCount);
 		if (node.visframe != re.visCount) {
 			return;
 		}
@@ -743,7 +705,7 @@ function RecursiveWorldNode(node) {
 			}
 		}*/
 
-		if (node.contents !== -1) {
+		if (!node.children) {
 			break;
 		}
 
@@ -782,6 +744,8 @@ function RecursiveWorldNode(node) {
 		/*dlightBits = newDlights[1];*/
 	}
 
+	re.pc.leafs++;
+
 	// leaf node, so add mark surfaces
 
 	/*// add to z buffer bounds
@@ -809,8 +773,8 @@ function RecursiveWorldNode(node) {
 	var faces = re.world.faces;
 	var leafSurfaces = re.world.leafSurfaces;
 
-	for (var i = node.firstLeafSurface, c = i + node.numLeafSurfaces; i < c; i++) {
-		var face = faces[leafSurfaces[i]];
+	for (var i = 0; i < node.numLeafSurfaces; i++) {
+		var face = faces[leafSurfaces[node.firstLeafSurface + i]];
 		// The surface may have already been added if it spans multiple leafs.
 		AddWorldSurface(face/*, dlightBits*/);
 	}
@@ -853,40 +817,14 @@ function RenderWorld(modelViewMat, projectionMat) {
 	// Map Geometry buffers
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-	
-	/*for (var i = 0; i < world.shaders.length; i++) {
-		var shader = world.shaders[i];
-
-		if (!shader.elementCount || !shader.visible) {
-			continue;
-		}
-
-		// Bind the surface shader
-		var glshader = shader.glshader || FindShader(shader.shaderName);
-
-		// Store off sky shader.
-		if (glshader.sky) {
-			skyShader = glshader;
-		}
-	
-		SetShader(glshader);
-
-		for (var j = 0; j < glshader.stages.length; j++) {
-			var stage = glshader.stages[j];
-
-			SetShaderStage(glshader, stage, time);
-			BindShaderAttribs(stage.program, modelViewMat, projectionMat);
-			gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
-		}
-	}*/
 
 	var refdef = re.refdef;
 	var drawSurfs = refdef.drawSurfs;
 	var shaders = world.shaders;
 
 	for (var i = 0; i < refdef.numDrawSurfs; i++) {
-		var surface = drawSurfs[i].surface;
-		var shader = shaders[surface.shader];
+		var face = drawSurfs[i].surface;
+		var shader = shaders[face.shader];
 
 		// Bind the surface shader
 		var glshader = shader.glshader || FindShader(shader.shaderName);
@@ -899,9 +837,16 @@ function RenderWorld(modelViewMat, projectionMat) {
 			SetShaderStage(glshader, stage, time);
 			BindShaderAttribs(stage.program, modelViewMat, projectionMat);
 
-			gl.drawElements(gl.TRIANGLES, shader.elementCount, gl.UNSIGNED_SHORT, shader.indexOffset);
+			gl.drawElements(gl.TRIANGLES, face.meshVertCount, gl.UNSIGNED_SHORT, face.indexOffset);
+
+			re.pc.verts += face.meshVertCount;
 		}
 	}
+
+	/*if (!window.foobar || window.foobar++ < 5000) {
+		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
+		window.foobar = 0;
+	}*/
 
 	/*var v = '\
 			#ifdef GL_ES \n\

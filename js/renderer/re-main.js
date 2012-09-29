@@ -31,8 +31,11 @@ function RenderScene(fd) {
 	re.refdef.fov = fd.fov;
 	re.refdef.origin = fd.vieworg;
 	re.refdef.viewaxis = fd.viewaxis;
-	
+
 	re.refdef.numDrawSurfs = 0;
+	re.pc.surfs = 0;
+	re.pc.leafs = 0;
+	re.pc.verts  = 0;
 
 	var parms = new ViewParms();
 	parms.x = fd.x;
@@ -108,7 +111,7 @@ function GenerateDrawSurfs() {
 	RenderDrawSurfs();
 }
 
-function AddDrawSurf(surface, shader/*, fogIndex, dlightMap*/) {
+function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 	var refdef = re.refdef;
 
 	// instead of checking for overflow, we just mask the index
@@ -118,8 +121,10 @@ function AddDrawSurf(surface, shader/*, fogIndex, dlightMap*/) {
 	// compared quickly during the qsorting process
 	//refdef.drawSurfs[index].sort = (shader.sortedIndex << QSORT_SHADERNUM_SHIFT);
 	//	| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
-	refdef.drawSurfs[index].surface = surface;
+	refdef.drawSurfs[index].surface = face;
 	refdef.numDrawSurfs++;
+
+	re.pc.surfs++;
 }
 
 function RenderDrawSurfs() {
