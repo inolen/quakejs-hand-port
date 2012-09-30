@@ -740,7 +740,6 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 		/*dlightBits = newDlights[1];*/
 	}
 
-
 	// add to z buffer bounds
 	var parms = re.viewParms;
 
@@ -773,6 +772,8 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 		// The surface may have already been added if it spans multiple leafs.
 		AddWorldSurface(face/*, dlightBits*/);
 	}
+
+	re.pc.leafs++;
 }
 
 function AddWorldSurfaces(map) {
