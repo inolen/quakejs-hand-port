@@ -71,7 +71,8 @@ var RefDef = function () {
 	this.y            = 0;
 	this.width        = 0;
 	this.height       = 0;
-	this.fov          = 0;
+	this.fovX         = 0;
+	this.fovY         = 0;
 	this.vieworg      = vec3.create();
 	this.viewaxis     = [
 		vec3.create(),
@@ -88,7 +89,7 @@ var RefDef = function () {
 
 var Orientation = function () {
 	this.origin      = vec3.create();
-	this.viewaxis    = [
+	this.axis    = [
 		vec3.create(),
 		vec3.create(),
 		vec3.create()
@@ -105,7 +106,19 @@ var ViewParms = function () {
 	this.y                = 0;
 	this.width            = 0;
 	this.height           = 0;
-	this.fov              = 0;
+	this.fovX             = 0;
+	this.fovY             = 0;
+	this.frustum          = [
+		new Plane(),
+		new Plane(),
+		new Plane(),
+		new Plane()
+	];
+	this.visBounds        = [
+		vec3.create(),
+		vec3.create()
+	];
+	this.zFar             = 0;
 	this.projectionMatrix = mat4.create();
 	this.frameSceneNum    = 0;
 	this.frameCount       = 0;

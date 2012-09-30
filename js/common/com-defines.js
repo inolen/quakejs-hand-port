@@ -133,3 +133,14 @@ var SURF_LIGHTFILTER            = 0x8000;        // act as a light filter during
 var SURF_ALPHASHADOW            = 0x10000;       // do per-pixel light shadow casting in q3map
 var SURF_NODLIGHT               = 0x20000;       // don't dlight even if solid (solid lava, skies)
 var SURF_DUST                   = 0x40000;       // leave a dust trail when walking on this surface
+
+
+/**
+ * Planes
+ */
+ var Plane = function () {
+ 	this.normal   = vec3.create();
+ 	this.dist     = 0;
+ 	this.type     = 0;
+ 	this.signbits = 0;
+};

@@ -37,16 +37,8 @@ function LoadPlanes(map) {
 
 	for (var i = 0; i < planes.length; i++) {
 		var plane = planes[i];
-		var bits = 0;
-
-		for (var j = 0; j < 3; j++) {
-			if (plane.normal[j] < 0) {
-				bits |= 1 << j;
-			}
-		}
-
 		plane.type = PlaneTypeForNormal(plane.normal);
-		plane.signbits = bits;
+		plane.signbits = GetPlaneSignbits(plane);
 	}
 }
 

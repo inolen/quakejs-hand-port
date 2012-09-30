@@ -87,3 +87,52 @@ var PLANE_NON_AXIAL	= 3;
 function PlaneTypeForNormal(x) {
 	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL))
 }
+
+function GetPlaneSignbits(p) {
+	var bits = 0;
+
+	for (var i = 0; i < 3; i++) {
+		if (p.normal[i] < 0) {
+			bits |= 1 << i;
+		}
+	}
+
+	return bits;
+}
+
+/**
+ * BoxOnPlaneSide
+ * Returns 1, 2, or 1 + 2.
+ */
+function BoxOnPlaneSide(mins, maxs, p) {
+	// fast axial cases
+	if (p.type < PLANE_NON_AXIAL) {
+		if (p.dist <= mins[p.type]) {
+			return 1;
+		} else if (p.dist >= maxs[p.type]) {
+			return 2;
+		}
+		return 3;
+	}
+
+	// general case
+	var dist = [0, 0];
+	
+	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
+		for (var i = 0; i < 3; i++) {
+			var b = (p.signbits >> i) & 1;
+			dist[b] += p.normal[i]*maxs[i];
+			dist[b^1] += p.normal[i]*mins[i];
+		}
+	}
+
+	var sides = 0;
+	if (dist[0] >= p.dist) {
+		sides = 1;
+	}
+	if (dist[1] < p.dist) {
+		sides |= 2;
+	}
+
+	return sides;
+}

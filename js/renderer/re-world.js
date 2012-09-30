@@ -652,7 +652,7 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 	AddDrawSurf(surf/*.data*/, surf.shader/*, surf.fogIndex, dlightBits*/);
 }
 
-function RecursiveWorldNode(node) {
+function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 	while (1) {
 		// if the node wasn't marked as potentially visible, exit
 		if (node.visframe != re.visCount) {
@@ -661,49 +661,45 @@ function RecursiveWorldNode(node) {
 
 		// if the bounding volume is outside the frustum, nothing
 		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
-		/*if ( !r_nocull->integer ) {
-			int		r;
+		if (true/*!r_nocull->integer*/) {
+			var r;
 
-			if ( planeBits & 1 ) {
-				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[0]);
-				if (r == 2) {
-					return;						// culled
-				}
-				if ( r == 1 ) {
-					planeBits &= ~1;			// all descendants will also be in front
+			if (planeBits & 1) {
+				r = BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[0]);
+				if (r === 2) {
+					return;                      // culled
+				} else if (r === 1) {
+					planeBits &= ~1;             // all descendants will also be in front
 				}
 			}
 
-			if ( planeBits & 2 ) {
-				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[1]);
-				if (r == 2) {
-					return;						// culled
-				}
-				if ( r == 1 ) {
-					planeBits &= ~2;			// all descendants will also be in front
-				}
-			}
-
-			if ( planeBits & 4 ) {
-				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[2]);
-				if (r == 2) {
-					return;						// culled
-				}
-				if ( r == 1 ) {
-					planeBits &= ~4;			// all descendants will also be in front
+			if (planeBits & 2) {
+				r = BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[1]);
+				if (r === 2) {
+					return;                      // culled
+				} else if (r === 1) {
+					planeBits &= ~2;             // all descendants will also be in front
 				}
 			}
 
-			if ( planeBits & 8 ) {
-				r = BoxOnPlaneSide(node->mins, node->maxs, &tr.viewParms.frustum[3]);
-				if (r == 2) {
-					return;						// culled
-				}
-				if ( r == 1 ) {
-					planeBits &= ~8;			// all descendants will also be in front
+			if (planeBits & 4) {
+				r = BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[2]);
+				if (r === 2) {
+					return;                      // culled
+				} else if (r == 1) {
+					planeBits &= ~4;             // all descendants will also be in front
 				}
 			}
-		}*/
+
+			if (planeBits & 8) {
+				r = BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[3]);
+				if (r === 2) {
+					return;                      // culled
+				} else if (r === 1 ) {
+					planeBits &= ~8;             // all descendants will also be in front
+				}
+			}
+		}
 
 		if (!node.children) {
 			break;
@@ -737,37 +733,36 @@ function RecursiveWorldNode(node) {
 		}*/
 
 		// recurse down the children, front side first
-		RecursiveWorldNode(node.children[0]/*, planeBits, newDlights[0]*/);
+		RecursiveWorldNode(node.children[0], planeBits/*, newDlights[0]*/);
 
 		// tail recurse
 		node = node.children[1];
 		/*dlightBits = newDlights[1];*/
 	}
 
-	re.pc.leafs++;
 
-	// leaf node, so add mark surfaces
+	// add to z buffer bounds
+	var parms = re.viewParms;
 
-	/*// add to z buffer bounds
-	if ( node->mins[0] < tr.viewParms.visBounds[0][0] ) {
-		tr.viewParms.visBounds[0][0] = node->mins[0];
+	if (node.mins[0] < parms.visBounds[0][0]) {
+		parms.visBounds[0][0] = node.mins[0];
 	}
-	if ( node->mins[1] < tr.viewParms.visBounds[0][1] ) {
-		tr.viewParms.visBounds[0][1] = node->mins[1];
+	if (node.mins[1] < parms.visBounds[0][1]) {
+		parms.visBounds[0][1] = node.mins[1];
 	}
-	if ( node->mins[2] < tr.viewParms.visBounds[0][2] ) {
-		tr.viewParms.visBounds[0][2] = node->mins[2];
+	if (node.mins[2] < parms.visBounds[0][2]) {
+		parms.visBounds[0][2] = node.mins[2];
 	}
 
-	if ( node->maxs[0] > tr.viewParms.visBounds[1][0] ) {
-		tr.viewParms.visBounds[1][0] = node->maxs[0];
+	if (node.maxs[0] > parms.visBounds[1][0]) {
+		parms.visBounds[1][0] = node.maxs[0];
 	}
-	if ( node->maxs[1] > tr.viewParms.visBounds[1][1] ) {
-		tr.viewParms.visBounds[1][1] = node->maxs[1];
+	if (node.maxs[1] > parms.visBounds[1][1]) {
+		parms.visBounds[1][1] = node.maxs[1];
 	}
-	if ( node->maxs[2] > tr.viewParms.visBounds[1][2] ) {
-		tr.viewParms.visBounds[1][2] = node->maxs[2];
-	}*/
+	if (node.maxs[2] > parms.visBounds[1][2]) {
+		parms.visBounds[1][2] = node.maxs[2];
+	}
 
 	// add the individual surfaces
 	var faces = re.world.faces;
@@ -782,7 +777,7 @@ function RecursiveWorldNode(node) {
 
 function AddWorldSurfaces(map) {
 	MarkLeaves();
-	RecursiveWorldNode(re.world.nodes[0]);
+	RecursiveWorldNode(re.world.nodes[0], 15);
 }
 
 var startTime = sys.GetMilliseconds();
@@ -828,7 +823,6 @@ function RenderWorld(modelViewMat, projectionMat) {
 
 		// Bind the surface shader
 		var glshader = shader.glshader || FindShader(shader.shaderName);
-
 		SetShader(glshader);
 		
 		for (var j = 0; j < glshader.stages.length; j++) {
@@ -843,100 +837,8 @@ function RenderWorld(modelViewMat, projectionMat) {
 		}
 	}
 
-	/*if (!window.foobar || window.foobar++ < 5000) {
+	if (!window.foobar || sys.GetMilliseconds() - window.foobar > 1000) {
 		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
-		window.foobar = 0;
-	}*/
-
-	/*var v = '\
-			#ifdef GL_ES \n\
-			precision highp float; \n\
-			#endif \n\
-			attribute vec3 position; \n\
-		\n\
-			uniform mat4 modelViewMat; \n\
-			uniform mat4 projectionMat; \n\
-		\n\
-			void main(void) { \n\
-				vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
-				gl_Position = projectionMat * worldPosition; \n\
-			} \n\
-		';
-
-	var f = '\
-			#ifdef GL_ES \n\
-			precision highp float; \n\
-			#endif \n\
-		\n\
-			void main(void) { \n\
-				gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);\n\
-			} \n\
-		';
-
-	var vs, fs, program;
-
-	if (!program) {
-		vs = gl.createShader(gl.VERTEX_SHADER);
-		gl.shaderSource(vs, v);
-		gl.compileShader(vs);
-		
-		fs = gl.createShader(gl.FRAGMENT_SHADER);
-		gl.shaderSource(fs, f);
-		gl.compileShader(fs);
-
-		program = gl.createProgram();
-		gl.attachShader(program, vs);
-		gl.attachShader(program, fs);
-		gl.linkProgram(program);
-	} else {
-		for (var i = 0; i < world.faces.length; ++i) {
-			var face = world.faces[i];
-
-			if (face.type !== Q3Bsp.SurfaceTypes.MST_PATCH) {
-				continue;
-			}
-
-			if (!face.vb) {
-				var vertices = [];
-				for (var i = 0; i < face.vertCount; i++) {
-					var vert = world.verts[face.vertex + i];
-
-					vertices.push(vert.pos[0]);
-					vertices.push(vert.pos[1]);
-					vertices.push(vert.pos[2]);
-				}
-
-				face.vb = gl.createBuffer();
-				gl.bindBuffer(gl.ARRAY_BUFFER, face.vb);
-				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-				var indices = [];
-				for(var k = 0; k < face.meshVertCount; k++) {
-					indices.push(world.meshVerts[face.meshVert + k]);
-				}
-
-				face.ib = gl.createBuffer();
-				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, face.ib);
-				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
-			}
-
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, face.ib);
-			gl.bindBuffer(gl.ARRAY_BUFFER, face.vb);
-
-			gl.useProgram(program);
-
-			// Set uniforms
-			var uniModelViewMat = gl.getUniformLocation(program, 'modelViewMat');
-			var uniProjectionMat = gl.getUniformLocation(program, 'projectionMat');
-			gl.uniformMatrix4fv(uniModelViewMat, false, modelViewMat);
-			gl.uniformMatrix4fv(uniProjectionMat, false, projectionMat);
-
-			// Setup vertex attributes
-			var attrPosition = gl.getAttribLocation(program, 'position');
-			gl.enableVertexAttribArray(attrPosition);
-			gl.vertexAttribPointer(attrPosition, 3, gl.FLOAT, false, 12, 0);
-
-			//gl.drawElements(gl.TRIANGLES, face.meshVertCount, gl.UNSIGNED_SHORT, 0);
-		}
-	}*/
+		window.foobar = sys.GetMilliseconds();
+	}
 }

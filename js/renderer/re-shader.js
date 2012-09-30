@@ -112,3 +112,53 @@ function LoadTextureForStage(glshader, stage, animFrame) {
 		return stage.texture;
 	}
 }
+
+function SetShader(glshader) {
+	if (!glshader) {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.BACK);
+	} else if (glshader.cull && !glshader.sky) {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(glshader.cull);
+	} else {
+		gl.disable(gl.CULL_FACE);
+	}
+
+	return true;
+}
+
+function SetShaderStage(glshader, stage, time) {
+	gl.blendFunc(stage.blendSrc, stage.blendDest);
+
+	if (stage.depthWrite && !glshader.sky) {
+		gl.depthMask(true);
+	} else {
+		gl.depthMask(false);
+	}
+
+	gl.depthFunc(stage.depthFunc);
+	gl.useProgram(stage.program);
+
+	var texture;
+	if (stage.animFreq) {
+		var animFrame = Math.floor(time * stage.animFreq) % stage.animMaps.length;
+		texture = LoadTextureForStage(glshader, stage, animFrame);
+	} else {
+		texture = LoadTextureForStage(glshader, stage);
+	}
+
+	gl.activeTexture(gl.TEXTURE0);
+	gl.uniform1i(stage.program.uniform.texture, 0);
+	gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+
+	if (stage.program.uniform.lightmap) {
+		var lightmap = FindImage('*lightmap');
+		gl.activeTexture(gl.TEXTURE1);
+		gl.uniform1i(stage.program.uniform.lightmap, 1);;
+		gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
+	}
+
+	if (stage.program.uniform.time) {
+		gl.uniform1f(stage.program.uniform.time, time);
+	}
+}

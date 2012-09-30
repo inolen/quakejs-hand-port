@@ -7,8 +7,7 @@ var commands = {};
 var keys = {};
 
 function Init(canvasCtx, glCtx) {
-	// Due to sv/cl/com having a circular dependency on eachother,
-	// we need to re-grab com now that we're all loaded.
+	// Due to circular dependencies, we need to re-require com now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
 
@@ -70,14 +69,23 @@ function CalcViewValues(refdef) {
 	refdef.y = 0;
 	refdef.width = canvas.width;
 	refdef.height = canvas.height;
-	refdef.fov = 45;
 	refdef.vieworg = cg.ps.origin;
 	vec3.anglesToAxis(cl.viewangles, refdef.viewaxis);
 
 	OffsetFirstPersonView(refdef);
+	CalcFov(refdef);
 }
 
 function OffsetFirstPersonView(refdef) {
 	// add view height
 	refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//cg.ps.viewheight;
+}
+
+function CalcFov(refdef) {
+	var fovX = 90;
+	var x = refdef.width / Math.tan(fovX / 360 * Math.PI);
+	var fovY = Math.atan2(refdef.height, x) * 360 / Math.PI;
+
+	refdef.fovX = fovX;
+	refdef.fovY = fovY;
 }
