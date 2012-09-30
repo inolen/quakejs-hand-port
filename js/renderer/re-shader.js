@@ -1,6 +1,3 @@
-var parsedShaders = {};
-var compiledShaders = {};
-
 function InitShaders() {
 	ScanAndLoadShaderFiles();
 }
@@ -8,18 +5,39 @@ function InitShaders() {
 function FindShader(shaderName) {
 	var shader;
 
-	if ((shader = compiledShaders[shaderName])) {
+	if ((shader = re.compiledShaders[shaderName])) {
 		return shader;
 	}
 
-	if ((shader = parsedShaders[shaderName])) {
-		return (compiledShaders[shaderName] = GLShader.FromShader(gl, shader));
+	if ((shader = re.parsedShaders[shaderName])) {
+		shader = GLShader.FromShader(gl, shader);
+	} else {
+		// Build default diffuse shader.
+		var map = shaderName !== '*default' ? shaderName + '.png' : shaderName;
+		var texture = FindImage(map);
+		shader = GLShader.FromTexture(gl, map, texture);
 	}
 
-	// Build default diffuse shader.
-	var map = shaderName !== '*default' ? shaderName + '.png' : shaderName;
-	var texture = FindImage(map);
-	return (compiledShaders[shaderName] = GLShader.FromTexture(gl, map, texture));
+	// Add the shader to the sorted cache.
+	SortShader(shader);
+
+	return (re.compiledShaders[shaderName] = shader);
+}
+
+function SortShader(shader) {
+	var sortedShaders = re.sortedShaders;
+	var sort = shader.sort;
+
+	for (var i = sortedShaders.length - 2; i >= 0; i--) {
+		if (sortedShaders[i].sort <= sort) {
+			break;
+		}
+		sortedShaders[i+1] = sortedShaders[i];
+		sortedShaders[i+1].sortedIndex++;
+	}
+
+	shader.sortedIndex = i+1;
+	sortedShaders[i+1] = shader;
 }
 
 function ScanAndLoadShaderFiles() {
@@ -49,12 +67,10 @@ function LoadShaderFile(url, onload) {
 			return;
 		}
 		
-		var parser = new Q3Shader.Parser(request.responseText, {
-			findImage: FindImage
-		});
+		var parser = new Q3Shader.Parser(request.responseText);
 		var shader;
 		while ((shader = parser.next())) {
-			parsedShaders[shader.name] = shader;
+			re.parsedShaders[shader.name] = shader;
 		};
 	};
 
@@ -63,21 +79,6 @@ function LoadShaderFile(url, onload) {
 	request.send(null);
 }
 
-function SetShader(glshader) {
-	if (!glshader) {
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.BACK);
-	} else if (glshader.cull && !glshader.sky) {
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(glshader.cull);
-	} else {
-		gl.disable(gl.CULL_FACE);
-	}
-
-	return true;
-}
-
-// This function
 function LoadTextureForStage(glshader, stage, animFrame) {
 	if (animFrame !== undefined && stage.animTextures) {
 		return stage.animTextures[animFrame];
@@ -109,41 +110,5 @@ function LoadTextureForStage(glshader, stage, animFrame) {
 		}
 
 		return stage.texture;
-	}
-}
-
-function SetShaderStage(glshader, stage, time) {
-	gl.blendFunc(stage.blendSrc, stage.blendDest);
-
-	if (stage.depthWrite && !glshader.sky) {
-		gl.depthMask(true);
-	} else {
-		gl.depthMask(false);
-	}
-
-	gl.depthFunc(stage.depthFunc);
-	gl.useProgram(stage.program);
-
-	var texture;
-	if (stage.animFreq) {
-		var animFrame = Math.floor(time * stage.animFreq) % stage.animMaps.length;
-		texture = LoadTextureForStage(glshader, stage, animFrame);
-	} else {
-		texture = LoadTextureForStage(glshader, stage);
-	}
-
-	gl.activeTexture(gl.TEXTURE0);
-	gl.uniform1i(stage.program.uniform.texture, 0);
-	gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
-
-	if (stage.program.uniform.lightmap) {
-		var lightmap = FindImage('*lightmap');
-		gl.activeTexture(gl.TEXTURE1);
-		gl.uniform1i(stage.program.uniform.lightmap, 1);;
-		gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
-	}
-
-	if (stage.program.uniform.time) {
-		gl.uniform1f(stage.program.uniform.time, time);
 	}
 }

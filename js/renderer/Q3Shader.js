@@ -1,5 +1,23 @@
-// TODO: This shouldn't be calling FindImage, that should go down in GLShader.
 define('renderer/Q3Shader', [], function () {
+	var SS_BAD            = 0;
+	var SS_PORTAL         = 1;                       // mirrors, portals, viewscreens
+	var SS_ENVIRONMENT    = 2;                       // sky box
+	var SS_OPAQUE         = 3;                       // opaque
+	var SS_DECAL          = 4;                       // scorch marks, etc.
+	var SS_SEE_THROUGH    = 5;                       // ladders, grates, grills that may have small blended
+	                                                 // edges in addition to alpha test
+	var SS_BANNER         = 6;
+	var SS_FOG            = 7;
+	var SS_UNDERWATER     = 8;                       // for items that should be drawn in front of the water plane
+	var SS_BLEND0         = 9;                       // regular transparency and filters
+	var SS_BLEND1         = 10;                      // generally only used for additive type effects
+	var SS_BLEND2         = 11;
+	var SS_BLEND3         = 12;
+	var SS_BLEND6         = 13;
+	var SS_STENCIL_SHADOW = 14;
+	var SS_ALMOST_NEAREST = 15;                      // gun smoke puffs
+	var SS_NEAREST        = 16;                      // blood blobs
+
 	/**
 	 * Shader Tokenizer
 	 */
@@ -58,11 +76,6 @@ define('renderer/Q3Shader', [], function () {
 		options = options || {};
 
 		this.tokens = new ShaderTokenizer(buffer);
-		this.findImage = options.findImage;
-
-		if (!this.findImage) {
-			throw new Exception('Must provide a callback for findImage');
-		}
 	};
 
 	ShaderParser.prototype._parseWaveform = function () {
@@ -79,7 +92,6 @@ define('renderer/Q3Shader', [], function () {
 
 	ShaderParser.prototype._parseStage = function(shader) {
 		var tokens = this.tokens;
-		var findImage = this.findImage;
 
 		var stage = {
 			map: null,
@@ -321,14 +333,16 @@ define('renderer/Q3Shader', [], function () {
 				case 'sort':
 					var sort = tokens.next().toLowerCase();
 					switch(sort) {
-						case 'portal': shader.sort = 1; break;
-						case 'sky': shader.sort = 2; break;
-						case 'opaque': shader.sort = 3; break;
-						case 'banner': shader.sort = 6; break;
-						case 'underwater': shader.sort = 8; break;
-						case 'additive': shader.sort = 9; break;
-						case 'nearest': shader.sort = 16; break;
-						default: shader.sort = parseInt(sort); break;
+						case 'portal':     shader.sort = SS_PORTAL;         break;
+						case 'sky':        shader.sort = SS_ENVIRONMENT;    break;
+						case 'opaque':     shader.sort = SS_OPAQUE;         break;
+						case 'decal':      shader.sort = SS_DECAL;          break;
+						case 'seeThrough': shader.sort = SS_SEE_THROUGH;    break;
+						case 'banner':     shader.sort = SS_BANNER;         break;
+						case 'additive':   shader.sort = SS_BLEND1;         break;
+						case 'nearest':    shader.sort = SS_NEAREST;        break;
+						case 'underwater': shader.sort = SS_UNDERWATER;     break;
+						default:           shader.sort = parseInt(sort);    break;
 					};
 					break;
 

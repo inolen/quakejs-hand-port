@@ -106,20 +106,65 @@ function RenderView(parms) {
 	GenerateDrawSurfs();
 }
 
-function GenerateDrawSurfs() {
-	AddWorldSurfaces();
-	RenderDrawSurfs();
+
+function SetShader(glshader) {
+	if (!glshader) {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.BACK);
+	} else if (glshader.cull && !glshader.sky) {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(glshader.cull);
+	} else {
+		gl.disable(gl.CULL_FACE);
+	}
+
+	return true;
+}
+
+function SetShaderStage(glshader, stage, time) {
+	gl.blendFunc(stage.blendSrc, stage.blendDest);
+
+	if (stage.depthWrite && !glshader.sky) {
+		gl.depthMask(true);
+	} else {
+		gl.depthMask(false);
+	}
+
+	gl.depthFunc(stage.depthFunc);
+	gl.useProgram(stage.program);
+
+	var texture;
+	if (stage.animFreq) {
+		var animFrame = Math.floor(time * stage.animFreq) % stage.animMaps.length;
+		texture = LoadTextureForStage(glshader, stage, animFrame);
+	} else {
+		texture = LoadTextureForStage(glshader, stage);
+	}
+
+	gl.activeTexture(gl.TEXTURE0);
+	gl.uniform1i(stage.program.uniform.texture, 0);
+	gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+
+	if (stage.program.uniform.lightmap) {
+		var lightmap = FindImage('*lightmap');
+		gl.activeTexture(gl.TEXTURE1);
+		gl.uniform1i(stage.program.uniform.lightmap, 1);;
+		gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
+	}
+
+	if (stage.program.uniform.time) {
+		gl.uniform1f(stage.program.uniform.time, time);
+	}
 }
 
 function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 	var refdef = re.refdef;
 
-	// instead of checking for overflow, we just mask the index
-	// so it wraps around
+	// Instead of checking for overflow, we just mask the index so it wraps around.
 	var index = refdef.numDrawSurfs & DRAWSURF_MASK;
-	// the sort data is packed into a single 32 bit value so it can be
-	// compared quickly during the qsorting process
-	//refdef.drawSurfs[index].sort = (shader.sortedIndex << QSORT_SHADERNUM_SHIFT);
+	// The sort data is packed into a single 32 bit value so it can be
+	// compared quickly during the qsorting process.
+	refdef.drawSurfs[index].sort = (shader.sortedIndex << QSORT_SHADERNUM_SHIFT);
 	//	| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
 	refdef.drawSurfs[index].surface = face;
 	refdef.numDrawSurfs++;
@@ -127,7 +172,11 @@ function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 	re.pc.surfs++;
 }
 
-function RenderDrawSurfs() {
+function SortDrawSurfaces() {
+	RadixSort(re.refdef.drawSurfs, re.refdef.numDrawSurfs);
+}
+
+function RenderDrawSurfaces() {
 	var parms = re.viewParms;
 
 	// Setup
@@ -144,4 +193,10 @@ function RenderDrawSurfs() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	RenderWorld(parms.or.modelMatrix, parms.projectionMatrix);
+}
+
+function GenerateDrawSurfs() {
+	AddWorldSurfaces();
+	SortDrawSurfaces();
+	RenderDrawSurfaces();
 }

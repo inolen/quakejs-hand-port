@@ -1,16 +1,36 @@
 var MAX_DRAWSURFS = 0x10000;
 var DRAWSURF_MASK = (MAX_DRAWSURFS-1);
 
+var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
+var MAX_ENTITIES   = (1 << ENTITYNUM_BITS) - 1;
+
+/** 
+ * The drawsurf sort data is packed into a single 32 bit value so it can be
+ * compared quickly during the qsorting process.
+ *
+ * The bits are allocated as follows:
+ * 0-1   : dlightmap index
+ * 2-6   : fog index
+ * 7-16  : entity index
+ * 17-30 : sorted shader index
+ */
+var QSORT_FOGNUM_SHIFT    = 2;
+var QSORT_ENTITYNUM_SHIFT = 7;
+var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
+
 var RenderLocals = function () {
-	this.world         = null;
-	this.refdef        = new RefDef();
-	this.viewParms     = null;
-	this.visCount      = 0;                      // incremented every time a new vis cluster is entered
-	this.frameCount    = 0;                      // incremented every frame
-	this.sceneCount    = 0;                      // incremented every scene
-	this.viewCount     = 0;                      // incremented every view (twice a scene if portaled)
-	this.frameSceneNum = 0;                      // zeroed at RE_BeginFrame
-	this.pc            = new PerformanceCounter();
+	this.parsedShaders   = {};
+	this.compiledShaders = {};
+	this.sortedShaders   = [];
+	this.world           = null;
+	this.refdef          = new RefDef();
+	this.viewParms       = null;
+	this.visCount        = 0;                    // incremented every time a new vis cluster is entered
+	this.frameCount      = 0;                    // incremented every frame
+	this.sceneCount      = 0;                    // incremented every scene
+	this.viewCount       = 0;                    // incremented every view (twice a scene if portaled)
+	this.frameSceneNum   = 0;                    // zeroed at RE_BeginFrame
+	this.pc              = new PerformanceCounter();
 };
 
 var PerformanceCounter = function () {
@@ -39,11 +59,6 @@ var WorldData = function () {
 	vec3_t      lightGridInverseSize;
 	int         lightGridBounds[3];
 	byte        *lightGridData;*/
-};
-
-var Texture = function () {
-	this.name   = null;
-	this.texnum = null;
 };
 
 var DrawSurface = function () {
@@ -94,4 +109,9 @@ var ViewParms = function () {
 	this.projectionMatrix = mat4.create();
 	this.frameSceneNum    = 0;
 	this.frameCount       = 0;
+};
+
+var Texture = function () {
+	this.name   = null;
+	this.texnum = null;
 };
