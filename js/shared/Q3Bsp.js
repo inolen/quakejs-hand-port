@@ -92,9 +92,7 @@ define('shared/Q3Bsp', [], function () {
 		Struct.int32('contents'),
 		{
 			glShader: { value: null, enumerable: true, configurable: true, writable: true },
-			indexOffset: { value: 0, enumerable: true, configurable: true, writable: true },
-			elementCount: { value: 0, enumerable: true, configurable: true, writable: true },
-			visible: { value: true, enumerable: true, configurable: true, writable: true }
+			sortedIndex: { value: 0, enumerable: true, configurable: true, writable: true }
 		}
 	);
 

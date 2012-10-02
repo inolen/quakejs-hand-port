@@ -1,6 +1,6 @@
 requirejs(['common/com'], function (com) {
-	var GL_WINDOW_WIDTH = 854;
-	var GL_WINDOW_HEIGHT = 480;
+	var GL_WINDOW_WIDTH = 1024;
+	var GL_WINDOW_HEIGHT = 576;
 
 	function Init(canvas, gl) {
 		com.Init(canvas, gl);

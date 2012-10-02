@@ -265,7 +265,7 @@ function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 }
 
 function SortDrawSurfaces() {
-	RadixSort(re.refdef.drawSurfs, re.refdef.numDrawSurfs);
+	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
 }
 
 function RenderDrawSurfaces() {

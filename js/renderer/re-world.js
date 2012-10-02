@@ -69,6 +69,16 @@ function ColorToVec(color) {
 	return [r, g, b, color[3] / 255];
 }
 
+function ShaderForShaderNum(shaderNum) {
+	var shaders = re.world.shaders;
+	if (shaderNum < 0 || shaderNum >= shaders.length) {
+		throw new Error('ShaderForShaderNum: bad num ' + shaderNum);
+	}
+	var dsh = shaders[shaderNum];
+	var shader = FindShader(dsh.shaderName);
+
+	return shader;
+}
 function LoadShaders(map) {
 	re.world.shaders = map.ParseLump(Q3Bsp.Lumps.LUMP_SHADERS, Q3Bsp.dshader_t);
 }
@@ -259,8 +269,8 @@ function LoadSurfaces(map) {
 			ParseMesh(face, verts, meshVerts, 5);
 		}
 
-		var shader = shaders[face.shader];
-		shader.geomType = face.type;
+		face.shader = ShaderForShaderNum(face.shader);
+		face.shader.geomType = face.type;
 
 		// Transform lightmap coords to match position in combined texture.
 		var lightmap = lightmaps[face.lightmap];
@@ -820,10 +830,10 @@ function RenderWorld(modelViewMat, projectionMat) {
 
 	for (var i = 0; i < refdef.numDrawSurfs; i++) {
 		var face = drawSurfs[i].surface;
-		var shader = shaders[face.shader];
+		var shader = face.shader;
+		var glshader = shader.glshader;
 
 		// Bind the surface shader
-		var glshader = shader.glshader || FindShader(shader.shaderName);
 		SetShader(glshader);
 		
 		for (var j = 0; j < glshader.stages.length; j++) {
@@ -838,8 +848,8 @@ function RenderWorld(modelViewMat, projectionMat) {
 		}
 	}
 
-	if (!window.foobar || sys.GetMilliseconds() - window.foobar > 1000) {
+	/*if (!window.foobar || sys.GetMilliseconds() - window.foobar > 1000) {
 		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
 		window.foobar = sys.GetMilliseconds();
-	}
+	}*/
 }

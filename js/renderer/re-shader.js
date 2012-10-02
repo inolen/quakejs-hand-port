@@ -1,3 +1,4 @@
+// TODO We really need to clean up these q3shader/glshader differences.
 function InitShaders() {
 	ScanAndLoadShaderFiles();
 }
@@ -9,14 +10,21 @@ function FindShader(shaderName) {
 		return shader;
 	}
 
+	var glshader;
 	if ((shader = re.parsedShaders[shaderName])) {
-		shader = GLShader.FromShader(gl, shader);
+		glshader = GLShader.FromShader(gl, shader);
 	} else {
 		// Build default diffuse shader.
+		// This is kind of ugly;
+		shader = {};
 		var map = shaderName !== '*default' ? shaderName + '.png' : shaderName;
 		var texture = FindImage(map);
-		shader = GLShader.FromTexture(gl, map, texture);
+		glshader = GLShader.FromTexture(gl, map, texture);
 	}
+	shader.glshader = glshader;
+
+	// Go ahead and cache the texture maps for this shader.
+	LoadTexturesForShader(glshader);
 
 	// Add the shader to the sorted cache.
 	SortShader(shader);
@@ -24,18 +32,47 @@ function FindShader(shaderName) {
 	return (re.compiledShaders[shaderName] = shader);
 }
 
+function LoadTexturesForShader(glshader) {
+	for(var i = 0; i < glshader.stages.length; i++) {
+		var stage = glshader.stages[i];
+
+		LoadTexturesForShaderStage(glshader, stage);
+	}
+}
+
+function LoadTexturesForShaderStage(glshader, stage) {
+	if (stage.animFreq) {
+		stage.animTextures = _.map(stage.animMaps, function (map) {
+			return FindImage(map, stage.clamp);
+		});
+	} else {
+		if (!stage.map) {
+			stage.texture = FindImage('*white');
+		} else if (stage.map == '$lightmap') {
+			if (glshader.lightmap < 0) {
+				stage.texture = FindImage('*white');
+			} else {
+				stage.texture = FindImage('*lightmap');
+			}
+		} else if (stage.map == '$whiteimage') {
+			stage.texture = FindImage('*white');
+		} else {
+			stage.texture = FindImage(stage.map, stage.clamp);
+		}
+	}
+}
+
 function SortShader(shader) {
 	var sortedShaders = re.sortedShaders;
 	var sort = shader.sort;
 
-	for (var i = sortedShaders.length - 2; i >= 0; i--) {
+	for (var i = sortedShaders.length - 1; i >= 0; i--) {
 		if (sortedShaders[i].sort <= sort) {
 			break;
 		}
 		sortedShaders[i+1] = sortedShaders[i];
 		sortedShaders[i+1].sortedIndex++;
 	}
-
 	shader.sortedIndex = i+1;
 	sortedShaders[i+1] = shader;
 }
@@ -79,40 +116,6 @@ function LoadShaderFile(url, onload) {
 	request.send(null);
 }
 
-function LoadTextureForStage(glshader, stage, animFrame) {
-	if (animFrame !== undefined && stage.animTextures) {
-		return stage.animTextures[animFrame];
-	} else if (stage.texture) {
-		return stage.texture;
-	}
-
-	if (animFrame !== undefined) {
-		if (!stage.animTextures) {
-			stage.animTextures = _.map(stage.animMaps, function (map) {
-				return FindImage(map, stage.clamp);
-			});
-		}
-
-		return stage.animTextures[animFrame];
-	} else {
-		if (!stage.map) {
-			stage.texture = FindImage('*white');
-		} else if (stage.map == '$lightmap') {
-			if (glshader.lightmap < 0) {
-				stage.texture = FindImage('*white');
-			} else {
-				stage.texture = FindImage('*lightmap');
-			}
-		} else if (stage.map == '$whiteimage') {
-			stage.texture = FindImage('*white');
-		} else {
-			stage.texture = FindImage(stage.map, stage.clamp);
-		}
-
-		return stage.texture;
-	}
-}
-
 function SetShader(glshader) {
 	if (!glshader) {
 		gl.enable(gl.CULL_FACE);
@@ -142,9 +145,9 @@ function SetShaderStage(glshader, stage, time) {
 	var texture;
 	if (stage.animFreq) {
 		var animFrame = Math.floor(time * stage.animFreq) % stage.animMaps.length;
-		texture = LoadTextureForStage(glshader, stage, animFrame);
+		texture = stage.animTextures[animFrame];
 	} else {
-		texture = LoadTextureForStage(glshader, stage);
+		texture = stage.texture;
 	}
 
 	gl.activeTexture(gl.TEXTURE0);
