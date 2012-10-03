@@ -3,28 +3,36 @@ function InitShaders() {
 	ScanAndLoadShaderFiles();
 }
 
-function FindShader(shaderName) {
+function FindShader(shaderName, lightmapIndex) {
 	var shader;
 
 	if ((shader = re.compiledShaders[shaderName])) {
 		return shader;
 	}
 
-	var glshader;
-	if ((shader = re.parsedShaders[shaderName])) {
-		glshader = GLShader.FromShader(gl, shader);
-	} else {
-		// Build default diffuse shader.
-		// This is kind of ugly;
-		shader = {};
+	if (!(shader = re.parsedShaders[shaderName])) {
+		// There is no shader for this name, let's create a default
+		// diffuse shader and assume the name references a texture.
+		var shader = new Q3Shader();
+		var stage = new Q3ShaderStage();
 		var map = shaderName !== '*default' ? shaderName + '.png' : shaderName;
-		var texture = FindImage(map);
-		glshader = GLShader.FromTexture(gl, map, texture);
-	}
-	shader.glshader = glshader;
+		shader.name = map;
+		shader.opaque = true;
+		stage.map = map;
+		shader.stages.push(stage);
 
-	// Go ahead and cache the texture maps for this shader.
-	LoadTexturesForShader(glshader);
+		re.parsedShaders[shaderName] = shader;
+	}
+
+	// Go ahead and load the texture maps for this shader.
+	// TODO We load shader textures here because we don't want to load images
+	// for every shader when it's parsed (as we parse a lot of unused shaders).
+	// If we made LoadShaderFile cache of key/value pairs of shader names
+	// and their text, and delay parsing until in here, we can remove this
+	// and reinstate it as part of ParseShader().
+	LoadTexturesForShader(shader);
+
+	shader.glshader = CompileShader(shader, lightmapIndex);
 
 	// Add the shader to the sorted cache.
 	SortShader(shader);
@@ -32,15 +40,15 @@ function FindShader(shaderName) {
 	return (re.compiledShaders[shaderName] = shader);
 }
 
-function LoadTexturesForShader(glshader) {
-	for(var i = 0; i < glshader.stages.length; i++) {
-		var stage = glshader.stages[i];
+function LoadTexturesForShader(shader) {
+	for(var i = 0; i < shader.stages.length; i++) {
+		var stage = shader.stages[i];
 
-		LoadTexturesForShaderStage(glshader, stage);
+		LoadTexturesForShaderStage(shader, stage);
 	}
 }
 
-function LoadTexturesForShaderStage(glshader, stage) {
+function LoadTexturesForShaderStage(shader, stage) {
 	if (stage.animFreq) {
 		stage.animTextures = _.map(stage.animMaps, function (map) {
 			return FindImage(map, stage.clamp);
@@ -49,7 +57,7 @@ function LoadTexturesForShaderStage(glshader, stage) {
 		if (!stage.map) {
 			stage.texture = FindImage('*white');
 		} else if (stage.map == '$lightmap') {
-			if (glshader.lightmap < 0) {
+			if (shader.lightmap < 0) {
 				stage.texture = FindImage('*white');
 			} else {
 				stage.texture = FindImage('*lightmap');
@@ -104,9 +112,10 @@ function LoadShaderFile(url, onload) {
 			return;
 		}
 		
-		var parser = new Q3Shader.Parser(request.responseText);
+		var tokens = new ShaderTokenizer(request.responseText);
+
 		var shader;
-		while ((shader = parser.next())) {
+		while ((shader = ParseShader(tokens))) {
 			re.parsedShaders[shader.name] = shader;
 		};
 	};
@@ -116,52 +125,351 @@ function LoadShaderFile(url, onload) {
 	request.send(null);
 }
 
-function SetShader(glshader) {
-	if (!glshader) {
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.BACK);
-	} else if (glshader.cull && !glshader.sky) {
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(glshader.cull);
-	} else {
-		gl.disable(gl.CULL_FACE);
-	}
+/**
+ * Shader parser
+ */
+var Q3Shader = function () {
+	this.name          = null;
+	this.cull          = 'front';
+	this.sky           = false;
+	this.blend         = false;
+	this.opaque        = false;
+	this.sort          = 0;
+	this.stages        = [];
+	this.vertexDeforms = [];
+};
 
-	return true;
+var Q3ShaderStage = function (map) {
+	this.map           = null;
+	this.clamp         = false;
+	this.tcGen         = 'base';
+	this.rgbGen        = 'identity';
+	this.rgbWaveform   = null;
+	this.alphaGen      = '1.0';
+	this.alphaFunc     = null;
+	this.alphaWaveform = null;
+	this.blendSrc      = 'GL_ONE';
+	this.blendDest     = 'GL_ZERO';
+	this.hasBlendFunc  = false;
+	this.tcMods        = [];
+	this.animMaps      = [];
+	this.animFreq      = 0;
+	this.depthFunc     = 'lequal';
+	this.depthWrite    = true;
+	this.isLightmap    = false;
+};
+
+function ParseWaveform(tokens) {
+	return {
+		funcName: tokens.next().toLowerCase(),
+		base: parseFloat(tokens.next()),
+		amp: parseFloat(tokens.next()),
+		phase: parseFloat(tokens.next()),
+		freq: parseFloat(tokens.next())
+	};
 }
 
-function SetShaderStage(glshader, stage, time) {
-	gl.blendFunc(stage.blendSrc, stage.blendDest);
+function ParseStage(tokens) {
+	var stage = new Q3ShaderStage();
 
-	if (stage.depthWrite && !glshader.sky) {
-		gl.depthMask(true);
-	} else {
-		gl.depthMask(false);
+	// Parse a shader
+	while (!tokens.EOF()) {
+		var token = tokens.next();
+		if(token == '}') { break; }
+
+		switch(token.toLowerCase()) {
+			case 'clampmap':
+				stage.clamp = true;
+			case 'map':
+				stage.map = tokens.next().replace(/(\.jpg|\.tga)/, '.png');
+				/*if (!stage.map) {
+					stage.texture = findImage('*white');
+				} else if (stage.map == '$lightmap') {
+					if (shader.lightmap < 0) {
+						stage.texture = findImage('*white');
+					} else {
+						stage.texture = findImage('*lightmap');
+					}
+				} else if (stage.map == '$whiteimage') {
+					stage.texture = findImage('*white');
+				} else {
+					stage.texture = findImage(stage.map, stage.clamp);
+				}*/
+				break;
+
+			case 'animmap':
+				stage.animFrame = 0;
+				stage.animFreq = parseFloat(tokens.next());
+				var nextMap = tokens.next();
+				while (nextMap.match(/(\.jpg|\.tga)/)) {
+					var map = nextMap.replace(/(\.jpg|\.tga)/, '.png');
+					stage.animMaps.push(map);
+					//stage.animTexture.push(findImage(map, stage.clamp));
+					nextMap = tokens.next();
+				}
+				tokens.prev();
+				break;
+
+			case 'rgbgen':
+				stage.rgbGen = tokens.next().toLowerCase();;
+				switch(stage.rgbGen) {
+					case 'wave':
+						stage.rgbWaveform = ParseWaveform(tokens);
+						if(!stage.rgbWaveform) { stage.rgbGen == 'identity'; }
+						break;
+				};
+				break;
+
+			case 'alphagen':
+				stage.alphaGen = tokens.next().toLowerCase();
+				switch(stage.alphaGen) {
+					case 'wave':
+						stage.alphaWaveform = ParseWaveform(tokens);
+						if(!stage.alphaWaveform) { stage.alphaGen == '1.0'; }
+						break;
+					default: break;
+				};
+				break;
+
+			case 'alphafunc':
+				stage.alphaFunc = tokens.next().toUpperCase();
+				break;
+
+			case 'blendfunc':
+				stage.blendSrc = tokens.next();
+				stage.hasBlendFunc = true;
+				if(!stage.depthWriteOverride) {
+					stage.depthWrite = false;
+				}
+				switch(stage.blendSrc) {
+					case 'add':
+						stage.blendSrc = 'GL_ONE';
+						stage.blendDest = 'GL_ONE';
+						break;
+
+					case 'blend':
+						stage.blendSrc = 'GL_SRC_ALPHA';
+						stage.blendDest = 'GL_ONE_MINUS_SRC_ALPHA';
+						break;
+
+					case 'filter':
+						stage.blendSrc = 'GL_DST_COLOR';
+						stage.blendDest = 'GL_ZERO';
+						break;
+
+					default:
+						stage.blendDest = tokens.next();
+						break;
+				}
+				break;
+
+			case 'depthfunc':
+				stage.depthFunc = tokens.next().toLowerCase();
+				break;
+
+			case 'depthwrite':
+				stage.depthWrite = true;
+				stage.depthWriteOverride = true;
+				break;
+
+			case 'tcmod':
+				var tcMod = {
+					type: tokens.next().toLowerCase()
+				}
+				switch(tcMod.type) {
+					case 'rotate':
+						tcMod.angle = parseFloat(tokens.next()) * (3.1415/180);
+						break;
+					case 'scale':
+						tcMod.scaleX = parseFloat(tokens.next());
+						tcMod.scaleY = parseFloat(tokens.next());
+						break;
+					case 'scroll':
+						tcMod.sSpeed = parseFloat(tokens.next());
+						tcMod.tSpeed = parseFloat(tokens.next());
+						break;
+					case 'stretch':
+						tcMod.waveform = ParseWaveform(tokens);
+						if(!tcMod.waveform) { tcMod.type == null; }
+						break;
+					case 'turb':
+						tcMod.turbulance = {
+							base: parseFloat(tokens.next()),
+							amp: parseFloat(tokens.next()),
+							phase: parseFloat(tokens.next()),
+							freq: parseFloat(tokens.next())
+						};
+						break;
+					default: tcMod.type == null; break;
+				}
+				if(tcMod.type) {
+					stage.tcMods.push(tcMod);
+				}
+				break;
+			case 'tcgen':
+				stage.tcGen = tokens.next();
+				break;
+			default: break;
+		}
 	}
 
-	gl.depthFunc(stage.depthFunc);
-	gl.useProgram(stage.program);
-
-	var texture;
-	if (stage.animFreq) {
-		var animFrame = Math.floor(time * stage.animFreq) % stage.animMaps.length;
-		texture = stage.animTextures[animFrame];
-	} else {
-		texture = stage.texture;
+	if(stage.blendSrc == 'GL_ONE' && stage.blendDest == 'GL_ZERO') {
+		stage.hasBlendFunc = false;
+		stage.depthWrite = true;
 	}
 
-	gl.activeTexture(gl.TEXTURE0);
-	gl.uniform1i(stage.program.uniform.texture, 0);
-	gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+	stage.isLightmap = stage.map == '$lightmap';
 
-	if (stage.program.uniform.lightmap) {
-		var lightmap = FindImage('*lightmap');
-		gl.activeTexture(gl.TEXTURE1);
-		gl.uniform1i(stage.program.uniform.lightmap, 1);;
-		gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
-	}
-
-	if (stage.program.uniform.time) {
-		gl.uniform1f(stage.program.uniform.time, time);
-	}
+	return stage;
 }
+
+function ParseShader(tokens) {
+	var shader = new Q3Shader();
+	shader.name = tokens.next();
+
+	// Sanity check.
+	if (tokens.next() !== '{') return null;
+
+	while (!tokens.EOF()) {
+		var token = tokens.next().toLowerCase();
+
+		if (token == '}') break;
+
+		switch (token) {
+			case '{': {
+				var stage = ParseStage(tokens);
+
+				// I really really really don't like doing this, which basically just forces lightmaps to use the 'filter' blendmode
+				// but if I don't a lot of textures end up looking too bright. I'm sure I'm jsut missing something, and this shouldn't
+				// be needed.
+				if (stage.isLightmap && (stage.hasBlendFunc)) {
+					stage.blendSrc = 'GL_DST_COLOR';
+					stage.blendDest = 'GL_ZERO';
+				}
+
+				// I'm having a ton of trouble getting lightingSpecular to work properly,
+				// so this little hack gets it looking right till I can figure out the problem
+				if(stage.alphaGen == 'lightingspecular') {
+					stage.blendSrc = 'GL_ONE';
+					stage.blendDest = 'GL_ZERO';
+					stage.hasBlendFunc = false;
+					stage.depthWrite = true;
+					shader.stages = [];
+				}
+
+				if(stage.hasBlendFunc) { shader.blend = true; } else { shader.opaque = true; }
+
+				shader.stages.push(stage);
+			} break;
+
+			case 'cull':
+				shader.cull = tokens.next();
+				break;
+
+			case 'deformvertexes':
+				var deform = {
+					type: tokens.next().toLowerCase()
+				};
+
+				switch (deform.type) {
+					case 'wave':
+						deform.spread = 1.0 / parseFloat(tokens.next());
+						deform.waveform = ParseWaveform(tokens);
+						break;
+					default: 
+						deform = null; 
+						break;
+				}
+
+				if (deform) {
+					shader.vertexDeforms.push(deform);
+				}
+				break;
+
+			case 'sort':
+				var sort = tokens.next().toLowerCase();
+				switch(sort) {
+					case 'portal':     shader.sort = SS_PORTAL;         break;
+					case 'sky':        shader.sort = SS_ENVIRONMENT;    break;
+					case 'opaque':     shader.sort = SS_OPAQUE;         break;
+					case 'decal':      shader.sort = SS_DECAL;          break;
+					case 'seeThrough': shader.sort = SS_SEE_THROUGH;    break;
+					case 'banner':     shader.sort = SS_BANNER;         break;
+					case 'additive':   shader.sort = SS_BLEND1;         break;
+					case 'nearest':    shader.sort = SS_NEAREST;        break;
+					case 'underwater': shader.sort = SS_UNDERWATER;     break;
+					default:           shader.sort = parseInt(sort);    break;
+				};
+				break;
+
+			case 'surfaceparm':
+				var param = tokens.next().toLowerCase();
+
+				switch (param) {
+					case 'sky':
+						shader.sky = true;
+						break;
+					default: break;
+				}
+				break;
+
+			default: break;
+		}
+	}
+
+	if (!shader.sort) {
+		/*// see through item, like a grill or grate
+		if (pStage->stateBits & GLS_DEPTHMASK_TRUE ) {
+			shader.sort = SS_SEE_THROUGH;
+		} else {
+			shader.sort = SS_BLEND0;
+		}*/
+		if (shader.opaque) {
+			shader.sort = SS_OPAQUE;
+		} else {
+			shader.sort = SS_BLEND0;
+		}
+	}
+
+	return shader;
+}
+
+/**
+ * Shader Tokenizer
+ */
+var ShaderTokenizer = function (src) {
+	// Strip out comments
+	src = src.replace(/\/\/.*$/mg, ''); // C++ style (//...)
+	src = src.replace(/\/\*[^*\/]*\*\//mg, ''); // C style (/*...*/) (Do the shaders even use these?)
+	this.tokens = src.match(/[^\s\n\r\"]+/mg);
+
+	this.offset = 0;
+};
+
+ShaderTokenizer.prototype.EOF = function() {
+	if(this.tokens === null) { return true; }
+	var token = this.tokens[this.offset];
+	while(token === '' && this.offset < this.tokens.length) {
+		this.offset++;
+		token = this.tokens[this.offset];
+	}
+	return this.offset >= this.tokens.length;
+};
+
+ShaderTokenizer.prototype.next = function() {
+	if(this.tokens === null) { return ; }
+	var token = '';
+	while(token === '' && this.offset < this.tokens.length) {
+		token = this.tokens[this.offset++];
+	}
+	return token;
+};
+
+ShaderTokenizer.prototype.prev = function() {
+	if(this.tokens === null) { return ; }
+	var token = '';
+	while(token === '' && this.offset >= 0) {
+		token = this.tokens[this.offset--];
+	}
+	return token;
+};

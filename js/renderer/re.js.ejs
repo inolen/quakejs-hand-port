@@ -1,10 +1,11 @@
-define('renderer/re', ['system/sys', 'common/com', 'shared/Q3Bsp', 'renderer/Q3Shader', 'renderer/GLShader'], function (sys, com, Q3Bsp, Q3Shader, GLShader) {
+define('renderer/re', ['system/sys', 'common/com', 'shared/Q3Bsp'], function (sys, com, Q3Bsp) {
 	<%- include ../common/com-defines.js %>
 	<%- include ../common/math-defines.js %>
 	<%- include re-defines.js %>
 	<%- include re-main.js %>
 	<%- include re-bsp.js %>
 	<%- include re-curve.js %>
+	<%- include re-glshader.js %>
 	<%- include re-image.js %>
 	<%- include re-shader.js %>
 	<%- include re-sky.js %>

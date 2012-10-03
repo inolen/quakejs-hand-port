@@ -266,7 +266,18 @@ function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 }
 
 function SortDrawSurfaces() {
-	//RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
+	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
+
+	/*if (!window.foobar) {
+		for (var i = 0; i < re.refdef.numDrawSurfs; i++) {
+			var face = re.refdef.drawSurfs[i].surface;
+			var shader = face.shader;
+
+			console.log('SortDrawSurfaces', i, re.refdef.drawSurfs[i].sort >> QSORT_SHADERNUM_SHIFT, shader.name, shader.sort);
+		}
+
+		window.foobar = true;
+	}*/
 }
 
 var startTime = sys.GetMilliseconds();
@@ -332,6 +343,7 @@ function RenderDrawSurfaces() {
 		// Bind the surface shader
 		SetShader(glshader);
 		
+		// TODO We need to optimize for single stage shaders.
 		for (var j = 0; j < glshader.stages.length; j++) {
 			var stage = glshader.stages[j];
 

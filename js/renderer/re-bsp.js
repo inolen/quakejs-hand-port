@@ -53,13 +53,13 @@ function ColorToVec(color) {
 	return [r, g, b, color[3] / 255];
 }
 
-function ShaderForShaderNum(shaderNum) {
+function ShaderForShaderNum(shaderNum, lightmapNum) {
 	var shaders = re.world.shaders;
 	if (shaderNum < 0 || shaderNum >= shaders.length) {
 		throw new Error('ShaderForShaderNum: bad num ' + shaderNum);
 	}
 	var dsh = shaders[shaderNum];
-	var shader = FindShader(dsh.shaderName);
+	var shader = FindShader(dsh.shaderName, lightmapNum);
 
 	return shader;
 }
@@ -129,7 +129,7 @@ function ParseMesh(face, level) {
 	var meshVerts = re.world.meshVerts;
 	
 	var points = verts.slice(face.vertex, face.vertex + face.vertCount);
-	var grid = SubdividePatchToGrid(points, face.patchWidth, face.patchHeight, r_subdivisions());
+	var grid = SubdividePatchToGrid(points, face.patchWidth, face.patchHeight, level);
 
 	// Append the grid's verts to the world.
 	face.vertex = verts.length;
@@ -184,10 +184,10 @@ function LoadSurfaces(map) {
 
 		// Tesselate patches.
 		if (face.type === Q3Bsp.SurfaceTypes.MST_PATCH) {
-			ParseMesh(face, 5);
+			ParseMesh(face, r_subdivisions());
 		}
 
-		face.shader = ShaderForShaderNum(face.shader);
+		face.shader = ShaderForShaderNum(face.shader, face.type === Q3Bsp.SurfaceTypes.MST_TRIANGLE_SOUP ? LIGHTMAP_BY_VERTEX : LIGHTMAP_2D);
 		face.shader.geomType = face.type;
 
 		// Transform lightmap coords to match position in combined texture.

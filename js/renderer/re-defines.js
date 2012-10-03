@@ -4,6 +4,30 @@ var DRAWSURF_MASK = (MAX_DRAWSURFS-1);
 var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
 var MAX_ENTITIES   = (1 << ENTITYNUM_BITS) - 1;
 
+var SS_BAD            = 0;
+var SS_PORTAL         = 1;                       // mirrors, portals, viewscreens
+var SS_ENVIRONMENT    = 2;                       // sky box
+var SS_OPAQUE         = 3;                       // opaque
+var SS_DECAL          = 4;                       // scorch marks, etc.
+var SS_SEE_THROUGH    = 5;                       // ladders, grates, grills that may have small blended
+                                                 // edges in addition to alpha test
+var SS_BANNER         = 6;
+var SS_FOG            = 7;
+var SS_UNDERWATER     = 8;                       // for items that should be drawn in front of the water plane
+var SS_BLEND0         = 9;                       // regular transparency and filters
+var SS_BLEND1         = 10;                      // generally only used for additive type effects
+var SS_BLEND2         = 11;
+var SS_BLEND3         = 12;
+var SS_BLEND6         = 13;
+var SS_STENCIL_SHADOW = 14;
+var SS_ALMOST_NEAREST = 15;                      // gun smoke puffs
+var SS_NEAREST        = 16;                      // blood blobs
+
+var LIGHTMAP_2D         = -4; // shader is for 2D rendering
+var LIGHTMAP_BY_VERTEX  = -3; // pre-lit triangle models
+var LIGHTMAP_WHITEIMAGE = -2;
+var LIGHTMAP_NONE       = -1;
+
 /** 
  * The drawsurf sort data is packed into a single 32 bit value so it can be
  * compared quickly during the qsorting process.
