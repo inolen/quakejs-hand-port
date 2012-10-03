@@ -1,5 +1,6 @@
 var re;
 var canvas, gl;
+var r_subdivisions;
 var r_znear;
 var r_zproj;
 
@@ -20,6 +21,7 @@ function Init(canvasCtx, glCtx) {
 	
 	re = new RenderLocals();
 
+	r_subdivisions = com.CvarAdd('r_subdivisions', 4);
 	r_znear = com.CvarAdd('r_znear', 4);
 	r_zproj = com.CvarAdd('r_zproj', 64);
 
@@ -236,7 +238,6 @@ function RenderView(parms) {
 	SetupProjectionMatrix(r_zproj());
 
 	GenerateDrawSurfs();
-
 	SortDrawSurfaces();
 	RenderDrawSurfaces();
 }
@@ -265,10 +266,12 @@ function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 }
 
 function SortDrawSurfaces() {
-	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
+	//RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
 }
 
+var startTime = sys.GetMilliseconds();
 function RenderDrawSurfaces() {
+	var world = re.world;
 	var parms = re.viewParms;
 
 	// Setup
@@ -284,5 +287,65 @@ function RenderDrawSurfaces() {
 	gl.depthMask(true);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	RenderWorld(parms.or.modelMatrix, parms.projectionMatrix);
+	// Seconds passed since map was initialized
+	var time = (sys.GetMilliseconds() - startTime)/1000.0;
+	var i = 0;
+
+	// If we have a skybox, render it first
+	if (skyShader) {
+		// SkyBox Buffers
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
+		gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
+
+		// Render Skybox
+		SetShader(skyShader);
+		for(var j = 0; j < skyShader.stages.length; j++) {
+			var stage = skyShader.stages[j];
+
+			SetShaderStage(skyShader, stage, time);
+			BindSkyAttribs(stage.program, parms.or.modelMatrix, parms.projectionMatrix);
+
+			// Draw all geometry that uses this textures
+			gl.drawElements(gl.TRIANGLES, skyboxIndexCount, gl.UNSIGNED_SHORT, 0);
+		}
+	}
+
+	// Map Geometry buffers
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+	var refdef = re.refdef;
+	var drawSurfs = refdef.drawSurfs;
+	var shaders = world.shaders;
+
+	var printfaces = false;
+	if (!window.foobar) {
+		printfaces = true;
+		window.foobar = true;
+	}
+
+	for (var i = 0; i < refdef.numDrawSurfs; i++) {
+		var face = drawSurfs[i].surface;
+		var shader = face.shader;
+		var glshader = shader.glshader;
+
+		// Bind the surface shader
+		SetShader(glshader);
+		
+		for (var j = 0; j < glshader.stages.length; j++) {
+			var stage = glshader.stages[j];
+
+			SetShaderStage(glshader, stage, time);
+			BindShaderAttribs(stage.program, parms.or.modelMatrix, parms.projectionMatrix);
+
+			gl.drawElements(gl.TRIANGLES, face.meshVertCount, gl.UNSIGNED_SHORT, face.indexOffset);
+
+			re.pc.verts += face.meshVertCount;
+		}
+	}
+
+	/*if (!window.foobar || sys.GetMilliseconds() - window.foobar > 1000) {
+		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
+		window.foobar = sys.GetMilliseconds();
+	}*/
 }

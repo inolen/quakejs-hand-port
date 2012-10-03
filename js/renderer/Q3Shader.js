@@ -362,7 +362,17 @@ define('renderer/Q3Shader', [], function () {
 		}
 
 		if (!shader.sort) {
-			shader.sort = (shader.opaque ? 3 : 9);
+			/*// see through item, like a grill or grate
+			if (pStage->stateBits & GLS_DEPTHMASK_TRUE ) {
+				shader.sort = SS_SEE_THROUGH;
+			} else {
+				shader.sort = SS_BLEND0;
+			}*/
+			if (shader.opaque) {
+				shader.sort = SS_OPAQUE;
+			} else {
+				shader.sort = SS_BLEND0;
+			}
 		}
 
 		return shader;

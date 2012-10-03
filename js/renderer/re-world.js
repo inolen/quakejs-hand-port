@@ -2,14 +2,12 @@ var q3render_vertex_stride = 56;
 
 var vertexBuffer = null;
 var indexBuffer = null;
-var indexCount = 0;
 
 function BuildWorldBuffers() {
 	var faces = re.world.faces,
 		verts = re.world.verts,
 		meshVerts = re.world.meshVerts,
-		shaders = re.world.shaders,
-		facesForShader = new Array(shaders.length);
+		shaders = re.world.shaders;
 
 	// Compile vert list
 	var vertices = new Array(verts.length*14);
@@ -355,67 +353,4 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 function AddWorldSurfaces(map) {
 	MarkLeaves();
 	RecursiveWorldNode(re.world.nodes[0], 15);
-}
-
-var startTime = sys.GetMilliseconds();
-function RenderWorld(modelViewMat, projectionMat) {
-	var world = re.world;
-
-	if (vertexBuffer === null || indexBuffer === null) { return; } // Not ready to draw yet
-
-	// Seconds passed since map was initialized
-	var time = (sys.GetMilliseconds() - startTime)/1000.0;
-	var i = 0;
-
-	// If we have a skybox, render it first
-	if (skyShader) {
-		// SkyBox Buffers
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
-		gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
-
-		// Render Skybox
-		SetShader(skyShader);
-		for(var j = 0; j < skyShader.stages.length; j++) {
-			var stage = skyShader.stages[j];
-
-			SetShaderStage(skyShader, stage, time);
-			BindSkyAttribs(stage.program, modelViewMat, projectionMat);
-
-			// Draw all geometry that uses this textures
-			gl.drawElements(gl.TRIANGLES, skyboxIndexCount, gl.UNSIGNED_SHORT, 0);
-		}
-	}
-
-	// Map Geometry buffers
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-
-	var refdef = re.refdef;
-	var drawSurfs = refdef.drawSurfs;
-	var shaders = world.shaders;
-
-	for (var i = 0; i < refdef.numDrawSurfs; i++) {
-		var face = drawSurfs[i].surface;
-		var shader = face.shader;
-		var glshader = shader.glshader;
-
-		// Bind the surface shader
-		SetShader(glshader);
-		
-		for (var j = 0; j < glshader.stages.length; j++) {
-			var stage = glshader.stages[j];
-
-			SetShaderStage(glshader, stage, time);
-			BindShaderAttribs(stage.program, modelViewMat, projectionMat);
-
-			gl.drawElements(gl.TRIANGLES, face.meshVertCount, gl.UNSIGNED_SHORT, face.indexOffset);
-
-			re.pc.verts += face.meshVertCount;
-		}
-	}
-
-	/*if (!window.foobar || sys.GetMilliseconds() - window.foobar > 1000) {
-		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
-		window.foobar = sys.GetMilliseconds();
-	}*/
 }

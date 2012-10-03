@@ -124,102 +124,36 @@ function LoadLightmaps(map) {
 	CreateImage('*lightmap', re.world.lightmaps, textureSize, textureSize);
 }
 
-// (1–t)^2*P0 + 2*(1–t)*t*P1 + t^2*P2
-function GetCurvePoint(c0, c1, c2, t) {
-	var result = [];
-	var dims = c0.length;
+function ParseMesh(face, level) {
+	var verts = re.world.verts;
+	var meshVerts = re.world.meshVerts;
+	
+	var points = verts.slice(face.vertex, face.vertex + face.vertCount);
+	var grid = SubdividePatchToGrid(points, face.patchWidth, face.patchHeight, r_subdivisions());
 
-	for (var i = 0; i < dims; i++) {
-		result[i] = (Math.pow(1-t, 2)*c0[i]) + (2*(1-t)*t*c1[i]) + (Math.pow(t, 2)*c2[i]);
-	}
-
-	return result;
-}
-
-function ParseMesh(face, verts, meshVerts, level) {
-	var width = face.patchWidth;
-	var height = face.patchHeight;
-	var firstControlPoint = face.vertex;
-
-	// Build 3x3 biquadtratic bezier patches.
-	// http://www.gamedev.net/page/resources/_/technical/math-and-physics/bezier-patches-r1584
-	var cp = function (x, y) {
-		return verts[firstControlPoint+y*width+x];
-	};
-	var build3x3 = function (x, y) {
-		// Create the new verts.
-		for (var j = 0; j <= level; j++) {
-			var v = j / level;
-
-			var c = [
-				{
-					pos:      GetCurvePoint(cp(x,  y).pos,      cp(x,  y+1).pos,      cp(x,  y+2).pos,      v),
-					lmCoord:  GetCurvePoint(cp(x,  y).lmCoord,  cp(x,  y+1).lmCoord,  cp(x,  y+2).lmCoord,  v),
-					texCoord: GetCurvePoint(cp(x,  y).texCoord, cp(x,  y+1).texCoord, cp(x,  y+2).texCoord, v),
-					color:    GetCurvePoint(cp(x,  y).color,    cp(x,  y+1).color,    cp(x,  y+2).color,    v)
-				},
-				{
-					pos:      GetCurvePoint(cp(x+1,y).pos,      cp(x+1,y+1).pos,      cp(x+1,y+2).pos,      v),
-					lmCoord:  GetCurvePoint(cp(x+1,y).lmCoord,  cp(x+1,y+1).lmCoord,  cp(x+1,y+2).lmCoord,  v),
-					texCoord: GetCurvePoint(cp(x+1,y).texCoord, cp(x+1,y+1).texCoord, cp(x+1,y+2).texCoord, v),
-					color:    GetCurvePoint(cp(x+1,y).color,    cp(x+1,y+1).color,    cp(x+1,y+2).color,    v)
-				},				
-				{
-					pos:      GetCurvePoint(cp(x+2,y).pos,      cp(x+2,y+1).pos,      cp(x+2,y+2).pos,      v),
-					lmCoord:  GetCurvePoint(cp(x+2,y).lmCoord,  cp(x+2,y+1).lmCoord,  cp(x+2,y+2).lmCoord,  v),
-					texCoord: GetCurvePoint(cp(x+2,y).texCoord, cp(x+2,y+1).texCoord, cp(x+2,y+2).texCoord, v),
-					color:    GetCurvePoint(cp(x+2,y).color,    cp(x+2,y+1).color,    cp(x+2,y+2).color,    v)
-				}
-			];
-
-			for (var i = 0; i <= level; i++) {
-				var u = i / level;
-
-				var vert = {
-					pos:      GetCurvePoint(c[0].pos,      c[1].pos,      c[2].pos,      u),
-					lmCoord:  GetCurvePoint(c[0].lmCoord,  c[1].lmCoord,  c[2].lmCoord,  u),
-					texCoord: GetCurvePoint(c[0].texCoord, c[1].texCoord, c[2].texCoord, u),
-					color:    GetCurvePoint(c[0].color,    c[1].color,    c[2].color,    u),
-					normal:   [0, 0, 1]
-				};
-
-				verts.push(vert);
-			}
-		}
-
-		var faceOffset = face.vertCount;
-		face.vertCount += (level+1) * (level + 1);
-		
-		// Add vert indexes.
-		for (var j = 0; j < level; j++) {
-			for (var i = 0; i < level; i++) {
-				// vertex order to be reckognized as tristrips
-				var v1 = faceOffset + j*(level+1) + i+1;
-				var v2 = v1 - 1;
-				var v3 = v2 + (level+1);
-				var v4 = v3 + 1;
-
-				meshVerts.push(v2);
-				meshVerts.push(v3);
-				meshVerts.push(v1);
-				
-				meshVerts.push(v1);
-				meshVerts.push(v3);
-				meshVerts.push(v4);
-			}
-		}
-
-		face.meshVertCount += level * level * 6;
-	};
-
+	// Append the grid's verts to the world.
 	face.vertex = verts.length;
-	face.vertCount = 0;
-	face.meshVert = meshVerts.length;
-	face.meshVertCount = 0;
+	face.vertCount = grid.verts.length;
+	verts.push.apply(verts, grid.verts);
 
-	for (var j = 0; j + 2 < height; j += 2) {
-		for (var i = 0; i + 2 < width; i += 2) {
-			build3x3(i, j);
+	// Triangulate and append indices for the new verts to the world.
+	face.meshVert = meshVerts.length;
+	face.meshVertCount = (grid.width-1) * (grid.height-1) * 6;
+
+	for (var j = 0; j < grid.height-1; j++) {
+		for (var i = 0; i < grid.width-1; i++) {
+			var v1 = j*grid.width + i+1;
+			var v2 = v1 - 1;
+			var v3 = v2 + grid.width;
+			var v4 = v3 + 1;
+			
+			meshVerts.push(v2);
+			meshVerts.push(v3);
+			meshVerts.push(v1);
+				
+			meshVerts.push(v1);
+			meshVerts.push(v3);
+			meshVerts.push(v4);
 		}
 	}
 }
@@ -245,12 +179,12 @@ function LoadSurfaces(map) {
 
 	var processed = new Array(verts.length);
 
-	for (var i = 0; i < faces.length; ++i) {
+	for (var i = 0; i < faces.length; i++) {
 		var face = faces[i];
 
 		// Tesselate patches.
 		if (face.type === Q3Bsp.SurfaceTypes.MST_PATCH) {
-			ParseMesh(face, verts, meshVerts, 5);
+			ParseMesh(face, 5);
 		}
 
 		face.shader = ShaderForShaderNum(face.shader);

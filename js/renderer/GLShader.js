@@ -499,7 +499,7 @@ define('renderer/GLShader', [], function () {
 			depthFunc: gl.LEQUAL,
 			depthWrite: true,
 			texture: texture,
-			program: defaultProgram
+			program: defaultProgram,
 		});
 
 		return glshader;
