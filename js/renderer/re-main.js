@@ -12,9 +12,10 @@ var flipMatrix = mat4.create([
 ]);
 
 function Init(canvasCtx, glCtx) {
-	// Due to circular dependencies, we need to re-require com now that we're all loaded.
+	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
+	sys = require('system/sys');
 
 	canvas = canvasCtx;
 	gl = glCtx;
@@ -280,10 +281,14 @@ function SortDrawSurfaces() {
 	}*/
 }
 
-var startTime = sys.GetMilliseconds();
 function RenderDrawSurfaces() {
 	var world = re.world;
 	var parms = re.viewParms;
+
+	// TODO move this
+	if (typeof startTime === 'undefined') {
+		startTime = sys.GetMilliseconds();
+	}
 
 	// Setup
 	gl.viewport(0, 0, parms.width, parms.height);

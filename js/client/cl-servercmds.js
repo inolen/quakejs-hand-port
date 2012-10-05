@@ -43,6 +43,6 @@ function ParseGameState(gamestate) {
 }
 
 function ParseSnapshot(snapshot) {
-	cg.ps.origin = snapshot.origin;
+	cg1.ps.origin = snapshot.origin;
 	//console.log('got snapshot', snapshot);
 }

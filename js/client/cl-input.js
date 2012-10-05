@@ -159,7 +159,7 @@ function SysKeyDownEvent(ev) {
 
 	// Special check for fullscreen.
 	if (ev.altKey && keyName == 'enter') {
-		canvas.requestFullscreen();
+		sys.RequestFullscreen();
 	}
 
 	KeyDownEvent(keyName);

@@ -2,14 +2,15 @@ var canvas, gl;
 var cl = new ClientLocals();
 var clc = new ClientConnection();
 var cls = new ClientStatic();
-var cg = new ClientGame();
+var cg1 = new ClientGame();
 var commands = {};
 var keys = {};
 
 function Init(canvasCtx, glCtx) {
-	// Due to circular dependencies, we need to re-require com now that we're all loaded.
+	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
+	sys = require('system/sys');
 
 	canvas = canvasCtx;
 	gl = glCtx;
@@ -19,23 +20,8 @@ function Init(canvasCtx, glCtx) {
 	InputInit();
 	CmdInit();
 	NetInit();
+	cg.Init();
 	re.Init(canvas, gl);
-
-	// Handle fullscreen transition.
-	var defaultWidth = canvas.width,
-		defaultHeight = canvas.height;
-
-	document.addEventListener('fullscreenchange', function() {
-		if (document.fullscreenEnabled) {
-			canvas.width = screen.width;
-			canvas.height = screen.height;
-			// Request automatically on fullscreen.
-			canvas.requestPointLock();
-		} else {
-			canvas.width = defaultWidth;
-			canvas.height = defaultHeight;
-		}
-	}, false);
 
 	cls.initialized = true;
 }
@@ -56,8 +42,8 @@ function Frame(frameTime, msec) {
 	NetFrame();
 
 	SendCommand();
-	CalcViewValues(cg.refdef);
-	re.RenderScene(cg.refdef);
+	CalcViewValues(cg1.refdef);
+	re.RenderScene(cg1.refdef);
 }
 
 function ServerSpawning() {
@@ -69,7 +55,7 @@ function CalcViewValues(refdef) {
 	refdef.y = 0;
 	refdef.width = canvas.width;
 	refdef.height = canvas.height;
-	refdef.vieworg = cg.ps.origin;
+	refdef.vieworg = cg1.ps.origin;
 	vec3.anglesToAxis(cl.viewangles, refdef.viewaxis);
 
 	OffsetFirstPersonView(refdef);
@@ -78,7 +64,7 @@ function CalcViewValues(refdef) {
 
 function OffsetFirstPersonView(refdef) {
 	// add view height
-	refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//cg.ps.viewheight;
+	refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//cg1.ps.viewheight;
 }
 
 function CalcFov(refdef) {

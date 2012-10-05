@@ -11,8 +11,17 @@
 		<script type="text/javascript" src="js/vendor/gl-matrix-ext.js"></script>
 		<script type="text/javascript" src="js/vendor/js-struct.js"></script>
 		<script type="text/javascript" src="js/vendor/protobuf.js"></script>
-		<script type="text/javascript" src="js/protocol/Net.pbj.js"></script>
-		<script type="text/javascript" data-main="js/main.js" src="js/vendor/require.min.js"></script>
+		<script type="text/javascript" src="js/common/protocol/Net.pbj.js"></script>
+		<script type="text/javascript" src="js/vendor/require.min.js"></script>
+		<script>
+			require.config({
+				baseUrl: 'js'
+			});
+
+			require(['system/sys'], function (sys) {
+				window.addEventListener('load', sys.Init);
+			});
+		</script>
 
 		<!-- Stylesheet -->
 		<link href="css/main.css" rel="stylesheet" type="text/css" />
@@ -26,6 +35,9 @@
 					http://get.webgl.org/
 				</a>
 			</canvas>
+			<div id="viewport-ui">
+				<h1>TESTING THIS SHIT OUT</h1>
+			</div>
 		</div>
 	</body>
 </html>

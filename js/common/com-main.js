@@ -1,6 +1,13 @@
-var frameTime = lastFrameTime = sys.GetMilliseconds();
+var frameTime;
+var lastFrameTime;
 
 function Init(canvas, gl) {
+	// Due to circular dependencies, we need to re-require sys now that we're all loaded.
+	// http://requirejs.org/docs/api.html#circular
+	sys = require('system/sys');
+
+	frameTime = lastFrameTime = sys.GetMilliseconds();
+
 	sv.Init();
 	cl.Init(canvas, gl);
 

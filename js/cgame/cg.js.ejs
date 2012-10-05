@@ -1,0 +1,11 @@
+define('cgame/cg', ['system/sys', 'game/bg'], function (sys, bg) {
+	<%- include ../common/com-defines.js %>
+	<%- include ../game/bg-defines.js %>
+	<%- include cg-defines.js %>
+	<%- include cg-main.js %>
+
+	return {
+		Init: Init,
+		Frame: Frame
+	};
+});
