@@ -37,6 +37,11 @@ function NetSend(msg) {
 		throw new Error('Message is not an instance of PROTO.Message');
 	}*/
 
+	// TODO: The netchan stuff needs an actual interface.
+	if (typeof netchan.outgoingSequence === 'undefined') netchan.outgoingSequence = 0;
+	msg.serverMessageSequence = netchan.outgoingSequence;
+	netchan.outgoingSequence++;
+
 	var serialized = new PROTO.ArrayBufferStream();
 	msg.SerializeToStream(serialized);
 
@@ -61,13 +66,7 @@ function PacketEvent(addr, buffer, length) {
 	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
 
 	var client = GetClientForAddr(addr);
-	ParseClientMessage(client, msg);
-}
-
-function ParseClientMessage(client, msg) {
-	if (msg.type === Net.ClientOp.Type.move) {
-		UserMove(client, msg.clop_move);
-	}
+	ExecuteClientMessage(client, msg);
 }
 
 function GetClientForAddr(addr) {

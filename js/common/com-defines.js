@@ -1,21 +1,32 @@
 var Q3W_BASE_FOLDER = 'baseq3';
-var PACKET_BACKUP   = 32;                        // number of old messages that must be kept on client and
-                                                 // server for delta comrpession and ping estimation
-var PACKET_MASK     = (PACKET_BACKUP-1);
+
+var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
  * NETWORKING
  */
-var NetAdr = {
-	type: 0,
-	ip: null,
-	port: 0
+var MAX_CLIENTS            = 64;                 // absolute limit
+var MAX_LOCATIONS          = 64;
+var MAX_GENTITIES          = 1024;
+
+var ENTITYNUM_NONE         = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
+
+var PACKET_BACKUP   = 32;                        // number of old messages that must be kept on client and
+                                                 // server for delta comrpession and ping estimation
+var PACKET_MASK     = (PACKET_BACKUP-1);
+
+var NetAdr = function () {
+	this.type = 0;
+	this.ip   = null;
+	this.port = 0;
 };
 
 var NetAdrType = {
-	NA_BAD: 0,
+	NA_BAD:      0,
 	NA_LOOPBACK: 1,
-	NA_IP: 2
+	NA_IP:       2
 };
 
 var NetSrc = {
@@ -26,14 +37,6 @@ var NetSrc = {
 /**
  * GAMESTATE
  */
-var MAX_CLIENTS            = 64;                 // absolute limit
-var MAX_LOCATIONS          = 64;
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
 var PS_PMOVEFRAMECOUNTBITS = 6;
 
 var PlayerState = function () {

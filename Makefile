@@ -1,6 +1,6 @@
 default: protocol
 
 protocol:
-	~/protojs/pbj js/protocol/Net.pbj js/protocol/Net.pbj.js
+	~/protojs/pbj js/common/protocol/Net.pbj js/common/protocol/Net.pbj.js
 
 .PHONY: protocol

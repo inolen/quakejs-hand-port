@@ -69,6 +69,6 @@ function SpawnServer(mapName) {
 
 		svs.initialized = true;
 
-		gm.Init(gmExports);
+		gm.Init(svExports);
 	}, this));
 }

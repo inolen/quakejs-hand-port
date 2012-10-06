@@ -32,6 +32,11 @@ function NetSend(msg) {
 		throw new Error('Message is not an instance of PROTO.Message');
 	}*/
 
+	msg.serverId = 42;//cl.serverId;
+	// Set the last message we received, which can be used for delta compression,
+	// and is also used to tell if we dropped a gamestate.
+	msg.messageAcknowledge = clc.serverMessageSequence;
+
 	var serialized = new PROTO.ArrayBufferStream();
 	msg.SerializeToStream(serialized);
 

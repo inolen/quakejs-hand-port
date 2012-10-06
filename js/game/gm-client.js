@@ -5,6 +5,7 @@ function ClientBegin(clientNum) {
 	var client = level.clients[clientNum] = new GameClient();
 	var ent = level.gentities[clientNum] = new GameEntity();
 
+	ent.s.number = clientNum;
 	ent.client = client;
 	ent.contents = CONTENTS_BODY;
 
@@ -34,6 +35,8 @@ function ClientThink(clientNum, cmd) {
 	bg.Pmove(pm);
 
 	// update game entity info
+	//console.log('Running client think', client.ps.origin[0], client.ps.origin[1], client.ps.origin[2]);
+
 	vec3.set(client.ps.origin, ent.currentOrigin);
 	vec3.set(pm.mins, ent.mins);
 	vec3.set(pm.maxs, ent.maxs);

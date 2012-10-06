@@ -524,7 +524,7 @@ function UpdateViewAngles(pm) {
 	for (var i = 0; i < 3; i++) {
 		var temp = cmd.angles[i];// + ps->delta_angles[i];
 
-		// TODO: Remove this from client code, enable here.s
+		// TODO: Remove this from client code, enable here.
 		/*if (i == PITCH) {
 			// don't let the player look up or down more than 90 degrees
 			if ( temp > 16000 ) {
@@ -580,6 +580,7 @@ function Pmove(pm) {
 	var cmd = pm.cmd;
 
 	if (cmd.serverTime < ps.commandTime) {
+		throw new Error('Pmove: cmd.serverTime < ps.commandTime');
 		return;	// should not happen
 	}
 

@@ -1,3 +1,7 @@
+function GentityForNum(num) {
+	return sv.gameEntities[num];
+}
+
 function SvEntityForGentity(gent) {
 	var num = gent.s.number;
 

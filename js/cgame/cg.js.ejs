@@ -1,8 +1,13 @@
 define('cgame/cg', ['system/sys', 'game/bg'], function (sys, bg) {
 	<%- include ../common/com-defines.js %>
 	<%- include ../game/bg-defines.js %>
+	<%- include ../renderer/re-defines.js %>
 	<%- include cg-defines.js %>
 	<%- include cg-main.js %>
+	<%- include cg-draw.js %>
+	<%- include cg-playerstate.js %>
+	<%- include cg-predict.js %>
+	<%- include cg-snapshot.js %>
 
 	return {
 		Init: Init,

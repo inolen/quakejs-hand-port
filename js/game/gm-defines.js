@@ -42,6 +42,6 @@ var LevelLocals = function () {
 	this.framenum     = 0;
 	this.previousTime = 0;
 	this.time         = 0;
-	this.gentities    = new Array(MAX_GENTITIES);
 	this.clients      = new Array(MAX_CLIENTS);
+	this.gentities    = new Array(MAX_GENTITIES);
 };

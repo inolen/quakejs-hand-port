@@ -1,6 +1,7 @@
 define('system/sys', ['common/com'], function (com) {
 	var viewportFrame = document.getElementById('viewport-frame');
 	var viewport = document.getElementById('viewport');
+	var viewportUi = document.getElementById('viewport-ui');
 
 	function Init() {
 		// Due to circular dependencies, we need to re-require com now that we're all loaded.
@@ -34,7 +35,7 @@ define('system/sys', ['common/com'], function (com) {
 		}
 
 		// Main.
-		com.Init(viewport, gl);
+		com.Init(gl, viewport, viewportUi);
 
 		function onRequestedFrame(timestamp) {
 			window.requestAnimationFrame(onRequestedFrame, viewport);

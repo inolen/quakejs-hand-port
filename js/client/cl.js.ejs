@@ -1,13 +1,24 @@
 define('client/cl', ['system/sys', 'common/com', 'cgame/cg', 'renderer/re'], function (sys, com, cg, re) {
+	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include ../game/bg-defines.js %>
 	<%- include ../renderer/re-defines.js %>
 	<%- include cl-defines.js %>
 	<%- include cl-main.js %>
+	<%- include cl-cgame.js %>
 	<%- include cl-cmd.js %>
 	<%- include cl-input.js %>
 	<%- include cl-net.js %>
 	<%- include cl-servercmds.js %>
+
+	var clExports = {
+		GetCurrentSnapshotNumber: GetCurrentSnapshotNumber,
+		GetSnapshot: GetSnapshot,
+		CreateElement: re.CreateElement,
+		DeleteElement: re.DeleteElement,
+		DrawText: re.DrawText,
+		RenderScene: re.RenderScene
+	};
 
 	return {
 		Init: Init,

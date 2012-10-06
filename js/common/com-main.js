@@ -1,7 +1,7 @@
 var frameTime;
 var lastFrameTime;
 
-function Init(canvas, gl) {
+function Init(gl, viewport, viewportUi) {
 	// Due to circular dependencies, we need to re-require sys now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	sys = require('system/sys');
@@ -9,7 +9,7 @@ function Init(canvas, gl) {
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
 	sv.Init();
-	cl.Init(canvas, gl);
+	cl.Init(gl, viewport, viewportUi);
 
 	// Provide the user a way to interface with the client.
 	window.$ = function (cmd) {

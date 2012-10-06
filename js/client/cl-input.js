@@ -6,11 +6,11 @@ var forwardKey, leftKey, backKey, rightKey, upKey;
 function InputInit() {
 	document.addEventListener('keydown', function (ev) { SysKeyDownEvent(ev); });
 	document.addEventListener('keyup', function (ev) { SysKeyUpEvent(ev); });
-	canvas.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
-	canvas.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
-	canvas.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
-	canvas.addEventListener('click', function(event) {
-		canvas.requestPointerLock();
+	viewport.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
+	viewport.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
+	viewport.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
+	viewport.addEventListener('click', function(event) {
+		viewport.requestPointerLock();
 	}, false);
 
 	com.CmdAdd('+forward', function (key) { forwardKey = key; });
@@ -48,7 +48,7 @@ function CreateCommand() {
 	// send the current server time so the amount of movement
 	// can be determined without allowing cheating
 	cmd.serverTime = cl.serverTime;
-
+	
 	return cmd;
 }
 

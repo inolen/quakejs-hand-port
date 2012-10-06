@@ -1,5 +1,6 @@
 var re;
-var canvas, gl;
+var gl;
+var viewportUi;
 var r_subdivisions;
 var r_znear;
 var r_zproj;
@@ -11,14 +12,14 @@ var flipMatrix = mat4.create([
 	0, 0, 0, 1
 ]);
 
-function Init(canvasCtx, glCtx) {
+function Init(glCtx, viewportUiEl) {
 	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
 	sys = require('system/sys');
 
-	canvas = canvasCtx;
 	gl = glCtx;
+	viewportUi = viewportUiEl;
 	
 	re = new RenderLocals();
 
@@ -240,6 +241,7 @@ function RenderView(parms) {
 
 	GenerateDrawSurfs();
 	SortDrawSurfaces();
+	// TODO we need to call something like R_AddDrawSurfCmd
 	RenderDrawSurfaces();
 }
 

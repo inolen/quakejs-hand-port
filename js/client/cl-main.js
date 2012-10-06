@@ -1,27 +1,34 @@
-var canvas, gl;
+var gl;
+var viewport;
+var viewportUi;
 var cl = new ClientLocals();
 var clc = new ClientConnection();
 var cls = new ClientStatic();
-var cg1 = new ClientGame();
 var commands = {};
 var keys = {};
 
-function Init(canvasCtx, glCtx) {
+function Init(glCtx, viewportEl, viewportUiEl) {
 	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
 	sys = require('system/sys');
 
-	canvas = canvasCtx;
 	gl = glCtx;
+	viewport = viewportEl;
+	viewportUi = viewportUiEl;
 
 	com.CvarAdd('cl_sensitivity', '2');
 
 	InputInit();
 	CmdInit();
 	NetInit();
-	cg.Init();
-	re.Init(canvas, gl);
+	re.Init(gl, viewportUi);
+
+	clc.state = CA_LOADING;
+	cg.Init(clExports, clc.serverMessageSequence/*, clc.lastExecutedServerCommand*/);
+	// We will send a usercmd this frame, which will cause the
+	// server to send us the first snapshot.
+	clc.state = CA_PRIMED;
 
 	cls.initialized = true;
 }
@@ -35,43 +42,31 @@ function Frame(frameTime, msec) {
 	cls.frameDelta = msec;
 	cls.realTime += msec;
 
-	// TODO Do fancy stuff like Q3.
-	cl.serverTime = cls.realTime;
-
 	//
 	NetFrame();
-
 	SendCommand();
-	CalcViewValues(cg1.refdef);
-	re.RenderScene(cg1.refdef);
+
+	// Decide on the serverTime to render.
+	SetCGameTime();
+
+	UpdateScreen();
+}
+
+function UpdateScreen() {
+	switch (clc.state) {
+		case CA_DISCONNECTED:
+		case CA_CONNECTING:
+		case CA_CHALLENGING:
+		case CA_CONNECTED:
+		case CA_LOADING:
+		case CA_PRIMED:
+			break;
+		case CA_ACTIVE:
+			cg.Frame(cl.serverTime);
+			break;
+	}
 }
 
 function ServerSpawning() {
 	NetConnect('localhost', 9000);
-}
-
-function CalcViewValues(refdef) {
-	refdef.x = 0;
-	refdef.y = 0;
-	refdef.width = canvas.width;
-	refdef.height = canvas.height;
-	refdef.vieworg = cg1.ps.origin;
-	vec3.anglesToAxis(cl.viewangles, refdef.viewaxis);
-
-	OffsetFirstPersonView(refdef);
-	CalcFov(refdef);
-}
-
-function OffsetFirstPersonView(refdef) {
-	// add view height
-	refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//cg1.ps.viewheight;
-}
-
-function CalcFov(refdef) {
-	var fovX = 90;
-	var x = refdef.width / Math.tan(fovX / 360 * Math.PI);
-	var fovY = Math.atan2(refdef.height, x) * 360 / Math.PI;
-
-	refdef.fovX = fovX;
-	refdef.fovY = fovY;
 }

@@ -1,6 +1,6 @@
 define('renderer/re', ['system/sys', 'common/com', 'shared/Q3Bsp'], function (sys, com, Q3Bsp) {
 	<%- include ../common/com-defines.js %>
-	<%- include ../common/math-defines.js %>
+	<%- include ../shared/math.js %>
 	<%- include re-defines.js %>
 	<%- include re-main.js %>
 	<%- include re-bsp.js %>
@@ -9,11 +9,15 @@ define('renderer/re', ['system/sys', 'common/com', 'shared/Q3Bsp'], function (sy
 	<%- include re-image.js %>
 	<%- include re-shader.js %>
 	<%- include re-sky.js %>
+	<%- include re-ui.js %>
 	<%- include re-world.js %>
 
 	return {
 		Init: Init,
 		RenderScene: RenderScene,
-		LoadMap: LoadMap
+		LoadMap: LoadMap,
+		CreateElement: CreateElement,
+		DeleteElement: DeleteElement,
+		DrawText: DrawText
 	};
 });
