@@ -17,6 +17,7 @@ define('shared/LoopbackChannel', [], function () {
 		this.sock = sock;
 		this.addr = addr;
 		this.challenge = challenge;
+		this.outgoingSequence = 0;
 
 		// Trigger some fake events as if we're a real socket.
 		// Wait 1 frame so the consumer has time to bind.
@@ -24,7 +25,7 @@ define('shared/LoopbackChannel', [], function () {
 			LoopbackChannel.Client = this;
 			setTimeout(function () {
 				LoopbackChannel.Client.emitEvent('open');
-				LoopbackChannel.Server.emitEvent('accept', [LoopbackChannel.Client]);
+				LoopbackChannel.Server.emitEvent('accept', [LoopbackChannel.Server]);
 			}, 0);
 		} else {
 			LoopbackChannel.Server = this;

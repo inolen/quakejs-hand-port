@@ -1,4 +1,5 @@
 define('cgame/cg', ['system/sys', 'game/bg'], function (sys, bg) {
+	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include ../game/bg-defines.js %>
 	<%- include ../renderer/re-defines.js %>
@@ -11,6 +12,7 @@ define('cgame/cg', ['system/sys', 'game/bg'], function (sys, bg) {
 
 	return {
 		Init: Init,
+		Shutdown: Shutdown,
 		Frame: Frame
 	};
 });

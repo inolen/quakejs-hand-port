@@ -30,7 +30,6 @@ function GetMsec() {
 
 function Frame() {
 	var msec = GetMsec();
-	//console.log(msec);
 	sv.Frame(frameTime, msec);
 	cl.Frame(frameTime, msec);
 }

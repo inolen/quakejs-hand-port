@@ -12,8 +12,10 @@ define('client/cl', ['system/sys', 'common/com', 'cgame/cg', 'renderer/re'], fun
 	<%- include cl-servercmds.js %>
 
 	var clExports = {
+		GetGameState: function () { return cl.gameState; },
 		GetCurrentSnapshotNumber: GetCurrentSnapshotNumber,
 		GetSnapshot: GetSnapshot,
+		LoadMap: re.LoadMap,
 		CreateElement: re.CreateElement,
 		DeleteElement: re.DeleteElement,
 		DrawText: re.DrawText,
@@ -22,7 +24,11 @@ define('client/cl', ['system/sys', 'common/com', 'cgame/cg', 'renderer/re'], fun
 
 	return {
 		Init: Init,
+		InitCGame: InitCGame,
+		ShutdownCGame: ShutdownCGame,
+		InitRenderer: InitRenderer,
+		ShutdownRenderer: ShutdownRenderer,
 		Frame: Frame,
-		ServerSpawning: ServerSpawning
+		MapLoading: MapLoading
 	};
 });

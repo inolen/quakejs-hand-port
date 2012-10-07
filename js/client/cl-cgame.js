@@ -20,17 +20,16 @@ function SetCGameTime() {
 		throw new Error('SetCGameTime: !cl.snap.valid');
 	}
 
-	if (cl.snap.serverTime < cl.oldFrameServerTime) {
+	/*if (cl.snap.serverTime < cl.oldFrameServerTime) {
 		throw new Error('cl.snap.serverTime < cl.oldFrameServerTime');
 	}
-	cl.oldFrameServerTime = cl.snap.serverTime;
+	cl.oldFrameServerTime = cl.snap.serverTime;*/
 
-	// get our current view of time
-	//console.log('fuck', cls.realTime, cl.serverTimeDelta);
+	// Get our current view of time.
 	cl.serverTime = cls.realTime + cl.serverTimeDelta;
 
-	// guarantee that time will never flow backwards, even if
-	// serverTimeDelta made an adjustment
+	// Guarantee that time will never flow backwards, even if
+	// serverTimeDelta made an adjustment.
 	if (cl.serverTime < cl.oldServerTime) {
 		cl.serverTime = cl.oldServerTime;
 	}
@@ -44,10 +43,10 @@ function SetCGameTime() {
 }
 
 function FirstSnapshot() {
-	/*// ignore snapshots that don't have entities
-	if ( cl.snap.snapFlags & SNAPFLAG_NOT_ACTIVE ) {
+	// Ignore snapshots that don't have entities.
+	if (cl.snap.snapFlags & SNAPFLAG_NOT_ACTIVE) {
 		return;
-	}*/
+	}
 
 	clc.state = CA_ACTIVE;
 

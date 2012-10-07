@@ -1,6 +1,4 @@
-var gamestate = {};
-
-function ParseServerMessage(msg) {
+function ExecuteServerMessage(msg) {
 	clc.serverMessageSequence = msg.serverMessageSequence;
 
 	if (msg.type === Net.ServerOp.Type.gamestate) {
@@ -10,14 +8,17 @@ function ParseServerMessage(msg) {
 	}
 }
 
-function ParseGameState(gamestate) {
-	for (var i = 0; i < gamestate.configstrings.length; i++) {
-		var cs = gamestate.configstrings[i];
-		gamestate[cs.key] = cs.value;
+function ParseGameState(msg) {
+	// Wipe local client state.
+	ClearState();
+
+	for (var i = 0; i < msg.configstrings.length; i++) {
+		var cs = msg.configstrings[i];
+		cl.gameState[cs.key] = cs.value;
 	}
 
-	// TODO: Call our own version of CL_InitCGame
-	re.LoadMap(gamestate['map']);
+	// Let the client game init and load data.
+	InitCGame();
 }
 
 function ParseSnapshot(msg) {
@@ -30,7 +31,10 @@ function ParseSnapshot(msg) {
 
 	// TODO should be replaced by the code below
 	newSnap.serverTime = msg.serverTime;
+	newSnap.snapFlags = msg.snapFlags;
 	newSnap.valid = true;
+
+	//console.log('ParseSnapshot', msg.serverTime);
 
 	/*newSnap.serverTime = snapshot.serverTime;
 	newSnap.deltaNum = !snapshot.deltaNum ? -1 : newSnap.messageNum - snapshot.deltaNum;

@@ -4,13 +4,14 @@
 var MAX_PARSE_ENTITIES = 2048;
 
 var ClientLocals = function () {
-	this.snap               = null;                          // latest received from server
-	this.serverTime         = 0;                             // may be paused during play
-	this.oldServerTime      = 0;                             // to prevent time from flowing bakcwards
+	this.snap               = null;                        // latest received from server
+	this.serverTime         = 0;                           // may be paused during play
+	this.oldServerTime      = 0;                           // to prevent time from flowing bakcwards
 	this.oldFrameServerTime = 0;                           // to check tournament restarts
 	this.serverTimeDelta    = 0;                           // cl.serverTime = cls.realtime + cl.serverTimeDelta
 	                                                       // this value changes as net lag varies
 	this.newSnapshots       = false;                       // set on parse of any valid packet
+	this.gameState          = [];                          // configstrings
 	this.mouseX             = 0;
 	this.mouseY             = 0;
 	this.viewangles         = [0, 0, 0];
@@ -29,9 +30,8 @@ var ClientLocals = function () {
 };
 
 var ClientStatic = function () {
-	this.initialized = false;
-	this.frameTime   = 0;
-	this.realTime    = 0;
+	this.initialized     = false;
+	this.realTime        = 0;
 };
 
 var ClientConnection = function () {

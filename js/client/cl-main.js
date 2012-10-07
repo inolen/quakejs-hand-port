@@ -1,13 +1,16 @@
 var gl;
 var viewport;
 var viewportUi;
-var cl = new ClientLocals();
-var clc = new ClientConnection();
+var cl;
+var clc;
 var cls = new ClientStatic();
+var cl_sensitivity;
 var commands = {};
 var keys = {};
 
 function Init(glCtx, viewportEl, viewportUiEl) {
+	console.log('--------- CL Init ---------');
+
 	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
@@ -17,32 +20,58 @@ function Init(glCtx, viewportEl, viewportUiEl) {
 	viewport = viewportEl;
 	viewportUi = viewportUiEl;
 
-	com.CvarAdd('cl_sensitivity', '2');
+	ClearState();
+	clc = new ClientConnection();
+	cls.realtime = 0;
+
+	cl_sensitivity = com.CvarAdd('cl_sensitivity', '2');
 
 	InputInit();
 	CmdInit();
 	NetInit();
-	re.Init(gl, viewportUi);
-
-	clc.state = CA_LOADING;
-	cg.Init(clExports, clc.serverMessageSequence/*, clc.lastExecutedServerCommand*/);
-	// We will send a usercmd this frame, which will cause the
-	// server to send us the first snapshot.
-	clc.state = CA_PRIMED;
+	InitRenderer();
 
 	cls.initialized = true;
+
+	setTimeout(function () {
+		NetConnect('localhost', 9000);
+	}, 100);
+}
+
+function ClearState() {
+	console.log('Clearing client state');
+
+	cl = new ClientLocals();
+}
+
+function InitCGame() {
+	clc.state = CA_LOADING;
+	cg.Init(clExports, clc.serverMessageSequence);
+	clc.state = CA_PRIMED;
+}
+
+function ShutdownCGame() {
+	cg.Shutdown();
+}
+
+function InitRenderer() {
+	re.Init(gl, viewportUi);
+}
+
+function ShutdownRenderer() {
+	re.Shutdown();
 }
 
 function Frame(frameTime, msec) {
+	cls.frameTime = frameTime;
+
 	if (!cls.initialized) {
 		return;
 	}
 
-	cls.frameTime = frameTime;
 	cls.frameDelta = msec;
 	cls.realTime += msec;
 
-	//
 	NetFrame();
 	SendCommand();
 
@@ -67,6 +96,7 @@ function UpdateScreen() {
 	}
 }
 
-function ServerSpawning() {
-	NetConnect('localhost', 9000);
+function MapLoading() {
+	clc.state = CA_CONNECTED;
+	//UpdateScreen();
 }

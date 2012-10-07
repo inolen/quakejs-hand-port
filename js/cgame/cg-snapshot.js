@@ -26,9 +26,9 @@ function ProcessSnapshots() {
 			return;
 		}
 
-		//if (!(snap->snapFlags & SNAPFLAG_NOT_ACTIVE)) {
+		if (!(snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
 			SetInitialSnapshot(snap);
-		//}
+		}
 	}
 
 	// Loop until we either have a valid nextSnap with a serverTime
@@ -110,6 +110,18 @@ function SetInitialSnapshot(snap) {
 
 function SetNextSnap(snap) {
 	cg.nextSnap = snap;
+
+	/*// If the next frame is a teleport for the playerstate, we can't interpolate.
+	if (cg.snap && ((snap.ps.eFlags ^ cg.snap->ps.eFlags) & EF_TELEPORT_BIT)) {
+		cg.nextFrameTeleport = true;
+	} else {
+		cg.nextFrameTeleport = false;
+	}
+
+	// if changing server restarts, don't interpolate.
+	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
+		cg.nextFrameTeleport = true;
+	}*/
 }
 
 function TransitionSnapshot() {

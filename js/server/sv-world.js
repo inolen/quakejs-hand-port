@@ -39,10 +39,8 @@ function ClearWorld() {
 /**
  * Builds a uniformly subdivided tree for the given world size
  */
-window.numws = 0;
 function CreateWorldSector(depth, mins, maxs) {
 	var node = worldSectors[worldSectors.length] = new WorldSector();
-	window.numws++;
 
 	if (depth === AREA_DEPTH) {
 		node.axis = -1;

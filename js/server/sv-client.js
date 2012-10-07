@@ -13,16 +13,18 @@ function ClientConnect(netchan) {
 		throw new Error('Server is full');
 	}
 
-	var client = svs.clients[clientNum] = new ServerClient(clientNum);
-	client.netchan = netchan;
+	var newcl = svs.clients[clientNum] = new ServerClient(clientNum);
+	newcl.netchan = netchan;
+
+	UserinfoChanged(newcl);
 
 	//console.log('Going from ClientState.FREE to ClientState.CONNECTED for ', client.name);
-	client.state = ClientState.CONNECTED;
+	newcl.state = ClientState.CONNECTED;
 
 	// When we receive the first packet from the client, we will
 	// notice that it is from a different serverid and that the
 	// gamestate message was not just sent, forcing a retransmit.
-	client.gamestateMessageNum = -1;
+	newcl.gamestateMessageNum = -1;
 }
 
 function ClientDisconnect(client) {
@@ -62,12 +64,18 @@ function ExecuteClientMessage(client, msg) {
 
 	// If we can tell that the client has dropped the last
 	// gamestate we sent them, resend it.
-	//if (msg.serverId != sv.serverId) {
+	if (msg.serverId !== sv_serverid()) {
 		if (client.messageAcknowledge > client.gamestateMessageNum) {
 			SendClientGameState(client);
-			return;
 		}
-	//}
+		return;
+	}
+
+	// This client has acknowledged the new gamestate so it's
+	// safe to start sending it the real time again.
+	if (client.oldServerTime && msg.serverId === sv_serverid()) {
+		client.oldServerTime = 0;
+	}
 
 	if (msg.type === Net.ClientOp.Type.move) {
 		UserMove(client, msg.clop_move);
@@ -89,11 +97,11 @@ function UserMove(client, cmd) {
 	// this gamestate, put the client into the world.
 	if (client.state === ClientState.PRIMED) {
 		ClientEnterWorld(client);
-		// the moves can be processed normaly
+		// now moves can be processed normaly
 	}
 
 	if (client.state !== ClientState.ACTIVE) {
-		return;
+		return; // shouldn't happen
 	}
 
 	ClientThink(client, cmd);
@@ -109,11 +117,16 @@ function SendClientGameState(client) {
 
 	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and ClientState.SERVERINFO)
 	var cs = new Net.ServerOp.ConfigString();
-	cs.key = 'map';
-	cs.value = com.CvarGet('sv_mapname');
+	cs.key = 'sv_mapname';
+	cs.value = sv_mapname();
 	svop.svop_gamestate.configstrings.push(cs);
 
-	NetSend(svop);
+	cs = new Net.ServerOp.ConfigString();
+	cs.key = 'sv_serverid';
+	cs.value = sv_serverid();
+	svop.svop_gamestate.configstrings.push(cs);
+
+	NetSend(client.netchan, svop);
 }
 
 function ClientThink(client, cmd) {
@@ -135,4 +148,23 @@ function GetClientNum(client) {
 	}
 
 	return -1;
+}
+
+
+function UserinfoChanged(client) {
+	var snaps = 20;
+
+	if (snaps < 1) {
+		snaps = 1;
+	} else if(snaps > sv_fps()) {
+		snaps = sv_fps();
+	}
+
+	snaps = 1000 / snaps;
+
+	if (snaps != client.snapshotMsec) {
+		// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time.
+		client.lastSnapshotTime = 0;
+		client.snapshotMsec = snaps;
+	}
 }

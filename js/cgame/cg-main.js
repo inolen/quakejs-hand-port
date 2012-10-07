@@ -1,15 +1,31 @@
 var cl;
-var cg = new ClientGame();
-var cgs = new ClientGameStatic();
+var cg;
+var cgs;
+var cg_errordecay;
+var cg_showmiss;
 
 function Init(cl_interface, serverMessageNum) {
+	console.log('--------- CG Init ---------');
+
 	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	sys = require('system/sys');
+	com = require('common/com');
 
 	cl = cl_interface;
+	cg = new ClientGame();
+	cgs = new ClientGameStatic();
+
+	cg_errordecay = com.CvarAdd('cg_errordecay', '100');
+	cg_showmiss = com.CvarAdd('cg_showmiss', '1');
 
 	cgs.processedSnapshotNum = serverMessageNum;
+	cgs.gameState = cl.GetGameState();
+	cl.LoadMap(cgs.gameState['sv_mapname']);
+}
+
+function Shutdown() {
+	console.log('--------- CG Shutdown ---------');
 }
 
 function Frame(serverTime) {
@@ -17,12 +33,10 @@ function Frame(serverTime) {
 	
 	ProcessSnapshots(); 
 
-	if (!cg.snap/* || (cg.snap->snapFlags & SNAPFLAG_NOT_ACTIVE)*/) {
+	if (!cg.snap || (cg.snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
 		//CG_DrawInformation();
 		return;
 	}
-
-	//console.log('Frame', cg.snap.ps.origin[2]);
 
 	PredictPlayerState();
 	

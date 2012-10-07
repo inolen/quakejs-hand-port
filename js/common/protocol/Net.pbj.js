@@ -122,17 +122,23 @@ Net.ServerOp_Snapshot = PROTO.Message("Net.ServerOp_Snapshot",{
 		type: function(){return PROTO.uint32;},
 		id: 1
 	},
+	snapFlags: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 2
+	},
 	ps: {
 		options: {},
 		multiplicity: PROTO.required,
 		type: function(){return Net.PlayerState;},
-		id: 2
+		id: 3
 	},
 	es: {
 		options: {},
 		multiplicity: PROTO.repeated,
 		type: function(){return Net.EntityState;},
-		id: 3
+		id: 4
 	}});
 Net.PlayerState = PROTO.Message("Net.PlayerState",{
 	origin: {

@@ -32,7 +32,7 @@ function NetSend(msg) {
 		throw new Error('Message is not an instance of PROTO.Message');
 	}*/
 
-	msg.serverId = 42;//cl.serverId;
+	msg.serverId = parseInt(cl.gameState['sv_serverid']);
 	// Set the last message we received, which can be used for delta compression,
 	// and is also used to tell if we dropped a gamestate.
 	msg.messageAcknowledge = clc.serverMessageSequence;
@@ -60,5 +60,5 @@ function PacketEvent(addr, buffer, length) {
 	var msg = new Net.ServerOp();
 	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
 
-	ParseServerMessage(msg);
+	ExecuteServerMessage(msg);
 }

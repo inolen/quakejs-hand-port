@@ -48,10 +48,10 @@ message ServerOp_Gamestate {
 message ServerOp_Snapshot {
   required uint32 serverTime = 1;
   //required uint32 deltaNum = 2;
-  //required uint32 snapFlags = 3;
+  required uint32 snapFlags = 2;
   //repeated byte areamask = 4 [packed=true];
-  required PlayerState ps = 2;
-  repeated EntityState es = 3;
+  required PlayerState ps = 3;
+  repeated EntityState es = 4;
 }
 
 message PlayerState {

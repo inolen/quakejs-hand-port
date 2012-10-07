@@ -83,9 +83,8 @@ function KeyMove(cmd) {
 
 function MouseMove(cmd) {
 	var oldAngles = cl.viewangles;
-	var sensitivity = com.CvarGet('cl_sensitivity');
-	var mx = cl.mouseX * sensitivity;
-	var my = cl.mouseY * sensitivity;
+	var mx = cl.mouseX * cl_sensitivity();
+	var my = cl.mouseY * cl_sensitivity();
 
 	cl.viewangles[YAW] -= mx * 0.022;
 	cl.viewangles[PITCH] += my * 0.022;
@@ -204,7 +203,7 @@ function GetKeyState(key) {
 	key.partial = 0;
 
 	if (key.active) {
-		msec += cls.frameTime - key.downtime;
+		msec += cls.frameTime- key.downtime;
 	}
 
 	key.downtime = cls.frameTime;

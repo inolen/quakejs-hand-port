@@ -5,6 +5,27 @@ function InitImages() {
 	BuildDefaultTexture();
 }
 
+function DeleteTextures() {
+	/*for (var i = 0; i < tr.numImages ; i++) {
+		qglDeleteTextures( 1, &tr.images[i]->texnum );
+	}
+
+	Com_Memset( tr.images, 0, sizeof( tr.images ) );
+
+	tr.numImages = 0;
+
+	Com_Memset( glState.currenttextures, 0, sizeof( glState.currenttextures ) );
+
+	if ( qglActiveTextureARB ) {
+		GL_SelectTexture( 1 );
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+		GL_SelectTexture( 0 );
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+	} else {
+		qglBindTexture( GL_TEXTURE_2D, 0 );
+	}*/
+}
+
 function FindImage(name, clamp) {
 	// Only load .png files. Retrying on missing files is an expensive
 	// operation in the browser.

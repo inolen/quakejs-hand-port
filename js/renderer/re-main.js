@@ -13,6 +13,7 @@ var flipMatrix = mat4.create([
 ]);
 
 function Init(glCtx, viewportUiEl) {
+	console.log('--------- RE Init ---------');
 	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
@@ -29,6 +30,11 @@ function Init(glCtx, viewportUiEl) {
 
 	InitImages();
 	InitShaders();
+}
+
+function Shutdown() {
+	console.log('--------- RE Shutdown ---------');
+	DeleteTextures();
 }
 
 function RenderScene(fd) {

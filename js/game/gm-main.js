@@ -4,11 +4,10 @@ var level;
 var g_gravity;
 
 function Init(sv_interface) {
-	// Due to sv/cl/com having a circular dependency on eachother,
-	// we need to re-grab com now that we're all loaded.
+	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
-
+	
 	g_gravity = com.CvarAdd('g_gravity', 800);
 	
 	sv = sv_interface;
@@ -19,6 +18,9 @@ function Init(sv_interface) {
 
 	// Spawn all the entities for the current level.
 	EntitySpawnAllFromDefs();
+}
+
+function Shutdown() {
 }
 
 function Frame(levelTime) {
@@ -38,7 +40,7 @@ function Frame(levelTime) {
 		}
 
 		/*if (i < MAX_CLIENTS) {
-			ClientThink(ent);
+			ClientThink(ent.client.number);
 			continue;
 		}*/
 
