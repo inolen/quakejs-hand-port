@@ -15,7 +15,9 @@ function LoadMap(mapName, callback) {
 		LoadNodes(map);
 		LoadEntities(map);
 
-		callback();
+		if (callback) {
+			callback();
+		}
 	});
 }
 
@@ -24,7 +26,7 @@ function LoadShaders(map) {
 }
 
 function LoadLeafs(map) {
-	cm.leaves = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);
+	cm.leafs = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);
 }
 
 function LoadLeafBrushes(map) {

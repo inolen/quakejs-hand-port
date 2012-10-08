@@ -292,11 +292,9 @@ function SortDrawSurfaces() {
 function RenderDrawSurfaces() {
 	var world = re.world;
 	var parms = re.viewParms;
-
-	// TODO move this
-	if (typeof startTime === 'undefined') {
-		startTime = sys.GetMilliseconds();
-	}
+	var refdef = re.refdef;
+	var drawSurfs = refdef.drawSurfs;
+	var shaders = world.shaders;
 
 	// Setup
 	gl.viewport(0, 0, parms.width, parms.height);
@@ -312,7 +310,7 @@ function RenderDrawSurfaces() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Seconds passed since map was initialized
-	var time = (sys.GetMilliseconds() - startTime)/1000.0;
+	var time = (sys.GetMilliseconds() - refdef.time)/1000.0;
 	var i = 0;
 
 	// If we have a skybox, render it first
@@ -337,16 +335,6 @@ function RenderDrawSurfaces() {
 	// Map Geometry buffers
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-
-	var refdef = re.refdef;
-	var drawSurfs = refdef.drawSurfs;
-	var shaders = world.shaders;
-
-	var printfaces = false;
-	if (!window.foobar) {
-		printfaces = true;
-		window.foobar = true;
-	}
 
 	for (var i = 0; i < refdef.numDrawSurfs; i++) {
 		var face = drawSurfs[i].surface;

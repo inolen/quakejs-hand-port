@@ -1,3 +1,6 @@
+var CMD_BACKUP = 64;
+var CMD_MASK   = (CMD_BACKUP - 1);
+
 var ClientGame = function () {
 	this.thisFrameTeleport    = false;
 	this.nextFrameTeleport    = false;

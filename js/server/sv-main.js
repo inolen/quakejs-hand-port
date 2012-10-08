@@ -23,7 +23,7 @@ function Init() {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		CmdLoadMap('q3tourney4');
+		CmdLoadMap('q3dm7');
 	}, 0);
 }
 
@@ -50,13 +50,13 @@ function Frame(frameTime, msec) {
 
 	NetFrame();
 
-	// run the game simulation in chunks
+	// Run the game simulation in chunks.
 	while (sv.timeResidual >= frameMsec) {
 		sv.timeResidual -= frameMsec;
 		svs.time += frameMsec;
 		sv.time += frameMsec;
 
-		// let everything in the world think and move
+		// Let everything in the world think and move.
 		gm.Frame(sv.time);
 	}
 

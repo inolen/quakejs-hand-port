@@ -71,16 +71,17 @@ function SendClientSnapshot(client) {
 	NetSend(client.netchan, svop);
 }
 
-window.snapshots = 0;
-window.lastSnapshotTime = 0;
-
+/**
+ * SendClientMessages
+ * 
+ * Send snapshots of player states and entity states to each client.
+ * NOTE: This function is called outside of the game frame loop in order to 
+ * send as few of snapshots as possible. Due to this, if the per-client
+ * throttling is disabled it can send multiple snapshots with the same sv.time
+ * on in-between frames making it impossible for the client to find a snapshot
+ * to interpolate with.
+ */
 function SendClientMessages() {
-	/*if (sys.GetMilliseconds() - window.lastSnapshotTime > 1000) {
-		console.log('SendClientMessages, ' + window.snapshots + ' snapshots in 1 sec');
-		window.snapshots = 0;
-		window.lastSnapshotTime = sys.GetMilliseconds();
-	}*/
-
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
@@ -88,13 +89,11 @@ function SendClientMessages() {
 			continue; // not connected
 		}
 
-		/*if (svs.time - client.lastSnapshotTime < client.snapshotMsec) {
+		if (svs.time - client.lastSnapshotTime < client.snapshotMsec) {
 			continue; // it's not time yet
-		}*/
+		}
 
 		SendClientSnapshot(client);
 		client.lastSnapshotTime = svs.time;
 	}
-
-	window.snapshots++;
 }

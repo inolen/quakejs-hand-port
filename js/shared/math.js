@@ -79,6 +79,23 @@ function RadixSort(arr, prop, len) {
 	return arr;
 }
 
+/**
+ * ANGLES
+ */
+function LerpAngle(from, to, frac) {
+	if (to - from > 180) {
+		to -= 360;
+	}
+	if (to - from < -180) {
+		to += 360;
+	}
+
+	return from + frac * (to - from);
+}
+
+/**
+ * PLANES
+ */
 var PLANE_X			= 0;
 var PLANE_Y			= 1;
 var PLANE_Z			= 2;

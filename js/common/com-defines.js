@@ -41,17 +41,35 @@ var PS_PMOVEFRAMECOUNTBITS = 6;
 
 var PlayerState = function () {
 	this.commandTime      = 0;                   // cmd->serverTime of last executed command
+	this.pm_type          = 0;
+	this.pm_flags         = 0;                   // ducked, jump_held, etc
 	this.origin           = [0, 0, 0];
 	this.velocity         = [0, 0, 0];
 	this.viewangles       = [0, 0, 0];
 	this.speed            = 0;
-	this.gracity          = 0;
+	this.gravity          = 0;
 	this.groundEntityNum  = -1;                  // ENTITYNUM_NONE = in air
-	this.pm_flags         = 0;                   // ducked, jump_held, etc
 	this.jumppad_ent      = 0;                   // jumppad entity hit this frame
 	this.jumppad_frame    = 0;
 	this.pmove_framecount = 0;
 };
+
+// deep copy
+PlayerState.prototype.clone = function () {
+	var ps = new PlayerState();
+	ps.commandTime          = this.commandTime;
+	vec3.set(this.origin,     ps.origin);
+	vec3.set(this.velocity,   ps.velocity);
+	vec3.set(this.viewangles, ps.viewangles);
+	ps.speed                = this.speed;
+	ps.gravity              = this.gravity;
+	ps.groundEntityNum      = this.groundEntityNum;
+	ps.pm_flags             = this.pm_flags;
+	ps.jumppad_ent          = this.jumppad_ent;
+	ps.jumppad_frame        = this.jumppad_frame;
+	ps.pmove_framecount     = this.pmove_framecount;
+	return ps;
+}
 
 /**
  * EntityState is the information conveyed from the server

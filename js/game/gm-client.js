@@ -17,12 +17,12 @@ function ClientThink(clientNum, cmd) {
 	var ent = level.gentities[clientNum];
 
 	// sanity check the command time to prevent speedup cheating
-	/*if (cmd->serverTime > level.time + 200) {
-		cmd->serverTime = level.time + 200;
+	if (cmd.serverTime > level.time + 200) {
+		cmd.serverTime = level.time + 200;
 	}
-	if (cmd->serverTime < level.time - 1000) {
-		cmd->serverTime = level.time - 1000;
-	}*/
+	if (cmd.serverTime < level.time - 1000) {
+		cmd.serverTime = level.time - 1000;
+	}
 
 	client.ps.gravity = g_gravity();
 	client.ps.speed = 320;
@@ -35,8 +35,6 @@ function ClientThink(clientNum, cmd) {
 	bg.Pmove(pm);
 
 	// update game entity info
-	//console.log('Running client think', client.ps.origin[0], client.ps.origin[1], client.ps.origin[2]);
-
 	vec3.set(client.ps.origin, ent.currentOrigin);
 	vec3.set(pm.mins, ent.mins);
 	vec3.set(pm.maxs, ent.maxs);
@@ -85,6 +83,5 @@ function SelectNearestDeathmatchSpawnPoint(from) {
 
 function SelectRandomDeathmatchSpawnPoint() {
 	var spawnpoints = EntityFind('classname', 'info_player_deathmatch');
-
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }

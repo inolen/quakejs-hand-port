@@ -1,21 +1,129 @@
-var q3bsptree_trace_offset = 0.03125;
+/*********************************************************************
+ *
+ * POSITION TESTING
+ *
+ ********************************************************************/
 
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] - SURFACE_CLIP_EPSILON ||
-		maxs[1] < mins2[1] - SURFACE_CLIP_EPSILON ||
-		maxs[2] < mins2[2] - SURFACE_CLIP_EPSILON ||
-		mins[0] > maxs2[0] + SURFACE_CLIP_EPSILON ||
-		mins[1] > maxs2[1] + SURFACE_CLIP_EPSILON ||
-		mins[2] > maxs2[2] + SURFACE_CLIP_EPSILON) {
-		return false;
+function TestBoxInBrush(tw, brush) {
+	if (!brush.numsides) {
+		return;
 	}
 
-	return true;
+	// Special test for axial.
+	if (tw.bounds[0][0] > brush.bounds[1][0]
+		|| tw.bounds[0][1] > brush.bounds[1][1]
+		|| tw.bounds[0][2] > brush.bounds[1][2]
+		|| tw.bounds[1][0] < brush.bounds[0][0]
+		|| tw.bounds[1][1] < brush.bounds[0][1]
+		|| tw.bounds[1][2] < brush.bounds[0][2]) {
+		return;
+	}
+
+	// The first six planes are the axial planes, so we only
+	// need to test the remainder.
+	for (var i = 6; i < brush.numsides; i++) {
+		var side = brush.sides + i;
+		var plane = side.plane;
+
+		// adjust the plane distance apropriately for mins/maxs
+		var dist = plane.dist - vec3.dot(tw.offsets[plane.signbits], plane.normal);
+		var d1 = vec3.dot(tw.start, plane.normal) - dist;
+
+		// if completely in front of face, no intersection
+		if (d1 > 0) {
+			return;
+		}
+	}
+
+	// Inside this brush.
+	tw.trace.startSolid = tw.trace.allSolid = true;
+	tw.trace.fraction = 0;
+	tw.trace.contents = brush.contents;
 }
 
+function TestInLeaf(tw, leaf) {
+	var brushes = cm.brushes;
+	var leafBrushes = cm.leafBrushes;
+
+	// test box position against all brushes in the leaf
+	for (var k = 0; k < leaf.numLeafBrushes; k++) {
+		var brushnum = leafBrushes[leaf.firstLeafBrush+k];
+		var b = brushes[brushnum];
+
+		if (b.checkcount === cm.checkcount) {
+			continue; // already checked this brush in another leaf
+		}
+		b.checkcount = cm.checkcount;
+
+		if (!(b.contents & tw.contents)) {
+			continue;
+		}
+		
+		TestBoxInBrush(tw, b);
+		if (tw.trace.allSolid) {
+			return;
+		}
+	}
+
+	/*// test against all patches
+	if ( !cm_noCurves->integer ) {
+		for ( k = 0 ; k < leaf->numLeafSurfaces ; k++ ) {
+			patch = cm.surfaces[ cm.leafsurfaces[ leaf->firstLeafSurface + k ] ];
+			if ( !patch ) {
+				continue;
+			}
+			if ( patch->checkcount == cm.checkcount ) {
+				continue;	// already checked this brush in another leaf
+			}
+			patch->checkcount = cm.checkcount;
+
+			if ( !(patch->contents & tw->contents)) {
+				continue;
+			}
+			
+			if ( CM_PositionTestInPatchCollide( tw, patch->pc ) ) {
+				tw->trace.startsolid = tw->trace.allsolid = qtrue;
+				tw->trace.fraction = 0;
+				tw->trace.contents = patch->contents;
+				return;
+			}
+		}
+	}*/
+}
+
+// Don't allocate this each time.
+var leaflist = new LeafList();
+function PositionTest(tw) {
+	var leafs = cm.leafs;
+	var mins = vec3.add(tw.start, tw.size[0], [0, 0, 0]);
+	var maxs = vec3.add(tw.start, tw.size[1], [0, 0, 0]);
+
+	vec3.add(mins, [-1, -1, -1]);
+	vec3.add(maxs, [1, 1, 1]);
+
+	cm.checkcount++;
+	leaflist.count = 0;
+	BoxLeafnums_r(leaflist, mins, maxs, 0);
+	cm.checkcount++;
+
+	// test the contents of the leafs
+	for (var i = 0; i < leaflist.count; i++) {
+		TestInLeaf(tw, leafs[leaflist.list[i]]);
+
+		if (tw.trace.allSolid) {
+			break;
+		}
+	}
+}
+
+/*********************************************************************
+ *
+ * TRACING
+ *
+ ********************************************************************/
 function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	var brushes = cm.brushes;
-	var leaves = cm.leaves;
+	var leafs = cm.leafs;
 	var leafBrushes = cm.leafBrushes;
 	var nodes = cm.nodes;
 	var planes = cm.planes;
@@ -26,7 +134,7 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	}
 
 	if (num < 0) { // Leaf node?
-		TraceThroughLeaf(tw, leaves[-(num + 1)]);
+		TraceThroughLeaf(tw, leafs[-(num + 1)]);
 		return;
 	}
 
@@ -315,32 +423,31 @@ function Trace(start, end, mins, maxs, brushmask, tw) {
 	}
 
 	//
-	// check for point special case
+	// check for position test special case
 	//
-	if (tw.size[0][0] == 0 && tw.size[0][1] == 0 && tw.size[0][2] == 0) {
-		tw.isPoint = true;
-		tw.extents = [0, 0, 0];
+	if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
+		PositionTest(tw);
 	} else {
-		tw.isPoint = false;
-		tw.extents[0] = tw.size[1][0];
-		tw.extents[1] = tw.size[1][1];
-		tw.extents[2] = tw.size[1][2];
-	}
+		//
+		// check for point special case
+		//
+		if (tw.size[0][0] == 0 && tw.size[0][1] == 0 && tw.size[0][2] == 0) {
+			tw.isPoint = true;
+			tw.extents = [0, 0, 0];
+		} else {
+			tw.isPoint = false;
+			tw.extents[0] = tw.size[1][0];
+			tw.extents[1] = tw.size[1][1];
+			tw.extents[2] = tw.size[1][2];
+		}
 
-	TraceThroughTree(tw, 0, 0, 1, tw.start, tw.end);
+		TraceThroughTree(tw, 0, 0, 1, tw.start, tw.end);
+	}
 
 	// generate endpos from the original, unmodified start/end
 	for (var i = 0; i < 3; i++) {
 		tw.trace.endPos[i] = start[i] + tw.trace.fraction * (end[i] - start[i]);
 	}
-
-	/*return output = {
-		allSolid: false,
-		startSolid: false,
-		fraction: 1.0,
-		endPos: end,
-		plane: null
-	};*/
-
+	
 	return trace;
 }

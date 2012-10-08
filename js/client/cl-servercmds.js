@@ -22,7 +22,7 @@ function ParseGameState(msg) {
 }
 
 function ParseSnapshot(msg) {
-	var newSnap = cl.snapshots[clc.serverMessageSequence & PACKET_MASK];
+	var newSnap = new ClientSnapshot();
 
 	// We will have read any new server commands in this
 	// message before we got to svc_snapshot.
@@ -33,8 +33,6 @@ function ParseSnapshot(msg) {
 	newSnap.serverTime = msg.serverTime;
 	newSnap.snapFlags = msg.snapFlags;
 	newSnap.valid = true;
-
-	//console.log('ParseSnapshot', msg.serverTime);
 
 	/*newSnap.serverTime = snapshot.serverTime;
 	newSnap.deltaNum = !snapshot.deltaNum ? -1 : newSnap.messageNum - snapshot.deltaNum;
@@ -109,6 +107,9 @@ function ParseSnapshot(msg) {
 			break;
 		}
 	}*/
+
+	// save the frame off in the backup array for later delta comparisons
+	cl.snapshots[cl.snap.messageNum & PACKET_MASK] = cl.snap;
 
 	cl.newSnapshots = true;
 }

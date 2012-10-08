@@ -159,6 +159,13 @@ function GroundTrace(pm) {
 	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
 	var trace = groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, pm.tracemask);
 
+	// do something corrective if the trace starts in a solid...
+	if (trace.allSolid) {
+		if (!CorrectAllSolid(pm, trace)) {
+			return;
+		}
+	}
+
 	// if the trace didn't hit anything, we are in free fall
 	if (trace.fraction == 1.0) {
 		GroundTraceMissed(pm);
@@ -192,6 +199,41 @@ function GroundTrace(pm) {
 	groundPlane = true;
 	walking = true;
 }
+
+function CorrectAllSolid(pm, trace) {
+	var ps = pm.ps;
+	var point = [0, 0, 0];
+	var trace;
+
+	// Jitter around.
+	for (var i = -1; i <= 1; i++) {
+		for (var j = -1; j <= 1; j++) {
+			for (var k = -1; k <= 1; k++) {
+				vec3.set(ps.origin, point);
+				point[0] += i;
+				point[1] += j;
+				point[2] += k;
+				trace = pm.trace(point, point, pm.mins, pm.maxs, pm.tracemask);
+
+				if (!trace.allSolid) {
+					point[0] = ps.origin[0];
+					point[1] = ps.origin[1];
+					point[2] = ps.origin[2] - 0.25;
+
+					groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, /*pm->ps->clientNum,*/ pm.tracemask)
+					return true;
+				}
+			}
+		}
+	}
+
+	ps.groundEntityNum = ENTITYNUM_NONE;
+	groundPlane = false;
+	walking = false;
+
+	return false;
+}
+
 
 function GroundTraceMissed(pm) {
 	pm.ps.groundEntityNum = ENTITYNUM_NONE;
@@ -517,10 +559,7 @@ function WalkMove(pm) {
 	StepSlideMove(pm, false);
 }
 
-function UpdateViewAngles(pm) {
-	var ps = pm.ps;
-	var cmd = pm.cmd;
-
+function UpdateViewAngles(ps, cmd) {
 	for (var i = 0; i < 3; i++) {
 		var temp = cmd.angles[i];// + ps->delta_angles[i];
 
@@ -554,7 +593,7 @@ function PmoveSingle(pm, msec) {
 	pm.frameTime = msec * 0.001;
 
 	// Update our view angles.
-	UpdateViewAngles(pm);
+	UpdateViewAngles(ps, cmd);
 	vec3.anglesToVectors(ps.viewangles, forward, right, up);
 
 	if (pm.cmd.upmove < 10) {

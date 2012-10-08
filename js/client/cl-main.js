@@ -5,6 +5,7 @@ var cl;
 var clc;
 var cls = new ClientStatic();
 var cl_sensitivity;
+var cl_showTimeDelta;
 var commands = {};
 var keys = {};
 
@@ -24,7 +25,8 @@ function Init(glCtx, viewportEl, viewportUiEl) {
 	clc = new ClientConnection();
 	cls.realtime = 0;
 
-	cl_sensitivity = com.CvarAdd('cl_sensitivity', '2');
+	cl_sensitivity = com.CvarAdd('cl_sensitivity', 2);
+	cl_showTimeDelta = com.CvarAdd('cl_showTimeDelta', 0);
 
 	InputInit();
 	CmdInit();
@@ -45,9 +47,9 @@ function ClearState() {
 }
 
 function InitCGame() {
-	clc.state = CA_LOADING;
+	clc.state = ConnectionState.LOADING;
 	cg.Init(clExports, clc.serverMessageSequence);
-	clc.state = CA_PRIMED;
+	clc.state = ConnectionState.PRIMED;
 }
 
 function ShutdownCGame() {
@@ -70,7 +72,7 @@ function Frame(frameTime, msec) {
 	}
 
 	cls.frameDelta = msec;
-	cls.realTime += msec;
+	cls.realTime += cls.frameDelta;
 
 	NetFrame();
 	SendCommand();
@@ -83,20 +85,20 @@ function Frame(frameTime, msec) {
 
 function UpdateScreen() {
 	switch (clc.state) {
-		case CA_DISCONNECTED:
-		case CA_CONNECTING:
-		case CA_CHALLENGING:
-		case CA_CONNECTED:
-		case CA_LOADING:
-		case CA_PRIMED:
+		case ConnectionState.DISCONNECTED:
+		case ConnectionState.CONNECTING:
+		case ConnectionState.CHALLENGING:
+		case ConnectionState.CONNECTED:
+		case ConnectionState.LOADING:
+		case ConnectionState.PRIMED:
 			break;
-		case CA_ACTIVE:
+		case ConnectionState.ACTIVE:
 			cg.Frame(cl.serverTime);
 			break;
 	}
 }
 
 function MapLoading() {
-	clc.state = CA_CONNECTED;
+	clc.state = ConnectionState.CONNECTED;
 	//UpdateScreen();
 }

@@ -74,6 +74,10 @@ function ProcessSnapshots() {
 	if (cg.nextSnap && cg.nextSnap.serverTime <= cg.time ) {
 		throw new Error('ProcessSnapshots: cg.nextSnap.serverTime <= cg.time');
 	}
+
+	if (!cg.nextSnap) {
+		console.log('ProcessSnapshots: No valid nextSnap.');
+	}
 }
 
 function ReadNextSnapshot() {
@@ -124,6 +128,11 @@ function SetNextSnap(snap) {
 	}*/
 }
 
+/**
+ * TransitionSnapshot
+ *
+ * The transition point from snap to nextSnap has passed.
+ */
 function TransitionSnapshot() {
 	if (!cg.snap) {
 		throw new Error('TransitionSnapshot: NULL cg.snap');
@@ -158,22 +167,20 @@ function TransitionSnapshot() {
 
 	cg.nextSnap = null;
 
-	// check for playerstate transition events
-	/*if (oldFrame) {
-		playerState_t	*ops, *ps;
-
+	/*// check for playerstate transition events
+	if (oldFrame) {
 		var ops = oldFrame.ps;
 		var ps = cg.snap.ps;
 
 		// teleporting checks are irrespective of prediction
-		if ( ( ps->eFlags ^ ops->eFlags ) & EF_TELEPORT_BIT ) {
-			cg.thisFrameTeleport = qtrue;	// will be cleared by prediction code
+		if ((ps.eFlags ^ ops.eFlags) & EF_TELEPORT_BIT) {
+			cg.thisFrameTeleport = true; // will be cleared by prediction code
 		}
 
 		// if we are not doing client side movement prediction for any
 		// reason, then the client events and view changes will be issued now
-		if ((cg.snap->ps.pm_flags & PMF_FOLLOW)) {
-			CG_TransitionPlayerState( ps, ops );
+		if ((cg.snap.ps.pm_flags & PMF_FOLLOW)) {
+			CG_TransitionPlayerState(ps, ops);
 		}
 	}*/
 }

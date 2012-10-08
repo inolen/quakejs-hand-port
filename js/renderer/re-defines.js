@@ -103,6 +103,7 @@ var RefDef = function () {
 		vec3.create(),
 		vec3.create()
 	];
+	this.time         = 0 ;
 	// TODO maybe this shouldn't be initialized until we hit the renderer.
 	this.drawSurfs    = new Array(MAX_DRAWSURFS);
 	this.numDrawSurfs = 0;

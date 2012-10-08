@@ -38,4 +38,3 @@ function TransitionPlayerState(ps, ops) {
 		cg.duckTime = cg.time;
 	}*/
 }
-

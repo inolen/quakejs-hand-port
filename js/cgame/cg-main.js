@@ -16,12 +16,14 @@ function Init(cl_interface, serverMessageNum) {
 	cg = new ClientGame();
 	cgs = new ClientGameStatic();
 
-	cg_errordecay = com.CvarAdd('cg_errordecay', '100');
-	cg_showmiss = com.CvarAdd('cg_showmiss', '1');
+	cg_errordecay = com.CvarAdd('cg_errordecay', 100);
+	cg_predict = com.CvarAdd('cg_predict', 0);
+	cg_showmiss = com.CvarAdd('cg_showmiss', 1);
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
-	cl.LoadMap(cgs.gameState['sv_mapname']);
+	cl.LoadClipMap(cgs.gameState['sv_mapname']);
+	cl.LoadRenderMap(cgs.gameState['sv_mapname']);
 }
 
 function Shutdown() {
@@ -41,8 +43,9 @@ function Frame(serverTime) {
 	PredictPlayerState();
 	
 	CalcViewValues();
+	cg.refdef.time = cg.time;
+	
 	cl.RenderScene(cg.refdef);
-
 	DrawFPS();
 }
 

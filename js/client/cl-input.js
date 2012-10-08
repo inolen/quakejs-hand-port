@@ -30,13 +30,23 @@ function InputInit() {
  * Process current input variables into userComamnd_t struct for transmission to server.
  */
 function SendCommand() {
-	var cmd = CreateCommand();
+	CreateNewCommands();
 
 	var clop = new Net.ClientOp();
 	clop.type = Net.ClientOp.Type.move;
-	clop.clop_move = cmd;
-
+	clop.clop_move = cl.cmds[cl.cmdNumber & CMD_MASK];
 	NetSend(clop);
+}
+
+function CreateNewCommands() {
+	// No need to create usercmds until we have a gamestate.
+	if (clc.state < ConnectionState.PRIMED) {
+		return;
+	}
+
+	cl.cmdNumber++;
+	var cmdNum = cl.cmdNumber & CMD_MASK;
+	cl.cmds[cmdNum] = CreateCommand();
 }
 
 function CreateCommand() {
@@ -45,10 +55,10 @@ function CreateCommand() {
 	KeyMove(cmd);
 	MouseMove(cmd);
 
-	// send the current server time so the amount of movement
-	// can be determined without allowing cheating
+	// Send the current server time so the amount of movement
+	// can be determined without allowing cheating.
 	cmd.serverTime = cl.serverTime;
-	
+
 	return cmd;
 }
 
