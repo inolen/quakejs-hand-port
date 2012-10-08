@@ -34,6 +34,10 @@ var ClientLocals = function () {
 		this.snapshots[i] = new ClientSnapshot();
 	}
 
+	for (var i = 0; i < CMD_BACKUP; i++) {
+		this.cmds[i] = new UserCmd();
+	}
+
 	for (var i = 0; i < MAX_PARSE_ENTITIES; i++) {
 		this.parseEntities[i] = new EntityState();
 	}

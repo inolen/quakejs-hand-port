@@ -48,19 +48,19 @@ Net.ClientOp_UserCmd = PROTO.Message("Net.ClientOp_UserCmd",{
 	forwardmove: {
 		options: {},
 		multiplicity: PROTO.required,
-		type: function(){return PROTO.int32;},
+		type: function(){return PBJ.int8;},
 		id: 3
 	},
 	rightmove: {
 		options: {},
 		multiplicity: PROTO.required,
-		type: function(){return PROTO.int32;},
+		type: function(){return PBJ.int8;},
 		id: 4
 	},
 	upmove: {
 		options: {},
 		multiplicity: PROTO.required,
-		type: function(){return PROTO.int32;},
+		type: function(){return PBJ.int8;},
 		id: 5
 	}});
 Net.ServerOp = PROTO.Message("Net.ServerOp",{
@@ -141,23 +141,59 @@ Net.ServerOp_Snapshot = PROTO.Message("Net.ServerOp_Snapshot",{
 		id: 4
 	}});
 Net.PlayerState = PROTO.Message("Net.PlayerState",{
+	commandTime: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 1
+	},
+	pm_type: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 2
+	},
+	pm_flags: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 3
+	},
+	pm_time: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 4
+	},
+	gravity: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 5
+	},
+	speed: {
+		options: {},
+		multiplicity: PROTO.required,
+		type: function(){return PROTO.uint32;},
+		id: 6
+	},
 	origin: {
 		options: {packed:true},
 		multiplicity: PROTO.repeated,
 		type: function(){return PROTO.Float;},
-		id: 1
+		id: 7
 	},
 	velocity: {
 		options: {packed:true},
 		multiplicity: PROTO.repeated,
 		type: function(){return PROTO.Float;},
-		id: 2
+		id: 8
 	},
 	viewangles: {
 		options: {packed:true},
 		multiplicity: PROTO.repeated,
 		type: function(){return PROTO.Float;},
-		id: 3
+		id: 9
 	}});
 Net.EntityState = PROTO.Message("Net.EntityState",{
 	number: {

@@ -59,6 +59,17 @@ function CalcViewValues() {
 	vec3.set(ps.origin, cg.refdef.vieworg);
 	vec3.anglesToAxis(ps.viewangles, cg.refdef.viewaxis);
 
+	// Add error decay.
+	// if (cg_errorDecay() > 0) {
+	// 	var t = cg.time - cg.predictedErrorTime;
+	// 	var f = (cg_errorDecay() - t) / cg_errorDecay();
+	// 	if (f > 0 && f < 1) {
+	// 		VectorMA( cg.refdef.vieworg, f, cg.predictedError, cg.refdef.vieworg );
+	// 	} else {
+	// 		cg.predictedErrorTime = 0;
+	// 	}
+	// }
+
 	OffsetFirstPersonView();
 	CalcFov();
 }

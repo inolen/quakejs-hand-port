@@ -489,7 +489,7 @@ function AirMove(pm) {
 
 	var scale = CmdScale(cmd, ps.speed);
 	var wishvel = [0, 0, 0];
-	for ( i = 0 ; i < 2 ; i++ ) {
+	for (var i = 0 ; i < 2 ; i++) {
 		wishvel[i] = forward[i]*cmd.forwardmove + right[i]*cmd.rightmove;
 	}
 	wishvel[2] = 0;

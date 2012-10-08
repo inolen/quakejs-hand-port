@@ -56,6 +56,14 @@ function SendClientSnapshot(client) {
 	}
 	
 	msg.ps = new Net.PlayerState();
+
+	msg.ps.commandTime = frame.ps.commandTime;
+	msg.ps.pm_type = frame.ps.pm_type;
+	msg.ps.pm_flags = frame.ps.pm_flags;
+	msg.ps.pm_time = frame.ps.pm_time;
+	msg.ps.gravity = frame.ps.gravity;
+	msg.ps.speed = frame.ps.speed;
+	
 	msg.ps.origin.push(frame.ps.origin[0]);
 	msg.ps.origin.push(frame.ps.origin[1]);
 	msg.ps.origin.push(frame.ps.origin[2]);
@@ -89,9 +97,9 @@ function SendClientMessages() {
 			continue; // not connected
 		}
 
-		if (svs.time - client.lastSnapshotTime < client.snapshotMsec) {
+		/*if (svs.time - client.lastSnapshotTime < client.snapshotMsec) {
 			continue; // it's not time yet
-		}
+		}*/
 
 		SendClientSnapshot(client);
 		client.lastSnapshotTime = svs.time;

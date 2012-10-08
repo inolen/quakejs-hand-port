@@ -32,9 +32,20 @@ function InputInit() {
 function SendCommand() {
 	CreateNewCommands();
 
+	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
+
 	var clop = new Net.ClientOp();
 	clop.type = Net.ClientOp.Type.move;
-	clop.clop_move = cl.cmds[cl.cmdNumber & CMD_MASK];
+
+	var move = clop.clop_move = new Net.ClientOp_UserCmd();
+	move.serverTime = cmd.serverTime;
+	move.angles.push(cmd.angles[0]);
+	move.angles.push(cmd.angles[1]);
+	move.angles.push(cmd.angles[2]);
+	move.forwardmove = cmd.forwardmove;
+	move.rightmove = cmd.rightmove;
+	move.upmove = cmd.upmove;
+
 	NetSend(clop);
 }
 
@@ -45,12 +56,11 @@ function CreateNewCommands() {
 	}
 
 	cl.cmdNumber++;
-	var cmdNum = cl.cmdNumber & CMD_MASK;
-	cl.cmds[cmdNum] = CreateCommand();
+	cl.cmds[cl.cmdNumber & CMD_MASK] = CreateCommand();
 }
 
 function CreateCommand() {
-	var cmd = new Net.ClientOp_UserCmd();
+	var cmd = new UserCmd();
 
 	KeyMove(cmd);
 	MouseMove(cmd);
@@ -62,33 +72,26 @@ function CreateCommand() {
 	return cmd;
 }
 
-// TODO Move somewhere generic
-function ClampChar(i) {
-	if ( i < -128 ) {
-		return -128;
-	}
-	if ( i > 127 ) {
-		return 127;
-	}
-	return i;
-}
-
 function KeyMove(cmd) {
 	var movespeed = 127;
 	var forward = 0, side = 0, up = 0;
 
-	if (rightKey) side += movespeed * GetKeyState(rightKey);
-	if (leftKey) side -= movespeed * GetKeyState(leftKey);
-
-	if (upKey) up += movespeed * GetKeyState(upKey);
-	if (upKey) up -= movespeed * GetKeyState(upKey);
-
 	if (forwardKey) forward += movespeed * GetKeyState(forwardKey);
 	if (backKey) forward -= movespeed * GetKeyState(backKey);
 
+	if (rightKey) side += movespeed * GetKeyState(rightKey);
+	if (leftKey) side -= movespeed * GetKeyState(leftKey);
+
+	if (upKey) { var foobar = GetKeyState(upKey); up += movespeed * foobar; }
+	//if (upKey) up -= movespeed * GetKeyState(upKey);
+
 	cmd.forwardmove = ClampChar(forward);
 	cmd.rightmove = ClampChar(side);
-	cmd.upmove = ClampChar(up);
+	cmd.upmove = up;
+
+	if (isNaN(cmd.upmove)) {
+		console.log('TEST MOTHER FUCKER', cmd.upmove, foobar);
+	}
 }
 
 function MouseMove(cmd) {
@@ -109,16 +112,16 @@ function MouseMove(cmd) {
 	cl.mouseX = 0;
 	cl.mouseY = 0;
 
-	cmd.angles.push(cl.viewangles[0]);
-	cmd.angles.push(cl.viewangles[1]);
-	cmd.angles.push(cl.viewangles[2]);
+	cmd.angles[0] = cl.viewangles[0];
+	cmd.angles[1] = cl.viewangles[1];
+	cmd.angles[2] = cl.viewangles[2];
 }
 
 /**
  * Key helpers
  */
 function GetKey(keyName) {
-	return keys[keyName] || (keys[keyName] = Object.create(KeyState));
+	return keys[keyName] || (keys[keyName] = new KeyState());
 }
 
 function GetKeyNameForKeyCode(keyCode) {
@@ -213,7 +216,7 @@ function GetKeyState(key) {
 	key.partial = 0;
 
 	if (key.active) {
-		msec += cls.frameTime- key.downtime;
+		msec += cls.frameTime - key.downtime;
 	}
 
 	key.downtime = cls.frameTime;

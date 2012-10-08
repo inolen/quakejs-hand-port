@@ -16,9 +16,9 @@ message ClientOp {
 message ClientOp_UserCmd {
   required uint32 serverTime = 1;
   repeated float angles = 2 [packed=true];
-  required int32 forwardmove = 3;
-  required int32 rightmove = 4;
-  required int32 upmove = 5;
+  required int8 forwardmove = 3;
+  required int8 rightmove = 4;
+  required int8 upmove = 5;
 }
 
 message ServerOp {
@@ -55,9 +55,15 @@ message ServerOp_Snapshot {
 }
 
 message PlayerState {
-  repeated float origin = 1 [packed=true];
-  repeated float velocity = 2 [packed=true];
-  repeated float viewangles = 3 [packed=true];
+  required uint32 commandTime = 1;
+  required uint32 pm_type     = 2;
+  required uint32 pm_flags    = 3;
+  required uint32 pm_time     = 4;
+  required uint32 gravity     = 5;
+  required uint32 speed       = 6;
+  repeated float origin       = 7 [packed=true];
+  repeated float velocity     = 8 [packed=true];
+  repeated float viewangles   = 9 [packed=true];
 }
 
 message EntityState {

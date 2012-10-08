@@ -115,6 +115,13 @@ function ParseSnapshot(msg) {
 }
 
 function ParsePacketPlayerstate(msg, snap) {
+	snap.ps.commandTime = msg.ps.commandTime;
+	snap.ps.pm_type = msg.ps.pm_type;
+	snap.ps.pm_flags = msg.ps.pm_flags;
+	snap.ps.pm_time = msg.ps.pm_time;
+	snap.ps.gravity = msg.ps.gravity;
+	snap.ps.speed = msg.ps.speed;
+	
 	if (msg.ps.origin.length) {
 		vec3.set(msg.ps.origin, snap.ps.origin);
 	}

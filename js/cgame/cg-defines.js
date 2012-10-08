@@ -14,6 +14,8 @@ var ClientGame = function () {
 	// prediction state
 	this.hyperspace           = false;           // true if prediction has hit a trigger_teleport
 	this.validPPS             = false;
+	this.predictedErrorTime   = 0;
+	this.predictedError       = vec3.create();
 	this.predictedPlayerState = null;
 	this.refdef               = new RefDef();
 };

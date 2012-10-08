@@ -69,7 +69,15 @@ PlayerState.prototype.clone = function () {
 	ps.jumppad_frame        = this.jumppad_frame;
 	ps.pmove_framecount     = this.pmove_framecount;
 	return ps;
-}
+};
+
+var UserCmd = function () {
+	this.serverTime  = 0;
+	this.angles      = [0, 0, 0];
+	this.forwardmove = 0;
+	this.rightmove   = 0;
+	this.upmove      = 0;
+};
 
 /**
  * EntityState is the information conveyed from the server

@@ -1,3 +1,13 @@
+function ClampChar(i) {
+	if (i < -128) {
+		return -128;
+	}
+	if (i > 127) {
+		return 127;
+	}
+	return i;
+}
+
 /**
  * Radix sort implementation for 32 bit ints
  * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
