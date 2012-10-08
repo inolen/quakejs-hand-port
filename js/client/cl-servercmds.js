@@ -74,7 +74,7 @@ function ParseSnapshot(msg) {
 	ParsePacketPlayerstate(msg, newSnap);
 
 	// read packet entities
-	//ParsePacketEntities(msg,/* old, */newSnap);
+	ParsePacketEntities(msg,/* old, */newSnap);
 
 	// if not valid, dump the entire thing now that it has
 	// been properly read
@@ -115,13 +115,24 @@ function ParseSnapshot(msg) {
 }
 
 function ParsePacketPlayerstate(msg, snap) {
-	snap.ps.commandTime = msg.ps.commandTime;
-	snap.ps.pm_type = msg.ps.pm_type;
-	snap.ps.pm_flags = msg.ps.pm_flags;
-	snap.ps.pm_time = msg.ps.pm_time;
-	snap.ps.gravity = msg.ps.gravity;
-	snap.ps.speed = msg.ps.speed;
-	
+	if (typeof msg.ps.commandTime !== 'undefined') {
+		snap.ps.commandTime = msg.ps.commandTime;
+	}
+	if (typeof msg.ps.pm_type !== 'undefined') {
+		snap.ps.pm_type = msg.ps.pm_type;
+	}
+	if (typeof msg.ps.pm_flags !== 'undefined') {
+		snap.ps.pm_flags = msg.ps.pm_flags;
+	}
+	if (typeof msg.ps.pm_time !== 'undefined') {
+		snap.ps.pm_time = msg.ps.pm_time;
+	}
+	if (typeof msg.ps.gravity !== 'undefined') {
+		snap.ps.gravity = msg.ps.gravity;
+	}
+	if (typeof msg.ps.speed !== 'undefined') {
+		snap.ps.speed = msg.ps.speed;
+	}	
 	if (msg.ps.origin.length) {
 		vec3.set(msg.ps.origin, snap.ps.origin);
 	}
@@ -168,16 +179,16 @@ function ParsePacketEntities(msg, snap) {
 			parseState.time2 = state.tyme2;
 		}
 		if (typeof state.origin !== 'undefined') {
-			parseState.origin = state.origin;
+			vec3.set(state.origin, parseState.origin);
 		}
 		if (typeof state.origin2 !== 'undefined') {
-			parseState.origin2 = state.origin2;
+			vec3.set(state.origin2, parseState.origin2);
 		}
 		if (typeof state.angles !== 'undefined') {
-			parseState.angles = state.angles;
+			vec3.set(state.angles, parseState.angles);
 		}
 		if (typeof state.angles2 !== 'undefined') {
-			parseState.angles2 = state.angles2;
+			vec3.set(state.angles2, parseState.angles2);
 		}
 		if (typeof state.groundEntityNum !== 'undefined') {
 			parseState.groundEntityNum = state.groundEntityNum;

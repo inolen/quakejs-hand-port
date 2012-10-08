@@ -16,8 +16,8 @@ function Init(glCtx, viewportUiEl) {
 	console.log('--------- RE Init ---------');
 	// Due to circular dependencies, we need to re-require now that we're all loaded.
 	// http://requirejs.org/docs/api.html#circular
-	com = require('common/com');
 	sys = require('system/sys');
+	com = require('common/com');
 
 	gl = glCtx;
 	viewportUi = viewportUiEl;

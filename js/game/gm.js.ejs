@@ -1,4 +1,5 @@
-define('game/gm', ['common/com', 'game/bg'], function (com, bg) {
+define('game/gm', ['system/sys', 'common/com', 'game/bg'], function (sys, com, bg) {
+	<%- include ../common/math.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include bg-defines.js %>
 	<%- include gm-defines.js %>

@@ -112,6 +112,25 @@ var RefDef = function () {
 	}
 };
 
+var RefEntityType = {
+	BBOX:          0,
+	MODEL:         1,
+	POLY:          2,
+	SPRITE:        3,
+	BEAM:          4,
+	RAIL_CORE:     5,
+	RAIL_RINGS:    6,
+	LIGHTNING:     7,
+	PORTALSURFACE: 8                             // doesn't draw anything, just info for portals
+};
+
+var RefEntity = function () {
+	this.type   = 0;
+	this.origin = vec3.create();
+	this.mins   = vec3.create();
+	this.maxs   = vec3.create();
+};
+
 var Orientation = function () {
 	this.origin      = vec3.create();
 	this.axis    = [

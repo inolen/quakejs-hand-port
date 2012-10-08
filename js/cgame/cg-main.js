@@ -44,6 +44,10 @@ function Frame(serverTime) {
 	
 	CalcViewValues();
 	cg.refdef.time = cg.time;
+
+	if (!cg.hyperspace) {
+		AddPacketEntities();
+	}
 	
 	cl.RenderScene(cg.refdef);
 	DrawFPS();

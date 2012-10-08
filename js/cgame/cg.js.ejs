@@ -1,11 +1,11 @@
-define('cgame/cg', ['system/sys', 'game/bg'], function (sys, bg) {
-	<%- include ../shared/shared.js %>
+define('cgame/cg', ['system/sys', 'common/com', 'game/bg'], function (sys, com, bg) {
 	<%- include ../common/com-defines.js %>
 	<%- include ../game/bg-defines.js %>
 	<%- include ../renderer/re-defines.js %>
 	<%- include cg-defines.js %>
 	<%- include cg-main.js %>
 	<%- include cg-draw.js %>
+	<%- include cg-ents.js %>
 	<%- include cg-playerstate.js %>
 	<%- include cg-predict.js %>
 	<%- include cg-snapshot.js %>

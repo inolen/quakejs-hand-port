@@ -115,8 +115,27 @@ function SetInitialSnapshot(snap) {
 function SetNextSnap(snap) {
 	cg.nextSnap = snap;
 
+	//bg.PlayerStateToEntityState(snap.ps, cg_entities[snap.ps.clientNum].nextState, false);
+	//cg_entities[cg.snap.ps.clientNum].interpolate = true;
+
+	// check for extrapolation errors
+	for (var i = 0; i < snap.numEntities; i++) {
+		var es = snap.es[i];
+		var cent = cg_entities[es.number];
+
+		// TODO copy shit
+		//cent.nextState = es;
+
+		// if this frame is a teleport, or the entity wasn't in the previous frame, don't interpolate
+		/*if (!cent.currentValid || ((cent.currentState.eFlags ^ es.eFlags) & EF_TELEPORT_BIT)) {
+			cent.interpolate = qfalse;
+		} else {
+			cent.interpolate = qtrue;
+		}*/
+	}
+
 	/*// If the next frame is a teleport for the playerstate, we can't interpolate.
-	if (cg.snap && ((snap.ps.eFlags ^ cg.snap->ps.eFlags) & EF_TELEPORT_BIT)) {
+	if (cg.snap && ((snap.ps.eFlags ^ cg.snap.ps.eFlags) & EF_TELEPORT_BIT)) {
 		cg.nextFrameTeleport = true;
 	} else {
 		cg.nextFrameTeleport = false;
