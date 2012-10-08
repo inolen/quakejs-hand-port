@@ -51,6 +51,7 @@ function Frame(frameTime, msec) {
 	NetFrame();
 
 	// Run the game simulation in chunks.
+	var frames = 0;
 	while (sv.timeResidual >= frameMsec) {
 		sv.timeResidual -= frameMsec;
 		svs.time += frameMsec;
@@ -58,9 +59,13 @@ function Frame(frameTime, msec) {
 
 		// Let everything in the world think and move.
 		gm.Frame(sv.time);
+		frames++;
 	}
 
-	SendClientMessages();
+	// Don't send out duplicate snapshots if we didn't run any gameframes.
+	if (frames > 0) {
+		SendClientMessages();
+	}
 }
 
 function SpawnServer(mapName) {

@@ -75,9 +75,9 @@ function ProcessSnapshots() {
 		throw new Error('ProcessSnapshots: cg.nextSnap.serverTime <= cg.time');
 	}
 
-	if (!cg.nextSnap) {
+	/*if (!cg.nextSnap) {
 		console.log('ProcessSnapshots: No valid nextSnap.');
-	}
+	}*/
 }
 
 function ReadNextSnapshot() {
