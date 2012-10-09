@@ -1,5 +1,4 @@
-// TODO: We need to use a node.js specific lib on the server so we can accept connections.
-define('system/WebSocketClientChannel', [], function () {
+define('system/WebSocketClientSocket', [], function () {
 	var WebSocketClientChannel = function (addr, challenge, callback) {
 		var self = this;
 

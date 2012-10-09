@@ -76,7 +76,7 @@ function SendClientSnapshot(client) {
 	msg.ps.viewangles.push(frame.ps.viewangles[1]);
 	msg.ps.viewangles.push(frame.ps.viewangles[2]);
 
-	NetSend(client.netchan, svop);
+	NetSend(client, svop);
 }
 
 function SendClientMessages() {

@@ -1,4 +1,4 @@
-define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'renderer/re'], function (sys, com, cm, cg, re) {
+define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'renderer/re', 'common/LoopbackSocket'], function (sys, com, cm, cg, re, LoopbackSocket) {
 	<%- include ../common/math.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include ../cgame/cg-defines.js %>
@@ -11,7 +11,7 @@ define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'rende
 	<%- include cl-net.js %>
 	<%- include cl-servercmds.js %>
 
-	var clExports = {
+	var cgameExports = {
 		GetGameState: function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
 		GetUserCommand: GetUserCommand,
@@ -26,7 +26,7 @@ define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'rende
 		RenderScene: re.RenderScene
 	};
 
-	return {
+	var publicExports = {
 		Init: Init,
 		InitCGame: InitCGame,
 		ShutdownCGame: ShutdownCGame,
@@ -35,4 +35,6 @@ define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'rende
 		Frame: Frame,
 		MapLoading: MapLoading
 	};
+
+	return publicExports;
 });

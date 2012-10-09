@@ -1,7 +1,6 @@
 var netchan;
 
 function NetInit() {
-	//NetConnect('localhost', 9000);
 }
 
 function NetFrame() {
@@ -10,15 +9,40 @@ function NetFrame() {
 
 function NetConnect(host, port) {
 	if (netchan) {
-		com.NetChannelDestroy(netchan);
+		netchan.socket.Close();
 		netchan = null;
 	}
 
-	var chan = com.NetChannelCreate(NetSrc.NS_CLIENT, 'ws://' + host + ':' + port, 0);
+	var addr = StringToAddr('ws://' + host + ':' + port);
+	var socket;
 
-	chan.addListener('open', function () {
-		netchan = chan;
-	});
+	if (addr.type === NetAdrType.NA_LOOPBACK) {
+		socket = LoopbackSocket.ConnectToServer();
+	} else {
+		socket = new WebSocketClientChannel(addr);
+	}
+
+	netchan = new NetChan(addr, socket);
+}
+
+function StringToAddr(str) {
+	var addr = new NetAdr();
+
+	if (str.indexOf('localhost') !== -1) {
+		addr.type = NetAdrType.NA_LOOPBACK;
+	} else {
+		addr.type = NetAdrType.NA_IP;
+	}
+
+	// TODO: Add a default port support.
+	var ip = str;
+	var m = ip.match(/\/\/(.+)\:(\d+)/);
+	if (m) {
+		addr.ip = m[1];
+		addr.port = m[2];
+	}
+
+	return addr;
 }
 
 function NetSend(msg) {
@@ -41,7 +65,7 @@ function NetSend(msg) {
 	msg.SerializeToStream(serialized);
 
 	var buffer = serialized.getArrayBuffer();
-	netchan.SendPacket(buffer, serialized.length());
+	netchan.socket.SendPacket(buffer, serialized.length());
 }
 
 function ProcessQueue() {
@@ -51,7 +75,7 @@ function ProcessQueue() {
 	}
 
 	var packet;
-	while ((packet = netchan.GetPacket())) {
+	while ((packet = netchan.socket.GetPacket())) {
 		PacketEvent(packet.addr, packet.buffer, packet.length);
 	}
 }
@@ -59,6 +83,5 @@ function ProcessQueue() {
 function PacketEvent(addr, buffer, length) {
 	var msg = new Net.ServerOp();
 	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
-
 	ExecuteServerMessage(msg);
 }

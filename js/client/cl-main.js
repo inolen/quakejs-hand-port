@@ -48,7 +48,7 @@ function ClearState() {
 
 function InitCGame() {
 	clc.state = ConnectionState.LOADING;
-	cg.Init(clExports, clc.serverMessageSequence);
+	cg.Init(cgameExports, clc.serverMessageSequence);
 	clc.state = ConnectionState.PRIMED;
 }
 

@@ -1,4 +1,4 @@
-define('server/sv', ['client/cl', 'system/sys', 'common/com', 'common/cm', 'game/gm', 'common/Q3Bsp'], function (cl, sys, com, cm, gm, Q3Bsp) {
+define('server/sv', ['system/sys', 'common/com', 'common/cm', 'client/cl', 'game/gm', 'common/Q3Bsp', 'common/LoopbackSocket'], function (sys, com, cm, cl, gm, Q3Bsp, LoopbackSocket) {
 	<%- include ../common/com-defines.js %>
 	<%- include sv-defines.js %>
 	<%- include sv-main.js %>
@@ -9,7 +9,7 @@ define('server/sv', ['client/cl', 'system/sys', 'common/com', 'common/cm', 'game
 	<%- include sv-snapshot.js %>
 	<%- include sv-world.js %>
 
-	var svExports = {
+	var gameExports = {
 		GetEntityDefs: cm.EntityDefs,
 		LocateGameData: LocateGameData,
 		SetBrushModel: SetBrushModel,
@@ -19,8 +19,10 @@ define('server/sv', ['client/cl', 'system/sys', 'common/com', 'common/cm', 'game
 		Trace: cm.Trace
 	};
 
-	return {
+	var publicExports = {
 		Init: Init,
 		Frame: Frame
 	};
+
+	return publicExports;
 });

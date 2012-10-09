@@ -101,7 +101,7 @@ function SpawnServer(mapName) {
 		ClearWorld();
 
 		// Initialize the game.
-		gm.Init(svExports);
+		gm.Init(gameExports);
 
 		/*// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {

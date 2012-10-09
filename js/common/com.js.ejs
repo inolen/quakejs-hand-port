@@ -1,10 +1,9 @@
-define('common/com', ['system/sys', 'server/sv', 'client/cl', 'common/LoopbackChannel', 'common/WebSocketClientChannel'], function (sys, sv, cl, LoopbackChannel, WebSocketClientChannel) {
+define('common/com', ['system/sys', 'server/sv', 'client/cl'], function (sys, sv, cl) {
 	<%- include com-defines.js %>
 	<%- include cm-defines.js %>
 	<%- include com-main.js %>
 	<%- include com-cmd.js %>
 	<%- include com-cvar.js %>
-	<%- include com-net.js %>
 
 	return {
 		Init: Init,
@@ -13,8 +12,6 @@ define('common/com', ['system/sys', 'server/sv', 'client/cl', 'common/LoopbackCh
 		CmdGet: CmdGet,
 		CvarAdd: CvarAdd,
 		CvarGet: CvarGet,
-		CvarSet: CvarSet,
-		NetChannelCreate: NetChannelCreate,
-		NetChannelDestroy: NetChannelDestroy
+		CvarSet: CvarSet
 	};
 });

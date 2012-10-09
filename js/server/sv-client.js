@@ -1,5 +1,5 @@
-function ClientConnect(netchan) {
-	console.log('SV: A client is direct connecting', netchan);
+function ClientConnect(addr, socket) {
+	console.log('SV: A client is direct connecting');
 
 	// Find a slot for the client.
 	var clientNum;
@@ -13,8 +13,9 @@ function ClientConnect(netchan) {
 		throw new Error('Server is full');
 	}
 
+	// Create the client.
 	var newcl = svs.clients[clientNum] = new ServerClient(clientNum);
-	newcl.netchan = netchan;
+	newcl.netchan = new NetChan(addr, socket);
 
 	UserinfoChanged(newcl);
 
@@ -27,12 +28,10 @@ function ClientConnect(netchan) {
 	newcl.gamestateMessageNum = -1;
 }
 
-function ClientDisconnect(client) {
-	// TODO we need to store a client number or something,
-	// checking by address is lame.
-	var idx;
+function ClientDisconnect(addr) {
+	var i;
 
-	for (var i = 0; i < svs.clients.length; i++) {
+	for (i = 0; i < svs.clients.length; i++) {
 		var c = svs.clients[i];
 
 		if (!c) {
@@ -40,17 +39,13 @@ function ClientDisconnect(client) {
 		}
 
 		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
-			idx = i;
-			break;
+			delete svs.clients[i];
+			return;
 		}
 	}
 
-	if (idx === undefined) {
-		console.warn('SV: No client found to disconnect.');
-		return;
-	}
+	throw new Error('SV: No client found to disconnect.');
 
-	delete svs.clients[idx];
 }
 
 function ExecuteClientMessage(client, msg) {
@@ -126,7 +121,8 @@ function SendClientGameState(client) {
 	cs.value = sv_serverid();
 	svop.svop_gamestate.configstrings.push(cs);
 
-	NetSend(client.netchan, svop);
+	console.log('Sending client game state');
+	NetSend(client, svop);
 }
 
 function ClientThink(client, cmd) {

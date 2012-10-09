@@ -1,10 +1,9 @@
 var Q3W_BASE_FOLDER = 'baseq3';
-
 var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
-/**
+/************************************************
  * NETWORKING
- */
+ ************************************************/
 var MAX_CLIENTS            = 64;                 // absolute limit
 var MAX_LOCATIONS          = 64;
 var MAX_GENTITIES          = 1024;
@@ -17,21 +16,23 @@ var PACKET_BACKUP   = 32;                        // number of old messages that 
                                                  // server for delta comrpession and ping estimation
 var PACKET_MASK     = (PACKET_BACKUP-1);
 
-var NetAdr = function () {
-	this.type = 0;
-	this.ip   = null;
-	this.port = 0;
-};
-
 var NetAdrType = {
 	NA_BAD:      0,
 	NA_LOOPBACK: 1,
 	NA_IP:       2
 };
 
-var NetSrc = {
-	NS_CLIENT: 0,
-	NS_SERVER: 1
+var NetAdr = function (type, ip, port) {
+	this.type = type;
+	this.ip   = ip;
+	this.port = port;
+};
+
+var NetChan = function (addr, socket) {
+	this.remoteAddress    = addr;
+	this.socket           = socket;
+	this.incomingSequence = 0;
+	this.outgoingSequence = 0;
 };
 
 var ConnectionState = {
@@ -49,9 +50,9 @@ var SNAPFLAG_RATE_DELAYED   = 1;
 var SNAPFLAG_NOT_ACTIVE     = 2;                 // snapshot used during connection and for zombies
 var SNAPFLAG_SERVERCOUNT    = 4;                 // toggled every map_restart so transitions can be detected
 
-/**
+/************************************************
  * GAMESTATE
- */
+ ************************************************/
 var PS_PMOVEFRAMECOUNTBITS = 6;
 
 var PlayerState = function () {
@@ -124,9 +125,9 @@ var EntityState = function () {
 	this.eventParm       = 0;
 };
 
-/**
- * Surface flags
- */
+/************************************************
+ * SURFACE FLAGS
+ ************************************************/
 var CONTENTS_SOLID              = 1;             // an eye is never valid in a solid
 var CONTENTS_LAVA               = 8;
 var CONTENTS_SLIME              = 16;
@@ -178,10 +179,9 @@ var SURF_ALPHASHADOW            = 0x10000;       // do per-pixel light shadow ca
 var SURF_NODLIGHT               = 0x20000;       // don't dlight even if solid (solid lava, skies)
 var SURF_DUST                   = 0x40000;       // leave a dust trail when walking on this surface
 
-
-/**
- * Planes
- */
+/************************************************
+ * PLANES
+ ************************************************/
  var Plane = function () {
  	this.normal   = vec3.create();
  	this.dist     = 0;
