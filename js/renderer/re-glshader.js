@@ -505,7 +505,7 @@ function CompileShader(shader, lightmapIndex) {
 		// Optimize and use default programs when we can.
 		// TODO We should move the default shaders over to re-shader instead of this hack.
 		if (shader.stages.length === 1 && shader.opaque === true) {
-			glstage.program = lightmapIndex === LIGHTMAP_BY_VERTEX ? modelProgram : defaultProgram;
+			glstage.program = lightmapIndex === LightmapType.VERTEX ? modelProgram : defaultProgram;
 		} else {
 			var vertexSrc = GenerateVertexShader(shader, stage);
 			var fragmentSrc = GenerateFragmentShader(shader, stage);

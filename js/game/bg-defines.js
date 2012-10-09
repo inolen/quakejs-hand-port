@@ -1,11 +1,11 @@
 // content masks
 var MASK_ALL                    = -1;
-var MASK_SOLID                  = CONTENTS_SOLID;
-var MASK_PLAYERSOLID            = CONTENTS_SOLID | CONTENTS_PLAYERCLIP | CONTENTS_BODY;
-var MASK_DEADSOLID              = CONTENTS_SOLID | CONTENTS_PLAYERCLIP;
-var MASK_WATER                  = CONTENTS_WATER | CONTENTS_LAVA | CONTENTS_SLIME
-var MASK_OPAQUE                 = CONTENTS_SOLID | CONTENTS_SLIME | CONTENTS_LAVA;
-var MASK_SHOT                   = CONTENTS_SOLID | CONTENTS_BODY | CONTENTS_CORPSE;
+var MASK_SOLID                  = ContentFlags.SOLID;
+var MASK_PLAYERSOLID            = ContentFlags.SOLID | ContentFlags.PLAYERCLIP | ContentFlags.BODY;
+var MASK_DEADSOLID              = ContentFlags.SOLID | ContentFlags.PLAYERCLIP;
+var MASK_WATER                  = ContentFlags.WATER | ContentFlags.LAVA       | ContentFlags.SLIME
+var MASK_OPAQUE                 = ContentFlags.SOLID | ContentFlags.SLIME      | ContentFlags.LAVA;
+var MASK_SHOT                   = ContentFlags.SOLID | ContentFlags.BODY       | ContentFlags.CORPSE;
 
 var PMF_DUCKED                  = 1;
 var PMF_JUMP_HELD               = 2;

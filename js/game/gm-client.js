@@ -7,7 +7,7 @@ function ClientBegin(clientNum) {
 
 	ent.s.number = clientNum;
 	ent.client = client;
-	ent.contents = CONTENTS_BODY;
+	ent.contents = ContentFlags.BODY;
 
 	ClientSpawn(ent);
 }

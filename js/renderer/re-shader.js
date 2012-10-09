@@ -389,15 +389,15 @@ function ParseShader(tokens) {
 			case 'sort':
 				var sort = tokens.next().toLowerCase();
 				switch(sort) {
-					case 'portal':     shader.sort = SS_PORTAL;         break;
-					case 'sky':        shader.sort = SS_ENVIRONMENT;    break;
-					case 'opaque':     shader.sort = SS_OPAQUE;         break;
-					case 'decal':      shader.sort = SS_DECAL;          break;
-					case 'seeThrough': shader.sort = SS_SEE_THROUGH;    break;
-					case 'banner':     shader.sort = SS_BANNER;         break;
-					case 'additive':   shader.sort = SS_BLEND1;         break;
-					case 'nearest':    shader.sort = SS_NEAREST;        break;
-					case 'underwater': shader.sort = SS_UNDERWATER;     break;
+					case 'portal':     shader.sort = ShaderSort.PORTAL;         break;
+					case 'sky':        shader.sort = ShaderSort.ENVIRONMENT;    break;
+					case 'opaque':     shader.sort = ShaderSort.OPAQUE;         break;
+					case 'decal':      shader.sort = ShaderSort.DECAL;          break;
+					case 'seeThrough': shader.sort = ShaderSort.SEE_THROUGH;    break;
+					case 'banner':     shader.sort = ShaderSort.BANNER;         break;
+					case 'additive':   shader.sort = ShaderSort.BLEND1;         break;
+					case 'nearest':    shader.sort = ShaderSort.NEAREST;        break;
+					case 'underwater': shader.sort = ShaderSort.UNDERWATER;     break;
 					default:           shader.sort = parseInt(sort);    break;
 				};
 				break;
@@ -420,14 +420,14 @@ function ParseShader(tokens) {
 	if (!shader.sort) {
 		/*// see through item, like a grill or grate
 		if (pStage->stateBits & GLS_DEPTHMASK_TRUE ) {
-			shader.sort = SS_SEE_THROUGH;
+			shader.sort = ShaderSort.SEE_THROUGH;
 		} else {
-			shader.sort = SS_BLEND0;
+			shader.sort = ShaderSort.BLEND0;
 		}*/
 		if (shader.opaque) {
-			shader.sort = SS_OPAQUE;
+			shader.sort = ShaderSort.OPAQUE;
 		} else {
-			shader.sort = SS_BLEND0;
+			shader.sort = ShaderSort.BLEND0;
 		}
 	}
 

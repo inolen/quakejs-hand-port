@@ -1,4 +1,3 @@
-var gl;
 var viewportFrame = document.getElementById('viewport-frame');
 var viewport = document.getElementById('viewport');
 var viewportUi = document.getElementById('viewport-ui');
@@ -8,22 +7,8 @@ function Init() {
 	// http://requirejs.org/docs/api.html#circular
 	com = require('common/com');
 
-	InputInit();
-	ContextInit();
-
-	com.Init(gl, viewport, viewportUi);
-
-	function onRequestedFrame(timestamp) {
-		window.requestAnimationFrame(onRequestedFrame, viewport);
-		com.Frame();
-	}
-
-	window.requestAnimationFrame(onRequestedFrame, viewport);
-}
-
-function ContextInit() {	
 	// Get the GL Context (try 'webgl' first, then fallback).
-	gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
+	var gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
 
 	if (!gl) {
 		document.getElementById('webgl-error').style.display = 'block';
@@ -36,6 +21,16 @@ function ContextInit() {
 
 	// Handle fullscreen transition.
 	document.addEventListener('fullscreenchange', FullscreenChanged, false);
+
+	InputInit();
+	com.Init(gl, viewport, viewportUi);
+
+	function onRequestedFrame(timestamp) {
+		window.requestAnimationFrame(onRequestedFrame, viewport);
+		com.Frame();
+	}
+
+	window.requestAnimationFrame(onRequestedFrame, viewport);
 }
 
 // Utility function that tests a list of webgl contexts and returns when one can be created

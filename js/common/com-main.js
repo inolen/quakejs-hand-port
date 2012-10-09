@@ -1,7 +1,6 @@
 var events;
 var frameTime;
 var lastFrameTime;
-var com_dedicated;
 
 function Init(gl, viewport, viewportUi) {
 	// Due to circular dependencies, we need to re-require sys now that we're all loaded.
@@ -10,8 +9,6 @@ function Init(gl, viewport, viewportUi) {
 
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
-	
-	com_dedicated = CvarAdd('com_dedicated', 0);
 
 	sv.Init();
 	cl.Init(gl, viewport, viewportUi);

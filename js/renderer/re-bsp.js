@@ -191,7 +191,7 @@ function LoadSurfaces(map) {
 			ParseMesh(face, r_subdivisions());
 		}
 
-		face.shader = ShaderForShaderNum(face.shader, face.type === Q3Bsp.SurfaceTypes.MST_TRIANGLE_SOUP ? LIGHTMAP_BY_VERTEX : LIGHTMAP_2D);
+		face.shader = ShaderForShaderNum(face.shader, face.type === Q3Bsp.SurfaceTypes.MST_TRIANGLE_SOUP ? LightmapType.VERTEX : LightmapType.UV);
 		face.shader.geomType = face.type;
 
 		// Transform lightmap coords to match position in combined texture.

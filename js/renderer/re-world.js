@@ -169,7 +169,7 @@ function MarkLeaves() {
 
 	/*if (re.viewCluster == -1 ) {
 		for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
-			if (nodes[i].contents != CONTENTS_SOLID) {
+			if (nodes[i].contents != ContentFlags.SOLID) {
 				nodes[i].visframe = re.visCount;
 			}
 		}

@@ -36,7 +36,7 @@ function TouchTriggers(ent) {
 			continue;
 		}
 
-		if (!(hit.contents & CONTENTS_TRIGGER)) {
+		if (!(hit.contents & ContentFlags.TRIGGER)) {
 			continue;
 		}
 

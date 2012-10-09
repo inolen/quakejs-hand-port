@@ -1,7 +1,7 @@
 entityEvents['trigger_push'] = {
 	spawn: function (self) {
 		sv.SetBrushModel(self, self.model);
-		self.contents = CONTENTS_TRIGGER;
+		self.contents = ContentFlags.TRIGGER;
 		self.nextthink = level.time + FRAMETIME;
 		sv.LinkEntity(self);
 	},

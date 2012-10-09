@@ -24,4 +24,4 @@ var ClientGame = function () {
 var ClientGameStatic = function () {
 	this.gameState            = null;
 	this.processedSnapshotNum = 0;               // the number of snapshots cgame has requested
-}
+};

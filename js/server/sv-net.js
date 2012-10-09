@@ -1,7 +1,7 @@
 function NetInit() {
 	var socket;
 
-	if (!com.CvarGet('com_dedicated')) {
+	if (true) {
 		socket = LoopbackSocket.ConnectToClient();
 	} else {
 	}
