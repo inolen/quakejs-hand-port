@@ -1,0 +1,12 @@
+define('system/sys', ['common/com'], function (com) {
+	<%- include sys-defines.js %>
+	<%- include sys-input.js %>
+	<%- include sys-main.js %>
+
+	return {
+		InputEventTypes: InputEventTypes,
+
+		Init: Init,
+		GetMilliseconds: GetMilliseconds
+	};
+});

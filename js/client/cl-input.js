@@ -1,18 +1,7 @@
 var activeKeys = {};
-var lastPageX = 0;
-var lastPageY = 0;
 var forwardKey, leftKey, backKey, rightKey, upKey;
 
 function InputInit() {
-	document.addEventListener('keydown', function (ev) { SysKeyDownEvent(ev); });
-	document.addEventListener('keyup', function (ev) { SysKeyUpEvent(ev); });
-	viewport.addEventListener('mousedown', function (ev) { SysMouseDownEvent(ev); });
-	viewport.addEventListener('mouseup', function (ev) { SysMouseUpEvent(ev); });
-	viewport.addEventListener('mousemove', function (ev) { SysMouseMoveEvent(ev); });
-	viewport.addEventListener('click', function(event) {
-		viewport.requestPointerLock();
-	}, false);
-
 	com.CmdAdd('+forward', function (key) { forwardKey = key; });
 	com.CmdAdd('+left', function (key) { leftKey = key; });
 	com.CmdAdd('+back', function (key) { backKey = key; });
@@ -124,88 +113,31 @@ function GetKey(keyName) {
 	return keys[keyName] || (keys[keyName] = new KeyState());
 }
 
-function GetKeyNameForKeyCode(keyCode) {
-	var local = KbLocals['us'];
-
-	for (var key in local) {
-		if (!local.hasOwnProperty(key)) continue;
-		if (local[key] == keyCode) return key;
-	}
-}
-
-function GetKeyNameForMouseButton(button) {
-	return 'mouse' + button;
-}
-
 /**
  * Abstracted key/mouse event handling.
  */
-function KeyDownEvent(keyName) {
+function KeyDownEvent(time, keyName) {
 	var key = GetKey(keyName);
 
 	// Some browsers repeat keydown events, we don't want that.
 	if (key.active) return;
 
 	key.active = true;
-	key.downtime = sys.GetMilliseconds();
+	key.downtime = time;
 	ExecBinding(key);
 }
 
-function KeyUpEvent(keyName) {
+function KeyUpEvent(time, keyName) {
 	var key = GetKey(keyName);
-	key.active = false; // Partial frame summing
-	key.partial += sys.GetMilliseconds() - key.downtime;
+	key.active = false;
+	// Partial frame summing.
+	key.partial += time - key.downtime;
 	ExecBinding(key);
 }
 
-function MouseMoveEvent(dx, dy) {
+function MouseMoveEvent(time, dx, dy) {
 	cl.mouseX += dx;
 	cl.mouseY += dy;
-}
-
-/**
- * System keyboard/mouse event handling.
- */
-function SysKeyDownEvent(ev) {
-	var keyName = GetKeyNameForKeyCode(ev.keyCode);
-
-	// Special check for fullscreen.
-	if (ev.altKey && keyName == 'enter') {
-		sys.RequestFullscreen();
-	}
-
-	KeyDownEvent(keyName);
-}
-
-function SysKeyUpEvent(ev) {
-	var keyName = GetKeyNameForKeyCode(ev.keyCode);
-	KeyUpEvent(keyName);
-}
-
-function SysMouseDownEvent(ev) {
-	var keyName = GetKeyNameForMouseButton(ev.button);
-	KeyDownEvent(keyName);
-}
-
-function SysMouseUpEvent(ev) {
-	var keyName = GetKeyNameForMouseButton(ev.button);
-	KeyUpEvent(keyName);
-}
-
-function SysMouseMoveEvent(ev) {
-	var deltaX, deltaY;
-
-	if (document.pointerLockElement) {
-		deltaX = ev.movementX;
-		deltaY = ev.movementY;
-	} else {
-		deltaX = ev.pageX - lastPageX;
-		deltaY = ev.pageY - lastPageY;
-		lastPageX = ev.pageX;
-		lastPageY = ev.pageY;
-	}
-
-	MouseMoveEvent(deltaX, deltaY);
 }
 
 /**

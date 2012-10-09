@@ -1,3 +1,4 @@
+var events;
 var frameTime;
 var lastFrameTime;
 var com_dedicated;
@@ -7,6 +8,7 @@ function Init(gl, viewport, viewportUi) {
 	// http://requirejs.org/docs/api.html#circular
 	sys = require('system/sys');
 
+	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 	
 	com_dedicated = CvarAdd('com_dedicated', 0);
@@ -25,36 +27,39 @@ function Init(gl, viewport, viewportUi) {
 	};
 }
 
-function GetMsec() {
+function Frame() {
 	lastFrameTime = frameTime;
 	frameTime = sys.GetMilliseconds();
-	return frameTime - lastFrameTime;
-}
 
-function Frame() {
-	var msec = GetMsec();
+	var msec = frameTime - lastFrameTime;
+
+	EventLoop();
+
 	sv.Frame(frameTime, msec);
 	cl.Frame(frameTime, msec);
 }
 
-/*function EventLoop() {
-	var ev = _events.shift();
+function EventLoop() {
+	var ev = events.shift();
 
 	while (ev) {
-		var handler = _eventHandlers[ev.type];
-
-		if (!handler) {
-			console.error("Could not find handler for event " + ev.type);
-			continue;
+		switch (ev.type) {
+			case sys.InputEventTypes.KEYDOWN:
+				cl.KeyDownEvent(ev.time, ev.keyName);
+				break;
+			case sys.InputEventTypes.KEYUP:
+				cl.KeyUpEvent(ev.time, ev.keyName);
+				break;
+			case sys.InputEventTypes.MOUSEMOVE:
+				cl.MouseMoveEvent(ev.time, ev.deltaX, ev.deltaY);
+				break;
 		}
 
-		handler.call(this, ev);
-
-		ev = _events.shift();
+		ev = events.shift();
 	}
 };
 
 function QueueEvent(ev) {
-	ev.time = Date().now;
-	_events.push(ev);
-};*/
+	ev.time = sys.GetMilliseconds();
+	events.push(ev);
+};
