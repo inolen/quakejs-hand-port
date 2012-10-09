@@ -24,7 +24,7 @@ function KeyDownEvent(ev) {
 
 	// Special check for fullscreen.
 	if (ev.altKey && keyName == 'enter') {
-		RequestFullscreen();
+		viewportFrame.requestFullscreen();
 	}
 
 	com.QueueEvent({ type: InputEventTypes.KEYDOWN, keyName: keyName });

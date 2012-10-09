@@ -2,6 +2,7 @@ var CMD_BACKUP = 64;
 var CMD_MASK   = (CMD_BACKUP - 1);
 
 var ClientGame = function () {
+	this.initialized          = false;
 	this.thisFrameTeleport    = false;
 	this.nextFrameTeleport    = false;
 	this.time                 = 0;               // this is the time value that the client is rendering at.

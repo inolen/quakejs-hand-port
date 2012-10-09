@@ -71,6 +71,8 @@ function Frame(frameTime, msec) {
 function SpawnServer(mapName) {
 	console.log('SV: Spawning new server instance running: ' + mapName);
 
+	sv.initialized = false;
+	
 	// Shutdown the game.
 	gm.Shutdown();
 	

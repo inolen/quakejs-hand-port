@@ -22,8 +22,11 @@ function Init(cl_interface, serverMessageNum) {
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
-	cl.LoadClipMap(cgs.gameState['sv_mapname']);
-	cl.LoadRenderMap(cgs.gameState['sv_mapname']);
+	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
+		cl.LoadRenderMap(cgs.gameState['sv_mapname'], function () {
+			cg.initialized = true;
+		});
+	});
 }
 
 function Shutdown() {
@@ -31,6 +34,10 @@ function Shutdown() {
 }
 
 function Frame(serverTime) {
+	if (!cg.initialized) {
+		return;
+	}
+	
 	cg.time = serverTime;
 	
 	ProcessSnapshots(); 
