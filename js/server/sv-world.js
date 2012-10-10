@@ -80,13 +80,7 @@ function FindEntitiesInBox(mins, maxs) {
 
 			var ent = node.entities[num];
 			var gent = GentityForSvEntity(ent);
-
-			/*if (_.keys(node.entities).length === 2 && window.foobar !== 2) {
-				console.log(gent, mins, maxs);
-				if (!window.foobar) window.foobar = 0;
-				window.foobar++;
-			}*/
-
+			
 			if (gent.absmin[0] > maxs[0] ||
 				gent.absmin[1] > maxs[1] ||
 				gent.absmin[2] > maxs[2] ||

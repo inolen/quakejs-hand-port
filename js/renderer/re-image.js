@@ -79,9 +79,10 @@ function BuildTexture(buffer, width, height, clamp) {
 	} else {
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
-		_.each(buffer, function (sub) {
+		for (var i = 0; i < buffer.length; i++) {
+			var sub = buffer[i];
 			gl.texSubImage2D(gl.TEXTURE_2D, 0, sub.x, sub.y, sub.width, sub.height, gl.RGBA, gl.UNSIGNED_BYTE, sub.buffer);
-		});
+		}
 	}
 
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
