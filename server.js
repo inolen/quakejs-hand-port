@@ -1,7 +1,8 @@
 var express = require('express'),
 	http = require('http'),
 	path = require('path'),
-	WebSocketServer = require('websocket').server;
+	WebSocketServer = require('websocket').server;/*,
+	sys = require('./js/system/sys');*/
 
 function createGameServer(server) {
 	wsServer = new WebSocketServer({

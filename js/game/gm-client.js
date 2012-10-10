@@ -30,7 +30,7 @@ function ClientThink(clientNum, cmd) {
 	var pm = new PmoveInfo();
 	pm.ps = client.ps;
 	pm.cmd = cmd;
-	pm.tracemask = MASK_PLAYERSOLID;
+	pm.tracemask = ContentMasks.PLAYERSOLID;
 	pm.trace = sv.Trace;
 	bg.Pmove(pm);
 

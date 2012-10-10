@@ -129,7 +129,7 @@ function CheckJump(pm) {
 	}
 
 	// must wait for jump to be released
-	if (ps.pm_flags & PMF_JUMP_HELD) {
+	if (ps.pm_flags & PmoveFlags.JUMP_HELD) {
 		// clear upmove so cmdscale doesn't lower running speed
 		pm.cmd.upmove = 0;
 		return false;
@@ -137,7 +137,7 @@ function CheckJump(pm) {
 
 	groundPlane = false; // jumping away
 	walking = false;
-	ps.pm_flags |= PMF_JUMP_HELD;
+	ps.pm_flags |= PmoveFlags.JUMP_HELD;
 
 	ps.groundEntityNum = ENTITYNUM_NONE;
 	ps.velocity[2] = JUMP_VELOCITY;
@@ -145,10 +145,10 @@ function CheckJump(pm) {
 
 	if ( pm->cmd.forwardmove >= 0 ) {
 		PM_ForceLegsAnim( LEGS_JUMP );
-		pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+		pm->ps->pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
 	} else {
 		PM_ForceLegsAnim( LEGS_JUMPB );
-		pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+		pm->ps->pm_flags |= PmoveFlags.BACKWARDS_JUMP;
 	}*/
 
 	return true;
@@ -177,10 +177,10 @@ function GroundTrace(pm) {
 		/*// go into jump animation
 		if ( pm->cmd.forwardmove >= 0 ) {
 			PM_ForceLegsAnim( LEGS_JUMP );
-			pm->ps->pm_flags &= ~PMF_BACKWARDS_JUMP;
+			pm->ps->pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
 		} else {
 			PM_ForceLegsAnim( LEGS_JUMPB );
-			pm->ps->pm_flags |= PMF_BACKWARDS_JUMP;
+			pm->ps->pm_flags |= PmoveFlags.BACKWARDS_JUMP;
 		}*/
 
 		ps.groundEntityNum = ENTITYNUM_NONE;
@@ -598,7 +598,7 @@ function PmoveSingle(pm, msec) {
 
 	if (pm.cmd.upmove < 10) {
 		// not holding jump
-		ps.pm_flags &= ~PMF_JUMP_HELD;
+		ps.pm_flags &= ~PmoveFlags.JUMP_HELD;
 	}
 
 	CheckDuck(pm);
@@ -640,7 +640,7 @@ function Pmove(pm) {
 
 		PmoveSingle(pm, msec);
 
-		if (pm.ps.pm_flags & PMF_JUMP_HELD) {
+		if (pm.ps.pm_flags & PmoveFlags.JUMP_HELD) {
 			pm.cmd.upmove = 20;
 		}
 	}

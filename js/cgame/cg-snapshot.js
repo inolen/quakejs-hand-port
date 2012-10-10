@@ -198,7 +198,7 @@ function TransitionSnapshot() {
 
 		// if we are not doing client side movement prediction for any
 		// reason, then the client events and view changes will be issued now
-		if ((cg.snap.ps.pm_flags & PMF_FOLLOW)) {
+		if ((cg.snap.ps.pm_flags & PmoveFlags.FOLLOW)) {
 			CG_TransitionPlayerState(ps, ops);
 		}
 	}*/

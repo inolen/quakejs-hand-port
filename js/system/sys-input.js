@@ -27,13 +27,13 @@ function KeyDownEvent(ev) {
 		viewportFrame.requestFullscreen();
 	}
 
-	com.QueueEvent({ type: InputEventTypes.KEYDOWN, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });
 }
 
 function KeyUpEvent(ev) {
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
-	com.QueueEvent({ type: InputEventTypes.KEYUP, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });
 }
 
 function MouseDownEvent(ev) {
@@ -43,13 +43,13 @@ function MouseDownEvent(ev) {
 		viewport.requestPointerLock();
 	}
 
-	com.QueueEvent({ type: InputEventTypes.KEYDOWN, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });
 }
 
 function MouseUpEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
-	com.QueueEvent({ type: InputEventTypes.KEYUP, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });
 }
 
 var lastPageX = 0;
@@ -67,5 +67,5 @@ function MouseMoveEvent(ev) {
 		lastPageY = ev.pageY;
 	}
 
-	com.QueueEvent({ type: InputEventTypes.MOUSEMOVE, deltaX: deltaX, deltaY: deltaY });
+	com.QueueEvent({ type: com.EventTypes.MOUSEMOVE, deltaX: deltaX, deltaY: deltaY });
 }

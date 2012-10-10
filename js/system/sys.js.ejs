@@ -1,12 +1,22 @@
+if (typeof define !== 'function') {
+	var define = require('amdefine')(module);
+}
+
 define('system/sys', ['common/com'], function (com) {
+	<%- include ../common/shared.js %>
 	<%- include sys-defines.js %>
 	<%- include sys-input.js %>
 	<%- include sys-main.js %>
 
-	return {
-		InputEventTypes: InputEventTypes,
-
-		Init: Init,
-		GetMilliseconds: GetMilliseconds
+	var protectedExports = {
+		GetGameRenderContext: GetGameRenderContext,
+		GetUIRenderContext:   GetUIRenderContext,
+		GetMilliseconds:      GetMilliseconds
 	};
+
+	var publicExports = {
+		Init: Init
+	};
+
+	return publicExports;
 });

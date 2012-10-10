@@ -1,18 +1,13 @@
-define('common/com', ['system/sys', 'server/sv', 'client/cl'], function (sys, sv, cl) {
+define('common/com', ['server/sv', 'client/cl'], function (sv, cl) {
 	<%- include com-defines.js %>
 	<%- include cm-defines.js %>
 	<%- include com-main.js %>
-	<%- include com-cmd.js %>
-	<%- include com-cvar.js %>
 
 	return {
+		EventTypes: EventTypes,
+
 		Init: Init,
 		Frame: Frame,
-		QueueEvent: QueueEvent,
-		CmdAdd: CmdAdd,
-		CmdGet: CmdGet,
-		CvarAdd: CvarAdd,
-		CvarGet: CvarGet,
-		CvarSet: CvarSet
+		QueueEvent: QueueEvent
 	};
 });

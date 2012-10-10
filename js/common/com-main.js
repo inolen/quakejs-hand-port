@@ -1,17 +1,17 @@
+var sys;
+
 var events;
 var frameTime;
 var lastFrameTime;
 
-function Init(gl, viewport, viewportUi) {
-	// Due to circular dependencies, we need to re-require sys now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	sys = require('system/sys');
+function Init(sys_) {
+	sys = sys_;
 
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
-	sv.Init();
-	cl.Init(gl, viewport, viewportUi);
+	sv.Init(sys);
+	cl.Init(sys);
 
 	// Provide the user a way to interface with the client.
 	window.$ = function (cmd) {
@@ -41,13 +41,13 @@ function EventLoop() {
 
 	while (ev) {
 		switch (ev.type) {
-			case sys.InputEventTypes.KEYDOWN:
+			case EventTypes.KEYDOWN:
 				cl.KeyDownEvent(ev.time, ev.keyName);
 				break;
-			case sys.InputEventTypes.KEYUP:
+			case EventTypes.KEYUP:
 				cl.KeyUpEvent(ev.time, ev.keyName);
 				break;
-			case sys.InputEventTypes.MOUSEMOVE:
+			case EventTypes.MOUSEMOVE:
 				cl.MouseMoveEvent(ev.time, ev.deltaX, ev.deltaY);
 				break;
 		}

@@ -1,6 +1,5 @@
-var gl;
-var viewport;
-var viewportUi;
+var sys;
+
 var cl;
 var clc;
 var cls = new ClientStatic();
@@ -9,24 +8,17 @@ var cl_showTimeDelta;
 var commands = {};
 var keys = {};
 
-function Init(glCtx, viewportEl, viewportUiEl) {
+function Init(sys_) {
 	console.log('--------- CL Init ---------');
 
-	// Due to circular dependencies, we need to re-require now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	com = require('common/com');
-	sys = require('system/sys');
-
-	gl = glCtx;
-	viewport = viewportEl;
-	viewportUi = viewportUiEl;
+	sys = sys_;
 
 	ClearState();
 	clc = new ClientConnection();
 	cls.realtime = 0;
 
-	cl_sensitivity = com.CvarAdd('cl_sensitivity', 2);
-	cl_showTimeDelta = com.CvarAdd('cl_showTimeDelta', 0);
+	cl_sensitivity = cvar.AddCvar('cl_sensitivity', 2);
+	cl_showTimeDelta = cvar.AddCvar('cl_showTimeDelta', 0);
 
 	InputInit();
 	CmdInit();
@@ -48,7 +40,7 @@ function ClearState() {
 
 function InitCGame() {
 	clc.state = ConnectionState.LOADING;
-	cg.Init(cgameExports, clc.serverMessageSequence);
+	cg.Init(sys, protectedExports, clc.serverMessageSequence);
 	clc.state = ConnectionState.PRIMED;
 }
 
@@ -57,7 +49,7 @@ function ShutdownCGame() {
 }
 
 function InitRenderer() {
-	re.Init(gl, viewportUi);
+	re.Init(sys);
 }
 
 function ShutdownRenderer() {

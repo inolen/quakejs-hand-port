@@ -1,8 +1,7 @@
-define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'renderer/re', 'common/LoopbackSocket'], function (sys, com, cm, cg, re, LoopbackSocket) {
-	<%- include ../common/math.js %>
+define('client/cl', ['common/cm', 'cgame/cg', 'renderer/re', 'common/cmd', 'common/cvar', 'common/LoopbackSocket'], function (cm, cg, re, cmd, cvar, LoopbackSocket) {
+	<%- include ../common/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include ../cgame/cg-defines.js %>
-	<%- include ../renderer/re-defines.js %>
 	<%- include cl-defines.js %>
 	<%- include cl-main.js %>
 	<%- include cl-cgame.js %>
@@ -11,7 +10,7 @@ define('client/cl', ['system/sys', 'common/com', 'common/cm', 'cgame/cg', 'rende
 	<%- include cl-net.js %>
 	<%- include cl-servercmds.js %>
 
-	var cgameExports = {
+	var protectedExports = {
 		GetGameState: function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
 		GetUserCommand: GetUserCommand,

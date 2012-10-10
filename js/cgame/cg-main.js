@@ -1,24 +1,23 @@
+var sys;
 var cl;
+
 var cg;
 var cgs;
 var cg_errordecay;
 var cg_showmiss;
 
-function Init(cl_interface, serverMessageNum) {
+function Init(sys_, cl_, serverMessageNum) {
 	console.log('--------- CG Init ---------');
 
-	// Due to circular dependencies, we need to re-require now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	sys = require('system/sys');
-	com = require('common/com');
+	sys = sys_;
+	cl = cl_;
 
-	cl = cl_interface;
 	cg = new ClientGame();
 	cgs = new ClientGameStatic();
 
-	cg_errordecay = com.CvarAdd('cg_errordecay', 100);
-	cg_predict = com.CvarAdd('cg_predict', 0);
-	cg_showmiss = com.CvarAdd('cg_showmiss', 1);
+	cg_errordecay = cvar.AddCvar('cg_errordecay', 100);
+	cg_predict = cvar.AddCvar('cg_predict', 0);
+	cg_showmiss = cvar.AddCvar('cg_showmiss', 1);
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();

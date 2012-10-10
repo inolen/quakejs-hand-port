@@ -1,4 +1,5 @@
-define('server/sv', ['system/sys', 'common/com', 'common/cm', 'client/cl', 'game/gm', 'common/Q3Bsp', 'common/LoopbackSocket'], function (sys, com, cm, cl, gm, Q3Bsp, LoopbackSocket) {
+define('server/sv', ['common/cm', 'client/cl', 'game/gm', 'common/cmd', 'common/cvar', 'common/Q3Bsp', 'common/LoopbackSocket'], function (cm, cl, gm, cmd, cvar, Q3Bsp, LoopbackSocket) {
+	<%- include ../common/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include sv-defines.js %>
 	<%- include sv-main.js %>

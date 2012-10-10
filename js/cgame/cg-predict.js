@@ -47,7 +47,7 @@ function PredictPlayerState() {
 	}
 
 	// Just copy the moves when following.
-	if (cg.snap.ps.pm_flags & PMF_FOLLOW) {
+	if (cg.snap.ps.pm_flags & PmoveFlags.FOLLOW) {
 		InterpolatePlayerState(false);
 		return;
 	}
@@ -95,9 +95,9 @@ function PredictPlayerState() {
 	cg_pmove.trace = cl.Trace;
 	// cg_pmove.pointcontents = CG_PointContents;
 	if (cg_pmove.ps.pm_type === PmoveType.DEAD) {
-		cg_pmove.tracemask = MASK_PLAYERSOLID & ~ContentFlags.BODY;
+		cg_pmove.tracemask = ContentMasks.PLAYERSOLID & ~ContentFlags.BODY;
 	} else {
-		cg_pmove.tracemask = MASK_PLAYERSOLID;
+		cg_pmove.tracemask = ContentMasks.PLAYERSOLID;
 	}
 	// if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
 	// 	cg_pmove.tracemask &= ~ContentFlags.BODY;	// spectators can fly through bodies

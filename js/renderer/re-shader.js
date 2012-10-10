@@ -419,7 +419,7 @@ function ParseShader(tokens) {
 
 	if (!shader.sort) {
 		/*// see through item, like a grill or grate
-		if (pStage->stateBits & GLS_DEPTHMASK_TRUE ) {
+		if (pStage->stateBits & GLS_DEPTHContentMasks.TRUE ) {
 			shader.sort = ShaderSort.SEE_THROUGH;
 		} else {
 			shader.sort = ShaderSort.BLEND0;

@@ -1,3 +1,5 @@
+var sys;
+
 var sv;
 var svs;
 
@@ -5,18 +7,15 @@ var sv_serverid;
 var sv_mapname;
 var sv_fps;
 
-function Init() {
-	// Due to circular dependencies, we need to re-require com now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	sys = require('system/sys');
-	com = require('common/com');
+function Init(sys_) {
+	sys = sys_;
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
 	
-	sv_serverid = com.CvarAdd('sv_serverid', 1337);
-	sv_mapname = com.CvarAdd('sv_mapname', 'nomap');
-	sv_fps = com.CvarAdd('sv_fps',     20);
+	sv_serverid = cvar.AddCvar('sv_serverid', 1337);
+	sv_mapname = cvar.AddCvar('sv_mapname', 'nomap');
+	sv_fps = cvar.AddCvar('sv_fps',     20);
 
 	CmdInit();
 	NetInit();
@@ -95,15 +94,15 @@ function SpawnServer(mapName) {
 
 	// Load the collision map.
 	cm.LoadMap(mapName, _.bind(function () {
-		com.CvarSet('sv_mapname', mapName);
+		cvar.SetCvar('sv_mapname', mapName);
 		// serverid should be different each time.
-		com.CvarSet('sv_serverid', svs.frameTime);
+		cvar.SetCvar('sv_serverid', svs.frameTime);
 
 		// Clear physics interaction links.
 		ClearWorld();
 
 		// Initialize the game.
-		gm.Init(gameExports);
+		gm.Init(sys, gameExports);
 
 		/*// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {

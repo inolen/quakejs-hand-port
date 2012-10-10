@@ -2,11 +2,11 @@ var activeKeys = {};
 var forwardKey, leftKey, backKey, rightKey, upKey;
 
 function InputInit() {
-	com.CmdAdd('+forward', function (key) { forwardKey = key; });
-	com.CmdAdd('+left', function (key) { leftKey = key; });
-	com.CmdAdd('+back', function (key) { backKey = key; });
-	com.CmdAdd('+right', function (key) { rightKey = key; });
-	com.CmdAdd('+jump', function (key) { upKey = key; });
+	cmd.AddCmd('+forward', function (key) { forwardKey = key; });
+	cmd.AddCmd('+left', function (key) { leftKey = key; });
+	cmd.AddCmd('+back', function (key) { backKey = key; });
+	cmd.AddCmd('+right', function (key) { rightKey = key; });
+	cmd.AddCmd('+jump', function (key) { upKey = key; });
 
 	Bind('w', '+forward');
 	Bind('a', '+left');
@@ -168,7 +168,7 @@ function ExecBinding(key) {
 	if (!cmdToExec) return;
 	if (!key.active && cmdToExec.charAt(0) === '+') cmdToExec = '-' + cmdToExec.substr(1);
 
-	var callback = com.CmdGet(cmdToExec);
+	var callback = cmd.GetCmd(cmdToExec);
 	if (callback) callback.call(this, key);
 }
 

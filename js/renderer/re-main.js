@@ -1,3 +1,5 @@
+var sys;
+
 var re;
 var gl;
 var viewportUi;
@@ -12,21 +14,21 @@ var flipMatrix = mat4.create([
 	0, 0, 0, 1
 ]);
 
-function Init(glCtx, viewportUiEl) {
+function Init(sys_) {
 	console.log('--------- RE Init ---------');
-	// Due to circular dependencies, we need to re-require now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	sys = require('system/sys');
-	com = require('common/com');
 
-	gl = glCtx;
-	viewportUi = viewportUiEl;
+	sys = sys_;
 	
 	re = new RenderLocals();
 
-	r_subdivisions = com.CvarAdd('r_subdivisions', 4);
-	r_znear = com.CvarAdd('r_znear', 4);
-	r_zproj = com.CvarAdd('r_zproj', 64);
+	r_subdivisions = cvar.AddCvar('r_subdivisions', 4);
+	r_znear = cvar.AddCvar('r_znear', 4);
+	r_zproj = cvar.AddCvar('r_zproj', 64);
+
+	var gameContext = sys.GetGameRenderContext();
+	var uiContext = sys.GetUIRenderContext();
+	gl = gameContext.gl;
+	viewportUi = uiContext.handle;
 
 	InitImages();
 	InitShaders();

@@ -1,6 +1,6 @@
 function CmdInit() {
-	com.CmdAdd('map', _.bind(CmdLoadMap, this));
-	com.CmdAdd('sectorlist', _.bind(CmdSectorList, this));
+	cmd.AddCmd('map', _.bind(CmdLoadMap, this));
+	cmd.AddCmd('sectorlist', _.bind(CmdSectorList, this));
 }
 
 function CmdLoadMap(mapName) {

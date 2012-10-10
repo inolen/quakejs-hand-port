@@ -1,14 +1,11 @@
+var gl;
 var viewportFrame = document.getElementById('viewport-frame');
 var viewport = document.getElementById('viewport');
 var viewportUi = document.getElementById('viewport-ui');
 
 function Init() {
-	// Due to circular dependencies, we need to re-require com now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	com = require('common/com');
-
 	// Get the GL Context (try 'webgl' first, then fallback).
-	var gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
+	gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
 
 	if (!gl) {
 		document.getElementById('webgl-error').style.display = 'block';
@@ -23,7 +20,7 @@ function Init() {
 	document.addEventListener('fullscreenchange', FullscreenChanged, false);
 
 	InputInit();
-	com.Init(gl, viewport, viewportUi);
+	com.Init(protectedExports);
 
 	function onRequestedFrame(timestamp) {
 		window.requestAnimationFrame(onRequestedFrame, viewport);
@@ -60,6 +57,19 @@ function FullscreenChanged() {
 		viewport.width = viewportFrame.offsetWidth;
 		viewport.height = viewportFrame.offsetHeight;
 	}
+}
+
+function GetGameRenderContext() {
+	var ctx = new RenderContext();
+	ctx.handle = viewport;
+	ctx.gl = gl;
+	return ctx;
+}
+
+function GetUIRenderContext() {
+	var ctx = new RenderContext();
+	ctx.handle = viewportUi;
+	return ctx;
 }
 
 function GetMilliseconds() {

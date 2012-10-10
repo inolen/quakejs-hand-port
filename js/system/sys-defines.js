@@ -1,9 +1,3 @@
-var InputEventTypes = {
-	KEYDOWN:   1,
-	KEYUP:     2,
-	MOUSEMOVE: 3
-};
-
 var KbLocals = {
 	'us': {
 		'backspace': 8,

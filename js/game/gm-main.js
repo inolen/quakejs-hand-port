@@ -1,18 +1,17 @@
+var sys;
 var sv;
+
 var level;
 
 var g_gravity;
 
-function Init(sv_interface) {
-	// Due to circular dependencies, we need to re-require now that we're all loaded.
-	// http://requirejs.org/docs/api.html#circular
-	sys = require('system/sys');
-	com = require('common/com');
+function Init(sys_, sv_) {
+	sys = sys_;
+	sv = sv_;
 
-	sv = sv_interface;
 	level = new LevelLocals();
 
-	g_gravity = com.CvarAdd('g_gravity', 800);
+	g_gravity = cvar.AddCvar('g_gravity', 800);
 
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);
