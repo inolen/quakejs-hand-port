@@ -1,4 +1,4 @@
-define('common/Q3Bsp', [], function () {
+define('shared/Q3Bsp', [], function () {
 	var Q3Bsp = function () {
 		return {
 			Load: function (url, callback) {

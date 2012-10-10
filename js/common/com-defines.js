@@ -1,3 +1,8 @@
+/**********************************************************
+ * Definitions common between client and server, but not
+ * game or render modules.
+ **********************************************************/
+
 var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 // Event types for the main message pump.

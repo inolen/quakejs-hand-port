@@ -1,4 +1,4 @@
-define('common/WebSocketClientSocket', [], function () {
+define('shared/WebSocketClientSocket', [], function () {
 	var WebSocketClientChannel = function (addr, challenge, callback) {
 		var self = this;
 

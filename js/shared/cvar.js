@@ -1,4 +1,4 @@
-define('common/cvar', [], function () {
+define('shared/cvar', [], function () {
 	var cvars = {};
 
 	function Cvar(defaultValue, changeCallback) {

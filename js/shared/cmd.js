@@ -1,4 +1,4 @@
-define('common/cmd', [], function () {
+define('shared/cmd', [], function () {
 	var commands = {};
 
 	function AddCmd(cmd, callback) {
