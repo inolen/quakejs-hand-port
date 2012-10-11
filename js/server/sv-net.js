@@ -1,10 +1,7 @@
 function NetInit() {
 	var socket;
 
-	if (true) {
-		socket = LoopbackSocket.ConnectToClient();
-	} else {
-	}
+	socket = sys.CreateServer();
 
 	socket.addListener('accept', function (addr, socket) {
 		ClientConnect(addr, socket);

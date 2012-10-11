@@ -67,7 +67,7 @@ function CalcViewValues() {
 	cg.refdef.width = viewport.width;
 	cg.refdef.height = viewport.height;
 	vec3.set(ps.origin, cg.refdef.vieworg);
-	vec3.anglesToAxis(ps.viewangles, cg.refdef.viewaxis);
+	AnglesToAxis(ps.viewangles, cg.refdef.viewaxis);
 
 	// Add error decay.
 	// if (cg_errorDecay() > 0) {

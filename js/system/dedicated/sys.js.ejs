@@ -1,0 +1,20 @@
+define('system/dedicated/sys', ['common/com'], function (com) {
+	<%- include ../../shared/shared.js %>
+	<%- include ../sys-defines.js %>
+	<%- include sys-main.js %>
+	<%- include sys-net.js %>
+
+	var protectedExports = {
+		GetGameRenderContext: GetGameRenderContext,
+		GetUIRenderContext:   GetUIRenderContext,
+		GetMilliseconds:      GetMilliseconds,
+		CreateServer:         CreateServer,
+		ConnectToServer:      ConnectToServer
+	};
+
+	var publicExports = {
+		Init: Init
+	};
+
+	return publicExports;
+});

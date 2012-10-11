@@ -16,18 +16,6 @@ var PACKET_BACKUP   = 32;                        // number of old messages that 
                                                  // server for delta comrpession and ping estimation
 var PACKET_MASK     = (PACKET_BACKUP-1);
 
-var NetAdrType = {
-	NA_BAD:      0,
-	NA_LOOPBACK: 1,
-	NA_IP:       2
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
 var NetChan = function (addr, socket) {
 	this.remoteAddress    = addr;
 	this.socket           = socket;

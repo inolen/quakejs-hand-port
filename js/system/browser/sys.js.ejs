@@ -1,0 +1,25 @@
+if (typeof define !== 'function') {
+	var define = require('amdefine')(module);
+}
+
+define('system/browser/sys', ['common/com', 'system/browser/LoopbackSocket', 'system/browser/WebSocketClient'], function (com, LoopbackSocket, WebSocketClient) {
+	<%- include ../../shared/shared.js %>
+	<%- include ../sys-defines.js %>
+	<%- include sys-input.js %>
+	<%- include sys-main.js %>
+	<%- include sys-net.js %>
+
+	var protectedExports = {
+		GetGameRenderContext: GetGameRenderContext,
+		GetUIRenderContext:   GetUIRenderContext,
+		GetMilliseconds:      GetMilliseconds,
+		CreateServer:         CreateServer,
+		ConnectToServer:      ConnectToServer
+	};
+
+	var publicExports = {
+		Init: Init
+	};
+
+	return publicExports;
+});

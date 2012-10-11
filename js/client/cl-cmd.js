@@ -3,5 +3,7 @@ function CmdInit() {
 }
 
 function CmdConnect(serverName) {
-	console.log('command connect: ' + serverName);
+	console.log('whuttup');
+	var parts = serverName.split(':');
+	NetConnect(parts[0], parts[1]);
 }

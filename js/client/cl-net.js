@@ -14,35 +14,8 @@ function NetConnect(host, port) {
 	}
 
 	var addr = StringToAddr('ws://' + host + ':' + port);
-	var socket;
-
-	if (addr.type === NetAdrType.NA_LOOPBACK) {
-		socket = LoopbackSocket.ConnectToServer();
-	} else {
-		socket = new WebSocketClientChannel(addr);
-	}
-
+	var socket = sys.ConnectToServer(addr);
 	netchan = new NetChan(addr, socket);
-}
-
-function StringToAddr(str) {
-	var addr = new NetAdr();
-
-	if (str.indexOf('localhost') !== -1) {
-		addr.type = NetAdrType.NA_LOOPBACK;
-	} else {
-		addr.type = NetAdrType.NA_IP;
-	}
-
-	// TODO: Add a default port support.
-	var ip = str;
-	var m = ip.match(/\/\/(.+)\:(\d+)/);
-	if (m) {
-		addr.ip = m[1];
-		addr.port = m[2];
-	}
-
-	return addr;
 }
 
 function NetSend(msg) {

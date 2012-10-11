@@ -594,7 +594,7 @@ function PmoveSingle(pm, msec) {
 
 	// Update our view angles.
 	UpdateViewAngles(ps, cmd);
-	vec3.anglesToVectors(ps.viewangles, forward, right, up);
+	AnglesToVectors(ps.viewangles, forward, right, up);
 
 	if (pm.cmd.upmove < 10) {
 		// not holding jump
