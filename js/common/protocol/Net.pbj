@@ -16,9 +16,9 @@ message ClientOp {
 message ClientOp_UserCmd {
   required uint32 serverTime = 1;
   repeated float angles = 2 [packed=true];
-  required int8 forwardmove = 3;
-  required int8 rightmove = 4;
-  required int8 upmove = 5;
+  required int32 forwardmove = 3;
+  required int32 rightmove = 4;
+  required int32 upmove = 5;
 }
 
 message ServerOp {

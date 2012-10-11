@@ -1,4 +1,6 @@
-define('clipmap/cm', ['shared/Q3Bsp'], function (Q3Bsp) {
+define('clipmap/cm',
+['underscore', 'glmatrix', 'jsstruct', 'shared/Q3Bsp'],
+function (_, glmatrix, Struct, Q3Bsp) {
 	<%- include ../shared/shared.js %>
 	<%- include cm-defines.js %>
 	<%- include cm-bsp.js %>

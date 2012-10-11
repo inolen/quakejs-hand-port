@@ -1,4 +1,6 @@
-define('shared/Q3Bsp', [], function () {
+define('shared/Q3Bsp',
+['jsstruct'],
+function (Struct) {
 	var Q3Bsp = function () {
 		return {
 			Load: function (url, callback) {

@@ -1,4 +1,6 @@
-define('common/com', ['server/sv', 'client/cl', 'shared/cmd'], function (sv, cl, cmd) {
+define('common/com',
+['underscore', 'server/sv', 'client/cl', 'shared/cmd'],
+function (_, sv, cl, cmd) {
 	<%- include com-defines.js %>
 	<%- include com-main.js %>
 

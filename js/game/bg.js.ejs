@@ -1,4 +1,6 @@
-define('game/bg', [], function () {
+define('game/bg',
+['glmatrix'],
+function (glmatrix) {
 	<%- include ../shared/shared.js %>
 	<%- include bg-defines.js %>
 	<%- include bg-misc.js %>

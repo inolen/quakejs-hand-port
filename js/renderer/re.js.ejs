@@ -1,4 +1,6 @@
-define('renderer/re', ['shared/cvar', 'shared/Q3Bsp'], function (cvar, Q3Bsp) {
+define('renderer/re',
+['underscore', 'glmatrix', 'jsstruct', 'shared/cvar', 'shared/Q3Bsp'],
+function (_, glmatrix, Struct, cvar, Q3Bsp) {
 	<%- include ../shared/shared.js %>
 	<%- include re-defines.js %>
 	<%- include re-main.js %>

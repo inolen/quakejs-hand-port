@@ -1,6 +1,6 @@
 .PHONY: modules protocol
 
-default: modules protocol
+#default: modules protocol
 
 ###########################################################
 # Build the cgame, game and sys modules. We're being

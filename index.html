@@ -3,20 +3,22 @@
 	<head>
 		<title>q3.js</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
-		<script type="text/javascript" src="js/vendor/underscore-min.js"></script>
-		<script type="text/javascript" src="js/vendor/EventEmitter.min.js"></script>
 		<script type="text/javascript" src="js/vendor/game-shim.js"></script>
-		<script type="text/javascript" src="js/vendor/gl-matrix-min.js"></script>
-		<script type="text/javascript" src="js/vendor/gl-matrix-ext.js"></script>
-		<script type="text/javascript" src="js/vendor/js-struct.js"></script>
-		<script type="text/javascript" src="js/vendor/protobuf.js"></script>
-		<script type="text/javascript" src="js/vendor/pbj.js"></script>
-		<script type="text/javascript" src="js/common/protocol/Net.pbj.js"></script>
 		<script type="text/javascript" src="js/vendor/require.min.js"></script>
 		<script>
 			require.config({
-				baseUrl: 'js'
+				baseUrl: 'js',
+				paths: {
+					'underscore':   'vendor/underscore',
+					'EventEmitter': 'vendor/EventEmitter',
+					'glmatrix':     'vendor/gl-matrix',
+					'jsstruct':     'vendor/js-struct',
+					'protobuf':     'vendor/protobuf',
+					'Net':          'common/protocol/Net.pbj'
+				},
+				shim: {
+					'Net': ['protobuf']
+				}
 			});
 
 			require(['system/browser/sys'], function (sys) {

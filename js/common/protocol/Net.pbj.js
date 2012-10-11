@@ -1,3 +1,4 @@
+(function (exports) {
 "use strict";
 /** @suppress {duplicate}*/var Net;
 if (typeof(Net)=="undefined") {Net = {};}
@@ -48,19 +49,19 @@ Net.ClientOp_UserCmd = PROTO.Message("Net.ClientOp_UserCmd",{
 	forwardmove: {
 		options: {},
 		multiplicity: PROTO.required,
-		type: function(){return PBJ.int8;},
+		type: function(){return PROTO.int32;},
 		id: 3
 	},
 	rightmove: {
 		options: {},
 		multiplicity: PROTO.required,
-		type: function(){return PBJ.int8;},
+		type: function(){return PROTO.int32;},
 		id: 4
 	},
 	upmove: {
 		options: {},
 		multiplicity: PROTO.required,
-		type: function(){return PBJ.int8;},
+		type: function(){return PROTO.int32;},
 		id: 5
 	}});
 Net.ServerOp = PROTO.Message("Net.ServerOp",{
@@ -268,3 +269,15 @@ Net.EntityState = PROTO.Message("Net.EntityState",{
 		type: function(){return PROTO.uint32;},
 		id: 12
 	}});
+
+// Expose the class either via AMD or the global object
+if(typeof define === 'function' && define.amd) {
+	define(function() {
+		return Net;
+	});
+}
+else {
+	exports.Net = Net;
+}
+
+}(this));

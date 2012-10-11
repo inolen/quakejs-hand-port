@@ -93,7 +93,7 @@ function SpawnServer(mapName) {
 	sv = new ServerLocals();
 
 	// Load the collision map.
-	cm.LoadMap(mapName, _.bind(function () {
+	cm.LoadMap(mapName, function () {
 		cvar.SetCvar('sv_mapname', mapName);
 		// serverid should be different each time.
 		cvar.SetCvar('sv_serverid', svs.frameTime);
@@ -132,5 +132,5 @@ function SpawnServer(mapName) {
 		svs.time += 100;*/
 
 		sv.initialized = true;
-	}, this));
+	});
 }

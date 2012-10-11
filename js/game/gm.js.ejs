@@ -1,4 +1,6 @@
-define('game/gm', ['game/bg', 'shared/cvar'], function (bg, cvar) {
+define('game/gm',
+['underscore', 'glmatrix', 'game/bg', 'shared/cvar'],
+function (_, glmatrix, bg, cvar) {
 	<%- include ../shared/shared.js %>
 	<%- include bg-defines.js %>
 	<%- include gm-defines.js %>

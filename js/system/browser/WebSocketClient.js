@@ -1,4 +1,6 @@
-define('system/WebSocketClient', [], function () {
+define('system/WebSocketClient',
+['underscore', 'EventEmitter'],
+function (_, EventEmitter) {
 	var WebSocketClient = function (addr, callback) {
 		var self = this;
 
