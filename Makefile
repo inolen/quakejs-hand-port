@@ -18,7 +18,13 @@ ALL_MODULES = \
 	js/shared/cvar.js \
 	js/shared/Q3Bsp.js \
 	js/renderer/re.js \
-	js/system/dedicated/sys.js
+	js/system/browser/sys.js \
+	js/system/dedicated/sys.js \
+	js/vendor/EventEmitter.js \
+	js/vendor/gl-matrix.js \
+	js/vendor/js-struct.js \
+	js/vendor/byte-buffer.js \
+	js/vendor/underscore.js
 
 ALL_MODULES_OUT = $(subst js/,js/bin/, $(ALL_MODULES))
 
@@ -44,9 +50,3 @@ js/bin/%.js: js/%.js
 #endef
 
 modules: $(ALL_MODULES_OUT)
-
-###########################################################
-# Convert our protocol buffer IDL into JS.
-###########################################################
-protocol:
-	protojs/pbj js/common/protocol/Net.pbj js/common/protocol/Net.pbj.js

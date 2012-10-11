@@ -1,6 +1,6 @@
 define('server/sv',
-['underscore', 'protobuf', 'Net', 'clipmap/cm', 'client/cl', 'game/gm', 'shared/cmd', 'shared/cvar', 'shared/Q3Bsp'],
-function (_, PROTO, Net, cm, cl, gm, cmd, cvar, Q3Bsp) {
+['underscore', 'ByteBuffer', 'clipmap/cm', 'client/cl', 'game/gm', 'shared/cmd', 'shared/cvar', 'shared/Q3Bsp'],
+function (_, ByteBuffer, cm, cl, gm, cmd, cvar, Q3Bsp) {
 	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include sv-defines.js %>

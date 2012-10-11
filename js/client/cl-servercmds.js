@@ -1,10 +1,13 @@
 function ExecuteServerMessage(msg) {
-	clc.serverMessageSequence = msg.serverMessageSequence;
+	var messageSequence = msg.readUnsignedInt();
+	var type = msg.readUnsignedByte();
 
-	if (msg.type === Net.ServerOp.Type.gamestate) {
-		ParseGameState(msg.svop_gamestate);
-	} else if (msg.type === Net.ServerOp.Type.snapshot) {
-		ParseSnapshot(msg.svop_snapshot);
+	clc.serverMessageSequence = messageSequence;
+
+	if (type === ServerMessage.gamestate) {
+		ParseGameState(msg);
+	} else if (type === ServerMessage.snapshot) {
+		ParseSnapshot(msg);
 	}
 }
 
@@ -12,10 +15,14 @@ function ParseGameState(msg) {
 	// Wipe local client state.
 	ClearState();
 
-	for (var i = 0; i < msg.configstrings.length; i++) {
-		var cs = msg.configstrings[i];
-		cl.gameState[cs.key] = cs.value;
-	}
+	// TODO make this read in an array of configstrings
+	var key = msg.readCString();
+	var val = msg.readCString();
+	cl.gameState[key] = val;
+
+	key = msg.readCString();
+	val = msg.readCString();
+	cl.gameState[key] = val;
 
 	// Let the client game init and load data.
 	InitCGame();
@@ -30,8 +37,8 @@ function ParseSnapshot(msg) {
 	newSnap.messageNum = clc.serverMessageSequence;
 
 	// TODO should be replaced by the code below
-	newSnap.serverTime = msg.serverTime;
-	newSnap.snapFlags = msg.snapFlags;
+	newSnap.serverTime = msg.readUnsignedInt();
+	newSnap.snapFlags = msg.readUnsignedInt();
 	newSnap.valid = true;
 
 	/*newSnap.serverTime = snapshot.serverTime;
@@ -74,7 +81,7 @@ function ParseSnapshot(msg) {
 	ParsePacketPlayerstate(msg, newSnap);
 
 	// read packet entities
-	ParsePacketEntities(msg,/* old, */newSnap);
+	//ParsePacketEntities(msg,/* old, */newSnap);
 
 	// if not valid, dump the entire thing now that it has
 	// been properly read
@@ -115,33 +122,21 @@ function ParseSnapshot(msg) {
 }
 
 function ParsePacketPlayerstate(msg, snap) {
-	if (typeof msg.ps.commandTime !== 'undefined') {
-		snap.ps.commandTime = msg.ps.commandTime;
-	}
-	if (typeof msg.ps.pm_type !== 'undefined') {
-		snap.ps.pm_type = msg.ps.pm_type;
-	}
-	if (typeof msg.ps.pm_flags !== 'undefined') {
-		snap.ps.pm_flags = msg.ps.pm_flags;
-	}
-	if (typeof msg.ps.pm_time !== 'undefined') {
-		snap.ps.pm_time = msg.ps.pm_time;
-	}
-	if (typeof msg.ps.gravity !== 'undefined') {
-		snap.ps.gravity = msg.ps.gravity;
-	}
-	if (typeof msg.ps.speed !== 'undefined') {
-		snap.ps.speed = msg.ps.speed;
-	}	
-	if (msg.ps.origin.length) {
-		vec3.set(msg.ps.origin, snap.ps.origin);
-	}
-	if (msg.ps.velocity.length) {
-		vec3.set(msg.ps.velocity, snap.ps.velocity);
-	}
-	if (msg.ps.viewangles.length) {
-		vec3.set(msg.ps.viewangles, snap.ps.viewangles);
-	}
+	snap.ps.commandTime = msg.readUnsignedInt();
+	snap.ps.pm_type = msg.readUnsignedInt();
+	snap.ps.pm_flags = msg.readUnsignedInt();
+	snap.ps.pm_time = msg.readUnsignedInt();
+	snap.ps.gravity = msg.readUnsignedInt();
+	snap.ps.speed = msg.readUnsignedInt();
+	snap.ps.origin[0] = msg.readFloat();
+	snap.ps.origin[1] = msg.readFloat();
+	snap.ps.origin[2] = msg.readFloat();
+	snap.ps.velocity[0] = msg.readFloat();
+	snap.ps.velocity[1] = msg.readFloat();
+	snap.ps.velocity[2] = msg.readFloat();
+	snap.ps.viewangles[0] = msg.readFloat();
+	snap.ps.viewangles[1] = msg.readFloat();
+	snap.ps.viewangles[2] = msg.readFloat();
 }
 
 function ParsePacketEntities(msg, snap) {	
@@ -163,42 +158,18 @@ function ParsePacketEntities(msg, snap) {
 			return;		// entity was delta removed
 		}*/
 
-		if (typeof state.number !== 'undefined') {
-			parseState.number = state.number;
-		}
-		if (typeof state.eType !== 'undefined') {
-			parseState.eType = state.eType;
-		}
-		if (typeof state.eFlags !== 'undefined') {
-			parseState.eFlags = state.eFlags;
-		}
-		if (typeof state.tyme !== 'undefined') {
-			parseState.time = state.tyme;
-		}
-		if (typeof state.tyme2 !== 'undefined') {
-			parseState.time2 = state.tyme2;
-		}
-		if (typeof state.origin !== 'undefined') {
-			vec3.set(state.origin, parseState.origin);
-		}
-		if (typeof state.origin2 !== 'undefined') {
-			vec3.set(state.origin2, parseState.origin2);
-		}
-		if (typeof state.angles !== 'undefined') {
-			vec3.set(state.angles, parseState.angles);
-		}
-		if (typeof state.angles2 !== 'undefined') {
-			vec3.set(state.angles2, parseState.angles2);
-		}
-		if (typeof state.groundEntityNum !== 'undefined') {
-			parseState.groundEntityNum = state.groundEntityNum;
-		}
-		if (typeof state.clientNum !== 'undefined') {
-			parseState.clientNum = state.clientNum;
-		}
-		if (typeof state.frame !== 'undefined') {
-			parseState.frame = state.frame;
-		}
+		parseState.number = state.number;
+		parseState.eType = state.eType;
+		parseState.eFlags = state.eFlags;
+		parseState.time = state.tyme;
+		parseState.time2 = state.tyme2;
+		vec3.set(state.origin, parseState.origin);
+		vec3.set(state.origin2, parseState.origin2);
+		vec3.set(state.angles, parseState.angles);
+		vec3.set(state.angles2, parseState.angles2);
+		parseState.groundEntityNum = state.groundEntityNum;
+		parseState.clientNum = state.clientNum;
+		parseState.frame = state.frame;
 
 		cl.parseEntitiesNum++;
 		snap.numEntities++;

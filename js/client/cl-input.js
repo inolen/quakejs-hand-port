@@ -18,24 +18,33 @@ function InputInit() {
 /**
  * Process current input variables into userComamnd_t struct for transmission to server.
  */
+
 function SendCommand() {
 	CreateNewCommands();
 
 	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
+	WriteCommandPacket(cmd);
+}
 
-	var clop = new Net.ClientOp();
-	clop.type = Net.ClientOp.Type.move;
+function WriteCommandPacket(cmd) {
+	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+	var serverid = parseInt(cl.gameState['sv_serverid']);
 
-	var move = clop.clop_move = new Net.ClientOp_UserCmd();
-	move.serverTime = cmd.serverTime;
-	move.angles.push(cmd.angles[0]);
-	move.angles.push(cmd.angles[1]);
-	move.angles.push(cmd.angles[2]);
-	move.forwardmove = cmd.forwardmove;
-	move.rightmove = cmd.rightmove;
-	move.upmove = cmd.upmove;
+	bb.writeUnsignedInt(serverid);
+	// Set the last message we received, which can be used for delta compression,
+	// and is also used to tell if we dropped a gamestate.
+	bb.writeUnsignedInt(clc.serverMessageSequence);
+	bb.writeUnsignedByte(ClientMessage.moveNoDelta);
 
-	NetSend(clop);
+	bb.writeUnsignedInt(cmd.serverTime);
+	bb.writeFloat(cmd.angles[0]);
+	bb.writeFloat(cmd.angles[1]);
+	bb.writeFloat(cmd.angles[2]);
+	bb.writeByte(cmd.forwardmove);
+	bb.writeByte(cmd.rightmove);
+	bb.writeByte(cmd.upmove);
+
+	NetSend(bb.raw, bb.index);
 }
 
 function CreateNewCommands() {

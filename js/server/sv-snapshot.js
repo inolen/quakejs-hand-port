@@ -30,14 +30,14 @@ function SendClientSnapshot(client) {
 	}
 
 	var frame = client.frames[client.netchan.outgoingSequence & PACKET_MASK];
+	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
 
-	var svop = new Net.ServerOp();
-	svop.type = Net.ServerOp.Type.snapshot;
-
-	var msg = svop.svop_snapshot = new Net.ServerOp_Snapshot();
+	bb.writeUnsignedInt(client.netchan.outgoingSequence);
+	bb.writeUnsignedByte(ServerMessage.snapshot);
 
 	// Send over the current server time so the client can drift
 	// its view of time to try to match.
+	var serverTime = sv.time;
 	if (client.oldServerTime) {
 		// The server has not yet got an acknowledgement of the
 		// new gamestate from this client, so continue to send it
@@ -45,38 +45,37 @@ function SendClientSnapshot(client) {
 		// the client's perspective this time is strictly speaking
 		// incorrect, but since it'll be busy loading a map at
 		// the time it doesn't really matter.
-		msg.serverTime = sv.time + client.oldServerTime;
-	} else {
-		msg.serverTime = sv.time;
+		serverTime = sv.time + client.oldServerTime;
 	}
+	bb.writeUnsignedInt(serverTime);
 
-	msg.snapFlags = svs.snapFlagServerBit;
+	var snapFlags = svs.snapFlagServerBit;
 	if (client.state !== ClientState.ACTIVE) {
-		msg.snapFlags |= SNAPFLAG_NOT_ACTIVE;
+		snapFlags |= SNAPFLAG_NOT_ACTIVE;
 	}
-	
-	msg.ps = new Net.PlayerState();
+	bb.writeUnsignedInt(snapFlags);
 
-	msg.ps.commandTime = frame.ps.commandTime;
-	msg.ps.pm_type = frame.ps.pm_type;
-	msg.ps.pm_flags = frame.ps.pm_flags;
-	msg.ps.pm_time = frame.ps.pm_time;
-	msg.ps.gravity = frame.ps.gravity;
-	msg.ps.speed = frame.ps.speed;
-	
-	msg.ps.origin.push(frame.ps.origin[0]);
-	msg.ps.origin.push(frame.ps.origin[1]);
-	msg.ps.origin.push(frame.ps.origin[2]);
+	// Write out playerstate
+	bb.writeUnsignedInt(frame.ps.commandTime);
+	bb.writeUnsignedInt(frame.ps.pm_type);
+	bb.writeUnsignedInt(frame.ps.pm_flags);
+	bb.writeUnsignedInt(frame.ps.pm_time);
+	bb.writeUnsignedInt(frame.ps.gravity);
+	bb.writeUnsignedInt(frame.ps.speed);
 
-	msg.ps.velocity.push(frame.ps.velocity[0]);
-	msg.ps.velocity.push(frame.ps.velocity[1]);
-	msg.ps.velocity.push(frame.ps.velocity[2]);
+	bb.writeFloat(frame.ps.origin[0]);
+	bb.writeFloat(frame.ps.origin[1]);
+	bb.writeFloat(frame.ps.origin[2]);
 
-	msg.ps.viewangles.push(frame.ps.viewangles[0]);
-	msg.ps.viewangles.push(frame.ps.viewangles[1]);
-	msg.ps.viewangles.push(frame.ps.viewangles[2]);
+	bb.writeFloat(frame.ps.velocity[0]);
+	bb.writeFloat(frame.ps.velocity[1]);
+	bb.writeFloat(frame.ps.velocity[2]);
 
-	NetSend(client, svop);
+	bb.writeFloat(frame.ps.viewangles[0]);
+	bb.writeFloat(frame.ps.viewangles[1]);
+	bb.writeFloat(frame.ps.viewangles[2]);
+
+	NetSend(client, bb.raw, bb.index);
 }
 
 function SendClientMessages() {

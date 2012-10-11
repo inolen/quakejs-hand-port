@@ -49,7 +49,11 @@ function ClientDisconnect(addr) {
 }
 
 function ExecuteClientMessage(client, msg) {
-	client.messageAcknowledge = msg.messageAcknowledge;
+	var serverid = msg.readUnsignedInt();
+	var messageSequence = msg.readUnsignedInt();
+	var type = msg.readUnsignedByte();
+
+	client.messageAcknowledge = messageSequence;
 
 	if (client.messageAcknowledge < 0) {
 		// Usually only hackers create messages like this.
@@ -59,7 +63,7 @@ function ExecuteClientMessage(client, msg) {
 
 	// If we can tell that the client has dropped the last
 	// gamestate we sent them, resend it.
-	if (msg.serverId !== sv_serverid()) {
+	if (serverid !== sv_serverid()) {
 		if (client.messageAcknowledge > client.gamestateMessageNum) {
 			SendClientGameState(client);
 		}
@@ -68,12 +72,17 @@ function ExecuteClientMessage(client, msg) {
 
 	// This client has acknowledged the new gamestate so it's
 	// safe to start sending it the real time again.
-	if (client.oldServerTime && msg.serverId === sv_serverid()) {
+	if (client.oldServerTime && serverid === sv_serverid()) {
 		client.oldServerTime = 0;
 	}
 
-	if (msg.type === Net.ClientOp.Type.move) {
-		UserMove(client, msg.clop_move);
+	switch (type) {
+		case ClientMessage.move:
+			UserMove(client, msg, true);
+			break;
+		case ClientMessage.moveNoDelta:
+			UserMove(client, msg, false);
+			break;
 	}
 }
 
@@ -87,7 +96,17 @@ function ClientEnterWorld(client) {
 	client.gentity = GentityForNum(client.clientNum);
 }
 
-function UserMove(client, cmd) {
+function UserMove(client, msg, delta) {
+	var cmd = new UserCmd();
+
+	cmd.serverTime = msg.readUnsignedInt();
+	cmd.angles[0] = msg.readFloat();
+	cmd.angles[1] = msg.readFloat();
+	cmd.angles[2] = msg.readFloat();
+	cmd.forwardmove = msg.readByte();
+	cmd.rightmove = msg.readByte();
+	cmd.upmove = msg.readByte();
+
 	// If this is the first usercmd we have received
 	// this gamestate, put the client into the world.
 	if (client.state === ClientState.PRIMED) {
@@ -106,23 +125,19 @@ function SendClientGameState(client) {
 	client.state = ClientState.PRIMED;
 	client.gamestateMessageNum = client.netchan.outgoingSequence;
 
-	var svop = new Net.ServerOp();
-	svop.type = Net.ServerOp.Type.gamestate;
-	svop.svop_gamestate = new Net.ServerOp_Gamestate();
+	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+
+	bb.writeUnsignedInt(client.netchan.outgoingSequence);
+	bb.writeUnsignedByte(ServerMessage.gamestate);
 
 	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and ClientState.SERVERINFO)
-	var cs = new Net.ServerOp.ConfigString();
-	cs.key = 'sv_mapname';
-	cs.value = sv_mapname();
-	svop.svop_gamestate.configstrings.push(cs);
+	bb.writeCString('sv_mapname');
+	bb.writeCString(sv_mapname());
 
-	cs = new Net.ServerOp.ConfigString();
-	cs.key = 'sv_serverid';
-	cs.value = sv_serverid();
-	svop.svop_gamestate.configstrings.push(cs);
+	bb.writeCString('sv_serverid');
+	bb.writeCString(sv_serverid().toString());
 
-	console.log('Sending client game state');
-	NetSend(client, svop);
+	NetSend(client, bb.raw, bb.index);
 }
 
 function ClientThink(client, cmd) {

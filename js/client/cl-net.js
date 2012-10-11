@@ -18,27 +18,13 @@ function NetConnect(host, port) {
 	netchan = new NetChan(addr, socket);
 }
 
-function NetSend(msg) {
+function NetSend(buffer, length) {
 	if (!netchan) {
 		console.warn('CL: NetSend called with uninitialized channel');
 		return;
 	}
 
-	// TODO: Validate message type.
-	/*if (!(msg instanceof PROTO.Message)) {
-		throw new Error('Message is not an instance of PROTO.Message');
-	}*/
-
-	msg.serverId = parseInt(cl.gameState['sv_serverid']);
-	// Set the last message we received, which can be used for delta compression,
-	// and is also used to tell if we dropped a gamestate.
-	msg.messageAcknowledge = clc.serverMessageSequence;
-
-	var serialized = new PROTO.ArrayBufferStream();
-	msg.SerializeToStream(serialized);
-
-	var buffer = serialized.getArrayBuffer();
-	netchan.socket.SendPacket(buffer, serialized.length());
+	netchan.socket.SendPacket(buffer, length);
 }
 
 function ProcessQueue() {
@@ -54,7 +40,7 @@ function ProcessQueue() {
 }
 
 function PacketEvent(addr, buffer, length) {
-	var msg = new Net.ServerOp();
-	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
-	ExecuteServerMessage(msg);
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+
+	ExecuteServerMessage(bb);
 }

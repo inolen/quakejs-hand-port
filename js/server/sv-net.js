@@ -16,23 +16,13 @@ function NetFrame() {
 	ProcessQueue();
 }
 
-function NetSend(client, msg) {
+function NetSend(client, buffer, length) {
 	var netchan = client.netchan;
 
-	// TODO: Validate message type.
-	/*if (!(msg instanceof PROTO.Message)) {
-		throw new Error('Message is not an instance of PROTO.Message');
-	}*/
-
 	// TODO: The netchan stuff needs an actual interface.
-	msg.serverMessageSequence = netchan.outgoingSequence;
 	netchan.outgoingSequence++;
-
-	var serialized = new PROTO.ArrayBufferStream();
-	msg.SerializeToStream(serialized);
-
-	var buffer = serialized.getArrayBuffer();
-	netchan.socket.SendPacket(buffer, serialized.length());
+	
+	netchan.socket.SendPacket(buffer, length);
 }
 
 function ProcessQueue() {
@@ -51,8 +41,7 @@ function ProcessQueue() {
 }
 
 function PacketEvent(client, buffer, length) {
-	var msg = new Net.ClientOp();
-	msg.ParseFromStream(new PROTO.ArrayBufferStream(buffer, length));
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 
-	ExecuteClientMessage(client, msg);
+	ExecuteClientMessage(client, bb);
 }
