@@ -1,4 +1,4 @@
-define('system/WebSocketClient',
+define('system/browser/WebSocketClient',
 ['underscore', 'EventEmitter'],
 function (_, EventEmitter) {
 	var WebSocketClient = function (addr, callback) {
@@ -14,14 +14,11 @@ function (_, EventEmitter) {
 			self.emitEvent('open');
 		};
 		this.ws.onmessage = function (event) {
-			console.log(event);
-			if (event.data instanceof ArrayBuffer) {
-				self.packets.push({
-					addr: addr,
-					buffer: event.data,
-					length: event.data.byteLength
-				});
-			}
+			self.packets.push({
+				addr: addr,
+				buffer: event.data,
+				length: event.data.byteLength
+			});
 		};
 		this.ws.onerror = function (error) {
 		};
@@ -31,8 +28,10 @@ function (_, EventEmitter) {
 		return this.packets.shift();
 	};
 
-	WebSocketClient.prototype.SendPacket = function (arraybuffer) {
-		this.ws.send(arraybuffer);
+	WebSocketClient.prototype.SendPacket = function (buffer, length) {
+		if (this.ws.readyState !== 1) return;
+
+		this.ws.send(buffer);
 	};
 
 	_.extend(WebSocketClient.prototype, EventEmitter.prototype);

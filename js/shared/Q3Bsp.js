@@ -1,16 +1,21 @@
 define('shared/Q3Bsp',
 ['jsstruct'],
-function (Struct) {
+function (Struct) {	
 	var Q3Bsp = function () {
 		return {
 			Load: function (url, callback) {
 				var self = this;
-				var request = new XMLHttpRequest();
 
-				request.open('GET', url, true);
-				request.responseType = 'arraybuffer';
-				request.addEventListener('load', function () {
-					var buffer = self.buffer = this.response;
+				// TODO FIX THIS SHIT.
+				// Put some sort of FS layer in sys
+				if (typeof(XMLHttpRequest) === 'undefined') {
+					var fs = require('fs');
+					var nb = fs.readFileSync(url.substring(3));
+					var buffer = self.buffer = new ArrayBuffer(nb.length);
+					var view = new Uint8Array(buffer);
+					for (var i = 0; i < nb.length; ++i) {
+						view[i] = nb[i];
+					}
 					var header = self.header = Q3Bsp.dheader_t.deserialize(buffer, 0, 1)[0];
 
 					if (header.ident != 'IBSP' && header.version != 46) {
@@ -18,8 +23,22 @@ function (Struct) {
 					}
 
 					callback.apply(this);
-				});
-				request.send(null);
+				} else {
+					var request = new XMLHttpRequest();
+					request.open('GET', url, true);
+					request.responseType = 'arraybuffer';
+					request.addEventListener('load', function () {
+						var buffer = self.buffer = this.response;
+						var header = self.header = Q3Bsp.dheader_t.deserialize(buffer, 0, 1)[0];
+
+						if (header.ident != 'IBSP' && header.version != 46) {
+							return;
+						}
+
+						callback.apply(this);
+					});
+					request.send(null);
+				}
 			},
 
 			GetBuffer: function () {

@@ -44,7 +44,8 @@ function WriteCommandPacket(cmd) {
 	bb.writeByte(cmd.rightmove);
 	bb.writeByte(cmd.upmove);
 
-	NetSend(bb.raw, bb.index);
+	var length = bb.index;
+	NetSend(bb.slice(0, length).buffer, length);
 }
 
 function CreateNewCommands() {
@@ -86,10 +87,6 @@ function KeyMove(cmd) {
 	cmd.forwardmove = ClampChar(forward);
 	cmd.rightmove = ClampChar(side);
 	cmd.upmove = up;
-
-	if (isNaN(cmd.upmove)) {
-		console.log('TEST MOTHER FUCKER', cmd.upmove, foobar);
-	}
 }
 
 function MouseMove(cmd) {

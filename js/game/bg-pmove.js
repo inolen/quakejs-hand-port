@@ -312,7 +312,7 @@ function SlideMove(pm, gravity) {
 				break;
 			}
 		}
-		if (i < length) {
+		if (i < planes.length) {
 			continue;
 		}
 		planes.push(vec3.set(trace.plane.normal, [0,0,0]));

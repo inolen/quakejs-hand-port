@@ -1,4 +1,5 @@
 var sys;
+var dedicated;
 
 var sv;
 var svs;
@@ -7,8 +8,9 @@ var sv_serverid;
 var sv_mapname;
 var sv_fps;
 
-function Init(sys_) {
+function Init(sys_, dedicated_) {
 	sys = sys_;
+	dedicated = dedicated_;
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
@@ -23,7 +25,7 @@ function Init(sys_) {
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
 		CmdLoadMap('q3tourney4');
-	}, 0);
+	}, 100);
 }
 
 function FrameMsec() {
@@ -75,15 +77,17 @@ function SpawnServer(mapName) {
 	// Shutdown the game.
 	gm.Shutdown();
 	
-	// Update the local client's screen.
-	cl.MapLoading();
+	if (!dedicated) {
+		// Update the local client's screen.
+		cl.MapLoading();
 
-	// Make sure all the client stuff is unloaded.
-	cl.ShutdownCGame();
-	cl.ShutdownRenderer();
+		// Make sure all the client stuff is unloaded.
+		cl.ShutdownCGame();
+		cl.ShutdownRenderer();
 
-	// Restart renderer.
-	cl.InitRenderer();
+		// Restart renderer.
+		cl.InitRenderer();
+	}
 
 	// Toggle the server bit so clients can detect that a server has changed.
 	svs.snapFlagServerBit ^= SNAPFLAG_SERVERCOUNT;

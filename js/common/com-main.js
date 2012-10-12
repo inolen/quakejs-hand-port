@@ -1,27 +1,32 @@
 var sys;
 
+var dedicated = false;
 var events;
 var frameTime;
 var lastFrameTime;
 
-function Init(sys_) {
+function Init(sys_, dedicated_) {
 	sys = sys_;
+	dedicated = dedicated_;
 
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
-	sv.Init(sys);
-	cl.Init(sys);
+	sv.Init(sys, dedicated);
 
-	// Provide the user a way to interface with the client.
-	window.$ = function (str) {
-		var args = Array.prototype.slice.call(arguments, 1);
-		var callback;
+	if (!dedicated) {
+		cl.Init(sys);
 
-		if ((callback = cmd.GetCmd(str))) {
-			callback(args);
-		}
-	};
+		// Provide the user a way to interface with the client.
+		window.$ = function (str) {
+			var args = Array.prototype.slice.call(arguments, 1);
+			var callback;
+
+			if ((callback = cmd.GetCmd(str))) {
+				callback(args);
+			}
+		};
+	}
 }
 
 function Frame() {
@@ -33,7 +38,10 @@ function Frame() {
 	EventLoop();
 
 	sv.Frame(frameTime, msec);
-	cl.Frame(frameTime, msec);
+
+	if (!dedicated) {
+		cl.Frame(frameTime, msec);
+	}
 }
 
 function EventLoop() {

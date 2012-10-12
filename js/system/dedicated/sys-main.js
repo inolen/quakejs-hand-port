@@ -1,7 +1,5 @@
-//var process = require('process');
-
 function Init() {
-	com.Init(protectedExports);
+	com.Init(protectedExports, true);
 
 	setInterval(function () {
 		com.Frame();
@@ -21,6 +19,6 @@ function GetUIRenderContext() {
 }
 
 function GetMilliseconds() {
-	//return process.hrtime() * 1000;
-	return 0;
+	var time = process.hrtime();
+	return time[0] * 1000 + parseInt(time[1] / 1000000);
 }

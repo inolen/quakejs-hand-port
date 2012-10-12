@@ -1,43 +1,6 @@
 var express = require('express'),
 	http = require('http'),
-	path = require('path'),
-	WebSocketServer = require('websocket').server;
-
-function createGameServer(server) {
-	wsServer = new WebSocketServer({
-		httpServer: server,
-		autoAcceptConnections: false
-	});
-
-	function originIsAllowed(origin) {
-		return true;
-	}
-
-	wsServer.on('request', function(request) {
-		if (!originIsAllowed(request.origin)) {
-			// Make sure we only accept requests from an allowed origin
-			request.reject();
-			console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
-			return;
-		}
-
-		var connection = request.accept('q3js', request.origin);
-		console.log((new Date()) + ' Connection accepted.');
-		connection.on('message', function(message) {
-			if (message.type === 'utf8') {
-				console.log('Received Message: ' + message.utf8Data);
-				connection.sendUTF(message.utf8Data);
-			}
-			else if (message.type === 'binary') {
-				console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-				connection.sendBytes(message.binaryData);
-			}
-		});
-		connection.on('close', function(reasonCode, description) {
-			console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-		});
-	});
-}
+	path = require('path');
 
 function main() {
 	var app = express();
@@ -59,27 +22,8 @@ function main() {
 	});
 
 	server.listen(9000);
-
-	createGameServer(server);
-
+	
 	console.log('Server is now listening on port 9000');
 }
-
-
-requirejs.config({
-    //Use node's special variable __dirname to
-    //get the directory containing this file.
-    //Useful if building a library that will
-    //be used in node but does not require the
-    //use of node outside
-    baseUrl: __dirname,
-
-    //Pass the top-level main.js/index.js require
-    //function to requirejs so that node modules
-    //are loaded relative to the top-level JS file.
-    nodeRequire: require
-});
-
-requirejs(['foo', 'bar'],
 
 main();

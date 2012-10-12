@@ -28,8 +28,8 @@ function Init(sys_) {
 	cls.initialized = true;
 
 	setTimeout(function () {
-		//NetConnect('192.168.0.102', 9001);
-		NetConnect('localhost', 9000);
+		NetConnect('192.168.0.102', 9001);
+		//NetConnect('localhost', 9000);
 	}, 100);
 }
 
