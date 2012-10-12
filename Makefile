@@ -20,7 +20,6 @@ ALL_MODULES = \
 	js/renderer/re.js \
 	js/system/browser/sys.js \
 	js/system/dedicated/sys.js \
-	js/vendor/EventEmitter.js \
 	js/vendor/gl-matrix.js \
 	js/vendor/js-struct.js \
 	js/vendor/byte-buffer.js \

@@ -1,3 +1,9 @@
+function PacketEvent(addr, buffer) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	
+	ExecuteServerMessage(bb);
+}
+
 function ExecuteServerMessage(msg) {
 	var messageSequence = msg.readUnsignedInt();
 	var type = msg.readUnsignedByte();

@@ -7,9 +7,13 @@ var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibilit
 
 // Event types for the main message pump.
 var EventTypes = {
-	KEYDOWN:   1,
-	KEYUP:     2,
-	MOUSEMOVE: 3
+	NETCONNECT:    1,
+	NETDISCONNECT: 2,
+	NETCLMESSAGE:  3,
+	NETSVMESSAGE:  4,
+	KEYDOWN:       5,
+	KEYUP:         6,
+	MOUSEMOVE:     7
 };
 
 var PACKET_BACKUP   = 32;                        // number of old messages that must be kept on client and
@@ -17,9 +21,10 @@ var PACKET_BACKUP   = 32;                        // number of old messages that 
 var PACKET_MASK     = (PACKET_BACKUP-1);
 var MAX_MSGLEN      = 16384;
 
-var NetChan = function (addr, socket) {
-	this.remoteAddress    = addr;
-	this.socket           = socket;
+var NetChan = function () {
+	this.src              = 0;
+	this.remoteAddress    = null;
+	this.socket           = null;
 	this.incomingSequence = 0;
 	this.outgoingSequence = 0;
 };

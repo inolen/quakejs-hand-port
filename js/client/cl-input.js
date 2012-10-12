@@ -44,8 +44,7 @@ function WriteCommandPacket(cmd) {
 	bb.writeByte(cmd.rightmove);
 	bb.writeByte(cmd.upmove);
 
-	var length = bb.index;
-	NetSend(bb.slice(0, length).buffer, length);
+	com.NetchanSend(clc.netchan, bb.buffer.slice(0, bb.index));
 }
 
 function CreateNewCommands() {

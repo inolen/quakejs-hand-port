@@ -1,4 +1,5 @@
 var sys;
+var com;
 var dedicated;
 
 var sv;
@@ -10,6 +11,7 @@ var sv_fps;
 
 function Init(sys_, dedicated_) {
 	sys = sys_;
+	com = require('common/com');
 	dedicated = dedicated_;
 
 	sv = new ServerLocals();
@@ -20,12 +22,11 @@ function Init(sys_, dedicated_) {
 	sv_fps = cvar.AddCvar('sv_fps',     20);
 
 	CmdInit();
-	NetInit();
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
 		CmdLoadMap('q3tourney4');
-	}, 100);
+	}, 50);
 }
 
 function FrameMsec() {
@@ -48,8 +49,6 @@ function Frame(frameTime, msec) {
 
 	var frameMsec = FrameMsec();
 	sv.timeResidual += msec;
-
-	NetFrame();
 
 	// Run the game simulation in chunks.
 	var frames = 0;

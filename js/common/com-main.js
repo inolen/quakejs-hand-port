@@ -49,6 +49,18 @@ function EventLoop() {
 
 	while (ev) {
 		switch (ev.type) {
+			case EventTypes.NETCONNECT:
+				sv.ClientConnect(ev.addr, ev.socket);
+				break;
+			case EventTypes.NETDISCONNECT:
+				sv.ClientDisconnect(ev.addr);
+				break;
+			case EventTypes.NETCLMESSAGE:
+				cl.PacketEvent(ev.addr, ev.buffer);
+				break;
+			case EventTypes.NETSVMESSAGE:
+				sv.PacketEvent(ev.addr, ev.buffer);
+				break;
 			case EventTypes.KEYDOWN:
 				cl.KeyDownEvent(ev.time, ev.keyName);
 				break;

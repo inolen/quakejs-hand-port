@@ -1,17 +1,31 @@
-function CreateServer(addr) {
-	var socket = LoopbackSocket.ConnectToClient();
+function NetCreateServer() {
+	throw new Error('Should not happen');
+}
+
+function NetConnectToServer(addr) {
+	var socket;
+
+	socket = new WebSocket('ws://' + addr.ip + ':' + addr.port, ['q3js']);
+	socket.binaryType = 'arraybuffer';
+	socket.onopen = function () {
+	};
+	socket.onmessage = function (event) {
+		com.QueueEvent({ type: com.EventTypes.NETCLMESSAGE, addr: addr, buffer: event.data });
+	};
+	socket.onerror = function (error) {
+	};
 
 	return socket;
 }
 
-function ConnectToServer(addr) {
-	var socket;
-
-	if (addr.type === NetAdrType.NA_LOOPBACK) {
-		socket = LoopbackSocket.ConnectToServer();
-	} else {
-		socket = new WebSocketClient(addr);
+function NetSend(socket, buffer) {
+	if (socket.readyState !== 1) {
+		return;
 	}
 
-	return socket;
+	socket.send(buffer);
+}
+
+function NetClose(socket) {
+	socket.close();
 }

@@ -1,6 +1,6 @@
 define('system/dedicated/sys',
-['common/com', 'EventEmitter'],
-function (com, EventEmitter) {
+['common/com'],
+function (com) {
 	<%- include ../../shared/shared.js %>
 	<%- include ../sys-defines.js %>
 	<%- include sys-main.js %>
@@ -10,8 +10,10 @@ function (com, EventEmitter) {
 		GetGameRenderContext: GetGameRenderContext,
 		GetUIRenderContext:   GetUIRenderContext,
 		GetMilliseconds:      GetMilliseconds,
-		CreateServer:         CreateServer,
-		ConnectToServer:      ConnectToServer
+		NetCreateServer:      NetCreateServer,
+		NetConnectToServer:   NetConnectToServer,
+		NetSend:              NetSend,
+		NetClose:             NetClose
 	};
 
 	var publicExports = {

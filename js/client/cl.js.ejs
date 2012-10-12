@@ -1,6 +1,6 @@
 define('client/cl',
-['underscore', 'glmatrix', 'ByteBuffer', 'clipmap/cm', 'cgame/cg', 'renderer/re', 'shared/cmd', 'shared/cvar'],
-function (_, glmatrix, ByteBuffer, cm, cg, re, cmd, cvar) {
+['underscore', 'glmatrix', 'ByteBuffer', 'common/com', 'clipmap/cm', 'cgame/cg', 'renderer/re', 'shared/cmd', 'shared/cvar'],
+function (_, glmatrix, ByteBuffer, com, cm, cg, re, cmd, cvar) {
 	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include ../cgame/cg-defines.js %>
@@ -9,7 +9,6 @@ function (_, glmatrix, ByteBuffer, cm, cg, re, cmd, cvar) {
 	<%- include cl-cgame.js %>
 	<%- include cl-cmd.js %>
 	<%- include cl-input.js %>
-	<%- include cl-net.js %>
 	<%- include cl-servercmds.js %>
 
 	var protectedExports = {
@@ -34,6 +33,7 @@ function (_, glmatrix, ByteBuffer, cm, cg, re, cmd, cvar) {
 		InitRenderer: InitRenderer,
 		ShutdownRenderer: ShutdownRenderer,
 		Frame: Frame,
+		PacketEvent: PacketEvent,
 		KeyDownEvent: KeyDownEvent,
 		KeyUpEvent: KeyUpEvent,
 		MouseMoveEvent: MouseMoveEvent,

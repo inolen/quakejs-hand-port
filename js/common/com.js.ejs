@@ -1,14 +1,19 @@
 define('common/com',
 ['underscore', 'server/sv', 'client/cl', 'shared/cmd'],
 function (_, sv, cl, cmd) {
+	<%- include ../shared/shared.js %>
 	<%- include com-defines.js %>
 	<%- include com-main.js %>
+	<%- include com-net.js %>
 
 	return {
 		EventTypes: EventTypes,
 
 		Init: Init,
 		Frame: Frame,
-		QueueEvent: QueueEvent
+		QueueEvent: QueueEvent,
+		NetchanSetup: NetchanSetup,
+		NetchanDestroy: NetchanDestroy,
+		NetchanSend: NetchanSend
 	};
 });

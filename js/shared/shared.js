@@ -26,6 +26,11 @@ var NetAdrType = {
 	NA_IP:       2
 };
 
+var NetSrc = {
+	CLIENT : 0,
+	SERVER: 1
+};
+
 var NetAdr = function (type, ip, port) {
 	this.type = type;
 	this.ip   = ip;

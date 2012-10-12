@@ -75,7 +75,7 @@ function SendClientSnapshot(client) {
 	bb.writeFloat(frame.ps.viewangles[1]);
 	bb.writeFloat(frame.ps.viewangles[2]);
 
-	NetSend(client, bb.raw, bb.index);
+	com.NetchanSend(client.netchan, bb.buffer.slice(0, bb.index));
 }
 
 function SendClientMessages() {

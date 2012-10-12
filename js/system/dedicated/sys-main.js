@@ -1,4 +1,5 @@
 function Init() {
+	NetCreateServer();
 	com.Init(protectedExports, true);
 
 	setInterval(function () {

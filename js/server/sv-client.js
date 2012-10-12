@@ -1,3 +1,20 @@
+function PacketEvent(addr, buffer) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+
+	for (i = 0; i < svs.clients.length; i++) {
+		var c = svs.clients[i];
+
+		if (!c) {
+			continue;
+		}
+
+		if (_.isEqual(c.netchan.addr, addr)) {
+			ExecuteClientMessage(c, bb);
+			return;
+		}
+	}
+}
+
 function ClientConnect(addr, socket) {
 	console.log('SV: A client is direct connecting');
 
@@ -15,7 +32,7 @@ function ClientConnect(addr, socket) {
 
 	// Create the client.
 	var newcl = svs.clients[clientNum] = new ServerClient(clientNum);
-	newcl.netchan = new NetChan(addr, socket);
+	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
 
 	UserinfoChanged(newcl);
 
@@ -52,7 +69,7 @@ function ExecuteClientMessage(client, msg) {
 	var serverid = msg.readUnsignedInt();
 	var messageSequence = msg.readUnsignedInt();
 	var type = msg.readUnsignedByte();
-
+	
 	client.messageAcknowledge = messageSequence;
 
 	if (client.messageAcknowledge < 0) {
@@ -137,7 +154,8 @@ function SendClientGameState(client) {
 	bb.writeCString('sv_serverid');
 	bb.writeCString(sv_serverid().toString());
 
-	NetSend(client, bb.raw, bb.index);
+	var newBuffer = bb.buffer.slice(0, bb.index);
+	com.NetchanSend(client.netchan, newBuffer);
 }
 
 function ClientThink(client, cmd) {

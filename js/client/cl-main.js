@@ -1,4 +1,5 @@
 var sys;
+var com;
 
 var cl;
 var clc;
@@ -12,6 +13,7 @@ function Init(sys_) {
 	console.log('--------- CL Init ---------');
 
 	sys = sys_;
+	com = require('common/com');
 
 	ClearState();
 	clc = new ClientConnection();
@@ -22,14 +24,13 @@ function Init(sys_) {
 
 	InputInit();
 	CmdInit();
-	NetInit();
 	InitRenderer();
 
 	cls.initialized = true;
 
 	setTimeout(function () {
-		NetConnect('192.168.0.102', 9001);
-		//NetConnect('localhost', 9000);
+		CmdConnect('192.168.0.102:9001');
+		//CmdConnect('localhost:9000');
 	}, 100);
 }
 
@@ -67,7 +68,6 @@ function Frame(frameTime, msec) {
 	cls.frameDelta = msec;
 	cls.realTime += cls.frameDelta;
 
-	NetFrame();
 	SendCommand();
 
 	// Decide on the serverTime to render.

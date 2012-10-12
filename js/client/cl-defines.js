@@ -64,6 +64,7 @@ var ClientConnection = function () {
 	// delta compression layer.
 	this.serverMessageSequence = 0;
 	this.state                 = ConnectionState.UNINITIALIZED;
+	this.netchan               = null;
 };
 
 var ClientSnapshot = function () {

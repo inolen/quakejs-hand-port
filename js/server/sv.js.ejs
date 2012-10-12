@@ -1,6 +1,6 @@
 define('server/sv',
-['underscore', 'ByteBuffer', 'clipmap/cm', 'client/cl', 'game/gm', 'shared/cmd', 'shared/cvar', 'shared/Q3Bsp'],
-function (_, ByteBuffer, cm, cl, gm, cmd, cvar, Q3Bsp) {
+['underscore', 'ByteBuffer', 'common/com', 'clipmap/cm', 'client/cl', 'game/gm', 'shared/cmd', 'shared/cvar', 'shared/Q3Bsp'],
+function (_, ByteBuffer, com, cm, cl, gm, cmd, cvar, Q3Bsp) {
 	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include sv-defines.js %>
@@ -8,7 +8,6 @@ function (_, ByteBuffer, cm, cl, gm, cmd, cvar, Q3Bsp) {
 	<%- include sv-client.js %>
 	<%- include sv-cmd.js %>
 	<%- include sv-game.js %>
-	<%- include sv-net.js %>
 	<%- include sv-snapshot.js %>
 	<%- include sv-world.js %>
 
@@ -24,7 +23,10 @@ function (_, ByteBuffer, cm, cl, gm, cmd, cvar, Q3Bsp) {
 
 	var publicExports = {
 		Init: Init,
-		Frame: Frame
+		Frame: Frame,
+		PacketEvent: PacketEvent,
+		ClientConnect: ClientConnect,
+		ClientDisconnect: ClientDisconnect,
 	};
 
 	return publicExports;

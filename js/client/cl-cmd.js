@@ -3,7 +3,15 @@ function CmdInit() {
 }
 
 function CmdConnect(serverName) {
-	console.log('whuttup');
 	var parts = serverName.split(':');
-	NetConnect(parts[0], parts[1]);
+	var host = parts[0];
+	var port = parts[1];
+
+	if (clc.netchan) {
+		com.NetchanDestroy(netchan);
+		clc.netchan = null;
+	}
+
+	var addr = StringToAddr('ws://' + host + ':' + port);
+	clc.netchan = com.NetchanSetup(NetSrc.CLIENT, addr);
 }

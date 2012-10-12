@@ -5,10 +5,9 @@ requirejs.config({
 	baseUrl: 'js/bin',
 	paths: {
 		'underscore':   'vendor/underscore',
-		'EventEmitter': 'vendor/EventEmitter',
 		'glmatrix':     'vendor/gl-matrix',
 		'jsstruct':     'vendor/js-struct',
-					'ByteBuffer':   'vendor/byte-buffer'
+		'ByteBuffer':   'vendor/byte-buffer'
 	}
 });
 

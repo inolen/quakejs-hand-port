@@ -2,7 +2,7 @@ if (typeof define !== 'function') {
 	var define = require('amdefine')(module);
 }
 
-define('system/browser/sys', ['common/com', 'system/browser/LoopbackSocket', 'system/browser/WebSocketClient'], function (com, LoopbackSocket, WebSocketClient) {
+define('system/browser/sys', ['common/com'], function (com, LoopbackSocket, WebSocketClient) {
 	<%- include ../../shared/shared.js %>
 	<%- include ../sys-defines.js %>
 	<%- include sys-input.js %>
@@ -13,8 +13,10 @@ define('system/browser/sys', ['common/com', 'system/browser/LoopbackSocket', 'sy
 		GetGameRenderContext: GetGameRenderContext,
 		GetUIRenderContext:   GetUIRenderContext,
 		GetMilliseconds:      GetMilliseconds,
-		CreateServer:         CreateServer,
-		ConnectToServer:      ConnectToServer
+		NetCreateServer:      NetCreateServer,
+		NetConnectToServer:   NetConnectToServer,
+		NetSend:              NetSend,
+		NetClose:             NetClose
 	};
 
 	var publicExports = {

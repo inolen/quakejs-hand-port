@@ -1,68 +1,49 @@
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 
-var server;
-
-function CreateServer(addr) {
-	server = http.createServer(function(request, response) {
-		console.log((new Date()) + ' Received request for ' + request.url);
-		response.writeHead(404);
-		response.end();
-	});
-	server.listen(9001, function() {
-		console.log((new Date()) + ' Server is listening on port 8080');
-	});
-
+function NetCreateServer() {
+	var server = http.createServer();
 	var wsServer = new WebSocketServer({
 		httpServer: server,
 		autoAcceptConnections: false
 	});
 
-	function originIsAllowed(origin) {
-		return true;
-	}
-
-	var test = new EventEmitter();
+	server.listen(9001, function() {
+		console.log((new Date()) + ' Server is listening on port 8080');
+	});
 
 	wsServer.on('request', function(request) {
 		var connection = request.accept('q3js', request.origin);
+		var addr = com.NetchanSetup(NetSrc.SERVER, connection.remoteAddress, connection);
+
 		console.log((new Date()) + ' Connection accepted.');
 
-		var addr = new NetAdr(NetAdrType.NA_IP, connection.remoteAddress, 0);
-		var queue = new Array();
-
-		var foobar = _.extend({
-			GetPacket: function () {
-				return queue.shift();
-			},
-			SendPacket: function (ab, length) {
-				var buffer = new Buffer(ab.byteLength);
-				var view = new Uint8Array(ab);
-				for (var i = 0; i < buffer.length; ++i) {
-					buffer[i] = view[i];
-				}
-				connection.sendBytes(buffer);
-			}
-		}, EventEmitter.prototype);
-
-		test.emitEvent('accept', [addr, foobar]);
+		com.QueueEvent({ type: com.EventTypes.NETCONNECT, addr: addr, socket: connection });
 
 		connection.on('message', function (message) {
-			queue.push({
-				addr: addr,
-				buffer: message.binaryData,
-				length: message.binaryData.length
-			});
+			com.QueueEvent({ type: com.EventTypes.NETSVMESSAGE, addr: addr, buffer: message.binaryData });
 		});
 
 		connection.on('close', function(reasonCode, description) {
-			console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+			com.QueueEvent({ type: com.EventTypes.NETDISCONNECT, addr: addr });
 		});
 	});
-
-	return test;
 }
 
-function ConnectToServer(addr) {
-	throw new Error('Dedicated server');
+function NetConnectToServer(addr) {
+	throw new Error('Should not happen');
+}
+
+function NetSend(socket, ab) {
+	// TODO optimize this, converting the buffer is lame.
+	var buffer = new Buffer(ab.byteLength);
+	var view = new Uint8Array(ab);
+	for (var i = 0; i < buffer.length; ++i) {
+		buffer[i] = view[i];
+	}
+	socket.sendBytes(buffer);
+}
+
+function NetClose(socket) {
+	socket.close();
 }
