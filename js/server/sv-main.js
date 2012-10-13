@@ -104,7 +104,18 @@ function SpawnServer(mapName) {
 		ClearWorld();
 
 		// Initialize the game.
-		gm.Init(gameExports);
+		var gminterface = {
+			AddCmd:            com.AddCmd,
+			AddCvar:           com.AddCvar,
+			GetEntityDefs:     cm.EntityDefs,
+			LocateGameData:    LocateGameData,
+			SetBrushModel:     SetBrushModel,
+			LinkEntity:        LinkEntity,
+			UnlinkEntity:      UnlinkEntity,
+			FindEntitiesInBox: FindEntitiesInBox,
+			Trace:             cm.Trace
+		};
+		gm.Init(gminterface);
 
 		/*// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {

@@ -11,25 +11,11 @@ function (_, ByteBuffer, gm, cl, cm, Q3Bsp) {
 	<%- include sv-snapshot.js %>
 	<%- include sv-world.js %>
 
-	var gameExports = {
-		AddCmd:            function () { return com.AddCmd.apply(this, arguments); },
-		AddCvar:           function () { return com.AddCvar.apply(this, arguments); },
-		GetEntityDefs:     cm.EntityDefs,
-		LocateGameData:    LocateGameData,
-		SetBrushModel:     SetBrushModel,
-		LinkEntity:        LinkEntity,
-		UnlinkEntity:      UnlinkEntity,
-		FindEntitiesInBox: FindEntitiesInBox,
-		Trace:             cm.Trace
-	};
-
-	var publicExports = {
+	return {
 		Init:             Init,
 		Frame:            Frame,
 		PacketEvent:      PacketEvent,
 		ClientConnect:    ClientConnect,
 		ClientDisconnect: ClientDisconnect,
 	};
-
-	return publicExports;
 });

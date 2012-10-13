@@ -105,24 +105,14 @@ function ScanAndLoadShaderFiles() {
 }
 
 function LoadShaderFile(url, onload) {
-	var request = new XMLHttpRequest();
-
-	request.onreadystatechange = function () {
-		if (request.readyState !== 4 || request.status !== 200) {
-			return;
-		}
-		
-		var tokens = new ShaderTokenizer(request.responseText);
+	cl.ReadFile(url, 'utf8', function (data) {
+		var tokens = new ShaderTokenizer(data);
 
 		var shader;
 		while ((shader = ParseShader(tokens))) {
 			re.parsedShaders[shader.name] = shader;
 		};
-	};
-
-	request.open('GET', url, true);
-	request.setRequestHeader('Content-Type', 'text/plain');
-	request.send(null);
+	});
 }
 
 /**

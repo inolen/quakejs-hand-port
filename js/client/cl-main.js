@@ -39,6 +39,24 @@ function ClearState() {
 }
 
 function InitCGame() {
+	var cginterface = {
+		AddCmd:                      com.AddCmd,
+		AddCvar:                     com.AddCvar,
+		GetMilliseconds:             com.GetMilliseconds,
+		GetGameState:                function () { return cl.gameState; },
+		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
+		GetUserCommand:              GetUserCommand,
+		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
+		GetSnapshot:                 GetSnapshot,
+		LoadClipMap:                 cm.LoadMap,
+		LoadRenderMap:               re.LoadMap,
+		Trace:                       cm.Trace,
+		CreateElement:               re.CreateElement,
+		DeleteElement:               re.DeleteElement,
+		DrawText:                    re.DrawText,
+		RenderScene:                 re.RenderScene
+	};
+
 	clc.state = ConnectionState.LOADING;
 	cg.Init(cginterface, clc.serverMessageSequence);
 	clc.state = ConnectionState.PRIMED;
@@ -49,6 +67,15 @@ function ShutdownCGame() {
 }
 
 function InitRenderer() {
+	var reinterface = {
+		AddCmd:                      com.AddCmd,
+		AddCvar:                     com.AddCvar,
+		GetMilliseconds:             com.GetMilliseconds,
+		ReadFile:                    com.ReadFile,
+		GetGameRenderContext:        com.GetGameRenderContext,
+		GetUIRenderContext:          com.GetUIRenderContext
+	};
+
 	re.Init(reinterface);
 }
 

@@ -11,32 +11,6 @@ function (_, glmatrix, ByteBuffer, cg, cm, re) {
 	<%- include cl-input.js %>
 	<%- include cl-parse.js %>
 
-	var cginterface = {
-		AddCmd:                      function () { return com.AddCmd.apply(this, arguments); },
-		AddCvar:                     function () { return com.AddCvar.apply(this, arguments); },
-		GetMilliseconds:             function () { return com.GetMilliseconds.apply(this, arguments); },
-		GetGameState:                function () { return cl.gameState; },
-		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
-		GetUserCommand:              GetUserCommand,
-		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
-		GetSnapshot:                 GetSnapshot,
-		LoadClipMap:                 cm.LoadMap,
-		LoadRenderMap:               re.LoadMap,
-		Trace:                       cm.Trace,
-		CreateElement:               re.CreateElement,
-		DeleteElement:               re.DeleteElement,
-		DrawText:                    re.DrawText,
-		RenderScene:                 re.RenderScene
-	};
-
-	var reinterface = {
-		AddCmd:                      function () { return com.AddCmd.apply(this, arguments); },
-		AddCvar:                     function () { return com.AddCvar.apply(this, arguments); },
-		GetMilliseconds:             function () { return com.GetMilliseconds.apply(this, arguments); },
-		GetGameRenderContext:        function () { return com.GetGameRenderContext.apply(this, arguments); },
-		GetUIRenderContext:          function () { return com.GetUIRenderContext.apply(this, arguments); },
-	};
-
 	return {
 		Init:             Init,
 		InitCGame:        InitCGame,

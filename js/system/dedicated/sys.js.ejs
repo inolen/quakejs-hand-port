@@ -4,10 +4,12 @@ function (com) {
 	<%- include ../../shared/shared.js %>
 	<%- include ../sys-defines.js %>
 	<%- include sys-main.js %>
+	<%- include sys-file.js %>
 	<%- include sys-net.js %>
 
 	var sysinterface = {
 		GetMilliseconds:      GetMilliseconds,
+		ReadFile:             ReadFile,
 		GetGameRenderContext: GetGameRenderContext,
 		GetUIRenderContext:   GetUIRenderContext,
 		NetCreateServer:      NetCreateServer,

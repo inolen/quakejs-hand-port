@@ -10,7 +10,27 @@ function Init(sysinterface, isdedicated) {
 	dedicated = isdedicated;
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
-	
+
+	var cominterface = {
+		AddCvar:              AddCvar,
+		GetCvar:              GetCvar,
+		SetCvar:              SetCvar,
+		AddCmd:               AddCmd,
+		GetCmd:               GetCmd,
+		NetchanSetup:         NetchanSetup,
+		NetchanDestroy:       NetchanDestroy,
+		NetchanSend:          NetchanSend,
+		NetchanPrint:         NetchanPrint,
+		GetMilliseconds:      sys.GetMilliseconds,
+		ReadFile:             sys.ReadFile,
+		GetGameRenderContext: sys.GetGameRenderContext,
+		GetUIRenderContext:   sys.GetUIRenderContext,
+		NetCreateServer:      sys.NetCreateServer,
+		NetConnectToServer:   sys.NetConnectToServer,
+		NetSend:              sys.NetSend,
+		NetClose:             sys.NetClose
+	};
+
 	sv.Init(cominterface, dedicated);
 
 	if (!dedicated) {
