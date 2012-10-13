@@ -3,6 +3,7 @@ var cl;
 var re;
 var gl;
 var viewportUi;
+var r_cull;
 var r_subdivisions;
 var r_znear;
 var r_zproj;
@@ -21,6 +22,7 @@ function Init(clinterface) {
 	
 	re = new RenderLocals();
 
+	r_cull = cl.AddCvar('r_cull', 1);
 	r_subdivisions = cl.AddCvar('r_subdivisions', 4);
 	r_znear = cl.AddCvar('r_znear', 4);
 	r_zproj = cl.AddCvar('r_zproj', 64);
@@ -53,6 +55,7 @@ function RenderScene(fd) {
 	re.refdef.fovY = fd.fovY;
 	re.refdef.origin = fd.vieworg;
 	re.refdef.viewaxis = fd.viewaxis;
+	re.refdef.time = fd.time;
 
 	re.refdef.numDrawSurfs = 0;
 	re.pc.surfs = 0;
@@ -278,17 +281,6 @@ function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 
 function SortDrawSurfaces() {
 	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
-
-	/*if (!window.foobar) {
-		for (var i = 0; i < re.refdef.numDrawSurfs; i++) {
-			var face = re.refdef.drawSurfs[i].surface;
-			var shader = face.shader;
-
-			console.log('SortDrawSurfaces', i, re.refdef.drawSurfs[i].sort >> QSORT_SHADERNUM_SHIFT, shader.name, shader.sort);
-		}
-
-		window.foobar = true;
-	}*/
 }
 
 function RenderDrawSurfaces() {
@@ -311,17 +303,14 @@ function RenderDrawSurfaces() {
 	gl.depthMask(true);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-	// Seconds passed since map was initialized
-	var time = (cl.GetMilliseconds() - refdef.time)/1000.0;
-	var i = 0;
+	// Seconds passed since map was initialized.
+	var time = refdef.time / 1000.0;
 
-	// If we have a skybox, render it first
+	// If we have a skybox, render it first.
 	if (skyShader) {
-		// SkyBox Buffers
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, skyboxIndexBuffer);
 		gl.bindBuffer(gl.ARRAY_BUFFER, skyboxBuffer);
 
-		// Render Skybox
 		SetShader(skyShader);
 		for(var j = 0; j < skyShader.stages.length; j++) {
 			var stage = skyShader.stages[j];
@@ -338,25 +327,39 @@ function RenderDrawSurfaces() {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
 
-	for (var i = 0; i < refdef.numDrawSurfs; i++) {
+	for (var i = 0; i < refdef.numDrawSurfs;) {
 		var face = drawSurfs[i].surface;
 		var shader = face.shader;
 		var glshader = shader.glshader;
 
+		// Find the next unique shader.
+		for (var next = i+1; next < refdef.numDrawSurfs; next++) {
+			var face2 = drawSurfs[next].surface;
+
+			if (face2.shader.sortedIndex !== face.shader.sortedIndex) {
+				break;
+			}
+		}
+
 		// Bind the surface shader
 		SetShader(glshader);
 		
-		// TODO We need to optimize for single stage shaders.
 		for (var j = 0; j < glshader.stages.length; j++) {
 			var stage = glshader.stages[j];
 
 			SetShaderStage(glshader, stage, time);
 			BindShaderAttribs(stage.program, parms.or.modelMatrix, parms.projectionMatrix);
 
-			gl.drawElements(gl.TRIANGLES, face.meshVertCount, gl.UNSIGNED_SHORT, face.indexOffset);
-
-			re.pc.verts += face.meshVertCount;
+			// Render all surfaces with this same shader.
+			for (var k = i; k < next; k++) {
+				var face2 = drawSurfs[k].surface;
+				gl.drawElements(gl.TRIANGLES, face2.meshVertCount, gl.UNSIGNED_SHORT, face2.indexOffset);
+				re.pc.verts += face2.meshVertCount;
+			}
 		}
+
+		// Move on to the next shader.
+		i += next - i;
 	}
 
 	/*if (!window.foobar || cl.GetMilliseconds() - window.foobar > 1000) {

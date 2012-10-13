@@ -67,7 +67,8 @@ function Frame(frameTime, msec) {
 }
 
 function SpawnServer(mapName) {
-	console.log('SV: Spawning new server instance running: ' + mapName);
+	console.log('--------- SV SpawnServer ---------');
+	console.log('Spawning new server for ' + mapName);
 
 	svs.initialized = false;
 	

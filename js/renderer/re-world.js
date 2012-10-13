@@ -213,9 +213,9 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 	surf.viewCount = re.viewCount;
 
 	// try to cull before dlighting or adding
-	/*if (CullSurface(surf.data, surf.shader)) {
+	if (CullSurface(surf, surf.shader)) {
 		return;
-	}*/
+	}
 
 	// check for dlighting
 	/*if (dlightBits ) {
@@ -224,6 +224,59 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 	}*/
 
 	AddDrawSurf(surf/*.data*/, surf.shader/*, surf.fogIndex, dlightBits*/);
+}
+
+/*
+================
+CullSurface
+
+Tries to back face cull surfaces before they are lighted or
+added to the sorting list.
+
+This will also allow mirrors on both sides of a model without recursion.
+================
+*/
+function CullSurface(surface, shader) {
+	if (!r_cull()) {
+		return false;
+	}
+
+	// TODO We don't convert to a render specific type yet.
+	if (surface.type === Q3Bsp.SurfaceTypes.MST_PATCH/*SurfaceType.GRID*/) {
+		//return R_CullGrid( (srfGridMesh_t *)surface );
+		return false;
+	}
+
+	/*if ( *surface == SF_TRIANGLES ) {
+		return R_CullTriSurf( (srfTriangles_t *)surface );
+	}*/
+
+	// TODO We don't convert to a render specific type yet.
+	/*if (surface.type !== SurfaceType.FACE) {
+		return false;
+	}*/
+
+	// TODO map shader cull value to enum
+	if (shader.cull === 'twosided' || shader.cull === 'none' || shader.cull === 'disable') {
+		return false;
+	}
+
+	var d = vec3.dot(re.viewParms.or.origin, surface.plane.normal);
+
+	// Don't cull exactly on the plane, because there are levels of rounding
+	// through the BSP, ICD, and hardware that may cause pixel gaps if an
+	// epsilon isn't allowed here.
+	if (shader.cull === 'front') {
+		if (d < surface.plane.dist - 8) {
+			return true;
+		}
+	} else {
+		if (d > surface.plane.dist + 8) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
@@ -353,4 +406,8 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 function AddWorldSurfaces(map) {
 	MarkLeaves();
 	RecursiveWorldNode(re.world.nodes[0], 15);
+	/*var faces = re.world.faces;
+	for (var i = 0; i < faces.length; i++) {
+		AddWorldSurface(faces[i]);
+	}*/
 }

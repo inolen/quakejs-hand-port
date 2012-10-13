@@ -1,6 +1,9 @@
 var cm;
 
 function LoadMap(mapName, callback) {
+	console.log('--------- CM Init ---------');
+	console.log('Loading clipmap for ' + mapName);
+	
 	cm = new ClipMap();
 
 	var map = new Q3Bsp();

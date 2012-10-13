@@ -4,34 +4,6 @@ var DRAWSURF_MASK = (MAX_DRAWSURFS-1);
 var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
 var MAX_ENTITIES   = (1 << ENTITYNUM_BITS) - 1;
 
-var ShaderSort = {
-	BAD:            0,
-	PORTAL:         1,                           // mirrors, portals, viewscreens
-	ENVIRONMENT:    2,                           // sky box
-	OPAQUE:         3,                           // opaque
-	DECAL:          4,                           // scorch marks, etc.
-	SEE_THROUGH:    5,                           // ladders, grates, grills that may have small blended
-	                                             // edges in addition to alpha test
-	BANNER:         6,
-	FOG:            7,
-	UNDERWATER:     8,                           // for items that should be drawn in front of the water plane
-	BLEND0:         9,                           // regular transparency and filters
-	BLEND1:         10,                          // generally only used for additive type effects
-	BLEND2:         11,
-	BLEND3:         12,
-	BLEND6:         13,
-	STENCIL_SHADOW: 14,
-	ALMOST_NEAREST: 15,                          // gun smoke puffs
-	NEAREST:        16                           // blood blobs
-};
-
-var LightmapType = {
-	UV:         -4,                              // shader is for 2D rendering
-	VERTEX:     -3,                              // pre-lit triangle models
-	WHITEIMAGE: -2,
-	NONE:       -1
-};
-
 /** 
  * The drawsurf sort data is packed into a single 32 bit value so it can be
  * compared quickly during the qsorting process.
@@ -89,11 +61,6 @@ var WorldData = function () {
 	byte        *lightGridData;*/
 };
 
-var DrawSurface = function () {
-	this.sort    = 0;                            // bit combination for fast compares
-	this.surface = -1;                           // any of surface*_t
-};
-
 var RefDef = function () {
 	this.x            = 0;
 	this.y            = 0;
@@ -107,6 +74,7 @@ var RefDef = function () {
 		vec3.create(),
 		vec3.create()
 	];
+	// Time in milliseconds for shader effects and other time dependent rendering issues.
 	this.time         = 0 ;
 	// TODO maybe this shouldn't be initialized until we hit the renderer.
 	this.drawSurfs    = new Array(MAX_DRAWSURFS);
@@ -176,3 +144,52 @@ var Texture = function () {
 	this.name   = null;
 	this.texnum = null;
 };
+
+var ShaderSort = {
+	BAD:            0,
+	PORTAL:         1,                           // mirrors, portals, viewscreens
+	ENVIRONMENT:    2,                           // sky box
+	OPAQUE:         3,                           // opaque
+	DECAL:          4,                           // scorch marks, etc.
+	SEE_THROUGH:    5,                           // ladders, grates, grills that may have small blended
+	                                             // edges in addition to alpha test
+	BANNER:         6,
+	FOG:            7,
+	UNDERWATER:     8,                           // for items that should be drawn in front of the water plane
+	BLEND0:         9,                           // regular transparency and filters
+	BLEND1:         10,                          // generally only used for additive type effects
+	BLEND2:         11,
+	BLEND3:         12,
+	BLEND6:         13,
+	STENCIL_SHADOW: 14,
+	ALMOST_NEAREST: 15,                          // gun smoke puffs
+	NEAREST:        16                           // blood blobs
+};
+
+var LightmapType = {
+	UV:         -4,                              // shader is for 2D rendering
+	VERTEX:     -3,                              // pre-lit triangle models
+	WHITEIMAGE: -2,
+	NONE:       -1
+};
+
+var SurfaceType = {
+	BAD:          0,
+	SKIP:         1,                             // ignore
+	FACE:         2,
+	GRID:         3,
+	TRIANGLES:    4,
+	POLY:         5,
+	MD3:          6,
+	MD4:          7,
+	IQM:          8,
+	FLARE:        9,
+	ENTITY:       10,                            // beams, rails, lightning, etc that can be determined by entity
+	DISPLAY_LIST: 11
+};
+
+var DrawSurface = function () {
+	this.sort    = 0;                            // bit combination for fast compares
+	this.surface = -1;                           // any of surface*_t
+};
+

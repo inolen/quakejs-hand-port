@@ -222,6 +222,13 @@ function LoadSurfaces(map) {
 				processed[idx] = true;
 			}
 		}
+
+		// Take the plane information from the lightmap vector
+		face.plane = new Plane();
+		face.plane.normal = face.normal;
+		face.plane.dist = vec3.dot(verts[face.vertex].pos, face.plane.normal);
+		face.plane.signbits = GetPlaneSignbits(face.plane);
+		face.plane.type = PlaneTypeForNormal(face.plane.normal);
 	}
 }
 
