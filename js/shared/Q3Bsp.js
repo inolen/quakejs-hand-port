@@ -26,6 +26,7 @@ function (Struct) {
 				} else {
 					var request = new XMLHttpRequest();
 					request.open('GET', url, true);
+					request.setRequestHeader('Content-Type', 'application/octet-stream');
 					request.responseType = 'arraybuffer';
 					request.addEventListener('load', function () {
 						var buffer = self.buffer = this.response;

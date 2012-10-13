@@ -7,8 +7,12 @@ function main() {
 	var server = http.createServer(app)
 
 	app.engine('ejs', require('ejs').__express);
-	app.engine('jade', require('jade').__express);
-	app.use(express.static(__dirname));
+	app.use(express.compress({
+		filter: function(req, res){
+			return /json|text|javascript|octet-stream/.test(res.getHeader('Content-Type'));
+		}
+	}));
+	app.use(express.static(__dirname, { maxAge: 86400000 }));
 
 	// Our build process will pre-process these .ejs views,
 	// but if they don't exist we need to build them at runtime.
