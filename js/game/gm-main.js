@@ -5,13 +5,13 @@ var level;
 
 var g_gravity;
 
-function Init(sys_, sv_) {
-	sys = sys_;
+function Init(sv_) {
+	sys = require('system/sys');
 	sv = sv_;
 
 	level = new LevelLocals();
 
-	g_gravity = cvar.AddCvar('g_gravity', 800);
+	g_gravity = sv.AddCvar('g_gravity', 800);
 
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);

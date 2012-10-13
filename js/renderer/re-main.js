@@ -1,4 +1,4 @@
-var sys;
+var cl;
 
 var re;
 var gl;
@@ -14,19 +14,19 @@ var flipMatrix = mat4.create([
 	0, 0, 0, 1
 ]);
 
-function Init(sys_) {
+function Init(clinterface) {
 	console.log('--------- RE Init ---------');
 
-	sys = sys_;
+	cl = clinterface;
 	
 	re = new RenderLocals();
 
-	r_subdivisions = cvar.AddCvar('r_subdivisions', 4);
-	r_znear = cvar.AddCvar('r_znear', 4);
-	r_zproj = cvar.AddCvar('r_zproj', 64);
+	r_subdivisions = cl.AddCvar('r_subdivisions', 4);
+	r_znear = cl.AddCvar('r_znear', 4);
+	r_zproj = cl.AddCvar('r_zproj', 64);
 
-	var gameContext = sys.GetGameRenderContext();
-	var uiContext = sys.GetUIRenderContext();
+	var gameContext = cl.GetGameRenderContext();
+	var uiContext = cl.GetUIRenderContext();
 	gl = gameContext.gl;
 	viewportUi = uiContext.handle;
 
@@ -312,7 +312,7 @@ function RenderDrawSurfaces() {
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Seconds passed since map was initialized
-	var time = (sys.GetMilliseconds() - refdef.time)/1000.0;
+	var time = (cl.GetMilliseconds() - refdef.time)/1000.0;
 	var i = 0;
 
 	// If we have a skybox, render it first
@@ -359,7 +359,7 @@ function RenderDrawSurfaces() {
 		}
 	}
 
-	/*if (!window.foobar || sys.GetMilliseconds() - window.foobar > 1000) {
+	/*if (!window.foobar || cl.GetMilliseconds() - window.foobar > 1000) {
 		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
 		window.foobar = sys.GetMilliseconds();
 	}*/

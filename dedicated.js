@@ -7,11 +7,11 @@ requirejs.config({
 		'underscore':   'vendor/underscore',
 		'glmatrix':     'vendor/gl-matrix',
 		'jsstruct':     'vendor/js-struct',
-		'ByteBuffer':   'vendor/byte-buffer'
+		'ByteBuffer':   'vendor/byte-buffer',
+		'system/sys':   'system/dedicated/sys'
 	}
 });
 
-requirejs(['system/dedicated/sys'], function (sys) {
-	console.log(sys);
+requirejs(['system/sys'], function (sys) {
 	sys.Init();
 });

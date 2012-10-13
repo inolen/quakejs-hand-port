@@ -20,7 +20,7 @@ function Init() {
 	document.addEventListener('fullscreenchange', FullscreenChanged, false);
 
 	InputInit();
-	com.Init(protectedExports);
+	com.Init(sysinterface, false);
 
 	function onRequestedFrame(timestamp) {
 		window.requestAnimationFrame(onRequestedFrame, viewport);

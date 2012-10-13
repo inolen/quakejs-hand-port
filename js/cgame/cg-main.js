@@ -1,23 +1,21 @@
-var sys;
-var cl;
+var clinterface;
 
 var cg;
 var cgs;
 var cg_errordecay;
 var cg_showmiss;
 
-function Init(sys_, cl_, serverMessageNum) {
+function Init(clinterface, serverMessageNum) {
 	console.log('--------- CG Init ---------');
 
-	sys = sys_;
-	cl = cl_;
+	cl = clinterface;
 
 	cg = new ClientGame();
 	cgs = new ClientGameStatic();
 
-	cg_errordecay = cvar.AddCvar('cg_errordecay', 100);
-	cg_predict = cvar.AddCvar('cg_predict', 0);
-	cg_showmiss = cvar.AddCvar('cg_showmiss', 1);
+	cg_errordecay = cl.AddCvar('cg_errordecay', 100);
+	cg_predict = cl.AddCvar('cg_predict', 0);
+	cg_showmiss = cl.AddCvar('cg_showmiss', 1);
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();

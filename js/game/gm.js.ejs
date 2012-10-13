@@ -1,6 +1,6 @@
 define('game/gm',
-['underscore', 'glmatrix', 'game/bg', 'shared/cvar'],
-function (_, glmatrix, bg, cvar) {
+['underscore', 'glmatrix', 'game/bg'],
+function (_, glmatrix, bg) {
 	<%- include ../shared/shared.js %>
 	<%- include bg-defines.js %>
 	<%- include gm-defines.js %>
@@ -12,11 +12,11 @@ function (_, glmatrix, bg, cvar) {
 	<%- include entities/gm-trigger_push.js %>
 
 	return {
-		Init: Init,
-		Shutdown: Shutdown,
-		Frame: Frame,
-		ClientBegin: ClientBegin,
-		ClientThink: ClientThink,
+		Init:                 Init,
+		Shutdown:             Shutdown,
+		Frame:                Frame,
+		ClientBegin:          ClientBegin,
+		ClientThink:          ClientThink,
 		GetClientPlayerstate: GetClientPlayerstate
 	};
 });

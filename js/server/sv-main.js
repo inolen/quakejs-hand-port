@@ -1,4 +1,3 @@
-var sys;
 var com;
 var dedicated;
 
@@ -9,17 +8,16 @@ var sv_serverid;
 var sv_mapname;
 var sv_fps;
 
-function Init(sys_, dedicated_) {
-	sys = sys_;
-	com = require('common/com');
-	dedicated = dedicated_;
+function Init(cominterface, isdedicated) {
+	com = cominterface;
+	dedicated = isdedicated;
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
 	
-	sv_serverid = cvar.AddCvar('sv_serverid', 1337);
-	sv_mapname = cvar.AddCvar('sv_mapname', 'nomap');
-	sv_fps = cvar.AddCvar('sv_fps',     20);
+	sv_serverid = com.AddCvar('sv_serverid', 1337);
+	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
+	sv_fps = com.AddCvar('sv_fps',     20);
 
 	CmdInit();
 
@@ -97,15 +95,15 @@ function SpawnServer(mapName) {
 
 	// Load the collision map.
 	cm.LoadMap(mapName, function () {
-		cvar.SetCvar('sv_mapname', mapName);
+		com.SetCvar('sv_mapname', mapName);
 		// serverid should be different each time.
-		cvar.SetCvar('sv_serverid', svs.frameTime);
+		com.SetCvar('sv_serverid', svs.frameTime);
 
 		// Clear physics interaction links.
 		ClearWorld();
 
 		// Initialize the game.
-		gm.Init(sys, gameExports);
+		gm.Init(gameExports);
 
 		/*// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {

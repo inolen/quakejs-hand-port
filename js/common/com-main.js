@@ -5,17 +5,16 @@ var events;
 var frameTime;
 var lastFrameTime;
 
-function Init(sys_, dedicated_) {
-	sys = sys_;
-	dedicated = dedicated_;
-
+function Init(sysinterface, isdedicated) {
+	sys = sysinterface;
+	dedicated = isdedicated;
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
-
-	sv.Init(sys, dedicated);
+	
+	sv.Init(cominterface, dedicated);
 
 	if (!dedicated) {
-		cl.Init(sys);
+		cl.Init(cominterface);
 
 		// Provide the user a way to interface with the client.
 		window.$ = function (str) {
@@ -24,7 +23,7 @@ function Init(sys_, dedicated_) {
 			var args = split.slice(1);
 			var callback;
 
-			if ((callback = cmd.GetCmd(cmdstr))) {
+			if ((callback = GetCmd(cmdstr))) {
 				callback.apply(this, args);
 			}
 		};

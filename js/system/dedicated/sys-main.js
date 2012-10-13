@@ -1,6 +1,6 @@
-function Init() {
+function Init(cominterface) {	
 	NetCreateServer();
-	com.Init(protectedExports, true);
+	com.Init(sysinterface, true);
 
 	setInterval(function () {
 		com.Frame();

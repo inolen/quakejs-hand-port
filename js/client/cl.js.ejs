@@ -1,6 +1,6 @@
 define('client/cl',
-['underscore', 'glmatrix', 'ByteBuffer', 'common/com', 'clipmap/cm', 'cgame/cg', 'renderer/re', 'shared/cmd', 'shared/cvar'],
-function (_, glmatrix, ByteBuffer, com, cm, cg, re, cmd, cvar) {
+['underscore', 'glmatrix', 'ByteBuffer', 'cgame/cg', 'clipmap/cm', 'renderer/re'],
+function (_, glmatrix, ByteBuffer, cg, cm, re) {
 	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include ../cgame/cg-defines.js %>
@@ -11,34 +11,43 @@ function (_, glmatrix, ByteBuffer, com, cm, cg, re, cmd, cvar) {
 	<%- include cl-input.js %>
 	<%- include cl-parse.js %>
 
-	var protectedExports = {
-		GetGameState: function () { return cl.gameState; },
+	var cginterface = {
+		AddCmd:                      function () { return com.AddCmd.apply(this, arguments); },
+		AddCvar:                     function () { return com.AddCvar.apply(this, arguments); },
+		GetMilliseconds:             function () { return com.GetMilliseconds.apply(this, arguments); },
+		GetGameState:                function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
-		GetUserCommand: GetUserCommand,
-		GetCurrentSnapshotNumber: GetCurrentSnapshotNumber,
-		GetSnapshot: GetSnapshot,
-		LoadClipMap: cm.LoadMap,
-		LoadRenderMap: re.LoadMap,
-		Trace: cm.Trace,
-		CreateElement: re.CreateElement,
-		DeleteElement: re.DeleteElement,
-		DrawText: re.DrawText,
-		RenderScene: re.RenderScene
+		GetUserCommand:              GetUserCommand,
+		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
+		GetSnapshot:                 GetSnapshot,
+		LoadClipMap:                 cm.LoadMap,
+		LoadRenderMap:               re.LoadMap,
+		Trace:                       cm.Trace,
+		CreateElement:               re.CreateElement,
+		DeleteElement:               re.DeleteElement,
+		DrawText:                    re.DrawText,
+		RenderScene:                 re.RenderScene
 	};
 
-	var publicExports = {
-		Init: Init,
-		InitCGame: InitCGame,
-		ShutdownCGame: ShutdownCGame,
-		InitRenderer: InitRenderer,
+	var reinterface = {
+		AddCmd:                      function () { return com.AddCmd.apply(this, arguments); },
+		AddCvar:                     function () { return com.AddCvar.apply(this, arguments); },
+		GetMilliseconds:             function () { return com.GetMilliseconds.apply(this, arguments); },
+		GetGameRenderContext:        function () { return com.GetGameRenderContext.apply(this, arguments); },
+		GetUIRenderContext:          function () { return com.GetUIRenderContext.apply(this, arguments); },
+	};
+
+	return {
+		Init:             Init,
+		InitCGame:        InitCGame,
+		ShutdownCGame:    ShutdownCGame,
+		InitRenderer:     InitRenderer,
 		ShutdownRenderer: ShutdownRenderer,
-		Frame: Frame,
-		PacketEvent: PacketEvent,
-		KeyDownEvent: KeyDownEvent,
-		KeyUpEvent: KeyUpEvent,
-		MouseMoveEvent: MouseMoveEvent,
-		MapLoading: MapLoading
+		Frame:            Frame,
+		PacketEvent:      PacketEvent,
+		KeyDownEvent:     KeyDownEvent,
+		KeyUpEvent:       KeyUpEvent,
+		MouseMoveEvent:   MouseMoveEvent,
+		MapLoading:       MapLoading
 	};
-
-	return publicExports;
 });

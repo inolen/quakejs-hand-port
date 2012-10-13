@@ -1,5 +1,5 @@
 function CmdInit() {
-	cmd.AddCmd('connect', CmdConnect);
+	com.AddCmd('connect', CmdConnect);
 }
 
 function CmdConnect(serverName) {

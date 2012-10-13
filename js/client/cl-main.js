@@ -1,4 +1,3 @@
-var sys;
 var com;
 
 var cl;
@@ -9,18 +8,17 @@ var cl_showTimeDelta;
 var commands = {};
 var keys = {};
 
-function Init(sys_) {
+function Init(cominterface) {
 	console.log('--------- CL Init ---------');
 
-	sys = sys_;
-	com = require('common/com');
+	com = cominterface;
 
 	ClearState();
 	clc = new ClientConnection();
 	cls.realtime = 0;
 
-	cl_sensitivity = cvar.AddCvar('cl_sensitivity', 2);
-	cl_showTimeDelta = cvar.AddCvar('cl_showTimeDelta', 0);
+	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
+	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0);
 
 	InputInit();
 	CmdInit();
@@ -42,7 +40,7 @@ function ClearState() {
 
 function InitCGame() {
 	clc.state = ConnectionState.LOADING;
-	cg.Init(sys, protectedExports, clc.serverMessageSequence);
+	cg.Init(cginterface, clc.serverMessageSequence);
 	clc.state = ConnectionState.PRIMED;
 }
 
@@ -51,7 +49,7 @@ function ShutdownCGame() {
 }
 
 function InitRenderer() {
-	re.Init(sys);
+	re.Init(reinterface);
 }
 
 function ShutdownRenderer() {

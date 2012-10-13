@@ -1,4 +1,4 @@
-define('system/dedicated/sys',
+define('system/sys',
 ['common/com'],
 function (com) {
 	<%- include ../../shared/shared.js %>
@@ -6,19 +6,17 @@ function (com) {
 	<%- include sys-main.js %>
 	<%- include sys-net.js %>
 
-	var protectedExports = {
+	var sysinterface = {
+		GetMilliseconds:      GetMilliseconds,
 		GetGameRenderContext: GetGameRenderContext,
 		GetUIRenderContext:   GetUIRenderContext,
-		GetMilliseconds:      GetMilliseconds,
 		NetCreateServer:      NetCreateServer,
 		NetConnectToServer:   NetConnectToServer,
 		NetSend:              NetSend,
 		NetClose:             NetClose
 	};
-
-	var publicExports = {
+	
+	return {
 		Init: Init
 	};
-
-	return publicExports;
 });

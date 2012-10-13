@@ -1,6 +1,6 @@
 define('server/sv',
-['underscore', 'ByteBuffer', 'common/com', 'clipmap/cm', 'client/cl', 'game/gm', 'shared/cmd', 'shared/cvar', 'shared/Q3Bsp'],
-function (_, ByteBuffer, com, cm, cl, gm, cmd, cvar, Q3Bsp) {
+['underscore', 'ByteBuffer', 'game/gm', 'client/cl', 'clipmap/cm', 'shared/Q3Bsp'],
+function (_, ByteBuffer, gm, cl, cm, Q3Bsp) {
 	<%- include ../shared/shared.js %>
 	<%- include ../common/com-defines.js %>
 	<%- include sv-defines.js %>
@@ -12,20 +12,22 @@ function (_, ByteBuffer, com, cm, cl, gm, cmd, cvar, Q3Bsp) {
 	<%- include sv-world.js %>
 
 	var gameExports = {
-		GetEntityDefs: cm.EntityDefs,
-		LocateGameData: LocateGameData,
-		SetBrushModel: SetBrushModel,
-		LinkEntity: LinkEntity,
-		UnlinkEntity: UnlinkEntity,
+		AddCmd:            function () { return com.AddCmd.apply(this, arguments); },
+		AddCvar:           function () { return com.AddCvar.apply(this, arguments); },
+		GetEntityDefs:     cm.EntityDefs,
+		LocateGameData:    LocateGameData,
+		SetBrushModel:     SetBrushModel,
+		LinkEntity:        LinkEntity,
+		UnlinkEntity:      UnlinkEntity,
 		FindEntitiesInBox: FindEntitiesInBox,
-		Trace: cm.Trace
+		Trace:             cm.Trace
 	};
 
 	var publicExports = {
-		Init: Init,
-		Frame: Frame,
-		PacketEvent: PacketEvent,
-		ClientConnect: ClientConnect,
+		Init:             Init,
+		Frame:            Frame,
+		PacketEvent:      PacketEvent,
+		ClientConnect:    ClientConnect,
 		ClientDisconnect: ClientDisconnect,
 	};
 

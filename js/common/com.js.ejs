@@ -1,20 +1,36 @@
 define('common/com',
-['underscore', 'ByteBuffer', 'server/sv', 'client/cl', 'shared/cmd'],
-function (_, ByteBuffer, sv, cl, cmd) {
+['underscore', 'ByteBuffer', 'server/sv', 'client/cl'],
+function (_, ByteBuffer, sv, cl) {
 	<%- include ../shared/shared.js %>
 	<%- include com-defines.js %>
+	<%- include com-cmd.js %>
+	<%- include com-cvar.js %>
 	<%- include com-main.js %>
 	<%- include com-net.js %>
 
-	return {
-		EventTypes: EventTypes,
+	var cominterface = {
+		AddCvar:              AddCvar,
+		GetCvar:              GetCvar,
+		SetCvar:              SetCvar,
+		AddCmd:               AddCmd,
+		GetCmd:               GetCmd,
+		NetchanSetup:         NetchanSetup,
+		NetchanDestroy:       NetchanDestroy,
+		NetchanSend:          NetchanSend,
+		NetchanPrint:         NetchanPrint,
+		GetMilliseconds:      function () { return sys.GetMilliseconds.apply(this, arguments); },
+		GetGameRenderContext: function () { return sys.GetGameRenderContext.apply(this, arguments); },
+		GetUIRenderContext:   function () { return sys.GetUIRenderContext.apply(this, arguments); },
+		NetCreateServer:      function () { return sys.NetCreateServer.apply(this, arguments); },
+		NetConnectToServer:   function () { return sys.NetConnectToServer.apply(this, arguments); },
+		NetSend:              function () { return sys.NetSend.apply(this, arguments); },
+		NetClose:             function () { return sys.NetClose.apply(this, arguments); }
+	};
 
+	return {
+		EventTypes:     EventTypes,
 		Init:           Init,
 		Frame:          Frame,
-		QueueEvent:     QueueEvent,
-		NetchanSetup:   NetchanSetup,
-		NetchanDestroy: NetchanDestroy,
-		NetchanSend:    NetchanSend,
-		NetchanPrint:   NetchanPrint
+		QueueEvent:     QueueEvent
 	};
 });
