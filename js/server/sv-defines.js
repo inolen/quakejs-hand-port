@@ -1,13 +1,14 @@
 // Persistent across all maps.
 var ServerStatic = function () {
+	this.initialized       = false;
 	this.time              = 0;
 	this.snapFlagServerBit = 0;                  // ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
 	this.clients           = [];
+	this.msgBuffer         = new ArrayBuffer(MAX_MSGLEN);
 };
 
 // Reset for each map.
 var ServerLocals = function () {
-	this.initialized   = false;
 	this.serverId      = 0;                      // changes each server start
 	this.time          = 0;
 	this.timeResidual  = 0;                      // <= 1000 / sv_frame->value

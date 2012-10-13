@@ -18,9 +18,17 @@ function NetConnectToServer(addr) {
 	return socket;
 }
 
-function NetSend(socket, buffer) {
+function NetSend(socket, buffer, length) {
 	if (socket.readyState !== 1) {
 		return;
+	}
+
+	// Make a truncated copy of the incoming buffer if the length doesn't
+	// match. This often happens due to us pre-allocating a buffer of
+	// MAX_MSGLEN everywhere. If only the WebSocket API would allow you
+	// to pass a length parameter to send.
+	if (buffer.byteLength !== length) {
+		buffer = buffer.slice(0, length);
 	}
 
 	socket.send(buffer);

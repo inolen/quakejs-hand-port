@@ -20,6 +20,11 @@ function InputInit() {
  */
 
 function SendCommand() {
+	// Don't send any message if not connected.
+	if (clc.state < ConnectionState.CONNECTED) {
+		return;
+	}
+
 	CreateNewCommands();
 
 	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
@@ -44,7 +49,7 @@ function WriteCommandPacket(cmd) {
 	bb.writeByte(cmd.rightmove);
 	bb.writeByte(cmd.upmove);
 
-	com.NetchanSend(clc.netchan, bb.buffer.slice(0, bb.index));
+	com.NetchanSend(clc.netchan, bb.buffer, bb.index);
 }
 
 function CreateNewCommands() {

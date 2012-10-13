@@ -1,11 +1,5 @@
-function PacketEvent(addr, buffer) {
-	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
-	
-	ExecuteServerMessage(bb);
-}
-
-function ExecuteServerMessage(msg) {
-	var messageSequence = msg.readUnsignedInt();
+function ParseServerMessage(msg) {
+	var messageSequence = msg.readInt();
 	var type = msg.readUnsignedByte();
 
 	clc.serverMessageSequence = messageSequence;

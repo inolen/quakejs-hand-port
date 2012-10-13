@@ -21,6 +21,7 @@ function Init(sys_, cl_, serverMessageNum) {
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
+	
 	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
 		cl.LoadRenderMap(cgs.gameState['sv_mapname'], function () {
 			cg.initialized = true;

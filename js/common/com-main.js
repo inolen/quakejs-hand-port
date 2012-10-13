@@ -19,11 +19,13 @@ function Init(sys_, dedicated_) {
 
 		// Provide the user a way to interface with the client.
 		window.$ = function (str) {
-			var args = Array.prototype.slice.call(arguments, 1);
+			var split = str.split(' ');
+			var cmdstr = split[0];
+			var args = split.slice(1);
 			var callback;
 
-			if ((callback = cmd.GetCmd(str))) {
-				callback(args);
+			if ((callback = cmd.GetCmd(cmdstr))) {
+				callback.apply(this, args);
 			}
 		};
 	}
@@ -49,14 +51,14 @@ function EventLoop() {
 
 	while (ev) {
 		switch (ev.type) {
-			case EventTypes.NETCONNECT:
-				sv.ClientConnect(ev.addr, ev.socket);
-				break;
-			case EventTypes.NETDISCONNECT:
-				sv.ClientDisconnect(ev.addr);
-				break;
 			case EventTypes.NETCLMESSAGE:
 				cl.PacketEvent(ev.addr, ev.buffer);
+				break;
+			case EventTypes.NETSVCONNECT:
+				sv.ClientConnect(ev.addr, ev.socket);
+				break;
+			case EventTypes.NETSVDISCONNECT:
+				sv.ClientDisconnect(ev.addr);
 				break;
 			case EventTypes.NETSVMESSAGE:
 				sv.PacketEvent(ev.addr, ev.buffer);

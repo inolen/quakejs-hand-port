@@ -30,9 +30,9 @@ function SendClientSnapshot(client) {
 	}
 
 	var frame = client.frames[client.netchan.outgoingSequence & PACKET_MASK];
-	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+	var bb = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
-	bb.writeUnsignedInt(client.netchan.outgoingSequence);
+	bb.writeInt(client.netchan.outgoingSequence);
 	bb.writeUnsignedByte(ServerMessage.snapshot);
 
 	// Send over the current server time so the client can drift
@@ -75,7 +75,7 @@ function SendClientSnapshot(client) {
 	bb.writeFloat(frame.ps.viewangles[1]);
 	bb.writeFloat(frame.ps.viewangles[2]);
 
-	com.NetchanSend(client.netchan, bb.buffer.slice(0, bb.index));
+	com.NetchanSend(client.netchan, bb.buffer, bb.index);
 }
 
 function SendClientMessages() {

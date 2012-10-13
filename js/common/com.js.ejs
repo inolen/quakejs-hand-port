@@ -1,6 +1,6 @@
 define('common/com',
-['underscore', 'server/sv', 'client/cl', 'shared/cmd'],
-function (_, sv, cl, cmd) {
+['underscore', 'ByteBuffer', 'server/sv', 'client/cl', 'shared/cmd'],
+function (_, ByteBuffer, sv, cl, cmd) {
 	<%- include ../shared/shared.js %>
 	<%- include com-defines.js %>
 	<%- include com-main.js %>
@@ -9,11 +9,12 @@ function (_, sv, cl, cmd) {
 	return {
 		EventTypes: EventTypes,
 
-		Init: Init,
-		Frame: Frame,
-		QueueEvent: QueueEvent,
-		NetchanSetup: NetchanSetup,
+		Init:           Init,
+		Frame:          Frame,
+		QueueEvent:     QueueEvent,
+		NetchanSetup:   NetchanSetup,
 		NetchanDestroy: NetchanDestroy,
-		NetchanSend: NetchanSend
+		NetchanSend:    NetchanSend,
+		NetchanPrint:   NetchanPrint
 	};
 });

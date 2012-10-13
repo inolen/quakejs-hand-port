@@ -60,10 +60,13 @@ var ConnectionState = {
 };
 
 var ClientConnection = function () {
+	this.state                 = ConnectionState.UNINITIALIZED;
+	this.clientNum             = -1;
+	this.lastPacketSentTime    = 0;                        // for retransmits during connection
+	this.lastPacketTime        = 0;                        // for timeouts
 	// Message sequence is used by both the network layer and the
 	// delta compression layer.
 	this.serverMessageSequence = 0;
-	this.state                 = ConnectionState.UNINITIALIZED;
 	this.netchan               = null;
 };
 

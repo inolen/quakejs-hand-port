@@ -18,14 +18,14 @@ function NetCreateServer() {
 
 		console.log((new Date()) + ' Connection accepted.');
 
-		com.QueueEvent({ type: com.EventTypes.NETCONNECT, addr: addr, socket: connection });
+		com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, addr: addr, socket: connection });
 
 		connection.on('message', function (message) {
 			com.QueueEvent({ type: com.EventTypes.NETSVMESSAGE, addr: addr, buffer: message.binaryData });
 		});
 
 		connection.on('close', function(reasonCode, description) {
-			com.QueueEvent({ type: com.EventTypes.NETDISCONNECT, addr: addr });
+			com.QueueEvent({ type: com.EventTypes.NETSVDISCONNECT, addr: addr });
 		});
 	});
 }
@@ -34,11 +34,11 @@ function NetConnectToServer(addr) {
 	throw new Error('Should not happen');
 }
 
-function NetSend(socket, ab) {
+function NetSend(socket, ab, length) {
 	// TODO optimize this, converting the buffer is lame.
-	var buffer = new Buffer(ab.byteLength);
+	var buffer = new Buffer(length);
 	var view = new Uint8Array(ab);
-	for (var i = 0; i < buffer.length; ++i) {
+	for (var i = 0; i < length; ++i) {
 		buffer[i] = view[i];
 	}
 	socket.sendBytes(buffer);

@@ -43,7 +43,7 @@ function FrameMsec() {
 function Frame(frameTime, msec) {
 	svs.frameTime = frameTime;
 	
-	if (!sv || !sv.initialized) {
+	if (!svs.initialized) {
 		return;
 	}
 
@@ -71,7 +71,7 @@ function Frame(frameTime, msec) {
 function SpawnServer(mapName) {
 	console.log('SV: Spawning new server instance running: ' + mapName);
 
-	sv.initialized = false;
+	svs.initialized = false;
 	
 	// Shutdown the game.
 	gm.Shutdown();
@@ -122,11 +122,12 @@ function SpawnServer(mapName) {
 				continue;
 			}
 			
-			client.oldServerTime = oldServerTime; // save when the server started for each client already connected
-			client.deltaMessage = -1;
-			client.lastSnapshotTime = 0; // generate a snapshot immediately
+			// Clear gentity pointer to prevent bad snapshots from building.
+			client.gentity = null;
 
-			gm.ClientBegin(i);
+			// When we get the next packet from a connected client,
+			// the new gamestate will be sent.
+			client.state = ClientState.CONNECTED;
 		}	
 
 		/*// Run another frame to allow things to look at all the players.
@@ -134,6 +135,6 @@ function SpawnServer(mapName) {
 		sv.time += 100;
 		svs.time += 100;*/
 
-		sv.initialized = true;
+		svs.initialized = true;
 	});
 }

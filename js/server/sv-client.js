@@ -1,5 +1,9 @@
 function PacketEvent(addr, buffer) {
-	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	if (!svs.initialized) {
+		return;
+	}
+
+	var msg = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 
 	for (i = 0; i < svs.clients.length; i++) {
 		var c = svs.clients[i];
@@ -9,7 +13,7 @@ function PacketEvent(addr, buffer) {
 		}
 
 		if (_.isEqual(c.netchan.addr, addr)) {
-			ExecuteClientMessage(c, bb);
+			ExecuteClientMessage(c, msg);
 			return;
 		}
 	}
@@ -33,11 +37,12 @@ function ClientConnect(addr, socket) {
 	// Create the client.
 	var newcl = svs.clients[clientNum] = new ServerClient(clientNum);
 	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
+	newcl.state = ClientState.CONNECTED;
 
 	UserinfoChanged(newcl);
 
-	//console.log('Going from ClientState.FREE to ClientState.CONNECTED for ', client.name);
-	newcl.state = ClientState.CONNECTED;
+	// Let the client know we've accepted them.
+	com.NetchanPrint(newcl.netchan, 'connectResponse');
 
 	// When we receive the first packet from the client, we will
 	// notice that it is from a different serverid and that the
@@ -142,9 +147,9 @@ function SendClientGameState(client) {
 	client.state = ClientState.PRIMED;
 	client.gamestateMessageNum = client.netchan.outgoingSequence;
 
-	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+	var bb = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
-	bb.writeUnsignedInt(client.netchan.outgoingSequence);
+	bb.writeInt(client.netchan.outgoingSequence);
 	bb.writeUnsignedByte(ServerMessage.gamestate);
 
 	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and ClientState.SERVERINFO)
@@ -154,8 +159,7 @@ function SendClientGameState(client) {
 	bb.writeCString('sv_serverid');
 	bb.writeCString(sv_serverid().toString());
 
-	var newBuffer = bb.buffer.slice(0, bb.index);
-	com.NetchanSend(client.netchan, newBuffer);
+	com.NetchanSend(client.netchan, bb.buffer, bb.index);
 }
 
 function ClientThink(client, cmd) {
@@ -178,7 +182,6 @@ function GetClientNum(client) {
 
 	return -1;
 }
-
 
 function UserinfoChanged(client) {
 	var snaps = 20;

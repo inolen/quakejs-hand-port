@@ -7,13 +7,13 @@ var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibilit
 
 // Event types for the main message pump.
 var EventTypes = {
-	NETCONNECT:    1,
-	NETDISCONNECT: 2,
-	NETCLMESSAGE:  3,
-	NETSVMESSAGE:  4,
-	KEYDOWN:       5,
-	KEYUP:         6,
-	MOUSEMOVE:     7
+	NETCLMESSAGE:    0,
+	NETSVCONNECT:    1,
+	NETSVDISCONNECT: 2,
+	NETSVMESSAGE:    3,
+	KEYDOWN:         4,
+	KEYUP:           5,
+	MOUSEMOVE:       6
 };
 
 var PACKET_BACKUP   = 32;                        // number of old messages that must be kept on client and
@@ -30,16 +30,16 @@ var NetChan = function () {
 };
 
 var ClientMessage = {
-	nop:           1,
-	move:          2,                            // [[UserCmd]
-	moveNoDelta:   3,                            // [[UserCmd]
-	clientCommand: 4                             // [string] message
+	nop:           0,
+	move:          1,                            // [[UserCmd]
+	moveNoDelta:   2,                            // [[UserCmd]
+	clientCommand: 3                             // [string] message
 };
 
 var ServerMessage = {
-	gamestate:     1,
-	configstring:  2,                            // [short] [string] only in gamestate messages
-	baseline:      3,                            // only in gamestate messages
-	serverCommand: 4,                            // [string] to be executed by client game module
-	snapshot:      5
+	gamestate:      0,
+	configstring:   1,                           // [short] [string] only in gamestate messages
+	baseline:       2,                           // only in gamestate messages
+	serverCommand:  3,                           // [string] to be executed by client game module
+	snapshot:       4
 };
