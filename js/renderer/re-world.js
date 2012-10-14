@@ -242,7 +242,7 @@ function CullSurface(surface, shader) {
 	}
 
 	// TODO We don't convert to a render specific type yet.
-	if (surface.type === Q3Bsp.SurfaceTypes.MST_PATCH/*SurfaceType.GRID*/) {
+	if (surface.type === SurfaceType.GRID/*SurfaceType.GRID*/) {
 		//return R_CullGrid( (srfGridMesh_t *)surface );
 		return false;
 	}
@@ -252,9 +252,9 @@ function CullSurface(surface, shader) {
 	}*/
 
 	// TODO We don't convert to a render specific type yet.
-	/*if (surface.type !== SurfaceType.FACE) {
+	if (surface.type !== SurfaceType.FACE) {
 		return false;
-	}*/
+	}
 
 	// TODO map shader cull value to enum
 	if (shader.cull === 'twosided' || shader.cull === 'none' || shader.cull === 'disable') {

@@ -27,6 +27,7 @@ function DeleteTextures() {
 }
 
 function FindImage(name, clamp) {
+	//console.log('FindImage', name);
 	// Only load .png files. Retrying on missing files is an expensive
 	// operation in the browser.
 	name = name.replace(/\.[^\.]+$/, '.png');

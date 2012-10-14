@@ -39,28 +39,6 @@ var PerformanceCounter = function () {
 	this.verts = 0;
 };
 
-var WorldData = function () {
-	this.name         = null;
-	this.path         = null;
-	this.lightmaps    = null;
-	this.shaders      = [];
-	this.verts        = [];
-	this.meshVerts    = [];
-	this.faces        = [];
-	this.planes       = [];
-	this.leafSurfaces = [];
-	this.nodes        = [];
-	this.leafs        = [];
-	this.entities     = {};
-	this.numClusters  = 0;
-
-	/*vec3_t    lightGridOrigin;
-	vec3_t      lightGridSize;
-	vec3_t      lightGridInverseSize;
-	int         lightGridBounds[3];
-	byte        *lightGridData;*/
-};
-
 var RefDef = function () {
 	this.x            = 0;
 	this.y            = 0;
@@ -145,6 +123,9 @@ var Texture = function () {
 	this.texnum = null;
 };
 
+/************************************************
+ * Backend structs
+ ************************************************/
 var ShaderSort = {
 	BAD:            0,
 	PORTAL:         1,                           // mirrors, portals, viewscreens
@@ -173,6 +154,14 @@ var LightmapType = {
 	NONE:       -1
 };
 
+var DrawSurface = function () {
+	this.sort    = 0;                            // bit combination for fast compares
+	this.surface = -1;                           // any of surface*_t
+};
+
+/************************************************
+ * Renderer specific BSP structs
+ ************************************************/
 var SurfaceType = {
 	BAD:          0,
 	SKIP:         1,                             // ignore
@@ -188,8 +177,61 @@ var SurfaceType = {
 	DISPLAY_LIST: 11
 };
 
-var DrawSurface = function () {
-	this.sort    = 0;                            // bit combination for fast compares
-	this.surface = -1;                           // any of surface*_t
+var msurface_t = function () {
+	this.surfaceType   = SurfaceType.BAD;
+	this.viewCount     = 0;                        // if == re.viewCount, already added
+	this.shader        = null;
+	this.fogIndex      = 0;
+	this.vertex        = 0;
+	this.vertCount     = 0;
+	this.meshVert      = 0;
+	this.meshVertCount = 0;
+	this.lightmapNum   = 0;
+	// grid meshes
+	this.patchWidth    = 0;
+	this.patchHeight   = 0;
+	// normal faces
+	this.planes        = new Plane();
 };
 
+var mnode_t = function () {
+	this.parent   = null;
+	this.plane    = null;
+	this.children = [null, null];
+	this.mins     = [0, 0, 0];
+	this.maxs     = [0, 0, 0];
+};
+
+var mleaf_t = function () {
+	this.parent           = null;
+	this.cluster          = 0;
+	this.area             = 0;
+	this.mins             = [0, 0, 0];
+	this.maxs             = [0, 0, 0];
+	this.firstLeafSurface = 0;
+	this.numLeafSurfaces  = 0;
+	this.firstLeafBrush   = 0;
+	this.numLeafBrushes   = 0;
+};
+
+var WorldData = function () {
+	this.name         = null;
+	this.path         = null;
+	this.lightmaps    = null;
+	this.shaders      = [];
+	this.verts        = [];
+	this.meshVerts    = [];
+	this.faces        = [];
+	this.planes       = [];
+	this.leafSurfaces = [];
+	this.nodes        = [];
+	this.leafs        = [];
+	this.entities     = {};
+	this.numClusters  = 0;
+
+	/*vec3_t    lightGridOrigin;
+	vec3_t      lightGridSize;
+	vec3_t      lightGridInverseSize;
+	int         lightGridBounds[3];
+	byte        *lightGridData;*/
+};

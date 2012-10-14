@@ -304,7 +304,9 @@ ByteBuffer = (function() {
     while (this._index < target) {
       b1 = raw[this._index];
       if (b1 < 128) {
-        codepoints[c++] = b1;
+        if (b1 !== 0) {
+          codepoints[c++] = b1;
+        }
         this._index++;
       } else if (b1 < 194) {
         throw new Error('Unexpected continuation byte');
