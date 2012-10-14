@@ -25,7 +25,7 @@ function Init(cominterface, isdedicated) {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		LoadMapCmd('q3tourney4');
+		LoadMapCmd('q3dm17');
 	}, 50);
 }
 

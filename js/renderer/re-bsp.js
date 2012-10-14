@@ -205,40 +205,42 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 		var face = faces[i] = new msurface_t();
 
 		// Read the source data into temp variabesl.
-		var shaderNum = bb.readInt();
-		var fogNum = bb.readInt();
-		var surfaceType  = bb.readInt();
-		var vertex = bb.readInt();
-		var vertCount = bb.readInt();
-		var meshVert = bb.readInt();
-		var meshVertCount = bb.readInt();
-		var lightmapNum = bb.readInt();
-		var lmStart = [bb.readInt(), bb.readInt()];
-		var lmSize = [bb.readInt(), bb.readInt()];
-		var lmOrigin = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
-		var lmVecs = [
+		var dface = new dsurface_t();
+
+		dface.shaderNum = bb.readInt();
+		dface.fogNum = bb.readInt();
+		dface.surfaceType  = bb.readInt();
+		dface.vertex = bb.readInt();
+		dface.vertCount = bb.readInt();
+		dface.meshVert = bb.readInt();
+		dface.meshVertCount = bb.readInt();
+		dface.lightmapNum = bb.readInt();
+		dface.lmStart = [bb.readInt(), bb.readInt()];
+		dface.lmSize = [bb.readInt(), bb.readInt()];
+		dface.lmOrigin = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
+		dface.lmVecs = [
 			[bb.readFloat(), bb.readFloat(), bb.readFloat()],
 			[bb.readFloat(), bb.readFloat(), bb.readFloat()],
 			[bb.readFloat(), bb.readFloat(), bb.readFloat()]
 		];
-		var patchWidth = bb.readInt();
-		var patchHeight = bb.readInt();
+		dface.patchWidth = bb.readInt();
+		dface.patchHeight = bb.readInt();
 
 		// Setup our in-memory representation.
-		face.shader = ShaderForShaderNum(shaderNum, lightmapNum);
-		face.fogIndex = fogNum + 1;
-		face.vertex = vertex;
-		face.vertCount = vertCount;
-		face.meshVert = meshVert;
-		face.meshVertCount = meshVertCount;
-		face.lightmapNum = lightmapNum;
-		face.patchWidth = patchWidth;
-		face.patchHeight = patchHeight;
+		face.shader = ShaderForShaderNum(dface.shaderNum, dface.lightmapNum);
+		face.fogIndex = dface.fogNum + 1;
+		face.vertex = dface.vertex;
+		face.vertCount = dface.vertCount;
+		face.meshVert = dface.meshVert;
+		face.meshVertCount = dface.meshVertCount;
+		face.lightmapNum = dface.lightmapNum;
+		face.patchWidth = dface.patchWidth;
+		face.patchHeight = dface.patchHeight;
 
-		if (face.type === MapSurfaceType.PATCH) {
-			ParseMesh(face, r_subdivisions());
-		} else if (face.type === MapSurfaceType.PLANAR) {
-			ParseFace(face);
+		if (dface.surfaceType === MapSurfaceType.PATCH) {
+			ParseMesh(dface, face, r_subdivisions());
+		} else if (dface.surfaceType === MapSurfaceType.PLANAR) {
+			ParseFace(dface, face);
 		}
 	}
 
@@ -278,7 +280,7 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 	}
 }
 
-function ParseMesh(face, level) {	
+function ParseMesh(dface, face, level) {
 	var verts = re.world.verts;
 	var meshVerts = re.world.meshVerts;
 	var points = verts.slice(face.vertex, face.vertex + face.vertCount);
@@ -286,6 +288,7 @@ function ParseMesh(face, level) {
 
 	face.surfaceType = SurfaceType.GRID;
 
+	// Start at the end of the current vert array.
 	face.vertex = verts.length;
 	face.vertCount = grid.verts.length;
 
@@ -314,16 +317,16 @@ function ParseMesh(face, level) {
 	}
 }
 
-function ParseFace(dface, out, mface) {
+function ParseFace(dface, face) {
 	var verts = re.world.verts;
 
-	mface.surfaceType = SurfaceType.FACE;
+	face.surfaceType = SurfaceType.FACE;
 
 	// Take the plane information from the lightmap vector
-	mface.plane.normal = vec3.create(face.lmVecs[2]);
-	mface.plane.dist = vec3.dot(verts[dface.vertex].pos, mface.plane.normal);
-	mface.plane.signbits = GetPlaneSignbits(mface.plane);
-	mface.plane.type = PlaneTypeForNormal(mface.plane.normal);
+	face.plane.normal = vec3.create(dface.lmVecs[2]);
+	face.plane.dist = vec3.dot(verts[face.vertex].pos, face.plane.normal);
+	face.plane.signbits = GetPlaneSignbits(face.plane);
+	face.plane.type = PlaneTypeForNormal(face.plane.normal);
 }
 
 function LoadPlanes(buffer, planeLump) {

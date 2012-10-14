@@ -187,11 +187,12 @@ var msurface_t = function () {
 	this.meshVert      = 0;
 	this.meshVertCount = 0;
 	this.lightmapNum   = 0;
+	this.normal        = [0, 0, 0];
 	// grid meshes
 	this.patchWidth    = 0;
 	this.patchHeight   = 0;
 	// normal faces
-	this.planes        = new Plane();
+	this.plane         = new Plane();
 };
 
 var mnode_t = function () {
