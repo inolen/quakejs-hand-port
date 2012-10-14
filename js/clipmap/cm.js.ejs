@@ -3,17 +3,27 @@ define('clipmap/cm',
 function (_, glmatrix, ByteBuffer) {
 	<%- include ../shared/shared.js %>
 	<%- include cm-defines.js %>
-	<%- include cm-main.js %>
-	<%- include cm-bsp.js %>
-	<%- include cm-test.js %>
-	<%- include cm-trace.js %>
+
+	// We don't want everyone who requires us to 
+	// have the same version of clipmap.
+	function ClipMap(cominterface) {
+		var com = cominterface;
+		<%- include cm-bsp.js %>
+		<%- include cm-test.js %>
+		<%- include cm-trace.js %>
+
+		return {
+			LoadMap: LoadMap,
+			EntityDefs: function () { return cm.entities; },
+			InlineModel: InlineModel,
+			ModelBounds: ModelBounds,
+			Trace: Trace
+		};
+	};
 
 	return {
-		Init: Init,
-		LoadMap: LoadMap,
-		EntityDefs: EntityDefs,
-		InlineModel: InlineModel,
-		ModelBounds: ModelBounds,
-		Trace: Trace
+		CreateInstance: function (cominterface) {
+			return new ClipMap(cominterface);
+		}
 	};
 });

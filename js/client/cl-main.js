@@ -3,6 +3,7 @@ var com;
 var cl;
 var clc;
 var cls = new ClientStatic();
+var cm;
 var cl_sensitivity;
 var cl_showTimeDelta;
 var commands = {};
@@ -15,6 +16,8 @@ function Init(cominterface) {
 
 	ClearState();
 	clc = new ClientConnection();
+	cm = clipmap.CreateInstance({ ReadFile: com.ReadFile });
+	
 	cls.realtime = 0;
 
 	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
@@ -23,7 +26,6 @@ function Init(cominterface) {
 	InitInput();
 	InitCmd();
 	InitRenderer();
-	cm.Init({ ReadFile: com.ReadFile });
 
 	cls.initialized = true;
 

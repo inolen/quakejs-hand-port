@@ -3,6 +3,7 @@ var dedicated;
 
 var sv;
 var svs;
+var cm;
 
 var sv_serverid;
 var sv_mapname;
@@ -14,13 +15,13 @@ function Init(cominterface, isdedicated) {
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
+	cm = clipmap.CreateInstance({ ReadFile: com.ReadFile });
 	
 	sv_serverid = com.AddCvar('sv_serverid', 1337);
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
 	sv_fps = com.AddCvar('sv_fps',     20);
 
 	InitCmd();
-	cm.Init({ ReadFile: com.ReadFile });
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {

@@ -3,8 +3,8 @@ var cm;
 function LoadMap(mapName, callback) {
 	console.log('--------- CM Init ---------');
 	console.log('Loading clipmap for ' + mapName);
-	
-	cm = new ClipMap();
+
+	cm = new ClipMapLocals();
 
 	com.ReadFile('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', 'binary', function (data) {
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
@@ -243,10 +243,6 @@ function LoadEntities(buffer, entityLump) {
 		entities.push(entity);
 	});
 }
-
-function EntityDefs() {
-	return cm.entities;
-};
 
 function ClipHandleToModel(handle) {
 	if (handle < 0) {

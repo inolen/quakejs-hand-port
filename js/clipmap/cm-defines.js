@@ -2,7 +2,7 @@
 // and to avoid various numeric issues
 var SURFACE_CLIP_EPSILON = 0.125;
 
-var ClipMap = function () {
+var ClipMapLocals = function () {
 	this.shaders     = null;
 	this.brushes     = null;
 	this.models      = null;
