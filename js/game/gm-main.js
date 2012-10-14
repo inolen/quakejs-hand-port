@@ -17,7 +17,7 @@ function Init(sv_) {
 	sv.LocateGameData(level.gentities, level.clients);
 
 	// Spawn all the entities for the current level.
-	EntitySpawnAllFromDefs();
+	SpawnAllEntitiesFromDefs();
 }
 
 function Shutdown() {
@@ -34,11 +34,7 @@ function Frame(levelTime) {
 		if (!ent) {
 			continue;
 		}
-
-		if (!ent.linked) {
-			continue;
-		}
-
+		
 		/*if (i < MAX_CLIENTS) {
 			ClientThink(ent.client.number);
 			continue;

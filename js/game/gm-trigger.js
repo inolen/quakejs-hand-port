@@ -4,7 +4,7 @@ function AimAtTarget(self) {
 
 	var ent = EntityPickTarget(self.target);
 	if (!ent) {
-		EntityFree(self);
+		FreeEntity(self);
 		return;
 	}
 
@@ -12,7 +12,7 @@ function AimAtTarget(self) {
 	var gravity = g_gravity();
 	var time = Math.sqrt(height / (0.5 * gravity));
 	if (!time) {
-		EntityFree(self);
+		FreeEntity(self);
 		return;
 	}
 

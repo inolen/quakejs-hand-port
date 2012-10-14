@@ -83,26 +83,31 @@ var PlayerState = function () {
 	this.viewangles       = [0, 0, 0];
 	this.speed            = 0;
 	this.gravity          = 0;
-	this.groundEntityNum  = -1;                  // ENTITYNUM_NONE = in air
+	this.groundEntityNum  = ENTITYNUM_NONE;      // ENTITYNUM_NONE = in air
 	this.jumppad_ent      = 0;                   // jumppad entity hit this frame
 	this.jumppad_frame    = 0;
 	this.pmove_framecount = 0;
 };
 
 // deep copy
-PlayerState.prototype.clone = function () {
-	var ps = new PlayerState();
+PlayerState.prototype.clone = function (ps) {
+	if (typeof(ps) === 'undefined') {
+		ps = new PlayerState();
+	}
+
 	ps.commandTime          = this.commandTime;
+	ps.pm_type              = this.pm_type;
+	ps.pm_flags             = this.pm_flags;
 	vec3.set(this.origin,     ps.origin);
 	vec3.set(this.velocity,   ps.velocity);
 	vec3.set(this.viewangles, ps.viewangles);
 	ps.speed                = this.speed;
 	ps.gravity              = this.gravity;
 	ps.groundEntityNum      = this.groundEntityNum;
-	ps.pm_flags             = this.pm_flags;
 	ps.jumppad_ent          = this.jumppad_ent;
 	ps.jumppad_frame        = this.jumppad_frame;
 	ps.pmove_framecount     = this.pmove_framecount;
+
 	return ps;
 };
 
@@ -126,7 +131,7 @@ var EntityState = function () {
 	this.origin2         = [0, 0, 0];
 	this.angles          = [0, 0, 0];
 	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = 0;                    // ENTITYNUM_NONE = in air
+	this.groundEntityNum = ENTITYNUM_NONE;       // ENTITYNUM_NONE = in air
 	this.modelindex      = 0;
 	this.modelindex2     = 0;
 	this.clientNum       = 0;                    // 0 to (MAX_CLIENTS - 1), for players and corpses
@@ -134,6 +139,33 @@ var EntityState = function () {
 	this.solid           = 0;                    // for client side prediction, trap_linkentity sets this properly
 	this.event           = 0;                    // impulse events -- muzzle flashes, footsteps, etc
 	this.eventParm       = 0;
+};
+
+// deep copy
+EntityState.prototype.clone = function (es) {
+	if (typeof(es) === 'undefined') {
+		es = new EntityState();
+	}
+
+	es.number            = this.number;
+	es.eType             = this.eType;
+	es.eFlags            = this.eFlags;
+	es.time              = this.time;
+	es.time2             = this.time2;
+	vec3.set(this.origin,  es.origin);
+	vec3.set(this.origin2, es.origin2);
+	vec3.set(this.angles,  es.angles);
+	vec3.set(this.angles2, es.angles2);
+	es.groundEntityNum   = this.groundEntityNum;
+	es.modelindex        = this.modelindex;
+	es.modelindex2       = this.modelindex2;
+	es.clientNum         = this.clientNum;
+	es.frame             = this.frame;
+	es.solid             = this.solid;
+	es.event             = this.event;
+	es.eventParm         = this.eventParm;
+
+	return es;
 };
 
 /**********************************************************

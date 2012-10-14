@@ -4,14 +4,16 @@ var MIN_WALK_NORMAL = 0.7;
 var STEPSIZE = 18;
 var OVERCLIP = 1.001;
 var DEFAULT_VIEWHEIGHT = 26;
+var ITEM_RADIUS = 15;                            // item sizes are needed for client side pickup detection
 
+/*
 var TrType = {
-	TR_STATIONARY:  1,
-	TR_INTERPOLATE: 2,                           // non-parametric, but interpolate between snapshots
-	TR_LINEAR:      3,
-	TR_LINEAR_STOP: 4,
-	TR_SINE:        5,                           // value = base + sin( time / duration ) * delta
-	TR_GRAVITY:     6
+	STATIONARY:  1,
+	INTERPOLATE: 2,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      3,
+	LINEAR_STOP: 4,
+	SINE:        5,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     6
 };
 
 var Trajectory = function () {
@@ -20,8 +22,91 @@ var Trajectory = function () {
 	this.duration = 0;
 	this.base = [0, 0, 0];
 	this.delta = [0, 0, 0];
+};*/
+
+/**********************************************************
+ * Game item descriptions
+ **********************************************************/
+var ItemType = {
+	BAD:                0,
+	WEAPON:             1,                       // EFX: rotate + upscale + minlight
+	AMMO:               2,                       // EFX: rotate
+	ARMOR:              3,                       // EFX: rotate + minlight
+	HEALTH:             4,                       // EFX: static external sphere + rotating internal
+	POWERUP:            5,                       // instant on, timer based
+	                                             // EFX: rotate + external ring that rotates
+	HOLDABLE:           6,                       // single use, holdable item
+	                                             // EFX: rotate + bob
+	PERSISTANT_POWERUP: 7,
+	TEAM:               8
 };
 
+var GameItemDesc = function (classname, giType) {
+	this.classname = classname;                  // spawning name
+	/*char		*pickup_sound;
+	char		*world_model[MAX_ITEM_MODELS];
+
+	char		*icon;
+	char		*pickup_name;	// for printing on pickup
+
+	int			quantity;		// for ammo how much, or duration of powerup*/
+	this.giType    = giType;                     // IT_* flags
+	/*int			giTag;
+
+	char		*precaches;		// string of all models and images this item will use
+	char		*sounds;		// string of all sounds this item will use*/
+};
+
+/**********************************************************
+ * Entity state related
+ **********************************************************/
+// entityState_t->eType
+var EntityType = {
+	GENERAL:          0,
+	PLAYER:           1,
+	ITEM:             2,
+	MISSILE:          3,
+	MOVER:            4,
+	BEAM:             5,
+	PORTAL:           6,
+	SPEAKER:          7,
+	PUSH_TRIGGER:     8,
+	TELEPORT_TRIGGER: 9,
+	INVISIBLE:        10,
+	GRAPPLE:          11,                        // grapple hooked on wall
+	TEAM:             12,
+	EVENTS:           13                         // any of the EV_* events can be added freestanding
+	                                             // by setting eType to ET_EVENTS + eventNum
+	                                             // this avoids having to set eFlags and eventNum
+};
+
+// entityState_t->eFlags
+var EntityFlags = {
+	DEAD:             0x00000001,                // don't draw a foe marker over players with EF_DEAD
+	TELEPORT_BIT:     0x00000004,                // toggled every time the origin abruptly changes
+	AWARD_EXCELLENT:  0x00000008,                // draw an excellent sprite
+	PLAYER_EVENT:     0x00000010,
+	BOUNCE:           0x00000010,                // for missiles
+	BOUNCE_HALF:      0x00000020,                // for missiles
+	AWARD_GAUNTLET:   0x00000040,                // draw a gauntlet sprite
+	NODRAW:           0x00000080,                // may have an event, but no model (unspawned items)
+	FIRING:           0x00000100,                // for lightning gun
+	KAMIKAZE:         0x00000200,
+	MOVER_STOP:       0x00000400,                // will push otherwise
+	AWARD_CAP:        0x00000800,                // draw the capture sprite
+	TALK:             0x00001000,                // draw a talk balloon
+	CONNECTION:       0x00002000,                // draw a connection trouble sprite
+	VOTED:            0x00004000,                // already cast a vote
+	AWARD_IMPRESSIVE: 0x00008000,                // draw an impressive sprite
+	AWARD_DEFEND:     0x00010000,                // draw a defend sprite
+	AWARD_ASSIST:     0x00020000,                // draw an assist sprite
+	AWARD_DENIED:     0x00040000,                // denied
+	TEAMVOTED:        0x00080000                 // already cast a team vote
+};
+
+/**********************************************************
+ * Pmove related
+ **********************************************************/
 var ContentFlags = {
 	SOLID:         1,                            // an eye is never valid in a solid
 	LAVA:          8,

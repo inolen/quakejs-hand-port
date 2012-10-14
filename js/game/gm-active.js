@@ -1,7 +1,7 @@
 
 /*
 ============
-G_TouchTriggers
+TouchTriggers
 
 Find all trigger entities that ent's current position touches.
 Spectators will only interact with teleporters.
@@ -19,10 +19,6 @@ function TouchTriggers(ent) {
 	vec3.add(ps.origin, range, maxs);
 
 	var entityNums = sv.FindEntitiesInBox(mins, maxs);
-
-	/*if (entityNums.length > 0 && entityNums[0] !== 0) {
-		console.log('TouchTriggers', entityNums);
-	}*/
 
 	/*// can't use ent->absmin, because that has a one unit pad
 	vec3.add(ps.origin, ent.r.mins, mins);

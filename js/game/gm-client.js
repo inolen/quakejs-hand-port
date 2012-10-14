@@ -66,7 +66,7 @@ function ClientSpawn(ent) {
 function SelectNearestDeathmatchSpawnPoint(from) {
 	var nearestDist = 999999;
 	var nearestSpot = null;
-	var spawnpoints = EntityFind('classname', 'info_player_deathmatch');
+	var spawnpoints = FindEntity('classname', 'info_player_deathmatch');
 
 	for (var i = 0; i < spawnpoints.length; i++) {
 		var spawnpoint = spawnpoints[i];
@@ -82,6 +82,6 @@ function SelectNearestDeathmatchSpawnPoint(from) {
 }
 
 function SelectRandomDeathmatchSpawnPoint() {
-	var spawnpoints = EntityFind('classname', 'info_player_deathmatch');
+	var spawnpoints = FindEntity('classname', 'info_player_deathmatch');
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }

@@ -76,9 +76,24 @@ function RenderScene(fd) {
 	vec3.set(fd.vieworg, parms.pvsOrigin);
 
 	RenderView(parms);
+
+	re.refdef.numRefEntities = 0;
 }
 
-function SetupModelMatrix() {
+function AddRefEntityToScene(refent) {
+	if (refent.reType < 0 || refent.reType >= RefEntityType.MAX_REF_ENTITY_TYPE) {
+		throw new Error('AddRefEntityToScene: bad reType ' + ent.reType);
+	}
+
+	re.refdef.refEntities[re.refdef.numRefEntities].reType = refent.reType;
+	vec3.set(refent.origin, re.refdef.refEntities[re.refdef.numRefEntities].origin);
+	vec3.set(refent.mins, re.refdef.refEntities[re.refdef.numRefEntities].mins);
+	vec3.set(refent.maxs, re.refdef.refEntities[re.refdef.numRefEntities].maxs);
+
+	re.refdef.numRefEntities++;
+}
+
+function RotateModelMatrixForViewer() {
 	var or = re.viewParms.or;
 
 	// Create model view matrix.
@@ -106,6 +121,59 @@ function SetupModelMatrix() {
 	// convert from our coordinate system (looking down X)
 	// to OpenGL's coordinate system (looking down -Z)
 	mat4.multiply(flipMatrix, modelMatrix, or.modelMatrix);
+}
+
+function RotateModelMatrixForEntity(refent, or) {
+	vec3.set(refent.origin, or.origin);
+	/*vec3.set(refent.axis[0], or.axis[0]);
+	vec3.set(refent.axis[1], or.axis[1]);
+	vec3.set(refent.axis[2], or.axis[2]);*/
+	vec3.set(re.viewParms.or.axis[0], or.axis[0]);
+	vec3.set(re.viewParms.or.axis[1], or.axis[1]);
+	vec3.set(re.viewParms.or.axis[2], or.axis[2]);
+
+	var modelMatrix = mat4.create();
+	modelMatrix[0] = or.axis[0][0];
+	modelMatrix[4] = or.axis[1][0];
+	modelMatrix[8] = or.axis[2][0];
+	modelMatrix[12] = or.origin[0];
+
+	modelMatrix[1] = or.axis[0][1];
+	modelMatrix[5] = or.axis[1][1];
+	modelMatrix[9] = or.axis[2][1];
+	modelMatrix[13] = or.origin[1];
+
+	modelMatrix[2] = or.axis[0][2];
+	modelMatrix[6] = or.axis[1][2];
+	modelMatrix[10] = or.axis[2][2];
+	modelMatrix[14] = or.origin[2];
+
+	modelMatrix[3] = 0;
+	modelMatrix[7] = 0;
+	modelMatrix[11] = 0;
+	modelMatrix[15] = 1;
+
+	mat4.multiply(re.viewParms.or.modelMatrix, modelMatrix, or.modelMatrix);
+
+	/*// calculate the viewer origin in the model's space
+	// needed for fog, specular, and environment mapping
+	VectorSubtract( viewParms->or.origin, or->origin, delta );
+
+	// compensate for scale in the axes if necessary
+	if ( ent->e.nonNormalizedAxes ) {
+		axisLength = VectorLength( ent->e.axis[0] );
+		if ( !axisLength ) {
+			axisLength = 0;
+		} else {
+			axisLength = 1.0f / axisLength;
+		}
+	} else {
+		axisLength = 1.0f;
+	}
+
+	or->viewOrigin[0] = DotProduct( delta, or->axis[0] ) * axisLength;
+	or->viewOrigin[1] = DotProduct( delta, or->axis[1] ) * axisLength;
+	or->viewOrigin[2] = DotProduct( delta, or->axis[2] ) * axisLength;*/
 }
 
 function SetupProjectionMatrix(zProj) {
@@ -247,13 +315,14 @@ function RenderView(parms) {
 	// SETUP tr.or
 	//vec3.set(re.viewParms.or.origin, re.or.viewOrigin);
 
-	SetupModelMatrix();
+	RotateModelMatrixForViewer();
 	SetupProjectionMatrix(r_zproj());
 
 	GenerateDrawSurfs();
 	SortDrawSurfaces();
 	// TODO we need to call something like R_AddDrawSurfCmd
 	RenderDrawSurfaces();
+	RenderRefEntities();
 }
 
 function GenerateDrawSurfs() {
@@ -366,4 +435,133 @@ function RenderDrawSurfaces() {
 		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
 		window.foobar = sys.GetMilliseconds();
 	}*/
+}
+
+var debugRefEntVerts = [
+	// Front face
+	-15.0, -15.0,  15.0,
+	15.0, -15.0,  15.0,
+	15.0,  15.0,  15.0,
+	-15.0,  15.0,  15.0,
+   
+	// Back face
+	-15.0, -15.0, -15.0,
+	-15.0,  15.0, -15.0,
+	15.0,  15.0, -15.0,
+	15.0, -15.0, -15.0,
+   
+	// Top face
+	-15.0,  15.0, -15.0,
+	-15.0,  15.0,  15.0,
+	15.0,  15.0,  15.0,
+	15.0,  15.0, -15.0,
+   
+	// Bottom face
+	-15.0, -15.0, -15.0,
+	15.0, -15.0, -15.0,
+	15.0, -15.0,  15.0,
+	-15.0, -15.0,  15.0,
+   
+	// Right face
+	15.0, -15.0, -15.0,
+	15.0,  15.0, -15.0,
+	15.0,  15.0,  15.0,
+	15.0, -15.0,  15.0,
+   
+	// Left face
+	-15.0, -15.0, -15.0,
+	-15.0, -15.0,  15.0,
+	-15.0,  15.0,  15.0,
+	-15.0,  15.0, -15.0
+];
+
+var debugRefEntIndexes = [
+	0,  1,  2,      0,  2,  3,    // front
+	4,  5,  6,      4,  6,  7,    // back
+	8,  9,  10,     8,  10, 11,   // top
+	12, 13, 14,     12, 14, 15,   // bottom
+	16, 17, 18,     16, 18, 19,   // right
+	20, 21, 22,     20, 22, 23    // left
+]
+
+var debugRefEntVertBuffer;
+var debugRefEntIndexBuffer;
+var v = '\
+	#ifdef GL_ES \n\
+	precision highp float; \n\
+	#endif \n\
+	attribute vec3 position; \n\
+\n\
+	uniform mat4 modelViewMat; \n\
+	uniform mat4 projectionMat; \n\
+\n\
+	void main(void) { \n\
+		vec4 worldPosition = modelViewMat * vec4(position, 1.0); \n\
+		gl_Position = projectionMat * worldPosition; \n\
+	} \n\
+';
+
+var f = '\
+	#ifdef GL_ES \n\
+	precision highp float; \n\
+	#endif \n\
+\n\
+	void main(void) { \n\
+		gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);\n\
+	} \n\
+';
+var vs, fs, program;
+
+function RenderRefEntities() {
+	if (!debugRefEntVertBuffer) {
+		debugRefEntVertBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(debugRefEntVerts), gl.STATIC_DRAW);
+
+		debugRefEntIndexBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(debugRefEntIndexes), gl.STATIC_DRAW);
+
+		if (!program) {
+			vs = gl.createShader(gl.VERTEX_SHADER);
+			gl.shaderSource(vs, v);
+			gl.compileShader(vs);
+			
+			fs = gl.createShader(gl.FRAGMENT_SHADER);
+			gl.shaderSource(fs, f);
+			gl.compileShader(fs);
+
+			program = gl.createProgram();
+			gl.attachShader(program, vs);
+			gl.attachShader(program, fs);
+			gl.linkProgram(program);
+		}
+	}
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
+	gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
+
+	gl.useProgram(program);
+
+	// Set uniforms
+	var uniModelViewMat = gl.getUniformLocation(program, 'modelViewMat');
+	var uniProjectionMat = gl.getUniformLocation(program, 'projectionMat');
+	//gl.uniformMatrix4fv(uniModelViewMat, false, re.viewParms.or.modelMatrix);
+	gl.uniformMatrix4fv(uniProjectionMat, false, re.viewParms.projectionMatrix);
+
+	// Setup vertex attributes
+	var attrPosition = gl.getAttribLocation(program, 'position');
+	gl.enableVertexAttribArray(attrPosition);
+	gl.vertexAttribPointer(attrPosition, 3, gl.FLOAT, false, 12, 0);
+
+	for (var i = 0; i < re.refdef.numRefEntities; i++) {
+		var refent = re.refdef.refEntities[i];
+		var or = new Orientation();
+
+		RotateModelMatrixForEntity(refent, or);
+
+		gl.uniformMatrix4fv(uniModelViewMat, false, or.modelMatrix);
+
+		gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+	}
 }

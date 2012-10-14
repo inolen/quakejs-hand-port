@@ -40,42 +40,49 @@ var PerformanceCounter = function () {
 };
 
 var RefDef = function () {
-	this.x            = 0;
-	this.y            = 0;
-	this.width        = 0;
-	this.height       = 0;
-	this.fovX         = 0;
-	this.fovY         = 0;
-	this.vieworg      = vec3.create();
-	this.viewaxis     = [
-		vec3.create(),
-		vec3.create(),
-		vec3.create()
+	this.x              = 0;
+	this.y              = 0;
+	this.width          = 0;
+	this.height         = 0;
+	this.fovX           = 0;
+	this.fovY           = 0;
+	this.vieworg        = [0, 0, 0];
+	this.viewaxis       = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
 	];
 	// Time in milliseconds for shader effects and other time dependent rendering issues.
-	this.time         = 0 ;
-	// TODO maybe this shouldn't be initialized until we hit the renderer.
-	this.drawSurfs    = new Array(MAX_DRAWSURFS);
-	this.numDrawSurfs = 0;
+	this.time           = 0;
+	this.drawSurfs      = new Array(MAX_DRAWSURFS);
+	this.numDrawSurfs   = 0;
+	this.refEntities    = new Array(MAX_ENTITIES);
+	this.numRefEntities = 0;
+
 	for (var i = 0; i < MAX_DRAWSURFS; i++) {
 		this.drawSurfs[i] = new DrawSurface();
+	}
+
+	for (var i = 0; i < MAX_ENTITIES; i++) {
+		this.refEntities[i] = new RefEntity();
 	}
 };
 
 var RefEntityType = {
-	BBOX:          0,
-	MODEL:         1,
-	POLY:          2,
-	SPRITE:        3,
-	BEAM:          4,
-	RAIL_CORE:     5,
-	RAIL_RINGS:    6,
-	LIGHTNING:     7,
-	PORTALSURFACE: 8                             // doesn't draw anything, just info for portals
+	BBOX:                0,
+	MODEL:               1,
+	POLY:                2,
+	SPRITE:              3,
+	BEAM:                4,
+	RAIL_CORE:           5,
+	RAIL_RINGS:          6,
+	LIGHTNING:           7,
+	PORTALSURFACE:       8,                      // doesn't draw anything, just info for portals
+	MAX_REF_ENTITY_TYPE: 9
 };
 
 var RefEntity = function () {
-	this.type   = 0;
+	this.reType = 0;
 	this.origin = vec3.create();
 	this.mins   = vec3.create();
 	this.maxs   = vec3.create();

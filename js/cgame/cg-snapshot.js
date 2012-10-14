@@ -110,6 +110,21 @@ function ReadNextSnapshot() {
 
 function SetInitialSnapshot(snap) {
 	cg.snap = snap;
+
+	for (var i = 0; i < cg.snap.numEntities; i++) {
+		var state = cg.snap.entities[i];
+		var cent = cg.entities[state.number];
+
+		state.clone(cent.currentState);
+
+		cent.interpolate = false;
+		cent.currentValid = true;
+
+		ResetEntity(cent);
+
+		// check for events
+		//CheckEvents( cent );
+	}
 }
 
 function SetNextSnap(snap) {
@@ -120,22 +135,21 @@ function SetNextSnap(snap) {
 
 	// check for extrapolation errors
 	for (var i = 0; i < snap.numEntities; i++) {
-		var es = snap.es[i];
-		var cent = cg_entities[es.number];
+		var state = snap.entities[i];
+		var cent = cg.entities[state.number];
 
-		// TODO copy shit
-		//cent.nextState = es;
+		state.clone(cent.nextState);
 
 		// if this frame is a teleport, or the entity wasn't in the previous frame, don't interpolate
-		/*if (!cent.currentValid || ((cent.currentState.eFlags ^ es.eFlags) & EF_TELEPORT_BIT)) {
-			cent.interpolate = qfalse;
+		if (!cent.currentValid || ((cent.currentState.eFlags ^ state.eFlags) & EntityFlags.TELEPORT_BIT)) {
+			cent.interpolate = false;
 		} else {
-			cent.interpolate = qtrue;
-		}*/
+			cent.interpolate = true;
+		}
 	}
 
-	/*// If the next frame is a teleport for the playerstate, we can't interpolate.
-	if (cg.snap && ((snap.ps.eFlags ^ cg.snap.ps.eFlags) & EF_TELEPORT_BIT)) {
+	// If the next frame is a teleport for the playerstate, we can't interpolate.
+	if (cg.snap && ((snap.ps.eFlags ^ cg.snap.ps.eFlags) & EntityFlags.TELEPORT_BIT)) {
 		cg.nextFrameTeleport = true;
 	} else {
 		cg.nextFrameTeleport = false;
@@ -144,7 +158,7 @@ function SetNextSnap(snap) {
 	// if changing server restarts, don't interpolate.
 	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
 		cg.nextFrameTeleport = true;
-	}*/
+	}
 }
 
 /**
@@ -174,15 +188,16 @@ function TransitionSnapshot() {
 	cg.snap = cg.nextSnap;
 
 	/*bg.PlayerStateToEntityState(cg.snap.ps, cg_entities[cg.snap.ps.clientNum].currentState);
-	cg_entities[ cg.snap->ps.clientNum ].interpolate = qfalse;
+	cg_entities[ cg.snap->ps.clientNum ].interpolate = qfalse;*/
 
-	for ( i = 0 ; i < cg.snap->numEntities ; i++ ) {
-		cent = &cg_entities[ cg.snap->entities[ i ].number ];
-		CG_TransitionEntity( cent );
+	for (var i = 0; i < cg.snap.numEntities; i++) {
+		var cent = cg.entities[cg.snap.entities[i].number];
+		
+		TransitionEntity(cent);
 
-		// remember time of snapshot this entity was last updated in
-		cent->snapShotTime = cg.snap->serverTime;
-	}*/
+		// Remember time of snapshot this entity was last updated in.
+		cent.snapShotTime = cg.snap.serverTime;
+	}
 
 	cg.nextSnap = null;
 
@@ -192,7 +207,7 @@ function TransitionSnapshot() {
 		var ps = cg.snap.ps;
 
 		// teleporting checks are irrespective of prediction
-		if ((ps.eFlags ^ ops.eFlags) & EF_TELEPORT_BIT) {
+		if ((ps.eFlags ^ ops.eFlags) & EntityFlags.TELEPORT_BIT) {
 			cg.thisFrameTeleport = true; // will be cleared by prediction code
 		}
 
@@ -202,4 +217,44 @@ function TransitionSnapshot() {
 			CG_TransitionPlayerState(ps, ops);
 		}
 	}*/
+}
+
+function ResetEntity(cent) {
+	/*// If the previous snapshot this entity was updated in is at least
+	// an event window back in time then we can reset the previous event.
+	if (cent.snapShotTime < cg.time - EVENT_VALID_MSEC) {
+		cent.previousEvent = 0;
+	}
+
+	cent->trailTime = cg.snap->serverTime;*/
+
+	vec3.set(cent.currentState.origin, cent.lerpOrigin);
+	vec3.set(cent.currentState.angles, cent.lerpAngles);
+
+	/*if (cent.currentState.eType === EntityType.PLAYER) {
+		ResetPlayerEntity(cent);
+	}*/
+}
+
+/*
+===============
+TransitionEntity
+
+cent->nextState is moved to cent->currentState and events are fired
+===============
+*/
+function TransitionEntity(cent) {
+	cent.currentState = cent.nextState;
+	cent.currentValid = true;
+
+	// Reset if the entity wasn't in the last frame or was teleported.
+	if (!cent.interpolate) {
+		ResetEntity(cent);
+	}
+
+	// Clear the next state. It will be set by the next SetNextSnap.
+	cent.interpolate = false;
+
+	// check for events
+	//CG_CheckEvents( cent );
 }

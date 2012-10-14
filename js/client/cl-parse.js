@@ -81,7 +81,7 @@ function ParseSnapshot(msg) {
 	ParsePacketPlayerstate(msg, newSnap);
 
 	// read packet entities
-	//ParsePacketEntities(msg,/* old, */newSnap);
+	ParsePacketEntities(msg,/* old, */newSnap);
 
 	// if not valid, dump the entire thing now that it has
 	// been properly read
@@ -142,34 +142,42 @@ function ParsePacketPlayerstate(msg, snap) {
 function ParsePacketEntities(msg, snap) {	
 	snap.parseEntitiesNum = cl.parseEntitiesNum;
 
-	for (var i = 0; i < msg.es.length; i++) {
-		// Save the parsed entity state into the big circular buffer so
-		// it can be used as the source for a later delta
-		var state = msg.es[i];
-		var parseState = cl.parseEntities[cl.parseEntitiesNum & (MAX_PARSE_ENTITIES-1)];
+	while (true) {
+		var newnum = msg.readUnsignedInt();
 
-		/*if ( unchanged ) {
-			*state = *old;
-		} else {
-			MSG_ReadDeltaEntity( msg, old, state, newnum );
+		if (newnum === (MAX_GENTITIES-1)) {
+			break;
 		}
 
-		if ( state->number == (MAX_GENTITIES-1) ) {
-			return;		// entity was delta removed
-		}*/
+		// Save the parsed entity state into the big circular buffer so
+		// it can be used as the source for a later delta.
+		var state = cl.parseEntities[cl.parseEntitiesNum & (MAX_PARSE_ENTITIES-1)];
 
-		parseState.number = state.number;
-		parseState.eType = state.eType;
-		parseState.eFlags = state.eFlags;
-		parseState.time = state.tyme;
-		parseState.time2 = state.tyme2;
-		vec3.set(state.origin, parseState.origin);
-		vec3.set(state.origin2, parseState.origin2);
-		vec3.set(state.angles, parseState.angles);
-		vec3.set(state.angles2, parseState.angles2);
-		parseState.groundEntityNum = state.groundEntityNum;
-		parseState.clientNum = state.clientNum;
-		parseState.frame = state.frame;
+		state.number = newnum;
+		state.eType = msg.readUnsignedInt();
+		state.eFlags = msg.readUnsignedInt();
+		/*state.time = state.tyme;
+		state.time2 = state.tyme2;*/
+		state.origin[0] = msg.readFloat();
+		state.origin[1] = msg.readFloat();
+		state.origin[2] = msg.readFloat();
+		/*state.origin2[0] = msg.readFloat();
+		state.origin2[1] = msg.readFloat();
+		state.origin2[2] = msg.readFloat();
+		state.angles[0] = msg.readFloat();
+		state.angles[1] = msg.readFloat();
+		state.angles[2] = msg.readFloat();
+		state.angles2[0] = msg.readFloat();
+		state.angles2[1] = msg.readFloat();
+		state.angles2[2] = msg.readFloat();
+		state.groundEntityNum = msg.readUnsignedInt();
+		state.clientNum = msg.readUnsignedInt();*/
+		/*state.frame = state.frame;
+		state.solid = state.solid;
+		state.event = state.event;
+		state.eventParm = state.eventParm;*/
+
+		//console.log('got origin', state.origin[0], state.origin[0], state.origin[0]);
 
 		cl.parseEntitiesNum++;
 		snap.numEntities++;

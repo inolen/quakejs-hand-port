@@ -1,3 +1,8 @@
+// Static item descriptions.
+var itemList = {
+	'item_armor_shard': new GameItemDesc('item_armor_shard', ItemType.ARMOR)
+};
+
 function TouchJumpPad(ps, jumppad) {
 	// if we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger
@@ -44,9 +49,9 @@ function PlayerStateToEntityState(ps, s) {
 	                                             // so corpses can also reference the proper config
 	s.eFlags = ps.eFlags;
 	/*if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		s->eFlags |= EF_DEAD;
+		s->eFlags |= EntityFlags.DEAD;
 	} else {
-		s->eFlags &= ~EF_DEAD;
+		s->eFlags &= ~EntityFlags.DEAD;
 	}*/
 
 	/*if ( ps->externalEvent ) {

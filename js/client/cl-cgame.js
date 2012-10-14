@@ -155,29 +155,29 @@ function GetSnapshot(snapshotNumber) {
 		throw new Error('GetSnapshot: snapshotNumber > cl.snapshot.messageNum');
 	}
 
-	// if the frame has fallen out of the circular buffer, we can't return it
+	// If the frame has fallen out of the circular buffer, we can't return it.
 	if (cl.snap.messageNum - snapshotNumber >= PACKET_BACKUP) {
 		return null;
 	}
 
-	// if the frame is not valid, we can't return it
+	// If the frame is not valid, we can't return it.
 	var snap = cl.snapshots[snapshotNumber & PACKET_MASK];
 	if (!snap.valid) {
 		return null;
 	}
 
 	// If the entities in the frame have fallen out of their circular buffer, we can't return it.
-	/*if (cl.parseEntitiesNum - snapshot.parseEntitiesNum >= MAX_PARSE_ENTITIES) {
+	if (cl.parseEntitiesNum - snap.parseEntitiesNum >= MAX_PARSE_ENTITIES) {
 		return null;
 	}
 	
 	// TODO: Should split up cgame and client snapshot structures, adding this property to the
 	// cgame version.
-	snapshot.es = new Array(snapshot.numEntities);
+	snap.entities = new Array(snap.numEntities);
 
-	for (var i = 0; i < snapshot.numEntities; i++) {
-		snapshot.es[i] = cl.parseEntities[(snapshot.parseEntitiesNum + i) & (MAX_PARSE_ENTITIES-1)];
-	}*/
+	for (var i = 0; i < snap.numEntities; i++) {
+		snap.entities[i] = cl.parseEntities[(snap.parseEntitiesNum + i) & (MAX_PARSE_ENTITIES-1)];
+	}
 
 	return snap;
 }

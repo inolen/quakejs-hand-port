@@ -12,144 +12,156 @@ function BuildClientSnapshot(client, msg) {
 		return false; // Client hasn't entered world yet.
 	}
 
+	// Bump the counter used to prevent double adding.
+	sv.snapshotCounter++;
+
 	var frame = client.frames[client.netchan.outgoingSequence & PACKET_MASK];
 	var clientNum = GetClientNum(client);
 	frame.ps = gm.GetClientPlayerstate(clientNum);
-	
-	//AddEntitiesVisibleFromPoint(frame.ps.origin, frame, null, false);
+
+	var entityNumbers = [];
+	AddEntitiesVisibleFromPoint(frame.ps.origin, frame, entityNumbers, false);
+
+	frame.numEntities = 0;
+	frame.firstEntity = svs.nextSnapshotEntities;
+
+	// Copy the entity states out.
+	for (var i = 0 ; i < entityNumbers.length; i++) {
+		var ent = GentityForNum(entityNumbers[i]);
+		var state = svs.snapshotEntities[svs.nextSnapshotEntities % MAX_SNAPSHOT_ENTITIES];
+
+		ent.s.clone(state);
+		svs.nextSnapshotEntities++;
+		frame.numEntities++;
+	}
 
 	return true;
 }
 
-// function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
-// 	/*leafnum = cm.PointLeafnum (origin);
-// 	clientarea = cm.LeafArea (leafnum);
-// 	clientcluster = cm.LeafCluster (leafnum);
+function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
+	/*leafnum = cm.PointLeafnum (origin);
+	clientarea = cm.LeafArea (leafnum);
+	clientcluster = cm.LeafCluster (leafnum);
 
-// 	// calculate the visible areas
-// 	frame->areabytes =cm.WriteAreaBits( frame->areabits, clientarea );
+	// calculate the visible areas
+	frame->areabytes =cm.WriteAreaBits( frame->areabits, clientarea );
 
-// 	clientpvs = cm.ClusterPVS (clientcluster);*/
+	clientpvs = cm.ClusterPVS (clientcluster);*/
 
-// 	for (var e = 0; e < sv.num_entities; e++) {
-// 		ent = SV_GentityNum(e);
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		var ent = GentityForNum(i);
 
-// 		// never send entities that aren't linked in
-// 		if (!ent.r.linked) {
-// 			continue;
-// 		}
+		// Never send entities that aren't linked in.
+		if (!ent || !ent.linked) {
+			continue;
+		}
 
-// 		if (ent->s.number != e) {
-// 			Com_DPrintf ("FIXING ENT->S.NUMBER!!!\n");
-// 			ent->s.number = e;
-// 		}
+		if (ent.s.number !== i) {
+			throw new Error('Entity number does not match.. WTF');
+			/*console.log('FIXING ENT->S.NUMBER!!!');
+			ent.s.number = e;*/
+		}
 
-// 		// entities can be flagged to explicitly not be sent to the client
-// 		if (ent.r.svFlags & SVF_NOCLIENT) {
-// 			continue;
-// 		}
+		// entities can be flagged to explicitly not be sent to the client
+		if (ent.svFlags & ServerFlags.NOCLIENT) {
+			continue;
+		}
 
-// 		// entities can be flagged to be sent to only one client
-// 		if (ent.r.svFlags & SVF_SINGLECLIENT) {
-// 			if (ent.r.singleClient != frame.ps.clientNum) {
-// 				continue;
-// 			}
-// 		}
-// 		// entities can be flagged to be sent to everyone but one client
-// 		if (ent.r.svFlags & SVF_NOTSINGLECLIENT) {
-// 			if (ent.r.singleClient == frame.ps.clientNum) {
-// 				continue;
-// 			}
-// 		}
+		// entities can be flagged to be sent to only one client
+		if (ent.svFlags & ServerFlags.SINGLECLIENT) {
+			if (ent.singleClient != frame.ps.clientNum) {
+				continue;
+			}
+		}
+		// entities can be flagged to be sent to everyone but one client
+		if (ent.svFlags & ServerFlags.NOTSINGLECLIENT) {
+			if (ent.singleClient === frame.ps.clientNum) {
+				continue;
+			}
+		}
 
-// 		svEnt = SvEntityForGentity( ent );
+		var svEnt = SvEntityForGentity(ent);
 
-// 		// don't double add an entity through portals
-// 		if ( svEnt.snapshotCounter === sv.snapshotCounter ) {
-// 			continue;
-// 		}
+		// don't double add an entity through portals
+		if (svEnt.snapshotCounter === sv.snapshotCounter) {
+			continue;
+		}
 
-// 		// broadcast entities are always sent
-// 		if ( ent.r.svFlags & SVF_BROADCAST ) {
-// 			SV_AddEntToSnapshot( svEnt, ent, eNums );
-// 			continue;
-// 		}
+		// broadcast entities are always sent
+		if (ent.svFlags & ServerFlags.BROADCAST ) {
+			AddEntToSnapshot(svEnt, ent, eNums);
+			continue;
+		}
 
-// 		// ignore if not touching a PV leaf
-// 		// check area
-// 		if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
-// 			// doors can legally straddle two areas, so
-// 			// we may need to check another one
-// 			if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
-// 				continue;		// blocked by a door
-// 			}
-// 		}
+		/*// ignore if not touching a PV leaf
+		// check area
+		if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
+			// doors can legally straddle two areas, so
+			// we may need to check another one
+			if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
+				continue;		// blocked by a door
+			}
+		}
 
-// 		bitvector = clientpvs;
+		bitvector = clientpvs;
 
-// 		// check individual leafs
-// 		if ( !svEnt->numClusters ) {
-// 			continue;
-// 		}
-// 		l = 0;
-// 		for ( i=0 ; i < svEnt->numClusters ; i++ ) {
-// 			l = svEnt->clusternums[i];
-// 			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-// 				break;
-// 			}
-// 		}
+		// check individual leafs
+		if ( !svEnt->numClusters ) {
+			continue;
+		}
+		l = 0;
+		for ( i=0 ; i < svEnt->numClusters ; i++ ) {
+			l = svEnt->clusternums[i];
+			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+				break;
+			}
+		}
 
-// 		// if we haven't found it to be visible,
-// 		// check overflow clusters that coudln't be stored
-// 		if ( i == svEnt->numClusters ) {
-// 			if ( svEnt->lastCluster ) {
-// 				for ( ; l <= svEnt->lastCluster ; l++ ) {
-// 					if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-// 						break;
-// 					}
-// 				}
-// 				if ( l == svEnt->lastCluster ) {
-// 					continue;	// not visible
-// 				}
-// 			} else {
-// 				continue;
-// 			}
-// 		}
+		// if we haven't found it to be visible,
+		// check overflow clusters that coudln't be stored
+		if ( i == svEnt->numClusters ) {
+			if ( svEnt->lastCluster ) {
+				for ( ; l <= svEnt->lastCluster ; l++ ) {
+					if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+						break;
+					}
+				}
+				if ( l == svEnt->lastCluster ) {
+					continue;	// not visible
+				}
+			} else {
+				continue;
+			}
+		}*/
 
-// 		// add it
-// 		AddEntToSnapshot(svEnt, ent, eNums);
+		// add it
+		AddEntToSnapshot(svEnt, ent, eNums);
 
-// 		// if it's a portal entity, add everything visible from its camera position
-// 		/*if (ent.r.svFlags & SVF_PORTAL) {
-// 			if (ent.s.generic1) {
-// 				var dir = vec3.subtract(ent.s.origin, origin, [0, 0, 0]);
+		// if it's a portal entity, add everything visible from its camera position
+		/*if (ent.r.svFlags & SVF_PORTAL) {
+			if (ent.s.generic1) {
+				var dir = vec3.subtract(ent.s.origin, origin, [0, 0, 0]);
 
-// 				if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1) {
-// 					continue;
-// 				}
-// 			}
+				if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1) {
+					continue;
+				}
+			}
 			
-// 			AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
-// 		}*/
-// 	}
-// }
+			AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
+		}*/
+	}
+}
 
-// function AddEntToSnapshot(svEnt, gEnt, eNums) {
-// 	// If we have already added this entity to this snapshot, don't add again.
-// 	if (svEnt.snapshotCounter === sv.snapshotCounter) {
-// 		return;
-// 	}
+function AddEntToSnapshot(svEnt, gEnt, eNums) {
+	// If we have already added this entity to this snapshot, don't add again.
+	if (svEnt.snapshotCounter === sv.snapshotCounter) {
+		return;
+	}
 
-// 	svEnt.snapshotCounter = sv.snapshotCounter;
+	svEnt.snapshotCounter = sv.snapshotCounter;
 
-// 	// If we are full, silently discard entities.
-// 	if (eNums.numSnapshotEntities === MAX_SNAPSHOT_ENTITIES) {
-// 		return;
-// 	}
-
-// 	eNums.snapshotEntities[eNums.numSnapshotEntities] = gEnt.s.number;
-// 	eNums.numSnapshotEntities++;
-// }
+	eNums.push(gEnt.s.number);
+}
 
 function SendClientSnapshot(client) {
 	if (!BuildClientSnapshot(client)) {
@@ -157,10 +169,10 @@ function SendClientSnapshot(client) {
 	}
 
 	var frame = client.frames[client.netchan.outgoingSequence & PACKET_MASK];
-	var bb = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
+	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
-	bb.writeInt(client.netchan.outgoingSequence);
-	bb.writeUnsignedByte(ServerMessage.snapshot);
+	msg.writeInt(client.netchan.outgoingSequence);
+	msg.writeUnsignedByte(ServerMessage.snapshot);
 
 	// Send over the current server time so the client can drift
 	// its view of time to try to match.
@@ -174,35 +186,60 @@ function SendClientSnapshot(client) {
 		// the time it doesn't really matter.
 		serverTime = sv.time + client.oldServerTime;
 	}
-	bb.writeUnsignedInt(serverTime);
+	msg.writeUnsignedInt(serverTime);
 
 	var snapFlags = svs.snapFlagServerBit;
 	if (client.state !== ClientState.ACTIVE) {
 		snapFlags |= SNAPFLAG_NOT_ACTIVE;
 	}
-	bb.writeUnsignedInt(snapFlags);
+	msg.writeUnsignedInt(snapFlags);
 
 	// Write out playerstate
-	bb.writeUnsignedInt(frame.ps.commandTime);
-	bb.writeUnsignedInt(frame.ps.pm_type);
-	bb.writeUnsignedInt(frame.ps.pm_flags);
-	bb.writeUnsignedInt(frame.ps.pm_time);
-	bb.writeUnsignedInt(frame.ps.gravity);
-	bb.writeUnsignedInt(frame.ps.speed);
+	msg.writeUnsignedInt(frame.ps.commandTime);
+	msg.writeUnsignedInt(frame.ps.pm_type);
+	msg.writeUnsignedInt(frame.ps.pm_flags);
+	msg.writeUnsignedInt(frame.ps.pm_time);
+	msg.writeUnsignedInt(frame.ps.gravity);
+	msg.writeUnsignedInt(frame.ps.speed);
 
-	bb.writeFloat(frame.ps.origin[0]);
-	bb.writeFloat(frame.ps.origin[1]);
-	bb.writeFloat(frame.ps.origin[2]);
+	msg.writeFloat(frame.ps.origin[0]);
+	msg.writeFloat(frame.ps.origin[1]);
+	msg.writeFloat(frame.ps.origin[2]);
 
-	bb.writeFloat(frame.ps.velocity[0]);
-	bb.writeFloat(frame.ps.velocity[1]);
-	bb.writeFloat(frame.ps.velocity[2]);
+	msg.writeFloat(frame.ps.velocity[0]);
+	msg.writeFloat(frame.ps.velocity[1]);
+	msg.writeFloat(frame.ps.velocity[2]);
 
-	bb.writeFloat(frame.ps.viewangles[0]);
-	bb.writeFloat(frame.ps.viewangles[1]);
-	bb.writeFloat(frame.ps.viewangles[2]);
+	msg.writeFloat(frame.ps.viewangles[0]);
+	msg.writeFloat(frame.ps.viewangles[1]);
+	msg.writeFloat(frame.ps.viewangles[2]);
 
-	com.NetchanSend(client.netchan, bb.buffer, bb.index);
+	// Should not write an int, and instead write a bitstream of GENTITYNUM_BITS length.
+	for (var i = 0; i < frame.numEntities; i++) {
+		var state = svs.snapshotEntities[(frame.firstEntity+i) % MAX_SNAPSHOT_ENTITIES];
+
+		msg.writeUnsignedInt(state.number);
+		msg.writeUnsignedInt(state.eType);
+		msg.writeUnsignedInt(state.eFlags);
+		msg.writeFloat(state.origin[0]);
+		msg.writeFloat(state.origin[1]);
+		msg.writeFloat(state.origin[2]);
+		/*msg.writeFloat(state.origin2[0]);
+		msg.writeFloat(state.origin2[1]);
+		msg.writeFloat(state.origin2[2]);
+		msg.writeFloat(state.angles[0]);
+		msg.writeFloat(state.angles[1]);
+		msg.writeFloat(state.angles[2]);
+		msg.writeFloat(state.angles2[0]);
+		msg.writeFloat(state.angles2[1]);
+		msg.writeFloat(state.angles2[2]);
+		msg.writeUnsignedInt(state.groundEntityNum);
+		msg.writeUnsignedInt(state.clientNum);*/
+	}
+
+	msg.writeUnsignedInt(MAX_GENTITIES-1);
+
+	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }
 
 function SendClientMessages() {

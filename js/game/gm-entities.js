@@ -4,7 +4,7 @@ var keyMap = {
 	'origin': ['s.origin', 'currentOrigin']
 }
 
-function EntitySpawn() {
+function SpawnEntity() {
 	for (var i = MAX_CLIENTS; i < MAX_GENTITIES; i++) {
 		if (level.gentities[i]) {
 			continue;
@@ -16,6 +16,29 @@ function EntitySpawn() {
 	}
 
 	throw new Error('Game entities is full');
+}
+
+function FreeEntity(ent) {
+	sv.UnlinkEntity(ent); // unlink from world
+	delete level.gentities[ent.s.number];
+}
+
+function FindEntity(key, value) {
+	var results = [];
+
+	for (var i = 0; i < level.gentities.length; i++) {
+		var ent = level.gentities[i];
+
+		if (!ent) {
+			continue;
+		}
+
+		if (ent[key] === value) {
+			results.push(ent);
+		}
+	}
+
+	return results;
 }
 
 function EntityThink(ent) {
@@ -36,35 +59,12 @@ function EntityThink(ent) {
 	ent.think.call(this, ent);
 }
 
-function EntityFree(ent) {
-	sv.UnlinkEntity(ent); // unlink from world
-	delete level.gentities[ent.s.number];
-}
-
-function EntityFind(key, value) {
-	var results = [];
-
-	for (var i = 0; i < level.gentities.length; i++) {
-		var ent = level.gentities[i];
-
-		if (!ent) {
-			continue;
-		}
-
-		if (ent[key] === value) {
-			results.push(ent);
-		}
-	}
-
-	return results;
-}
-
 function EntityPickTarget(targetName) {
 	if (!targetName) {
 		throw new Error('SV: EntityPickTarget called with NULL targetname');
 	}
 
-	var choices = EntityFind('targetname', targetName);
+	var choices = FindEntity('targetname', targetName);
 
 	if (!choices.length) {
 		throw new Error('SV: EntityPickTarget: target ' + targetName + ' not found');
@@ -73,8 +73,8 @@ function EntityPickTarget(targetName) {
 	return choices[Math.floor(Math.random()*choices.length)];
 }
 
-function EntitySpawnFromDef(def) {
-	var ent = EntitySpawn();
+function SpawnEntityFromDef(def) {
+	var ent = SpawnEntity();
 
 	// Merge definition info into the entity.
 	for (var defKey in def) {
@@ -105,16 +105,25 @@ function EntitySpawnFromDef(def) {
 	}
 
 	// Call spawn function if it exists.
+	var item;
+	var spawn;
+
+	// See if we should spawn this as an item.
+	if ((item = bg.ItemList[ent.classname])) {
+		SpawnItem(ent, item);
+		return;
+	}
+
 	if (ent.spawn) {
 		ent.spawn.call(this, ent);
 	}
 }
 
-function EntitySpawnAllFromDefs() {
+function SpawnAllEntitiesFromDefs() {
 	var entityDefs = sv.GetEntityDefs();
 
 	for (var i = 0; i < entityDefs.length; i++) {
 		var def = entityDefs[i];
-		EntitySpawnFromDef(def);
+		SpawnEntityFromDef(def);
 	}
 }

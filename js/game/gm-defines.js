@@ -1,24 +1,42 @@
 var FRAMETIME = 100; // msec
 
+// The server does not know how to interpret most of the values
+// in entityStates (level eType), so the game must explicitly flag
+// special server behaviors.
+var ServerFlags = {
+	NOCLIENT:           0x00000001,              // don't send entity to clients, even if it has effects
+	BOT:                0x00000002,              // set if the entity is a bot
+	BROADCAST:          0x00000008,              // send to all connected clients
+	PORTAL:             0x00000020,              // merge a second pvs at origin2 into snapshots
+	USE_CURRENT_ORIGIN: 0x00000040,              // entity->r.currentOrigin instead of entity->s.origin
+	                                             // for link position (missiles and movers)
+	SINGLECLIENT:       0x00000080,              // only send to a single client (entityShared_t->singleClient)
+	NOTSINGLECLIENT:    0x00000100               // send entity to everyone but one client
+};
+
 var GameEntity = function () {
 	/**
 	 * Shared by the engine and game.
 	 */
 	this.s             = new EntityState();
 	this.linked        = false;
-	// if false, assume an explicit mins / maxs bounding box only set by trap_SetBrushModel
+	// SVF_NOCLIENT, SVF_BROADCAST, etc.
+	this.svFlags       = 0;
+	// Only send to this client when SVF_SINGLECLIENT is set.
+	this.singleClient  = 0;
+	// If false, assume an explicit mins / maxs bounding box only set by trap_SetBrushModel.
 	this.bmodel        = false;
 	this.mins          = [0, 0, 0];
 	this.maxs          = [0, 0, 0];
 	// ContentFlags.TRIGGER, ContentFlags.SOLID, ContentFlags.BODY (non-solid ent should be 0)
 	this.contents      = 0;
-	// derived from mins/maxs and origin + rotation
+	// Derived from mins/maxs and origin + rotation.
 	this.absmin        = [0, 0, 0];
 	this.absmax        = [0, 0, 0];
 	// currentOrigin will be used for all collision detection and world linking.
 	// it will not necessarily be the same as the trajectory evaluation for the current
 	// time, because each entity must be moved one at a time after time is advanced
-	// to avoid simultanious collision issues
+	// to avoid simultanious collision issues.
 	this.currentOrigin = [0, 0, 0];
 	this.currentAngles = [0, 0, 0];
 	this.client        = null;
@@ -27,6 +45,7 @@ var GameEntity = function () {
 	 * Game only
 	 */
 	this.classname     = 'noclass';
+	this.spawnflags    = 0;
 	this.model         = null;
 	this.model2        = null;
 	this.target        = null;
