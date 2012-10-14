@@ -143,7 +143,7 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	// and the offset for the size of the box
 	//
 	var node = nodes[num];
-	var plane = node.plane;
+	var plane = planes[node.planeNum];
 
 	// adjust the plane distance apropriately for mins/maxs
 	var t1, t2, offset;

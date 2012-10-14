@@ -5,7 +5,7 @@ var SURFACE_CLIP_EPSILON = 0.125;
 var ClipMap = function () {
 	this.shaders     = null;
 	this.brushes     = null;
-	this.cmodels     = null;
+	this.models      = null;
 	this.leafs       = null;
 	this.leafBrushes = null;
 	this.nodes       = null;
@@ -14,6 +14,47 @@ var ClipMap = function () {
 	this.entities    = null;
 };
 
+/**********************************************************
+ * Clipmap specific BSP structs
+ **********************************************************/
+var cnode_t = function () {
+	this.planeNum    = 0;
+	this.childrenNum = [0, 0];
+};
+
+var cmodel_t = function () {
+	this.mins = [0, 0, 0];
+	this.maxs = [0, 0, 0];
+	this.leaf = null;                            // submodels don't reference the main tree
+};
+
+var cleaf_t = function () {
+	this.cluster          = 0;
+	this.area             = 0;
+	this.firstLeafSurface = 0;
+	this.numLeafSurfaces  = 0;
+	this.firstLeafBrush   = 0;
+	this.numLeafBrushes   = 0;
+};
+
+var cbrushside_t = function () {
+	this.plane        = null;
+	this.surfaceFlags = 0;
+	this.shaderNum    = 0;
+};
+
+var cbrush_t = function () {
+	this.shaderNum = 0;                          // the shader that determined the contents
+	this.contents  = 0;
+	this.bounds    = [[0, 0, 0], [0, 0, 0]];
+	this.numsides  = 0;
+	this.sides     = null;
+	this.checkcount = 0;                         // to avoid repeated testings
+};
+
+/**********************************************************
+ * Tracing
+ **********************************************************/
 var TraceResults = function () {
 	this.allSolid   = false;                     // if true, plane is not valid
 	this.startSolid = false;                     // if true, the initial point was in a solid area

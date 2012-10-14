@@ -6,17 +6,31 @@ function LoadMap(mapName, callback) {
 	
 	cm = new ClipMap();
 
-	var map = new Q3Bsp();
-	map.Load('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', function () {
-		LoadShaders(map);
-		LoadLeafs(map);
-		LoadLeafBrushes(map);
-		LoadPlanes(map);
-		LoadBrushSides(map);
-		LoadBrushes(map);
-		LoadSubmodels(map);
-		LoadNodes(map);
-		LoadEntities(map);
+	com.ReadFile('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', 'binary', function (data) {
+		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
+
+		// Parse the header.
+		var header = new dheader_t();
+		header.ident = bb.readUTFChars(4);
+		header.version = bb.readInt();
+		for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
+			header.lumps[i].fileofs = bb.readInt();
+			header.lumps[i].filelen = bb.readInt();
+		}
+
+		if (header.ident !== 'IBSP' && header.version !== 46) {
+			return;
+		}
+
+		LoadShaders(data, header.lumps[Lumps.SHADERS]);
+		LoadLeafs(data, header.lumps[Lumps.LEAFS]);
+		LoadLeafBrushes(data, header.lumps[Lumps.LEAFBRUSHES]);
+		LoadPlanes(data, header.lumps[Lumps.PLANES]);
+		LoadBrushSides(data, header.lumps[Lumps.BRUSHSIDES]);
+		LoadBrushes(data, header.lumps[Lumps.BRUSHES]);
+		LoadSubmodels(data, header.lumps[Lumps.MODELS]);
+		LoadNodes(data, header.lumps[Lumps.NODES]);
+		LoadEntities(data, header.lumps[Lumps.ENTITIES]);
 
 		if (callback) {
 			callback();
@@ -24,67 +38,132 @@ function LoadMap(mapName, callback) {
 	});
 }
 
-function LoadShaders(map) {
-	cm.shaders = map.ParseLump(Q3Bsp.Lumps.LUMP_SHADERS, Q3Bsp.dshader_t);
+function LoadShaders(buffer, shaderLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = shaderLump.fileofs;
+
+	var shaders = cm.shaders = new Array(shaderLump.filelen / dshader_t.size);
+
+	for (var i = 0; i < shaders.length; i++) {
+		var shader = shaders[i] = new dshader_t();
+
+		shader.shaderName = bb.readUTFChars(MAX_QPATH);
+		shader.flags = bb.readInt();
+		shader.contents = bb.readInt();
+	}
 }
 
-function LoadLeafs(map) {
-	cm.leafs = map.ParseLump(Q3Bsp.Lumps.LUMP_LEAFS, Q3Bsp.dleaf_t);
+function LoadLeafs(buffer, leafLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = leafLump.fileofs;
+
+	var leafs = cm.leafs = new Array(leafLump.filelen / dleaf_t.size);
+
+	for (var i = 0; i < leafs.length; i++) {
+		var leaf = leafs[i] = new cleaf_t();
+
+		leaf.cluster = bb.readInt();
+		leaf.area = bb.readInt();
+		
+		// Skip mins/maxs.
+		bb.index += 24;
+
+		leaf.firstLeafSurface = bb.readInt();
+		leaf.numLeafSurfaces = bb.readInt();
+		leaf.firstLeafBrush = bb.readInt();
+		leaf.numLeafBrushes = bb.readInt();
+	}
+
 }
 
-function LoadLeafBrushes(map) {
-	var lump = map.GetLump(Q3Bsp.Lumps.LUMP_LEAFBRUSHES);
-	cm.leafBrushes = Struct.readUint32Array(map.GetBuffer(), lump.fileofs, lump.filelen/4);
+function LoadLeafBrushes(buffer, leafBrushLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = leafBrushLump.fileofs;
+
+	var leafBrushes = cm.leafBrushes = new Array(leafBrushLump.filelen / 4);
+
+	for (var i = 0; i < leafBrushes.length; i++) {
+		leafBrushes[i] = bb.readInt();
+	}
 }
 
-function LoadPlanes(map) {
-	var planes = cm.planes = map.ParseLump(Q3Bsp.Lumps.LUMP_PLANES, Q3Bsp.dplane_t);
+function LoadPlanes(buffer, planeLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = planeLump.fileofs;
+
+	var planes = cm.planes = new Array(planeLump.filelen / dplane_t.size);
 
 	for (var i = 0; i < planes.length; i++) {
-		var plane = planes[i];
-		plane.type = PlaneTypeForNormal(plane.normal);
+		var plane = planes[i] = new Plane();
+
+		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()]
+		plane.dist = bb.readFloat();
 		plane.signbits = GetPlaneSignbits(plane);
+		plane.type = PlaneTypeForNormal(plane.normal);
 	}
 }
 
-function LoadBrushSides(map) {
+function LoadBrushSides(buffer, brushSideLump) {
 	var planes = cm.planes;
 
-	var brushSides = cm.brushSides = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHSIDES, Q3Bsp.dbrushside_t);
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = brushSideLump.fileofs;
+
+	var brushSides = cm.brushSides = new Array(brushSideLump.filelen / dbrushside_t.size);
 
 	for (var i = 0; i < brushSides.length; i++) {
-		var side = brushSides[i];
+		var side = brushSides[i] = new cbrushside_t();
 
-		side.plane = planes[side.planeNum];
+		var planeNum = bb.readInt();
+		var shaderNum = bb.readInt();
+
+		side.plane = planes[planeNum];
+		side.shaderNum = shaderNum;
+		side.surfaceFlags = cm.shaders[shaderNum].surfaceFlags;
 	}
 }
 
-function LoadBrushes(map) {
+function LoadBrushes(buffer, brushLump) {
 	var shaders = cm.shaders;
 	var brushSides = cm.brushSides;
-	var brushes = cm.brushes = map.ParseLump(Q3Bsp.Lumps.LUMP_BRUSHES, Q3Bsp.dbrush_t);
+
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = brushLump.fileofs;
+
+	var brushes = cm.brushes = new Array(brushLump.filelen / dbrush_t.size);
 
 	for (var i = 0; i < brushes.length; i++) {
-		var brush = brushes[i];
+		var brush = brushes[i] = new cbrush_t();
 
+		brush.side = bb.readInt();
+		brush.numsides = bb.readInt();
+		brush.shaderNum = bb.readInt();
 		brush.sides = brushSides.slice(brush.side, brush.side + brush.numsides);
 		brush.bounds = [
 			[-brush.sides[0].plane.dist, -brush.sides[2].plane.dist, -brush.sides[4].plane.dist],
 			[brush.sides[1].plane.dist, brush.sides[3].plane.dist, brush.sides[5].plane.dist]
 		];
-		brush.contents = shaders[brush.shader].contents;
+		brush.contents = shaders[brush.shaderNum].contents;
 	}
 }
 
-function LoadSubmodels(map) {
-	var cmodels = cm.cmodels = map.ParseLump(Q3Bsp.Lumps.LUMP_MODELS, Q3Bsp.dmodel_t);
+function LoadSubmodels(buffer, modelLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = modelLump.fileofs;
 
-	for (var i = 0; i < cmodels.length; i++) {
-		var model = cmodels[i];
+	var models = cm.models = new Array(modelLump.filelen / dmodel_t.size);
 
-		// spread the mins / maxs by a pixel
-		vec3.subtract(model.mins, [-1, -1, -1]);
-		vec3.add(model.maxs, [1, 1, 1]);
+	for (var i = 0; i < models.length; i++) {
+		var model = models[i] = new cmodel_t();
+
+		// Spread the mins / maxs by a pixel.
+		model.mins = [bb.readFloat() - 1, bb.readFloat() - 1, bb.readFloat() - 1];
+		model.maxs = [bb.readFloat() + 1, bb.readFloat() + 1, bb.readFloat() + 1];
+
+		var firstSurface = bb.readInt();
+		var numSurfaces = bb.readInt();
+		var firstBrush = bb.readInt();
+		var numBrushes = bb.readInt();
 
 		if (i === 0) {
 			continue;	// world model doesn't need other info
@@ -107,19 +186,30 @@ function LoadSubmodels(map) {
 	}
 }
 
-function LoadNodes(map) {
+function LoadNodes(buffer, nodeLump) {
 	var planes = cm.planes;
-	var nodes = cm.nodes = map.ParseLump(Q3Bsp.Lumps.LUMP_NODES, Q3Bsp.dnode_t);
 
-	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
-		var node = nodes[i];
-		node.plane = planes[node.planeNum];
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = nodeLump.fileofs;
+
+	var nodes = cm.nodes = new Array(nodeLump.filelen / dnode_t.size);
+
+	for (var i = 0; i < nodes.length; i++) {
+		var node = nodes[i] = new cnode_t();
+
+		node.planeNum = bb.readInt();
+		node.childrenNum = [bb.readInt(), bb.readInt()];
+
+		// Skip mins/maxs.
+		bb.index += 24;
 	}
 }
 
-function LoadEntities(map) {
-	var lump = map.GetLump(Q3Bsp.Lumps.LUMP_ENTITIES);
-	var entityStr = Struct.readString(map.GetBuffer(), lump.fileofs, lump.filelen);
+function LoadEntities(buffer, entityLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = entityLump.fileofs;
+
+	var entityStr = bb.readString(entityLump.filelen);
 
 	var entities = cm.entities = [];
 
@@ -162,18 +252,18 @@ function ClipHandleToModel(handle) {
 	if (handle < 0) {
 		throw new Error('ClipHandleToModel: bad handle ' + handle);
 	}
-	if (handle < cm.cmodels.length) {
-		return cm.cmodels[handle];
+	if (handle < cm.models.length) {
+		return cm.models[handle];
 	}
 	/*if ( handle == BOX_MODEL_HANDLE ) {
 		return &box_model;
 	}*/
 	
-	throw new Error('ClipHandleToModel: bad handle ' + cm.cmodels.length + ' < ' + handle);
+	throw new Error('ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 
 function InlineModel(num) {
-	if (num < 0 || num >= cm.cmodels.length) {
+	if (num < 0 || num >= cm.models.length) {
 		throw new Error('GetInlineModel: bad number');
 	}
 

@@ -235,9 +235,9 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 		face.patchWidth = patchWidth;
 		face.patchHeight = patchHeight;
 
-		if (face.type === DSurfaceType.PATCH) {
+		if (face.type === MapSurfaceType.PATCH) {
 			ParseMesh(face, r_subdivisions());
-		} else if (face.type === DSurfaceType.PLANAR) {
+		} else if (face.type === MapSurfaceType.PLANAR) {
 			ParseFace(face);
 		}
 	}

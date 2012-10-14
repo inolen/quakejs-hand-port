@@ -1,7 +1,7 @@
 var activeKeys = {};
 var forwardKey, leftKey, backKey, rightKey, upKey;
 
-function InputInit() {
+function InitInput() {
 	com.AddCmd('+forward', function (key) { forwardKey = key; });
 	com.AddCmd('+left', function (key) { leftKey = key; });
 	com.AddCmd('+back', function (key) { backKey = key; });

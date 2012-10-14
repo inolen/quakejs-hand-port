@@ -475,7 +475,7 @@ var drawVert_t = function () {
 };
 drawVert_t.size = 44;
 
-var DSurfaceType = {
+var MapSurfaceType = {
 	BAD:           0,
 	PLANAR:        1,
 	PATCH:         2,

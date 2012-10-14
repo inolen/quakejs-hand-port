@@ -1,8 +1,8 @@
-function CmdInit() {
-	com.AddCmd('map', CmdLoadMap);
-	com.AddCmd('sectorlist', CmdSectorList);
+function InitCmd() {
+	com.AddCmd('map', LoadMapCmd);
+	com.AddCmd('sectorlist', SectorListCmd);
 }
 
-function CmdLoadMap(mapName) {
+function LoadMapCmd(mapName) {
 	SpawnServer(mapName);
 }

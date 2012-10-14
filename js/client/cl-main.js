@@ -20,15 +20,16 @@ function Init(cominterface) {
 	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
 	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0);
 
-	InputInit();
-	CmdInit();
+	InitInput();
+	InitCmd();
 	InitRenderer();
+	cm.Init({ ReadFile: com.ReadFile });
 
 	cls.initialized = true;
 
 	setTimeout(function () {
-		//CmdConnect('192.168.0.102:9001');
-		CmdConnect('localhost:9000');
+		//ConnectCmd('192.168.0.102:9001');
+		ConnectCmd('localhost:9000');
 	}, 100);
 }
 

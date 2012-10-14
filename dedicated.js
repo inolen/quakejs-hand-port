@@ -6,7 +6,6 @@ requirejs.config({
 	paths: {
 		'underscore':   'vendor/underscore',
 		'glmatrix':     'vendor/gl-matrix',
-		'jsstruct':     'vendor/js-struct',
 		'ByteBuffer':   'vendor/byte-buffer',
 		'system/sys':   'system/dedicated/sys'
 	}

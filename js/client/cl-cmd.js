@@ -1,8 +1,8 @@
-function CmdInit() {
-	com.AddCmd('connect', CmdConnect);
+function InitCmd() {
+	com.AddCmd('connect', ConnectCmd);
 }
 
-function CmdConnect(serverName) {
+function ConnectCmd(serverName) {
 	var parts = serverName.split(':');
 	var host = parts[0];
 	var port = parts[1];

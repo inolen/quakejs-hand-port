@@ -19,11 +19,12 @@ function Init(cominterface, isdedicated) {
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
 	sv_fps = com.AddCvar('sv_fps',     20);
 
-	CmdInit();
+	InitCmd();
+	cm.Init({ ReadFile: com.ReadFile });
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		CmdLoadMap('q3tourney4');
+		LoadMapCmd('q3tourney4');
 	}, 50);
 }
 
