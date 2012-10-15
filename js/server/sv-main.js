@@ -19,7 +19,7 @@ function Init(cominterface, isdedicated) {
 	
 	sv_serverid = com.AddCvar('sv_serverid', 1337);
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
-	sv_fps = com.AddCvar('sv_fps',     10);
+	sv_fps = com.AddCvar('sv_fps', 20);
 
 	InitCmd();
 

@@ -71,38 +71,38 @@ function CreateCommand() {
  * <count * usercmds>
  */
 function WritePacket() {
-	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+	var msg = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
 	var serverid = parseInt(cl.gameState['sv_serverid']);
 
-	bb.writeInt(serverid);
+	msg.writeInt(serverid);
 	// Write the last message we received, which can
 	// be used for delta compression, and is also used
 	// to tell if we dropped a gamestate
-	bb.writeInt(clc.serverMessageSequence);
+	msg.writeInt(clc.serverMessageSequence);
 	// Write the last reliable message we received.
-	bb.writeInt(clc.serverCommandSequence);
+	msg.writeInt(clc.serverCommandSequence);
 
 	// Write any unacknowledged client commands.
 	for (var i = clc.reliableAcknowledge + 1; i <= clc.reliableSequence; i++) {
-		bb.writeUnsignedByte(ClientMessage.clientCommand);
-		bb.writeInt(i);
-		bb.writeCString(clc.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
+		msg.writeUnsignedByte(ClientMessage.clientCommand);
+		msg.writeInt(i);
+		msg.writeCString(clc.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
 	}
 
 	// Write only the latest client command for now
 	// since we're rocking TCP.
 	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
 
-	bb.writeUnsignedByte(ClientMessage.moveNoDelta);
-	bb.writeUnsignedInt(cmd.serverTime);
-	bb.writeFloat(cmd.angles[0]);
-	bb.writeFloat(cmd.angles[1]);
-	bb.writeFloat(cmd.angles[2]);
-	bb.writeByte(cmd.forwardmove);
-	bb.writeByte(cmd.rightmove);
-	bb.writeByte(cmd.upmove);
+	msg.writeUnsignedByte(ClientMessage.moveNoDelta);
+	msg.writeUnsignedInt(cmd.serverTime);
+	msg.writeFloat(cmd.angles[0]);
+	msg.writeFloat(cmd.angles[1]);
+	msg.writeFloat(cmd.angles[2]);
+	msg.writeByte(cmd.forwardmove);
+	msg.writeByte(cmd.rightmove);
+	msg.writeByte(cmd.upmove);
 
-	com.NetchanSend(clc.netchan, bb.buffer, bb.index);
+	com.NetchanSend(clc.netchan, msg.buffer, msg.index);
 }
 
 function KeyMove(cmd) {
