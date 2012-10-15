@@ -37,6 +37,7 @@ function AddCEntity(cent) {
 	CalcEntityLerpPositions(cent);
 
 	//if (cent.currentState.eType === EntityType.ITEM) {
+	if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
 		var refent = new RefEntity();
 
 		refent.reType = RefEntityType.BBOX;
@@ -45,6 +46,7 @@ function AddCEntity(cent) {
 		vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
 
 		cl.AddRefEntityToScene(refent);
+	}
 	//}
 
 	// add automatic effects
