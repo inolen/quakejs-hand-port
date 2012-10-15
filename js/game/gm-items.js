@@ -34,7 +34,7 @@ function FinishSpawningItem(ent) {
 	//ent.s.modelindex = ent->item - bg_itemlist;		// store item number in modelindex
 	//ent.s.modelindex2 = 0; // zero indicates this isn't a dropped item
 
-	ent.contents = ContentFlags.TRIGGER;
+	ent.contents = ContentTypes.TRIGGER;
 	//ent.touch = Touch_Item;
 	//ent->use = Use_Item;
 

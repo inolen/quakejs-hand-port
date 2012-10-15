@@ -9,10 +9,10 @@ var Q3W_BASE_FOLDER = 'baseq3';
  * Communicated across the network
  **********************************************************/
 var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                 // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                 // toggled every map_restart so transitions can be detected
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
 
-var MAX_CLIENTS            = 64;                 // absolute limit
+var MAX_CLIENTS            = 64;                           // absolute limit
 var MAX_LOCATIONS          = 64;
 var MAX_GENTITIES          = 1024;
 
@@ -21,9 +21,9 @@ var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
 var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
 
 var NetAdrType = {
-	NA_BAD:      0,
-	NA_LOOPBACK: 1,
-	NA_IP:       2
+	NAD:      0,
+	LOOPBACK: 1,
+	IP:       2
 };
 
 var NetSrc = {
@@ -36,26 +36,6 @@ var NetAdr = function (type, ip, port) {
 	this.ip   = ip;
 	this.port = port;
 };
-
-function StringToAddr(str) {
-	var addr = new NetAdr();
-
-	if (str.indexOf('localhost') !== -1) {
-		addr.type = NetAdrType.NA_LOOPBACK;
-	} else {
-		addr.type = NetAdrType.NA_IP;
-	}
-
-	// TODO: Add a default port support.
-	var ip = str;
-	var m = ip.match(/\/\/(.+)\:(\d+)/);
-	if (m) {
-		addr.ip = m[1];
-		addr.port = m[2];
-	}
-
-	return addr;
-}
 
 /**********************************************************
  * A user command is what the client sends to the server
@@ -75,16 +55,17 @@ var UserCmd = function () {
 var PS_PMOVEFRAMECOUNTBITS = 6;
 
 var PlayerState = function () {
-	this.commandTime      = 0;                   // cmd->serverTime of last executed command
+	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
+	this.commandTime      = 0;                             // cmd->serverTime of last executed command
 	this.pm_type          = 0;
-	this.pm_flags         = 0;                   // ducked, jump_held, etc
+	this.pm_flags         = 0;                             // ducked, jump_held, etc
 	this.origin           = [0, 0, 0];
 	this.velocity         = [0, 0, 0];
 	this.viewangles       = [0, 0, 0];
 	this.speed            = 0;
 	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;      // ENTITYNUM_NONE = in air
-	this.jumppad_ent      = 0;                   // jumppad entity hit this frame
+	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
+	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
 	this.jumppad_frame    = 0;
 	this.pmove_framecount = 0;
 };
@@ -95,6 +76,7 @@ PlayerState.prototype.clone = function (ps) {
 		ps = new PlayerState();
 	}
 
+	ps.clientNum            = this.clientNum;
 	ps.commandTime          = this.commandTime;
 	ps.pm_type              = this.pm_type;
 	ps.pm_flags             = this.pm_flags;
@@ -111,6 +93,37 @@ PlayerState.prototype.clone = function (ps) {
 	return ps;
 };
 
+var TrajectoryType = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var Trajectory = function () {
+	this.trType     = 0;
+	this.trTime     = 0;
+	this.trDuration = 0;
+	this.trBase     = [0, 0, 0];
+	this.trDelta    = [0, 0, 0];
+};
+
+Trajectory.prototype.clone = function (tr) {
+	if (typeof(tr) === 'undefined') {
+		tr = new Trajectory();
+	}
+
+	tr.trType = this.trType;
+	tr.trTime = this.trTime;
+	tr.trDuration = this.trDuration;
+	vec3.set(this.trBase, tr.trBase);
+	vec3.set(this.trDelta, tr.trDelta);
+
+	return tr;
+}
+
 /**********************************************************
  * EntityState is the information conveyed from the server
  * in an update message about entities that the client will
@@ -120,24 +133,24 @@ PlayerState.prototype.clone = function (ps) {
  * size is fairly large
  **********************************************************/
 var EntityState = function () {
-	this.number          = 0;                    // entity index
-	this.eType           = 0;                    // entityType_t
+	this.number          = 0;                              // entity index
+	this.eType           = 0;                              // entityType_t
 	this.eFlags          = 0;
-	//trajectory_t	pos;                         // for calculating position
-	//trajectory_t	apos;                        // for calculating angles
+	this.pos             = new Trajectory();               // for calculating position
+	this.apos            = new Trajectory();               // for calculating angles
 	this.time            = 0;
 	this.time2           = 0;
 	this.origin          = [0, 0, 0];
 	this.origin2         = [0, 0, 0];
 	this.angles          = [0, 0, 0];
 	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;       // ENTITYNUM_NONE = in air
+	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
 	this.modelindex      = 0;
 	this.modelindex2     = 0;
-	this.clientNum       = 0;                    // 0 to (MAX_CLIENTS - 1), for players and corpses
+	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
 	this.frame           = 0;
-	this.solid           = 0;                    // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                    // impulse events -- muzzle flashes, footsteps, etc
+	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
+	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
 	this.eventParm       = 0;
 };
 
@@ -150,6 +163,8 @@ EntityState.prototype.clone = function (es) {
 	es.number            = this.number;
 	es.eType             = this.eType;
 	es.eFlags            = this.eFlags;
+	this.pos.clone(es.pos);
+	this.apos.clone(es.apos);
 	es.time              = this.time;
 	es.time2             = this.time2;
 	vec3.set(this.origin,  es.origin);

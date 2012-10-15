@@ -14,7 +14,7 @@ function ReadFile(path, encoding, callback) {
 				view[i] = data[i];
 			}
 
-			callback.apply(this, buffer);
+			callback.call(this, buffer);
 		});
 
 		return;

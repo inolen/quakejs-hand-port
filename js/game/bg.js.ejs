@@ -7,9 +7,11 @@ function (glmatrix) {
 	<%- include bg-pmove.js %>
 	
 	return {
-		ItemList: itemList,
-		Pmove: Pmove,
-		UpdateViewAngles: UpdateViewAngles,
-		TouchJumpPad: TouchJumpPad
+		ItemList:                 itemList,
+		Pmove:                    Pmove,
+		UpdateViewAngles:         UpdateViewAngles,
+		PlayerStateToEntityState: PlayerStateToEntityState,
+		EvaluateTrajectory:       EvaluateTrajectory,
+		TouchJumpPad:             TouchJumpPad
 	};
 });

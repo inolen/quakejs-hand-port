@@ -95,12 +95,12 @@ function PredictPlayerState() {
 	cg_pmove.trace = cl.Trace;
 	// cg_pmove.pointcontents = CG_PointContents;
 	if (cg_pmove.ps.pm_type === PmoveType.DEAD) {
-		cg_pmove.tracemask = ContentMasks.PLAYERSOLID & ~ContentFlags.BODY;
+		cg_pmove.tracemask = ContentMasks.PLAYERSOLID & ~ContentTypes.BODY;
 	} else {
 		cg_pmove.tracemask = ContentMasks.PLAYERSOLID;
 	}
 	// if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
-	// 	cg_pmove.tracemask &= ~ContentFlags.BODY;	// spectators can fly through bodies
+	// 	cg_pmove.tracemask &= ~ContentTypes.BODY;	// spectators can fly through bodies
 	// }
 	// cg_pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
 

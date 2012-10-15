@@ -14,7 +14,7 @@ function NetchanSetup(src, addr, socket) {
 
 	if (typeof (socket) !== 'undefined') {
 		netchan.socket = socket;
-	} else if (addr.type == NetAdrType.NA_LOOPBACK) {
+	} else if (addr.type == NetAdrType.LOOPBACK) {
 		// Trigger a fake connect event for loopback sockets.
 		QueueEvent({ type: EventTypes.NETSVCONNECT, addr: addr, socket: null });
 	} else {
@@ -25,7 +25,7 @@ function NetchanSetup(src, addr, socket) {
 }
 
 function NetchanDestroy(netchan) {
-	if (netchan.addr.type == NetAdrType.NA_LOOPBACK) {
+	if (netchan.addr.type === NetAdrType.LOOPBACK) {
 		// Trigger a fake disconnect event for loopback sockets.
 		QueueEvent({ type: EventTypes.NETSVDISCONNECT, addr: netchan.addr });
 	} else {
@@ -39,8 +39,7 @@ function NetchanSendLoopPacket(netchan, buffer, length) {
 	// Make a truncated copy of the incoming buffer.
 	buffer = buffer.slice(0, length);
 
-	var i = q.send++ & (MAX_LOOPBACK-1);
-	q.msgs[i] = buffer;
+	q.msgs[q.send++ % MAX_LOOPBACK] = buffer;
 
 	QueueEvent({
 		type: netchan.src === NetSrc.CLIENT ? EventTypes.NETSVMESSAGE : EventTypes.NETCLMESSAGE,
@@ -51,20 +50,39 @@ function NetchanSendLoopPacket(netchan, buffer, length) {
 }
 
 function NetchanSend(netchan, buffer, length) {
-	netchan.outgoingSequence++;
+	var msg = new ByteBuffer(msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
-	if (netchan.addr.type === NetAdrType.NA_LOOPBACK) {
-		NetchanSendLoopPacket(netchan, buffer, length);
+	// Prefix packet with outgoing sequence.
+	// TODO this is pretty ugly.
+	var view = new Uint8Array(buffer);
+	msg.writeInt(netchan.outgoingSequence++);
+	for (var i = 0; i < length; i++) {
+		msg.writeUnsignedByte(view[i]);
+	}
+
+	if (netchan.addr.type === NetAdrType.LOOPBACK) {
+		NetchanSendLoopPacket(netchan, msg.buffer, msg.index);
 		return;
 	}
 
-	sys.NetSend(netchan.socket, buffer, length);
+	sys.NetSend(netchan.socket, msg.buffer, msg.index);
 }
 
 function NetchanPrint(netchan, str) {
-	var bb = new ByteBuffer(msgBuffer, ByteBuffer.LITTLE_ENDIAN);
-	bb.writeInt(-1);
-	bb.writeCString(str);
+	var msg = new ByteBuffer(msgBuffer, ByteBuffer.LITTLE_ENDIAN);
+	msg.writeInt(-1);
+	msg.writeCString(str);
 
-	NetchanSend(netchan, bb.buffer, bb.index);
+	if (netchan.addr.type === NetAdrType.LOOPBACK) {
+		NetchanSendLoopPacket(netchan, msg.buffer, msg.index);
+		return;
+	}
+
+	sys.NetSend(netchan.socket, msg.buffer, msg.index);
+}
+
+function NetchanProcess(netchan, msg) {
+	var sequence = msg.readInt();
+	netchan.incomingSequence = sequence;
+	return true;
 }

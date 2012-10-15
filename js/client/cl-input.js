@@ -16,7 +16,8 @@ function InitInput() {
 }
 
 /**
- * Process current input variables into userComamnd_t struct for transmission to server.
+ * Process current input variables into userCommand_t
+ * struct for transmission to server.
  */
 
 function SendCommand() {
@@ -26,30 +27,7 @@ function SendCommand() {
 	}
 
 	CreateNewCommands();
-
-	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
-	WriteCommandPacket(cmd);
-}
-
-function WriteCommandPacket(cmd) {
-	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
-	var serverid = parseInt(cl.gameState['sv_serverid']);
-
-	bb.writeUnsignedInt(serverid);
-	// Set the last message we received, which can be used for delta compression,
-	// and is also used to tell if we dropped a gamestate.
-	bb.writeUnsignedInt(clc.serverMessageSequence);
-	bb.writeUnsignedByte(ClientMessage.moveNoDelta);
-
-	bb.writeUnsignedInt(cmd.serverTime);
-	bb.writeFloat(cmd.angles[0]);
-	bb.writeFloat(cmd.angles[1]);
-	bb.writeFloat(cmd.angles[2]);
-	bb.writeByte(cmd.forwardmove);
-	bb.writeByte(cmd.rightmove);
-	bb.writeByte(cmd.upmove);
-
-	com.NetchanSend(clc.netchan, bb.buffer, bb.index);
+	WritePacket();
 }
 
 function CreateNewCommands() {
@@ -73,6 +51,58 @@ function CreateCommand() {
 	cmd.serverTime = cl.serverTime;
 
 	return cmd;
+}
+
+/**
+ * WritePacket
+ *
+ * Create and send the command packet to the server,
+ * including both the reliable commands and the usercmds.
+ * 
+ * During normal gameplay, a client packet will contain
+ * something like:
+ *
+ * 4    serverid
+ * 4    sequence number
+ * 4    acknowledged sequence number
+ * <optional reliable commands>
+ * 1    clc_move or clc_moveNoDelta
+ * 1    command count
+ * <count * usercmds>
+ */
+function WritePacket() {
+	var bb = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+	var serverid = parseInt(cl.gameState['sv_serverid']);
+
+	bb.writeInt(serverid);
+	// Write the last message we received, which can
+	// be used for delta compression, and is also used
+	// to tell if we dropped a gamestate
+	bb.writeInt(clc.serverMessageSequence);
+	// Write the last reliable message we received.
+	bb.writeInt(clc.serverCommandSequence);
+
+	// Write any unacknowledged client commands.
+	for (var i = clc.reliableAcknowledge + 1; i <= clc.reliableSequence; i++) {
+		bb.writeUnsignedByte(ClientMessage.clientCommand);
+		bb.writeInt(i);
+		bb.writeCString(clc.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
+	}
+
+	// Write only the latest client command for now
+	// since we're rocking TCP.
+	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
+
+	bb.writeUnsignedByte(ClientMessage.moveNoDelta);
+	bb.writeUnsignedInt(cmd.serverTime);
+	bb.writeFloat(cmd.angles[0]);
+	bb.writeFloat(cmd.angles[1]);
+	bb.writeFloat(cmd.angles[2]);
+	bb.writeByte(cmd.forwardmove);
+	bb.writeByte(cmd.rightmove);
+	bb.writeByte(cmd.upmove);
+
+	com.NetchanSend(clc.netchan, bb.buffer, bb.index);
 }
 
 function KeyMove(cmd) {

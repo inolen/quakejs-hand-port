@@ -3,7 +3,7 @@ entityEvents['trigger_push'] = {
 		sv.SetBrushModel(self, self.model);
 
 		self.s.eType = EntityType.PUSH_TRIGGER;
-		self.contents = ContentFlags.TRIGGER;
+		self.contents = ContentTypes.TRIGGER;
 		self.nextthink = level.time + FRAMETIME;
 		
 		sv.LinkEntity(self);

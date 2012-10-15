@@ -28,7 +28,7 @@ var GameEntity = function () {
 	this.bmodel        = false;
 	this.mins          = [0, 0, 0];
 	this.maxs          = [0, 0, 0];
-	// ContentFlags.TRIGGER, ContentFlags.SOLID, ContentFlags.BODY (non-solid ent should be 0)
+	// ContentTypes.TRIGGER, ContentTypes.SOLID, ContentTypes.BODY (non-solid ent should be 0)
 	this.contents      = 0;
 	// Derived from mins/maxs and origin + rotation.
 	this.absmin        = [0, 0, 0];

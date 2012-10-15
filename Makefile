@@ -14,14 +14,10 @@ ALL_MODULES = \
 	js/game/bg.js \
 	js/game/gm.js \
 	js/server/sv.js \
-	js/shared/cmd.js \
-	js/shared/cvar.js \
-	js/shared/Q3Bsp.js \
 	js/renderer/re.js \
 	js/system/browser/sys.js \
 	js/system/dedicated/sys.js \
 	js/vendor/gl-matrix.js \
-	js/vendor/js-struct.js \
 	js/vendor/byte-buffer.js \
 	js/vendor/underscore.js
 

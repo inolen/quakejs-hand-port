@@ -15,7 +15,7 @@ function BuildClientSnapshot(client, msg) {
 	// Bump the counter used to prevent double adding.
 	sv.snapshotCounter++;
 
-	var frame = client.frames[client.netchan.outgoingSequence & PACKET_MASK];
+	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
 	var clientNum = GetClientNum(client);
 	frame.ps = gm.GetClientPlayerstate(clientNum);
 
@@ -168,10 +168,11 @@ function SendClientSnapshot(client) {
 		return;
 	}
 
-	var frame = client.frames[client.netchan.outgoingSequence & PACKET_MASK];
+	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
 	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
-	msg.writeInt(client.netchan.outgoingSequence);
+	msg.writeInt(client.lastClientCommand);
+
 	msg.writeUnsignedByte(ServerMessage.snapshot);
 
 	// Send over the current server time so the client can drift
@@ -186,21 +187,22 @@ function SendClientSnapshot(client) {
 		// the time it doesn't really matter.
 		serverTime = sv.time + client.oldServerTime;
 	}
-	msg.writeUnsignedInt(serverTime);
+	msg.writeInt(serverTime);
 
 	var snapFlags = svs.snapFlagServerBit;
 	if (client.state !== ClientState.ACTIVE) {
 		snapFlags |= SNAPFLAG_NOT_ACTIVE;
 	}
-	msg.writeUnsignedInt(snapFlags);
+	msg.writeInt(snapFlags);
 
 	// Write out playerstate
-	msg.writeUnsignedInt(frame.ps.commandTime);
-	msg.writeUnsignedInt(frame.ps.pm_type);
-	msg.writeUnsignedInt(frame.ps.pm_flags);
-	msg.writeUnsignedInt(frame.ps.pm_time);
-	msg.writeUnsignedInt(frame.ps.gravity);
-	msg.writeUnsignedInt(frame.ps.speed);
+	msg.writeInt(frame.ps.clientNum);
+	msg.writeInt(frame.ps.commandTime);
+	msg.writeInt(frame.ps.pm_type);
+	msg.writeInt(frame.ps.pm_flags);
+	msg.writeInt(frame.ps.pm_time);
+	msg.writeInt(frame.ps.gravity);
+	msg.writeInt(frame.ps.speed);
 
 	msg.writeFloat(frame.ps.origin[0]);
 	msg.writeFloat(frame.ps.origin[1]);
@@ -218,9 +220,30 @@ function SendClientSnapshot(client) {
 	for (var i = 0; i < frame.numEntities; i++) {
 		var state = svs.snapshotEntities[(frame.firstEntity+i) % MAX_SNAPSHOT_ENTITIES];
 
-		msg.writeUnsignedInt(state.number);
-		msg.writeUnsignedInt(state.eType);
-		msg.writeUnsignedInt(state.eFlags);
+		msg.writeInt(state.number);
+		msg.writeInt(state.eType);
+		msg.writeInt(state.eFlags);
+
+		msg.writeInt(state.pos.trType);
+		msg.writeInt(state.pos.trTime);
+		msg.writeInt(state.pos.trDuration);
+		msg.writeFloat(state.pos.trBase[0]);
+		msg.writeFloat(state.pos.trBase[1]);
+		msg.writeFloat(state.pos.trBase[2]);
+		msg.writeFloat(state.pos.trDelta[0]);
+		msg.writeFloat(state.pos.trDelta[1]);
+		msg.writeFloat(state.pos.trDelta[2]);
+
+		msg.writeInt(state.apos.trType);
+		msg.writeInt(state.apos.trTime);
+		msg.writeInt(state.apos.trDuration);
+		msg.writeFloat(state.apos.trBase[0]);
+		msg.writeFloat(state.apos.trBase[1]);
+		msg.writeFloat(state.apos.trBase[2]);
+		msg.writeFloat(state.apos.trDelta[0]);
+		msg.writeFloat(state.apos.trDelta[1]);
+		msg.writeFloat(state.apos.trDelta[2]);
+
 		msg.writeFloat(state.origin[0]);
 		msg.writeFloat(state.origin[1]);
 		msg.writeFloat(state.origin[2]);
@@ -246,6 +269,10 @@ function SendClientMessages() {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
+		if (!client) {
+			continue;
+		}
+		
 		if (!client.state) {
 			continue; // not connected
 		}

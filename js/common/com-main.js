@@ -21,6 +21,7 @@ function Init(sysinterface, isdedicated) {
 		NetchanDestroy:       NetchanDestroy,
 		NetchanSend:          NetchanSend,
 		NetchanPrint:         NetchanPrint,
+		NetchanProcess:       NetchanProcess,
 		GetMilliseconds:      sys.GetMilliseconds,
 		ReadFile:             sys.ReadFile,
 		GetGameRenderContext: sys.GetGameRenderContext,
@@ -77,7 +78,7 @@ function EventLoop() {
 				sv.ClientConnect(ev.addr, ev.socket);
 				break;
 			case EventTypes.NETSVDISCONNECT:
-				sv.ClientDisconnect(ev.addr);
+				//sv.ClientDisconnect(ev.addr);
 				break;
 			case EventTypes.NETSVMESSAGE:
 				sv.PacketEvent(ev.addr, ev.buffer);

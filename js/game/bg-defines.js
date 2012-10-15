@@ -1,3 +1,4 @@
+var DEFAULT_GRAVITY = 800;
 var JUMP_VELOCITY = 270;
 var MAX_CLIP_PLANES = 5;
 var MIN_WALK_NORMAL = 0.7;
@@ -5,24 +6,6 @@ var STEPSIZE = 18;
 var OVERCLIP = 1.001;
 var DEFAULT_VIEWHEIGHT = 26;
 var ITEM_RADIUS = 15;                            // item sizes are needed for client side pickup detection
-
-/*
-var TrType = {
-	STATIONARY:  1,
-	INTERPOLATE: 2,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      3,
-	LINEAR_STOP: 4,
-	SINE:        5,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     6
-};
-
-var Trajectory = function () {
-	this.type = 0;
-	this.time = 0;
-	this.duration = 0;
-	this.base = [0, 0, 0];
-	this.delta = [0, 0, 0];
-};*/
 
 /**********************************************************
  * Game item descriptions
@@ -107,7 +90,7 @@ var EntityFlags = {
 /**********************************************************
  * Pmove related
  **********************************************************/
-var ContentFlags = {
+var ContentTypes = {
 	SOLID:         1,                            // an eye is never valid in a solid
 	LAVA:          8,
 	SLIME:         16,
@@ -142,12 +125,12 @@ var ContentFlags = {
 
 var ContentMasks = {
 	ALL:         -1,
-	SOLID:       ContentFlags.SOLID,
-	PLAYERSOLID: ContentFlags.SOLID | ContentFlags.PLAYERCLIP  | ContentFlags.BODY,
-	DEADSOLID:   ContentFlags.SOLID | ContentFlags.PLAYERCLIP,
-	WATER:       ContentFlags.WATER | ContentFlags.LAVA        | ContentFlags.SLIME,
-	OPAQUE:      ContentFlags.SOLID | ContentFlags.SLIME       | ContentFlags.LAVA,
-	SHOT:        ContentFlags.SOLID | ContentFlags.BODY       | ContentFlags.CORPSE,
+	SOLID:       ContentTypes.SOLID,
+	PLAYERSOLID: ContentTypes.SOLID | ContentTypes.PLAYERCLIP  | ContentTypes.BODY,
+	DEADSOLID:   ContentTypes.SOLID | ContentTypes.PLAYERCLIP,
+	WATER:       ContentTypes.WATER | ContentTypes.LAVA        | ContentTypes.SLIME,
+	OPAQUE:      ContentTypes.SOLID | ContentTypes.SLIME       | ContentTypes.LAVA,
+	SHOT:        ContentTypes.SOLID | ContentTypes.BODY       | ContentTypes.CORPSE,
 };
 
 var PmoveType = {

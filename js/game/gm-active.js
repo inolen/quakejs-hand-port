@@ -32,7 +32,7 @@ function TouchTriggers(ent) {
 			continue;
 		}
 
-		if (!(hit.contents & ContentFlags.TRIGGER)) {
+		if (!(hit.contents & ContentTypes.TRIGGER)) {
 			continue;
 		}
 

@@ -161,7 +161,7 @@ function GetSnapshot(snapshotNumber) {
 	}
 
 	// If the frame is not valid, we can't return it.
-	var snap = cl.snapshots[snapshotNumber & PACKET_MASK];
+	var snap = cl.snapshots[snapshotNumber % PACKET_BACKUP];
 	if (!snap.valid) {
 		return null;
 	}

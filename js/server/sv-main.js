@@ -25,7 +25,7 @@ function Init(cominterface, isdedicated) {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		LoadMapCmd('q3tourney2');
+		LoadMapCmd('q3dm17');
 	}, 50);
 }
 
@@ -65,6 +65,31 @@ function Frame(frameTime, msec) {
 	// Don't send out duplicate snapshots if we didn't run any gameframes.
 	if (frames > 0) {
 		SendClientMessages();
+	}
+}
+
+function PacketEvent(addr, buffer) {
+	if (!svs.initialized) {
+		return;
+	}
+
+	var msg = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+
+	for (i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (client.state === ClientState.FREE) {
+			continue;
+		}
+
+		if (!_.isEqual(client.netchan.addr, addr)) {
+			continue;
+		}
+
+		if (com.NetchanProcess(client, msg)) {
+			ExecuteClientMessage(client, msg);
+		}
+		return;
 	}
 }
 

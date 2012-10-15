@@ -1,6 +1,6 @@
-// the parseEntities array must be large enough to hold PACKET_BACKUP frames of
+// The parseEntities array must be large enough to hold PACKET_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server
-// it can be un-deltad from the original 
+// it can be un-deltad from the original.
 var MAX_PARSE_ENTITIES = 2048;
 
 var ClientLocals = function () {
@@ -19,8 +19,9 @@ var ClientLocals = function () {
 	this.mouseY               = 0;
 	this.viewangles           = [0, 0, 0];
 
-	// cmds[cmdNumber] is the predicted command, [cmdNumber-1] is the last
-	// properly generated command.
+	// cmds[cmdNumber] is the predicted command,
+	// [cmdNumber-1] is the last properly generated
+	// command.
 	this.cmds                 = new Array(CMD_BACKUP);     // each mesage will send several old cmds
 	this.cmdNumber            = 0;                         // incremented each frame, because multiple
 	                                                       // frames may need to be packed into a single packet
@@ -60,14 +61,26 @@ var ConnectionState = {
 };
 
 var ClientConnection = function () {
-	this.state                 = ConnectionState.UNINITIALIZED;
-	this.clientNum             = -1;
-	this.lastPacketSentTime    = 0;                        // for retransmits during connection
-	this.lastPacketTime        = 0;                        // for timeouts
-	// Message sequence is used by both the network layer and the
-	// delta compression layer.
-	this.serverMessageSequence = 0;
-	this.netchan               = null;
+	this.state                     = ConnectionState.UNINITIALIZED;
+	this.clientNum                 = -1;
+	this.lastPacketSentTime        = 0;                    // for retransmits during connection
+	this.lastPacketTime            = 0;                    // for timeouts
+
+	// These are our reliable messages that go to the
+	// server.
+	this.reliableSequence          = 0;
+	this.reliableAcknowledge       = 0;                    // the last one the server has executed
+	this.reliableCommands          = new Array(MAX_RELIABLE_COMMANDS);
+
+	// Message sequence is used by both the network layer
+	// and the delta compression layer.
+	this.serverMessageSequence     = 0;
+	// Reliable messages received from server.
+	this.serverCommandSequence     = 0;
+	this.lastExecutedServerCommand = 0;                    // last server command grabbed or executed with CL_GetServerCommand
+	this.serverCommands            = new Array(MAX_RELIABLE_COMMANDS);
+
+	this.netchan                   = null;
 };
 
 var ClientSnapshot = function () {

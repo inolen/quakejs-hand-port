@@ -5,9 +5,9 @@ function ClientBegin(clientNum) {
 	var client = level.clients[clientNum] = new GameClient();
 	var ent = level.gentities[clientNum] = new GameEntity();
 
-	ent.s.number = clientNum;
 	ent.client = client;
-	ent.contents = ContentFlags.BODY;
+	ent.s.number = clientNum;
+	ent.client.ps.clientNum = clientNum;
 
 	ClientSpawn(ent);
 }
@@ -34,7 +34,10 @@ function ClientThink(clientNum, cmd) {
 	pm.trace = sv.Trace;
 	bg.Pmove(pm);
 
-	// update game entity info
+	// Save results of pmove.
+	bg.PlayerStateToEntityState(ent.client.ps, ent.s);
+
+	// Update game entity info.
 	vec3.set(client.ps.origin, ent.currentOrigin);
 	vec3.set(pm.mins, ent.mins);
 	vec3.set(pm.maxs, ent.maxs);
@@ -44,7 +47,6 @@ function ClientThink(clientNum, cmd) {
 
 	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
 	//VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
-
 }
 
 function GetClientPlayerstate(clientNum) {
@@ -56,11 +58,42 @@ function ClientSpawn(ent) {
 	var client = ent.client;
 	var ps = ent.client.ps;
 
+	ent.classname = 'player';
+	ent.contents = ContentTypes.BODY;
+	ent.s.groundEntityNum = ENTITYNUM_NONE;
+
 	var spawnpoint = SelectRandomDeathmatchSpawnPoint();
 
-	ps.origin = spawnpoint.s.origin;
+	vec3.set(spawnpoint.s.origin, ps.origin);
 	ps.origin[2] += 70;
-	ps.velocity = [0, 0, 0];
+	vec3.set(ps.velocity, [0, 0, 0]);
+}
+
+/**
+ * ClientDisconnect
+ *
+ * Called when a player drops from the server, will not be
+ * called between levels.
+ * This should NOT be called directly by any game logic,
+ * call sv.DropClient(), which will call this and do
+ * server system housekeeping.
+ */
+function ClientDisconnect(clientNum) {
+	var ent = level.gentities[clientNum];
+
+	if (!ent.client/* || ent.client.pers.connected == CON_DISCONNECTED*/) {
+		return;
+	}
+
+	console.log('ClientDisconnect: ' + clientNum);
+
+	sv.UnlinkEntity (ent);
+	ent.s.modelindex = 0;
+	ent.classname = 'disconnected';
+	/*ent.client.pers.connected = CON_DISCONNECTED;
+	ent.client.ps.persistant[PERS_TEAM] = TEAM_FREE;
+	ent.client.sess.sessionTeam = TEAM_FREE;
+	trap_SetConfigstring( CS_PLAYERS + clientNum, "");*/
 }
 
 function SelectNearestDeathmatchSpawnPoint(from) {

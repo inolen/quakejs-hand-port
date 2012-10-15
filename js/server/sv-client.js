@@ -1,31 +1,10 @@
-function PacketEvent(addr, buffer) {
-	if (!svs.initialized) {
-		return;
-	}
-
-	var msg = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
-
-	for (i = 0; i < svs.clients.length; i++) {
-		var c = svs.clients[i];
-
-		if (!c) {
-			continue;
-		}
-
-		if (_.isEqual(c.netchan.addr, addr)) {
-			ExecuteClientMessage(c, msg);
-			return;
-		}
-	}
-}
-
 function ClientConnect(addr, socket) {
 	console.log('SV: A client is direct connecting');
 
 	// Find a slot for the client.
 	var clientNum;
 	for (var i = 0; i < MAX_CLIENTS; i++) {
-		if (!svs.clients[i]) {
+		if (svs.clients[i].state == ClientState.FREE) {
 			clientNum = i;
 			break;
 		}
@@ -35,7 +14,7 @@ function ClientConnect(addr, socket) {
 	}
 
 	// Create the client.
-	var newcl = svs.clients[clientNum] = new ServerClient(clientNum);
+	var newcl = svs.clients[clientNum];
 	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
 	newcl.state = ClientState.CONNECTED;
 
@@ -50,72 +29,56 @@ function ClientConnect(addr, socket) {
 	newcl.gamestateMessageNum = -1;
 }
 
-function ClientDisconnect(addr) {
-	var i;
-
-	for (i = 0; i < svs.clients.length; i++) {
-		var c = svs.clients[i];
-
-		if (!c) {
-			continue;
-		}
-
-		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
-			delete svs.clients[i];
-			return;
-		}
+/**
+ * DropClient
+ *
+ * Called when the player is totally leaving the server, either willingly
+ * or unwillingly.
+ */
+function DropClient(client, reason) {
+	if (client.state === ClientState.ZOMBIE) {
+		return;  // already dropped
 	}
 
-	throw new Error('SV: No client found to disconnect.');
+	/*// see if we already have a challenge for this ip
+	challenge = &svs.challenges[0];
 
-}
+	for (i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
+	{
+		if(NET_CompareAdr(drop->netchan.remoteAddress, challenge->adr))
+		{
+			Com_Memset(challenge, 0, sizeof(*challenge));
+			break;
+		}
+	}*/
 
-function ExecuteClientMessage(client, msg) {
-	var serverid = msg.readUnsignedInt();
-	var messageSequence = msg.readUnsignedInt();
-	var type = msg.readUnsignedByte();
+	// tell everyone why they got dropped
+	//SV_SendServerCommand( NULL, "print \"%s" S_COLOR_WHITE " %s\n\"", drop->name, reason );
+
+	// Call the game function for removing a client
+	// this will remove the body, among other things.
+	var clientNum = svs.clients.indexOf(client);
+	gm.ClientDisconnect(clientNum);
+
+	// add the disconnect command
+	//SV_SendServerCommand( drop, "disconnect \"%s\"", reason);
+
+	// nuke user info
+	//SV_SetUserinfo( drop - svs.clients, "" );
 	
-	client.messageAcknowledge = messageSequence;
-
-	if (client.messageAcknowledge < 0) {
-		// Usually only hackers create messages like this.
-		// It is more annoying for them to leave them hanging.
-		return;
-	}
-
-	// If we can tell that the client has dropped the last
-	// gamestate we sent them, resend it.
-	if (serverid !== sv_serverid()) {
-		if (client.messageAcknowledge > client.gamestateMessageNum) {
-			SendClientGameState(client);
-		}
-		return;
-	}
-
-	// This client has acknowledged the new gamestate so it's
-	// safe to start sending it the real time again.
-	if (client.oldServerTime && serverid === sv_serverid()) {
-		client.oldServerTime = 0;
-	}
-
-	switch (type) {
-		case ClientMessage.move:
-			UserMove(client, msg, true);
-			break;
-		case ClientMessage.moveNoDelta:
-			UserMove(client, msg, false);
-			break;
-	}
+	//Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
+	client.state = ClientState.ZOMBIE;           // become free in a few seconds
 }
-
 
 function ClientEnterWorld(client) {
+	var clientNum = svs.clients.indexOf(client);
+
 	client.state = ClientState.ACTIVE;
 
-	gm.ClientBegin(client.clientNum);
+	gm.ClientBegin(clientNum);
 
 	// The entity is initialized inside of ClientBegin.
-	client.gentity = GentityForNum(client.clientNum);
+	client.gentity = GentityForNum(clientNum);
 }
 
 function UserMove(client, msg, delta) {
@@ -143,44 +106,29 @@ function UserMove(client, msg, delta) {
 	ClientThink(client, cmd);
 }
 
-function SendClientGameState(client) {
-	client.state = ClientState.PRIMED;
-	client.gamestateMessageNum = client.netchan.outgoingSequence;
-
-	var bb = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
-
-	bb.writeInt(client.netchan.outgoingSequence);
-	bb.writeUnsignedByte(ServerMessage.gamestate);
-
-	// TODO: Send aggregated configstrings from specific cvars (CVAR_SYSTEMINFO and ClientState.SERVERINFO)
-	bb.writeCString('sv_mapname');
-	bb.writeCString(sv_mapname());
-
-	bb.writeCString('sv_serverid');
-	bb.writeCString(sv_serverid().toString());
-
-	com.NetchanSend(client.netchan, bb.buffer, bb.index);
-}
-
 function ClientThink(client, cmd) {
 	var clientNum = GetClientNum(client);
 	gm.ClientThink(clientNum, cmd);
 }
 
-function GetClientNum(client) {
-	for (var i = 0; i < svs.clients.length; i++) {
-		var c = svs.clients[i];
+function SendClientGameState(client) {
+	client.state = ClientState.PRIMED;
+	// When we receive the first packet from the client, we will
+	// notice that it is from a different serverid and that the
+	// gamestate message was not just sent, forcing a retransmit.
+	client.gamestateMessageNum = client.netchan.outgoingSequence;
 
-		if (!c) {
-			continue;
-		}
+	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
-		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
-			return i;
-		}
-	}
+	msg.writeInt(client.lastClientCommand);
 
-	return -1;
+	msg.writeUnsignedByte(ServerMessage.gamestate);
+	msg.writeCString('sv_mapname');
+	msg.writeCString(sv_mapname());
+	msg.writeCString('sv_serverid');
+	msg.writeCString(sv_serverid().toString());
+
+	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }
 
 function UserinfoChanged(client) {
@@ -199,4 +147,149 @@ function UserinfoChanged(client) {
 		client.lastSnapshotTime = 0;
 		client.snapshotMsec = snaps;
 	}
+}
+
+function GetClientNum(client) {
+	for (var i = 0; i < svs.clients.length; i++) {
+		var c = svs.clients[i];
+
+		if (!c) {
+			continue;
+		}
+
+		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+function Disconnect(client) {
+	DropClient(client, 'disconnected');
+}
+
+/**********************************************************
+ *
+ * User message/command processing
+ *
+ **********************************************************/
+function ExecuteClientMessage(client, msg) {
+	var serverid = msg.readInt();
+
+	client.messageAcknowledge = msg.readInt();
+	if (client.messageAcknowledge < 0) {
+		// Usually only hackers create messages like this
+		// it is more annoying for them to let them hanging.
+		return;
+	}
+
+	cl.reliableAcknowledge = msg.readInt();
+	// NOTE: when the client message is fux0red the acknowledgement numbers
+	// can be out of range, this could cause the server to send thousands of server
+	// commands which the server thinks are not yet acknowledged in SV_UpdateServerCommandsToClient
+	if (client.reliableAcknowledge < client.reliableSequence - MAX_RELIABLE_COMMANDS) {
+		// Usually only hackers create messages like this
+		// it is more annoying for them to let them hanging.
+		client.reliableAcknowledge = client.reliableSequence;
+		return;
+	}
+
+	// If we can tell that the client has dropped the last
+	// gamestate we sent them, resend it.
+	if (serverid !== sv_serverid()) {
+		if (client.messageAcknowledge > client.gamestateMessageNum) {
+			SendClientGameState(client);
+		}
+		return;
+	}
+
+	// This client has acknowledged the new gamestate so it's
+	// safe to start sending it the real time again.
+	if (client.oldServerTime && serverid === sv_serverid()) {
+		client.oldServerTime = 0;
+	}
+
+	// Read optional clientCommand strings.
+	var type;
+
+	while (true) {
+		type = msg.readUnsignedByte();
+
+		if (type === ClientMessage.EOF) {
+			break;
+		}
+
+		if (type !== ClientMessage.clientCommand) {
+			break;
+		}
+
+		if (!ClientCommand(client, msg)) {
+			return;	// we couldn't execute it because of the flood protection
+		}
+
+		if (client.state === ClientState.ZOMBIE) {
+			return;	// disconnect command
+		}
+	}
+
+	// Read the usercmd_t.
+	switch (type) {
+		case ClientMessage.move:
+			UserMove(client, msg, true);
+			break;
+		case ClientMessage.moveNoDelta:
+			UserMove(client, msg, false);
+			break;
+	}
+}
+
+
+function ClientCommand(client, msg) {
+	var sequence = msg.readInt();
+	var str = msg.readCString();
+
+	// See if we have already executed it.
+	if (client.lastClientCommand >= sequence) {
+		return true;
+	}
+
+	//console.log("clientCommand: %s : %i : %s\n", cl->name, seq, s);
+
+	// drop the connection if we have somehow lost commands
+	if (sequence > client.lastClientCommand + 1 ) {
+		//Com_Printf( "Client %s lost %i clientCommands\n", cl->name,  seq - cl->lastClientCommand + 1 );
+		DropClient(client, 'Lost reliable commands');
+		return false;
+	}
+
+	// don't allow another command for one second
+	client.nextReliableTime = svs.time + 1000;
+
+	ExecuteClientCommand(client, str);
+
+	cl.lastClientCommand = sequence;
+	client.lastClientCommandString = str;
+
+	return true; // continue procesing
+}
+
+function ExecuteClientCommand(client, str) {
+	// see if it is a server level command
+	/*for (u=ucmds ; u->name ; u++) {
+		if (!strcmp (Cmd_Argv(0), u->name) ) {
+			u->func( cl );
+			bProcessed = qtrue;
+			break;
+		}
+	}*/
+	if (str === 'disconnect') {
+		Disconnect(client);
+	}
+
+	/*// Pass unknown strings to the game.
+	if (!u->name && sv.state == SS_GAME && (cl->state == CS_ACTIVE || cl->state == CS_PRIMED)) {
+		Cmd_Args_Sanitize();
+		VM_Call( gvm, GAME_CLIENT_COMMAND, cl - svs.clients );
+	}*/
 }

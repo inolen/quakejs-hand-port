@@ -130,8 +130,8 @@ function SetInitialSnapshot(snap) {
 function SetNextSnap(snap) {
 	cg.nextSnap = snap;
 
-	//bg.PlayerStateToEntityState(snap.ps, cg_entities[snap.ps.clientNum].nextState, false);
-	//cg_entities[cg.snap.ps.clientNum].interpolate = true;
+	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].nextState);
+	cg.entities[cg.snap.ps.clientNum].interpolate = true;
 
 	// check for extrapolation errors
 	for (var i = 0; i < snap.numEntities; i++) {
@@ -187,8 +187,8 @@ function TransitionSnapshot() {
 	var oldFrame = cg.snap;
 	cg.snap = cg.nextSnap;
 
-	/*bg.PlayerStateToEntityState(cg.snap.ps, cg_entities[cg.snap.ps.clientNum].currentState);
-	cg_entities[ cg.snap->ps.clientNum ].interpolate = qfalse;*/
+	bg.PlayerStateToEntityState(cg.snap.ps, cg.entities[cg.snap.ps.clientNum].currentState);
+	cg.entities[cg.snap.ps.clientNum].interpolate = false;
 
 	for (var i = 0; i < cg.snap.numEntities; i++) {
 		var cent = cg.entities[cg.snap.entities[i].number];

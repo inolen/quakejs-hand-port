@@ -16,10 +16,14 @@ var EventTypes = {
 	MOUSEMOVE:       6
 };
 
-var PACKET_BACKUP   = 32;                        // number of old messages that must be kept on client and
+/**********************************************************
+ * Networking
+ **********************************************************/
+var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
                                                  // server for delta comrpession and ping estimation
-var PACKET_MASK     = (PACKET_BACKUP-1);
-var MAX_MSGLEN      = 16384;
+var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
+var MAX_MSGLEN            = 16384;
 
 var NetChan = function () {
 	this.src              = 0;
@@ -33,7 +37,8 @@ var ClientMessage = {
 	nop:           0,
 	move:          1,                            // [[UserCmd]
 	moveNoDelta:   2,                            // [[UserCmd]
-	clientCommand: 3                             // [string] message
+	clientCommand: 3,                            // [string] message
+	EOF:           4
 };
 
 var ServerMessage = {

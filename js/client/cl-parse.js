@@ -1,8 +1,11 @@
 function ParseServerMessage(msg) {
-	var messageSequence = msg.readInt();
-	var type = msg.readUnsignedByte();
+	// Get the reliable sequence acknowledge number.
+	clc.reliableAcknowledge = msg.readInt();
+	if (clc.reliableAcknowledge < clc.reliableSequence - MAX_RELIABLE_COMMANDS) {
+		clc.reliableAcknowledge = clc.reliableSequence;
+	}
 
-	clc.serverMessageSequence = messageSequence;
+	var type = msg.readUnsignedByte();
 
 	if (type === ServerMessage.gamestate) {
 		ParseGameState(msg);
@@ -24,6 +27,8 @@ function ParseGameState(msg) {
 	val = msg.readCString();
 	cl.gameState[key] = val;
 
+	console.log('Received gamestate', cl.gameState['sv_mapname'], cl.gameState['sv_serverid']);
+
 	// Let the client game init and load data.
 	InitCGame();
 }
@@ -33,8 +38,8 @@ function ParseSnapshot(msg) {
 
 	// We will have read any new server commands in this
 	// message before we got to svc_snapshot.
-	//newSnap.serverCommandNum = clc.serverCommandSequence;
 	newSnap.messageNum = clc.serverMessageSequence;
+	newSnap.serverCommandNum = clc.serverCommandSequence;
 
 	// TODO should be replaced by the code below
 	newSnap.serverTime = msg.readUnsignedInt();
@@ -54,7 +59,7 @@ function ParseSnapshot(msg) {
 	if (newSnap.deltaNum <= 0) {
 		newSnap.valid = true;		// uncompressed frame
 	} else {
-		old = cl.snapshots[newSnap.deltaNum & PACKET_MASK];
+		old = cl.snapshots[newSnap.deltaNum % PACKET_BACKUP];
 		if (!old.valid) {
 			// should never happen
 			throw new Error('Delta from invalid frame (not supposed to happen!).');
@@ -99,7 +104,7 @@ function ParseSnapshot(msg) {
 		oldMessageNum = newSnap.messageNum - ( PACKET_BACKUP - 1 );
 	}
 	for ( ; oldMessageNum < newSnap.messageNum ; oldMessageNum++ ) {
-		cl.snapshots[oldMessageNum & PACKET_MASK].valid = false;
+		cl.snapshots[oldMessageNum % PACKET_BACKUP].valid = false;
 	}*/
 	
 	// copy to the current good spot
@@ -108,7 +113,7 @@ function ParseSnapshot(msg) {
 	/*cl.snap.ping = 999;
 	// calculate ping time
 	for (var i = 0 ; i < PACKET_BACKUP ; i++ ) {
-		packetNum = (clc.netchan.outgoingSequence - 1 - i) & PACKET_MASK;
+		packetNum = (clc.netchan.outgoingSequence - 1 - i) % PACKET_BACKUP;
 		if (cl.snap.ps.commandTime >= cl.outPackets[packetNum].p_serverTime) {
 			cl.snap.ping = cls.realtime - cl.outPackets[packetNum].p_realtime;
 			break;
@@ -116,18 +121,19 @@ function ParseSnapshot(msg) {
 	}*/
 
 	// save the frame off in the backup array for later delta comparisons
-	cl.snapshots[cl.snap.messageNum & PACKET_MASK] = cl.snap;
+	cl.snapshots[cl.snap.messageNum % PACKET_BACKUP] = cl.snap;
 
 	cl.newSnapshots = true;
 }
 
 function ParsePacketPlayerstate(msg, snap) {
-	snap.ps.commandTime = msg.readUnsignedInt();
-	snap.ps.pm_type = msg.readUnsignedInt();
-	snap.ps.pm_flags = msg.readUnsignedInt();
-	snap.ps.pm_time = msg.readUnsignedInt();
-	snap.ps.gravity = msg.readUnsignedInt();
-	snap.ps.speed = msg.readUnsignedInt();
+	snap.ps.clientNum = msg.readInt();
+	snap.ps.commandTime = msg.readInt();
+	snap.ps.pm_type = msg.readInt();
+	snap.ps.pm_flags = msg.readInt();
+	snap.ps.pm_time = msg.readInt();
+	snap.ps.gravity = msg.readInt();
+	snap.ps.speed = msg.readInt();
 	snap.ps.origin[0] = msg.readFloat();
 	snap.ps.origin[1] = msg.readFloat();
 	snap.ps.origin[2] = msg.readFloat();
@@ -143,7 +149,7 @@ function ParsePacketEntities(msg, snap) {
 	snap.parseEntitiesNum = cl.parseEntitiesNum;
 
 	while (true) {
-		var newnum = msg.readUnsignedInt();
+		var newnum = msg.readInt();
 
 		if (newnum === (MAX_GENTITIES-1)) {
 			break;
@@ -154,10 +160,29 @@ function ParsePacketEntities(msg, snap) {
 		var state = cl.parseEntities[cl.parseEntitiesNum & (MAX_PARSE_ENTITIES-1)];
 
 		state.number = newnum;
-		state.eType = msg.readUnsignedInt();
-		state.eFlags = msg.readUnsignedInt();
-		/*state.time = state.tyme;
-		state.time2 = state.tyme2;*/
+		state.eType = msg.readInt();
+		state.eFlags = msg.readInt();
+
+		state.pos.trType = msg.readInt();
+		state.pos.trTime = msg.readInt();
+		state.pos.trDuration = msg.readInt();
+		state.pos.trBase[0] = msg.readFloat();
+		state.pos.trBase[1] = msg.readFloat();
+		state.pos.trBase[2] = msg.readFloat();
+		state.pos.trDelta[0] = msg.readFloat();
+		state.pos.trDelta[1] = msg.readFloat();
+		state.pos.trDelta[2] = msg.readFloat();
+
+		state.apos.trType = msg.readInt();
+		state.apos.trTime = msg.readInt();
+		state.apos.trDuration = msg.readInt();
+		state.apos.trBase[0] = msg.readFloat();
+		state.apos.trBase[1] = msg.readFloat();
+		state.apos.trBase[2] = msg.readFloat();
+		state.apos.trDelta[0] = msg.readFloat();
+		state.apos.trDelta[1] = msg.readFloat();
+		state.apos.trDelta[2] = msg.readFloat();
+
 		state.origin[0] = msg.readFloat();
 		state.origin[1] = msg.readFloat();
 		state.origin[2] = msg.readFloat();
@@ -170,8 +195,8 @@ function ParsePacketEntities(msg, snap) {
 		state.angles2[0] = msg.readFloat();
 		state.angles2[1] = msg.readFloat();
 		state.angles2[2] = msg.readFloat();
-		state.groundEntityNum = msg.readUnsignedInt();
-		state.clientNum = msg.readUnsignedInt();*/
+		state.groundEntityNum = msg.readInt();
+		state.clientNum = msg.readInt();*/
 		/*state.frame = state.frame;
 		state.solid = state.solid;
 		state.event = state.event;
