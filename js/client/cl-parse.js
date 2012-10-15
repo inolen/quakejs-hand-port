@@ -202,8 +202,6 @@ function ParsePacketEntities(msg, snap) {
 		state.event = state.event;
 		state.eventParm = state.eventParm;*/
 
-		//console.log('got origin', state.origin[0], state.origin[0], state.origin[0]);
-
 		cl.parseEntitiesNum++;
 		snap.numEntities++;
 	}

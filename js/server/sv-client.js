@@ -1,5 +1,5 @@
 function ClientConnect(addr, socket) {
-	console.log('SV: A client is direct connecting');
+	console.log('SV: A client is connecting');
 
 	// Find a slot for the client.
 	var clientNum;
@@ -253,8 +253,6 @@ function ClientCommand(client, msg) {
 	if (client.lastClientCommand >= sequence) {
 		return true;
 	}
-
-	//console.log("clientCommand: %s : %i : %s\n", cl->name, seq, s);
 
 	// drop the connection if we have somehow lost commands
 	if (sequence > client.lastClientCommand + 1 ) {

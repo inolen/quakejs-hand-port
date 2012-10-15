@@ -227,7 +227,7 @@ function ParseStringMessage(addr, msg) {
 
 	var str = msg.readCString();
 
-	if (str === 'connectResponse') {		
+	if (str === 'connectResponse') {
 		if (clc.state >= ConnectionState.CONNECTED) {
 			console.warn('Dup connect received. Ignored.');
 			return;
@@ -244,6 +244,8 @@ function ParseStringMessage(addr, msg) {
 		// TODO Setup netchan here, make cl-cmd.js just send the connect request.
 		//Netchan_Setup(NS_CLIENT, &clc.netchan, from, Cvar_VariableValue("net_qport"), clc.challenge, qfalse);
 
+		console.log('Got connection response');
+		
 		clc.state = ConnectionState.CONNECTED;
 		clc.lastPacketSentTime = -9999;  // send first packet immediately
 	}

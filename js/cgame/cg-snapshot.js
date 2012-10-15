@@ -111,6 +111,8 @@ function ReadNextSnapshot() {
 function SetInitialSnapshot(snap) {
 	cg.snap = snap;
 
+	console.log('Setting initial snapshot');
+
 	for (var i = 0; i < cg.snap.numEntities; i++) {
 		var state = cg.snap.entities[i];
 		var cent = cg.entities[state.number];
