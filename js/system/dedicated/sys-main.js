@@ -19,7 +19,13 @@ function GetUIRenderContext() {
 	throw new Error('Dedicated server');
 }
 
+var timeBase;
 function GetMilliseconds() {
 	var time = process.hrtime();
-	return time[0] * 1000 + parseInt(time[1] / 1000000);
+
+	if (!timeBase) {
+		timeBase = time[0] * 1000 + parseInt(time[1] / 1000000);
+	}
+
+	return (time[0] * 1000 + parseInt(time[1] / 1000000)) - timeBase;
 }
