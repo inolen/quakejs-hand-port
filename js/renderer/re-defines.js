@@ -30,15 +30,11 @@ var RenderLocals = function () {
 	this.sceneCount      = 0;                              // incremented every scene
 	this.viewCount       = 0;                              // incremented every view (twice a scene if portaled)
 	this.frameSceneNum   = 0;                              // zeroed at RE_BeginFrame
-	this.pc              = new PerformanceCounter();
 };
 
-var PerformanceCounter = function () {
-	this.surfs = 0;
-	this.leafs = 0;
-	this.verts = 0;
-};
-
+/**********************************************************
+ * Describe a render frame
+ **********************************************************/
 var RefDef = function () {
 	this.x              = 0;
 	this.y              = 0;
@@ -144,47 +140,6 @@ var ViewParms = function () {
 	this.frameCount       = 0;
 };
 
-var Texture = function () {
-	this.name   = null;
-	this.texnum = null;
-};
-
-/************************************************
- * Backend structs
- ************************************************/
-var ShaderSort = {
-	BAD:            0,
-	PORTAL:         1,                                     // mirrors, portals, viewscreens
-	ENVIRONMENT:    2,                                     // sky box
-	OPAQUE:         3,                                     // opaque
-	DECAL:          4,                                     // scorch marks, etc.
-	SEE_THROUGH:    5,                                     // ladders, grates, grills that may have small blended
-	                                                       // edges in addition to alpha test
-	BANNER:         6,
-	FOG:            7,
-	UNDERWATER:     8,                                     // for items that should be drawn in front of the water plane
-	BLEND0:         9,                                     // regular transparency and filters
-	BLEND1:         10,                                    // generally only used for additive type effects
-	BLEND2:         11,
-	BLEND3:         12,
-	BLEND6:         13,
-	STENCIL_SHADOW: 14,
-	ALMOST_NEAREST: 15,                                    // gun smoke puffs
-	NEAREST:        16                                     // blood blobs
-};
-
-var LightmapType = {
-	UV:         -4,                                        // shader is for 2D rendering
-	VERTEX:     -3,                                        // pre-lit triangle models
-	WHITEIMAGE: -2,
-	NONE:       -1
-};
-
-var DrawSurface = function () {
-	this.sort    = 0;                                      // bit combination for fast compares
-	this.surface = -1;                                     // any of surface*_t
-};
-
 /************************************************
  * Renderer specific BSP structs
  ************************************************/
@@ -241,6 +196,12 @@ var mleaf_t = function () {
 	this.numLeafBrushes   = 0;
 };
 
+var bmodel_t = function () {
+	this.bounds       = [[0, 0, 0], [0, 0, 0]];            // for culling
+	this.firstSurface = 0;
+	this.numSurfaces  = 0;
+};
+
 var WorldData = function () {
 	this.name         = null;
 	this.path         = null;
@@ -261,4 +222,159 @@ var WorldData = function () {
 	vec3_t      lightGridInverseSize;
 	int         lightGridBounds[3];
 	byte        *lightGridData;*/
+};
+
+/**********************************************************
+ * MD3 files
+ **********************************************************/
+var MD3_IDENT   = (('3'<<24)+('P'<<16)+('D'<<8)+'I');
+var MD3_VERSION = 15;
+
+// limits
+var MD3_MAX_LODS      = 3;
+var MD3_MAX_TRIANGLES = 8192;                              // per surface
+var MD3_MAX_VERTS     = 4096;                              // per surface
+var MD3_MAX_SHADERS   = 256;                               // per surface
+var MD3_MAX_FRAMES    = 1024;                              // per model
+var MD3_MAX_SURFACES  = 32;                                // per model
+var MD3_MAX_TAGS      = 16;                                // per frame
+
+// vertex scales
+var MD3_XYZ_SCALE     = (1.0/64);
+
+var MD3Frame = function () {
+	this.bounds      = [[0, 0, 0], [0, 0, 0]];
+	this.localOrigin = [0, 0, 0];
+	this.radius      = 0;
+	this.name        = null;
+};
+
+var MD3Tag = function () {
+	this.name   = null;
+	this.origin = [0, 0, 0];
+	this.axis   = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+};
+
+/**********************************************************
+ * MD3 surface
+ * CHUNK			SIZE
+ * header			sizeof( md3Surface_t )
+ * shaders			sizeof( md3Shader_t ) * numShaders
+ * triangles[0]		sizeof( md3Triangle_t ) * numTriangles
+ * st				sizeof( md3St_t ) * numVerts
+ * XyzNormals		sizeof( md3XyzNormal_t ) * numVerts * numFrames
+ **********************************************************/
+var MD3Surface = function () {
+	this.ident         = 0;                                // int 
+	this.name          = null;                             // char[MAX_QPATH], polyset name
+	this.flags         = 0;                                // int
+	this.numFrames     = 0;                                // int, all surfaces in a model should have the same
+	this.numShaders    = 0;                                // int, all surfaces in a model should have the same
+	this.numVerts      = 0;                                // int
+	this.numTriangles  = 0;                                // int
+	this.ofdTriangles  = 0;                                // int
+	this.ofdShaders    = 0;                                // int, offset from start of md3Surface_t
+	this.ofsSt         = 0;                                // int, texture coords are common for all frames
+	this.ofsXyzNormals = 0;                                // int, numVerts * numFrames
+	this.ofsEnd        = 0;                                // int, next surface follows
+};
+
+var MD3Shader = function () {
+	this.name        = null;                               // char[MAX_QPATH]
+	this.shaderIndex = 0;                                  // for in-game use
+};
+
+var MD3Triangle = function () {
+	this.indexes = [0, 0, 0];                              // int[3]
+};
+
+var MD3St = function () {
+	this.st = [0, 0];                                      // float[2]
+};
+
+var MD3XyzNormal = function () {
+	this.xyz    = [0, 0, 0];                               // short[3]
+	this.normal = 0;                                       // short
+};
+
+var MD3Header = function () {
+	this.ident       = 0;                                  // int
+	this.version     = 0;                                  // int
+	this.name        = null;                               // char[MAX_QPATH], model name
+	this.flags       = 0;                                  // int
+	this.numFrames   = 0;                                  // int
+	this.numTags     = 0;                                  // int
+	this.numSurfaces = 0;                                  // int
+	this.numSkins    = 0;                                  // int
+	this.ofsFrames   = 0;                                  // int, offset for first frame
+	this.ofsTags     = 0;                                  // int, numFrames * numTags
+	this.ofsSurfaces = 0;                                  // int, first surface, others follow
+	this.ofsEnd      = 0;                                  // int, end of file
+};
+
+/**********************************************************
+ * Images
+ **********************************************************/ 
+var Texture = function () {
+	this.name   = null;
+	this.texnum = null;
+};
+
+/**********************************************************
+ * Models
+ **********************************************************/
+var ModelType = {
+	BAD:   0,
+	BRUSH: 1,
+	MD3:   2
+};
+
+var Model = function () {
+	this.name     = null;
+	this.type     = ModelType.BAD;
+	this.index    = 0;                                    // model = tr.models[model->index]
+	this.dataSize = 0;                                    // just for listing purposes
+	this.bmodel   = null;
+	this.md3      = new Array(MD3_MAX_LOADS);
+	this.numLods  = 0;
+};
+
+/************************************************
+ * Backend structs
+ ************************************************/
+var ShaderSort = {
+	BAD:            0,
+	PORTAL:         1,                                     // mirrors, portals, viewscreens
+	ENVIRONMENT:    2,                                     // sky box
+	OPAQUE:         3,                                     // opaque
+	DECAL:          4,                                     // scorch marks, etc.
+	SEE_THROUGH:    5,                                     // ladders, grates, grills that may have small blended
+	                                                       // edges in addition to alpha test
+	BANNER:         6,
+	FOG:            7,
+	UNDERWATER:     8,                                     // for items that should be drawn in front of the water plane
+	BLEND0:         9,                                     // regular transparency and filters
+	BLEND1:         10,                                    // generally only used for additive type effects
+	BLEND2:         11,
+	BLEND3:         12,
+	BLEND6:         13,
+	STENCIL_SHADOW: 14,
+	ALMOST_NEAREST: 15,                                    // gun smoke puffs
+	NEAREST:        16                                     // blood blobs
+};
+
+var LightmapType = {
+	UV:         -4,                                        // shader is for 2D rendering
+	VERTEX:     -3,                                        // pre-lit triangle models
+	WHITEIMAGE: -2,
+	NONE:       -1
+};
+
+var DrawSurface = function () {
+	this.sort    = 0;                                      // bit combination for fast compares
+	this.surface = -1;                                     // any of surface*_t
 };

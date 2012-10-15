@@ -58,9 +58,6 @@ function RenderScene(fd) {
 	re.refdef.time = fd.time;
 
 	re.refdef.numDrawSurfs = 0;
-	re.pc.surfs = 0;
-	re.pc.leafs = 0;
-	re.pc.verts  = 0;
 
 	var parms = new ViewParms();
 	parms.x = fd.x;
@@ -314,7 +311,13 @@ function RenderView(parms) {
 
 	GenerateDrawSurfs();
 	SortDrawSurfaces();
-	// TODO we need to call something like R_AddDrawSurfCmd
+
+	// Initial setup.
+	gl.viewport(0, 0, re.viewParms.width, re.viewParms.height);
+	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+	gl.clearDepth(1.0);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
 	RenderDrawSurfaces();
 	RenderRefEntities();
 }
@@ -338,8 +341,6 @@ function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 	//	| tr.shiftedEntityNum | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
 	refdef.drawSurfs[index].surface = face;
 	refdef.numDrawSurfs++;
-
-	re.pc.surfs++;
 }
 
 function SortDrawSurfaces() {
@@ -353,18 +354,10 @@ function RenderDrawSurfaces() {
 	var drawSurfs = refdef.drawSurfs;
 	var shaders = world.shaders;
 
-	// Setup
-	gl.viewport(0, 0, parms.width, parms.height);
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-	gl.clearDepth(1.0);
-
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
 	gl.enable(gl.CULL_FACE);
-
-	// Clear back buffer but not color buffer (we expect the entire scene to be overwritten)
 	gl.depthMask(true);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	// Seconds passed since map was initialized.
 	var time = refdef.time / 1000.0;
@@ -417,18 +410,12 @@ function RenderDrawSurfaces() {
 			for (var k = i; k < next; k++) {
 				var face2 = drawSurfs[k].surface;
 				gl.drawElements(gl.TRIANGLES, face2.meshVertCount, gl.UNSIGNED_SHORT, face2.indexOffset);
-				re.pc.verts += face2.meshVertCount;
 			}
 		}
 
 		// Move on to the next shader.
 		i += next - i;
 	}
-
-	/*if (!window.foobar || cl.GetMilliseconds() - window.foobar > 1000) {
-		console.log(re.pc.surfs + ' surfs, ' + re.pc.leafs + ' leafs, ', + re.pc.verts + ' verts');
-		window.foobar = sys.GetMilliseconds();
-	}*/
 }
 
 var debugRefEntVerts = [
@@ -496,10 +483,6 @@ var v = '\
 ';
 
 var f = '\
-	#ifdef GL_ES \n\
-	precision highp float; \n\
-	#endif \n\
-\n\
 	void main(void) { \n\
 		gl_FragColor = vec4 (0.0, 1.0, 0.0, 1.0);\n\
 	} \n\
@@ -507,6 +490,8 @@ var f = '\
 var vs, fs, program;
 
 function RenderRefEntities() {
+	gl.disable(gl.BLEND);
+
 	if (!debugRefEntVertBuffer) {
 		debugRefEntVertBuffer = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
@@ -532,15 +517,14 @@ function RenderRefEntities() {
 		}
 	}
 
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
 	gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
 
 	gl.useProgram(program);
 
 	// Set uniforms
 	var uniModelViewMat = gl.getUniformLocation(program, 'modelViewMat');
 	var uniProjectionMat = gl.getUniformLocation(program, 'projectionMat');
-	//gl.uniformMatrix4fv(uniModelViewMat, false, re.viewParms.or.modelMatrix);
 	gl.uniformMatrix4fv(uniProjectionMat, false, re.viewParms.projectionMatrix);
 
 	// Setup vertex attributes
@@ -550,12 +534,12 @@ function RenderRefEntities() {
 
 	for (var i = 0; i < re.refdef.numRefEntities; i++) {
 		var refent = re.refdef.refEntities[i];
+
+		// Update model view matrix for entity.
 		var or = new Orientation();
-
 		RotateModelMatrixForEntity(refent, or);
-
 		gl.uniformMatrix4fv(uniModelViewMat, false, or.modelMatrix);
 
-		gl.drawElements(gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+		gl.drawElements(gl.LINE_LOOP, 36, gl.UNSIGNED_SHORT, 0);
 	}
 }

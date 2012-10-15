@@ -399,8 +399,6 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 		// The surface may have already been added if it spans multiple leafs.
 		AddWorldSurface(face/*, dlightBits*/);
 	}
-
-	re.pc.leafs++;
 }
 
 function AddWorldSurfaces(map) {
