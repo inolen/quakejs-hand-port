@@ -38,11 +38,10 @@ function FinishSpawningItem(ent) {
 	//ent.touch = Touch_Item;
 	//ent->use = Use_Item;
 
-	if (ent.spawnflags & 1) {
+	//if (ent.spawnflags & 1) {
 		// suspended
-		// TODO figure out why we need G_SetOrigin and the trajectory fields
-		//G_SetOrigin( ent, ent->s.origin );
-	} else {
+		SetOrigin(ent, ent.s.origin);
+	//} else {
 		// drop to floor
 		/*var dest = vec3.create([ent.s.origin[0], ent.s.origin[1], ent.s.origin[2] - 4096]);
 
@@ -57,7 +56,7 @@ function FinishSpawningItem(ent) {
 		ent->s.groundEntityNum = tr.entityNum;
 
 		G_SetOrigin( ent, tr.endpos );*/
-	}
+	//}
 
 	/*// team slaves and targeted items aren't present at start
 	if ( ( ent->flags & FL_TEAMSLAVE ) || ent->targetname ) {

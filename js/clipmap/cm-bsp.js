@@ -222,7 +222,15 @@ function LoadEntities(buffer, entityLump) {
 
 			switch (key) {
 				case 'origin':
-				case 'origin2':
+					value.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
+						entity[key] = [
+							parseFloat(x),
+							parseFloat(y),
+							parseFloat(z)
+						];
+					});
+					break;
+				case 'angles':
 					value.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
 						entity[key] = [
 							parseFloat(x),

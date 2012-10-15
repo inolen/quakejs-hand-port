@@ -15,12 +15,19 @@ var ClientGame = function () {
 	this.snap                 = null;            // cg.snap->serverTime <= cg.time
 	this.nextSnap             = null;            // cg.nextSnap->serverTime > cg.time, or NULL
 	this.entities             = new Array(MAX_GENTITIES);
+	
 	// prediction state
 	this.hyperspace           = false;           // true if prediction has hit a trigger_teleport
 	this.validPPS             = false;
 	this.predictedErrorTime   = 0;
 	this.predictedError       = vec3.create();
 	this.predictedPlayerState = null;
+
+	// auto rotating items
+	this.autoAngles           = [0, 0, 0];
+	this.autoAnglesFast       = [0, 0, 0];
+
+	// view rendering
 	this.refdef               = new RefDef();
 
 	for (var i = 0; i < MAX_GENTITIES; i++) {

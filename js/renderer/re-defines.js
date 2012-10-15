@@ -25,11 +25,11 @@ var RenderLocals = function () {
 	this.world           = null;
 	this.refdef          = new RefDef();
 	this.viewParms       = null;
-	this.visCount        = 0;                    // incremented every time a new vis cluster is entered
-	this.frameCount      = 0;                    // incremented every frame
-	this.sceneCount      = 0;                    // incremented every scene
-	this.viewCount       = 0;                    // incremented every view (twice a scene if portaled)
-	this.frameSceneNum   = 0;                    // zeroed at RE_BeginFrame
+	this.visCount        = 0;                              // incremented every time a new vis cluster is entered
+	this.frameCount      = 0;                              // incremented every frame
+	this.sceneCount      = 0;                              // incremented every scene
+	this.viewCount       = 0;                              // incremented every view (twice a scene if portaled)
+	this.frameSceneNum   = 0;                              // zeroed at RE_BeginFrame
 	this.pc              = new PerformanceCounter();
 };
 
@@ -77,15 +77,34 @@ var RefEntityType = {
 	RAIL_CORE:           5,
 	RAIL_RINGS:          6,
 	LIGHTNING:           7,
-	PORTALSURFACE:       8,                      // doesn't draw anything, just info for portals
+	PORTALSURFACE:       8,                                // doesn't draw anything, just info for portals
 	MAX_REF_ENTITY_TYPE: 9
 };
 
 var RefEntity = function () {
 	this.reType = 0;
-	this.origin = vec3.create();
-	this.mins   = vec3.create();
-	this.maxs   = vec3.create();
+	this.origin = [0, 0, 0];
+	this.axis   = [                                        // rotation vectors
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	]
+	this.mins   = [0, 0, 0];
+	this.maxs   = [0, 0, 0];
+};
+
+RefEntity.prototype.clone = function (refent) {
+	if (typeof(refent) === 'undefined') {
+		refent = new RefEntity();
+	}
+
+	refent.reType = this.reType;
+	vec3.set(this.origin, refent.origin);
+	mat3.set(this.axis, refent.axis);
+	vec3.set(this.mins, refent.mins);
+	vec3.set(this.maxs, refent.maxs);
+
+	return refent;
 };
 
 var Orientation = function () {
@@ -102,7 +121,7 @@ var Orientation = function () {
 var ViewParms = function () {
 	this.or               = new Orientation();
 	this.world            = new Orientation();
-	this.pvsOrigin        = vec3.create();          // may be different than or.origin for portals
+	this.pvsOrigin        = vec3.create();                 // may be different than or.origin for portals
 	this.x                = 0;
 	this.y                = 0;
 	this.width            = 0;
@@ -135,35 +154,35 @@ var Texture = function () {
  ************************************************/
 var ShaderSort = {
 	BAD:            0,
-	PORTAL:         1,                           // mirrors, portals, viewscreens
-	ENVIRONMENT:    2,                           // sky box
-	OPAQUE:         3,                           // opaque
-	DECAL:          4,                           // scorch marks, etc.
-	SEE_THROUGH:    5,                           // ladders, grates, grills that may have small blended
-	                                             // edges in addition to alpha test
+	PORTAL:         1,                                     // mirrors, portals, viewscreens
+	ENVIRONMENT:    2,                                     // sky box
+	OPAQUE:         3,                                     // opaque
+	DECAL:          4,                                     // scorch marks, etc.
+	SEE_THROUGH:    5,                                     // ladders, grates, grills that may have small blended
+	                                                       // edges in addition to alpha test
 	BANNER:         6,
 	FOG:            7,
-	UNDERWATER:     8,                           // for items that should be drawn in front of the water plane
-	BLEND0:         9,                           // regular transparency and filters
-	BLEND1:         10,                          // generally only used for additive type effects
+	UNDERWATER:     8,                                     // for items that should be drawn in front of the water plane
+	BLEND0:         9,                                     // regular transparency and filters
+	BLEND1:         10,                                    // generally only used for additive type effects
 	BLEND2:         11,
 	BLEND3:         12,
 	BLEND6:         13,
 	STENCIL_SHADOW: 14,
-	ALMOST_NEAREST: 15,                          // gun smoke puffs
-	NEAREST:        16                           // blood blobs
+	ALMOST_NEAREST: 15,                                    // gun smoke puffs
+	NEAREST:        16                                     // blood blobs
 };
 
 var LightmapType = {
-	UV:         -4,                              // shader is for 2D rendering
-	VERTEX:     -3,                              // pre-lit triangle models
+	UV:         -4,                                        // shader is for 2D rendering
+	VERTEX:     -3,                                        // pre-lit triangle models
 	WHITEIMAGE: -2,
 	NONE:       -1
 };
 
 var DrawSurface = function () {
-	this.sort    = 0;                            // bit combination for fast compares
-	this.surface = -1;                           // any of surface*_t
+	this.sort    = 0;                                      // bit combination for fast compares
+	this.surface = -1;                                     // any of surface*_t
 };
 
 /************************************************
@@ -171,7 +190,7 @@ var DrawSurface = function () {
  ************************************************/
 var SurfaceType = {
 	BAD:          0,
-	SKIP:         1,                             // ignore
+	SKIP:         1,                                       // ignore
 	FACE:         2,
 	GRID:         3,
 	TRIANGLES:    4,
@@ -180,13 +199,13 @@ var SurfaceType = {
 	MD4:          7,
 	IQM:          8,
 	FLARE:        9,
-	ENTITY:       10,                            // beams, rails, lightning, etc that can be determined by entity
+	ENTITY:       10,                                      // beams, rails, lightning, etc that can be determined by entity
 	DISPLAY_LIST: 11
 };
 
 var msurface_t = function () {
 	this.surfaceType   = SurfaceType.BAD;
-	this.viewCount     = 0;                        // if == re.viewCount, already added
+	this.viewCount     = 0;                                  // if == re.viewCount, already added
 	this.shader        = null;
 	this.fogIndex      = 0;
 	this.vertex        = 0;

@@ -85,10 +85,7 @@ function AddRefEntityToScene(refent) {
 		throw new Error('AddRefEntityToScene: bad reType ' + ent.reType);
 	}
 
-	re.refdef.refEntities[re.refdef.numRefEntities].reType = refent.reType;
-	vec3.set(refent.origin, re.refdef.refEntities[re.refdef.numRefEntities].origin);
-	vec3.set(refent.mins, re.refdef.refEntities[re.refdef.numRefEntities].mins);
-	vec3.set(refent.maxs, re.refdef.refEntities[re.refdef.numRefEntities].maxs);
+	refent.clone(re.refdef.refEntities[re.refdef.numRefEntities]);
 
 	re.refdef.numRefEntities++;
 }
@@ -125,13 +122,10 @@ function RotateModelMatrixForViewer() {
 
 function RotateModelMatrixForEntity(refent, or) {
 	vec3.set(refent.origin, or.origin);
-	/*vec3.set(refent.axis[0], or.axis[0]);
+	vec3.set(refent.axis[0], or.axis[0]);
 	vec3.set(refent.axis[1], or.axis[1]);
-	vec3.set(refent.axis[2], or.axis[2]);*/
-	vec3.set(re.viewParms.or.axis[0], or.axis[0]);
-	vec3.set(re.viewParms.or.axis[1], or.axis[1]);
-	vec3.set(re.viewParms.or.axis[2], or.axis[2]);
-
+	vec3.set(refent.axis[2], or.axis[2]);
+	
 	var modelMatrix = mat4.create();
 	modelMatrix[0] = or.axis[0][0];
 	modelMatrix[4] = or.axis[1][0];

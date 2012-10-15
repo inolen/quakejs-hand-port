@@ -41,6 +41,22 @@ function FindEntity(key, value) {
 	return results;
 }
 
+/**
+ * SetOrigin
+ * 
+ * Set the entities current origin as well as the entity's
+ * associated trajectory information to make it stationary.
+ */
+function SetOrigin(ent, origin) {
+	vec3.set(origin, ent.s.pos.trBase);
+	ent.s.pos.trType = TrajectoryType.STATIONARY;
+	ent.s.pos.trTime = 0;
+	ent.s.pos.trDuration = 0;
+	vec3.set([0, 0, 0], ent.s.pos.trDelta);
+
+	vec3.set(origin, ent.currentOrigin);
+}
+
 function EntityThink(ent) {
 	var thinktime = ent.nextthink;
 
@@ -98,7 +114,7 @@ function SpawnEntityFromDef(def) {
 			eval('ent.' + entKey + ' = def[defKey]');
 		}
 	}
-
+	
 	// Merge entity-specific callbacks in.
 	if (entityEvents[ent.classname]) {
 		_.extend(ent, entityEvents[ent.classname]);

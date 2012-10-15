@@ -12,6 +12,15 @@ function AddPacketEntities() {
 									// no entities should be marked as interpolating
 	}
 
+	// The auto-rotating items will all have the same axis.
+	cg.autoAngles[0] = 0;
+	cg.autoAngles[1] = ( cg.time & 2047 ) * 360 / 2048.0;
+	cg.autoAngles[2] = 0;
+
+	cg.autoAnglesFast[0] = 0;
+	cg.autoAnglesFast[1] = ( cg.time & 1023 ) * 360 / 1024.0;
+	cg.autoAnglesFast[2] = 0;
+
 	/*// generate and add the entity from the playerstate
 	var ps = cg.predictedPlayerState;
 	BG_PlayerStateToEntityState( ps, &cg.predictedPlayerEntity.currentState, qfalse );
@@ -36,18 +45,28 @@ function AddCEntity(cent) {
 	// Calculate the current origin.
 	CalcEntityLerpPositions(cent);
 
-	//if (cent.currentState.eType === EntityType.ITEM) {
+	if (cent.currentState.eType === EntityType.ITEM) {
+		// Autorotate at one of two speeds.
+		if (cent.giType === ItemType.HEALTH) {
+			vec3.set(cg.autoAnglesFast, cent.lerpAngles);
+		} else {
+			vec3.set(cg.autoAngles, cent.lerpAngles);
+		}
+	}
+
 	if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
 		var refent = new RefEntity();
 
 		refent.reType = RefEntityType.BBOX;
+		
 		vec3.set(cent.lerpOrigin, refent.origin);
+		AnglesToAxis(cent.lerpAngles, refent.axis);
+
 		vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
 		vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
 
 		cl.AddRefEntityToScene(refent);
 	}
-	//}
 
 	// add automatic effects
 	//CG_EntityEffects( cent );
