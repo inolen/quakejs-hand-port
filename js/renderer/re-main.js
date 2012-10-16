@@ -386,7 +386,6 @@ function RenderDrawSurfaces() {
 	for (var i = 0; i < refdef.numDrawSurfs;) {
 		var face = drawSurfs[i].surface;
 		var shader = face.shader;
-		var glshader = shader.glshader;
 
 		// Find the next unique shader.
 		for (var next = i+1; next < refdef.numDrawSurfs; next++) {
@@ -398,12 +397,12 @@ function RenderDrawSurfaces() {
 		}
 
 		// Bind the surface shader
-		SetShader(glshader);
+		SetShader(shader);
 		
-		for (var j = 0; j < glshader.stages.length; j++) {
-			var stage = glshader.stages[j];
+		for (var j = 0; j < shader.stages.length; j++) {
+			var stage = shader.stages[j];
 
-			SetShaderStage(glshader, stage, time);
+			SetShaderStage(shader, stage, time);
 			BindShaderAttribs(stage.program, parms.or.modelMatrix, parms.projectionMatrix);
 
 			// Render all surfaces with this same shader.

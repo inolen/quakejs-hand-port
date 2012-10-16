@@ -317,11 +317,64 @@ var MD3Header = function () {
 };
 
 /**********************************************************
- * Images
- **********************************************************/ 
+ * Textures/Shaders
+ **********************************************************/
 var Texture = function () {
 	this.name   = null;
 	this.texnum = null;
+};
+
+// This is the final, compiled shader struct we use in the game.
+var Shader = function () {
+	this.name        = null;
+	this.sort        = ShaderSort.OPAQUE;
+	this.cull        = gl.FRONT;
+	this.stages      = [];
+	this.sortedIndex = 0;                                  // assigned internally
+};
+
+var ShaderStage = function () {
+	this.texture      = null;
+	this.animFreq     = 0;
+	this.animTextures = null;
+	this.blendSrc     = gl.ONE;
+	this.blendDest    = gl.ZERO;
+	this.depthWrite   = true;
+	this.depthFunc    = gl.LEQUAL;
+	this.program      = null;
+};
+
+// This is a parsed version of a shader right out of a .shader file from baseq3/shaders
+var Q3Shader = function () {
+	this.name          = null;
+	this.sort          = ShaderSort.OPAQUE;
+	this.cull          = 'front';
+	this.sky           = false;
+	this.blend         = false;
+	this.opaque        = false;
+	this.lightmapIndex = 0;
+	this.stages        = [];
+	this.vertexDeforms = [];
+};
+
+var Q3ShaderStage = function () {
+	this.map           = null;
+	this.animFreq      = 0;
+	this.animMaps      = [];
+	this.clamp         = false;
+	this.tcGen         = 'base';
+	this.rgbGen        = 'identity';
+	this.rgbWaveform   = null;
+	this.alphaGen      = '1.0';
+	this.alphaFunc     = null;
+	this.alphaWaveform = null;
+	this.blendSrc      = 'GL_ONE';
+	this.blendDest     = 'GL_ZERO';
+	this.hasBlendFunc  = false;
+	this.tcMods        = [];
+	this.depthFunc     = 'lequal';
+	this.depthWrite    = true;
+	this.isLightmap    = false;
 };
 
 /**********************************************************
