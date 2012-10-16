@@ -27,7 +27,9 @@ function DeleteTextures() {
 }
 
 function FindImage(name, clamp) {
+	// TODO we're constantly finding *lightmap.
 	//console.log('FindImage', name);
+	
 	// Only load .png files. Retrying on missing files is an expensive
 	// operation in the browser.
 	name = name.replace(/\.[^\.]+$/, '.png');
@@ -42,6 +44,7 @@ function FindImage(name, clamp) {
 		image.texnum = FindImage('*default').texnum;
 	}
 
+	// TODO Convert this to use sys.ReadFile.
 	// Load the image using the Image() class.
 	var el = new Image();
 	el.onload = function() {

@@ -34,6 +34,7 @@ function Init(clinterface) {
 
 	InitImages();
 	InitShaders();
+	//LoadMD3();
 }
 
 function Shutdown() {

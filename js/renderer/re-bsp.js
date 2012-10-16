@@ -1,7 +1,7 @@
 function LoadMap(mapName, callback) {
 	re.world = new WorldData();
 
-	cl.ReadFile('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', 'binary', function (data) {
+	cl.ReadFile('maps/' + mapName + '.bsp', 'binary', function (data) {
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
 
 		// Parse the header.

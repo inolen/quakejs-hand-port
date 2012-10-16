@@ -4,7 +4,7 @@ function ReadFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 
 	if (binary) {
-		fs.readFile(path.substring(3), function (err, data) {
+		fs.readFile(Q3W_BASE_FOLDER + '/' + path, function (err, data) {
 			if (err) throw err;
 
 			// Marshal the NodeBuffer into a new ArrayBuffer.

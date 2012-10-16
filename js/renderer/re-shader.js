@@ -92,8 +92,6 @@ function ScanAndLoadShaderScripts() {
 }
 
 function LoadShaderScript(path) {
-	path = Q3W_BASE_FOLDER + '/' + path;
-
 	cl.ReadFile(path, 'utf8', function (data) {
 		// Tokenize the file and spit out the shader names / bodies
 		// into a hashtable.
@@ -140,8 +138,6 @@ function ScanAndLoadShaderPrograms(callback) {
 }
 
 function LoadShaderProgram(path, callback) {
-	path = Q3W_BASE_FOLDER + '/' + path;
-
 	cl.ReadFile(path, 'utf8', function (data) {
 		// Use basename as name.
 		var programName = path.replace(/.*\//, '');

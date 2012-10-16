@@ -6,7 +6,7 @@ function LoadMap(mapName, callback) {
 
 	cm = new ClipMapLocals();
 
-	com.ReadFile('../' + Q3W_BASE_FOLDER + '/maps/' + mapName + '.bsp', 'binary', function (data) {
+	com.ReadFile('maps/' + mapName + '.bsp', 'binary', function (data) {
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
 
 		// Parse the header.

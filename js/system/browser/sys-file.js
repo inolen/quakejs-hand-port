@@ -2,7 +2,7 @@ function ReadFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 
 	var request = new XMLHttpRequest();
-	request.open('GET', path, true);
+	request.open('GET', Q3W_BASE_FOLDER + '/' + path, true);
 
 	if (binary) {
 		request.setRequestHeader('Content-Type', 'application/octet-stream');
