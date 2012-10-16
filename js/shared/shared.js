@@ -215,17 +215,23 @@ function AnglesToVectors(angles, forward, right, up) {
 	sr = Math.sin(angle);
 	cr = Math.cos(angle);
 
-	forward[0] = cp*cy;
-	forward[1] = cp*sy;
-	forward[2] = -sp;
+	if (forward) {
+		forward[0] = cp*cy;
+		forward[1] = cp*sy;
+		forward[2] = -sp;
+	}
 
-	right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-	right[1] = (-1*sr*sp*sy+-1*cr*cy);
-	right[2] = -1*sr*cp;
+	if (right) {
+		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
+		right[1] = (-1*sr*sp*sy+-1*cr*cy);
+		right[2] = -1*sr*cp;
+	}
 
-	up[0] = (cr*sp*cy+-sr*-sy);
-	up[1] = (cr*sp*sy+-sr*cy);
-	up[2] = cr*cp;
+	if (up) {
+		up[0] = (cr*sp*cy+-sr*-sy);
+		up[1] = (cr*sp*sy+-sr*cy);
+		up[2] = cr*cp;
+	}
 }
 
 function AnglesToAxis(angles, axis) {
@@ -234,6 +240,14 @@ function AnglesToAxis(angles, axis) {
 	// angle vectors returns "right" instead of "y axis"
 	AnglesToVectors(angles, axis[0], right, axis[2]);
 	vec3.subtract([0, 0, 0], right, axis[1]);
+}
+
+var AngleToShort = function (x) {
+	return (((x)*65536/360) & 65535);
+}
+
+var ShortToAngle = function (x) {
+	return ((x)*(360.0/65536));
 }
 
 /**********************************************************

@@ -98,6 +98,18 @@ function ClientDisconnect(clientNum) {
 	trap_SetConfigstring( CS_PLAYERS + clientNum, "");*/
 }
 
+function SetClientViewAngle(ent, angle) {
+	// TODO Fix this once we have the pers structure.
+	/*// set the delta angle
+	for (var i = 0; i < 3; i++) {
+		var cmdAngle = AngleToShort(angle[i]);
+		ent.client.ps.delta_angles[i] = cmdAngle - ent.client.pers.cmd.angles[i];
+	}*/
+	console.log('SetClientViewAngle');
+	vec3.set(angle, ent.s.angles);
+	vec3.set(ent.s.angles, ent.client.ps.viewangles);
+}
+
 function SelectNearestDeathmatchSpawnPoint(from) {
 	var nearestDist = 999999;
 	var nearestSpot = null;

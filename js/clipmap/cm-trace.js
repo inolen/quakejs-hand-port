@@ -22,7 +22,7 @@ function TestBoxInBrush(tw, brush) {
 	// The first six planes are the axial planes, so we only
 	// need to test the remainder.
 	for (var i = 6; i < brush.numsides; i++) {
-		var side = brush.sides + i;
+		var side = brush.sides[i];
 		var plane = side.plane;
 
 		// adjust the plane distance apropriately for mins/maxs

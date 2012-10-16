@@ -484,14 +484,15 @@ function RenderRefEntities() {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
 
 	// Bind the debug green shader.
+	var program = re.debugGreenShader.stages[0].program;
 	SetShader(re.debugGreenShader);
 	SetShaderStage(re.debugGreenShader, re.debugGreenShader.stages[0]);
 
 	// Setup shader attributes.
-	gl.uniformMatrix4fv(re.debugGreenShader.projectionMat, false, re.viewParms.projectionMatrix);
+	gl.uniformMatrix4fv(program.uniform.projectionMat, false, re.viewParms.projectionMatrix);
 
-	gl.enableVertexAttribArray(re.debugGreenShader.attrib.position);
-	gl.vertexAttribPointer(attrPosition, 3, gl.FLOAT, false, 12, 0);
+	gl.enableVertexAttribArray(program.attrib.position);
+	gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 12, 0);
 
 	for (var i = 0; i < re.refdef.numRefEntities; i++) {
 		var refent = re.refdef.refEntities[i];
@@ -499,7 +500,7 @@ function RenderRefEntities() {
 		// Update model view matrix for entity.
 		var or = new Orientation();
 		RotateModelMatrixForEntity(refent, or);
-		gl.uniformMatrix4fv(re.debugGreenShader.modelViewMat, false, or.modelMatrix);
+		gl.uniformMatrix4fv(program.uniform.modelViewMat, false, or.modelMatrix);
 
 		gl.drawElements(gl.LINE_LOOP, 36, gl.UNSIGNED_SHORT, 0);
 	}
