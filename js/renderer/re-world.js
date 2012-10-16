@@ -69,22 +69,22 @@ function BindShaderAttribs(shader, modelViewMat, projectionMat) {
 	gl.enableVertexAttribArray(shader.attrib.position);
 	gl.vertexAttribPointer(shader.attrib.position, 3, gl.FLOAT, false, q3render_vertex_stride, 0);
 
-	if(shader.attrib.texCoord !== undefined) {
+	if (shader.attrib.texCoord !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.texCoord);
 		gl.vertexAttribPointer(shader.attrib.texCoord, 2, gl.FLOAT, false, q3render_vertex_stride, 3*4);
 	}
 
-	if(shader.attrib.lightCoord !== undefined) {
+	if (shader.attrib.lightCoord !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.lightCoord);
 		gl.vertexAttribPointer(shader.attrib.lightCoord, 2, gl.FLOAT, false, q3render_vertex_stride, 5*4);
 	}
 
-	if(shader.attrib.normal !== undefined) {
+	if (shader.attrib.normal !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.normal);
 		gl.vertexAttribPointer(shader.attrib.normal, 3, gl.FLOAT, false, q3render_vertex_stride, 7*4);
 	}
 
-	if(shader.attrib.color !== undefined) {
+	if (shader.attrib.color !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.color);
 		gl.vertexAttribPointer(shader.attrib.color, 4, gl.FLOAT, false, q3render_vertex_stride, 10*4);
 	}
@@ -241,7 +241,6 @@ function CullSurface(surface, shader) {
 		return false;
 	}
 
-	// TODO We don't convert to a render specific type yet.
 	if (surface.type === SurfaceType.GRID/*SurfaceType.GRID*/) {
 		//return R_CullGrid( (srfGridMesh_t *)surface );
 		return false;
@@ -251,13 +250,11 @@ function CullSurface(surface, shader) {
 		return R_CullTriSurf( (srfTriangles_t *)surface );
 	}*/
 
-	// TODO We don't convert to a render specific type yet.
 	if (surface.type !== SurfaceType.FACE) {
 		return false;
 	}
 
-	// TODO map shader cull value to enum
-	if (shader.cull === 'twosided' || shader.cull === 'none' || shader.cull === 'disable') {
+	if (!shader.cull) {
 		return false;
 	}
 

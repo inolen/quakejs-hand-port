@@ -19,17 +19,22 @@ var QSORT_ENTITYNUM_SHIFT = 7;
 var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
 
 var RenderLocals = function () {
-	this.parsedShaders   = {};
-	this.compiledShaders = {};
-	this.sortedShaders   = [];
-	this.world           = null;
-	this.refdef          = new RefDef();
-	this.viewParms       = null;
-	this.visCount        = 0;                              // incremented every time a new vis cluster is entered
-	this.frameCount      = 0;                              // incremented every frame
-	this.sceneCount      = 0;                              // incremented every scene
-	this.viewCount       = 0;                              // incremented every view (twice a scene if portaled)
-	this.frameSceneNum   = 0;                              // zeroed at RE_BeginFrame
+	this.world               = null;
+	this.refdef              = new RefDef();
+	this.viewParms           = null;
+	this.visCount            = 0;                          // incremented every time a new vis cluster is entered
+	this.frameCount          = 0;                          // incremented every frame
+	this.sceneCount          = 0;                          // incremented every scene
+	this.viewCount           = 0;                          // incremented every view (twice a scene if portaled)
+	this.frameSceneNum       = 0;                          // zeroed at RE_BeginFrame
+
+	// shaders
+	this.shaderBodies        = {};
+	this.programBodies       = {};
+	this.compiledShaders     = {};
+	this.sortedShaders       = [];
+	this.defaultModelProgram = null;
+	this.modelProgram        = null;
 };
 
 /**********************************************************
@@ -347,7 +352,7 @@ var ShaderStage = function () {
 // This is a parsed version of a shader right out of a .shader file from baseq3/shaders
 var Q3Shader = function () {
 	this.name          = null;
-	this.sort          = ShaderSort.OPAQUE;
+	this.sort          = 0;                                // DON'T specify a defualt sort, ParseShader handles it.
 	this.cull          = 'front';
 	this.sky           = false;
 	this.blend         = false;

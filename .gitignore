@@ -1,4 +1,5 @@
 /node_modules
-/baseq3
+/baseq3/*
+!/baseq3/programs
 /demoq3
 /js/bin

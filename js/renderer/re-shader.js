@@ -1,13 +1,29 @@
-var shaderTexts = {};
-
 var defaultProgram = null;
 var modelProgram = null;
 
 function InitShaders() {
-	ScanAndLoadShaderFiles();
+	// TODO there are some serious race conditions here, as we don't wait for these to finish loading
+	// Thankfully these almost always finish before the map loads.
+	ScanAndLoadShaderPrograms(function () {
+		InitDefaultPrograms();
+		InitDefaultShaders();
 
-	defaultProgram = CompileShaderProgram(defaultVertexShaderSrc, defaultFragmentShaderSrc);
-	modelProgram = CompileShaderProgram(defaultVertexShaderSrc, modelFragmnetShaderSrc);
+		ScanAndLoadShaderScripts();
+	});
+}
+
+// These default programs are used to render textures without a shader.
+function InitDefaultPrograms() {
+	re.defaultProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
+	re.defaultModelProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['defaultModel.fp']);
+}
+
+function InitDefaultShaders() {
+	var debugGreenShader = re.debugGreenShader = new Shader();
+	var debugGreenShaderStage = new ShaderStage();
+	debugGreenShader.name = 'debugGreenShader';
+	debugGreenShaderStage.program = CompileShaderProgram(re.programBodies['world.vp'], re.programBodies['green.fp']);
+	debugGreenShader.stages.push(debugGreenShaderStage);
 }
 
 function FindShader(shaderName, lightmapIndex) {
@@ -17,8 +33,8 @@ function FindShader(shaderName, lightmapIndex) {
 		return shader;
 	}
 
-	if (shaderTexts[shaderName]) {
-		var shaderText = shaderTexts[shaderName];
+	if (re.shaderBodies[shaderName]) {
+		var shaderText = re.shaderBodies[shaderName];
 		var q3shader = ParseShader(shaderText, lightmapIndex);
 		shader = TranslateShader(q3shader);
 	} else {
@@ -28,7 +44,7 @@ function FindShader(shaderName, lightmapIndex) {
 
 		var stage = new ShaderStage();
 		stage.texture = FindImage(shader.name);
-		stage.program = lightmapIndex === LightmapType.VERTEX ? modelProgram : defaultProgram;
+		stage.program = lightmapIndex === LightmapType.VERTEX ? re.defaultModelProgram : re.defaultProgram;
 		shader.stages.push(stage);
 	}
 
@@ -57,7 +73,7 @@ function SortShader(shader) {
 	sortedShaders[i+1] = shader;
 }
 
-function ScanAndLoadShaderFiles() {
+function ScanAndLoadShaderScripts() {
 	var allShaders = [
 		'scripts/base.shader', 'scripts/base_button.shader', 'scripts/base_floor.shader',
 		'scripts/base_light.shader', 'scripts/base_object.shader', 'scripts/base_support.shader',
@@ -71,13 +87,14 @@ function ScanAndLoadShaderFiles() {
 	];
 
 	for (var i = 0; i < allShaders.length; ++i) {
-		var path = Q3W_BASE_FOLDER + '/' + allShaders[i];
-		LoadShaderFile(path);
+		LoadShaderScript(allShaders[i]);
 	}
 }
 
-function LoadShaderFile(url, onload) {
-	cl.ReadFile(url, 'utf8', function (data) {
+function LoadShaderScript(path) {
+	path = Q3W_BASE_FOLDER + '/' + path;
+
+	cl.ReadFile(path, 'utf8', function (data) {
 		// Tokenize the file and spit out the shader names / bodies
 		// into a hashtable.
 		var tokens = new ShaderTokenizer(data);
@@ -99,8 +116,37 @@ function LoadShaderFile(url, onload) {
 				shaderText += token + ' ';
 			} while (depth && !tokens.EOF());
 
-			shaderTexts[shaderName] = shaderText;
+			re.shaderBodies[shaderName] = shaderText;
 		}
+	});
+}
+
+function ScanAndLoadShaderPrograms(callback) {
+	var allPrograms = [
+		'programs/default.vp', 'programs/world.vp',
+		'programs/default.fp', 'programs/defaultModel.fp', 'programs/green.fp'
+	];
+
+	var done = 0;
+
+	for (var i = 0; i < allPrograms.length; ++i) {
+		LoadShaderProgram(allPrograms[i], function () {
+			// Trigger callback if we've processed all the programs.
+			if (++done === allPrograms.length) {
+				if (callback) callback();
+			}
+		});
+	}
+}
+
+function LoadShaderProgram(path, callback) {
+	path = Q3W_BASE_FOLDER + '/' + path;
+
+	cl.ReadFile(path, 'utf8', function (data) {
+		// Use basename as name.
+		var programName = path.replace(/.*\//, '');
+		re.programBodies[programName] = data;
+		callback();
 	});
 }
 
@@ -159,29 +205,23 @@ function CompileShaderProgram(vertexSrc, fragmentSrc) {
 }
 
 function SetShader(shader) {
-	if (!shader) {
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(gl.BACK);
-	} else if (shader.cull) {
+	if (shader.cull) {
 		gl.enable(gl.CULL_FACE);
 		gl.cullFace(shader.cull);
 	} else {
 		gl.disable(gl.CULL_FACE);
 	}
-
-	return true;
 }
 
 function SetShaderStage(shader, stage, time) {
 	gl.blendFunc(stage.blendSrc, stage.blendDest);
-
 	if (stage.depthWrite) {
 		gl.depthMask(true);
 	} else {
 		gl.depthMask(false);
 	}
-
 	gl.depthFunc(stage.depthFunc);
+
 	gl.useProgram(stage.program);
 
 	var texture;
@@ -192,9 +232,11 @@ function SetShaderStage(shader, stage, time) {
 		texture = stage.texture;
 	}
 
-	gl.activeTexture(gl.TEXTURE0);
-	gl.uniform1i(stage.program.uniform.texture, 0);
-	gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+	if (texture) {
+		gl.activeTexture(gl.TEXTURE0);
+		gl.uniform1i(stage.program.uniform.texture, 0);
+		gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+	}
 
 	if (stage.program.uniform.lightmap) {
 		var lightmap = FindImage('*lightmap');
@@ -229,7 +271,7 @@ function ParseShader(shaderText, lightmapIndex) {
 
 		switch (token) {
 			case '{': {
-				var stage = ParseQ3ShaderStage(shader, tokens);
+				var stage = ParseShaderStage(shader, tokens);
 
 				// I really really really don't like doing this, which basically just forces lightmaps to use the 'filter' blendmode
 				// but if I don't a lot of textures end up looking too bright. I'm sure I'm jsut missing something, and this shouldn't
@@ -326,7 +368,7 @@ function ParseShader(shaderText, lightmapIndex) {
 	return shader;
 }
 
-function ParseQ3ShaderStage(shader, tokens) {
+function ParseShaderStage(shader, tokens) {
 	var stage = new Q3ShaderStage();
 
 	// Parse a shader
@@ -501,6 +543,7 @@ function TranslateShader(q3shader) {
 	var shader = new Shader();
 
 	shader.name = q3shader.name;
+	shader.sort = q3shader.sort;
 	shader.cull = TranslateCull(q3shader.cull);
 	shader.blend = q3shader.blend;
 	shader.sky = q3shader.sky;
@@ -543,15 +586,12 @@ function TranslateDepthFunc(depth) {
 function TranslateCull(cull) {
 	if (!cull) { return gl.FRONT; }
 
-	switch (cull.toLowerCase()) {
-		case 'none':
-		case 'twosided':
-		case 'disable':
-			return null;
-		case 'back':
-		case 'backside':
-		case 'backsided':
-			return gl.BACK
+	cull = cull.toLowerCase();
+
+	if (cull == 'none' || cull == 'twosided' || cull == 'disable') {
+		return null;
+	} else if (cull == 'back' || cull == 'backside' || cull == 'backsided') {
+		return gl.BACK;
 	}
 }
 
@@ -571,62 +611,62 @@ function TranslateBlend(blend) {
 	}
 }
 
-function GenerateVertexShader(stageShader, stage) {
-	var shader = new ShaderBuilder();
+function GenerateVertexShader(q3shader, stage) {
+	var builder = new ShaderBuilder();
 
-	shader.addAttribs({
+	builder.addAttribs({
 		position: 'vec3',
 		normal: 'vec3',
 		color: 'vec4',
 	});
 
-	shader.addVaryings({
+	builder.addVaryings({
 		vTexCoord: 'vec2',
 		vColor: 'vec4',
 	});
 
-	shader.addUniforms({
+	builder.addUniforms({
 		modelViewMat: 'mat4',
 		projectionMat: 'mat4',
 		time: 'float',
 	});
 
 	if (stage.isLightmap) {
-		shader.addAttribs({ lightCoord: 'vec2' });
+		builder.addAttribs({ lightCoord: 'vec2' });
 	} else {
-		shader.addAttribs({ texCoord: 'vec2' });
+		builder.addAttribs({ texCoord: 'vec2' });
 	}
 
-	shader.addLines(['vec3 defPosition = position;']);
+	builder.addLines(['vec3 defPosition = position;']);
 
-	for(var i = 0; i < stageShader.vertexDeforms.length; ++i) {
-		var deform = stageShader.vertexDeforms[i];
+	for(var i = 0; i < q3shader.vertexDeforms.length; ++i) {
+		var deform = q3shader.vertexDeforms[i];
 
 		switch(deform.type) {
 			case 'wave':
 				var name = 'deform' + i;
 				var offName = 'deformOff' + i;
 
-				shader.addLines([
+				builder.addLines([
 					'float ' + offName + ' = (position.x + position.y + position.z) * ' + deform.spread.toFixed(4) + ';'
 				]);
 
 				var phase = deform.waveform.phase;
 				deform.waveform.phase = phase.toFixed(4) + ' + ' + offName;
-				shader.addWaveform(name, deform.waveform);
+				builder.addWaveform(name, deform.waveform);
 				deform.waveform.phase = phase;
 
-				shader.addLines(['defPosition += normal * ' + name + ';']);
+				builder.addLines(['defPosition += normal * ' + name + ';']);
 				break;
 			default: break;
 		}
 	}
 
-	shader.addLines(['vec4 worldPosition = modelViewMat * vec4(defPosition, 1.0);']);
-	shader.addLines(['vColor = color;']);
+	builder.addLines(['vec4 worldPosition = modelViewMat * vec4(defPosition, 1.0);']);
+	builder.addLines(['vColor = color;']);
 
 	if (stage.tcGen == 'environment') {
-		shader.addLines([
+		builder.addLines([
 			'vec3 viewer = normalize(-worldPosition.xyz);',
 			'float d = dot(normal, viewer);',
 			'vec3 reflected = normal*2.0*d - viewer;',
@@ -635,9 +675,9 @@ function GenerateVertexShader(stageShader, stage) {
 	} else {
 		// Standard texturing
 		if (stage.isLightmap) {
-			shader.addLines(['vTexCoord = lightCoord;']);
+			builder.addLines(['vTexCoord = lightCoord;']);
 		} else {
-			shader.addLines(['vTexCoord = texCoord;']);
+			builder.addLines(['vTexCoord = texCoord;']);
 		}
 	}
 
@@ -646,7 +686,7 @@ function GenerateVertexShader(stageShader, stage) {
 		var tcMod = stage.tcMods[i];
 		switch(tcMod.type) {
 			case 'rotate':
-				shader.addLines([
+				builder.addLines([
 					'float r = ' + tcMod.angle.toFixed(4) + ' * time;',
 					'vTexCoord -= vec2(0.5, 0.5);',
 					'vTexCoord = vec2(vTexCoord.s * cos(r) - vTexCoord.t * sin(r), vTexCoord.t * cos(r) + vTexCoord.s * sin(r));',
@@ -654,18 +694,18 @@ function GenerateVertexShader(stageShader, stage) {
 				]);
 				break;
 			case 'scroll':
-				shader.addLines([
+				builder.addLines([
 					'vTexCoord += vec2(' + tcMod.sSpeed.toFixed(4) + ' * time, ' + tcMod.tSpeed.toFixed(4) + ' * time);'
 				]);
 				break;
 			case 'scale':
-				shader.addLines([
+				builder.addLines([
 					'vTexCoord *= vec2(' + tcMod.scaleX.toFixed(4) + ', ' + tcMod.scaleY.toFixed(4) + ');'
 				]);
 				break;
 			case 'stretch':
-				shader.addWaveform('stretchWave', tcMod.waveform);
-				shader.addLines([
+				builder.addWaveform('stretchWave', tcMod.waveform);
+				builder.addLines([
 					'stretchWave = 1.0 / stretchWave;',
 					'vTexCoord *= stretchWave;',
 					'vTexCoord += vec2(0.5 - (0.5 * stretchWave), 0.5 - (0.5 * stretchWave));',
@@ -673,7 +713,7 @@ function GenerateVertexShader(stageShader, stage) {
 				break;
 			case 'turb':
 				var tName = 'turbTime' + i;
-				shader.addLines([
+				builder.addLines([
 					'float ' + tName + ' = ' + tcMod.turbulance.phase.toFixed(4) + ' + time * ' + tcMod.turbulance.freq.toFixed(4) + ';',
 					'vTexCoord.s += sin( ( ( position.x + position.z )* 1.0/128.0 * 0.125 + ' + tName + ' ) * 6.283) * ' + tcMod.turbulance.amp.toFixed(4) + ';',
 					'vTexCoord.t += sin( ( position.y * 1.0/128.0 * 0.125 + ' + tName + ' ) * 6.283) * ' + tcMod.turbulance.amp.toFixed(4) + ';'
@@ -686,61 +726,61 @@ function GenerateVertexShader(stageShader, stage) {
 
 	switch(stage.alphaGen) {
 		case 'lightingspecular':
-			shader.addAttribs({ lightCoord: 'vec2' });
-			shader.addVaryings({ vLightCoord: 'vec2' });
-			shader.addLines([ 'vLightCoord = lightCoord;' ]);
+			builder.addAttribs({ lightCoord: 'vec2' });
+			builder.addVaryings({ vLightCoord: 'vec2' });
+			builder.addLines([ 'vLightCoord = lightCoord;' ]);
 			break;
 		default:
 			break;
 	}
 
-	shader.addLines(['gl_Position = projectionMat * worldPosition;']);
+	builder.addLines(['gl_Position = projectionMat * worldPosition;']);
 
-	return shader.getSource();
+	return builder.getSource();
 }
 
-function GenerateFragmentShader(stageShader, stage) {
-	var shader = new ShaderBuilder();
+function GenerateFragmentShader(q3shader, stage) {
+	var builder = new ShaderBuilder();
 
-	shader.addVaryings({
+	builder.addVaryings({
 		vTexCoord: 'vec2',
 		vColor: 'vec4',
 	});
 
-	shader.addUniforms({
+	builder.addUniforms({
 		texture: 'sampler2D',
 		time: 'float',
 	});
 
-	shader.addLines(['vec4 texColor = texture2D(texture, vTexCoord.st);']);
+	builder.addLines(['vec4 texColor = texture2D(texture, vTexCoord.st);']);
 
 	switch (stage.rgbGen) {
 		case 'vertex':
-			shader.addLines(['vec3 rgb = texColor.rgb * vColor.rgb;']);
+			builder.addLines(['vec3 rgb = texColor.rgb * vColor.rgb;']);
 			break;
 		case 'wave':
-			shader.addWaveform('rgbWave', stage.rgbWaveform);
-			shader.addLines(['vec3 rgb = texColor.rgb * rgbWave;']);
+			builder.addWaveform('rgbWave', stage.rgbWaveform);
+			builder.addLines(['vec3 rgb = texColor.rgb * rgbWave;']);
 			break;
 		default:
-			shader.addLines(['vec3 rgb = texColor.rgb;']);
+			builder.addLines(['vec3 rgb = texColor.rgb;']);
 			break;
 	}
 
 	switch (stage.alphaGen) {
 		case 'wave':
-			shader.addWaveform('alpha', stage.alphaWaveform);
+			builder.addWaveform('alpha', stage.alphaWaveform);
 			break;
 		case 'lightingspecular':
 			// For now this is VERY special cased. May not work well with all instances of lightingSpecular
-			shader.addUniforms({
+			builder.addUniforms({
 				lightmap: 'sampler2D'
 			});
-			shader.addVaryings({
+			builder.addVaryings({
 				vLightCoord: 'vec2',
 				vLight: 'float'
 			});
-			shader.addLines([
+			builder.addLines([
 				'vec4 light = texture2D(lightmap, vLightCoord.st);',
 				'rgb *= light.rgb;',
 				'rgb += light.rgb * texColor.a * 0.6;', // This was giving me problems, so I'm ignorning an actual specular calculation for now
@@ -748,29 +788,29 @@ function GenerateFragmentShader(stageShader, stage) {
 			]);
 			break;
 		default:
-			shader.addLines(['float alpha = texColor.a;']);
+			builder.addLines(['float alpha = texColor.a;']);
 			break;
 	}
 
 	if (stage.alphaFunc) {
 		switch (stage.alphaFunc) {
 			case 'GT0':
-				shader.addLines(['if(alpha == 0.0) { discard; }']);
+				builder.addLines(['if(alpha == 0.0) { discard; }']);
 				break;
 			case 'LT128':
-				shader.addLines(['if(alpha >= 0.5) { discard; }']);
+				builder.addLines(['if(alpha >= 0.5) { discard; }']);
 				break;
 			case 'GE128':
-				shader.addLines(['if(alpha < 0.5) { discard; }']);
+				builder.addLines(['if(alpha < 0.5) { discard; }']);
 				break;
 			default:
 				break;
 		}
 	}
 
-	shader.addLines(['gl_FragColor = vec4(rgb, alpha);']);
+	builder.addLines(['gl_FragColor = vec4(rgb, alpha);']);
 
-	return shader.getSource();
+	return builder.getSource();
 }
 
 /**********************************************************
