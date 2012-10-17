@@ -1,14 +1,16 @@
 var defaultProgram = null;
 var modelProgram = null;
 
-function InitShaders() {
+function InitShaders(callback) {
 	// TODO there are some serious race conditions here, as we don't wait for these to finish loading
 	// Thankfully these almost always finish before the map loads.
 	ScanAndLoadShaderPrograms(function () {
 		InitDefaultPrograms();
 		InitDefaultShaders();
 
-		ScanAndLoadShaderScripts();
+		ScanAndLoadShaderScripts(function () {
+			callback();
+		});
 	});
 }
 
@@ -36,6 +38,7 @@ function FindShader(shaderName, lightmapIndex) {
 	if (re.shaderBodies[shaderName]) {
 		var shaderText = re.shaderBodies[shaderName];
 		var q3shader = ParseShader(shaderText, lightmapIndex);
+
 		shader = TranslateShader(q3shader);
 	} else {
 		// There is no shader for this name, let's create a default.
@@ -44,7 +47,10 @@ function FindShader(shaderName, lightmapIndex) {
 
 		var stage = new ShaderStage();
 		stage.texture = FindImage(shader.name);
-		stage.program = lightmapIndex === LightmapType.VERTEX ? re.defaultModelProgram : re.defaultProgram;
+		stage.program = lightmapIndex === LightmapType.VERTEX || lightmapIndex === LightmapType.NONE ?
+			re.defaultModelProgram :
+			re.defaultProgram;
+
 		shader.stages.push(stage);
 	}
 
@@ -73,7 +79,7 @@ function SortShader(shader) {
 	sortedShaders[i+1] = shader;
 }
 
-function ScanAndLoadShaderScripts() {
+function ScanAndLoadShaderScripts(callback) {
 	var allShaders = [
 		'scripts/base.shader', 'scripts/base_button.shader', 'scripts/base_floor.shader',
 		'scripts/base_light.shader', 'scripts/base_object.shader', 'scripts/base_support.shader',
@@ -86,12 +92,19 @@ function ScanAndLoadShaderScripts() {
 		'scripts/skin.shader', 'scripts/sky.shader', 'scripts/test.shader'
 	];
 
+	var done = 0;
+
 	for (var i = 0; i < allShaders.length; ++i) {
-		LoadShaderScript(allShaders[i]);
+		LoadShaderScript(allShaders[i], function () {			
+			// Trigger callback if we've processed all the programs.
+			if (++done === allShaders.length) {
+				if (callback) callback();
+			}
+		});
 	}
 }
 
-function LoadShaderScript(path) {
+function LoadShaderScript(path, callback) {
 	cl.ReadFile(path, 'utf8', function (data) {
 		// Tokenize the file and spit out the shader names / bodies
 		// into a hashtable.
@@ -116,6 +129,8 @@ function LoadShaderScript(path) {
 
 			re.shaderBodies[shaderName] = shaderText;
 		}
+
+		if (callback) callback();
 	});
 }
 
@@ -142,7 +157,7 @@ function LoadShaderProgram(path, callback) {
 		// Use basename as name.
 		var programName = path.replace(/.*\//, '');
 		re.programBodies[programName] = data;
-		callback();
+		if (callback) callback();
 	});
 }
 
@@ -210,6 +225,10 @@ function SetShader(shader) {
 }
 
 function SetShaderStage(shader, stage, time) {
+	if (!time || isNaN(time)) {
+		throw new Error('Invalid time for shader');
+	}
+	
 	gl.blendFunc(stage.blendSrc, stage.blendDest);
 	if (stage.depthWrite) {
 		gl.depthMask(true);
@@ -254,8 +273,6 @@ function ParseShader(shaderText, lightmapIndex) {
 	var shader = new Q3Shader();
 	shader.name = tokens.next();
 	shader.lightmapIndex = lightmapIndex;
-
-	var debug = shader.name === 'models/mapobjects/spotlamp/beam';
 
 	// Sanity check.
 	if (tokens.next() !== '{') return null;
@@ -559,6 +576,8 @@ function TranslateShader(q3shader) {
 		var vertexSrc = GenerateVertexShader(q3shader, q3stage);
 		var fragmentSrc = GenerateFragmentShader(q3shader, q3stage);
 		stage.program = CompileShaderProgram(vertexSrc, fragmentSrc);
+		stage.vertexSrc = vertexSrc;
+		stage.fragmentSrc = fragmentSrc;
 
 		shader.stages.push(stage);
 	}

@@ -269,6 +269,7 @@ var MD3 = function () {
 
 var MD3Surface = function () {
 	this.ident         = SurfaceType.MD3;
+	this.header        = null;
 	this.name          = null;
 	this.shaders       = null;
 	this.st            = null;
@@ -321,7 +322,8 @@ var MD3St = function () {
 
 var MD3XyzNormal = function () {
 	this.xyz    = [0, 0, 0];                               // short[3]
-	this.normal = 0;                                       // short
+	//this.normal = 0;                                     // short, zenith and azimuth angles of normal vector.
+	this.normal = [0, 0, 0];
 };
 
 var MD3Frame = function () {
