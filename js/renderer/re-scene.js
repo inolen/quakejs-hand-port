@@ -68,28 +68,8 @@ function AddEntitySurfaces() {
 				break;
 
 			case RefEntityType.MODEL:
-				//var model = GetModelByHandle(ent.hModel);
-				//AddMd3Surfaces(refent);
-				/*// we must set up parts of tr.or for model culling
-				RotateModelMatrixForEntity(ent, &tr.viewParms, &tr.or);
-
-				tr.currentModel = GetModelByHandle( ent->e.hModel );
-
-				if (!tr.currentModel) {
-					R_AddDrawSurf( &entitySurface, tr.defaultShader, 0, 0 );
-				} else {
-					switch ( tr.currentModel->type ) {
-					case MOD_MESH:
-						R_AddMD3Surfaces( ent );
-						break;
-					// case MOD_BRUSH:
-					// 	R_AddBrushModelSurfaces( ent );
-					// 	break;
-					default:
-						throw new Error('AddEntitySurfaces: Bad modeltype');
-						break;
-					}
-				}*/
+				var model = GetModelByHandle(refent.hModel);
+				AddMd3Surfaces(refent);
 				break;
 			default:
 				throw new Error('AddEntitySurfaces: Bad reType');
@@ -99,6 +79,10 @@ function AddEntitySurfaces() {
 
 function AddBboxSurfaces(refent) {
 	AddDrawSurf(re.debugBboxSurface, re.debugBboxSurface.shader, refent.index);
+}
+
+function AddMd3Surfaces(refent) {
+
 }
 
 function RenderDrawSurfaces() {
@@ -291,46 +275,5 @@ function RenderDrawSurfaces() {
 				}
 			}
 		}
-	}
-}
-
-function RenderRefEntities() {
-	gl.disable(gl.BLEND);
-
-	var time = re.refdef.time / 1000.0;
-
-	if (!debugRefEntVertBuffer) {
-		debugRefEntVertBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(debugRefEntVerts), gl.STATIC_DRAW);
-
-		debugRefEntIndexBuffer = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(debugRefEntIndexes), gl.STATIC_DRAW);
-	}
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
-
-	// Bind the debug green shader.
-	var program = re.debugGreenShader.stages[0].program;
-	SetShader(re.debugGreenShader);
-	SetShaderStage(re.debugGreenShader, re.debugGreenShader.stages[0], time);
-
-	// Setup shader attributes.
-	gl.uniformMatrix4fv(program.uniform.projectionMat, false, re.viewParms.projectionMatrix);
-
-	gl.enableVertexAttribArray(program.attrib.position);
-	gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 12, 0);
-
-	for (var i = 0; i < re.refdef.numRefEntities; i++) {
-		var refent = re.refdef.refEntities[i];
-
-		// Update model view matrix for entity.
-		var or = new Orientation();
-		RotateModelMatrixForEntity(refent, or);
-		gl.uniformMatrix4fv(program.uniform.modelViewMat, false, or.modelMatrix);
-
-		gl.drawElements(gl.LINE_LOOP, 36, gl.UNSIGNED_SHORT, 0);
 	}
 }*/

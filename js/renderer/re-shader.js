@@ -6,7 +6,7 @@ function InitShaders(callback) {
 		InitDebugShaders();
 
 		ScanAndLoadShaderScripts(function () {
-			callback();
+			if (callback) callback();
 		});
 	});
 }
@@ -171,7 +171,9 @@ function ScanAndLoadShaderScripts(callback) {
 }
 
 function LoadShaderScript(path, callback) {
-	cl.ReadFile(path, 'utf8', function (data) {
+	cl.ReadFile(path, 'utf8', function (err, data) {
+		if (err) throw err;
+
 		// Tokenize the file and spit out the shader names / bodies
 		// into a hashtable.
 		var tokens = new ShaderTokenizer(data);
@@ -219,7 +221,9 @@ function ScanAndLoadShaderPrograms(callback) {
 }
 
 function LoadShaderProgram(path, callback) {
-	cl.ReadFile(path, 'utf8', function (data) {
+	cl.ReadFile(path, 'utf8', function (err, data) {
+		if (err) throw err;
+		
 		// Use basename as name.
 		var programName = path.replace(/.*\//, '');
 		re.programBodies[programName] = data;

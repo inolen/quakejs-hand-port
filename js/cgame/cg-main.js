@@ -5,6 +5,8 @@ var cgs;
 var cg_errordecay;
 var cg_showmiss;
 
+var shardHandle;
+
 function Init(clinterface, serverMessageNum) {
 	console.log('--------- CG Init ---------');
 
@@ -25,6 +27,8 @@ function Init(clinterface, serverMessageNum) {
 			cg.initialized = true;
 		});
 	});
+
+	shardHandle = cl.RegisterModel('models/powerups/armor/shard.md3');
 }
 
 function Shutdown() {

@@ -13,10 +13,10 @@ function ReadFile(path, encoding, callback) {
 
 	request.addEventListener('load', function () {
 		if (request.readyState !== 4 || request.status !== 200) {
-			throw new Error('ReadFile received response code ' + request.readyState);
+			return callback(new Error('ReadFile received response code ' + request.readyState));
 		}
 
-		callback.call(this, binary ? request.response : request.responseText);
+		return callback(null, binary ? request.response : request.responseText);
 	});
 	request.send(null);
 }

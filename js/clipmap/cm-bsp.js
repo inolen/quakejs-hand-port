@@ -6,7 +6,9 @@ function LoadMap(mapName, callback) {
 
 	cm = new ClipMapLocals();
 
-	com.ReadFile('maps/' + mapName + '.bsp', 'binary', function (data) {
+	com.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
+		if (err) throw err;
+		
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
 
 		// Parse the header.

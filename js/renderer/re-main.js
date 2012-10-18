@@ -35,11 +35,7 @@ function Init(clinterface) {
 	viewportUi = uiContext.handle;
 
 	InitImages();
-	InitShaders(function () {
-		cl.ReadFile('models/powerups/armor/shard.md3', 'binary', function (data) {
-			var model = shardmd3 = LoadMD3(0, data, 'shard');
-		});
-	});
+	InitShaders();
 }
 
 function Shutdown() {

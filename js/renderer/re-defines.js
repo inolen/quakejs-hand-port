@@ -37,6 +37,8 @@ var RenderLocals = function () {
 	this.viewCount           = 0;                          // incremented every view (twice a scene if portaled)
 	this.frameSceneNum       = 0;                          // zeroed at RE_BeginFrame
 
+	this.models              = [];
+
 	// shaders
 	this.shaderBodies        = {};
 	this.programBodies       = {};
@@ -127,16 +129,19 @@ var RefEntityType = {
 };
 
 var RefEntity = function () {
+	this.index  = 0;                                       // internal use only
 	this.reType = 0;
 	this.origin = [0, 0, 0];
 	this.axis   = [                                        // rotation vectors
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
-	]
+	];
+	// model
+	this.hModel = 0;
+	// bbox
 	this.mins   = [0, 0, 0];
 	this.maxs   = [0, 0, 0];
-	this.index  = 0;                                       // internal use only
 };
 
 RefEntity.prototype.clone = function (refent) {
@@ -233,8 +238,8 @@ var DebugSurface = function () {
 	this.indexCount  = 0;
 }
 
-var MD3Surface = function () {
-	this.ident         = SurfaceType.MD3;
+var Md3Surface = function () {
+	this.ident         = SurfaceType.Md3;
 	this.header        = null;
 	this.name          = null;
 	this.shaders       = null;
@@ -343,14 +348,13 @@ var Q3ShaderStage = function () {
 var ModelType = {
 	BAD:   0,
 	BRUSH: 1,
-	MD3:   2
+	Md3:   2
 };
 
 var Model = function () {
-	this.name     = null;
 	this.type     = ModelType.BAD;
+	this.name     = null;
 	this.index    = 0;                                    // model = tr.models[model->index]
-	this.dataSize = 0;                                    // just for listing purposes
 	this.bmodel   = null;
 	this.md3      = new Array(MD3_MAX_LODS);
 	this.numLods  = 0;
@@ -386,7 +390,7 @@ var bmodel_t = function () {
 };
 
 /**********************************************************
- * MD3 files
+ * Md3 files
  **********************************************************/
 var MD3_IDENT   = (('3'.charCodeAt() << 24) + ('P'.charCodeAt() << 16) + ('D'.charCodeAt() << 8) + 'I'.charCodeAt());
 var MD3_VERSION = 15;
@@ -403,9 +407,9 @@ var MD3_MAX_TAGS      = 16;                                // per frame
 // vertex scales
 var MD3_XYZ_SCALE     = (1.0/64);
 
-// The MD3 object is what we actually use in the engine, the structures
+// The Md3 object is what we actually use in the engine, the structures
 // below are representative of the actual file we load from disk.
-var MD3 = function () {
+var Md3 = function () {
 	this.name     = null;
 	this.flags    = 0;
 	this.frames   = null;
@@ -414,7 +418,7 @@ var MD3 = function () {
 	this.skins    = null;
 };
 
-var MD3Header = function () {
+var Md3Header = function () {
 	this.ident       = 0;                                  // int
 	this.version     = 0;                                  // int
 	this.name        = null;                               // char[MAX_QPATH], model name
@@ -429,7 +433,7 @@ var MD3Header = function () {
 	this.ofsEnd      = 0;                                  // int, end of file
 };
 
-var MD3SurfaceHeader = function () {
+var Md3SurfaceHeader = function () {
 	this.ident         = 0;                                // int 
 	this.name          = null;                             // char[MAX_QPATH], polyset name
 	this.flags         = 0;                                // int
@@ -444,26 +448,26 @@ var MD3SurfaceHeader = function () {
 	this.ofsEnd        = 0;                                // int, next surface follows
 };
 
-var MD3Shader = function () {
+var Md3Shader = function () {
 	this.name        = null;                               // char[MAX_QPATH]
 	this.shader      = 0;                                  // for in-game use
 };
 
-var MD3Triangle = function () {
+var Md3Triangle = function () {
 	this.indexes = [0, 0, 0];                              // int[3]
 };
 
-var MD3St = function () {
+var Md3St = function () {
 	this.st = [0, 0];                                      // float[2]
 };
 
-var MD3XyzNormal = function () {
+var Md3XyzNormal = function () {
 	this.xyz    = [0, 0, 0];                               // short[3]
 	//this.normal = 0;                                     // short, zenith and azimuth angles of normal vector.
 	this.normal = [0, 0, 0];
 };
 
-var MD3Frame = function () {
+var Md3Frame = function () {
 	this.bounds      = [                                   // float[6]
 		[0, 0, 0],
 		[0, 0, 0]
@@ -473,7 +477,7 @@ var MD3Frame = function () {
 	this.name        = null;                               // char[16]
 };
 
-var MD3Tag = function () {
+var Md3Tag = function () {
 	this.name   = null;                                    // char[MAX_QPATH]
 	this.origin = [0, 0, 0];
 	this.axis   = [

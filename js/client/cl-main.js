@@ -54,6 +54,7 @@ function InitCGame() {
 		LoadClipMap:                 cm.LoadMap,
 		Trace:                       cm.Trace,
 		LoadRenderMap:               re.LoadMap,
+		RegisterModel:               re.RegisterModel,
 		AddRefEntityToScene:         re.AddRefEntityToScene,
 		CreateElement:               re.CreateElement,
 		DeleteElement:               re.DeleteElement,
