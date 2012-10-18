@@ -1,12 +1,9 @@
-var defaultProgram = null;
-var modelProgram = null;
-
 function InitShaders(callback) {
 	// TODO there are some serious race conditions here, as we don't wait for these to finish loading
 	// Thankfully these almost always finish before the map loads.
 	ScanAndLoadShaderPrograms(function () {
-		InitDefaultPrograms();
 		InitDefaultShaders();
+		InitDebugShaders();
 
 		ScanAndLoadShaderScripts(function () {
 			callback();
@@ -14,18 +11,78 @@ function InitShaders(callback) {
 	});
 }
 
-// These default programs are used to render textures without a shader.
-function InitDefaultPrograms() {
+function InitDefaultShaders() {
+	// These default programs are used to render textures without a shader.
 	re.defaultProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
 	re.defaultModelProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['defaultModel.fp']);
 }
 
-function InitDefaultShaders() {
-	var debugGreenShader = re.debugGreenShader = new Shader();
+function InitDebugShaders() {
+	// Register green debug shader.
+	var debugGreenShader = new Shader();
 	var debugGreenShaderStage = new ShaderStage();
 	debugGreenShader.name = 'debugGreenShader';
 	debugGreenShaderStage.program = CompileShaderProgram(re.programBodies['world.vp'], re.programBodies['green.fp']);
 	debugGreenShader.stages.push(debugGreenShaderStage);
+
+	RegisterShader('debugGreenShader', debugGreenShader);
+
+	// Setup debug vertex/index buffer.
+	var bboxVerts = [
+		// Front face
+		-15.0, -15.0,  15.0,
+		15.0, -15.0,  15.0,
+		15.0,  15.0,  15.0,
+		-15.0,  15.0,  15.0,
+		// Back face
+		-15.0, -15.0, -15.0,
+		-15.0,  15.0, -15.0,
+		15.0,  15.0, -15.0,
+		15.0, -15.0, -15.0,
+		// Top face
+		-15.0,  15.0, -15.0,
+		-15.0,  15.0,  15.0,
+		15.0,  15.0,  15.0,
+		15.0,  15.0, -15.0,
+		// Bottom face
+		-15.0, -15.0, -15.0,
+		15.0, -15.0, -15.0,
+		15.0, -15.0,  15.0,
+		-15.0, -15.0,  15.0,
+		// Right face
+		15.0, -15.0, -15.0,
+		15.0,  15.0, -15.0,
+		15.0,  15.0,  15.0,
+		15.0, -15.0,  15.0,
+		// Left face
+		-15.0, -15.0, -15.0,
+		-15.0, -15.0,  15.0,
+		-15.0,  15.0,  15.0,
+		-15.0,  15.0, -15.0
+	];
+
+	var bboxIndexes = [
+		0,  1,  2,      0,  2,  3,    // front
+		4,  5,  6,      4,  6,  7,    // back
+		8,  9,  10,     8,  10, 11,   // top
+		12, 13, 14,     12, 14, 15,   // bottom
+		16, 17, 18,     16, 18, 19,   // right
+		20, 21, 22,     20, 22, 23    // left
+	];
+
+	re.debugVertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, re.debugVertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(bboxVerts), gl.STATIC_DRAW);
+
+	re.debugIndexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, re.debugIndexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(bboxIndexes), gl.STATIC_DRAW);
+
+	// Setup bbox surface.
+	re.debugBboxSurface = new DebugSurface();
+	re.debugBboxSurface.shader = debugGreenShader;
+	re.debugBboxSurface.firstIndex = 0;
+	re.debugBboxSurface.indexCount= bboxIndexes.length;
 }
 
 function FindShader(shaderName, lightmapIndex) {
@@ -54,6 +111,8 @@ function FindShader(shaderName, lightmapIndex) {
 		shader.stages.push(stage);
 	}
 
+	return RegisterShader(shaderName, shader);
+
 	// Add the shader to the sorted cache.
 	SortShader(shader);
 
@@ -61,7 +120,14 @@ function FindShader(shaderName, lightmapIndex) {
 }
 
 function RegisterShader(shaderName, shader) {
+	if (re.sortedShaders.length === MAX_SHADERS) {
+		console.warn('RegisterShader - MAX_SHADERS hit');
+		return FindShader('*default');
+	}
 
+	SortShader(shader);
+
+	return (re.compiledShaders[shaderName] = shader);
 }
 
 function SortShader(shader) {

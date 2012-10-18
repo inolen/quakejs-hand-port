@@ -1,12 +1,11 @@
 var MAX_DRAWSURFS = 0x10000;
-var DRAWSURF_MASK = (MAX_DRAWSURFS-1);
 
 // surface geometry should not exceed these limits
 var SHADER_MAX_VERTEXES = 1000;
 var SHADER_MAX_INDEXES  = (6*SHADER_MAX_VERTEXES);
 
 var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
-var MAX_ENTITIES   = (1 << ENTITYNUM_BITS) - 1;
+var MAX_ENTITIES   = (1 << ENTITYNUM_BITS);
 
 /** 
  * The drawsurf sort data is packed into a single 32 bit value so it can be
@@ -21,6 +20,12 @@ var MAX_ENTITIES   = (1 << ENTITYNUM_BITS) - 1;
 var QSORT_FOGNUM_SHIFT    = 2;
 var QSORT_ENTITYNUM_SHIFT = 7;
 var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
+
+// 14 bits
+// can't be increased without changing bit packing for drawsurfs
+// see QSORT_SHADERNUM_SHIFT
+var SHADERNUM_BITS = 14
+var MAX_SHADERS    = (1<<SHADERNUM_BITS);
 
 var RenderLocals = function () {
 	this.world               = null;
@@ -39,6 +44,41 @@ var RenderLocals = function () {
 	this.sortedShaders       = [];
 	this.defaultModelProgram = null;
 	this.modelProgram        = null;
+
+	// render buffers
+	this.debugVertexStride   = 12;
+	this.debugVertexBuffer   = null;
+	this.debugIndexBuffer    = null;
+	this.worldVertexStride   = 56;
+	this.worldVertexBuffer   = null;
+	this.worldIndexBuffer    = null;
+	this.entityVertexBuffer  = null;
+	this.entityIndexBuffer   = null;
+
+	// default debug surface for bboxs
+	this.debugBboxSurface    = null;
+};
+
+var WorldData = function () {
+	this.name         = null;
+	this.path         = null;
+	this.lightmaps    = null;
+	this.shaders      = [];
+	this.verts        = [];
+	this.meshVerts    = [];
+	this.faces        = [];
+	this.planes       = [];
+	this.leafSurfaces = [];
+	this.nodes        = [];
+	this.leafs        = [];
+	this.entities     = {};
+	this.numClusters  = 0;
+
+	/*vec3_t    lightGridOrigin;
+	vec3_t      lightGridSize;
+	vec3_t      lightGridInverseSize;
+	int         lightGridBounds[3];
+	byte        *lightGridData;*/
 };
 
 /**********************************************************
@@ -73,11 +113,6 @@ var RefDef = function () {
 	}
 };
 
-var DrawSurface = function () {
-	this.sort    = 0;                                      // bit combination for fast compares
-	this.surface = -1;                                     // any of surface*_t
-};
-
 var RefEntityType = {
 	BBOX:                0,
 	MODEL:               1,
@@ -101,6 +136,7 @@ var RefEntity = function () {
 	]
 	this.mins   = [0, 0, 0];
 	this.maxs   = [0, 0, 0];
+	this.index  = 0;                                       // internal use only
 };
 
 RefEntity.prototype.clone = function (refent) {
@@ -113,6 +149,7 @@ RefEntity.prototype.clone = function (refent) {
 	mat3.set(this.axis, refent.axis);
 	vec3.set(this.mins, refent.mins);
 	vec3.set(this.maxs, refent.maxs);
+	refent.index = this.index;
 
 	return refent;
 };
@@ -154,22 +191,21 @@ var ViewParms = function () {
 	this.frameCount       = 0;
 };
 
-/************************************************
- * Renderer specific BSP structs
- ************************************************/
+/**********************************************************
+ * Render surfaces
+ **********************************************************/
 var SurfaceType = {
 	BAD:          0,
-	SKIP:         1,                                       // ignore
-	FACE:         2,
-	GRID:         3,
-	TRIANGLES:    4,
-	POLY:         5,
-	MD3:          6,
-	MD4:          7,
-	IQM:          8,
-	FLARE:        9,
-	ENTITY:       10,                                      // beams, rails, lightning, etc that can be determined by entity
-	DISPLAY_LIST: 11
+	DEBUG:        1,
+	SKIP:         2,                                       // ignore
+	FACE:         3,
+	GRID:         4,
+	TRIANGLES:    5,
+	POLY:         6,
+	MD3:          7,
+	FLARE:        8,
+	ENTITY:       9,                                      // beams, rails, lightning, etc that can be determined by entity
+	DISPLAY_LIST: 10
 };
 
 var msurface_t = function () {
@@ -190,82 +226,12 @@ var msurface_t = function () {
 	this.plane         = new Plane();
 };
 
-var mnode_t = function () {
-	this.parent   = null;
-	this.plane    = null;
-	this.children = [null, null];
-	this.mins     = [0, 0, 0];
-	this.maxs     = [0, 0, 0];
-};
-
-var mleaf_t = function () {
-	this.parent           = null;
-	this.cluster          = 0;
-	this.area             = 0;
-	this.mins             = [0, 0, 0];
-	this.maxs             = [0, 0, 0];
-	this.firstLeafSurface = 0;
-	this.numLeafSurfaces  = 0;
-	this.firstLeafBrush   = 0;
-	this.numLeafBrushes   = 0;
-};
-
-var bmodel_t = function () {
-	this.bounds       = [[0, 0, 0], [0, 0, 0]];            // for culling
-	this.firstSurface = 0;
-	this.numSurfaces  = 0;
-};
-
-var WorldData = function () {
-	this.name         = null;
-	this.path         = null;
-	this.lightmaps    = null;
-	this.shaders      = [];
-	this.verts        = [];
-	this.meshVerts    = [];
-	this.faces        = [];
-	this.planes       = [];
-	this.leafSurfaces = [];
-	this.nodes        = [];
-	this.leafs        = [];
-	this.entities     = {};
-	this.numClusters  = 0;
-
-	/*vec3_t    lightGridOrigin;
-	vec3_t      lightGridSize;
-	vec3_t      lightGridInverseSize;
-	int         lightGridBounds[3];
-	byte        *lightGridData;*/
-};
-
-/**********************************************************
- * MD3 files
- **********************************************************/
-var MD3_IDENT   = (('3'.charCodeAt() << 24) + ('P'.charCodeAt() << 16) + ('D'.charCodeAt() << 8) + 'I'.charCodeAt());
-var MD3_VERSION = 15;
-
-// limits
-var MD3_MAX_LODS      = 3;
-var MD3_MAX_TRIANGLES = 8192;                              // per surface
-var MD3_MAX_VERTS     = 4096;                              // per surface
-var MD3_MAX_SHADERS   = 256;                               // per surface
-var MD3_MAX_FRAMES    = 1024;                              // per model
-var MD3_MAX_SURFACES  = 32;                                // per model
-var MD3_MAX_TAGS      = 16;                                // per frame
-
-// vertex scales
-var MD3_XYZ_SCALE     = (1.0/64);
-
-// The MD3 object is what we actually use in the engine, the structures
-// below are representative of the actual file we load from disk.
-var MD3 = function () {
-	this.name     = null;
-	this.flags    = 0;
-	this.frames   = null;
-	this.tags     = null;
-	this.surfaces = null;
-	this.skins    = null;
-};
+var DebugSurface = function () {
+	this.surfaceType = SurfaceType.DEBUG;
+	this.shader      = null;
+	this.firstIndex  = 0;
+	this.indexCount  = 0;
+}
 
 var MD3Surface = function () {
 	this.ident         = SurfaceType.MD3;
@@ -277,73 +243,9 @@ var MD3Surface = function () {
 	this.xyzNormals    = null;
 };
 
-var MD3Header = function () {
-	this.ident       = 0;                                  // int
-	this.version     = 0;                                  // int
-	this.name        = null;                               // char[MAX_QPATH], model name
-	this.flags       = 0;                                  // int
-	this.numFrames   = 0;                                  // int
-	this.numTags     = 0;                                  // int
-	this.numSurfaces = 0;                                  // int
-	this.numSkins    = 0;                                  // int
-	this.ofsFrames   = 0;                                  // int, offset for first frame
-	this.ofsTags     = 0;                                  // int, numFrames * numTags
-	this.ofsSurfaces = 0;                                  // int, first surface, others follow
-	this.ofsEnd      = 0;                                  // int, end of file
-};
-
-var MD3SurfaceHeader = function () {
-	this.ident         = 0;                                // int 
-	this.name          = null;                             // char[MAX_QPATH], polyset name
-	this.flags         = 0;                                // int
-	this.numFrames     = 0;                                // int, all surfaces in a model should have the same
-	this.numShaders    = 0;                                // int, all surfaces in a model should have the same
-	this.numVerts      = 0;                                // int
-	this.numTriangles  = 0;                                // int
-	this.ofsTriangles  = 0;                                // int
-	this.ofsShaders    = 0;                                // int, offset from start of md3Surface_t
-	this.ofsSt         = 0;                                // int, texture coords are common for all frames
-	this.ofsXyzNormals = 0;                                // int, numVerts * numFrames
-	this.ofsEnd        = 0;                                // int, next surface follows
-};
-
-var MD3Shader = function () {
-	this.name        = null;                               // char[MAX_QPATH]
-	this.shader      = 0;                                  // for in-game use
-};
-
-var MD3Triangle = function () {
-	this.indexes = [0, 0, 0];                              // int[3]
-};
-
-var MD3St = function () {
-	this.st = [0, 0];                                      // float[2]
-};
-
-var MD3XyzNormal = function () {
-	this.xyz    = [0, 0, 0];                               // short[3]
-	//this.normal = 0;                                     // short, zenith and azimuth angles of normal vector.
-	this.normal = [0, 0, 0];
-};
-
-var MD3Frame = function () {
-	this.bounds      = [                                   // float[6]
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.localOrigin = [0, 0, 0];                          // float[3]
-	this.radius      = 0;                                  // float
-	this.name        = null;                               // char[16]
-};
-
-var MD3Tag = function () {
-	this.name   = null;                                    // char[MAX_QPATH]
-	this.origin = [0, 0, 0];
-	this.axis   = [
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
+var DrawSurface = function () {
+	this.sort    = 0;                                      // bit combination for fast compares
+	this.surface = -1;                                     // any of surface*_t
 };
 
 /**********************************************************
@@ -452,4 +354,131 @@ var Model = function () {
 	this.bmodel   = null;
 	this.md3      = new Array(MD3_MAX_LODS);
 	this.numLods  = 0;
+};
+
+/************************************************
+ * Renderer specific BSP structs
+ ************************************************/
+var mnode_t = function () {
+	this.parent   = null;
+	this.plane    = null;
+	this.children = [null, null];
+	this.mins     = [0, 0, 0];
+	this.maxs     = [0, 0, 0];
+};
+
+var mleaf_t = function () {
+	this.parent           = null;
+	this.cluster          = 0;
+	this.area             = 0;
+	this.mins             = [0, 0, 0];
+	this.maxs             = [0, 0, 0];
+	this.firstLeafSurface = 0;
+	this.numLeafSurfaces  = 0;
+	this.firstLeafBrush   = 0;
+	this.numLeafBrushes   = 0;
+};
+
+var bmodel_t = function () {
+	this.bounds       = [[0, 0, 0], [0, 0, 0]];            // for culling
+	this.firstSurface = 0;
+	this.numSurfaces  = 0;
+};
+
+/**********************************************************
+ * MD3 files
+ **********************************************************/
+var MD3_IDENT   = (('3'.charCodeAt() << 24) + ('P'.charCodeAt() << 16) + ('D'.charCodeAt() << 8) + 'I'.charCodeAt());
+var MD3_VERSION = 15;
+
+// limits
+var MD3_MAX_LODS      = 3;
+var MD3_MAX_TRIANGLES = 8192;                              // per surface
+var MD3_MAX_VERTS     = 4096;                              // per surface
+var MD3_MAX_SHADERS   = 256;                               // per surface
+var MD3_MAX_FRAMES    = 1024;                              // per model
+var MD3_MAX_SURFACES  = 32;                                // per model
+var MD3_MAX_TAGS      = 16;                                // per frame
+
+// vertex scales
+var MD3_XYZ_SCALE     = (1.0/64);
+
+// The MD3 object is what we actually use in the engine, the structures
+// below are representative of the actual file we load from disk.
+var MD3 = function () {
+	this.name     = null;
+	this.flags    = 0;
+	this.frames   = null;
+	this.tags     = null;
+	this.surfaces = null;
+	this.skins    = null;
+};
+
+var MD3Header = function () {
+	this.ident       = 0;                                  // int
+	this.version     = 0;                                  // int
+	this.name        = null;                               // char[MAX_QPATH], model name
+	this.flags       = 0;                                  // int
+	this.numFrames   = 0;                                  // int
+	this.numTags     = 0;                                  // int
+	this.numSurfaces = 0;                                  // int
+	this.numSkins    = 0;                                  // int
+	this.ofsFrames   = 0;                                  // int, offset for first frame
+	this.ofsTags     = 0;                                  // int, numFrames * numTags
+	this.ofsSurfaces = 0;                                  // int, first surface, others follow
+	this.ofsEnd      = 0;                                  // int, end of file
+};
+
+var MD3SurfaceHeader = function () {
+	this.ident         = 0;                                // int 
+	this.name          = null;                             // char[MAX_QPATH], polyset name
+	this.flags         = 0;                                // int
+	this.numFrames     = 0;                                // int, all surfaces in a model should have the same
+	this.numShaders    = 0;                                // int, all surfaces in a model should have the same
+	this.numVerts      = 0;                                // int
+	this.numTriangles  = 0;                                // int
+	this.ofsTriangles  = 0;                                // int
+	this.ofsShaders    = 0;                                // int, offset from start of md3Surface_t
+	this.ofsSt         = 0;                                // int, texture coords are common for all frames
+	this.ofsXyzNormals = 0;                                // int, numVerts * numFrames
+	this.ofsEnd        = 0;                                // int, next surface follows
+};
+
+var MD3Shader = function () {
+	this.name        = null;                               // char[MAX_QPATH]
+	this.shader      = 0;                                  // for in-game use
+};
+
+var MD3Triangle = function () {
+	this.indexes = [0, 0, 0];                              // int[3]
+};
+
+var MD3St = function () {
+	this.st = [0, 0];                                      // float[2]
+};
+
+var MD3XyzNormal = function () {
+	this.xyz    = [0, 0, 0];                               // short[3]
+	//this.normal = 0;                                     // short, zenith and azimuth angles of normal vector.
+	this.normal = [0, 0, 0];
+};
+
+var MD3Frame = function () {
+	this.bounds      = [                                   // float[6]
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	this.localOrigin = [0, 0, 0];                          // float[3]
+	this.radius      = 0;                                  // float
+	this.name        = null;                               // char[16]
+};
+
+var MD3Tag = function () {
+	this.name   = null;                                    // char[MAX_QPATH]
+	this.origin = [0, 0, 0];
+	this.axis   = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
 };

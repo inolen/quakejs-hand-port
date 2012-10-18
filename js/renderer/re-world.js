@@ -1,8 +1,3 @@
-var q3render_vertex_stride = 56;
-
-var vertexBuffer = null;
-var indexBuffer = null;
-
 function BuildWorldBuffers() {
 	var faces = re.world.faces,
 		verts = re.world.verts,
@@ -48,45 +43,45 @@ function BuildWorldBuffers() {
 		}
 	}
 
-	vertexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+	re.worldVertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, re.worldVertexBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
-	indexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+	re.worldIndexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, re.worldIndexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 }
 
 /**
  * Helper functions to bind attributes to vertex arrays.
  */
-function BindShaderAttribs(shader, modelViewMat, projectionMat) {
+function BindShaderAttribs(shader, modelViewMat, projectionMat, stride) {
 	// Set uniforms
 	gl.uniformMatrix4fv(shader.uniform.modelViewMat, false, modelViewMat);
 	gl.uniformMatrix4fv(shader.uniform.projectionMat, false, projectionMat);
 
 	// Setup vertex attributes
 	gl.enableVertexAttribArray(shader.attrib.position);
-	gl.vertexAttribPointer(shader.attrib.position, 3, gl.FLOAT, false, q3render_vertex_stride, 0);
+	gl.vertexAttribPointer(shader.attrib.position, 3, gl.FLOAT, false, stride, 0);
 
 	if (shader.attrib.texCoord !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.texCoord);
-		gl.vertexAttribPointer(shader.attrib.texCoord, 2, gl.FLOAT, false, q3render_vertex_stride, 3*4);
+		gl.vertexAttribPointer(shader.attrib.texCoord, 2, gl.FLOAT, false, stride, 3*4);
 	}
 
 	if (shader.attrib.lightCoord !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.lightCoord);
-		gl.vertexAttribPointer(shader.attrib.lightCoord, 2, gl.FLOAT, false, q3render_vertex_stride, 5*4);
+		gl.vertexAttribPointer(shader.attrib.lightCoord, 2, gl.FLOAT, false, stride, 5*4);
 	}
 
 	if (shader.attrib.normal !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.normal);
-		gl.vertexAttribPointer(shader.attrib.normal, 3, gl.FLOAT, false, q3render_vertex_stride, 7*4);
+		gl.vertexAttribPointer(shader.attrib.normal, 3, gl.FLOAT, false, stride, 7*4);
 	}
 
 	if (shader.attrib.color !== undefined) {
 		gl.enableVertexAttribArray(shader.attrib.color);
-		gl.vertexAttribPointer(shader.attrib.color, 4, gl.FLOAT, false, q3render_vertex_stride, 10*4);
+		gl.vertexAttribPointer(shader.attrib.color, 4, gl.FLOAT, false, stride, 10*4);
 	}
 }
 
@@ -223,7 +218,7 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 		dlightBits = (dlightBits !== 0);
 	}*/
 
-	AddDrawSurf(surf/*.data*/, surf.shader/*, surf.fogIndex, dlightBits*/);
+	AddDrawSurf(surf, surf.shader, ENTITYNUM_WORLD);
 }
 
 /*
