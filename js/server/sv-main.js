@@ -25,7 +25,7 @@ function Init(cominterface, isdedicated) {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		LoadMapCmd('q3ctf2');
+		LoadMapCmd('q3tourney2');
 	}, 50);
 }
 
@@ -136,6 +136,7 @@ function SpawnServer(mapName) {
 			AddCvar:           com.AddCvar,
 			GetEntityDefs:     cm.EntityDefs,
 			LocateGameData:    LocateGameData,
+			GetUserCommand:    GetUserCommand,
 			SetBrushModel:     SetBrushModel,
 			LinkEntity:        LinkEntity,
 			UnlinkEntity:      UnlinkEntity,

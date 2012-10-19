@@ -53,8 +53,15 @@ var GameEntity = function () {
 	this.nextthink     = 0;
 };
 
+// client data that stays across multiple respawns, but is cleared
+// on each level change or team change at ClientBegin()
+var GameClientPersistant = function () {
+	this.cmd = new UserCmd();
+};
+
 var GameClient = function () {
 	this.ps = new PlayerState();
+	this.pers = new GameClientPersistant();
 };
 
 var LevelLocals = function () {

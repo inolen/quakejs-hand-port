@@ -94,10 +94,10 @@ function WritePacket() {
 	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
 
 	msg.writeUnsignedByte(ClientMessage.moveNoDelta);
-	msg.writeUnsignedInt(cmd.serverTime);
-	msg.writeFloat(cmd.angles[0]);
-	msg.writeFloat(cmd.angles[1]);
-	msg.writeFloat(cmd.angles[2]);
+	msg.writeInt(cmd.serverTime);
+	msg.writeUnsignedShort(cmd.angles[0]);
+	msg.writeUnsignedShort(cmd.angles[1]);
+	msg.writeUnsignedShort(cmd.angles[2]);
 	msg.writeByte(cmd.forwardmove);
 	msg.writeByte(cmd.rightmove);
 	msg.writeByte(cmd.upmove);
@@ -124,7 +124,7 @@ function KeyMove(cmd) {
 }
 
 function MouseMove(cmd) {
-	var oldAngles = cl.viewangles;
+	var oldAngles = vec3.create(cl.viewangles);
 	var mx = cl.mouseX * cl_sensitivity();
 	var my = cl.mouseY * cl_sensitivity();
 
@@ -141,9 +141,9 @@ function MouseMove(cmd) {
 	cl.mouseX = 0;
 	cl.mouseY = 0;
 
-	cmd.angles[0] = cl.viewangles[0];
-	cmd.angles[1] = cl.viewangles[1];
-	cmd.angles[2] = cl.viewangles[2];
+	cmd.angles[0] = AngleToShort(cl.viewangles[0]);
+	cmd.angles[1] = AngleToShort(cl.viewangles[1]);
+	cmd.angles[2] = AngleToShort(cl.viewangles[2]);
 }
 
 /**

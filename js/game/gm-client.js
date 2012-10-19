@@ -12,9 +12,14 @@ function ClientBegin(clientNum) {
 	ClientSpawn(ent);
 }
 
-function ClientThink(clientNum, cmd) {
+function ClientThink(clientNum) {
 	var client = level.clients[clientNum];
 	var ent = level.gentities[clientNum];
+
+	// Grab the latest command.
+	sv.GetUserCommand(clientNum, ent.client.pers.cmd);
+
+	var cmd = ent.client.pers.cmd;
 
 	// sanity check the command time to prevent speedup cheating
 	if (cmd.serverTime > level.time + 200) {
@@ -32,6 +37,7 @@ function ClientThink(clientNum, cmd) {
 	pm.cmd = cmd;
 	pm.tracemask = ContentMasks.PLAYERSOLID;
 	pm.trace = sv.Trace;
+	pm.client = false;
 	bg.Pmove(pm);
 
 	// Save results of pmove.
@@ -41,12 +47,14 @@ function ClientThink(clientNum, cmd) {
 	vec3.set(client.ps.origin, ent.currentOrigin);
 	vec3.set(pm.mins, ent.mins);
 	vec3.set(pm.maxs, ent.maxs);
+
+	// Link entity now, after any personal teleporters have been used.
 	sv.LinkEntity(ent);
 
 	TouchTriggers(ent);
 
 	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
-	//VectorCopy( ent->client->ps.origin, ent->r.currentOrigin );
+	vec3.set(ent.client.ps.origin, ent.currentOrigin);
 }
 
 function GetClientPlayerstate(clientNum) {
@@ -61,6 +69,8 @@ function ClientSpawn(ent) {
 	ent.classname = 'player';
 	ent.contents = ContentTypes.BODY;
 	ent.s.groundEntityNum = ENTITYNUM_NONE;
+	vec3.set(playerMins, ent.mins);
+	vec3.set(playerMaxs, ent.maxs);
 
 	var spawnpoint = SelectRandomDeathmatchSpawnPoint();
 	var spawnorigin = vec3.create(spawnpoint.s.origin);
@@ -69,6 +79,9 @@ function ClientSpawn(ent) {
 	SetOrigin(ent, spawnorigin);
 	vec3.set(spawnorigin, ps.origin);
 	vec3.set(ps.velocity, [0, 0, 0]);
+
+	sv.GetUserCommand(client.ps.clientNum, ent.client.pers.cmd);
+	SetClientViewAngle(ent, spawnpoint.s.angles);
 }
 
 /**
@@ -98,15 +111,13 @@ function ClientDisconnect(clientNum) {
 	trap_SetConfigstring( CS_PLAYERS + clientNum, "");*/
 }
 
-function SetClientViewAngle(ent, angle) {
-	// TODO Fix this once we have the pers structure.
-	/*// set the delta angle
+function SetClientViewAngle(ent, angles) {
+	// Set the delta angle.
 	for (var i = 0; i < 3; i++) {
-		var cmdAngle = AngleToShort(angle[i]);
+		var cmdAngle = AngleToShort(angles[i]);
 		ent.client.ps.delta_angles[i] = cmdAngle - ent.client.pers.cmd.angles[i];
-	}*/
-	console.log('SetClientViewAngle');
-	vec3.set(angle, ent.s.angles);
+	}
+	vec3.set(angles, ent.s.angles);
 	vec3.set(ent.s.angles, ent.client.ps.viewangles);
 }
 

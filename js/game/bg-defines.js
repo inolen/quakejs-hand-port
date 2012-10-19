@@ -155,7 +155,8 @@ var PmoveFlags = {
 	GRAPPLE_PULL:   2048,                        // pull towards grapple location
 	FOLLOW:         4096,                        // spectate following another player
 	SCOREBOARD:     8192,                        // spectate as a scoreboard
-	INVULEXPAND:    16384                        // invulnerability sphere set to full size
+	INVULEXPAND:    16384,                       // invulnerability sphere set to full size
+	ALL_TIMES:      (32|64|256)
 };
 
 var PmoveInfo = function () {

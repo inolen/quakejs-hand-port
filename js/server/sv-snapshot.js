@@ -215,6 +215,9 @@ function SendClientSnapshot(client) {
 	msg.writeFloat(frame.ps.viewangles[0]);
 	msg.writeFloat(frame.ps.viewangles[1]);
 	msg.writeFloat(frame.ps.viewangles[2]);
+	msg.writeShort(frame.ps.delta_angles[0]);
+	msg.writeShort(frame.ps.delta_angles[1]);
+	msg.writeShort(frame.ps.delta_angles[2]);
 
 	// Should not write an int, and instead write a bitstream of GENTITYNUM_BITS length.
 	for (var i = 0; i < frame.numEntities; i++) {

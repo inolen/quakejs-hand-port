@@ -16,6 +16,7 @@ var forward = [0, 0, 0], right = [0, 0, 0], up = [0, 0, 0];
 var groundTrace;
 var groundPlane;
 var walking;
+var msec;
 
 /*
 ============
@@ -61,10 +62,24 @@ function Friction(pm, flying) {
 	}
 
 	var drop = 0;
-	if (walking) {
-		var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
-		drop += control * q3movement_friction * pm.frameTime;
-	} else if (flying) {
+
+	// Apply ground friction.
+	//if (pm.waterlevel <= 1) {
+		if (walking && !(groundTrace.surfaceFlags & SurfaceFlags.SLICK) ) {
+			// if getting knocked back, no friction
+			if (!(ps.pm_flags & PmoveFlags.TIME_KNOCKBACK)) {
+				var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
+				drop += control * q3movement_friction * pm.frameTime;
+			}
+		}
+	//}
+
+	// Apply water friction even if just wading.
+	/*if (pm.waterlevel) {
+		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
+	}*/
+
+	if (flying) {
 		drop += speed * q3movement_flightfriction * pm.frameTime;
 	}
 
@@ -167,7 +182,7 @@ function GroundTrace(pm) {
 	}
 
 	// if the trace didn't hit anything, we are in free fall
-	if (trace.fraction == 1.0) {
+	if (trace.fraction === 1.0) {
 		GroundTraceMissed(pm);
 		return;
 	}
@@ -186,6 +201,7 @@ function GroundTrace(pm) {
 		ps.groundEntityNum = ENTITYNUM_NONE;
 		groundPlane = false;
 		walking = false;
+
 		return;
 	}
 
@@ -193,9 +209,12 @@ function GroundTrace(pm) {
 		ps.groundEntityNum = ENTITYNUM_NONE;
 		groundPlane = true;
 		walking = false;
+
 		return;
 	}
 
+	// TODO return entitynum in tracework
+	//ps.groundEntityNum = trace.entityNum;
 	groundPlane = true;
 	walking = true;
 }
@@ -260,12 +279,12 @@ function SlideMove(pm, gravity) {
 		}
 	}
 
-	// never turn against the ground plane
+	// Never turn against the ground plane.
 	if (groundPlane) {
 		planes.push(vec3.set(groundTrace.plane.normal, [0,0,0]));
 	}
 
-	// never turn against original velocity
+	// Never turn against original velocity.
 	planes.push(vec3.normalize(ps.velocity, [0,0,0]));
 
 	for (var bumpcount = 0; bumpcount < numbumps; bumpcount++) {
@@ -278,7 +297,7 @@ function SlideMove(pm, gravity) {
 		if (trace.allSolid) {
 			// entity is completely trapped in another solid
 			ps.velocity[2] = 0; // don't build up falling damage, but allow sideways acceleration
-			return true;
+			return false;
 		}
 
 		if (trace.fraction > 0) {
@@ -286,7 +305,7 @@ function SlideMove(pm, gravity) {
 			vec3.set(trace.endPos, ps.origin);
 		}
 
-		if (trace.fraction == 1) {
+		if (trace.fraction === 1) {
 			 break; // moved the entire distance
 		}
 
@@ -298,7 +317,7 @@ function SlideMove(pm, gravity) {
 		if (planes.length >= MAX_CLIP_PLANES) {
 			// this shouldn't really happen
 			ps.velocity = [0, 0, 0];
-			return true;
+			return false;
 		}
 
 		//
@@ -372,7 +391,7 @@ function SlideMove(pm, gravity) {
 
 					// stop dead at a tripple plane interaction
 					ps.velocity = [0, 0, 0];
-					return true;
+					return false;
 				}
 			}
 
@@ -497,13 +516,12 @@ function AirMove(pm) {
 	var wishdir = vec3.normalize(wishvel, [0, 0, 0]);
 	wishspeed *= scale;
 
-	// not on ground, so little effect on velocity
+	// Not on ground, so little effect on velocity.
 	Accelerate(pm, wishdir, wishspeed, q3movement_airaccelerate);
 
-	// we may have a ground plane that is very steep, even
-	// though we don't have a groundentity
-	// slide along the steep plane
-	if (groundPlane ) {
+	// We may have a ground plane that is very steep, even though
+	// we don't have a groundentity. Slide along the steep plane.
+	if (groundPlane) {
 		ClipVelocity(ps.velocity, groundTrace.plane.normal, ps.velocity, OVERCLIP);
 	}
 
@@ -540,7 +558,30 @@ function WalkMove(pm) {
 	var wishdir = vec3.normalize(wishvel, [0, 0, 0]);
 	wishspeed *= scale;
 
-	Accelerate(pm, wishdir, wishspeed, q3movement_accelerate);
+	// Clamp the speed lower if wading or walking on the bottom.
+	/*if (pm.waterlevel) {
+		float	waterScale;
+
+		waterScale = pm->waterlevel / 3.0;
+		waterScale = 1.0 - ( 1.0 - pm_swimScale ) * waterScale;
+		if ( wishspeed > pm->ps->speed * waterScale ) {
+			wishspeed = pm->ps->speed * waterScale;
+		}
+	}*/
+
+	// When a player gets hit, they temporarily lose
+	// full control, which allows them to be moved a bit.
+	var accelerate = q3movement_accelerate;
+
+	if ((groundTrace.surfaceFlags & SurfaceFlags.SLICK ) || ps.pm_flags & PmoveFlags.TIME_KNOCKBACK) {
+		accelerate = q3movement_airaccelerate;
+	}
+
+	Accelerate(pm, wishdir, wishspeed, accelerate);
+
+	if ((groundTrace.surfaceFlags & SurfaceFlags.SLICK ) || ps.pm_flags & PmoveFlags.TIME_KNOCKBACK) {
+		ps.velocity[2] -= ps.gravity * pm.frameTime;
+	}
 
 	var vel = vec3.length(ps.velocity);
 
@@ -561,34 +602,46 @@ function WalkMove(pm) {
 
 function UpdateViewAngles(ps, cmd) {
 	for (var i = 0; i < 3; i++) {
-		var temp = cmd.angles[i];// + ps->delta_angles[i];
+		// Circularly clamp uint16 to in16.
+		var temp = (cmd.angles[i] + ps.delta_angles[i]) & 0xFFFF;
+		if (temp > 0x7FFF) {
+			temp = temp - 0xFFFF;
+		}
 
-		// TODO: Remove this from client code, enable here.
-		/*if (i == PITCH) {
-			// don't let the player look up or down more than 90 degrees
-			if ( temp > 16000 ) {
-				//ps->delta_angles[i] = 16000 - cmd->angles[i];
+		if (i === PITCH) {
+			// Don't let the player look up or down more than 90 degrees.
+			if (temp > 16000) {
+				ps.delta_angles[i] = 16000 - cmd.angles[i];
 				temp = 16000;
-			} else if ( temp < -16000 ) {
-				//ps->delta_angles[i] = -16000 - cmd->angles[i];
+			} else if (temp < -16000) {
+				ps.delta_angles[i] = -16000 - cmd.angles[i];
 				temp = -16000;
 			}
-		}*/
+		}
 
-		ps.viewangles[i] = temp;
+		ps.viewangles[i] = ShortToAngle(temp);
 	}
 }
 
-function PmoveSingle(pm, msec) {
+function DropTimers(pm) {
+	var ps = pm.ps;
+
+	// Drop misc timing counter.
+	if (ps.pm_time) {
+		if (msec >= ps.pm_time) {
+			ps.pm_flags &= ~PmoveFlags.ALL_TIMES;
+			ps.pm_time = 0;
+		} else {
+			ps.pm_time -= msec;
+		}
+	}
+}
+
+function PmoveSingle(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
 	// Determine the time.
-	if (msec < 1) {
-		msec = 1;
-	} else if (msec > 200) {
-		msec = 200;
-	}
 	ps.commandTime = cmd.serverTime;
 	pm.frameTime = msec * 0.001;
 
@@ -603,6 +656,7 @@ function PmoveSingle(pm, msec) {
 
 	CheckDuck(pm);
 	GroundTrace(pm);
+	DropTimers(pm);
 
 	//FlyMove(pm);
 	if (walking) {
@@ -632,13 +686,15 @@ function Pmove(pm) {
 	// chop the move up if it is too long, to prevent framerate
 	// dependent behavior
 	while (ps.commandTime != cmd.serverTime) {
-		var msec = cmd.serverTime - ps.commandTime;
+		msec = cmd.serverTime - ps.commandTime;
 
-		if (msec > 66) {
+		if (msec < 1) {
+			msec = 1;
+		} else if (msec > 66) {
 			msec = 66;
 		}
 
-		PmoveSingle(pm, msec);
+		PmoveSingle(pm);
 
 		if (pm.ps.pm_flags & PmoveFlags.JUMP_HELD) {
 			pm.cmd.upmove = 20;

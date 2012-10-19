@@ -33,6 +33,14 @@ function LocateGameData(gameEntities, gameClients) {
 	sv.gameClients = gameClients;
 }
 
+function GetUserCommand(clientNum, cmd) {
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		throw new Error('GetUsercmd: bad clientNum: ' + clientNum);
+	}
+
+	svs.clients[clientNum].lastUserCmd.clone(cmd);
+}
+
 function SetBrushModel(gent, name) {
 	if (!name) {
 		throw new Error('SV: SetBrushModel: null');

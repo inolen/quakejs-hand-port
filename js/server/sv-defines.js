@@ -48,6 +48,7 @@ var ServerClient = function () {
 
 	this.gamestateMessageNum     = -1;
 
+	this.lastUserCmd             = new UserCmd();
 	this.lastMessageNum          = 0;                      // for delta compression
 	this.lastClientCommand       = 0;                      // reliable client message sequence
 	this.lastClientCommandString = null;

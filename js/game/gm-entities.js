@@ -1,7 +1,8 @@
 var entityEvents = {};
 
 var keyMap = {
-	'origin': ['s.origin', 'currentOrigin']
+	'origin': ['s.origin', 'currentOrigin'],
+	'angles': ['s.angles']
 }
 
 function SpawnEntity() {
@@ -130,17 +131,21 @@ function SpawnEntityFromDef(def) {
 		return;
 	}
 
-	if (ent.spawn) {
-		ent.spawn.call(this, ent);
-	} else {
-		FreeEntity(ent);
+	if (ent.classname === "misc_teleporter_dest") {
+		console.log('spawning', def, ent);
 	}
+
+	if (!ent.spawn) {
+		FreeEntity(ent);
+		//console.log(ent.classname + ' doesn\'t have a spawn function', ent.targetname);
+		return;
+	}
+
+	ent.spawn.call(this, ent);
 }
 
 function SpawnAllEntitiesFromDefs() {
 	var entityDefs = sv.GetEntityDefs();
-
-	console.log('SpawnAllEntitiesFromDefs', entityDefs.length);
 
 	for (var i = 0; i < entityDefs.length; i++) {
 		var def = entityDefs[i];

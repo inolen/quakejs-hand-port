@@ -242,7 +242,7 @@ function LoadEntities(buffer, entityLump) {
 					});
 					break;
 				case 'angle':
-					entity[key] = parseFloat(value);
+					entity['angles'] = [0, parseFloat(value), 0];
 					break;
 				default:
 					entity[key] = value;

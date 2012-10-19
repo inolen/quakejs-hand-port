@@ -143,6 +143,9 @@ function ParsePacketPlayerstate(msg, snap) {
 	snap.ps.viewangles[0] = msg.readFloat();
 	snap.ps.viewangles[1] = msg.readFloat();
 	snap.ps.viewangles[2] = msg.readFloat();
+	snap.ps.delta_angles[0] = msg.readShort();
+	snap.ps.delta_angles[1] = msg.readShort();
+	snap.ps.delta_angles[2] = msg.readShort();
 }
 
 function ParsePacketEntities(msg, snap) {	

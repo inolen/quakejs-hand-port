@@ -304,16 +304,6 @@ tessFns[SurfaceType.FACE] = TesselateFace;
 tessFns[SurfaceType.GRID] = TesselateFace;
 tessFns[SurfaceType.BBOX] = TesselateBbox;
 
-/*if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
-	foobar = tess.numIndexes;
-	console.log('max indexes', foobar);
-}
-
-if (typeof(foobar2) === 'undefined' || tess.numVertexes > foobar2) {
-	foobar2 = tess.numVertexes;
-	console.log('max vertexes', foobar2);
-}*/
-
 function RenderDrawSurfaces() {
 	var world = re.world;
 	var parms = re.viewParms;
@@ -359,7 +349,7 @@ function RenderDrawSurfaces() {
 
 		// Change the tess parameters if needed.
 		if (shader != oldShader || entityNum != oldEntityNum) {
-			if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
+			/*if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
 				foobar = tess.numIndexes;
 				console.log('max indexes', foobar);
 			}
@@ -367,7 +357,7 @@ function RenderDrawSurfaces() {
 			if (typeof(foobar2) === 'undefined' || tess.numVertexes > foobar2) {
 				foobar2 = tess.numVertexes;
 				console.log('max vertexes', foobar2);
-			}
+			}*/
 
 			if (oldShader) {
 				EndSurface();

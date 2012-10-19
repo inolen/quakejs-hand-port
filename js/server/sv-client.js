@@ -84,10 +84,10 @@ function ClientEnterWorld(client) {
 function UserMove(client, msg, delta) {
 	var cmd = new UserCmd();
 
-	cmd.serverTime = msg.readUnsignedInt();
-	cmd.angles[0] = msg.readFloat();
-	cmd.angles[1] = msg.readFloat();
-	cmd.angles[2] = msg.readFloat();
+	cmd.serverTime = msg.readInt();
+	cmd.angles[0] = msg.readUnsignedShort();
+	cmd.angles[1] = msg.readUnsignedShort();
+	cmd.angles[2] = msg.readUnsignedShort();
 	cmd.forwardmove = msg.readByte();
 	cmd.rightmove = msg.readByte();
 	cmd.upmove = msg.readByte();
@@ -108,7 +108,10 @@ function UserMove(client, msg, delta) {
 
 function ClientThink(client, cmd) {
 	var clientNum = GetClientNum(client);
-	gm.ClientThink(clientNum, cmd);
+	
+	cmd.clone(client.lastUserCmd);
+
+	gm.ClientThink(clientNum);
 }
 
 function SendClientGameState(client) {

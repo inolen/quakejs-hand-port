@@ -49,6 +49,20 @@ var UserCmd = function () {
 	this.upmove      = 0;
 };
 
+UserCmd.prototype.clone = function (cmd) {
+	if (typeof(cmd) === 'undefined') {
+		cmd = new UserCmd();
+	}
+
+	cmd.serverTime = this.serverTime;
+	vec3.set(this.angles, cmd.angles);
+	cmd.forwardmove = this.forwardmove;
+	cmd.rightmove = this.rightmove;
+	cmd.upmove = this.upmove;
+
+	return cmd;
+};
+
 /**********************************************************
  * Player state
  **********************************************************/
@@ -62,6 +76,8 @@ var PlayerState = function () {
 	this.origin           = [0, 0, 0];
 	this.velocity         = [0, 0, 0];
 	this.viewangles       = [0, 0, 0];
+	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
+	                                                       // changed by spawns, rotating objects, and teleporters
 	this.speed            = 0;
 	this.gravity          = 0;
 	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
@@ -80,9 +96,10 @@ PlayerState.prototype.clone = function (ps) {
 	ps.commandTime          = this.commandTime;
 	ps.pm_type              = this.pm_type;
 	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin,     ps.origin);
-	vec3.set(this.velocity,   ps.velocity);
+	vec3.set(this.origin, ps.origin);
+	vec3.set(this.velocity, ps.velocity);
 	vec3.set(this.viewangles, ps.viewangles);
+	vec3.set(this.delta_angles, ps.delta_angles);
 	ps.speed                = this.speed;
 	ps.gravity              = this.gravity;
 	ps.groundEntityNum      = this.groundEntityNum;
