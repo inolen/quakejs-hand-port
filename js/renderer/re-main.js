@@ -268,12 +268,6 @@ function RenderView(parms) {
 	GenerateDrawSurfs();
 	SortDrawSurfaces();
 
-	// Initial setup.
-	gl.viewport(0, 0, re.viewParms.width, re.viewParms.height);
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-	gl.clearDepth(1.0);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
 	RenderDrawSurfaces();
 }
 
@@ -302,3 +296,270 @@ function AddDrawSurf(face, shader, entityNum/*, fogIndex, dlightMap*/) {
 function SortDrawSurfaces() {
 	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
 }
+
+var tess;
+var tessFns = {};
+tessFns[SurfaceType.BAD] = TesselateFace;
+tessFns[SurfaceType.FACE] = TesselateFace;
+tessFns[SurfaceType.GRID] = TesselateFace;
+tessFns[SurfaceType.BBOX] = TesselateBbox;
+
+/*if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
+	foobar = tess.numIndexes;
+	console.log('max indexes', foobar);
+}
+
+if (typeof(foobar2) === 'undefined' || tess.numVertexes > foobar2) {
+	foobar2 = tess.numVertexes;
+	console.log('max vertexes', foobar2);
+}*/
+
+function RenderDrawSurfaces() {
+	var world = re.world;
+	var parms = re.viewParms;
+	var refdef = re.refdef;
+	var drawSurfs = refdef.drawSurfs;
+	var shaders = world.shaders;
+
+	if (!tess) {
+		tess = new ShaderCommands();
+	}
+
+	gl.viewport(0, 0, re.viewParms.width, re.viewParms.height);
+	gl.clearColor(0.0, 0.0, 0.0, 1.0);
+	gl.clearDepth(1.0);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	gl.enable(gl.DEPTH_TEST);
+	gl.enable(gl.BLEND);
+	gl.enable(gl.CULL_FACE);
+	gl.depthMask(true);
+
+	//
+	var oldSort = -1;
+	var oldShader = null;
+	var oldEntityNum = -1;
+	var modelMatrix;
+
+	for (var i = 0; i < refdef.numDrawSurfs; i++) {
+		var drawSurf = drawSurfs[i];
+		var face = drawSurf.surface;
+
+		//var fogNum = (drawSurf.sort >> QSORT_FOGNUM_SHIFT) & 31;
+		var shader = re.sortedShaders[(drawSurf.sort >> QSORT_SHADERNUM_SHIFT) % MAX_SHADERS];
+		var entityNum = (drawSurf.sort >> QSORT_ENTITYNUM_SHIFT) % MAX_ENTITIES;
+		//var dlightMap = drawSurf.sort & 3;
+
+		if (drawSurfs.sort === oldSort) {
+			// Fast path, same as previous sort.
+			tessFns[face.surfaceType](tess, face);
+			continue;
+		}
+		oldSort = drawSurf.sort;
+
+		// Change the tess parameters if needed.
+		if (shader != oldShader || entityNum != oldEntityNum) {
+			if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
+				foobar = tess.numIndexes;
+				console.log('max indexes', foobar);
+			}
+
+			if (typeof(foobar2) === 'undefined' || tess.numVertexes > foobar2) {
+				foobar2 = tess.numVertexes;
+				console.log('max vertexes', foobar2);
+			}
+
+			if (oldShader) {
+				EndSurface();
+			}
+
+			BeginSurface(shader);
+			oldShader = shader;
+		}
+
+		// Change the model view matrix for entity.
+		if (oldEntityNum !== entityNum) {
+			if (entityNum !== ENTITYNUM_WORLD) {
+				var or = new Orientation();
+				RotateModelMatrixForEntity(refdef.refEntities[entityNum], or);
+				mat4.set(or.modelMatrix, tess.modelMatrix);
+			} else {
+				mat4.set(parms.or.modelMatrix, tess.modelMatrix);
+			}
+
+			oldEntityNum = entityNum;
+		}
+
+		// Add surface.
+		tessFns[face.surfaceType](tess, face);
+	}
+
+	// Draw the contents of the last shader batch.
+	if (oldShader) {
+		EndSurface();
+	}
+}
+
+function BeginSurface(shader) {
+	tess.numIndexes = 0;
+	tess.numVertexes = 0;
+	tess.shader = shader;
+	tess.shaderTime = re.refdef.time / 1000;
+}
+
+function EndSurface() {
+	var shader = tess.shader;
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, tess.xyzBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, tess.xyz, gl.DYNAMIC_DRAW); 
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, tess.texCoordBuffer);  
+	gl.bufferData(gl.ARRAY_BUFFER, tess.texCoords, gl.DYNAMIC_DRAW);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, tess.lmCoordBuffer);  
+	gl.bufferData(gl.ARRAY_BUFFER, tess.lmCoords, gl.DYNAMIC_DRAW);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, tess.normalBuffer);  
+	gl.bufferData(gl.ARRAY_BUFFER, tess.normals, gl.DYNAMIC_DRAW);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, tess.colorBuffer);  
+	gl.bufferData(gl.ARRAY_BUFFER, tess.colors, gl.DYNAMIC_DRAW);
+
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, tess.indexes, gl.DYNAMIC_DRAW);
+
+
+	// Bind the surface shader
+	SetShader(shader);
+	
+	for (var i = 0; i < shader.stages.length; i++) {
+		var stage = shader.stages[i];
+		var program = stage.program;
+
+		SetShaderStage(shader, stage, tess.shaderTime);
+
+		// Set uniforms
+		gl.uniformMatrix4fv(program.uniform.modelViewMat, false, tess.modelMatrix);
+		gl.uniformMatrix4fv(program.uniform.projectionMat, false, re.viewParms.projectionMatrix);
+
+		// Setup vertex attributes
+		gl.enableVertexAttribArray(program.attrib.position);
+		gl.bindBuffer(gl.ARRAY_BUFFER, tess.xyzBuffer);
+		gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 12, 0);
+
+		if (program.attrib.texCoord !== undefined) {
+			gl.enableVertexAttribArray(program.attrib.texCoord);
+			gl.bindBuffer(gl.ARRAY_BUFFER, tess.texCoordBuffer);
+			gl.vertexAttribPointer(program.attrib.texCoord, 2, gl.FLOAT, false, 8, 0);
+		}
+
+		if (program.attrib.lightCoord !== undefined) {
+			gl.enableVertexAttribArray(program.attrib.lightCoord);
+			gl.bindBuffer(gl.ARRAY_BUFFER, tess.lmCoordBuffer);
+			gl.vertexAttribPointer(program.attrib.lightCoord, 2, gl.FLOAT, false, 8, 0);
+		}
+
+		if (program.attrib.normal !== undefined) {
+			gl.enableVertexAttribArray(program.attrib.normal);
+			gl.bindBuffer(gl.ARRAY_BUFFER, tess.normalBuffer);
+			gl.vertexAttribPointer(program.attrib.normal, 3, gl.FLOAT, false, 12, 0);
+		}
+
+		if (program.attrib.color !== undefined) {
+			gl.enableVertexAttribArray(program.attrib.color);
+			gl.bindBuffer(gl.ARRAY_BUFFER, tess.colorBuffer);
+			gl.vertexAttribPointer(program.attrib.color, 4, gl.UNSIGNED_BYTE, false, 4, 0);
+		}
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
+		gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, 0);
+	}
+}
+
+/*function RenderModels() {
+	var shard = shardmd3 ? shardmd3.md3[0] : null;
+
+	if (!debugRefEntVertBuffer && shard) {
+		debugRefEntVertBuffer = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
+		var verts = [];
+		var offset = 0;
+		for (var i = 0; i < shard.surfaces.length; i++) {
+			var surface = shard.surfaces[i];
+
+			for (var j = 0; j < surface.header.numFrames * surface.header.numVerts; j++) {
+				var k = j % surface.header.numVerts;
+
+				verts[offset++] = surface.xyzNormals[j].xyz[0] * MD3_XYZ_SCALE;
+				verts[offset++] = surface.xyzNormals[j].xyz[1] * MD3_XYZ_SCALE;
+				verts[offset++] = surface.xyzNormals[j].xyz[2] * MD3_XYZ_SCALE;
+
+				verts[offset++] = surface.st[k].st[0];
+				verts[offset++] = surface.st[k].st[1];
+
+				verts[offset++] = 0;
+				verts[offset++] = 0;
+
+				verts[offset++] = surface.xyzNormals[j].normal[0];
+				verts[offset++] = surface.xyzNormals[j].normal[1];
+				verts[offset++] = surface.xyzNormals[j].normal[2];
+
+				verts[offset++] = 0;
+				verts[offset++] = 0;
+				verts[offset++] = 0;
+				verts[offset++] = 0;
+			}
+		}
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+
+		debugRefEntIndexBuffer = gl.createBuffer();
+		var indexes = [];
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
+		for (var i = 0; i < shard.surfaces.length; i++) {
+			var surface = shard.surfaces[i];
+
+			for (var j = 0; j < surface.triangles.length; j++) {
+				indexes.push(surface.triangles[j].indexes[0]);
+				indexes.push(surface.triangles[j].indexes[1]);
+				indexes.push(surface.triangles[j].indexes[2]);
+			}
+		}
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), gl.STATIC_DRAW);
+	}
+
+	if (!debugRefEntVertBuffer) {
+		return;
+	}
+
+	var time = re.refdef.time / 1000.0;
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, debugRefEntVertBuffer);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, debugRefEntIndexBuffer);
+
+	for (var i = 0; i < re.refdef.numRefEntities; i++) {
+		var refent = re.refdef.refEntities[i];
+
+		// Update model view matrix for entity.
+		var or = new Orientation();
+		RotateModelMatrixForEntity(refent, or);
+
+		for (var j = 0; j < shard.surfaces.length; j++) {
+			var surface = shard.surfaces[j];
+
+			for (var k = 0; k < surface.shaders.length; k++) {
+				var shader = surface.shaders[k].shader;
+
+				SetShader(shader);
+
+				for (var l = 0; l < shader.stages.length; l++) {
+					var stage = shader.stages[l];
+
+					SetShaderStage(shader, stage, time);
+					BindShaderAttribs(stage.program, or.modelMatrix, re.viewParms.projectionMatrix);
+
+					gl.drawElements(gl.TRIANGLES, surface.triangles.length * 3, gl.UNSIGNED_SHORT, 0);
+				}
+			}
+		}
+	}
+}*/

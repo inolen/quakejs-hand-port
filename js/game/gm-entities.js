@@ -15,7 +15,7 @@ function SpawnEntity() {
 		return ent;
 	}
 
-	throw new Error('Game entities is full');
+	return null;//throw new Error('Game entities is full');
 }
 
 function FreeEntity(ent) {
@@ -132,11 +132,15 @@ function SpawnEntityFromDef(def) {
 
 	if (ent.spawn) {
 		ent.spawn.call(this, ent);
+	} else {
+		FreeEntity(ent);
 	}
 }
 
 function SpawnAllEntitiesFromDefs() {
 	var entityDefs = sv.GetEntityDefs();
+
+	console.log('SpawnAllEntitiesFromDefs', entityDefs.length);
 
 	for (var i = 0; i < entityDefs.length; i++) {
 		var def = entityDefs[i];

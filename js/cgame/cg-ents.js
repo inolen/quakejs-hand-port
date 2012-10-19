@@ -57,21 +57,21 @@ function AddCEntity(cent) {
 	if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
 		var refent = new RefEntity();
 
-		/*refent.reType = RefEntityType.BBOX;
+		refent.reType = RefEntityType.BBOX;
 		
 		vec3.set(cent.lerpOrigin, refent.origin);
 		AnglesToAxis(cent.lerpAngles, refent.axis);
 
 		vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
-		vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);*/
+		vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
 
-		refent.reType = RefEntityType.MODEL;
+		/*refent.reType = RefEntityType.MODEL;
 
 		vec3.set(cent.lerpOrigin, refent.origin);
 		AnglesToAxis(cent.lerpAngles, refent.axis);
 
-		refent.hModel = shardHandle;
-
+		refent.hModel = shardHandle;*/
+		
 		cl.AddRefEntityToScene(refent);
 	}
 

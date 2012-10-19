@@ -33,9 +33,6 @@ function LoadMap(mapName, callback) {
 			header.lumps[Lumps.LEAFSURFACES]);
 		LoadVisibility(data, header.lumps[Lumps.VISIBILITY]);
 
-		BuildSkyboxBuffers();
-		BuildWorldBuffers();
-
 		if (callback) {
 			callback();
 		}
@@ -229,6 +226,7 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 		dface.patchHeight = bb.readInt();
 
 		// Setup our in-memory representation.
+		face.surfaceType = SurfaceType.FACE;
 		face.shader = ShaderForShaderNum(dface.shaderNum, dface.lightmapNum);
 		face.fogIndex = dface.fogNum + 1;
 		face.vertex = dface.vertex;

@@ -1,7 +1,8 @@
 var MAX_DRAWSURFS = 0x10000;
 
-// surface geometry should not exceed these limits
-var SHADER_MAX_VERTEXES = 1000;
+// Surface geometry should not exceed these limits
+// TODO How does Q3 stay so low? There limit is 1000, we can fit under 2000 in most cases, but q3ctf2 is ~4300.
+var SHADER_MAX_VERTEXES = 5000;
 var SHADER_MAX_INDEXES  = (6*SHADER_MAX_VERTEXES);
 
 var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
@@ -27,6 +28,8 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
 var SHADERNUM_BITS = 14
 var MAX_SHADERS    = (1<<SHADERNUM_BITS);
 
+var MAX_BBOX_SURFACES = 32;
+
 var RenderLocals = function () {
 	this.world               = null;
 	this.refdef              = new RefDef();
@@ -47,18 +50,13 @@ var RenderLocals = function () {
 	this.defaultModelProgram = null;
 	this.modelProgram        = null;
 
-	// render buffers
-	this.debugVertexStride   = 12;
-	this.debugVertexBuffer   = null;
-	this.debugIndexBuffer    = null;
-	this.worldVertexStride   = 56;
-	this.worldVertexBuffer   = null;
-	this.worldIndexBuffer    = null;
-	this.entityVertexBuffer  = null;
-	this.entityIndexBuffer   = null;
+	// bbox surface pool
+	this.bboxSurfaces        = new Array(MAX_BBOX_SURFACES);
+	this.bboxSurfaceNum      = 0;
 
-	// default debug surface for bboxs
-	this.debugBboxSurface    = null;
+	for (var i = 0; i < MAX_BBOX_SURFACES; i++) {
+		this.bboxSurfaces[i] = new BboxSurface();
+	}
 };
 
 var WorldData = function () {
@@ -162,9 +160,9 @@ RefEntity.prototype.clone = function (refent) {
 var Orientation = function () {
 	this.origin      = vec3.create();
 	this.axis    = [
-		vec3.create(),
-		vec3.create(),
-		vec3.create()
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
 	];
 	this.viewOrigin  = vec3.create();
 	this.modelMatrix = mat4.create();
@@ -196,12 +194,45 @@ var ViewParms = function () {
 	this.frameCount       = 0;
 };
 
+var ShaderCommands = function () {
+	this.shader         = null;
+	this.shaderTime     = 0;
+	this.modelMatrix    = mat4.create();
+	this.numIndexes     = 0;
+	this.numVertexes    = 0;
+	this.indexes        = new Uint16Array(SHADER_MAX_INDEXES);
+	this.xyz            = new Float32Array(SHADER_MAX_VERTEXES*3);
+	this.normals        = new Float32Array(SHADER_MAX_VERTEXES*3);
+	this.texCoords      = new Float32Array(SHADER_MAX_VERTEXES*2);
+	this.lmCoords       = new Float32Array(SHADER_MAX_VERTEXES*2);
+	this.colors         = new Uint8Array(SHADER_MAX_VERTEXES*4);
+
+	this.indexBuffer    = gl.createBuffer();
+	this.xyzBuffer      = gl.createBuffer();
+	this.normalBuffer   = gl.createBuffer();
+	this.texCoordBuffer = gl.createBuffer();
+	this.lmCoordBuffer  = gl.createBuffer();
+	this.colorBuffer    = gl.createBuffer();
+
+	// stageVars_t	svars QALIGN(16);
+	// color4ub_t	constantColor255[SHADER_MAX_VERTEXES] QALIGN(16);
+
+	// int			fogNum;
+
+	// int			dlightBits;	// or together of all vertexDlightBits
+
+	// info extracted from current shader
+	// int			numPasses;
+	// void		(*currentStageIteratorFunc)( void );
+	// shaderStage_t	**xstages;
+};
+
 /**********************************************************
  * Render surfaces
  **********************************************************/
 var SurfaceType = {
 	BAD:          0,
-	DEBUG:        1,
+	BBOX:         1,
 	SKIP:         2,                                       // ignore
 	FACE:         3,
 	GRID:         4,
@@ -231,15 +262,14 @@ var msurface_t = function () {
 	this.plane         = new Plane();
 };
 
-var DebugSurface = function () {
-	this.surfaceType = SurfaceType.DEBUG;
+var BboxSurface = function () {
+	this.surfaceType = SurfaceType.BBOX;
 	this.shader      = null;
-	this.firstIndex  = 0;
-	this.indexCount  = 0;
+	this.refent      = null;
 }
 
 var Md3Surface = function () {
-	this.ident         = SurfaceType.Md3;
+	this.ident         = SurfaceType.MD3;
 	this.header        = null;
 	this.name          = null;
 	this.shaders       = null;
@@ -294,6 +324,7 @@ var Shader = function () {
 	this.name        = null;
 	this.sort        = ShaderSort.OPAQUE;
 	this.cull        = gl.FRONT;
+	this.mode        = gl.TRIANGLES;
 	this.stages      = [];
 	this.sortedIndex = 0;                                  // assigned internally
 };
