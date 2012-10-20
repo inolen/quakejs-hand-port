@@ -134,10 +134,6 @@ function SpawnEntityFromDef(def) {
 		}
 	}
 
-	if (ent.classname === "misc_teleporter_dest") {
-		console.log('spawning', def, ent);
-	}
-
 	if (!ent.spawn) {
 		FreeEntity(ent);
 		//console.log(ent.classname + ' doesn\'t have a spawn function', ent.targetname);
