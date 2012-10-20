@@ -269,7 +269,7 @@ var BboxSurface = function () {
 }
 
 var Md3Surface = function () {
-	this.ident         = SurfaceType.MD3;
+	this.surfaceType   = SurfaceType.MD3;
 	this.header        = null;
 	this.name          = null;
 	this.shaders       = null;

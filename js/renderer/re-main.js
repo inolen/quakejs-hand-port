@@ -303,6 +303,7 @@ tessFns[SurfaceType.BAD] = TesselateFace;
 tessFns[SurfaceType.FACE] = TesselateFace;
 tessFns[SurfaceType.GRID] = TesselateFace;
 tessFns[SurfaceType.BBOX] = TesselateBbox;
+tessFns[SurfaceType.MD3] = TesselateMd3;
 
 function RenderDrawSurfaces() {
 	var world = re.world;

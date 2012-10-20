@@ -21,7 +21,6 @@ function AddEntitySurfaces() {
 				break;
 
 			case RefEntityType.MODEL:
-				var model = GetModelByHandle(refent.hModel);
 				AddMd3Surfaces(refent);
 				break;
 			default:
@@ -40,7 +39,110 @@ function AddBboxSurfaces(refent) {
 }
 
 function AddMd3Surfaces(refent) {
+	var model = GetModelByHandle(refent.hModel);
 
+	/*if (ent->e.renderfx & RF_WRAP_FRAMES) {
+		ent->e.frame %= tr.currentModel->md3[0]->numFrames;
+		ent->e.oldframe %= tr.currentModel->md3[0]->numFrames;
+	}*/
+
+	// Validate the frames so there is no chance of a crash.
+	// This will write directly into the entity structure, so
+	// when the surfaces are rendered, they don't need to be
+	// range checked again.
+	/*if ((ent->e.frame >= tr.currentModel->md3[0]->numFrames) 
+		|| (ent->e.frame < 0)
+		|| (ent->e.oldframe >= tr.currentModel->md3[0]->numFrames)
+		|| (ent->e.oldframe < 0)) {
+			ri.Printf( PRINT_DEVELOPER, "R_AddMD3Surfaces: no such frame %d to %d for '%s'\n",
+				ent->e.oldframe, ent->e.frame,
+				tr.currentModel->name );
+			ent->e.frame = 0;
+			ent->e.oldframe = 0;
+	}*/
+
+	// compute LOD
+	//lod = R_ComputeLOD( ent );
+
+	// cull the entire model if merged bounding box of both frames
+	// is outside the view frustum.
+	/*cull = R_CullModel ( header, ent );
+	if ( cull == CULL_OUT ) {
+		return;
+	}*/
+
+	// set up lighting now that we know we aren't culled
+	/*if ( !personalModel || r_shadows->integer > 1 ) {
+		R_SetupEntityLighting( &tr.refdef, ent );
+	}*/
+
+	// see if we are in a fog volume
+	//fogNum = R_ComputeFogNum( header, ent );
+
+	//
+	// draw all surfaces
+	//
+	var md3 = model.md3[0];
+
+	for (var i = 0 ; i < md3.surfaces.length; i++) {
+		var face = md3.surfaces[i];
+
+		/*if ( ent->e.customShader ) {
+			shader = R_GetShaderByHandle( ent->e.customShader );
+		} else if ( ent->e.customSkin > 0 && ent->e.customSkin < tr.numSkins ) {
+			skin_t *skin;
+			int		j;
+
+			skin = R_GetSkinByHandle( ent->e.customSkin );
+
+			// match the surface name to something in the skin file
+			shader = tr.defaultShader;
+			for ( j = 0 ; j < skin->numSurfaces ; j++ ) {
+				// the names have both been lowercased
+				if ( !strcmp( skin->surfaces[j]->name, surface->name ) ) {
+					shader = skin->surfaces[j]->shader;
+					break;
+				}
+			}
+			if (shader == tr.defaultShader) {
+				ri.Printf( PRINT_DEVELOPER, "WARNING: no shader for surface %s in skin %s\n", surface->name, skin->name);
+			}
+			else if (shader->defaultShader) {
+				ri.Printf( PRINT_DEVELOPER, "WARNING: shader %s in skin %s not found\n", shader->name, skin->name);
+			}
+		} else if ( surface->numShaders <= 0 ) {
+			shader = tr.defaultShader;
+		} else {
+			md3Shader = (md3Shader_t *) ( (byte *)surface + surface->ofsShaders );
+			md3Shader += ent->e.skinNum % surface->numShaders;
+			shader = tr.shaders[ md3Shader->shaderIndex ];
+		}*/
+
+
+		// we will add shadows even if the main object isn't visible in the view
+
+		// stencil shadows can't do personal models unless I polyhedron clip
+		/*if ( !personalModel
+			&& r_shadows->integer == 2 
+			&& fogNum == 0
+			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
+			&& shader->sort == SS_OPAQUE ) {
+			R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, qfalse );
+		}
+
+		// projection shadows work fine with personal models
+		if ( r_shadows->integer == 3
+			&& fogNum == 0
+			&& (ent->e.renderfx & RF_SHADOW_PLANE )
+			&& shader->sort == SS_OPAQUE ) {
+			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
+		}*/
+
+		// don't add third_person objects if not viewing through a portal
+		//if ( !personalModel ) {
+			AddDrawSurf(face, face.shaders[0].shader, refent.index);
+		//}
+	}
 }
 
 function TesselateFace(tess, face) {
@@ -76,6 +178,49 @@ function TesselateFace(tess, face) {
 	for (var i = 0; i < face.meshVertCount; i++) {
 		var meshVert = meshVerts[face.meshVert + i];
 		tess.indexes[tess.numIndexes++] = offset + meshVert;
+	}
+}
+
+function TesselateMd3(tess, face) {
+	/*if (  backEnd.currentEntity->e.oldframe == backEnd.currentEntity->e.frame ) {
+		backlerp = 0;
+	} else  {
+		backlerp = backEnd.currentEntity->e.backlerp;
+	}
+	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles*3 );
+	LerpMeshVertexes (surface, backlerp);*/
+
+	var offset = tess.numVertexes;
+
+	for (var i = 0; i < face.header.numVerts; i++) {
+		tess.xyz[tess.numVertexes*3+0] = face.xyzNormals[i].xyz[0] * MD3_XYZ_SCALE;
+		tess.xyz[tess.numVertexes*3+1] = face.xyzNormals[i].xyz[1] * MD3_XYZ_SCALE;
+		tess.xyz[tess.numVertexes*3+2] = face.xyzNormals[i].xyz[2] * MD3_XYZ_SCALE;
+
+		tess.texCoords[tess.numVertexes*2+0] = face.st[i].st[0];
+		tess.texCoords[tess.numVertexes*2+1] = face.st[i].st[1];
+
+		tess.lmCoords[tess.numVertexes*2+0] = 0;
+		tess.lmCoords[tess.numVertexes*2+1] = 0;
+
+		tess.normals[tess.numVertexes*3+0] = face.xyzNormals[i].normal[0];
+		tess.normals[tess.numVertexes*3+1] = face.xyzNormals[i].normal[1];
+		tess.normals[tess.numVertexes*3+2] = face.xyzNormals[i].normal[2];
+
+		tess.colors[tess.numVertexes*4+0] = 0;
+		tess.colors[tess.numVertexes*4+1] = 0;
+		tess.colors[tess.numVertexes*4+2] = 0;
+		tess.colors[tess.numVertexes*4+3] = 0;
+
+		tess.numVertexes++;
+	}
+
+	for (var i = 0; i < face.triangles.length; i++) {
+		var tri = face.triangles[i];
+
+		tess.indexes[tess.numIndexes++] = offset + tri.indexes[0];
+		tess.indexes[tess.numIndexes++] = offset + tri.indexes[1];
+		tess.indexes[tess.numIndexes++] = offset + tri.indexes[2];
 	}
 }
 
@@ -126,9 +271,9 @@ function TesselateBbox(face) {
 	var offset = tess.numVertexes;
 
 	for (var i = 0; i < bboxVerts.length; i += 3) {
-		tess.xyz[tess.numVertexes*3+0] = bboxVerts[i+0];
-		tess.xyz[tess.numVertexes*3+1] = bboxVerts[i+1];
-		tess.xyz[tess.numVertexes*3+2] = bboxVerts[i+2];
+		tess.xyz[tess.numVertexes+3+0] = bboxVerts[i+0];
+		tess.xyz[tess.numVertexes+3+1] = bboxVerts[i+1];
+		tess.xyz[tess.numVertexes+3+2] = bboxVerts[i+2];
 		tess.numVertexes++;
 	}
 
