@@ -115,7 +115,13 @@ function Frame(serverTime) {
 	}
 	
 	r.RenderScene(cg.refdef);
-	ui.DrawHud({ fps: GetFPS() });
+	ui.RenderView('hud', { fps: GetFPS() });
+
+	var players = [
+		{ name: 'Player 1' }
+	];
+
+	ui.RenderView('scoreboard', { players: players });
 }
 
 /**

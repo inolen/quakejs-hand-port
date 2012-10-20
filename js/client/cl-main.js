@@ -54,7 +54,7 @@ function Init(cominterface) {
 			RenderScene:                 re.RenderScene
 		},
 		{
-			DrawHud:                     ui.DrawHud
+			RenderView:                  ui.RenderView
 		}
 	);
 

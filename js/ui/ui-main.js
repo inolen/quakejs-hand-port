@@ -8,7 +8,24 @@ function Init() {
 	uil = new UILocals();
 
 	document.addEventListener('fullscreenchange', UpdateFontSizes, false);
-	UpdateFontSizes();
+
+	sys.ReadFile('ui/css/font.css', 'utf8', function (err, data) {
+		if (err) return err;
+		EmbedCSS(data);
+	});
+
+	sys.ReadFile('ui/css/views.css', 'utf8', function (err, data) {
+		if (err) return err;
+		EmbedCSS(data);
+	});
+}
+
+function EmbedCSS(data) {
+	var head = document.getElementsByTagName('head')[0];
+	var el = document.createElement('style');
+	el.setAttribute('type', 'text/css');		
+	el.appendChild(document.createTextNode(data));
+	head.appendChild(el);
 }
 
 function UpdateFontSizes() {
@@ -22,7 +39,7 @@ function UpdateFontSizes() {
 }
 
 function GetView(name) {
-	var view = uil.views['hud'];
+	var view = uil.views[name];
 
 	if (!view) {
 		view = RegisterView(name);
@@ -32,8 +49,8 @@ function GetView(name) {
 }
 
 function RegisterView(name) {
-	var view = uil.views['hud'] = new UIView();
-	var filename = 'templates/' + name + '.tpl';
+	var view = uil.views[name] = new UIView();
+	var filename = 'ui/templates/' + name + '.tpl';
 
 	sys.ReadFile(filename, 'utf8', function (err, data) {
 		if (err) return;
@@ -52,16 +69,10 @@ function RegisterView(name) {
 	return view;
 }
 
-function DrawHud(model) {
-	var view = GetView('hud');
+function RenderView(name, model) {
+	var view = GetView(name);
 
-	// Template may still be async loading.
-	if (!view.template) {
-		return;
-	}
-
-	// Don't re-render if the data hasn't changed.
-	if (_.isEqual(model, view.oldModel)) {
+	if (!view.template || _.isEqual(model, view.oldModel)) {
 		return;
 	}
 
