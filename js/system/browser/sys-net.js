@@ -23,9 +23,16 @@ function NetSend(socket, buffer, length) {
 		return;
 	}
 
-	var view = new Uint8Array(buffer, 0, length);
+	// TODO Use this instead of truncating the array once Chrome
+	// supports sending an ArrayBufferView.
+	//var view = new Uint8Array(buffer, 0, length);
+	//socket.send(view);
+	
+	if (buffer.byteLength !== length) {
+		buffer = buffer.slice(0, length);
+	}
 
-	socket.send(view);
+	socket.send(buffer);
 }
 
 function NetClose(socket) {
