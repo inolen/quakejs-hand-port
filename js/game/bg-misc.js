@@ -14,6 +14,7 @@ function PlayerStateToEntityState(ps, state) {
 	}*/
 
 	state.number = ps.clientNum;
+	state.eType = EntityType.PLAYER;
 
 	state.pos.trType = TrajectoryType.INTERPOLATE;
 	vec3.set(ps.origin, state.pos.trBase);

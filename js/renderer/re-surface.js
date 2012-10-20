@@ -275,16 +275,33 @@ var bboxIndexes = [
 ];
 
 function TesselateBbox(face) {
-	var offset = tess.numVertexes;
+	var vertexOffset = tess.numVertexes * 14;
+	var indexOffset = tess.numVertexes;
 
 	for (var i = 0; i < bboxVerts.length; i += 3) {
-		tess.xyz[tess.numVertexes+3+0] = bboxVerts[i+0];
-		tess.xyz[tess.numVertexes+3+1] = bboxVerts[i+1];
-		tess.xyz[tess.numVertexes+3+2] = bboxVerts[i+2];
+		tess.vertexes[vertexOffset++] = bboxVerts[i+0];
+		tess.vertexes[vertexOffset++] = bboxVerts[i+1];
+		tess.vertexes[vertexOffset++] = bboxVerts[i+2];
+
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+
 		tess.numVertexes++;
 	}
 
 	for (var i = 0; i < bboxIndexes.length; i++) {
-		tess.indexes[tess.numIndexes++] = offset + bboxIndexes[i];
+		tess.indexes[tess.numIndexes++] = indexOffset + bboxIndexes[i];
 	}
 }

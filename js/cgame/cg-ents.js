@@ -46,38 +46,36 @@ function AddCEntity(cent) {
 	CalcEntityLerpPositions(cent);
 
 	if (cent.currentState.eType === EntityType.ITEM) {
+		var refent = new RefEntity();
+		var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
+
 		// Autorotate at one of two speeds.
 		if (cent.giType === ItemType.HEALTH) {
 			vec3.set(cg.autoAnglesFast, cent.lerpAngles);
 		} else {
 			vec3.set(cg.autoAngles, cent.lerpAngles);
 		}
-	}
 
-	if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
+		for (var i = 0; i < itemInfo.modelHandles.length; i++) {
+			refent.reType = RefEntityType.MODEL;
+			vec3.set(cent.lerpOrigin, refent.origin);
+			AnglesToAxis(cent.lerpAngles, refent.axis);
+			refent.hModel = itemInfo.modelHandles[i];
+			
+			cl.AddRefEntityToScene(refent);
+		}
+	} else if (cent.currentState.eType == EntityType.PLAYER) {
 		var refent = new RefEntity();
+		if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
+			refent.reType = RefEntityType.BBOX;
+			
+			vec3.set(cent.lerpOrigin, refent.origin);
+			AnglesToAxis(cent.lerpAngles, refent.axis);
 
-		/*refent.reType = RefEntityType.BBOX;
-		
-		vec3.set(cent.lerpOrigin, refent.origin);
-		AnglesToAxis(cent.lerpAngles, refent.axis);
+			vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
+			vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
 
-		vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
-		vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);*/
-
-		//console.log('type', cent.currentState.eType );
-		if (cent.currentState.eType === EntityType.ITEM) {
-
-			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
-
-			for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-				refent.reType = RefEntityType.MODEL;
-				vec3.set(cent.lerpOrigin, refent.origin);
-				AnglesToAxis(cent.lerpAngles, refent.axis);
-				refent.hModel = itemInfo.modelHandles[i];
-				
-				cl.AddRefEntityToScene(refent);
-			}
+			cl.AddRefEntityToScene(refent);
 		}
 	}
 
