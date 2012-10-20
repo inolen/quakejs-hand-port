@@ -23,15 +23,9 @@ function NetSend(socket, buffer, length) {
 		return;
 	}
 
-	// Make a truncated copy of the incoming buffer if the length doesn't
-	// match. This often happens due to us pre-allocating a buffer of
-	// MAX_MSGLEN everywhere. If only the WebSocket API would allow you
-	// to pass a length parameter to send.
-	if (buffer.byteLength !== length) {
-		buffer = buffer.slice(0, length);
-	}
+	var view = new Uint8Array(buffer, 0, length);
 
-	socket.send(buffer);
+	socket.send(view);
 }
 
 function NetClose(socket) {
