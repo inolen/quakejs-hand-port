@@ -304,9 +304,7 @@ ByteBuffer = (function() {
     while (this._index < target) {
       b1 = raw[this._index];
       if (b1 < 128) {
-        if (b1 !== 0) {
-          codepoints[c++] = b1;
-        }
+        codepoints[c++] = b1;
         this._index++;
       } else if (b1 < 194) {
         throw new Error('Unexpected continuation byte');
@@ -431,7 +429,7 @@ ByteBuffer = (function() {
   };
 
   ByteBuffer.prototype.readASCIIString = function(fixedLength) {
-    var bytes, i, c, length, chars;
+    var bytes, i, c, length, limit, chars, parts;
     bytes = this._raw;
     i = 0;
     length = fixedLength || bytes.length;
@@ -443,7 +441,19 @@ ByteBuffer = (function() {
       }
       i++;
     }
-    return String.fromCharCode.apply(String, chars);
+
+    limit = 1 << 16;
+    if (length < limit) {
+      return String.fromCharCode.apply(String, chars);
+    } else {
+      parts = [];
+      i = 0;
+      while (i < length) {
+        parts.push(String.fromCharCode.apply(String, chars.slice(i, i + limit)));
+        i += limit;
+      }
+      return parts.join('');
+    }
   };
 
   ByteBuffer.prototype.writeASCIIString = function(string, fixedLength) {
