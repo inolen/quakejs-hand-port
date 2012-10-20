@@ -8,9 +8,7 @@ html, body {
 }
 
 body {
-	background: #000 url('../img/bg.jpg') no-repeat;
-	background-size: cover;
-	text-align: center;
+	background: #000;
 }
 
 #viewport-frame {
