@@ -401,24 +401,16 @@ function BeginSurface(shader) {
 function EndSurface() {
 	var shader = tess.shader;
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, tess.xyzBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, tess.xyz, gl.DYNAMIC_DRAW); 
+	// Create new views into the underlying ArrayBuffer that represent the
+	// much smaller subset of data we need to actually send to the GPU.
+	var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * 14);
+	var indexView = new Uint16Array(tess.abindexes, 0, tess.numIndexes);
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, tess.texCoordBuffer);  
-	gl.bufferData(gl.ARRAY_BUFFER, tess.texCoords, gl.DYNAMIC_DRAW);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, tess.lmCoordBuffer);  
-	gl.bufferData(gl.ARRAY_BUFFER, tess.lmCoords, gl.DYNAMIC_DRAW);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, tess.normalBuffer);  
-	gl.bufferData(gl.ARRAY_BUFFER, tess.normals, gl.DYNAMIC_DRAW);
-
-	gl.bindBuffer(gl.ARRAY_BUFFER, tess.colorBuffer);  
-	gl.bufferData(gl.ARRAY_BUFFER, tess.colors, gl.DYNAMIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, tess.vertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, vertexView, gl.DYNAMIC_DRAW);
 
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, tess.indexes, gl.DYNAMIC_DRAW);
-
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexView, gl.DYNAMIC_DRAW);
 
 	// Bind the surface shader
 	SetShader(shader);
@@ -435,34 +427,28 @@ function EndSurface() {
 
 		// Setup vertex attributes
 		gl.enableVertexAttribArray(program.attrib.position);
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.xyzBuffer);
-		gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 12, 0);
+		gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 56, 0);
 
 		if (program.attrib.texCoord !== undefined) {
 			gl.enableVertexAttribArray(program.attrib.texCoord);
-			gl.bindBuffer(gl.ARRAY_BUFFER, tess.texCoordBuffer);
-			gl.vertexAttribPointer(program.attrib.texCoord, 2, gl.FLOAT, false, 8, 0);
+			gl.vertexAttribPointer(program.attrib.texCoord, 2, gl.FLOAT, false, 56, 3*4);
 		}
 
 		if (program.attrib.lightCoord !== undefined) {
 			gl.enableVertexAttribArray(program.attrib.lightCoord);
-			gl.bindBuffer(gl.ARRAY_BUFFER, tess.lmCoordBuffer);
-			gl.vertexAttribPointer(program.attrib.lightCoord, 2, gl.FLOAT, false, 8, 0);
+			gl.vertexAttribPointer(program.attrib.lightCoord, 2, gl.FLOAT, false, 56, 5*4);
 		}
 
 		if (program.attrib.normal !== undefined) {
 			gl.enableVertexAttribArray(program.attrib.normal);
-			gl.bindBuffer(gl.ARRAY_BUFFER, tess.normalBuffer);
-			gl.vertexAttribPointer(program.attrib.normal, 3, gl.FLOAT, false, 12, 0);
+			gl.vertexAttribPointer(program.attrib.normal, 3, gl.FLOAT, false, 56, 7*4);
 		}
 
 		if (program.attrib.color !== undefined) {
 			gl.enableVertexAttribArray(program.attrib.color);
-			gl.bindBuffer(gl.ARRAY_BUFFER, tess.colorBuffer);
-			gl.vertexAttribPointer(program.attrib.color, 4, gl.UNSIGNED_BYTE, false, 4, 0);
+			gl.vertexAttribPointer(program.attrib.color, 4, gl.FLOAT, false, 56, 10*4);
 		}
 
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
 		gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, 0);
 	}
 }

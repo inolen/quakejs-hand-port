@@ -33,6 +33,8 @@ function LoadMap(mapName, callback) {
 			header.lumps[Lumps.LEAFSURFACES]);
 		LoadVisibility(data, header.lumps[Lumps.VISIBILITY]);
 
+		//BuildWorldBuffers();
+
 		if (callback) {
 			callback();
 		}

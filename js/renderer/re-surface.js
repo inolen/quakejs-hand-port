@@ -153,36 +153,37 @@ function AddMd3Surfaces(refent) {
 function TesselateFace(tess, face) {
 	var verts = re.world.verts;
 	var meshVerts = re.world.meshVerts;
-	var offset = tess.numVertexes;
+	var vertexOffset = tess.numVertexes * 14;
+	var indexOffset = tess.numVertexes;
 
 	for (var i = 0; i < face.vertCount; i++) {
 		var vert = verts[face.vertex + i];
 
-		tess.xyz[tess.numVertexes*3+0] = vert.pos[0];
-		tess.xyz[tess.numVertexes*3+1] = vert.pos[1];
-		tess.xyz[tess.numVertexes*3+2] = vert.pos[2];
+		tess.vertexes[vertexOffset++] = vert.pos[0];
+		tess.vertexes[vertexOffset++] = vert.pos[1];
+		tess.vertexes[vertexOffset++] = vert.pos[2];
 
-		tess.texCoords[tess.numVertexes*2+0] = vert.texCoord[0];
-		tess.texCoords[tess.numVertexes*2+1] = vert.texCoord[1];
+		tess.vertexes[vertexOffset++] = vert.texCoord[0];
+		tess.vertexes[vertexOffset++] = vert.texCoord[1];
 
-		tess.lmCoords[tess.numVertexes*2+0] = vert.lmCoord[0];
-		tess.lmCoords[tess.numVertexes*2+1] = vert.lmCoord[1];
+		tess.vertexes[vertexOffset++] = vert.lmCoord[0];
+		tess.vertexes[vertexOffset++] = vert.lmCoord[1];
 
-		tess.normals[tess.numVertexes*3+0] = vert.normal[0];
-		tess.normals[tess.numVertexes*3+1] = vert.normal[1];
-		tess.normals[tess.numVertexes*3+2] = vert.normal[2];
+		tess.vertexes[vertexOffset++] = vert.normal[0];
+		tess.vertexes[vertexOffset++] = vert.normal[1];
+		tess.vertexes[vertexOffset++] = vert.normal[2];
 
-		tess.colors[tess.numVertexes*4+0] = vert.color[0];
-		tess.colors[tess.numVertexes*4+1] = vert.color[1];
-		tess.colors[tess.numVertexes*4+2] = vert.color[2];
-		tess.colors[tess.numVertexes*4+3] = vert.color[3];
+		tess.vertexes[vertexOffset++] = vert.color[0];
+		tess.vertexes[vertexOffset++] = vert.color[1];
+		tess.vertexes[vertexOffset++] = vert.color[2];
+		tess.vertexes[vertexOffset++] = vert.color[3];
 
 		tess.numVertexes++;
 	}
 
 	for (var i = 0; i < face.meshVertCount; i++) {
 		var meshVert = meshVerts[face.meshVert + i];
-		tess.indexes[tess.numIndexes++] = offset + meshVert;
+		tess.indexes[tess.numIndexes++] = indexOffset + meshVert;
 	}
 }
 
@@ -195,27 +196,28 @@ function TesselateMd3(tess, face) {
 	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles*3 );
 	LerpMeshVertexes (surface, backlerp);*/
 
-	var offset = tess.numVertexes;
+	var vertexOffset = tess.numVertexes * 14;
+	var indexOffset = tess.numVertexes;
 
 	for (var i = 0; i < face.header.numVerts; i++) {
-		tess.xyz[tess.numVertexes*3+0] = face.xyzNormals[i].xyz[0] * MD3_XYZ_SCALE;
-		tess.xyz[tess.numVertexes*3+1] = face.xyzNormals[i].xyz[1] * MD3_XYZ_SCALE;
-		tess.xyz[tess.numVertexes*3+2] = face.xyzNormals[i].xyz[2] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = face.xyzNormals[i].xyz[0] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = face.xyzNormals[i].xyz[1] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = face.xyzNormals[i].xyz[2] * MD3_XYZ_SCALE;
 
-		tess.texCoords[tess.numVertexes*2+0] = face.st[i].st[0];
-		tess.texCoords[tess.numVertexes*2+1] = face.st[i].st[1];
+		tess.vertexes[vertexOffset++] = face.st[i].st[0];
+		tess.vertexes[vertexOffset++] = face.st[i].st[1];
 
-		tess.lmCoords[tess.numVertexes*2+0] = 0;
-		tess.lmCoords[tess.numVertexes*2+1] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
 
-		tess.normals[tess.numVertexes*3+0] = face.xyzNormals[i].normal[0];
-		tess.normals[tess.numVertexes*3+1] = face.xyzNormals[i].normal[1];
-		tess.normals[tess.numVertexes*3+2] = face.xyzNormals[i].normal[2];
+		tess.vertexes[vertexOffset++] = face.xyzNormals[i].normal[0];
+		tess.vertexes[vertexOffset++] = face.xyzNormals[i].normal[1];
+		tess.vertexes[vertexOffset++] = face.xyzNormals[i].normal[2];
 
-		tess.colors[tess.numVertexes*4+0] = 0;
-		tess.colors[tess.numVertexes*4+1] = 0;
-		tess.colors[tess.numVertexes*4+2] = 0;
-		tess.colors[tess.numVertexes*4+3] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
+		tess.vertexes[vertexOffset++] = 0;
 
 		tess.numVertexes++;
 	}
@@ -223,9 +225,9 @@ function TesselateMd3(tess, face) {
 	for (var i = 0; i < face.triangles.length; i++) {
 		var tri = face.triangles[i];
 
-		tess.indexes[tess.numIndexes++] = offset + tri.indexes[0];
-		tess.indexes[tess.numIndexes++] = offset + tri.indexes[1];
-		tess.indexes[tess.numIndexes++] = offset + tri.indexes[2];
+		tess.indexes[tess.numIndexes++] = indexOffset + tri.indexes[0];
+		tess.indexes[tess.numIndexes++] = indexOffset + tri.indexes[1];
+		tess.indexes[tess.numIndexes++] = indexOffset + tri.indexes[2];
 	}
 }
 

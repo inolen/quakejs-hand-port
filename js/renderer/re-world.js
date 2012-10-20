@@ -1,6 +1,57 @@
-/**
- *
- */
+/*function BuildWorldBuffers() {
+	var faces = re.world.faces,
+		verts = re.world.verts,
+		meshVerts = re.world.meshVerts,
+		shaders = re.world.shaders;
+
+	// Compile vert list
+	var vertices = new Array(verts.length*14);
+	var offset = 0;
+	for (var i = 0; i < verts.length; i++) {
+		var vert = verts[i];
+
+		vertices[offset++] = vert.pos[0];
+		vertices[offset++] = vert.pos[1];
+		vertices[offset++] = vert.pos[2];
+
+		vertices[offset++] = vert.texCoord[0];
+		vertices[offset++] = vert.texCoord[1];
+
+		vertices[offset++] = vert.lmCoord[0];
+		vertices[offset++] = vert.lmCoord[1];
+
+		vertices[offset++] = vert.normal[0];
+		vertices[offset++] = vert.normal[1];
+		vertices[offset++] = vert.normal[2];
+
+		vertices[offset++] = vert.color[0];
+		vertices[offset++] = vert.color[1];
+		vertices[offset++] = vert.color[2];
+		vertices[offset++] = vert.color[3];
+	}
+
+	// Compile index list
+	var indices = new Array();
+
+	for (var i = 0; i < faces.length; i++) {
+		var face = faces[i];
+
+		face.indexOffset = indices.length * 2; // Offset is in bytes
+
+		for(var j = 0; j < face.meshVertCount; j++) {
+			indices.push(face.vertex + meshVerts[face.meshVert + j]);
+		}
+	}
+
+	re.worldVertexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, re.worldVertexBuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+	re.worldIndexBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, re.worldIndexBuffer);
+	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+}*/
+
 function PointInLeaf(p) {
 	if (!re.world) {
 		throw new Error('PointInLeaf: bad model');

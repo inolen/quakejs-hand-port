@@ -25,8 +25,8 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
 // 14 bits
 // can't be increased without changing bit packing for drawsurfs
 // see QSORT_SHADERNUM_SHIFT
-var SHADERNUM_BITS = 14
-var MAX_SHADERS    = (1<<SHADERNUM_BITS);
+var SHADERNUM_BITS       = 14
+var MAX_SHADERS          = (1<<SHADERNUM_BITS);
 
 var MAX_BBOX_SURFACES = 32;
 
@@ -53,6 +53,10 @@ var RenderLocals = function () {
 	// bbox surface pool
 	this.bboxSurfaces        = new Array(MAX_BBOX_SURFACES);
 	this.bboxSurfaceNum      = 0;
+
+	/*// static vertex buffers
+	this.worldVertexBuffer   = null;
+	this.worldIndexBuffer    = null;*/
 
 	for (var i = 0; i < MAX_BBOX_SURFACES; i++) {
 		this.bboxSurfaces[i] = new BboxSurface();
@@ -196,27 +200,23 @@ var ViewParms = function () {
 };
 
 var ShaderCommands = function () {
-	this.shader         = null;
-	this.shaderTime     = 0;
-	this.modelMatrix    = mat4.create();
-	this.numIndexes     = 0;
-	this.numVertexes    = 0;
-	this.indexes        = new Uint16Array(SHADER_MAX_INDEXES);
-	this.xyz            = new Float32Array(SHADER_MAX_VERTEXES*3);
-	this.normals        = new Float32Array(SHADER_MAX_VERTEXES*3);
-	this.texCoords      = new Float32Array(SHADER_MAX_VERTEXES*2);
-	this.lmCoords       = new Float32Array(SHADER_MAX_VERTEXES*2);
-	this.colors         = new Uint8Array(SHADER_MAX_VERTEXES*4);
+	this.shader          = null;
+	this.shaderTime      = 0;
+	this.modelMatrix     = mat4.create();
+	this.numVertexes     = 0;
+	this.numIndexes      = 0;
 
-	this.indexBuffer    = gl.createBuffer();
-	this.xyzBuffer      = gl.createBuffer();
-	this.normalBuffer   = gl.createBuffer();
-	this.texCoordBuffer = gl.createBuffer();
-	this.lmCoordBuffer  = gl.createBuffer();
-	this.colorBuffer    = gl.createBuffer();
+	// Underlying data for the buffers.
+	this.abindexes       = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
+	this.abvertexes      = new ArrayBuffer(SHADER_MAX_VERTEXES * 4 * 14);
 
-	// stageVars_t	svars QALIGN(16);
-	// color4ub_t	constantColor255[SHADER_MAX_VERTEXES] QALIGN(16);
+	// Views into the underlying buffer.
+	this.indexes         = new Uint16Array(this.abindexes);
+	this.vertexes        = new Float32Array(this.abvertexes);
+
+	// Actual OpenGL buffers that we upload our buffers to.
+	this.indexBuffer     = gl.createBuffer();
+	this.vertexBuffer    = gl.createBuffer();
 
 	// int			fogNum;
 
