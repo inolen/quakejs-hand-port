@@ -2,8 +2,8 @@
  * InputInit
  */
 function InputInit() {
-	document.addEventListener('keydown', KeyDownEvent);
-	document.addEventListener('keyup', KeyUpEvent);
+	viewport.addEventListener('keydown', KeyDownEvent);
+	viewport.addEventListener('keyup', KeyUpEvent);
 	viewport.addEventListener('mousedown', MouseDownEvent);
 	viewport.addEventListener('mouseup', MouseUpEvent);
 	viewport.addEventListener('mousemove', MouseMoveEvent);
@@ -32,6 +32,8 @@ function GetKeyNameForMouseButton(button) {
  * KeyDownEvent
  */
 function KeyDownEvent(ev) {
+	ev.preventDefault();
+
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
 	// Special check for fullscreen.
@@ -46,6 +48,8 @@ function KeyDownEvent(ev) {
  * KeyUpEvent
  */
 function KeyUpEvent(ev) {
+	ev.preventDefault();
+
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
 	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });

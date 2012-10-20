@@ -20,7 +20,8 @@ function Init() {
 	viewport.height = viewportFrame.offsetHeight;
 
 	// Handle fullscreen transition.
-	document.addEventListener('fullscreenchange', FullscreenChanged, false);
+	document.addEventListener('fullscreenchange', ResizeViewport, false);
+	window.addEventListener('resize', ResizeViewport, false);
 
 	InputInit();
 	com.Init(sysinterface, false);
@@ -54,9 +55,9 @@ function GetAvailableContext(canvas, contextList) {
 }
 
 /**
- * FullscreenChanged
+ * ResizeViewport
  */
-function FullscreenChanged() {
+function ResizeViewport() {
 	if (document.fullscreenEnabled) {
 		viewport.width = screen.width;
 		viewport.height = screen.height;

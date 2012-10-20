@@ -18,7 +18,8 @@ function Init(serverMessageNum) {
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
-	
+
+	InitCommands();	
 	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
 		r.LoadMap(cgs.gameState['sv_mapname'], function () {
 			RegisterGraphics();
@@ -115,13 +116,16 @@ function Frame(serverTime) {
 	}
 	
 	r.RenderScene(cg.refdef);
+	
 	ui.RenderView('hud', { fps: GetFPS() });
 
-	var players = [
-		{ name: 'Player 1' }
-	];
+	if (cg.showScores === true) {
+		var players = [
+			{ name: 'Player 1' }
+		];
 
-	ui.RenderView('scoreboard', { players: players });
+		ui.RenderView('scoreboard', { players: players });
+	}
 }
 
 /**

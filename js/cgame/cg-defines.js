@@ -33,6 +33,9 @@ var ClientGame = function () {
 	// view rendering
 	this.refdef               = new RefDef();
 
+	// scoreboard
+	this.showScores           = false;
+
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		this.entities[i] = new ClientGameEntity();
 	}

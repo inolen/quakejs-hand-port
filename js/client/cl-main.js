@@ -164,6 +164,8 @@ function UpdateScreen() {
 			cg.Frame(cl.serverTime);
 			break;
 	}
+
+	ui.Refresh();
 }
 
 /**
