@@ -1,9 +1,12 @@
 /*********************************************************************
  *
- * POSITION TESTING
+ * Position testing
  *
  ********************************************************************/
 
+/**
+ * TestBoxInBrush
+ */
 function TestBoxInBrush(tw, brush) {
 	if (!brush.numsides) {
 		return;
@@ -41,6 +44,9 @@ function TestBoxInBrush(tw, brush) {
 	tw.trace.contents = brush.contents;
 }
 
+/**
+ * TestInLeaf
+ */
 function TestInLeaf(tw, leaf) {
 	var brushes = cm.brushes;
 	var leafBrushes = cm.leafBrushes;
@@ -91,8 +97,13 @@ function TestInLeaf(tw, leaf) {
 	}*/
 }
 
+/**
+ * PositionTest
+ */
+
 // Don't allocate this each time.
 var leaflist = new LeafList();
+
 function PositionTest(tw) {
 	var leafs = cm.leafs;
 	var mins = vec3.add(tw.start, tw.size[0], [0, 0, 0]);
@@ -118,9 +129,13 @@ function PositionTest(tw) {
 
 /*********************************************************************
  *
- * TRACING
+ * Tracing
  *
  ********************************************************************/
+
+/**
+ * TraceThroughTree
+ */
 function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	var brushes = cm.brushes;
 	var leafs = cm.leafs;
@@ -224,6 +239,9 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	TraceThroughTree(tw, node.childrenNum[side^1], midf, p2f, mid, p2);
 }
 
+/**
+ * TraceThroughLeaf
+ */
 function TraceThroughLeaf(tw, leaf) {
 	var brushes = cm.brushes;
 	var leafBrushes = cm.leafBrushes;
@@ -257,6 +275,9 @@ function TraceThroughLeaf(tw, leaf) {
 	}
 }
 
+/**
+ * TraceThroughBrush
+ */
 function TraceThroughBrush(tw, brush) {
 	var brushSides = cm.brushSides;
 	var trace = tw.trace;
@@ -352,6 +373,9 @@ function TraceThroughBrush(tw, brush) {
 	}
 }
 
+/**
+ * Trace
+ */
 function Trace(start, end, mins, maxs, brushmask, tw) {
 	tw = tw || new TraceWork();
 	var trace = tw.trace;

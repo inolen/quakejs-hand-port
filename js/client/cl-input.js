@@ -1,6 +1,9 @@
 var activeKeys = {};
 var forwardKey, leftKey, backKey, rightKey, upKey;
 
+/**
+ * InitInput
+ */
 function InitInput() {
 	com.AddCmd('+forward', function (key) { forwardKey = key; });
 	com.AddCmd('+left', function (key) { leftKey = key; });
@@ -16,10 +19,11 @@ function InitInput() {
 }
 
 /**
+ * SendCommand
+ * 
  * Process current input variables into userCommand_t
  * struct for transmission to server.
  */
-
 function SendCommand() {
 	// Don't send any message if not connected.
 	if (clc.state < ConnectionState.CONNECTED) {
@@ -30,6 +34,12 @@ function SendCommand() {
 	WritePacket();
 }
 
+/**
+ * CreateNewCommands
+ * 
+ * Process current input variables into userCommand_t
+ * struct for transmission to server.
+ */
 function CreateNewCommands() {
 	// No need to create usercmds until we have a gamestate.
 	if (clc.state < ConnectionState.PRIMED) {
@@ -40,6 +50,9 @@ function CreateNewCommands() {
 	cl.cmds[cl.cmdNumber & CMD_MASK] = CreateCommand();
 }
 
+/**
+ * CreateCommand
+ */
 function CreateCommand() {
 	var cmd = new UserCmd();
 
@@ -105,6 +118,9 @@ function WritePacket() {
 	com.NetchanSend(clc.netchan, msg.buffer, msg.index);
 }
 
+/**
+ * KeyMove
+ */
 function KeyMove(cmd) {
 	var movespeed = 127;
 	var forward = 0, side = 0, up = 0;
@@ -123,6 +139,9 @@ function KeyMove(cmd) {
 	cmd.upmove = up;
 }
 
+/**
+ * MouseMove
+ */
 function MouseMove(cmd) {
 	var oldAngles = vec3.create(cl.viewangles);
 	var mx = cl.mouseX * cl_sensitivity();
@@ -146,15 +165,22 @@ function MouseMove(cmd) {
 	cmd.angles[2] = AngleToShort(cl.viewangles[2]);
 }
 
+
+/**********************************************************
+ *
+ * Abstracted key/mouse event handling.
+ *
+ **********************************************************/
+
 /**
- * Key helpers
+ * GetKey
  */
 function GetKey(keyName) {
 	return keys[keyName] || (keys[keyName] = new KeyState());
 }
 
 /**
- * Abstracted key/mouse event handling.
+ * KeyDownEvent
  */
 function KeyDownEvent(time, keyName) {
 	var key = GetKey(keyName);
@@ -167,6 +193,9 @@ function KeyDownEvent(time, keyName) {
 	ExecBinding(key);
 }
 
+/**
+ * KeyUpEvent
+ */
 function KeyUpEvent(time, keyName) {
 	var key = GetKey(keyName);
 	key.active = false;
@@ -175,12 +204,17 @@ function KeyUpEvent(time, keyName) {
 	ExecBinding(key);
 }
 
+/**
+ * MouseMoveEvent
+ */
 function MouseMoveEvent(time, dx, dy) {
 	cl.mouseX += dx;
 	cl.mouseY += dy;
 }
 
 /**
+ * GetKeyState
+ *
  * Returns the fraction of the frame the input was down.
  */
 function GetKeyState(key) {
@@ -199,8 +233,14 @@ function GetKeyState(key) {
 	return val;
 }
 
-/**
+/**********************************************************
+ *
  * Key bindings
+ *
+ **********************************************************/
+
+/**
+ * ExecBinding
  */
 function ExecBinding(key) {
 	var cmdToExec = key.binding;
@@ -212,11 +252,17 @@ function ExecBinding(key) {
 	if (callback) callback.call(this, key);
 }
 
+/**
+ * Bind
+ */
 function Bind(keyName, cmd) {
 	var key = GetKey(keyName);
 	key.binding = cmd;
 }
 
+/**
+ * Unbind
+ */
 function Unbind(keyName, cmd) {
 	delete key.binding;
 }

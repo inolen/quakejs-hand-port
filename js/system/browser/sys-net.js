@@ -1,7 +1,13 @@
+/**
+ * NetCreateServer
+ */
 function NetCreateServer() {
 	throw new Error('Should not happen');
 }
 
+/**
+ * NetConnectToServer
+ */
 function NetConnectToServer(addr) {
 	var socket;
 
@@ -18,6 +24,9 @@ function NetConnectToServer(addr) {
 	return socket;
 }
 
+/**
+ * NetSend
+ */
 function NetSend(socket, buffer, length) {
 	if (socket.readyState !== 1) {
 		return;
@@ -35,6 +44,9 @@ function NetSend(socket, buffer, length) {
 	socket.send(buffer);
 }
 
+/**
+ * NetClose
+ */
 function NetClose(socket) {
 	socket.close();
 }

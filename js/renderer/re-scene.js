@@ -1,3 +1,6 @@
+/**
+ * RenderScene
+ */
 function RenderScene(fd) {
 	if (!re.world) {
 		//throw new Error('RenderScene: NULL worldmodel');
@@ -34,6 +37,9 @@ function RenderScene(fd) {
 	re.refdef.numRefEntities = 0;
 }
 
+/**
+ * AddRefEntityToScene
+ */
 function AddRefEntityToScene(refent) {
 	if (refent.reType < 0 || refent.reType >= RefEntityType.MAX_REF_ENTITY_TYPE) {
 		throw new Error('AddRefEntityToScene: bad reType ' + ent.reType);

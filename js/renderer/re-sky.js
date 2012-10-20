@@ -6,6 +6,9 @@ var skyboxIndexBuffer = null;
 var skyboxIndexCount;
 var skyShader = null;
 
+/**
+ * BuildSkyboxBuffers
+ */
 function BuildSkyboxBuffers() {
 	var skyVerts = [
 		-128, 128, 128, 0, 0,

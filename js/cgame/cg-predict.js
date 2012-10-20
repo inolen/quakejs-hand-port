@@ -1,3 +1,6 @@
+/**
+ * InterpolatePlayerState
+ */
 function InterpolatePlayerState(grabAngles) {
 	var ps = cg.predictedPlayerState = cg.snap.ps.clone();
 	var prev = cg.snap;
@@ -36,6 +39,9 @@ function InterpolatePlayerState(grabAngles) {
 	}
 }
 
+/**
+ * PredictPlayerState
+ */
 function PredictPlayerState() {
 	cg.hyperspace = false;	// will be set if touching a trigger_teleport
 

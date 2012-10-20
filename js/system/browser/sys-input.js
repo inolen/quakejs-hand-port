@@ -1,3 +1,6 @@
+/**
+ * InputInit
+ */
 function InputInit() {
 	document.addEventListener('keydown', KeyDownEvent);
 	document.addEventListener('keyup', KeyUpEvent);
@@ -6,6 +9,9 @@ function InputInit() {
 	viewport.addEventListener('mousemove', MouseMoveEvent);
 }
 
+/**
+ * GetKeyNameForKeyCode
+ */
 function GetKeyNameForKeyCode(keyCode) {
 	var local = KbLocals['us'];
 
@@ -15,10 +21,16 @@ function GetKeyNameForKeyCode(keyCode) {
 	}
 }
 
+/**
+ * GetKeyNameForMouseButton
+ */
 function GetKeyNameForMouseButton(button) {
 	return 'mouse' + button;
 }
 
+/**
+ * KeyDownEvent
+ */
 function KeyDownEvent(ev) {
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
@@ -30,12 +42,18 @@ function KeyDownEvent(ev) {
 	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });
 }
 
+/**
+ * KeyUpEvent
+ */
 function KeyUpEvent(ev) {
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
 	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });
 }
 
+/**
+ * MouseDownEvent
+ */
 function MouseDownEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
@@ -46,12 +64,18 @@ function MouseDownEvent(ev) {
 	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });
 }
 
+/**
+ * MouseUpEvent
+ */
 function MouseUpEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
 	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });
 }
 
+/**
+ * MouseMoveEvent
+ */
 var lastPageX = 0;
 var lastPageY = 0;
 function MouseMoveEvent(ev) {

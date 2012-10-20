@@ -17,6 +17,9 @@ var flipMatrix = mat4.create([
 	0, 0, 0, 1
 ]);
 
+/**
+ * Init
+ */
 function Init(clinterface) {
 	console.log('--------- RE Init ---------');
 
@@ -38,11 +41,17 @@ function Init(clinterface) {
 	InitShaders();
 }
 
+/**
+ * Shutdown
+ */
 function Shutdown() {
 	console.log('--------- RE Shutdown ---------');
 	DeleteTextures();
 }
 
+/**
+ * RotateModelMatrixForViewer
+ */
 function RotateModelMatrixForViewer() {
 	var or = re.viewParms.or;
 
@@ -73,6 +82,9 @@ function RotateModelMatrixForViewer() {
 	mat4.multiply(flipMatrix, modelMatrix, or.modelMatrix);
 }
 
+/**
+ * RotateModelMatrixForEntity
+ */
 function RotateModelMatrixForEntity(refent, or) {
 	vec3.set(refent.origin, or.origin);
 	vec3.set(refent.axis[0], or.axis[0]);
@@ -123,6 +135,9 @@ function RotateModelMatrixForEntity(refent, or) {
 	or->viewOrigin[2] = DotProduct( delta, or->axis[2] ) * axisLength;*/
 }
 
+/**
+ * SetupProjectionMatrix
+ */
 function SetupProjectionMatrix(zProj) {
 	var parms = re.viewParms;
 
@@ -156,6 +171,7 @@ function SetupProjectionMatrix(zProj) {
 
 /**
  * SetupFrustum
+ * 
  * Set up the culling frustum planes for the current view using the results we got from computing the first two rows of 
  * the projection matrix.
  */
@@ -189,6 +205,9 @@ function SetupFrustum(parms, xmin, xmax, ymax, zProj) {
 	}
 }
 
+/**
+ * SetFarClip
+ */
 function SetFarClip() {
 	var parms = re.viewParms;
 
@@ -235,6 +254,7 @@ function SetFarClip() {
 
 /**
  * SetupProjectionZ
+ *
  * Sets the z-component transformation part in the projection matrix.
  */
 function SetupProjectionMatrixZ() {
@@ -250,6 +270,9 @@ function SetupProjectionMatrixZ() {
 	parms.projectionMatrix[14] = -2 * zFar * zNear / depth;
 }
 
+/**
+ * RenderView
+ */
 function RenderView(parms) {
 	re.viewCount++;
 	re.viewParms = parms;
@@ -271,6 +294,9 @@ function RenderView(parms) {
 	RenderDrawSurfaces();
 }
 
+/**
+ * GenerateDrawSurfs
+ */
 function GenerateDrawSurfs() {
 	AddWorldSurfaces();
 	AddEntitySurfaces();
@@ -280,6 +306,9 @@ function GenerateDrawSurfs() {
 	SetupProjectionMatrixZ();
 }
 
+/**
+ * AddDrawSurf
+ */
 function AddDrawSurf(face, shader, entityNum/*, fogIndex, dlightMap*/) {
 	var refdef = re.refdef;
 
@@ -293,6 +322,9 @@ function AddDrawSurf(face, shader, entityNum/*, fogIndex, dlightMap*/) {
 	refdef.numDrawSurfs++;
 }
 
+/**
+ * SortDrawSurfaces
+ */
 function SortDrawSurfaces() {
 	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
 }
@@ -305,6 +337,9 @@ tessFns[SurfaceType.GRID] = TesselateFace;
 tessFns[SurfaceType.BBOX] = TesselateBbox;
 tessFns[SurfaceType.MD3] = TesselateMd3;
 
+/**
+ * RenderDrawSurfaces
+ */
 function RenderDrawSurfaces() {
 	var world = re.world;
 	var parms = re.viewParms;
@@ -391,6 +426,9 @@ function RenderDrawSurfaces() {
 	}
 }
 
+/**
+ * BeginSurface
+ */
 function BeginSurface(shader) {
 	tess.numIndexes = 0;
 	tess.numVertexes = 0;
@@ -398,6 +436,9 @@ function BeginSurface(shader) {
 	tess.shaderTime = re.refdef.time / 1000;
 }
 
+/**
+ * EndSurface
+ */
 function EndSurface() {
 	var shader = tess.shader;
 

@@ -1,5 +1,8 @@
 var MAX_GRID_SIZE = 129;
 
+/**
+ * LerpDrawVert
+ */
 function LerpDrawVert(a, b, out) {
 	out.pos[0] = 0.5 * (a.pos[0] + b.pos[0]);
 	out.pos[1] = 0.5 * (a.pos[1] + b.pos[1]);
@@ -17,6 +20,9 @@ function LerpDrawVert(a, b, out) {
 	out.color[3] = (a.color[3] + b.color[3]) >> 1;
 }
 
+/**
+ * Transpose
+ */
 function Transpose(ctrl, width, height) {
 	var temp;
 
@@ -52,6 +58,9 @@ function Transpose(ctrl, width, height) {
 
 }
 
+/**
+ * PutPointsOnCurve
+ */
 function PutPointsOnCurve(ctrl, width, height) {
 	var prev = {pos: [0,0,0], lmCoord: [0,0], texCoord: [0, 0], color: [0, 0, 0, 0], normal: [0, 0, 1]};
 	var next = {pos: [0,0,0], lmCoord: [0,0], texCoord: [0, 0], color: [0, 0, 0, 0], normal: [0, 0, 1]};
@@ -74,12 +83,12 @@ function PutPointsOnCurve(ctrl, width, height) {
 }
 
 /**
- * Tessellate a bezier patch.
+ * SubdividePatchToGrid
  *
- * Most implementations take the patch's control points and step across 0...1 some fixed
- * amount, generating new vertices along the curve. This approach works, but doesn't treat
- * small and large curves alike, creating more vertices than necessary for smaller patches
- * more vertices and not enough for larger patches. 
+ * Tessellate a bezier patch. Most implementations take the patch's control points and step
+ * across 0...1 some fixed amount, generating new vertices along the curve. This approach
+ * works, but doesn't treat small and large curves alike, creating more vertices than necessary
+ * for smaller patches and not enough for larger patches. 
  * 
  * What this approach does is subdivide the control points with LerpDrawVert, and check
  * the distance of the subdivided midpoints from the actual point on the curve. Once the

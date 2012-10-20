@@ -1,3 +1,6 @@
+/**
+ * TransitionPlayerState
+ */
 function TransitionPlayerState(ps, ops) {
 	// check for changing follow mode
 	/*if (ps.clientNum !== ops.clientNum) {

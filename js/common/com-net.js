@@ -6,6 +6,9 @@ var loopbacks = [
 ];
 var msgBuffer = new ArrayBuffer(MAX_MSGLEN);
 
+/**
+ * NetchanSetup
+ */
 function NetchanSetup(src, addr, socket) {
 	var netchan = new NetChan();
 
@@ -24,6 +27,9 @@ function NetchanSetup(src, addr, socket) {
 	return netchan;
 }
 
+/**
+ * NetchanDestroy
+ */
 function NetchanDestroy(netchan) {
 	if (netchan.addr.type === NetAdrType.LOOPBACK) {
 		// Trigger a fake disconnect event for loopback sockets.
@@ -33,6 +39,9 @@ function NetchanDestroy(netchan) {
 	}
 }
 
+/**
+ * NetchanSendLoopPacket
+ */
 function NetchanSendLoopPacket(netchan, buffer, length) {
 	var q = loopbacks[netchan.src];
 
@@ -49,6 +58,9 @@ function NetchanSendLoopPacket(netchan, buffer, length) {
 	});
 }
 
+/**
+ * NetchanSend
+ */
 function NetchanSend(netchan, buffer, length) {
 	var msg = new ByteBuffer(msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
@@ -68,6 +80,9 @@ function NetchanSend(netchan, buffer, length) {
 	sys.NetSend(netchan.socket, msg.buffer, msg.index);
 }
 
+/**
+ * NetchanPrint
+ */
 function NetchanPrint(netchan, str) {
 	var msg = new ByteBuffer(msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 	msg.writeInt(-1);
@@ -81,6 +96,9 @@ function NetchanPrint(netchan, str) {
 	sys.NetSend(netchan.socket, msg.buffer, msg.index);
 }
 
+/**
+ * NetchanProcess
+ */
 function NetchanProcess(netchan, msg) {
 	var sequence = msg.readInt();
 	netchan.incomingSequence = sequence;

@@ -1,5 +1,8 @@
 var cm;
 
+/**
+ * LoadMap
+ */
 function LoadMap(mapName, callback) {
 	console.log('--------- CM Init ---------');
 	console.log('Loading clipmap for ' + mapName);
@@ -40,6 +43,9 @@ function LoadMap(mapName, callback) {
 	});
 }
 
+/**
+ * LoadShaders
+ */
 function LoadShaders(buffer, shaderLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = shaderLump.fileofs;
@@ -55,6 +61,9 @@ function LoadShaders(buffer, shaderLump) {
 	}
 }
 
+/**
+ * LoadLeafs
+ */
 function LoadLeafs(buffer, leafLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = leafLump.fileofs;
@@ -75,9 +84,11 @@ function LoadLeafs(buffer, leafLump) {
 		leaf.firstLeafBrush = bb.readInt();
 		leaf.numLeafBrushes = bb.readInt();
 	}
-
 }
 
+/**
+ * LoadLeafBrushes
+ */
 function LoadLeafBrushes(buffer, leafBrushLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = leafBrushLump.fileofs;
@@ -89,6 +100,9 @@ function LoadLeafBrushes(buffer, leafBrushLump) {
 	}
 }
 
+/**
+ * LoadPlanes
+ */
 function LoadPlanes(buffer, planeLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = planeLump.fileofs;
@@ -105,6 +119,9 @@ function LoadPlanes(buffer, planeLump) {
 	}
 }
 
+/**
+ * LoadBrushSides
+ */
 function LoadBrushSides(buffer, brushSideLump) {
 	var planes = cm.planes;
 
@@ -125,6 +142,9 @@ function LoadBrushSides(buffer, brushSideLump) {
 	}
 }
 
+/**
+ * LoadBrushes
+ */
 function LoadBrushes(buffer, brushLump) {
 	var shaders = cm.shaders;
 	var brushSides = cm.brushSides;
@@ -149,6 +169,9 @@ function LoadBrushes(buffer, brushLump) {
 	}
 }
 
+/**
+ * LoadSubmodels
+ */
 function LoadSubmodels(buffer, modelLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = modelLump.fileofs;
@@ -207,6 +230,9 @@ function LoadNodes(buffer, nodeLump) {
 	}
 }
 
+/**
+ * LoadEntities
+ */
 function LoadEntities(buffer, entityLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = entityLump.fileofs;
@@ -254,6 +280,9 @@ function LoadEntities(buffer, entityLump) {
 	});
 }
 
+/**
+ * ClipHandleToModel
+ */
 function ClipHandleToModel(handle) {
 	if (handle < 0) {
 		throw new Error('ClipHandleToModel: bad handle ' + handle);
@@ -268,6 +297,9 @@ function ClipHandleToModel(handle) {
 	throw new Error('ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 
+/**
+ * InlineModel
+ */
 function InlineModel(num) {
 	if (num < 0 || num >= cm.models.length) {
 		throw new Error('GetInlineModel: bad number');
@@ -276,6 +308,9 @@ function InlineModel(num) {
 	return num;
 }
 
+/**
+ * ModelBounds
+ */
 function ModelBounds(model, mins, maxs) {
 	var cmod = ClipHandleToModel( model );
 	vec3.set(cmod.mins, mins);

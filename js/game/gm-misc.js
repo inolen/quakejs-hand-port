@@ -1,3 +1,6 @@
+/**
+ * TeleportPlayer
+ */
 function TeleportPlayer(player, origin, angles) {
 	var noAngles = (angles[0] > 999999.0);
 

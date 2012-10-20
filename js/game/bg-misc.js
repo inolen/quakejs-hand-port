@@ -64,6 +64,9 @@ function PlayerStateToEntityState(ps, state) {
 	s->generic1 = ps->generic1;*/
 }
 
+/**
+ * EvaluateTrajectory
+ */
 function EvaluateTrajectory(tr, atTime, result) {
 	var deltaTime;
 	var phase;
@@ -106,6 +109,9 @@ function EvaluateTrajectory(tr, atTime, result) {
 	}
 }
 
+/**
+ * TouchJumpPad
+ */
 function TouchJumpPad(ps, jumppad) {
 	// if we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger

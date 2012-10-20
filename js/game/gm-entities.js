@@ -1,10 +1,14 @@
 var entityEvents = {};
 
+// Maps entity definition values to entity values.
 var keyMap = {
 	'origin': ['s.origin', 'currentOrigin'],
 	'angles': ['s.angles']
 }
 
+/**
+ * SpawnEntity
+ */
 function SpawnEntity() {
 	for (var i = MAX_CLIENTS; i < MAX_GENTITIES; i++) {
 		if (level.gentities[i]) {
@@ -19,11 +23,17 @@ function SpawnEntity() {
 	return null;//throw new Error('Game entities is full');
 }
 
+/**
+ * FreeEntity
+ */
 function FreeEntity(ent) {
 	sv.UnlinkEntity(ent); // unlink from world
 	delete level.gentities[ent.s.number];
 }
 
+/**
+ * FindEntity
+ */
 function FindEntity(key, value) {
 	var results = [];
 
@@ -58,6 +68,9 @@ function SetOrigin(ent, origin) {
 	vec3.set(origin, ent.currentOrigin);
 }
 
+/**
+ * EntityThink
+ */
 function EntityThink(ent) {
 	var thinktime = ent.nextthink;
 
@@ -76,6 +89,9 @@ function EntityThink(ent) {
 	ent.think.call(this, ent);
 }
 
+/**
+ * EntityPickTarget
+ */
 function EntityPickTarget(targetName) {
 	if (!targetName) {
 		throw new Error('SV: EntityPickTarget called with NULL targetname');
@@ -90,6 +106,9 @@ function EntityPickTarget(targetName) {
 	return choices[Math.floor(Math.random()*choices.length)];
 }
 
+/**
+ * SpawnEntityFromDef
+ */
 function SpawnEntityFromDef(def) {
 	var ent = SpawnEntity();
 
@@ -143,6 +162,11 @@ function SpawnEntityFromDef(def) {
 	ent.spawn.call(this, ent);
 }
 
+/**
+ * SpawnAllEntitiesFromDefs
+ *
+ * Spawns all the map entities into the game.
+ */
 function SpawnAllEntitiesFromDefs() {
 	var entityDefs = sv.GetEntityDefs();
 

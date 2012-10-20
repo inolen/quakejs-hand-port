@@ -1,5 +1,8 @@
 var fs = require('fs');
 
+/**
+ * ReadFile
+ */
 function ReadFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 

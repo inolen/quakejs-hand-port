@@ -1,3 +1,6 @@
+/**
+ * Init
+ */
 function Init(cominterface) {	
 	NetCreateServer();
 	com.Init(sysinterface, true);
@@ -7,18 +10,30 @@ function Init(cominterface) {
 	}, 10);
 }
 
+/**
+ * FullscreenChanged
+ */
 function FullscreenChanged() {
-	throw new Error('Dedicated server');
+	throw new Error('Should not happen');
 }
 
+/**
+ * GetGameRenderContext
+ */
 function GetGameRenderContext() {
-	throw new Error('Dedicated server');
+	throw new Error('Should not happen');
 }
 
+/**
+ * GetUIRenderContext
+ */
 function GetUIRenderContext() {
-	throw new Error('Dedicated server');
+	throw new Error('Should not happen');
 }
 
+/**
+ * GetMilliseconds
+ */
 var timeBase;
 function GetMilliseconds() {
 	var time = process.hrtime();

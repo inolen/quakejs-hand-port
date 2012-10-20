@@ -1,3 +1,6 @@
+/**
+ * LoadMap
+ */
 function LoadMap(mapName, callback) {
 	re.world = new WorldData();
 
@@ -41,6 +44,9 @@ function LoadMap(mapName, callback) {
 	});
 }
 
+/**
+ * BrightnessAdjust
+ */
 function BrightnessAdjust(color, factor) {
 	var scale = 1.0, temp = 0.0;
 
@@ -59,6 +65,9 @@ function BrightnessAdjust(color, factor) {
 	return color;
 }
 
+/**
+ * ColorToVec
+ */
 function ColorToVec(color) {
 	var r, g, b;
 
@@ -78,6 +87,9 @@ function ColorToVec(color) {
 	return [r, g, b, color[3] / 255];
 }
 
+/**
+ * ShaderForShaderNum
+ */
 function ShaderForShaderNum(shaderNum, lightmapNum) {
 	var shaders = re.world.shaders;
 	if (shaderNum < 0 || shaderNum >= shaders.length) {
@@ -89,6 +101,9 @@ function ShaderForShaderNum(shaderNum, lightmapNum) {
 	return shader;
 }
 
+/**
+ * LoadShaders
+ */
 function LoadShaders(buffer, shaderLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = shaderLump.fileofs;
@@ -104,6 +119,9 @@ function LoadShaders(buffer, shaderLump) {
 	}
 }
 
+/**
+ * LoadLightmaps
+ */
 function LoadLightmaps(buffer, lightmapLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = lightmapLump.fileofs;
@@ -165,6 +183,9 @@ function LoadLightmaps(buffer, lightmapLump) {
 	CreateImage('*lightmap', re.world.lightmaps, textureSize, textureSize);
 }
 
+/**
+ * LoadSurfaces
+ */
 function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 
@@ -282,6 +303,9 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 	}
 }
 
+/**
+ * ParseMesh
+ */
 function ParseMesh(dface, face, level) {
 	var verts = re.world.verts;
 	var meshVerts = re.world.meshVerts;
@@ -319,6 +343,9 @@ function ParseMesh(dface, face, level) {
 	}
 }
 
+/**
+ * ParseFace
+ */
 function ParseFace(dface, face) {
 	var verts = re.world.verts;
 
@@ -331,6 +358,9 @@ function ParseFace(dface, face) {
 	face.plane.type = PlaneTypeForNormal(face.plane.normal);
 }
 
+/**
+ * LoadPlanes
+ */
 function LoadPlanes(buffer, planeLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = planeLump.fileofs;
@@ -347,6 +377,9 @@ function LoadPlanes(buffer, planeLump) {
 	}
 }
 
+/**
+ * LoadNodesAndLeafs
+ */
 function LoadNodesAndLeafs(buffer, nodeLump, leafLump, leafSurfacesLump) {
 	var world = re.world;
 	var planes = world.planes;
@@ -432,6 +465,9 @@ function LoadNodesAndLeafs(buffer, nodeLump, leafLump, leafSurfacesLump) {
 	setParent_r(allNodes[0], null);
 }
 
+/**
+ * LoadVisibility
+ */
 function LoadVisibility(buffer, visLump) {
 	var world = re.world;
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);

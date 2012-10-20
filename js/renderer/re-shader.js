@@ -1,10 +1,11 @@
-
+/**
+ * InitShaders
+ */
 function InitShaders(callback) {
 	// TODO there are some serious race conditions here, as we don't wait for these to finish loading
 	// Thankfully these almost always finish before the map loads.
 	ScanAndLoadShaderPrograms(function () {
 		InitDefaultShaders();
-		InitDebugShaders();
 
 		ScanAndLoadShaderScripts(function () {
 			if (callback) callback();
@@ -12,13 +13,14 @@ function InitShaders(callback) {
 	});
 }
 
+/**
+ * InitDefaultShaders
+ */
 function InitDefaultShaders() {
 	// These default programs are used to render textures without a shader.
 	re.defaultProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
 	re.defaultModelProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['defaultModel.fp']);
-}
 
-function InitDebugShaders() {
 	// Register green debug shader.
 	var debugGreenShader = new Shader();
 	var debugGreenShaderStage = new ShaderStage();
@@ -30,6 +32,9 @@ function InitDebugShaders() {
 	RegisterShader('debugGreenShader', debugGreenShader);
 }
 
+/**
+ * FindShader
+ */
 function FindShader(shaderName, lightmapIndex) {
 	var shader;
 
@@ -64,6 +69,9 @@ function FindShader(shaderName, lightmapIndex) {
 	return (re.compiledShaders[shaderName] = shader);
 }
 
+/**
+ * RegisterShader
+ */
 function RegisterShader(shaderName, shader) {
 	if (re.sortedShaders.length === MAX_SHADERS) {
 		console.warn('RegisterShader - MAX_SHADERS hit');
@@ -75,6 +83,9 @@ function RegisterShader(shaderName, shader) {
 	return (re.compiledShaders[shaderName] = shader);
 }
 
+/**
+ * SortShader
+ */
 function SortShader(shader) {
 	var sortedShaders = re.sortedShaders;
 	var sort = shader.sort;
@@ -90,6 +101,9 @@ function SortShader(shader) {
 	sortedShaders[i+1] = shader;
 }
 
+/**
+ * ScanAndLoadShaderScripts
+ */
 function ScanAndLoadShaderScripts(callback) {
 	var allShaders = [
 		'scripts/base.shader', 'scripts/base_button.shader', 'scripts/base_floor.shader',
@@ -115,6 +129,9 @@ function ScanAndLoadShaderScripts(callback) {
 	}
 }
 
+/**
+ * LoadShaderScript
+ */
 function LoadShaderScript(path, callback) {
 	cl.ReadFile(path, 'utf8', function (err, data) {
 		if (err) throw err;
@@ -147,6 +164,9 @@ function LoadShaderScript(path, callback) {
 	});
 }
 
+/**
+ * ScanAndLoadShaderPrograms
+ */
 function ScanAndLoadShaderPrograms(callback) {
 	var allPrograms = [
 		'programs/default.vp', 'programs/world.vp',
@@ -165,6 +185,9 @@ function ScanAndLoadShaderPrograms(callback) {
 	}
 }
 
+/**
+ * LoadShaderProgram
+ */
 function LoadShaderProgram(path, callback) {
 	cl.ReadFile(path, 'utf8', function (err, data) {
 		if (err) throw err;
@@ -177,6 +200,8 @@ function LoadShaderProgram(path, callback) {
 }
 
 /**
+ * CompileShaderProgram
+ *
  * Compilex vertex and fragment source into a WebGL
  * shader program, and properties to returned object
  * to easily modify shader parameters.
@@ -230,6 +255,9 @@ function CompileShaderProgram(vertexSrc, fragmentSrc) {
 	return shaderProgram;
 }
 
+/**
+ * SetShader
+ */
 function SetShader(shader) {
 	if (shader.cull) {
 		gl.enable(gl.CULL_FACE);
@@ -239,6 +267,9 @@ function SetShader(shader) {
 	}
 }
 
+/**
+ * SetShaderStage
+ */
 function SetShaderStage(shader, stage, time) {
 	if (!time || isNaN(time)) {
 		throw new Error('Invalid time for shader');
@@ -281,8 +312,14 @@ function SetShaderStage(shader, stage, time) {
 }
 
 /**********************************************************
+ *
  * Q3 Shader parser
+ *
  **********************************************************/
+
+/**
+ * ParseShader
+ */
 function ParseShader(shaderText, lightmapIndex) {
 	var tokens = new ShaderTokenizer(shaderText);
 	var shader = new Q3Shader();
@@ -396,6 +433,9 @@ function ParseShader(shaderText, lightmapIndex) {
 	return shader;
 }
 
+/**
+ * ParseShaderStage
+ */
 function ParseShaderStage(shader, tokens) {
 	var stage = new Q3ShaderStage();
 
@@ -554,6 +594,9 @@ function ParseShaderStage(shader, tokens) {
 	return stage;
 }
 
+/**
+ * ParseWaveform
+ */
 function ParseWaveform(tokens) {
 	return {
 		funcName: tokens.next().toLowerCase(),
@@ -564,9 +607,12 @@ function ParseWaveform(tokens) {
 	};
 }
 
-/**********************************************************
- * Translate the shaders into WebGL ready shaders.
- **********************************************************/
+
+/**
+ * TranslateShader
+ * 
+ * Translate a parsed q3 shader into WebGL ready shaders.
+ */
 function TranslateShader(q3shader) {
 	var shader = new Shader();
 
@@ -600,6 +646,9 @@ function TranslateShader(q3shader) {
 	return shader;
 }
 
+/**
+ * TranslateDepthFunc
+ */
 function TranslateDepthFunc(depth) {
 	if (!depth) { return gl.LEQUAL; }
 
@@ -613,6 +662,9 @@ function TranslateDepthFunc(depth) {
 	}
 }
 
+/**
+ * TranslateCull
+ */
 function TranslateCull(cull) {
 	if (!cull) { return gl.FRONT; }
 
@@ -625,6 +677,9 @@ function TranslateCull(cull) {
 	}
 }
 
+/**
+ * TranslateBlend
+ */
 function TranslateBlend(blend) {
 	if (!blend) { return gl.ONE; }
 
@@ -641,6 +696,9 @@ function TranslateBlend(blend) {
 	}
 }
 
+/**
+ * GenerateVertexShader
+ */
 function GenerateVertexShader(q3shader, stage) {
 	var builder = new ShaderBuilder();
 
@@ -769,6 +827,9 @@ function GenerateVertexShader(q3shader, stage) {
 	return builder.getSource();
 }
 
+/**
+ * GenerateFragmentShader
+ */
 function GenerateFragmentShader(q3shader, stage) {
 	var builder = new ShaderBuilder();
 
@@ -843,9 +904,12 @@ function GenerateFragmentShader(q3shader, stage) {
 	return builder.getSource();
 }
 
-/**********************************************************
+
+/**
+ * ShaderBuilder
+ * 
  * Helper class for writing WebGL shaders
- **********************************************************/
+ */
 var ShaderBuilder = function () {
 	this.attrib = {};
 	this.varying = {};
@@ -955,9 +1019,11 @@ ShaderBuilder.prototype.addTriangleFunc = function() {
 	]);
 };
 
-/**********************************************************
- * Tokenize q3 shaders
- **********************************************************/
+/**
+ * ShaderTokenizer
+ * 
+ * Help tokenize q3 shaders.
+ */
 var ShaderTokenizer = function (src) {
 	// Strip out comments
 	src = src.replace(/\/\/.*$/mg, ''); // C++ style (//...)

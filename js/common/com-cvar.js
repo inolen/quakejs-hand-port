@@ -1,5 +1,6 @@
 var cvars = {};
 
+// TODO move to com-defines.
 function Cvar(defaultValue, changeCallback) {
 	var currentValue = defaultValue;
 
@@ -19,12 +20,18 @@ function Cvar(defaultValue, changeCallback) {
 	};
 }
 
+/**
+ * AddCvar
+ */
 function AddCvar(name, defaultValue, changeCallback) {
 	var cvar = new Cvar(defaultValue, changeCallback);
 	cvars[name] = cvar;
 	return cvar;
 };
 
+/**
+ * GetCvar
+ */
 function GetCvar(name) {
 	var cvar = cvars[name];
 
@@ -36,6 +43,9 @@ function GetCvar(name) {
 	return cvar();
 }
 
+/**
+ * SetCvar
+ */
 function SetCvar(name, value) {
 	var cvar = cvars[name];
 

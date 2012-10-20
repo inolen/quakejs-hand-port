@@ -1,11 +1,9 @@
-/*
-=============
-BuildClientSnapshot
-
-Decides which entities are going to be visible to the client, and
-copies off the playerstate and areabits.
-=============
-*/
+/**
+ * BuildClientSnapshot
+ * 
+ * Decides which entities are going to be visible to the client, and
+ * copies off the playerstate and areabits.
+ */
 function BuildClientSnapshot(client, msg) {
 	var clent = client.gentity;
 	if (!clent || client.state === ClientState.ZOMBIE) {
@@ -38,6 +36,9 @@ function BuildClientSnapshot(client, msg) {
 	return true;
 }
 
+/**
+ * AddEntitiesVisibleFromPoint
+ */
 function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 	/*leafnum = cm.PointLeafnum (origin);
 	clientarea = cm.LeafArea (leafnum);
@@ -152,6 +153,9 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 	}
 }
 
+/**
+ * AddEntToSnapshot
+ */
 function AddEntToSnapshot(svEnt, gEnt, eNums) {
 	// If we have already added this entity to this snapshot, don't add again.
 	if (svEnt.snapshotCounter === sv.snapshotCounter) {
@@ -163,6 +167,9 @@ function AddEntToSnapshot(svEnt, gEnt, eNums) {
 	eNums.push(gEnt.s.number);
 }
 
+/**
+ * SendClientSnapshot
+ */
 function SendClientSnapshot(client) {
 	if (!BuildClientSnapshot(client)) {
 		return;
@@ -268,6 +275,9 @@ function SendClientSnapshot(client) {
 	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }
 
+/**
+ * SendClientMessages
+ */
 function SendClientMessages() {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];

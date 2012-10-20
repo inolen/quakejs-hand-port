@@ -17,6 +17,9 @@ var WorldSector = function () {
 	this.entities = {};
 };
 
+/**
+ * SectorListCmd
+ */
 function SectorListCmd() {	
 	for (var i = 0; i < worldSectors.length; i++) {
 		var node = worldSectors[i];
@@ -24,6 +27,9 @@ function SectorListCmd() {
 	}
 }
 
+/**
+ * ClearWorld
+ */
 function ClearWorld() {
 	worldSectors = [];
 
@@ -37,6 +43,8 @@ function ClearWorld() {
 }
 
 /**
+ * CreateWorldSector
+ *
  * Builds a uniformly subdivided tree for the given world size
  */
 function CreateWorldSector(depth, mins, maxs) {
@@ -69,6 +77,9 @@ function CreateWorldSector(depth, mins, maxs) {
 	return node;
 }
 
+/**
+ * FindEntitiesInBox
+ */
 function FindEntitiesInBox(mins, maxs) {
 	var entityNums = [];
 
@@ -111,6 +122,9 @@ function FindEntitiesInBox(mins, maxs) {
 	return entityNums;
 }
 
+/**
+ * RadiusFromBounds
+ */
 // TODO move to com-math
 function RadiusFromBounds(mins, maxs) {
 	var corner = [0, 0, 0];
@@ -124,6 +138,9 @@ function RadiusFromBounds(mins, maxs) {
 	return vec3.length(corner);
 }
 
+/**
+ * LinkEntity
+ */
 function LinkEntity(gent) {
 	var ent = SvEntityForGentity(gent);
 
@@ -270,6 +287,9 @@ function LinkEntity(gent) {
 	node.entities[ent.number] = ent;
 }
 
+/**
+ * UnlinkEntity
+ */
 function UnlinkEntity(gent) {
 	var ent = SvEntityForGentity(gent);
 	var node = ent.worldSector;

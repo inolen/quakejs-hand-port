@@ -1,6 +1,9 @@
 var http = require('http');
 var WebSocketServer = require('websocket').server;
 
+/**
+ * NetCreateServer
+ */
 function NetCreateServer() {
 	var server = http.createServer();
 	var wsServer = new WebSocketServer({

@@ -6,6 +6,7 @@
 
 /**
  * BoxLeafnums
+ *
  * Fills in a list of all the leafs touched
  */
 function BoxLeafnums_r(ll, mins, maxs, nodenum) {
@@ -33,6 +34,9 @@ function BoxLeafnums_r(ll, mins, maxs, nodenum) {
 	}
 }
 
+/**
+ * BoundsIntersect
+ */
 function BoundsIntersect(mins, maxs, mins2, maxs2) {
 	if (maxs[0] < mins2[0] - SURFACE_CLIP_EPSILON ||
 		maxs[1] < mins2[1] - SURFACE_CLIP_EPSILON ||

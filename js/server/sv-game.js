@@ -1,7 +1,13 @@
+/**
+ * GentityForNum
+ */
 function GentityForNum(num) {
 	return sv.gameEntities[num];
 }
 
+/**
+ * SvEntityForGentity
+ */
 function SvEntityForGentity(gent) {
 	var num = gent.s.number;
 
@@ -18,6 +24,9 @@ function SvEntityForGentity(gent) {
 	return ent;
 }
 
+/**
+ * GentityForSvEntity
+ */
 function GentityForSvEntity(ent) {
 	var num = ent.number;
 
@@ -28,11 +37,17 @@ function GentityForSvEntity(ent) {
 	return sv.gameEntities[num];
 }
 
+/**
+ * LocateGameData
+ */
 function LocateGameData(gameEntities, gameClients) {
 	sv.gameEntities = gameEntities;
 	sv.gameClients = gameClients;
 }
 
+/**
+ * GetUserCommand
+ */
 function GetUserCommand(clientNum, cmd) {
 	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
 		throw new Error('GetUsercmd: bad clientNum: ' + clientNum);
@@ -41,6 +56,9 @@ function GetUserCommand(clientNum, cmd) {
 	svs.clients[clientNum].lastUserCmd.clone(cmd);
 }
 
+/**
+ * SetBrushModel
+ */
 function SetBrushModel(gent, name) {
 	if (!name) {
 		throw new Error('SV: SetBrushModel: null');

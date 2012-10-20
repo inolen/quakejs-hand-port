@@ -1,3 +1,6 @@
+/**
+ * AimAtTarget
+ */
 function AimAtTarget(self) {
 	var origin = vec3.add(self.absmin, self.absmax, [0, 0, 0]);
 	vec3.scale(origin, 0.5);

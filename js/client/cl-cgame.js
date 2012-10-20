@@ -1,7 +1,13 @@
+/**
+ * GetCurrentUserCommandNumber
+ */
 function GetCurrentUserCommandNumber() {
 	return cl.cmdNumber;
 }
 
+/**
+ * GetUserCommand
+ */
 function GetUserCommand(cmdNumber) {
 	// cmds[cmdNumber] is the last properly generated command.
 
@@ -79,6 +85,9 @@ function AdjustTimeDelta() {
 	}
 }
 
+/**
+ * SetCGameTime
+ */
 function SetCGameTime() {
 	// Getting a valid frame message ends the connection process.
 	if (clc.state !== ConnectionState.ACTIVE) {
@@ -130,6 +139,9 @@ function SetCGameTime() {
 	}
 }
 
+/**
+ * FirstSnapshot
+ */
 function FirstSnapshot() {
 	// Ignore snapshots that don't have entities.
 	if (cl.snap.snapFlags & SNAPFLAG_NOT_ACTIVE) {
@@ -143,6 +155,9 @@ function FirstSnapshot() {
 	cl.oldServerTime = cl.snap.serverTime;
 }
 
+/**
+ * GetCurrentSnapshotNumber
+ */
 function GetCurrentSnapshotNumber() {
 	return {
 		snapshotNumber: cl.snap.messageNum,
@@ -150,6 +165,9 @@ function GetCurrentSnapshotNumber() {
 	};
 }
 
+/**
+ * GetSnapshot
+ */
 function GetSnapshot(snapshotNumber) {
 	if (snapshotNumber > cl.snap.messageNum) {
 		throw new Error('GetSnapshot: snapshotNumber > cl.snapshot.messageNum');

@@ -1,3 +1,6 @@
+/**
+ * ReadFile
+ */
 function ReadFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 

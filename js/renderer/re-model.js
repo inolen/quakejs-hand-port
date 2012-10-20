@@ -1,3 +1,6 @@
+/**
+ * GetModelByHandle
+ */
 function GetModelByHandle(index) {
 	// Out of range gets the default model.
 	if (index < 1 || index >= re.models.length) {
@@ -43,7 +46,9 @@ function RegisterModel(name) {
 	return hModel;
 }
 
-
+/**
+ * RegisterMd3
+ */
 function RegisterMd3(mod, name) {
 	var done = 0;
 
@@ -88,6 +93,9 @@ function RegisterMd3(mod, name) {
 	}
 }
 
+/**
+ * LoadMd3
+ */
 function LoadMd3 (filename, callback) {
 	cl.ReadFile(filename, 'binary', function (err, data) {
 		if (err) return callback(err);

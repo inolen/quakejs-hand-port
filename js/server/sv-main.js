@@ -9,6 +9,9 @@ var sv_serverid;
 var sv_mapname;
 var sv_fps;
 
+/**
+ * Init
+ */
 function Init(cominterface, isdedicated) {
 	com = cominterface;
 	dedicated = isdedicated;
@@ -29,6 +32,11 @@ function Init(cominterface, isdedicated) {
 	}, 50);
 }
 
+/**
+ * FrameMsec
+ * 
+ * Calculate the # of milliseconds for a single frame.
+ */
 function FrameMsec() {
 	var fps = sv_fps();
 	var frameMsec = 1000 / fps;
@@ -40,6 +48,9 @@ function FrameMsec() {
 	return frameMsec;
 }
 
+/**
+ * Frame
+ */
 function Frame(frameTime, msec) {
 	svs.frameTime = frameTime;
 	
@@ -68,6 +79,9 @@ function Frame(frameTime, msec) {
 	}
 }
 
+/**
+ * PacketEvent
+ */
 function PacketEvent(addr, buffer) {
 	if (!svs.initialized) {
 		return;
@@ -93,6 +107,9 @@ function PacketEvent(addr, buffer) {
 	}
 }
 
+/**
+ * SpawnServer
+ */
 function SpawnServer(mapName) {
 	console.log('--------- SV SpawnServer ---------');
 	console.log('Spawning new server for ' + mapName);
@@ -176,3 +193,88 @@ function SpawnServer(mapName) {
 		svs.initialized = true;
 	});
 }
+
+// /**
+//  * SendConfigString
+//  *
+//  * Creates and sends the server command necessary to update the CS index for the
+//  * given client.
+//  */
+// function SendConfigstring(client, index) {
+// 	SendServerCommand(client, 'cs %i "%s"\n', index, sv.configstrings[index]);
+// }
+
+// /**
+//  * UpdateConfigstrings
+//  * 
+//  * Called when a client goes from CS_PRIMED to CS_ACTIVE. Updates all
+//  * Configstring indexes that have changed while the client was in CS_PRIMED.
+//  */
+// function UpdateConfigstrings(client) {
+// 	for (var index = 0; index <= MAX_CONFIGSTRINGS; index++) {
+// 		// If the CS hasn't changed since we went to CS_PRIMED, ignore.
+// 		if (!client.csUpdated[index]) {
+// 			continue;
+// 		}
+
+// 		SendConfigstring(client, index);
+// 		client.csUpdated[index] = false;
+// 	}
+// }
+
+// function SetConfigstring(index, val) {
+// 	if (index < 0 || index >= MAX_CONFIGSTRINGS) {
+// 		throw new Error('SetConfigstring: bad index ' + index);
+// 	}
+
+// 	// Don't bother broadcasting an update if no change.
+// 	if (val === sv.configstrings[index])) {
+// 		return;
+// 	}
+
+// 	// Change the string in sv.
+// 	sv.configstrings[index] = val;
+
+// 	// Send it to all the clients if we aren't spawning a new server.
+// 	if (sv.state == SS_GAME || sv.restarting) {
+// 		// Send the data to all relevent clients
+// 		for (var i = 0; i < MAX_CLIENTS; i++) {
+// 			var client = svs.clients[i];
+
+// 			if (client.state < ClientState.ACTIVE) {
+// 				if (client.state === CS_PRIMED) {
+// 					client.csUpdated[index] = true;
+// 				}
+// 				continue;
+// 			}
+		
+// 			SendConfigstring(client, index);
+// 		}
+// 	}
+// }
+
+// function GetConfigstring(index) {
+// 	if (index < 0 || index >= MAX_CONFIGSTRINGS) {
+// 		throw new Error('GetConfigstring: bad index ' + index);
+// 	}
+
+// 	return sv.configstrings[index];
+// }
+
+// function SetUserinfo(index, val) {
+// 	if (index < 0 || index >= MAX_CLIENTS) {
+// 		throw new Error('SetUserinfo: bad index ' + index);
+// 	}
+
+// 	svs.clients[index].userinfo = val;
+// 	svs.clients[index].name = Info_ValueForKey( val, "name" );
+// }
+
+
+// function GetUserinfo(index) {
+// 	if (index < 0 || index >= MAX_CLIENTS) {
+// 		throw new Error('GetUserinfo: bad index ' + index);
+// 	}
+
+// 	return svs.clients[index].userinfo;
+// }

@@ -1,12 +1,9 @@
-
-/*
-============
-TouchTriggers
-
-Find all trigger entities that ent's current position touches.
-Spectators will only interact with teleporters.
-============
-*/
+/**
+ * TouchTriggers
+ *
+ * Find all trigger entities that ent's current position touches.
+ * Spectators will only interact with teleporters.
+ */
 function TouchTriggers(ent) {
 	if (!ent.client) {
 		return;

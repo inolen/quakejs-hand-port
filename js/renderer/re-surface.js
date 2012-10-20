@@ -1,3 +1,6 @@
+/**
+ * AddEntitySurfaces
+ */
 function AddEntitySurfaces() {
 	for (var i = 0; i < re.refdef.numRefEntities; i++) {
 		var refent = re.refdef.refEntities[i];
@@ -29,6 +32,9 @@ function AddEntitySurfaces() {
 	}
 }
 
+/**
+ * AddBboxSurfaces
+ */
 function AddBboxSurfaces(refent) {
 	var face = re.bboxSurfaces[re.bboxSurfaceNum++ % MAX_BBOX_SURFACES];
 
@@ -38,6 +44,9 @@ function AddBboxSurfaces(refent) {
 	AddDrawSurf(face, face.shader, refent.index);
 }
 
+/**
+ * AddMd3Surfaces
+ */
 function AddMd3Surfaces(refent) {
 	var model = GetModelByHandle(refent.hModel);
 
@@ -150,6 +159,9 @@ function AddMd3Surfaces(refent) {
 	}
 }
 
+/**
+ * TesselateFace
+ */
 function TesselateFace(tess, face) {
 	var verts = re.world.verts;
 	var meshVerts = re.world.meshVerts;
@@ -187,6 +199,9 @@ function TesselateFace(tess, face) {
 	}
 }
 
+/**
+ * TesselateMd3
+ */
 function TesselateMd3(tess, face) {
 	/*if (  backEnd.currentEntity->e.oldframe == backEnd.currentEntity->e.frame ) {
 		backlerp = 0;
@@ -274,6 +289,9 @@ var bboxIndexes = [
 	20, 21, 22,     20, 22, 23    // left
 ];
 
+/**
+ * TesselateBbox
+ */
 function TesselateBbox(face) {
 	var vertexOffset = tess.numVertexes * 14;
 	var indexOffset = tess.numVertexes;

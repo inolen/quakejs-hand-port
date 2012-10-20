@@ -1,3 +1,6 @@
+/**
+ * ParseServerMessage
+ */
 function ParseServerMessage(msg) {
 	// Get the reliable sequence acknowledge number.
 	clc.reliableAcknowledge = msg.readInt();
@@ -14,6 +17,9 @@ function ParseServerMessage(msg) {
 	}
 }
 
+/**
+ * ParseGameState
+ */
 function ParseGameState(msg) {
 	// Wipe local client state.
 	ClearState();
@@ -33,6 +39,9 @@ function ParseGameState(msg) {
 	InitCGame();
 }
 
+/**
+ * ParseSnapshot
+ */
 function ParseSnapshot(msg) {
 	var newSnap = new ClientSnapshot();
 
@@ -126,6 +135,9 @@ function ParseSnapshot(msg) {
 	cl.newSnapshots = true;
 }
 
+/**
+ * ParsePacketPlayerstate
+ */
 function ParsePacketPlayerstate(msg, snap) {
 	snap.ps.clientNum = msg.readInt();
 	snap.ps.commandTime = msg.readInt();
@@ -148,6 +160,9 @@ function ParsePacketPlayerstate(msg, snap) {
 	snap.ps.delta_angles[2] = msg.readShort();
 }
 
+/**
+ * ParsePacketEntities
+ */
 function ParsePacketEntities(msg, snap) {	
 	snap.parseEntitiesNum = cl.parseEntitiesNum;
 

@@ -3,6 +3,9 @@ var viewportFrame = document.getElementById('viewport-frame');
 var viewport = document.getElementById('viewport');
 var viewportUi = document.getElementById('viewport-ui');
 
+/**
+ * Init
+ */
 function Init() {
 	// Get the GL Context (try 'webgl' first, then fallback).
 	gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
@@ -30,8 +33,12 @@ function Init() {
 	window.requestAnimationFrame(onRequestedFrame, viewport);
 }
 
-// Utility function that tests a list of webgl contexts and returns when one can be created
-// Hopefully this future-proofs us a bit
+/**
+ * GetAvailableContext
+ *
+ * Utility function that tests a list of webgl contexts and returns when one can be created.
+ * Hopefully this future-proofs us a bit.
+ */
 function GetAvailableContext(canvas, contextList) {
 	if (canvas.getContext) {
 		for (var i = 0; i < contextList.length; ++i) {
@@ -46,6 +53,9 @@ function GetAvailableContext(canvas, contextList) {
 	return null;
 }
 
+/**
+ * FullscreenChanged
+ */
 function FullscreenChanged() {
 	if (document.fullscreenEnabled) {
 		viewport.width = screen.width;
@@ -59,6 +69,9 @@ function FullscreenChanged() {
 	}
 }
 
+/**
+ * GetGameRenderContext
+ */
 function GetGameRenderContext() {
 	var ctx = new RenderContext();
 	ctx.handle = viewport;
@@ -66,12 +79,18 @@ function GetGameRenderContext() {
 	return ctx;
 }
 
+/**
+ * GetUIRenderContext
+ */
 function GetUIRenderContext() {
 	var ctx = new RenderContext();
 	ctx.handle = viewportUi;
 	return ctx;
 }
 
+/**
+ * GetMilliseconds
+ */
 function GetMilliseconds() {
 	if (window.performance.now) {
 		return parseInt(window.performance.now());

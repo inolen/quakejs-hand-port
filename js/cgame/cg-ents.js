@@ -1,3 +1,6 @@
+/**
+ * AddPacketEntities
+ */
 function AddPacketEntities() {
 	// set cg.frameInterpolation
 	if (cg.nextSnap) {
@@ -36,6 +39,9 @@ function AddPacketEntities() {
 	}
 }
 
+/**
+ * AddCEntity
+ */
 function AddCEntity(cent) {
 	// Event-only entities will have been dealt with already.
 	if (cent.currentState.eType >= EntityType.EVENTS) {
@@ -45,38 +51,42 @@ function AddCEntity(cent) {
 	// Calculate the current origin.
 	CalcEntityLerpPositions(cent);
 
-	if (cent.currentState.eType === EntityType.ITEM) {
-		var refent = new RefEntity();
-		var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
+	switch (cent.currentState.eType) {
+		case EntityType.ITEM:
+			var refent = new RefEntity();
+			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
 
-		// Autorotate at one of two speeds.
-		if (cent.giType === ItemType.HEALTH) {
-			vec3.set(cg.autoAnglesFast, cent.lerpAngles);
-		} else {
-			vec3.set(cg.autoAngles, cent.lerpAngles);
-		}
+			// Autorotate at one of two speeds.
+			if (cent.giType === ItemType.HEALTH) {
+				vec3.set(cg.autoAnglesFast, cent.lerpAngles);
+			} else {
+				vec3.set(cg.autoAngles, cent.lerpAngles);
+			}
 
-		for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-			refent.reType = RefEntityType.MODEL;
-			vec3.set(cent.lerpOrigin, refent.origin);
-			AnglesToAxis(cent.lerpAngles, refent.axis);
-			refent.hModel = itemInfo.modelHandles[i];
-			
-			cl.AddRefEntityToScene(refent);
-		}
-	} else if (cent.currentState.eType == EntityType.PLAYER) {
-		var refent = new RefEntity();
-		if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
-			refent.reType = RefEntityType.BBOX;
-			
-			vec3.set(cent.lerpOrigin, refent.origin);
-			AnglesToAxis(cent.lerpAngles, refent.axis);
+			for (var i = 0; i < itemInfo.modelHandles.length; i++) {
+				refent.reType = RefEntityType.MODEL;
+				vec3.set(cent.lerpOrigin, refent.origin);
+				AnglesToAxis(cent.lerpAngles, refent.axis);
+				refent.hModel = itemInfo.modelHandles[i];
+				
+				cl.AddRefEntityToScene(refent);
+			}
+			break;
 
-			vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
-			vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
+		case EntityType.PLAYER:
+			var refent = new RefEntity();
+			if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
+				refent.reType = RefEntityType.BBOX;
+				
+				vec3.set(cent.lerpOrigin, refent.origin);
+				AnglesToAxis(cent.lerpAngles, refent.axis);
 
-			cl.AddRefEntityToScene(refent);
-		}
+				vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
+				vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
+
+				cl.AddRefEntityToScene(refent);
+			}
+			break;
 	}
 
 	// add automatic effects
@@ -123,6 +133,9 @@ function AddCEntity(cent) {
 	}*/
 }
 
+/**
+ * CalcEntityLerpPositions
+ */
 function CalcEntityLerpPositions(cent) {
 	// Make sure the clients use TrajectoryType.INTERPOLATE.
 	if (cent.currentState.number < MAX_CLIENTS) {
@@ -156,6 +169,9 @@ function CalcEntityLerpPositions(cent) {
 	}*/
 }
 
+/**
+ * InterpolateEntityPosition
+ */
 function InterpolateEntityPosition(cent) {
 	// It would be an internal error to find an entity that interpolates without
 	// a snapshot ahead of the current one

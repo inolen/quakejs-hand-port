@@ -9,6 +9,9 @@ var cl_showTimeDelta;
 var commands = {};
 var keys = {};
 
+/**
+ * Init
+ */
 function Init(cominterface) {
 	console.log('--------- CL Init ---------');
 
@@ -35,12 +38,18 @@ function Init(cominterface) {
 	}, 100);
 }
 
+/**
+ * ClearState
+ */
 function ClearState() {
 	console.log('Clearing client state');
 
 	cl = new ClientLocals();
 }
 
+/**
+ * InitCGame
+ */
 function InitCGame() {
 	var cginterface = {
 		AddCmd:                      com.AddCmd,
@@ -69,10 +78,16 @@ function InitCGame() {
 	clc.state = ConnectionState.PRIMED;
 }
 
+/**
+ * ShutdownCGame
+ */
 function ShutdownCGame() {
 	cg.Shutdown();
 }
 
+/**
+ * InitRenderer
+ */
 function InitRenderer() {
 	var reinterface = {
 		AddCmd:                      com.AddCmd,
@@ -86,10 +101,16 @@ function InitRenderer() {
 	re.Init(reinterface);
 }
 
+/**
+ * ShutdownRenderer
+ */
 function ShutdownRenderer() {
 	re.Shutdown();
 }
 
+/**
+ * Frame
+ */
 function Frame(frameTime, msec) {
 	cls.frameTime = frameTime;
 
@@ -108,6 +129,9 @@ function Frame(frameTime, msec) {
 	UpdateScreen();
 }
 
+/**
+ * UpdateScreen
+ */
 function UpdateScreen() {
 	switch (clc.state) {
 		case ConnectionState.DISCONNECTED:
@@ -123,6 +147,9 @@ function UpdateScreen() {
 	}
 }
 
+/**
+ * MapLoading
+ */
 function MapLoading() {
 	if (clc.state >= ConnectionState.CONNECTED /*&& !Q_stricmp( clc.servername, "localhost" ) */) {
 		clc.state = ConnectionState.CONNECTED;		// so the connect screen is drawn
@@ -146,6 +173,9 @@ function MapLoading() {
 	}
 }
 
+/**
+ * Disconnect
+ */
 function Disconnect(showMainMenu) {
 	/*if (!com_cl_running || !com_cl_running->integer) {
 		return;
@@ -197,7 +227,9 @@ function AddReliableCommand(cmd/*, isDisconnectCmd*/) {
 	clc.reliableCommands[++clc.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
 }
 
-
+/**
+ * PacketEvent
+ */
 function PacketEvent(addr, buffer) {
 	if (!cls.initialized) {
 		return;
@@ -223,6 +255,9 @@ function PacketEvent(addr, buffer) {
 	ParseServerMessage(msg);
 }
 
+/**
+ * ParseStringMessage
+ */
 function ParseStringMessage(addr, msg) {
 	msg.readInt();  // Skip the -1.
 

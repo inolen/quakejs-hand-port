@@ -18,15 +18,13 @@ var groundPlane;
 var walking;
 var msec;
 
-/*
-============
-PM_CmdScale
-
-Returns the scale factor to apply to cmd movements
-This allows the clients to use axial -127 to 127 values for all directions
-without getting a sqrt(2) distortion in speed.
-============
-*/
+/**
+ * CmdScale
+ *
+ * Returns the scale factor to apply to cmd movements
+ * This allows the clients to use axial -127 to 127 values for all directions
+ * without getting a sqrt(2) distortion in speed.
+ */
 function CmdScale(cmd, speed) {
 	var max = Math.abs(cmd.forwardmove);
 	if (Math.abs(cmd.rightmove) > max) {
@@ -45,6 +43,9 @@ function CmdScale(cmd, speed) {
 	return scale;
 }
 
+/**
+ * Friction
+ */
 function Friction(pm, flying) {
 	var ps = pm.ps;
 
@@ -92,6 +93,9 @@ function Friction(pm, flying) {
 	vec3.scale(ps.velocity, newspeed);
 }
 
+/**
+ * ClipVelocity
+ */
 function ClipVelocity(vel, normal, overbounce) {
 	var backoff = vec3.dot(vel, normal);
 
@@ -105,6 +109,9 @@ function ClipVelocity(vel, normal, overbounce) {
 	return vec3.subtract(vel, change, [0, 0, 0]);
 }
 
+/**
+ * Accelerate
+ */
 function Accelerate(pm, wishdir, wishspeed, accel) {
 	var ps = pm.ps;
 	var currentspeed = vec3.dot(ps.velocity, wishdir);
@@ -123,6 +130,9 @@ function Accelerate(pm, wishdir, wishspeed, accel) {
 	vec3.add(ps.velocity, vec3.scale(wishdir, accelspeed, [0,0,0]));
 }
 
+/**
+ * CheckDuck
+ */
 function CheckDuck(pm) {
 	pm.mins[0] = -15;
 	pm.mins[1] = -15;
@@ -135,6 +145,9 @@ function CheckDuck(pm) {
 	pm.ps.viewheight = DEFAULT_VIEWHEIGHT;
 }
 
+/**
+ * CheckJump
+ */
 function CheckJump(pm) {
 	var ps = pm.ps;
 
@@ -169,6 +182,9 @@ function CheckJump(pm) {
 	return true;
 }
 
+/**
+ * GroundTrace
+ */
 function GroundTrace(pm) {
 	var ps = pm.ps;
 	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
@@ -219,6 +235,9 @@ function GroundTrace(pm) {
 	walking = true;
 }
 
+/**
+ * CorrectAllSolid
+ */
 function CorrectAllSolid(pm, trace) {
 	var ps = pm.ps;
 	var point = [0, 0, 0];
@@ -253,13 +272,18 @@ function CorrectAllSolid(pm, trace) {
 	return false;
 }
 
-
+/**
+ * GroundTraceMissed
+ */
 function GroundTraceMissed(pm) {
 	pm.ps.groundEntityNum = ENTITYNUM_NONE;
 	groundPlane = false;
 	walking = false;
 }
 
+/**
+ * SlideMove
+ */
 function SlideMove(pm, gravity) {
 	var ps = pm.ps;
 	var endVelocity = [0,0,0];
@@ -409,6 +433,9 @@ function SlideMove(pm, gravity) {
 	return bumpcount === 0;
 }
 
+/**
+ * StepSlideMove
+ */
 function StepSlideMove(pm, gravity) {
 	var ps = pm.ps;
 
@@ -474,6 +501,9 @@ function StepSlideMove(pm, gravity) {
 	}*/
 }
 
+/**
+ * FlyMove
+ */
 function FlyMove(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
@@ -494,6 +524,9 @@ function FlyMove(pm) {
 	StepSlideMove(pm, false);
 }
 
+/**
+ * AirMove
+ */
 function AirMove(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
@@ -528,6 +561,9 @@ function AirMove(pm) {
 	StepSlideMove(pm, true);
 }
 
+/**
+ * WalkMove
+ */
 function WalkMove(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
@@ -600,6 +636,9 @@ function WalkMove(pm) {
 	StepSlideMove(pm, false);
 }
 
+/**
+ * UpdateViewAngles
+ */
 function UpdateViewAngles(ps, cmd) {
 	for (var i = 0; i < 3; i++) {
 		// Circularly clamp uint16 to in16.
@@ -623,6 +662,9 @@ function UpdateViewAngles(ps, cmd) {
 	}
 }
 
+/**
+ * DropTimers
+ */
 function DropTimers(pm) {
 	var ps = pm.ps;
 
@@ -637,6 +679,9 @@ function DropTimers(pm) {
 	}
 }
 
+/**
+ * PmoveSingle
+ */
 function PmoveSingle(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
@@ -668,6 +713,9 @@ function PmoveSingle(pm) {
 	GroundTrace(pm);
 }
 
+/**
+ * Pmove
+ */
 function Pmove(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;

@@ -1,3 +1,6 @@
+/**
+ * ClientConnect
+ */
 function ClientConnect(addr, socket) {
 	console.log('SV: A client is connecting');
 
@@ -70,6 +73,9 @@ function DropClient(client, reason) {
 	client.state = ClientState.ZOMBIE;           // become free in a few seconds
 }
 
+/**
+ * ClientEnterWorld
+ */
 function ClientEnterWorld(client) {
 	var clientNum = svs.clients.indexOf(client);
 
@@ -81,6 +87,9 @@ function ClientEnterWorld(client) {
 	client.gentity = GentityForNum(clientNum);
 }
 
+/**
+ * UserMove
+ */
 function UserMove(client, msg, delta) {
 	var cmd = new UserCmd();
 
@@ -106,6 +115,9 @@ function UserMove(client, msg, delta) {
 	ClientThink(client, cmd);
 }
 
+/**
+ * ClientThink
+ */
 function ClientThink(client, cmd) {
 	var clientNum = GetClientNum(client);
 	
@@ -114,6 +126,9 @@ function ClientThink(client, cmd) {
 	gm.ClientThink(clientNum);
 }
 
+/**
+ * SendClientGameState
+ */
 function SendClientGameState(client) {
 	client.state = ClientState.PRIMED;
 	// When we receive the first packet from the client, we will
@@ -134,6 +149,9 @@ function SendClientGameState(client) {
 	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }
 
+/**
+ * UserinfoChanged
+ */
 function UserinfoChanged(client) {
 	var snaps = 20;
 
@@ -152,6 +170,9 @@ function UserinfoChanged(client) {
 	}
 }
 
+/**
+ * GetClientNum
+ */
 function GetClientNum(client) {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var c = svs.clients[i];
@@ -168,6 +189,9 @@ function GetClientNum(client) {
 	return -1;
 }
 
+/**
+ * Disconnect
+ */
 function Disconnect(client) {
 	DropClient(client, 'disconnected');
 }
@@ -177,6 +201,10 @@ function Disconnect(client) {
  * User message/command processing
  *
  **********************************************************/
+
+/**
+ * ExecuteClientMessage
+ */
 function ExecuteClientMessage(client, msg) {
 	var serverid = msg.readInt();
 
@@ -247,7 +275,9 @@ function ExecuteClientMessage(client, msg) {
 	}
 }
 
-
+/**
+ * ClientCommand
+ */
 function ClientCommand(client, msg) {
 	var sequence = msg.readInt();
 	var str = msg.readCString();
@@ -275,6 +305,9 @@ function ClientCommand(client, msg) {
 	return true; // continue procesing
 }
 
+/**
+ * ExecuteClientCommand
+ */
 function ExecuteClientCommand(client, str) {
 	// see if it is a server level command
 	/*for (u=ucmds ; u->name ; u++) {

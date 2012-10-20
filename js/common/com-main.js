@@ -5,6 +5,9 @@ var events;
 var frameTime;
 var lastFrameTime;
 
+/**
+ * Init
+ */
 function Init(sysinterface, isdedicated) {
 	sys = sysinterface;
 	dedicated = isdedicated;
@@ -51,6 +54,9 @@ function Init(sysinterface, isdedicated) {
 	}
 }
 
+/**
+ * Frame
+ */
 function Frame() {
 	lastFrameTime = frameTime;
 	frameTime = sys.GetMilliseconds();
@@ -66,6 +72,9 @@ function Frame() {
 	}
 }
 
+/**
+ * EventLoop
+ */
 function EventLoop() {
 	var ev = events.shift();
 
@@ -98,6 +107,9 @@ function EventLoop() {
 	}
 };
 
+/**
+ * QueueEvent
+ */
 function QueueEvent(ev) {
 	ev.time = sys.GetMilliseconds();
 	events.push(ev);

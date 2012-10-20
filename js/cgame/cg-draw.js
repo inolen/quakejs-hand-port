@@ -4,6 +4,9 @@ var previousTimes = new Array(FPS_FRAMES);
 var previousTime  = 0;
 var previousIdx   = 0;
 
+/**
+ * DrawFPS
+ */
 function DrawFPS() {
 	var t = cl.GetMilliseconds();
 	var frameTime = t - previousTime;

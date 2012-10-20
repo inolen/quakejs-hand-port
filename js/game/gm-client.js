@@ -1,6 +1,11 @@
 var playerMins = [-15, -15, -24];
 var playerMaxs = [15, 15, 32];
 
+/**
+ * ClientBegin
+ *
+ * Called when a client has connected and has the ACTIVE state.
+ */
 function ClientBegin(clientNum) {
 	var client = level.clients[clientNum] = new GameClient();
 	var ent = level.gentities[clientNum] = new GameEntity();
@@ -12,6 +17,9 @@ function ClientBegin(clientNum) {
 	ClientSpawn(ent);
 }
 
+/**
+ * ClientThink
+ */
 function ClientThink(clientNum) {
 	var client = level.clients[clientNum];
 	var ent = level.gentities[clientNum];
@@ -57,11 +65,17 @@ function ClientThink(clientNum) {
 	vec3.set(ent.client.ps.origin, ent.currentOrigin);
 }
 
+/**
+ * GetClientPlayerstate
+ */
 function GetClientPlayerstate(clientNum) {
 	var client = level.clients[clientNum];
 	return client.ps;
 }
 
+/**
+ * ClientSpawn
+ */
 function ClientSpawn(ent) {
 	var client = ent.client;
 	var ps = ent.client.ps;
@@ -111,6 +125,13 @@ function ClientDisconnect(clientNum) {
 	trap_SetConfigstring( CS_PLAYERS + clientNum, "");*/
 }
 
+/**
+ * SetClientViewAngle
+ *
+ * Set's the actual entitystate angles, as well as the
+ * delta_angles of the playerstate, which the client uses
+ * to offset it's own predicted angles when rendering.
+ */
 function SetClientViewAngle(ent, angles) {
 	// Set the delta angle.
 	for (var i = 0; i < 3; i++) {
@@ -121,6 +142,9 @@ function SetClientViewAngle(ent, angles) {
 	vec3.set(ent.s.angles, ent.client.ps.viewangles);
 }
 
+/**
+ * SelectNearestDeathmatchSpawnPoint
+ */
 function SelectNearestDeathmatchSpawnPoint(from) {
 	var nearestDist = 999999;
 	var nearestSpot = null;
@@ -139,6 +163,9 @@ function SelectNearestDeathmatchSpawnPoint(from) {
 	return nearestSpot;
 }
 
+/**
+ * SelectRandomDeathmatchSpawnPoint
+ */
 function SelectRandomDeathmatchSpawnPoint() {
 	var spawnpoints = FindEntity('classname', 'info_player_deathmatch');
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];

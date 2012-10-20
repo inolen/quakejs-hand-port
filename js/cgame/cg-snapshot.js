@@ -1,3 +1,6 @@
+/**
+ * ProcessSnapshots
+ */
 function ProcessSnapshots() {
 	var snap;
 
@@ -80,6 +83,9 @@ function ProcessSnapshots() {
 	}*/
 }
 
+/**
+ * ReadNextSnapshot
+ */
 function ReadNextSnapshot() {
 	if (cg.latestSnapshotNum > cgs.processedSnapshotNum + 1000) {
 		console.warn('ReadNextSnapshot: way out of range, ' + cg.latestSnapshotNum + ' > ' + cgs.processedSnapshotNum);
@@ -108,6 +114,9 @@ function ReadNextSnapshot() {
 	return null;
 }
 
+/**
+ * SetInitialSnapshot
+ */
 function SetInitialSnapshot(snap) {
 	cg.snap = snap;
 
@@ -129,6 +138,9 @@ function SetInitialSnapshot(snap) {
 	}
 }
 
+/**
+ * SetNextSnap
+ */
 function SetNextSnap(snap) {
 	cg.nextSnap = snap;
 
@@ -221,6 +233,9 @@ function TransitionSnapshot() {
 	}*/
 }
 
+/**
+ * ResetEntity
+ */
 function ResetEntity(cent) {
 	/*// If the previous snapshot this entity was updated in is at least
 	// an event window back in time then we can reset the previous event.
@@ -238,13 +253,11 @@ function ResetEntity(cent) {
 	}*/
 }
 
-/*
-===============
-TransitionEntity
-
-cent->nextState is moved to cent->currentState and events are fired
-===============
-*/
+/**
+ * TransitionEntity
+ *
+ * cent->nextState is moved to cent->currentState and events are fired.
+ */
 function TransitionEntity(cent) {
 	cent.currentState = cent.nextState;
 	cent.currentValid = true;

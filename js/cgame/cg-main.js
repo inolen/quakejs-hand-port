@@ -5,6 +5,9 @@ var cgs;
 var cg_errordecay;
 var cg_showmiss;
 
+/**
+ * Init
+ */
 function Init(clinterface, serverMessageNum) {
 	console.log('--------- CG Init ---------');
 
@@ -23,16 +26,75 @@ function Init(clinterface, serverMessageNum) {
 	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
 		cl.LoadRenderMap(cgs.gameState['sv_mapname'], function () {
 			RegisterGraphics();
+			RegisterClients();
 
 			cg.initialized = true;
 		});
 	});
 }
 
+/**
+ * Shutdown
+ */
 function Shutdown() {
 	console.log('--------- CG Shutdown ---------');
 }
 
+/**
+ * RegisterGraphics
+ */
+function RegisterGraphics() {
+	for (var i = 0; i < bg.ItemList.length; i++) {
+		RegisterItemVisuals(i);
+	}
+}
+
+/**
+ * RegisterItemVisuals
+ */
+function RegisterItemVisuals(itemNum) {
+	var gitem = bg.ItemList[itemNum];
+	var itemInfo = cg.itemInfo[itemNum];
+
+	if (itemInfo) {
+		return;
+	}
+
+	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
+
+	for (var i = 0; i < gitem.modelPaths.length; i++) {
+		itemInfo.modelHandles[i] = cl.RegisterModel(gitem.modelPaths[i]);
+	}
+
+	/*if ( item->giType == IT_WEAPON ) {
+		CG_RegisterWeapon( item->giTag );
+	}*/
+}
+
+/**
+ * RegisterClients
+ */
+function RegisterClients() {
+	/*NewClientInfo(cg.clientNum);
+
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		if (cg.clientNum === i) {
+			continue;
+		}
+
+		clientInfo = CG_ConfigString(CS_PLAYERS + i);
+
+		if ( !clientInfo[0]) {
+			continue;
+		}
+
+		NewClientInfo(i);
+	}*/
+}
+
+/**
+ * Frame
+ */
 function Frame(serverTime) {
 	if (!cg.initialized) {
 		return;
@@ -60,31 +122,9 @@ function Frame(serverTime) {
 	DrawFPS();
 }
 
-function RegisterGraphics() {
-	for (var i = 0; i < bg.ItemList.length; i++) {
-		RegisterItemVisuals(i);
-	}
-}
-
-function RegisterItemVisuals(itemNum) {
-	var gitem = bg.ItemList[itemNum];
-	var itemInfo = cg.itemInfo[itemNum];
-
-	if (itemInfo) {
-		return;
-	}
-
-	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
-
-	for (var i = 0; i < gitem.modelPaths.length; i++) {
-		itemInfo.modelHandles[i] = cl.RegisterModel(gitem.modelPaths[i]);
-	}
-
-	/*if ( item->giType == IT_WEAPON ) {
-		CG_RegisterWeapon( item->giTag );
-	}*/
-}
-
+/**
+ * CalcViewValues
+ */
 function CalcViewValues() {
 	var ps = cg.predictedPlayerState;
 
@@ -110,11 +150,17 @@ function CalcViewValues() {
 	CalcFov();
 }
 
+/**
+ * OffsetFirstPersonView
+ */
 function OffsetFirstPersonView() {
 	// add view height
 	cg.refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//ps.viewheight;
 }
 
+/**
+ * CalcFov
+ */
 function CalcFov() {
 	var fovX = 90;
 	var x = cg.refdef.width / Math.tan(fovX / 360 * Math.PI);

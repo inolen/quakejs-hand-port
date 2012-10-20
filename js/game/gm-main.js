@@ -5,6 +5,9 @@ var level;
 
 var g_gravity;
 
+/**
+ * Init
+ */
 function Init(sv_) {
 	sys = require('system/sys');
 	sv = sv_;
@@ -20,9 +23,15 @@ function Init(sv_) {
 	SpawnAllEntitiesFromDefs();
 }
 
+/**
+ * Shutdown
+ */
 function Shutdown() {
 }
 
+/**
+ * Frame
+ */
 function Frame(levelTime) {
 	level.framenum++;
 	level.previousTime = level.time;

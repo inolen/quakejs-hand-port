@@ -1,7 +1,13 @@
+/**
+ * InitCmd
+ */
 function InitCmd() {
 	com.AddCmd('connect', ConnectCmd);
 }
 
+/**
+ * ConnectCmd
+ */
 function ConnectCmd(serverName) {
 	var parts = serverName.split(':');
 	var host = parts[0];
@@ -32,6 +38,9 @@ function ConnectCmd(serverName) {
 	clc.connectPacketCount = 0;*/
 }
 
+/**
+ * StringToAddr
+ */
 function StringToAddr(str) {
 	var addr = new NetAdr();
 
