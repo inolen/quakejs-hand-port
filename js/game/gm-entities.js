@@ -122,13 +122,16 @@ function SpawnEntityFromDef(def) {
 	}
 
 	// Call spawn function if it exists.
-	var item;
 	var spawn;
 
 	// See if we should spawn this as an item.
-	if ((item = bg.ItemList[ent.classname])) {
-		SpawnItem(ent, item);
-		return;
+	for (var i = 0; i < bg.ItemList.length; i++) {
+		var item = bg.ItemList[i];
+
+		if (item.classname === ent.classname) {
+			SpawnItem(ent, item);
+			return;
+		}
 	}
 
 	if (ent.classname === "misc_teleporter_dest") {

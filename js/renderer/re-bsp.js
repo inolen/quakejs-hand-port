@@ -8,7 +8,7 @@ function LoadMap(mapName, callback) {
 
 		// Parse the header.
 		var header = new dheader_t();
-		header.ident = bb.readUTFChars(4);
+		header.ident = bb.readASCIIString(4);
 		header.version = bb.readInt();
 		for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
 			header.lumps[i].fileofs = bb.readInt();
@@ -96,7 +96,7 @@ function LoadShaders(buffer, shaderLump) {
 	for (var i = 0; i < shaders.length; i++) {
 		var shader = shaders[i] = new dshader_t();
 
-		shader.shaderName = bb.readUTFChars(MAX_QPATH);
+		shader.shaderName = bb.readASCIIString(MAX_QPATH);
 		shader.flags = bb.readInt();
 		shader.contents = bb.readInt();
 	}

@@ -84,7 +84,12 @@ function AddMd3Surfaces(refent) {
 	//
 	var md3 = model.md3[0];
 
-	for (var i = 0 ; i < md3.surfaces.length; i++) {
+	// not loaded yet
+	if (!md3) {
+		return;
+	}
+
+	for (var i = 0; i < md3.surfaces.length; i++) {
 		var face = md3.surfaces[i];
 
 		/*if ( ent->e.customShader ) {

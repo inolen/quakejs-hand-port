@@ -65,14 +65,20 @@ function AddCEntity(cent) {
 		vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
 		vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);*/
 
-		refent.reType = RefEntityType.MODEL;
+		//console.log('type', cent.currentState.eType );
+		if (cent.currentState.eType === EntityType.ITEM) {
 
-		vec3.set(cent.lerpOrigin, refent.origin);
-		AnglesToAxis(cent.lerpAngles, refent.axis);
+			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
 
-		refent.hModel = shardHandle;
-		
-		cl.AddRefEntityToScene(refent);
+			for (var i = 0; i < itemInfo.modelHandles.length; i++) {
+				refent.reType = RefEntityType.MODEL;
+				vec3.set(cent.lerpOrigin, refent.origin);
+				AnglesToAxis(cent.lerpAngles, refent.axis);
+				refent.hModel = itemInfo.modelHandles[i];
+				
+				cl.AddRefEntityToScene(refent);
+			}
+		}
 	}
 
 	// add automatic effects

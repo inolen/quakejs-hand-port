@@ -5,8 +5,6 @@ var cgs;
 var cg_errordecay;
 var cg_showmiss;
 
-var shardHandle;
-
 function Init(clinterface, serverMessageNum) {
 	console.log('--------- CG Init ---------');
 
@@ -24,11 +22,11 @@ function Init(clinterface, serverMessageNum) {
 	
 	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
 		cl.LoadRenderMap(cgs.gameState['sv_mapname'], function () {
+			RegisterGraphics();
+
 			cg.initialized = true;
 		});
 	});
-
-	shardHandle = cl.RegisterModel('models/powerups/armor/shard.md3');
 }
 
 function Shutdown() {
@@ -60,6 +58,31 @@ function Frame(serverTime) {
 	
 	cl.RenderScene(cg.refdef);
 	DrawFPS();
+}
+
+function RegisterGraphics() {
+	for (var i = 0; i < bg.ItemList.length; i++) {
+		RegisterItemVisuals(i);
+	}
+}
+
+function RegisterItemVisuals(itemNum) {
+	var gitem = bg.ItemList[itemNum];
+	var itemInfo = cg.itemInfo[itemNum];
+
+	if (itemInfo) {
+		return;
+	}
+
+	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
+
+	for (var i = 0; i < gitem.modelPaths.length; i++) {
+		itemInfo.modelHandles[i] = cl.RegisterModel(gitem.modelPaths[i]);
+	}
+
+	/*if ( item->giType == IT_WEAPON ) {
+		CG_RegisterWeapon( item->giTag );
+	}*/
 }
 
 function CalcViewValues() {

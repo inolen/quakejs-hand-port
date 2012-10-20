@@ -197,13 +197,9 @@ function ParsePacketEntities(msg, snap) {
 		state.angles[2] = msg.readFloat();
 		state.angles2[0] = msg.readFloat();
 		state.angles2[1] = msg.readFloat();
-		state.angles2[2] = msg.readFloat();
+		state.angles2[2] = msg.readFloat();*/
 		state.groundEntityNum = msg.readInt();
-		state.clientNum = msg.readInt();*/
-		/*state.frame = state.frame;
-		state.solid = state.solid;
-		state.event = state.event;
-		state.eventParm = state.eventParm;*/
+		state.modelIndex = msg.readInt();
 
 		cl.parseEntitiesNum++;
 		snap.numEntities++;

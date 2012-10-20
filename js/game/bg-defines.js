@@ -24,8 +24,9 @@ var ItemType = {
 	TEAM:               8
 };
 
-var GameItemDesc = function (classname, giType) {
-	this.classname = classname;                  // spawning name
+var GameItemDesc = function (classname, modelPaths, giType) {
+	this.classname   = classname;                  // spawning name
+	this.modelPaths = modelPaths;
 	/*char		*pickup_sound;
 	char		*world_model[MAX_ITEM_MODELS];
 

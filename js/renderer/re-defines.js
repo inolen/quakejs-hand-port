@@ -136,7 +136,7 @@ var RefEntity = function () {
 		[0, 0, 0]
 	];
 	// model
-	this.hModel = 0;
+	this.hModel = -1;
 	// bbox
 	this.mins   = [0, 0, 0];
 	this.maxs   = [0, 0, 0];
@@ -150,6 +150,7 @@ RefEntity.prototype.clone = function (refent) {
 	refent.reType = this.reType;
 	vec3.set(this.origin, refent.origin);
 	mat3.set(this.axis, refent.axis);
+	refent.hModel = this.hModel;
 	vec3.set(this.mins, refent.mins);
 	vec3.set(this.maxs, refent.maxs);
 	refent.index = this.index;

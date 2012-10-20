@@ -430,6 +430,35 @@ ByteBuffer = (function() {
     return ++bytes;
   };
 
+  ByteBuffer.prototype.readASCIIString = function(fixedLength) {
+    var bytes, i, c, length, chars;
+    bytes = this._raw;
+    i = 0;
+    length = fixedLength || bytes.length;
+    chars = [];
+    while (i < length) {
+      c = this.readByte();
+      if (c !== 0x00) {
+        chars[i] = c;
+      }
+      i++;
+    }
+    return String.fromCharCode.apply(String, chars);
+  };
+
+  ByteBuffer.prototype.writeASCIIString = function(string, fixedLength) {
+    var bytes, i, length, chars;
+    bytes = this._raw;
+    i = 0;
+    length = fixedLength || string.length;
+    chars = [];
+    while (i < length) {
+      chars[i++] = i < string.length ? string.charCodeAt(i) : 0x00;
+    }    
+    this.write(chars);
+    return length;
+  };
+
   ByteBuffer.prototype.prepend = function(bytes) {
     var view;
     if (bytes <= 0) {

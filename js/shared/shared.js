@@ -162,8 +162,8 @@ var EntityState = function () {
 	this.angles          = [0, 0, 0];
 	this.angles2         = [0, 0, 0];
 	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelindex      = 0;
-	this.modelindex2     = 0;
+	this.modelIndex      = 0;
+	this.modelIndex2     = 0;
 	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
 	this.frame           = 0;
 	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
@@ -189,8 +189,8 @@ EntityState.prototype.clone = function (es) {
 	vec3.set(this.angles,  es.angles);
 	vec3.set(this.angles2, es.angles2);
 	es.groundEntityNum   = this.groundEntityNum;
-	es.modelindex        = this.modelindex;
-	es.modelindex2       = this.modelindex2;
+	es.modelIndex        = this.modelIndex;
+	es.modelindex2       = this.modelIndex2;
 	es.clientNum         = this.clientNum;
 	es.frame             = this.frame;
 	es.solid             = this.solid;

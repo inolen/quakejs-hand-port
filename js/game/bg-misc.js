@@ -1,8 +1,3 @@
-// Static item descriptions.
-var itemList = {
-	'item_armor_shard': new GameItemDesc('item_armor_shard', ItemType.ARMOR)
-};
-
 /**
  * PlayerStateToEntityState
  *

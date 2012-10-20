@@ -27,11 +27,13 @@ function SpawnItem(ent, item) {
  * free fall from their spawn points
  */
 function FinishSpawningItem(ent) {
+	var itemIndex = bg.ItemList.indexOf(ent.item);
+
 	vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], ent.mins);
 	vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], ent.maxs);
 
 	ent.s.eType = EntityType.ITEM;
-	//ent.s.modelindex = ent->item - bg_itemlist;		// store item number in modelindex
+	ent.s.modelIndex = itemIndex;
 	//ent.s.modelindex2 = 0; // zero indicates this isn't a dropped item
 
 	ent.contents = ContentTypes.TRIGGER;

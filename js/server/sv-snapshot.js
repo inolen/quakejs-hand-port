@@ -258,9 +258,9 @@ function SendClientSnapshot(client) {
 		msg.writeFloat(state.angles[2]);
 		msg.writeFloat(state.angles2[0]);
 		msg.writeFloat(state.angles2[1]);
-		msg.writeFloat(state.angles2[2]);
-		msg.writeUnsignedInt(state.groundEntityNum);
-		msg.writeUnsignedInt(state.clientNum);*/
+		msg.writeFloat(state.angles2[2]);*/
+		msg.writeInt(state.groundEntityNum);
+		msg.writeInt(state.modelIndex);
 	}
 
 	msg.writeUnsignedInt(MAX_GENTITIES-1);

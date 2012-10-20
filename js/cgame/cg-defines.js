@@ -20,8 +20,11 @@ var ClientGame = function () {
 	this.hyperspace           = false;           // true if prediction has hit a trigger_teleport
 	this.validPPS             = false;
 	this.predictedErrorTime   = 0;
-	this.predictedError       = vec3.create();
+	this.predictedError       = [0, 0, 0];
 	this.predictedPlayerState = null;
+
+	// item resource info
+	this.itemInfo             = new Array();
 
 	// auto rotating items
 	this.autoAngles           = [0, 0, 0];
@@ -75,4 +78,9 @@ var ClientGameEntity =  function () {
 	// exact interpolated position of entity on this frame
 	this.lerpOrigin = [0, 0, 0];
 	this.lerpAngles = [0, 0, 0];
+};
+
+var ItemInfo = function () {
+	this.modelHandles = [];
+	this.icon         = -1;
 };

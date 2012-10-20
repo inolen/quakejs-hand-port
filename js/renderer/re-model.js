@@ -23,24 +23,17 @@ function RegisterModel(name) {
 	}
 
 	// Search the currently loaded models.
-	var hModel = 1;
-	var mod;
-
-	for (hModel = 1 ; hModel < re.models.length; hModel++) {
+	for (var hModel = 0; hModel < re.models.length; hModel++) {
 		mod = re.models[hModel];
 
 		if (mod.name === name) {
-			if (mod.type === ModelType.BAD) {
-				return 0;
-			}
-
 			return hModel;
 		}
 	}
 
 	// Create new model.
-	var index = re.models.length;
-	mod = re.models[index] = new Model();
+	hModel = re.models.length;
+	mod = re.models[hModel] = new Model();
 	mod.type = ModelType.BAD;
 	mod.name = name;
 
@@ -57,7 +50,8 @@ function RegisterMd3(mod, name) {
 	// Strip off file extension.
 	var filename = name.substr(0, name.lastIndexOf('.')) || name;
 
-	for (var lod = MD3_MAX_LODS - 1 ; lod >= 0 ; lod--) {
+	// TODO Enable lods (ugh.. all the failed HTTP requests).
+	for (var lod = 0/*MD3_MAX_LODS - 1*/; lod >= 0 ; lod--) {
 		var lodFilename;
 
 		if (lod) {
@@ -94,7 +88,6 @@ function RegisterMd3(mod, name) {
 	}
 }
 
-
 function LoadMd3 (filename, callback) {
 	cl.ReadFile(filename, 'binary', function (err, data) {
 		if (err) return callback(err);
@@ -112,7 +105,7 @@ function LoadMd3 (filename, callback) {
 		}
 
 		// Finish reading header.
-		header.name = bb.readString(MAX_QPATH);
+		header.name = bb.readASCIIString(MAX_QPATH);
 		header.flags = bb.readInt();
 		header.numFrames = bb.readInt();
 		header.numTags = bb.readInt();
@@ -147,7 +140,7 @@ function LoadMd3 (filename, callback) {
 				frame.localOrigin[j] = bb.readFloat();
 			}
 			frame.radius = bb.readFloat();
-			frame.name = bb.readString(16);
+			frame.name = bb.readASCIIString(16);
 		}
 
 		// Read all of the tags.
@@ -155,7 +148,7 @@ function LoadMd3 (filename, callback) {
 
 		for (var i = 0; i < header.numTags; i++) {
 			var tag = md3.tags[i] = new Md3Tag();
-			tag.name = bb.readString(MAX_QPATH);
+			tag.name = bb.readASCIIString(MAX_QPATH);
 			for (var j = 0; j < 3; j++) {
 				tag.origin[j] = bb.readFloat();
 			}
@@ -165,12 +158,12 @@ function LoadMd3 (filename, callback) {
 		}
 
 		// Read all of the meshes.
-		var sheader = new Md3SurfaceHeader();
 		var meshOffset = bb.index = header.ofsSurfaces;
 
 		for (var i = 0; i < header.numSurfaces; i++) {
+			var sheader = new Md3SurfaceHeader();
 			sheader.ident = bb.readInt();
-			sheader.name = bb.readString(MAX_QPATH);
+			sheader.name = bb.readASCIIString(MAX_QPATH);
 			sheader.flags = bb.readInt();
 			sheader.numFrames = bb.readInt();
 			sheader.numShaders = bb.readInt();
@@ -214,7 +207,7 @@ function LoadMd3 (filename, callback) {
 			for (var j = 0; j < sheader.numShaders; j++) {
 				var shader = surf.shaders[j] = new Md3Shader();
 				// Strip extension.
-				shader.name = bb.readString(MAX_QPATH).replace(/\.[^/.]+$/, '');
+				shader.name = bb.readASCIIString(MAX_QPATH).replace(/\.[^/.]+$/, '');
 				shader.shader = FindShader(shader.name, LightmapType.NONE);
 			}
 
