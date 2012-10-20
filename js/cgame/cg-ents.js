@@ -69,7 +69,7 @@ function AddCEntity(cent) {
 				AnglesToAxis(cent.lerpAngles, refent.axis);
 				refent.hModel = itemInfo.modelHandles[i];
 				
-				cl.AddRefEntityToScene(refent);
+				r.AddRefEntityToScene(refent);
 			}
 			break;
 
@@ -84,7 +84,7 @@ function AddCEntity(cent) {
 				vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
 				vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
 
-				cl.AddRefEntityToScene(refent);
+				r.AddRefEntityToScene(refent);
 			}
 			break;
 	}

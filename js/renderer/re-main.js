@@ -33,9 +33,7 @@ function Init(clinterface) {
 	r_zproj = cl.AddCvar('r_zproj', 64);
 
 	var gameContext = cl.GetGameRenderContext();
-	var uiContext = cl.GetUIRenderContext();
 	gl = gameContext.gl;
-	viewportUi = uiContext.handle;
 
 	InitImages();
 	InitShaders();

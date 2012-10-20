@@ -5,16 +5,25 @@ function (_, glmatrix, bg) {
 	<%- include ../game/bg-defines.js %>
 	<%- include ../renderer/re-defines.js %>
 	<%- include cg-defines.js %>
-	<%- include cg-main.js %>
-	<%- include cg-draw.js %>
-	<%- include cg-ents.js %>
-	<%- include cg-playerstate.js %>
-	<%- include cg-predict.js %>
-	<%- include cg-snapshot.js %>
+
+	function CGame(sys, com, cl, r, ui) {
+		<%- include cg-main.js %>
+		<%- include cg-draw.js %>
+		<%- include cg-ents.js %>
+		<%- include cg-playerstate.js %>
+		<%- include cg-predict.js %>
+		<%- include cg-snapshot.js %>
+
+		return {
+			Init: Init,
+			Shutdown: Shutdown,
+			Frame: Frame
+		};
+	}
 
 	return {
-		Init: Init,
-		Shutdown: Shutdown,
-		Frame: Frame
+		CreateInstance: function (sysinterface, cominterface, clinterface, rinterface, uiinterface) {
+			return new CGame(sysinterface, cominterface, clinterface, rinterface, uiinterface);
+		}
 	};
 });

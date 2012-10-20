@@ -1,5 +1,3 @@
-var clinterface;
-
 var cg;
 var cgs;
 var cg_errordecay;
@@ -8,23 +6,21 @@ var cg_showmiss;
 /**
  * Init
  */
-function Init(clinterface, serverMessageNum) {
+function Init(serverMessageNum) {
 	console.log('--------- CG Init ---------');
-
-	cl = clinterface;
 
 	cg = new ClientGame();
 	cgs = new ClientGameStatic();
 
-	cg_errordecay = cl.AddCvar('cg_errordecay', 100);
-	cg_predict = cl.AddCvar('cg_predict', 0);
-	cg_showmiss = cl.AddCvar('cg_showmiss', 1);
+	cg_errordecay = com.AddCvar('cg_errordecay', 100);
+	cg_predict = com.AddCvar('cg_predict', 0);
+	cg_showmiss = com.AddCvar('cg_showmiss', 1);
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
 	
 	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
-		cl.LoadRenderMap(cgs.gameState['sv_mapname'], function () {
+		r.LoadMap(cgs.gameState['sv_mapname'], function () {
 			RegisterGraphics();
 			RegisterClients();
 
@@ -63,7 +59,7 @@ function RegisterItemVisuals(itemNum) {
 	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
 
 	for (var i = 0; i < gitem.modelPaths.length; i++) {
-		itemInfo.modelHandles[i] = cl.RegisterModel(gitem.modelPaths[i]);
+		itemInfo.modelHandles[i] = r.RegisterModel(gitem.modelPaths[i]);
 	}
 
 	/*if ( item->giType == IT_WEAPON ) {
@@ -118,8 +114,8 @@ function Frame(serverTime) {
 		AddPacketEntities();
 	}
 	
-	cl.RenderScene(cg.refdef);
-	DrawFPS();
+	r.RenderScene(cg.refdef);
+	ui.DrawHud({ fps: GetFPS() });
 }
 
 /**

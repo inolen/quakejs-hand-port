@@ -1,14 +1,13 @@
 var FPS_FRAMES    = 4;
-var fpsElement    = null;
 var previousTimes = new Array(FPS_FRAMES);
 var previousTime  = 0;
 var previousIdx   = 0;
 
 /**
- * DrawFPS
+ * GetFPS
  */
-function DrawFPS() {
-	var t = cl.GetMilliseconds();
+function GetFPS() {
+	var t = sys.GetMilliseconds();
 	var frameTime = t - previousTime;
 	previousTime = t;
 
@@ -27,12 +26,8 @@ function DrawFPS() {
 			total = 1;
 		}
 
-		var fps = parseInt(1000 * FPS_FRAMES / total);
-
-		if (!fpsElement) {
-			fpsElement = cl.CreateElement();
-		}
-		
-		cl.DrawText(fpsElement, cg.refdef.width - 48, 5, fps + 'fps');
+		return parseInt(1000 * FPS_FRAMES / total);
 	}
+
+	return 0;
 }

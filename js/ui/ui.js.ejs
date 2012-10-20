@@ -1,0 +1,20 @@
+define('ui/ui',
+['underscore'],
+function (_) {
+	<%- include ui-defines.js %>
+
+	function UserInterface(sys, r) {
+		<%- include ui-main.js %>
+
+		return {
+			Init:    Init,
+			DrawHud: DrawHud
+		};
+	}
+
+	return {
+		CreateInstance: function (sysinterface, rinterface) {
+			return new UserInterface(sysinterface, rinterface);
+		}
+	};
+});

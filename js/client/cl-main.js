@@ -1,9 +1,11 @@
 var com;
+var ui;
+var cm;
+var cg;
 
 var cl;
 var clc;
 var cls = new ClientStatic();
-var cm;
 var cl_sensitivity;
 var cl_showTimeDelta;
 var commands = {};
@@ -16,11 +18,48 @@ function Init(cominterface) {
 	console.log('--------- CL Init ---------');
 
 	com = cominterface;
+	ui = uinterface.CreateInstance(
+		{
+			ReadFile: com.ReadFile,
+			GetUIRenderContext: com.GetUIRenderContext
+		},
+		{}
+	);
+	cm = clipmap.CreateInstance(
+		{
+			ReadFile: com.ReadFile
+		}
+	);
+	cg = cgame.CreateInstance(
+		{
+			GetMilliseconds:             com.GetMilliseconds,
+		},
+		{
+			AddCmd:                      com.AddCmd,
+			AddCvar:                     com.AddCvar
+		},
+		{
+			GetGameState:                function () { return cl.gameState; },
+			GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
+			GetUserCommand:              GetUserCommand,
+			GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
+			GetSnapshot:                 GetSnapshot,
+			LoadClipMap:                 cm.LoadMap,
+			Trace:                       cm.Trace,
+		},
+		{
+			LoadMap:                     re.LoadMap,
+			RegisterModel:               re.RegisterModel,
+			AddRefEntityToScene:         re.AddRefEntityToScene,
+			RenderScene:                 re.RenderScene
+		},
+		{
+			DrawHud:                     ui.DrawHud
+		}
+	);
 
 	ClearState();
-	clc = new ClientConnection();
-	cm = clipmap.CreateInstance({ ReadFile: com.ReadFile });
-	
+	clc = new ClientConnection();	
 	cls.realtime = 0;
 
 	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
@@ -29,6 +68,7 @@ function Init(cominterface) {
 	InitInput();
 	InitCmd();
 	InitRenderer();
+	ui.Init();
 
 	cls.initialized = true;
 
@@ -51,28 +91,8 @@ function ClearState() {
  * InitCGame
  */
 function InitCGame() {
-	var cginterface = {
-		AddCmd:                      com.AddCmd,
-		AddCvar:                     com.AddCvar,
-		GetMilliseconds:             com.GetMilliseconds,
-		GetGameState:                function () { return cl.gameState; },
-		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
-		GetUserCommand:              GetUserCommand,
-		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
-		GetSnapshot:                 GetSnapshot,
-		LoadClipMap:                 cm.LoadMap,
-		Trace:                       cm.Trace,
-		LoadRenderMap:               re.LoadMap,
-		RegisterModel:               re.RegisterModel,
-		AddRefEntityToScene:         re.AddRefEntityToScene,
-		CreateElement:               re.CreateElement,
-		DeleteElement:               re.DeleteElement,
-		DrawText:                    re.DrawText,
-		RenderScene:                 re.RenderScene
-	};
-
 	clc.state = ConnectionState.LOADING;
-	cg.Init(cginterface, clc.serverMessageSequence);
+	cg.Init(clc.serverMessageSequence);
 	// We will send a usercmd this frame, which will cause
 	// the server to send us the first snapshot.
 	clc.state = ConnectionState.PRIMED;
@@ -94,8 +114,7 @@ function InitRenderer() {
 		AddCvar:                     com.AddCvar,
 		GetMilliseconds:             com.GetMilliseconds,
 		ReadFile:                    com.ReadFile,
-		GetGameRenderContext:        com.GetGameRenderContext,
-		GetUIRenderContext:          com.GetUIRenderContext
+		GetGameRenderContext:        com.GetGameRenderContext
 	};
 
 	re.Init(reinterface);
