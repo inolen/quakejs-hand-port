@@ -1,56 +1,87 @@
 var uil;
-var viewportUi;
+var $viewportUi;
+var $ptr;
+
+var map = {
+	'hud': HudView,
+	'scoreboard': ScoreboardView,
+	'ingame-menu': IngameMenu
+};
 
 /**
  * Init
  */
 function Init() {	
-	var uiContext = sys.GetUIRenderContext();	
-	viewportUi = uiContext.handle;
+	var uiContext = sys.GetUIRenderContext();
 
 	uil = new UILocals();
 
+	//
 	document.addEventListener('fullscreenchange', UpdateFontSizes, false);
 
-	sys.ReadFile('ui/css/font.css', 'utf8', function (err, data) {
-		if (err) return err;
-		EmbedCSS(data);
-	});
+	//
+	$viewportUi = $(uiContext.handle);
 
-	sys.ReadFile('ui/css/views.css', 'utf8', function (err, data) {
-		if (err) return err;
-		EmbedCSS(data);
-	});
+	// Embed our CSS.
+	var $style = $('<style>', { 'type': 'text/css'}).append(viewsCss);
+	$style.appendTo('head');
+
+	// Create pointer element.
+	$ptr = $('<div>', { 'class': 'pointer' });
+	$viewportUi.append($ptr);
 }
 
 /**
- * EmbedCSS
+ * KeyPressEvent
  */
-function EmbedCSS(data) {
-	var head = document.getElementsByTagName('head')[0];
-	var el = document.createElement('style');
-	el.setAttribute('type', 'text/css');		
-	el.appendChild(document.createTextNode(data));
-	head.appendChild(el);
+function KeyPressEvent(keyName) {
+	if (keyName === 'mouse0') {
+		var el = document.elementFromPoint(mx, my);
+
+		$(el).click();
+	}
+}
+
+/**
+ * MouseMoveEvent
+ */
+var lastHovered = null;
+var mx = 0;
+var my = 0;
+
+function MouseMoveEvent(dx, dy) {
+	mx += dx;
+	my += dy;
+
+	$ptr.css({
+		'top': my + 'px',
+		'left': mx + 'px'
+	});
+
+	var el = document.elementFromPoint(mx, my);
+
+	if (lastHovered && lastHovered !== el) {
+		$(lastHovered).removeClass('hover');
+		lastHovered = null;
+	}
+
+	if (el && $.contains(uil.activeMenu.el, el)) {
+		$(el).addClass('hover');
+		lastHovered = el;
+	}
 }
 
 /**
  * RegisterView
  */
 function RegisterView(name) {
-	var view = uil.views[name] = new UIView();
-	var filename = 'ui/templates/' + name + '.tpl';
-
-	sys.ReadFile(filename, 'utf8', function (err, data) {
-		if (err) return;
-		view.template = _.template(data);
+	var view = uil.views[name] = new map[name]({
+		ui: {
+			CloseActiveMenu: CloseActiveMenu
+		}
 	});
 
-	view.el = document.createElement('div');
-	view.el.id = name;
-	view.el.style['display'] = 'none';
-
-	viewportUi.appendChild(view.el);
+	$viewportUi.append(view.$el);
 
 	return view;
 }
@@ -69,23 +100,58 @@ function GetView(name) {
 }
 
 /**
- * RenderView
+ * SetActiveMenu
+ */
+function SetActiveMenu(name) {
+	uil.activeMenu = GetView(name);
+	cl.CaptureInput();
+}
+
+/**
+ * CloseActiveMenu
+ */
+function CloseActiveMenu() {
+	uil.activeMenu = null;
+	cl.ReleaseInput();
+}
+
+/**
+ * Render
  *
- * Despite it's name, note that this does not immediately render a view.
- * It just sets its state so it's rendered on the next Refresh.
+ * Show/hide/update all views.
+ */
+function Render() {
+	var views = uil.views;
+
+	for (var name in views) {
+		if (!views.hasOwnProperty(name)) {
+			continue;
+		}
+
+		var view = views[name];
+
+		// Hide the view if it's not active this frame (and it's not the
+		// active menu).
+		if (view.visFrame !== uil.frameCount && view !== uil.activeMenu) {
+			HideView(view);
+			return;
+		}
+
+		view.render();
+
+		ShowView(view);
+	}
+
+	uil.frameCount++;
+}
+
+/**
+ * RenderView
  */
 function RenderView(name, model) {
 	var view = GetView(name);
-
-	// Make sure this is rendered next Refresh.
-	view.visFrame = uil.frameCount;
-
-	// Update the view's data.
-	var oldModel = view.model;
 	view.model = model;
-
-	// Only refresh if the data has changed.
-	view.dirty = !_.isEqual(model, view.oldModel);
+	view.visFrame = uil.frameCount;
 }
 
 /**
@@ -95,61 +161,25 @@ function RenderView(name, model) {
  * This allows all of our text elements to scale properly with the window.
  */
 function UpdateFontSizes() {
-	var width = viewportUi.offsetWidth;
-	var children = viewportUi.childNodes;
+	var width = $viewportUi.width();
+	var children = $viewportUi[0].childNodes;
 
 	for (var i = 0; i < children.length; i++) {
 		var child = children[i];
-		child.style['font-size' ] = (width / 64) + 'px';
+		$(child).css('font-size', (width / 64) + 'px');
 	}
 }
 
 /**
- * Refresh
- *
- * Show/hide/update all views.
+ * HideView
  */
-function Refresh() {
-	var views = uil.views;
-
-	for (var name in views) {
-		if (!views.hasOwnProperty(name)) {
-			continue;
-		}
-
-		RefreshView(views[name]);
-	}
-
-	uil.frameCount++;
-}
-
-function RefreshView(view) {
-	// Ignore if the template hasn't finished loading.
-	if (!view.template) {
-		return;
-	}
-
-	// If the template wasn't rendered this frame, hide it.
-	if (view.visFrame !== uil.frameCount) {
-		HideView(view);
-		return;
-	}
-
-	// Make it visible.
-	var el = view.el;
-	el.style['display'] = 'block';
-
-	// Re-render if dirty.
-	if (view.dirty) {
-		var output = view.template(view.model);
-		el.innerHTML = output;
-	}
-}
-
 function HideView(view) {
-	view.el.style['display'] = 'none';
+	view.$el.hide();
 }
 
+/**
+ * ShowView
+ */
 function ShowView(view) {
-	view.el.style['display'] = 'block';
+	view.$el.show();
 }

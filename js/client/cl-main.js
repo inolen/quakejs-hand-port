@@ -23,6 +23,10 @@ function Init(cominterface) {
 			ReadFile: com.ReadFile,
 			GetUIRenderContext: com.GetUIRenderContext
 		},
+		{
+			CaptureInput: function () { cl.inputCaptured = true; },
+			ReleaseInput: function () { cl.inputCaptured = false; }
+		},
 		{}
 	);
 	cm = clipmap.CreateInstance(
@@ -165,7 +169,7 @@ function UpdateScreen() {
 			break;
 	}
 
-	ui.Refresh();
+	ui.Render();
 }
 
 /**

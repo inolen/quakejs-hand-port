@@ -2,24 +2,20 @@
  * InitCommands
  */
 function InitCommands() {
-	com.AddCmd('+scores', CmdScoresDown);
-	com.AddCmd('-scores', CmdScoresUp);
+	com.AddCmd('+scores', ScoresDownCmd);
+	com.AddCmd('-scores', ScoresUpCmd);
 }
 
 /**
- * CmdScoresDown
+ * ScoresDownCmd
  */
-function CmdScoresDown() {
+function ScoresDownCmd() {
 	cg.showScores = true;
-
-	console.log('scores down');
 }
 
 /**
- * CmdScoresUp
+ * ScoresUpCmd
  */
-function CmdScoresUp() {
+function ScoresUpCmd() {
 	cg.showScores = false;
-
-	console.log('scores up');
 }

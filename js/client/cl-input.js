@@ -20,54 +20,6 @@ function InitInput() {
 	Bind('tab', '+scores');
 }
 
-/**
- * KeyMove
- */
-function KeyMove(cmd) {
-	var movespeed = 127;
-	var forward = 0, side = 0, up = 0;
-
-	if (forwardKey) forward += movespeed * GetKeyState(forwardKey);
-	if (backKey) forward -= movespeed * GetKeyState(backKey);
-
-	if (rightKey) side += movespeed * GetKeyState(rightKey);
-	if (leftKey) side -= movespeed * GetKeyState(leftKey);
-
-	if (upKey) { var foobar = GetKeyState(upKey); up += movespeed * foobar; }
-	//if (upKey) up -= movespeed * GetKeyState(upKey);
-
-	cmd.forwardmove = ClampChar(forward);
-	cmd.rightmove = ClampChar(side);
-	cmd.upmove = up;
-}
-
-/**
- * MouseMove
- */
-function MouseMove(cmd) {
-	var oldAngles = vec3.create(cl.viewangles);
-	var mx = cl.mouseX * cl_sensitivity();
-	var my = cl.mouseY * cl_sensitivity();
-
-	cl.viewangles[YAW] -= mx * 0.022;
-	cl.viewangles[PITCH] += my * 0.022;
-
-	if (cl.viewangles[PITCH] - oldAngles[PITCH] > 90) {
-		cl.viewangles[PITCH] = oldAngles[PITCH] + 90;
-	} else if (oldAngles[PITCH] - cl.viewangles[PITCH] > 90) {
-		cl.viewangles[PITCH] = oldAngles[PITCH] - 90;
-	}
-
-	// reset
-	cl.mouseX = 0;
-	cl.mouseY = 0;
-
-	cmd.angles[0] = AngleToShort(cl.viewangles[0]);
-	cmd.angles[1] = AngleToShort(cl.viewangles[1]);
-	cmd.angles[2] = AngleToShort(cl.viewangles[2]);
-}
-
-
 /**********************************************************
  *
  * Abstracted key/mouse event handling.
@@ -78,7 +30,14 @@ function MouseMove(cmd) {
  * GetKey
  */
 function GetKey(keyName) {
-	return keys[keyName] || (keys[keyName] = new KeyState());
+	var key = keys[keyName];
+
+	if (!key) {
+		key = keys[keyName] = new KeyState();
+		key.chr = keyName;
+	}
+
+	return key;
 }
 
 /**
@@ -92,7 +51,22 @@ function KeyDownEvent(time, keyName) {
 
 	key.active = true;
 	key.downtime = time;
-	ExecBinding(key);
+
+	if (keyName == 'graveaccent') {
+		if (!cl.inputCaptured) {
+			ui.SetActiveMenu('ingame-menu');
+		} else {
+			ui.CloseActiveMenu();
+		}
+		return;
+	}
+
+	// distribute the key down event to the apropriate handler
+	if (cl.inputCaptured) {
+		ui.KeyPressEvent(keyName);
+	} else {
+		ExecBinding(key);
+	}
 }
 
 /**
@@ -103,15 +77,22 @@ function KeyUpEvent(time, keyName) {
 	key.active = false;
 	// Partial frame summing.
 	key.partial += time - key.downtime;
-	ExecBinding(key);
+
+	if (!cl.inputCaptured) {
+		ExecBinding(key);
+	}
 }
 
 /**
  * MouseMoveEvent
  */
 function MouseMoveEvent(time, dx, dy) {
-	cl.mouseX += dx;
-	cl.mouseY += dy;
+	if (cl.inputCaptured) {
+		ui.MouseMoveEvent(dx, dy);
+	} else {
+		cl.mouseX += dx;
+		cl.mouseY += dy;
+	}
 }
 
 /**

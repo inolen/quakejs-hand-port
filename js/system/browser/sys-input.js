@@ -32,7 +32,10 @@ function GetKeyNameForMouseButton(button) {
  * KeyDownEvent
  */
 function KeyDownEvent(ev) {
-	ev.preventDefault();
+	// Don't allow default handlers to run if we've locked the pointer.
+	if (document.pointerLockElement) {
+		ev.preventDefault();
+	}
 
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
@@ -48,7 +51,10 @@ function KeyDownEvent(ev) {
  * KeyUpEvent
  */
 function KeyUpEvent(ev) {
-	ev.preventDefault();
+	// Don't allow default handlers to run if we've locked the pointer.
+	if (document.pointerLockElement) {
+		ev.preventDefault();
+	}
 
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
@@ -61,7 +67,7 @@ function KeyUpEvent(ev) {
 function MouseDownEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
-	if (!document.pointerLockElement) {
+	if (!document.pointerLockElement && ev.button === 0) {
 		viewport.requestPointerLock();
 	}
 

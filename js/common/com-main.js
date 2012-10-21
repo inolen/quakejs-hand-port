@@ -41,7 +41,7 @@ function Init(sysinterface, isdedicated) {
 		cl.Init(cominterface);
 
 		// Provide the user a way to interface with the client.
-		window.$ = function (str) {
+		/*window.$ = function (str) {
 			var split = str.split(' ');
 			var cmdstr = split[0];
 			var args = split.slice(1);
@@ -50,7 +50,7 @@ function Init(sysinterface, isdedicated) {
 			if ((callback = GetCmd(cmdstr))) {
 				callback.apply(this, args);
 			}
-		};
+		};*/
 	}
 }
 

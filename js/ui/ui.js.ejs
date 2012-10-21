@@ -1,21 +1,32 @@
 define('ui/ui',
-['underscore'],
-function (_) {
+[
+	'underscore',
+	'backbone',
+	'text!ui/css/views.css',
+	'ui/views/HudView',
+	'ui/views/ScoreboardView',
+	'ui/views/IngameMenu'
+],
+function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu) {
 	<%- include ui-defines.js %>
 
-	function UserInterface(sys, r) {
+	function UserInterface(sys, cl, r) {
 		<%- include ui-main.js %>
 
 		return {
-			Init:       Init,
-			RenderView: RenderView,
-			Refresh:    Refresh
+			Init:            Init,
+			KeyPressEvent:   KeyPressEvent,
+			MouseMoveEvent:  MouseMoveEvent,
+			SetActiveMenu:   SetActiveMenu,
+			CloseActiveMenu: CloseActiveMenu,
+			RenderView:      RenderView,
+			Render:          Render
 		};
 	}
 
 	return {
-		CreateInstance: function (sysinterface, rinterface) {
-			return new UserInterface(sysinterface, rinterface);
+		CreateInstance: function (sysinterface, clinterface, rinterface) {
+			return new UserInterface(sysinterface, clinterface, rinterface);
 		}
 	};
 });
