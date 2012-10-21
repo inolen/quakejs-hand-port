@@ -24,6 +24,9 @@ function Init(cominterface) {
 			GetUIRenderContext: com.GetUIRenderContext
 		},
 		{
+			ExecuteCmdText: com.ExecuteCmdText
+		},
+		{
 			CaptureInput: CaptureInput
 		},
 		{}

@@ -12,7 +12,7 @@ define('ui/ui',
 function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlayerMenu, SettingsMenu) {
 	<%- include ui-defines.js %>
 
-	function UserInterface(sys, cl, r) {
+	function UserInterface(sys, com, cl, r) {
 		<%- include ui-main.js %>
 
 		return {
@@ -27,8 +27,8 @@ function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlay
 	}
 
 	return {
-		CreateInstance: function (sysinterface, clinterface, rinterface) {
-			return new UserInterface(sysinterface, clinterface, rinterface);
+		CreateInstance: function (sys, com, cl, r) {
+			return new UserInterface(sys, com, cl, r);
 		}
 	};
 });

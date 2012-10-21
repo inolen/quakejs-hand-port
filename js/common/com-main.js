@@ -20,6 +20,7 @@ function Init(sysinterface, isdedicated) {
 		SetCvar:              SetCvar,
 		AddCmd:               AddCmd,
 		GetCmd:               GetCmd,
+		ExecuteCmdText:       ExecuteCmdText,
 		NetchanSetup:         NetchanSetup,
 		NetchanDestroy:       NetchanDestroy,
 		NetchanSend:          NetchanSend,
@@ -42,14 +43,7 @@ function Init(sysinterface, isdedicated) {
 
 		// Provide the user a way to interface with the client.
 		/*window.$ = function (str) {
-			var split = str.split(' ');
-			var cmdstr = split[0];
-			var args = split.slice(1);
-			var callback;
-
-			if ((callback = GetCmd(cmdstr))) {
-				callback.apply(this, args);
-			}
+			ExecuteCmdText(str);
 		};*/
 	}
 }

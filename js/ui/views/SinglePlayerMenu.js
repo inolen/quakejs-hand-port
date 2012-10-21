@@ -5,8 +5,9 @@ define('ui/views/SinglePlayerMenu',
 	'text!ui/templates/singleplayer.tpl'
 ],
 function (_, Backbone, templateSrc) {
-	var ui;
 	var sys;
+	var com;
+	var ui;
 
 	var SinglePlayerMenu = Backbone.View.extend({
 		id: 'singleplayer',
@@ -22,8 +23,9 @@ function (_, Backbone, templateSrc) {
 		initialize: function (opts) {
 			var self = this;
 
-			ui = opts.ui;
 			sys = opts.sys;
+			com = opts.com;
+			ui = opts.ui;
 
 			var levels = [ 'q3dm7', 'q3dm17', 'q3tourney2' ];
 
@@ -49,7 +51,8 @@ function (_, Backbone, templateSrc) {
 		},
 		levelClicked: function (ev) {
 			var $img = $(ev.target);
-			console.log('selected', $img.data('name'));
+			var levelName = $img.data('name');
+			com.ExecuteCmdText('map ' + levelName);
 		},
 		closeMenu: function () {
 			ui.CloseActiveMenu();

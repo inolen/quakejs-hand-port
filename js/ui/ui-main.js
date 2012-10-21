@@ -91,6 +91,9 @@ function RegisterView(name) {
 		sys: {
 			ReadFile: sys.ReadFile
 		},
+		com: {
+			ExecuteCmdText: com.ExecuteCmdText
+		},
 		ui: {
 			SetActiveMenu: SetActiveMenu,
 			CloseActiveMenu: CloseActiveMenu
