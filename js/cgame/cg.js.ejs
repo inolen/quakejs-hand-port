@@ -23,8 +23,8 @@ function (_, glmatrix, bg) {
 	}
 
 	return {
-		CreateInstance: function (sysinterface, cominterface, clinterface, rinterface, uiinterface) {
-			return new CGame(sysinterface, cominterface, clinterface, rinterface, uiinterface);
+		CreateInstance: function (sys, com, cl, r, ui) {
+			return new CGame(sys, com, cl, r, ui);
 		}
 	};
 });

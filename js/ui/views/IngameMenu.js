@@ -5,8 +5,10 @@ define('ui/views/IngameMenu',
 	'text!ui/templates/ingame.tpl'
 ],
 function (_, Backbone, templateSrc) {
+	var ui;
+
 	var IngameMenu = Backbone.View.extend({
-		id: 'ingame-menu',
+		id: 'ingame',
 		model: {
 			name: ''
 		},
@@ -21,7 +23,7 @@ function (_, Backbone, templateSrc) {
 			ui = opts.ui;
 		},
 		openSinglePlayerMenu: function() {
-			alert('openSinglePlayerMenu');
+			ui.SetActiveMenu('singleplayer');
 		},
 		closeMenu: function () {
 			ui.CloseActiveMenu();

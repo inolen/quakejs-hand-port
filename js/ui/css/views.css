@@ -24,6 +24,7 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+
 }
 
 #viewport-ui > div {
@@ -35,14 +36,18 @@
 }
 
 #viewport-ui .pointer {
+	display: none;
 	position: absolute;
 	top: 0;
 	left: 0;
-	display: inline-block;
 	width: 16px;
 	height: 16px;
 	background: #f00;
 	pointer-events: none;
+}
+
+#viewport-ui.active .pointer {
+	display: inline-block;
 }
 
 /**
@@ -69,11 +74,15 @@
 /**
  * Menus
  */
-#ingame-menu div {
-	padding: 4px;
+#ingame {
+	word-break: break-all;
+}
+
+#ingame div {
+	padding: 5px;
 	background: #000;
 }
 
-#ingame-menu div.hover {
+#ingame div.hover {
 	background: #f00;
 }

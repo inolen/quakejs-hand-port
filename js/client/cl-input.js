@@ -61,7 +61,7 @@ function KeyDownEvent(time, keyName) {
 
 	if (keyName == 'graveaccent') {
 		if (!cl.keyCallback) {
-			ui.SetActiveMenu('ingame-menu');
+			ui.SetActiveMenu('ingame');
 		} else {
 			ui.CloseActiveMenu();
 		}

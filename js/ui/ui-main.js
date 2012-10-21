@@ -5,7 +5,8 @@ var $ptr;
 var map = {
 	'hud': HudView,
 	'scoreboard': ScoreboardView,
-	'ingame-menu': IngameMenu
+	'ingame': IngameMenu,
+	'singleplayer': SinglePlayerMenu
 };
 
 /**
@@ -106,8 +107,12 @@ function MouseMoveEvent(dx, dy) {
  */
 function RegisterView(name) {
 	var view = uil.views[name] = new map[name]({
+		sys: {
+			ReadFile: sys.ReadFile
+		},
 		ui: {
 			CaptureInput: CaptureInput,
+			SetActiveMenu: SetActiveMenu,
 			CloseActiveMenu: CloseActiveMenu
 		}
 	});
@@ -134,6 +139,7 @@ function GetView(name) {
  * SetActiveMenu
  */
 function SetActiveMenu(name) {
+	$viewportUi.addClass('active');
 	uil.activeMenu = GetView(name);
 	cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
 }
@@ -142,6 +148,7 @@ function SetActiveMenu(name) {
  * CloseActiveMenu
  */
 function CloseActiveMenu() {
+	$viewportUi.removeClass('active');
 	uil.activeMenu = null;
 	cl.CaptureInput(null, null);
 }
