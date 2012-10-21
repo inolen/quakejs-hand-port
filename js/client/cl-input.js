@@ -26,8 +26,8 @@ function InitInput() {
  * Enables another module to capture the client's input.
  */
 function CaptureInput(keyCallback, mouseMoveCallback) {
-	cl.keyCallback = keyCallback;
-	cl.mouseMoveCallback = mouseMoveCallback;
+	cls.keyCallback = keyCallback;
+	cls.mouseMoveCallback = mouseMoveCallback;
 }
 
 /**********************************************************
@@ -60,7 +60,7 @@ function KeyDownEvent(time, keyName) {
 	if (key.active) return;
 
 	if (keyName === 'graveaccent') {
-		if (!cl.keyCallback) {
+		if (!cls.keyCallback) {
 			ui.SetActiveMenu('ingame');
 		} else {
 			ui.CloseActiveMenu();
@@ -69,8 +69,8 @@ function KeyDownEvent(time, keyName) {
 	}
 
 	// Distribute the key down event to the apropriate handler.
-	if (cl.keyCallback) {
-		cl.keyCallback(keyName);
+	if (cls.keyCallback) {
+		cls.keyCallback(keyName);
 	} else {
 		key.downtime = time;
 		key.active = true;
@@ -87,7 +87,7 @@ function KeyUpEvent(time, keyName) {
 
 	// Disable if the key input is now being captured.
 	// Otherwise KeyState will return small values when queried.
-	if (!cl.keyCallback) {
+	if (!cls.keyCallback) {
 		key.partial += time - key.downtime; // Partial frame summing.
 	}
 
@@ -99,8 +99,8 @@ function KeyUpEvent(time, keyName) {
  * MouseMoveEvent
  */
 function MouseMoveEvent(time, dx, dy) {
-	if (cl.mouseMoveCallback) {
-		cl.mouseMoveCallback(dx, dy);
+	if (cls.mouseMoveCallback) {
+		cls.mouseMoveCallback(dx, dy);
 	} else {
 		cl.mouseX += dx;
 		cl.mouseY += dy;

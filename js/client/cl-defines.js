@@ -3,6 +3,8 @@
 // it can be un-deltad from the original.
 var MAX_PARSE_ENTITIES = 2048;
 
+// The ClientLocals structure is wiped completely at every
+// new gamestate, potentially several times during an established connection.
 var ClientLocals = function () {
 	this.snap                 = null;                      // latest received from server
 	this.serverTime           = 0;                         // may be paused during play
@@ -31,9 +33,6 @@ var ClientLocals = function () {
 	this.parseEntities        = new Array(MAX_PARSE_ENTITIES);
 	this.parseEntitiesNum     = 0;                         // index (not anded off) into cl_parse_entities[]
 	
-	this.keyCallback          = false;                     // allows external modules to trap user input
-	this.mouseMoveCallback    = false;
-	
 	for (var i = 0; i < PACKET_BACKUP; i++) {
 		this.snapshots[i] = new ClientSnapshot();
 	}
@@ -47,9 +46,15 @@ var ClientLocals = function () {
 	}
 };
 
+// The ClientStatic structure is never wiped, and is used even when
+// no client connection is active at all.
 var ClientStatic = function () {
-	this.initialized     = false;
-	this.realTime        = 0;
+	this.initialized       = false;
+	this.realTime          = 0;
+
+	this.keyCallback       = false;                     // allows external modules to trap user input
+	this.mouseMoveCallback = false;
+	
 };
 
 var ConnectionState = {
