@@ -35,9 +35,19 @@ function Init() {
  * KeyPressEvent
  */
 function KeyPressEvent(keyName) {
+	// Clicking anywhere should clear anything capturing input.
 	if (keyName === 'mouse0') {
-		var el = document.elementFromPoint(mx, my);
+		CaptureInput(null, null);
+	}
 
+	if (uil.keyCallback) {
+		uil.keyCallback(keyName);
+		return;
+	}
+
+	if (keyName === 'mouse0') {
+		// Trigger click events.
+		var el = document.elementFromPoint(mx, my);
 		$(el).click();
 	}
 }
@@ -50,8 +60,28 @@ var mx = 0;
 var my = 0;
 
 function MouseMoveEvent(dx, dy) {
+	if (uil.mouseCallback) {
+		uil.mouseCallback(dx, dy);
+		return;
+	}
+
+	var vw = $viewportUi.width();
+	var vh = $viewportUi.height();
+
 	mx += dx;
 	my += dy;
+
+	if (mx < 0) {
+		mx = 0;
+	} else if (mx > vw) {
+		mx = vw;
+	}
+
+	if (my < 0) {
+		my = 0;
+	} else if (my > vh) {
+		my = vh;
+	}
 
 	$ptr.css({
 		'top': my + 'px',
@@ -77,6 +107,7 @@ function MouseMoveEvent(dx, dy) {
 function RegisterView(name) {
 	var view = uil.views[name] = new map[name]({
 		ui: {
+			CaptureInput: CaptureInput,
 			CloseActiveMenu: CloseActiveMenu
 		}
 	});
@@ -104,7 +135,7 @@ function GetView(name) {
  */
 function SetActiveMenu(name) {
 	uil.activeMenu = GetView(name);
-	cl.CaptureInput();
+	cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
 }
 
 /**
@@ -112,8 +143,17 @@ function SetActiveMenu(name) {
  */
 function CloseActiveMenu() {
 	uil.activeMenu = null;
-	cl.ReleaseInput();
+	cl.CaptureInput(null, null);
 }
+
+/**
+ * CaptureInput
+ */
+function CaptureInput(keyCallback, mouseCallback) {
+	uil.keyCallback = keyCallback;
+	uil.mouseCallback = mouseCallback;
+}
+
 
 /**
  * Render

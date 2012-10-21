@@ -20,6 +20,16 @@ function InitInput() {
 	Bind('tab', '+scores');
 }
 
+/**
+ * CaptureInput
+ *
+ * Enables another module to capture the client's input.
+ */
+function CaptureInput(keyCallback, mouseMoveCallback) {
+	cl.keyCallback = keyCallback;
+	cl.mouseMoveCallback = mouseMoveCallback;
+}
+
 /**********************************************************
  *
  * Abstracted key/mouse event handling.
@@ -49,11 +59,8 @@ function KeyDownEvent(time, keyName) {
 	// Some browsers repeat keydown events, we don't want that.
 	if (key.active) return;
 
-	key.active = true;
-	key.downtime = time;
-
 	if (keyName == 'graveaccent') {
-		if (!cl.inputCaptured) {
+		if (!cl.keyCallback) {
 			ui.SetActiveMenu('ingame-menu');
 		} else {
 			ui.CloseActiveMenu();
@@ -61,10 +68,13 @@ function KeyDownEvent(time, keyName) {
 		return;
 	}
 
-	// distribute the key down event to the apropriate handler
-	if (cl.inputCaptured) {
-		ui.KeyPressEvent(keyName);
+	// Distribute the key down event to the apropriate handler.
+	if (cl.keyCallback) {
+		cl.keyCallback(keyName);
 	} else {
+		key.active = true;
+		key.downtime = time;
+
 		ExecBinding(key);
 	}
 }
@@ -74,21 +84,20 @@ function KeyDownEvent(time, keyName) {
  */
 function KeyUpEvent(time, keyName) {
 	var key = GetKey(keyName);
+
 	key.active = false;
 	// Partial frame summing.
 	key.partial += time - key.downtime;
 
-	if (!cl.inputCaptured) {
-		ExecBinding(key);
-	}
+	ExecBinding(key);
 }
 
 /**
  * MouseMoveEvent
  */
 function MouseMoveEvent(time, dx, dy) {
-	if (cl.inputCaptured) {
-		ui.MouseMoveEvent(dx, dy);
+	if (cl.mouseMoveCallback) {
+		cl.mouseMoveCallback(dx, dy);
 	} else {
 		cl.mouseX += dx;
 		cl.mouseY += dy;

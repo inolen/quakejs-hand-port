@@ -7,11 +7,15 @@ define('ui/views/IngameMenu',
 function (_, Backbone, templateSrc) {
 	var IngameMenu = Backbone.View.extend({
 		id: 'ingame-menu',
+		model: {
+			name: ''
+		},
 		template: _.template(templateSrc),
-		rendered: false,
+		dirty: true,
 		events: {
 			'click .single-player': 'openSinglePlayerMenu',
-			'click .close': 'closeMenu'
+			'click .close': 'closeMenu',
+			'click .name': 'editName'
 		},
 		initialize: function (opts) {
 			ui = opts.ui;
@@ -22,10 +26,21 @@ function (_, Backbone, templateSrc) {
 		closeMenu: function () {
 			ui.CloseActiveMenu();
 		},
+		editName: function (ev) {
+			var self = this;
+			var el = ev.target;
+
+			console.log('capturing input', this.model);
+
+			ui.CaptureInput(function (keyName) {
+				self.model.name += keyName;
+				$('.name .control-input', self.el).text(self.model.name);
+			}, null);
+		},
 		render: function () {
-			if (!this.rendered) {
-				$(this.el).html(this.template());
-				this.rendered = true;
+			if (this.dirty) {
+				$(this.el).html(this.template(this.model));
+				this.dirty = false;
 			}
 
 			return this;

@@ -24,8 +24,7 @@ function Init(cominterface) {
 			GetUIRenderContext: com.GetUIRenderContext
 		},
 		{
-			CaptureInput: function () { cl.inputCaptured = true; },
-			ReleaseInput: function () { cl.inputCaptured = false; }
+			CaptureInput: CaptureInput
 		},
 		{}
 	);

@@ -31,7 +31,8 @@ var ClientLocals = function () {
 	this.parseEntities        = new Array(MAX_PARSE_ENTITIES);
 	this.parseEntitiesNum     = 0;                         // index (not anded off) into cl_parse_entities[]
 	
-	this.inputCaptured        = false;
+	this.keyCallback          = false;                     // allows external modules to trap user input
+	this.mouseMoveCallback    = false;
 	
 	for (var i = 0; i < PACKET_BACKUP; i++) {
 		this.snapshots[i] = new ClientSnapshot();
