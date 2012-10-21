@@ -10,12 +10,14 @@ function (_, Backbone, templateSrc) {
 
 	var SinglePlayerMenu = Backbone.View.extend({
 		id: 'singleplayer',
+		className: 'menu',
 		model: {
 			levels: []
 		},
 		template: _.template(templateSrc),
-		dirty: true,
 		events: {
+			'click img': 'levelClicked',
+			'click .close': 'closeMenu'
 		},
 		initialize: function (opts) {
 			var self = this;
@@ -23,30 +25,37 @@ function (_, Backbone, templateSrc) {
 			ui = opts.ui;
 			sys = opts.sys;
 
-			var levelshots = [
-				'levelshots/Q3DM7.jpg',
-				'levelshots/Q3DM17.jpg',
-				'levelshots/Q3TOURNEY2.jpg'
-			];
+			var levels = [ 'q3dm7', 'q3dm17', 'q3tourney2' ];
 
 			var done = 0;
-			for (var i = 0; i < levelshots.length; i++) {
+			for (var i = 0; i < levels.length; i++) {
 				(function (i) {
-					sys.ReadFile(levelshots[i], 'binary', function (err, data) {
+					var filename = 'levelshots/' + levels[i] + '.png';
+
+					sys.ReadFile(filename, 'binary', function (err, data) {
 						if (err) throw err;
 
 						self.model.levels[i] = {
-							url: 'data:image/jpg;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(data)))
+							name: levels[i],
+							url: 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(data)))
 						};
 
-						if (++done === levelshots.length) {
+						if (++done === levels.length) {
 							self.render();
 						}
 					});
 				}(i));
 			}
 		},
+		levelClicked: function (ev) {
+			var $img = $(ev.target);
+			console.log('selected', $img.data('name'));
+		},
+		closeMenu: function () {
+			ui.CloseActiveMenu();
+		},
 		render: function () {
+			console.log('rendering');
 			$(this.el).html(this.template(this.model));
 			return this;
 		}

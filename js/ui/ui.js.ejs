@@ -6,9 +6,10 @@ define('ui/ui',
 	'ui/views/HudView',
 	'ui/views/ScoreboardView',
 	'ui/views/IngameMenu',
-	'ui/views/SinglePlayerMenu'
+	'ui/views/SinglePlayerMenu',
+	'ui/views/SettingsMenu'
 ],
-function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlayerMenu) {
+function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlayerMenu, SettingsMenu) {
 	<%- include ui-defines.js %>
 
 	function UserInterface(sys, cl, r) {

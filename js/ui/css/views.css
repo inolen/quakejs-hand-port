@@ -43,11 +43,15 @@
 	width: 16px;
 	height: 16px;
 	background: #f00;
-	pointer-events: none;
+	z-index: 1;
 }
 
 #viewport-ui.active .pointer {
 	display: inline-block;
+}
+
+#viewport-ui .control-label {
+	padding-right: 10px;
 }
 
 /**
@@ -74,15 +78,21 @@
 /**
  * Menus
  */
-#ingame {
+.menu {
 	word-break: break-all;
-}
-
-#ingame div {
 	padding: 5px;
 	background: #000;
 }
 
-#ingame div.hover {
-	background: #f00;
+.menu div {
+	padding: 5px;
+	margin-bottom: 5px;
+}
+
+.menu div.hover {
+	background: #00f;
+}
+
+.menu div.focus {
+	border: 1px solid #0f0;
 }

@@ -1,3 +1,4 @@
 <% _.each(levels, function (level) { %>
-	<img src="<%= level.url %>" />
+	<img data-name="<%- level.name %>" src="<%= level.url %>" />
 <% }); %>
+<div class="close">Close</div>

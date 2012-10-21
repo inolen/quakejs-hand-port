@@ -59,7 +59,7 @@ function KeyDownEvent(time, keyName) {
 	// Some browsers repeat keydown events, we don't want that.
 	if (key.active) return;
 
-	if (keyName == 'graveaccent') {
+	if (keyName === 'graveaccent') {
 		if (!cl.keyCallback) {
 			ui.SetActiveMenu('ingame');
 		} else {
@@ -72,8 +72,8 @@ function KeyDownEvent(time, keyName) {
 	if (cl.keyCallback) {
 		cl.keyCallback(keyName);
 	} else {
-		key.active = true;
 		key.downtime = time;
+		key.active = true;
 
 		ExecBinding(key);
 	}
@@ -85,10 +85,13 @@ function KeyDownEvent(time, keyName) {
 function KeyUpEvent(time, keyName) {
 	var key = GetKey(keyName);
 
-	key.active = false;
-	// Partial frame summing.
-	key.partial += time - key.downtime;
+	// Disable if the key input is now being captured.
+	// Otherwise KeyState will return small values when queried.
+	if (!cl.keyCallback) {
+		key.partial += time - key.downtime; // Partial frame summing.
+	}
 
+	key.active = false;
 	ExecBinding(key);
 }
 

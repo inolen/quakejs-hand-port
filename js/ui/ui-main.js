@@ -6,7 +6,8 @@ var map = {
 	'hud': HudView,
 	'scoreboard': ScoreboardView,
 	'ingame': IngameMenu,
-	'singleplayer': SinglePlayerMenu
+	'singleplayer': SinglePlayerMenu,
+	'settings': SettingsMenu
 };
 
 /**
@@ -18,17 +19,22 @@ function Init() {
 	uil = new UILocals();
 
 	//
+	document.addEventListener('resize', UpdateCachedViewportDimensions, false);
 	document.addEventListener('fullscreenchange', UpdateFontSizes, false);
 
 	//
 	$viewportUi = $(uiContext.handle);
+
+	UpdateCachedViewportDimensions();
+	// TODO figure out a way to call this after a successful render of a view
+	UpdateFontSizes();
 
 	// Embed our CSS.
 	var $style = $('<style>', { 'type': 'text/css'}).append(viewsCss);
 	$style.appendTo('head');
 
 	// Create pointer element.
-	$ptr = $('<div>', { 'class': 'pointer' });
+	$ptr = $('<span>', { 'class': 'pointer' });
 	$viewportUi.append($ptr);
 }
 
@@ -36,70 +42,45 @@ function Init() {
  * KeyPressEvent
  */
 function KeyPressEvent(keyName) {
-	// Clicking anywhere should clear anything capturing input.
 	if (keyName === 'mouse0') {
-		CaptureInput(null, null);
+		SetFocusedElement(uil.hover);
+		$(uil.focused).click();
 	}
 
-	if (uil.keyCallback) {
-		uil.keyCallback(keyName);
+	// Forward key press events to our focused element.
+	if (uil.focused) {
+		if (keyName === 'enter') {
+			ClearFocusedElement();
+		} else {
+			$(uil.focused).trigger('keypress', [ keyName ]);
+		}
 		return;
-	}
-
-	if (keyName === 'mouse0') {
-		// Trigger click events.
-		var el = document.elementFromPoint(mx, my);
-		$(el).click();
 	}
 }
 
 /**
  * MouseMoveEvent
  */
-var lastHovered = null;
-var mx = 0;
-var my = 0;
-
 function MouseMoveEvent(dx, dy) {
 	if (uil.mouseCallback) {
 		uil.mouseCallback(dx, dy);
 		return;
 	}
 
-	var vw = $viewportUi.width();
-	var vh = $viewportUi.height();
+	uil.mx += dx;
+	uil.my += dy;
 
-	mx += dx;
-	my += dy;
+	// Clamp to viewport width/height.
+	uil.mx = Math.max(0, Math.min(uil.mx, uil.vw));
+	uil.my = Math.max(0, Math.min(uil.my, uil.vh));
 
-	if (mx < 0) {
-		mx = 0;
-	} else if (mx > vw) {
-		mx = vw;
-	}
+	// Update pointer element.
+	$ptr.css({ 'top': uil.my + 'px', 'left': uil.mx + 'px' });
 
-	if (my < 0) {
-		my = 0;
-	} else if (my > vh) {
-		my = vh;
-	}
+	var el = document.elementFromPoint(uil.mx, uil.my);
 
-	$ptr.css({
-		'top': my + 'px',
-		'left': mx + 'px'
-	});
-
-	var el = document.elementFromPoint(mx, my);
-
-	if (lastHovered && lastHovered !== el) {
-		$(lastHovered).removeClass('hover');
-		lastHovered = null;
-	}
-
-	if (el && $.contains(uil.activeMenu.el, el)) {
-		$(el).addClass('hover');
-		lastHovered = el;
-	}
+	// Simulate browser by adding/removing hover classes.
+	SetHoverElement(el);
 }
 
 /**
@@ -111,7 +92,6 @@ function RegisterView(name) {
 			ReadFile: sys.ReadFile
 		},
 		ui: {
-			CaptureInput: CaptureInput,
 			SetActiveMenu: SetActiveMenu,
 			CloseActiveMenu: CloseActiveMenu
 		}
@@ -151,16 +131,61 @@ function CloseActiveMenu() {
 	$viewportUi.removeClass('active');
 	uil.activeMenu = null;
 	cl.CaptureInput(null, null);
+
+	ClearHoverElement();
+	ClearFocusedElement();
 }
 
 /**
- * CaptureInput
+ * SetHoverElement
  */
-function CaptureInput(keyCallback, mouseCallback) {
-	uil.keyCallback = keyCallback;
-	uil.mouseCallback = mouseCallback;
+function SetHoverElement(el) {
+	// Nothing to do.
+	if (uil.hover === el) {
+		return;
+	}
+
+	ClearHoverElement();
+
+	if (el && $.contains(uil.activeMenu.el, el)) {
+		$(el).addClass('hover');
+		uil.hover = el;
+	}
 }
 
+/**
+ * ClearHoverElement
+ */
+function ClearHoverElement() {
+	if (uil.hover) {
+		$(uil.hover).removeClass('hover');
+		uil.hover = null;
+	}
+}
+
+/**
+ * SetFocusedElement
+ */
+function SetFocusedElement(el) {
+	// Nothing to do.
+	if (uil.focused === el) {
+		return;
+	}
+
+	ClearFocusedElement();
+
+	uil.focused = el;
+	$(uil.focused).addClass('focus');
+}
+
+/**
+ * ClearHoveredElement
+ */
+function ClearFocusedElement() {
+	$(uil.focused).trigger('blur');
+	$(uil.focused).removeClass('focus');
+	uil.focused = null;
+}
 
 /**
  * Render
@@ -181,10 +206,8 @@ function Render() {
 		// active menu).
 		if (view.visFrame !== uil.frameCount && view !== uil.activeMenu) {
 			HideView(view);
-			return;
+			continue;
 		}
-
-		view.render();
 
 		ShowView(view);
 	}
@@ -202,18 +225,25 @@ function RenderView(name, model) {
 }
 
 /**
+ * UpdateCachedViewportDimensions
+ */
+function UpdateCachedViewportDimensions() {
+	uil.vw = $viewportUi.width();
+	uil.vh = $viewportUi.height();
+}
+
+/**
  * UpdateFontSizes
  *
  * Update base font-size of each child element to be 1/64th of the viewport size.
  * This allows all of our text elements to scale properly with the window.
  */
 function UpdateFontSizes() {
-	var width = $viewportUi.width();
 	var children = $viewportUi[0].childNodes;
 
 	for (var i = 0; i < children.length; i++) {
 		var child = children[i];
-		$(child).css('font-size', (width / 64) + 'px');
+		$(child).css('font-size', (uil.vw / 64) + 'px');
 	}
 }
 
