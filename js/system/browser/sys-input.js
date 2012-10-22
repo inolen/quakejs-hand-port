@@ -2,11 +2,13 @@
  * InputInit
  */
 function InputInit() {
-	viewport.addEventListener('keydown', KeyDownEvent);
-	viewport.addEventListener('keyup', KeyUpEvent);
-	viewport.addEventListener('mousedown', MouseDownEvent);
-	viewport.addEventListener('mouseup', MouseUpEvent);
-	viewport.addEventListener('mousemove', MouseMoveEvent);
+	// Listen to input on the parent frame, that way input from
+	// both the game and the UI will bubble up and be handled.
+	viewportFrame.addEventListener('keydown', KeyDownEvent);
+	viewportFrame.addEventListener('keyup', KeyUpEvent);
+	viewportFrame.addEventListener('mousedown', MouseDownEvent);
+	viewportFrame.addEventListener('mouseup', MouseUpEvent);
+	viewportFrame.addEventListener('mousemove', MouseMoveEvent);
 }
 
 /**

@@ -11,11 +11,6 @@
 #viewport-ui {
 	font-family: 'SourceCodeProSemibold', sans-serif;
 	/**
-	 * Disable pointer events on the main UI overlay, so they pass
-	 * through to the viewport layer.
-	 */
-	pointer-events: none;
-	/**
 	 * Don't let people accidently highlight text.
 	 */
 	-webkit-touch-callout: none;
@@ -27,14 +22,6 @@
 
 }
 
-#viewport-ui > div {
-	/**
-	 * Reenable pointer events so document.elementFromPoint can
-	 * find us.
-	 */
-	pointer-events: all;
-}
-
 #viewport-ui .pointer {
 	display: none;
 	position: absolute;
@@ -44,6 +31,8 @@
 	height: 16px;
 	background: #f00;
 	z-index: 1;
+	/* Don't let elementFromPoint() return the actual pointer */
+	pointer-events: none;
 }
 
 #viewport-ui.active .pointer {
