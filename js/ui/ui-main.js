@@ -88,14 +88,10 @@ function MouseMoveEvent(dx, dy) {
  */
 function RegisterView(name) {
 	var view = uil.views[name] = new map[name]({
-		sys: {
-			ReadFile: sys.ReadFile
-		},
-		com: {
-			ExecuteCmdText: com.ExecuteCmdText
-		},
+		sys: sys,
+		com: com,
 		ui: {
-			SetActiveMenu: SetActiveMenu,
+			SetActiveMenu:   SetActiveMenu,
 			CloseActiveMenu: CloseActiveMenu
 		}
 	});

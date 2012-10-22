@@ -4,7 +4,7 @@
 function LoadMap(mapName, callback) {
 	re.world = new WorldData();
 
-	cl.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
+	sys.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
 		if (err) throw err;
 		
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);

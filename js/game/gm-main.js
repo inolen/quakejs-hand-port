@@ -1,4 +1,4 @@
-var sys;
+var com;
 var sv;
 
 var level;
@@ -8,13 +8,13 @@ var g_gravity;
 /**
  * Init
  */
-function Init(sv_) {
-	sys = require('system/sys');
-	sv = sv_;
+function Init(cominterface, svinterface) {
+	com = cominterface;
+	sv = svinterface;
 
 	level = new LevelLocals();
 
-	g_gravity = sv.AddCvar('g_gravity', 800);
+	g_gravity = com.AddCvar('g_gravity', 800);
 
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);

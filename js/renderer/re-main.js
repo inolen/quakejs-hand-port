@@ -1,4 +1,5 @@
-var cl;
+var sys;
+var com;
 
 var re;
 var gl;
@@ -20,19 +21,20 @@ var flipMatrix = mat4.create([
 /**
  * Init
  */
-function Init(clinterface) {
+function Init(sysinterface, cominterface) {
 	console.log('--------- RE Init ---------');
 
-	cl = clinterface;
+	sys = sysinterface;
+	com = cominterface;
 	
 	re = new RenderLocals();
 
-	r_cull = cl.AddCvar('r_cull', 1);
-	r_subdivisions = cl.AddCvar('r_subdivisions', 4);
-	r_znear = cl.AddCvar('r_znear', 4);
-	r_zproj = cl.AddCvar('r_zproj', 64);
+	r_cull = com.AddCvar('r_cull', 1);
+	r_subdivisions = com.AddCvar('r_subdivisions', 4);
+	r_znear = com.AddCvar('r_znear', 4);
+	r_zproj = com.AddCvar('r_zproj', 64);
 
-	var gameContext = cl.GetGameRenderContext();
+	var gameContext = sys.GetGameRenderContext();
 	gl = gameContext.gl;
 
 	InitImages();

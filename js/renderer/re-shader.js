@@ -133,7 +133,7 @@ function ScanAndLoadShaderScripts(callback) {
  * LoadShaderScript
  */
 function LoadShaderScript(path, callback) {
-	cl.ReadFile(path, 'utf8', function (err, data) {
+	sys.ReadFile(path, 'utf8', function (err, data) {
 		if (err) throw err;
 
 		// Tokenize the file and spit out the shader names / bodies
@@ -189,7 +189,7 @@ function ScanAndLoadShaderPrograms(callback) {
  * LoadShaderProgram
  */
 function LoadShaderProgram(path, callback) {
-	cl.ReadFile(path, 'utf8', function (err, data) {
+	sys.ReadFile(path, 'utf8', function (err, data) {
 		if (err) throw err;
 		
 		// Use basename as name.

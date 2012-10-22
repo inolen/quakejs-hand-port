@@ -97,7 +97,7 @@ function RegisterMd3(mod, name) {
  * LoadMd3
  */
 function LoadMd3 (filename, callback) {
-	cl.ReadFile(filename, 'binary', function (err, data) {
+	sys.ReadFile(filename, 'binary', function (err, data) {
 		if (err) return callback(err);
 
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);

@@ -14,7 +14,7 @@ function Init(sysinterface, isdedicated) {
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
-	var cominterface = {
+	var exports = {
 		AddCvar:              AddCvar,
 		GetCvar:              GetCvar,
 		SetCvar:              SetCvar,
@@ -25,21 +25,13 @@ function Init(sysinterface, isdedicated) {
 		NetchanDestroy:       NetchanDestroy,
 		NetchanSend:          NetchanSend,
 		NetchanPrint:         NetchanPrint,
-		NetchanProcess:       NetchanProcess,
-		GetMilliseconds:      sys.GetMilliseconds,
-		ReadFile:             sys.ReadFile,
-		GetGameRenderContext: sys.GetGameRenderContext,
-		GetUIRenderContext:   sys.GetUIRenderContext,
-		NetCreateServer:      sys.NetCreateServer,
-		NetConnectToServer:   sys.NetConnectToServer,
-		NetSend:              sys.NetSend,
-		NetClose:             sys.NetClose
+		NetchanProcess:       NetchanProcess
 	};
 
-	sv.Init(cominterface, dedicated);
+	sv.Init(sys, exports, dedicated);
 
 	if (!dedicated) {
-		cl.Init(cominterface);
+		cl.Init(sys, exports);
 
 		// Provide the user a way to interface with the client.
 		/*window.$ = function (str) {

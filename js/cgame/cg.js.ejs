@@ -6,7 +6,7 @@ function (_, glmatrix, bg) {
 	<%- include ../renderer/re-defines.js %>
 	<%- include cg-defines.js %>
 
-	function CGame(sys, com, cl, r, ui) {
+	function CGame(sys, com, cl, cm, r, ui) {
 		<%- include cg-main.js %>
 		<%- include cg-cmds.js %>
 		<%- include cg-draw.js %>
@@ -23,8 +23,8 @@ function (_, glmatrix, bg) {
 	}
 
 	return {
-		CreateInstance: function (sys, com, cl, r, ui) {
-			return new CGame(sys, com, cl, r, ui);
+		CreateInstance: function (sys, com, cl, cm, r, ui) {
+			return new CGame(sys, com, cl, cm, r, ui);
 		}
 	};
 });

@@ -1,3 +1,4 @@
+var sys;
 var com;
 var dedicated;
 
@@ -12,13 +13,14 @@ var sv_fps;
 /**
  * Init
  */
-function Init(cominterface, isdedicated) {
+function Init(sysinterface, cominterface, isdedicated) {
+	sys = sysinterface;
 	com = cominterface;
 	dedicated = isdedicated;
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
-	cm = clipmap.CreateInstance({ ReadFile: com.ReadFile });
+	cm = clipmap.CreateInstance(sys);
 	
 	sv_serverid = com.AddCvar('sv_serverid', 1337);
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
@@ -148,9 +150,7 @@ function SpawnServer(mapName) {
 		ClearWorld();
 
 		// Initialize the game.
-		var gminterface = {
-			AddCmd:            com.AddCmd,
-			AddCvar:           com.AddCvar,
+		var exports = {
 			GetEntityDefs:     cm.EntityDefs,
 			LocateGameData:    LocateGameData,
 			GetUserCommand:    GetUserCommand,
@@ -160,7 +160,7 @@ function SpawnServer(mapName) {
 			FindEntitiesInBox: FindEntitiesInBox,
 			Trace:             cm.Trace
 		};
-		gm.Init(gminterface);
+		gm.Init(com, exports);
 
 		/*// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {

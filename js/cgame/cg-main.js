@@ -20,7 +20,7 @@ function Init(serverMessageNum) {
 	cgs.gameState = cl.GetGameState();
 
 	InitCommands();	
-	cl.LoadClipMap(cgs.gameState['sv_mapname'], function () {
+	cm.LoadMap(cgs.gameState['sv_mapname'], function () {
 		r.LoadMap(cgs.gameState['sv_mapname'], function () {
 			RegisterGraphics();
 			RegisterClients();

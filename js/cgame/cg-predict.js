@@ -98,7 +98,7 @@ function PredictPlayerState() {
 	// Prepare for pmove.
 	var cg_pmove = new PmoveInfo();
 	cg_pmove.ps = cg.predictedPlayerState;
-	cg_pmove.trace = cl.Trace;
+	cg_pmove.trace = cm.Trace;
 	// cg_pmove.pointcontents = CG_PointContents;
 	if (cg_pmove.ps.pm_type === PmoveType.DEAD) {
 		cg_pmove.tracemask = ContentMasks.PLAYERSOLID & ~ContentTypes.BODY;

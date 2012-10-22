@@ -1,6 +1,7 @@
+var sys;
 var com;
-var ui;
 var cm;
+var ui;
 var cg;
 
 var cl;
@@ -14,55 +15,23 @@ var keys = {};
 /**
  * Init
  */
-function Init(cominterface) {
+function Init(sysinterface, cominterface) {
 	console.log('--------- CL Init ---------');
 
+	var exports = {
+		GetGameState:                function () { return cl.gameState; },
+		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
+		GetUserCommand:              GetUserCommand,
+		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
+		GetSnapshot:                 GetSnapshot,
+		CaptureInput:                CaptureInput
+	}
+
+	sys = sysinterface;
 	com = cominterface;
-	ui = uinterface.CreateInstance(
-		{
-			ReadFile: com.ReadFile,
-			GetUIRenderContext: com.GetUIRenderContext
-		},
-		{
-			ExecuteCmdText: com.ExecuteCmdText
-		},
-		{
-			CaptureInput: CaptureInput
-		},
-		{}
-	);
-	cm = clipmap.CreateInstance(
-		{
-			ReadFile: com.ReadFile
-		}
-	);
-	cg = cgame.CreateInstance(
-		{
-			GetMilliseconds:             com.GetMilliseconds,
-		},
-		{
-			AddCmd:                      com.AddCmd,
-			AddCvar:                     com.AddCvar
-		},
-		{
-			GetGameState:                function () { return cl.gameState; },
-			GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
-			GetUserCommand:              GetUserCommand,
-			GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
-			GetSnapshot:                 GetSnapshot,
-			LoadClipMap:                 cm.LoadMap,
-			Trace:                       cm.Trace,
-		},
-		{
-			LoadMap:                     re.LoadMap,
-			RegisterModel:               re.RegisterModel,
-			AddRefEntityToScene:         re.AddRefEntityToScene,
-			RenderScene:                 re.RenderScene
-		},
-		{
-			RenderView:                  ui.RenderView
-		}
-	);
+	cm = clipmap.CreateInstance(sys);
+	ui = uinterface.CreateInstance(sys, com, exports, re);
+	cg = cgame.CreateInstance(sys, com, exports, cm, re, ui);
 
 	ClearState();
 	clc = new ClientConnection();	
@@ -115,15 +84,7 @@ function ShutdownCGame() {
  * InitRenderer
  */
 function InitRenderer() {
-	var reinterface = {
-		AddCmd:                      com.AddCmd,
-		AddCvar:                     com.AddCvar,
-		GetMilliseconds:             com.GetMilliseconds,
-		ReadFile:                    com.ReadFile,
-		GetGameRenderContext:        com.GetGameRenderContext
-	};
-
-	re.Init(reinterface);
+	re.Init(sys, com);
 }
 
 /**
