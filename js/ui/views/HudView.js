@@ -10,17 +10,22 @@ function (_, Backbone, templateSrc) {
 	var HudView = Backbone.View.extend({
 		id: 'hud',
 		template: _.template(templateSrc),
+		model: {
+			fps: 0
+		},
+		fpsel: null,
 		initialize: function (opts) {
 			ui = opts.ui;
+			this.render();
+		},
+		update: function (newModel) {
+			this.fpsel.text(newModel.fps);
+			this.model = newModel;
 		},
 		render: function () {
-			var modelJson = JSON.stringify(this.model);
+			this.$el.html(this.template(this.model));
 
-			if (modelJson !== this.oldModelJson) {
-				$(this.el).html(this.template(this.model));
-			}
-
-			this.oldModelJson = modelJson;
+			this.fpsel = this.$el.find('.fps-value');
 
 			return this;
 		}

@@ -13,7 +13,9 @@ function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlay
 	<%- include ui-defines.js %>
 
 	function UserInterface(sys, com, cl, r) {
+		<%- include ../shared/shared.js %>
 		<%- include ui-main.js %>
+		<%- include ui-image.js %>
 
 		return {
 			Init:            Init,
@@ -27,8 +29,8 @@ function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlay
 	}
 
 	return {
-		CreateInstance: function (sys, com, cl, r) {
-			return new UserInterface(sys, com, cl, r);
+		CreateInstance: function (sys, com, cl) {
+			return new UserInterface(sys, com, cl);
 		}
 	};
 });

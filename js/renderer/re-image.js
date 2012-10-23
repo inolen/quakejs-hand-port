@@ -54,7 +54,7 @@ function FindImage(name, clamp) {
 	}
 
 	// TODO Convert this to use sys.ReadFile.
-	// Load the image using the Image() class.
+	// However, using a raw img is much faster than sys.ReadFile + atob64.
 	var el = new Image();
 	el.onload = function() {
 		image.texnum = BuildTexture(el, null, null, clamp);

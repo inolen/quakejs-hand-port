@@ -30,7 +30,7 @@ function Init(sysinterface, cominterface) {
 	sys = sysinterface;
 	com = cominterface;
 	cm = clipmap.CreateInstance(sys);
-	ui = uinterface.CreateInstance(sys, com, exports, re);
+	ui = uinterface.CreateInstance(sys, com, exports);
 	cg = cgame.CreateInstance(sys, com, exports, cm, re, ui);
 
 	ClearState();

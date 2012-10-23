@@ -46,6 +46,9 @@ function (_, Backbone, templateSrc) {
 		closeMenu: function () {
 			ui.CloseActiveMenu();
 		},
+		update: function (newModel) {
+
+		},
 		render: function () {
 			$(this.el).html(this.template(this.model));
 			return this;

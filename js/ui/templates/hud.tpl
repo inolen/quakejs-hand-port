@@ -1,1 +1,1 @@
-<div class="fps"><%- fps %> FPS</div>
+<div class="fps"><span class="fps-value"><%- fps %></span> FPS</div>

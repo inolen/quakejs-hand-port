@@ -8,4 +8,9 @@ var UILocals = function () {
 	this.my            = 0;                                // mouse y
 	this.vw            = 0;                                // viewport width
 	this.vh            = 0;                                // viewport height
+	this.images        = {};
 };
+
+var UIImage = function () {
+	this.b64 = null;
+}

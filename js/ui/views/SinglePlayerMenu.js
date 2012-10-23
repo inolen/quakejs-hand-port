@@ -32,14 +32,12 @@ function (_, Backbone, templateSrc) {
 			var done = 0;
 			for (var i = 0; i < levels.length; i++) {
 				(function (i) {
-					var filename = 'levelshots/' + levels[i] + '.png';
+					var filename = 'levelshots/' + levels[i];
 
-					sys.ReadFile(filename, 'binary', function (err, data) {
-						if (err) throw err;
-
+					ui.FindImage(filename, function (err, img) {
 						self.model.levels[i] = {
 							name: levels[i],
-							url: 'data:image/png;base64,' + btoa(String.fromCharCode.apply(null, new Uint8Array(data)))
+							url: img.data
 						};
 
 						if (++done === levels.length) {
@@ -57,8 +55,10 @@ function (_, Backbone, templateSrc) {
 		closeMenu: function () {
 			ui.CloseActiveMenu();
 		},
+		update: function (newModel) {
+
+		},
 		render: function () {
-			console.log('rendering');
 			$(this.el).html(this.template(this.model));
 			return this;
 		}

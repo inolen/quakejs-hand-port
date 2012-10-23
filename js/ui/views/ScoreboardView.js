@@ -12,8 +12,9 @@ function (_, Backbone, templateSrc) {
 		template: _.template(templateSrc),
 		initialize: function (opts) {
 			ui = opts.ui;
+			this.render();
 		},
-		render: function () {
+		update: function (newModel) {
 			var modelJson = JSON.stringify(this.model);
 
 			if (modelJson !== this.oldModelJson) {
@@ -22,6 +23,10 @@ function (_, Backbone, templateSrc) {
 
 			this.oldModelJson = modelJson;
 
+			return this;
+		},
+		render: function () {
+			$(this.el).html(this.template(this.model));
 			return this;
 		}
 	});

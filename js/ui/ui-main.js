@@ -1,5 +1,5 @@
 var uil;
-var $viewportUi;
+var $viewportUI;
 var $ptr;
 
 var map = {
@@ -19,15 +19,12 @@ function Init() {
 	uil = new UILocals();
 
 	//
-	document.addEventListener('resize', UpdateCachedViewportDimensions, false);
-	document.addEventListener('fullscreenchange', UpdateFontSizes, false);
+	document.addEventListener('resize', ScaleUI, false);
+	document.addEventListener('fullscreenchange', ScaleUI, false);
 
 	//
-	$viewportUi = $(uiContext.handle);
-
-	UpdateCachedViewportDimensions();
-	// TODO figure out a way to call this after a successful render of a view
-	UpdateFontSizes();
+	$viewportUI = $(uiContext.handle);
+	ScaleUI();
 
 	// Embed our CSS.
 	var $style = $('<style>', { 'type': 'text/css'}).append(viewsCss);
@@ -35,7 +32,7 @@ function Init() {
 
 	// Create pointer element.
 	$ptr = $('<span>', { 'class': 'pointer' });
-	$viewportUi.append($ptr);
+	$viewportUI.append($ptr);
 }
 
 /**
@@ -91,12 +88,15 @@ function RegisterView(name) {
 		sys: sys,
 		com: com,
 		ui: {
+			FindImage:       FindImage,
 			SetActiveMenu:   SetActiveMenu,
 			CloseActiveMenu: CloseActiveMenu
 		}
 	});
 
-	$viewportUi.append(view.$el);
+	$viewportUI.append(view.$el);
+
+	HideView(view);
 
 	return view;
 }
@@ -118,7 +118,7 @@ function GetView(name) {
  * SetActiveMenu
  */
 function SetActiveMenu(name) {
-	$viewportUi.addClass('active');
+	$viewportUI.addClass('active');
 	uil.activeMenu = GetView(name);
 	cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
 }
@@ -127,7 +127,7 @@ function SetActiveMenu(name) {
  * CloseActiveMenu
  */
 function CloseActiveMenu() {
-	$viewportUi.removeClass('active');
+	$viewportUI.removeClass('active');
 	uil.activeMenu = null;
 	cl.CaptureInput(null, null);
 
@@ -194,6 +194,11 @@ function ClearFocusedElement() {
 function Render() {
 	var views = uil.views;
 
+	// Add active menu to render list.
+	if (uil.activeMenu) {
+		RenderView(uil.activeMenu.id, uil.activeMenu.model);
+	}
+
 	for (var name in views) {
 		if (!views.hasOwnProperty(name)) {
 			continue;
@@ -201,14 +206,18 @@ function Render() {
 
 		var view = views[name];
 
-		// Hide the view if it's not active this frame (and it's not the
-		// active menu).
-		if (view.visFrame !== uil.frameCount && view !== uil.activeMenu) {
+		// Hide the view if it's not active this frame.
+		if (view.visFrame !== uil.frameCount) {
 			HideView(view);
 			continue;
 		}
 
-		ShowView(view);
+		// If the view was successfully shown, let's make sure it has the
+		// most up to date font sizes as it may have not been visible on
+		// the last resize.
+		if (ShowView(view)) {
+			UpdateFontSize(view);
+		}
 	}
 
 	uil.frameCount++;
@@ -219,43 +228,70 @@ function Render() {
  */
 function RenderView(name, model) {
 	var view = GetView(name);
-	view.model = model;
+
+	// Update visFrame so the main render can show active views.
 	view.visFrame = uil.frameCount;
-}
 
-/**
- * UpdateCachedViewportDimensions
- */
-function UpdateCachedViewportDimensions() {
-	uil.vw = $viewportUi.width();
-	uil.vh = $viewportUi.height();
-}
-
-/**
- * UpdateFontSizes
- *
- * Update base font-size of each child element to be 1/64th of the viewport size.
- * This allows all of our text elements to scale properly with the window.
- */
-function UpdateFontSizes() {
-	var children = $viewportUi[0].childNodes;
-
-	for (var i = 0; i < children.length; i++) {
-		var child = children[i];
-		$(child).css('font-size', (uil.vw / 64) + 'px');
-	}
+	view.update(model);
 }
 
 /**
  * HideView
  */
 function HideView(view) {
-	view.$el.hide();
+	if (view.$el.is(':visible')) {
+		view.$el.hide();
+		return true;
+	}
+
+	return false;
 }
 
 /**
  * ShowView
  */
 function ShowView(view) {
-	view.$el.show();
+	if (!view.$el.is(':visible')) {
+		view.$el.show();
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * ScaleUI
+ * 
+ * Update cached viewport sizes as well as font-sizes for all views.
+ */
+function ScaleUI() {
+	uil.vw = $viewportUI.width();
+	uil.vh = $viewportUI.height();
+
+	UpdateAllFontSizes();
+}
+
+/**
+ * UpdateAllFontSizes
+ */
+function UpdateAllFontSizes() {
+	var views = uil.views;
+
+	for (var name in views) {
+		if (!views.hasOwnProperty(name)) {
+			continue;
+		}
+
+		UpdateFontSize(views[name]);
+	}
+}
+
+/**
+ * UpdateFontSizes
+ *
+ * Update base font-size of view to be 1/64th of the viewport size.
+ * This allows all of our text elements to scale properly with the window.
+ */
+function UpdateFontSize(view) {
+	view.$el.css('font-size', (uil.vw / 100) + 'px');
 }

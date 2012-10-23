@@ -44,8 +44,8 @@ function GetAvailableContext(canvas, contextList) {
 	if (canvas.getContext) {
 		for (var i = 0; i < contextList.length; ++i) {
 			try {
-				var context = canvas.getContext(contextList[i], { antialias:false });
-				if(context !== null) {
+				var context = canvas.getContext(contextList[i], { antialias: false });
+				if( context !== null) {
 					return context;
 				}
 			} catch (ex) { }
