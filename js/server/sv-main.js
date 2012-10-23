@@ -26,11 +26,11 @@ function Init(sysinterface, cominterface, isdedicated) {
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
 	sv_fps = com.AddCvar('sv_fps', 20);
 
-	InitCmd();
+	InitCmds();
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		LoadMapCmd('q3tourney2');
+		CmdLoadMap('q3tourney2');
 	}, 50);
 }
 

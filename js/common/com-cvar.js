@@ -56,3 +56,10 @@ function SetCvar(name, value) {
 
 	cvar(value);
 }
+
+/**
+ * WriteCvars
+ */
+function WriteCvars(str) {
+	return str;
+}

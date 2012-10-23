@@ -54,7 +54,13 @@ var ClientStatic = function () {
 
 	this.keyCallback       = false;                     // allows external modules to trap user input
 	this.mouseMoveCallback = false;
-	
+
+	this.keys              = {};
+	this.forwardKey        = null;
+	this.leftKey           = null;
+	this.backKey           = null;
+	this.rightKey          = null;
+	this.upKey             = null;
 };
 
 var ConnectionState = {

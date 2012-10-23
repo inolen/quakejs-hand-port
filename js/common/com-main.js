@@ -14,18 +14,21 @@ function Init(sysinterface, isdedicated) {
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
+	InitCmds();
+	
 	var exports = {
-		AddCvar:              AddCvar,
-		GetCvar:              GetCvar,
-		SetCvar:              SetCvar,
-		AddCmd:               AddCmd,
-		GetCmd:               GetCmd,
-		ExecuteCmdText:       ExecuteCmdText,
-		NetchanSetup:         NetchanSetup,
-		NetchanDestroy:       NetchanDestroy,
-		NetchanSend:          NetchanSend,
-		NetchanPrint:         NetchanPrint,
-		NetchanProcess:       NetchanProcess
+		SaveConfig:    SaveConfig,
+		AddCvar:        AddCvar,
+		GetCvar:        GetCvar,
+		SetCvar:        SetCvar,
+		AddCmd:         AddCmd,
+		GetCmd:         GetCmd,
+		ExecuteCmdText: ExecuteCmdText,
+		NetchanSetup:   NetchanSetup,
+		NetchanDestroy: NetchanDestroy,
+		NetchanSend:    NetchanSend,
+		NetchanPrint:   NetchanPrint,
+		NetchanProcess: NetchanProcess
 	};
 
 	sv.Init(sys, exports, dedicated);
@@ -38,6 +41,8 @@ function Init(sysinterface, isdedicated) {
 			ExecuteCmdText(str);
 		};*/
 	}
+
+	LoadConfig();
 }
 
 /**
@@ -100,3 +105,26 @@ function QueueEvent(ev) {
 	ev.time = sys.GetMilliseconds();
 	events.push(ev);
 };
+
+/**
+ * LoadConfig
+ */
+function LoadConfig() {
+	ExecuteCmdText('exec default.cfg');
+}
+
+/**
+ * SaveConfig
+ */
+function SaveConfig() {
+	var cfg = 'unbindall\n';
+
+	cfg = cl.WriteBindings(cfg);
+	cfg = WriteCvars(cfg);
+
+	sys.WriteFile('default.cfg', cfg, 'utf8', function (err) {
+		if (!err) {
+			console.log('SHIT WAS SAVED');
+		}
+	});
+}

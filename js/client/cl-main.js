@@ -9,8 +9,6 @@ var clc;
 var cls = new ClientStatic();
 var cl_sensitivity;
 var cl_showTimeDelta;
-var commands = {};
-var keys = {};
 
 /**
  * Init
@@ -19,6 +17,7 @@ function Init(sysinterface, cominterface) {
 	console.log('--------- CL Init ---------');
 
 	var exports = {
+		Bind:                        CmdBind,
 		GetGameState:                function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
 		GetUserCommand:              GetUserCommand,
@@ -40,16 +39,15 @@ function Init(sysinterface, cominterface) {
 	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
 	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0);
 
-	InitInput();
-	InitCmd();
+	InitCmds();
+	InitDefaultBinds();
 	InitRenderer();
 	ui.Init();
 
 	cls.initialized = true;
 
 	setTimeout(function () {
-		//ConnectCmd('192.168.0.102:9001');
-		ConnectCmd('localhost:9000');
+		CmdConnect('localhost:9000');
 	}, 100);
 }
 

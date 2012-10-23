@@ -42,6 +42,7 @@ function KeyPressEvent(keyName) {
 	if (keyName === 'mouse0') {
 		SetFocusedElement(uil.hover);
 		$(uil.focused).click();
+		return;
 	}
 
 	// Forward key press events to our focused element.
@@ -87,10 +88,13 @@ function RegisterView(name) {
 	var view = uil.views[name] = new map[name]({
 		sys: sys,
 		com: com,
+		cl: cl,
 		ui: {
-			FindImage:       FindImage,
-			SetActiveMenu:   SetActiveMenu,
-			CloseActiveMenu: CloseActiveMenu
+			SetActiveMenu:       SetActiveMenu,
+			CloseActiveMenu:     CloseActiveMenu,
+			FindImage:           FindImage,
+			ProcessTextInput:    ProcessTextInput,
+			ProcessKeyBindInput: ProcessKeyBindInput
 		}
 	});
 

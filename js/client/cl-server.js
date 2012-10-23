@@ -59,14 +59,14 @@ function KeyMove(cmd) {
 	var movespeed = 127;
 	var forward = 0, side = 0, up = 0;
 
-	if (forwardKey) forward += movespeed * GetKeyState(forwardKey);
-	if (backKey) forward -= movespeed * GetKeyState(backKey);
+	if (cls.forwardKey) forward += movespeed * GetKeyState(cls.forwardKey);
+	if (cls.backKey) forward -= movespeed * GetKeyState(cls.backKey);
 
-	if (rightKey) side += movespeed * GetKeyState(rightKey);
-	if (leftKey) side -= movespeed * GetKeyState(leftKey);
+	if (cls.rightKey) side += movespeed * GetKeyState(cls.rightKey);
+	if (cls.leftKey) side -= movespeed * GetKeyState(cls.leftKey);
 
-	if (upKey) { var foobar = GetKeyState(upKey); up += movespeed * foobar; }
-	//if (upKey) up -= movespeed * GetKeyState(upKey);
+	if (cls.upKey) { up += movespeed * GetKeyState(cls.upKey); }
+	//if (cls.upKey) up -= movespeed * GetKeyState(cls.upKey);
 
 	cmd.forwardmove = ClampChar(forward);
 	cmd.rightmove = ClampChar(side);

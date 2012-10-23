@@ -1,25 +1,3 @@
-var activeKeys = {};
-var forwardKey, leftKey, backKey, rightKey, upKey;
-
-/**
- * InitInput
- */
-function InitInput() {
-	com.AddCmd('+forward', function (key) { forwardKey = key; });
-	com.AddCmd('+left', function (key) { leftKey = key; });
-	com.AddCmd('+back', function (key) { backKey = key; });
-	com.AddCmd('+right', function (key) { rightKey = key; });
-	com.AddCmd('+jump', function (key) { upKey = key; });
-
-	// TODO move to config file
-	Bind('w', '+forward');
-	Bind('a', '+left');
-	Bind('s', '+back');
-	Bind('d', '+right');
-	Bind('space', '+jump');
-	Bind('tab', '+scores');
-}
-
 /**
  * CaptureInput
  *
@@ -30,20 +8,14 @@ function CaptureInput(keyCallback, mouseMoveCallback) {
 	cls.mouseMoveCallback = mouseMoveCallback;
 }
 
-/**********************************************************
- *
- * Abstracted key/mouse event handling.
- *
- **********************************************************/
-
 /**
  * GetKey
  */
 function GetKey(keyName) {
-	var key = keys[keyName];
+	var key = cls.keys[keyName];
 
 	if (!key) {
-		key = keys[keyName] = new KeyState();
+		key = cls.keys[keyName] = new KeyState();
 		key.chr = keyName;
 	}
 
@@ -128,12 +100,6 @@ function GetKeyState(key) {
 	return val;
 }
 
-/**********************************************************
- *
- * Key bindings
- *
- **********************************************************/
-
 /**
  * ExecBinding
  */
@@ -148,16 +114,20 @@ function ExecBinding(key) {
 }
 
 /**
- * Bind
+ * WriteBindings
  */
-function Bind(keyName, cmd) {
-	var key = GetKey(keyName);
-	key.binding = cmd;
-}
+function WriteBindings(str) {
+	for (var keyName in cls.keys) {
+		if (!cls.keys.hasOwnProperty(keyName)) {
+			continue;
+		}
 
-/**
- * Unbind
- */
-function Unbind(keyName, cmd) {
-	delete key.binding;
+		var key = GetKey(keyName);
+
+		if (key.binding) {
+			str += 'bind ' + keyName + ' ' + key.binding + '\n';
+		}
+	}
+
+	return str;
 }
