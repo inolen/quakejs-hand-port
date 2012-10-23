@@ -17,7 +17,7 @@ function Init(sysinterface, isdedicated) {
 	InitCmds();
 	
 	var exports = {
-		SaveConfig:    SaveConfig,
+		SaveConfig:     SaveConfig,
 		AddCvar:        AddCvar,
 		GetCvar:        GetCvar,
 		SetCvar:        SetCvar,

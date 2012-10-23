@@ -46,6 +46,7 @@
 #viewport-ui .control-label {
 	display: inline-block;
 	width: 10em;
+	color: #A6E22E;
 }
 
 /**
@@ -73,9 +74,14 @@
  * Menus
  */
 .menu {
+	position: relative;
+	width: 40%;
+	margin: 10% auto 0;
+	padding: 1em 2em;
+	background: #111;
+	color: #bfbfbf;
+	border-radius: 10px;
 	word-break: break-all;
-	padding: 5px;
-	background: #000;
 }
 
 .menu div {
@@ -84,9 +90,29 @@
 }
 
 .menu div.hover {
-	background: #00f;
+	background: #333;
 }
 
 .menu div.focus {
 	border: 1px solid #0f0;
+}
+
+.menu .close {
+	position: absolute;
+	top: 0;
+	right: 0;
+	font-size: 1.8em;
+	line-height: .8em;
+	color: #999999;
+}
+
+.menu .close.hover {
+	color: #bfbfbf;
+}
+
+/**
+ * Ingame menu
+ */
+#ingame.menu {
+	text-align: center;
 }

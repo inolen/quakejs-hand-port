@@ -66,8 +66,10 @@ function (_, Backbone, templateSrc) {
 			cl.Bind(this.model.leftKey, '+left');
 			cl.Bind(this.model.backKey, '+back');
 			cl.Bind(this.model.rightKey, '+right');
-			cl.Bind(this.model.upKey, '+up');
-			com.SaveConfig();
+			cl.Bind(this.model.upKey, '+jump');
+			com.SaveConfig(function () {
+				com.LoadConfig();
+			});
 		},
 		closeMenu: function () {
 			ui.CloseActiveMenu();

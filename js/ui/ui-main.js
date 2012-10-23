@@ -39,18 +39,18 @@ function Init() {
  * KeyPressEvent
  */
 function KeyPressEvent(keyName) {
-	if (keyName === 'mouse0') {
-		SetFocusedElement(uil.hover);
-		$(uil.focused).click();
+	if (keyName === 'mouse0' && uil.hoverEls && uil.hoverEls.length > 0) {
+		SetFocusedElement(uil.hoverEls[0]);
+		$(uil.focusEl).click();
 		return;
 	}
 
 	// Forward key press events to our focused element.
-	if (uil.focused) {
+	if (uil.focusEl) {
 		if (keyName === 'enter') {
 			ClearFocusedElement();
 		} else {
-			$(uil.focused).trigger('keypress', [ keyName ]);
+			$(uil.focusEl).trigger('keypress', [ keyName ]);
 		}
 		return;
 	}
@@ -75,10 +75,41 @@ function MouseMoveEvent(dx, dy) {
 	// Update pointer element.
 	$ptr.css({ 'top': uil.my + 'px', 'left': uil.mx + 'px' });
 
-	var el = document.elementFromPoint(uil.mx, uil.my);
-
 	// Simulate browser by adding/removing hover classes.
-	SetHoverElement(el);
+	if (uil.activeMenu) {
+		var els = GetAllElementsAtPoint(uil.activeMenu, uil.mx, uil.my);
+		SetHoverElements(els);
+	}
+}
+
+/**
+ * GetAllElementsAtPoint
+ *
+ * Returns a list of ALL elements of a view that contain the specified point.
+ */
+function GetAllElementsAtPoint(view, x, y) {
+	var el = document.elementFromPoint(x, y);
+
+	if (!$.contains(view.el, el)) {
+		return [el];
+	}
+
+	var $matches = $(el).parentsUntil(view.el, function () {
+		var $parent = $(this);
+		var offset = $parent.offset();
+		var range = {
+			x: [offset.left, offset.left + $parent.outerWidth()],
+			y: [offset.top, offset.top + $parent.outerHeight()]
+		};
+		return (x >= range.x[0] && x <= range.x[1]) && (y >= range.y[0] && y <= range.y[1])
+	});
+
+	// Make sure to add the origin, lowest element as the first index
+	// in the array, as we rely on that later on for triggering events.
+	var matches = $matches.toArray();
+	matches.splice(0, 0, el);
+
+	return matches;
 }
 
 /**
@@ -135,34 +166,40 @@ function CloseActiveMenu() {
 	uil.activeMenu = null;
 	cl.CaptureInput(null, null);
 
-	ClearHoverElement();
+	ClearHoverElements();
 	ClearFocusedElement();
 }
 
 /**
- * SetHoverElement
+ * SetHoverElements
  */
-function SetHoverElement(el) {
-	// Nothing to do.
-	if (uil.hover === el) {
-		return;
+function SetHoverElements(els) {
+	if (uil.hoverEls) {
+		// Clear old hover elements.
+		for (var i = 0; i < uil.hoverEls.length;) {
+			var old = uil.hoverEls[i];
+			if (els.indexOf(old) === -1) {
+				$(old).removeClass('hover');
+				uil.hoverEls.splice(i, 1);
+				continue;
+			}
+			i++;
+		}
 	}
 
-	ClearHoverElement();
-
-	if (el && $.contains(uil.activeMenu.el, el)) {
-		$(el).addClass('hover');
-		uil.hover = el;
+	if (els) {
+		$(els).addClass('hover');
+		uil.hoverEls = els;
 	}
 }
 
 /**
  * ClearHoverElement
  */
-function ClearHoverElement() {
-	if (uil.hover) {
-		$(uil.hover).removeClass('hover');
-		uil.hover = null;
+function ClearHoverElements() {
+	if (uil.hoverEls) {
+		$(uil.hoverEls).removeClass('hover');
+		uil.hoverEls = null;
 	}
 }
 
@@ -171,23 +208,23 @@ function ClearHoverElement() {
  */
 function SetFocusedElement(el) {
 	// Nothing to do.
-	if (uil.focused === el) {
+	if (uil.focusEl === el) {
 		return;
 	}
 
 	ClearFocusedElement();
 
-	uil.focused = el;
-	$(uil.focused).addClass('focus');
+	uil.focusEl = el;
+	$(uil.focusEl).addClass('focus');
 }
 
 /**
  * ClearHoveredElement
  */
 function ClearFocusedElement() {
-	$(uil.focused).trigger('blur');
-	$(uil.focused).removeClass('focus');
-	uil.focused = null;
+	$(uil.focusEl).trigger('blur');
+	$(uil.focusEl).removeClass('focus');
+	uil.focusEl = null;
 }
 
 /**

@@ -1,3 +1,4 @@
+<div class="close">×</div>
 <h1>Settings</h1>
 <div class="name control-group">
 	<span class="control-label">Name:</span><span class="control-input"><%- name %></span>
@@ -18,4 +19,3 @@
 <div class="up-key control-group">
 	<span class="control-label">Jump:</span><span class="control-input"><%- upKey %></span>
 </div>
-<div class="close">Close</div>
