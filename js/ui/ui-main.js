@@ -90,6 +90,10 @@ function MouseMoveEvent(dx, dy) {
 function GetAllElementsAtPoint(view, x, y) {
 	var el = document.elementFromPoint(x, y);
 
+	if (!el) {
+		return null;
+	}
+
 	if (!$.contains(view.el, el)) {
 		return [el];
 	}
@@ -174,11 +178,12 @@ function CloseActiveMenu() {
  * SetHoverElements
  */
 function SetHoverElements(els) {
+	// Clear old hover elements.
 	if (uil.hoverEls) {
-		// Clear old hover elements.
 		for (var i = 0; i < uil.hoverEls.length;) {
 			var old = uil.hoverEls[i];
-			if (els.indexOf(old) === -1) {
+			// If the new array doesn't contain the old element, remove it.
+			if (!els || els.indexOf(old) === -1) {
 				$(old).removeClass('hover');
 				uil.hoverEls.splice(i, 1);
 				continue;
@@ -187,9 +192,10 @@ function SetHoverElements(els) {
 		}
 	}
 
-	if (els) {
-		$(els).addClass('hover');
-		uil.hoverEls = els;
+	uil.hoverEls = els;
+
+	if (uil.hoverEls) {
+		$(uil.hoverEls).addClass('hover');
 	}
 }
 
@@ -199,8 +205,9 @@ function SetHoverElements(els) {
 function ClearHoverElements() {
 	if (uil.hoverEls) {
 		$(uil.hoverEls).removeClass('hover');
-		uil.hoverEls = null;
 	}
+
+	uil.hoverEls = null;
 }
 
 /**
