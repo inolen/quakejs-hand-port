@@ -23,6 +23,27 @@ function GetKey(keyName) {
 }
 
 /**
+ * GetKeyNamesForCmd
+ */
+function GetKeyNamesForCmd(cmdName) {
+	var keys;
+	
+	for (var keyName in cls.keys) {
+		if (!cls.keys.hasOwnProperty(keyName)) {
+			continue;
+		}
+
+		var key = cls.keys[keyName];
+		if (key.binding === cmdName) {
+			if (!keys) keys = [];
+			keys.push(keyName);
+		}
+	}
+
+	return keys;
+}
+
+/**
  * KeyDownEvent
  */
 function KeyDownEvent(time, keyName) {

@@ -13,20 +13,20 @@ function (_, Backbone, templateSrc) {
 		model: {
 			fps: 0
 		},
-		fpsel: null,
+		fpsEl: null,
 		initialize: function (opts) {
 			ui = opts.ui;
 			this.render();
 		},
-		update: function (newModel) {
-			this.fpsel.text(newModel.fps);
-			this.model = newModel;
+		setFPS: function (fps) {
+			if (!this.fpsEl) {
+				this.fpsEl = this.$el.find('.fps-value');
+			}
+			this.model.fps = fps;
+			this.fpsEl.text(this.model.fps);
 		},
 		render: function () {
 			this.$el.html(this.template(this.model));
-
-			this.fpsel = this.$el.find('.fps-value');
-
 			return this;
 		}
 	});

@@ -6,7 +6,10 @@ var cg;
 
 var cl;
 var clc;
-var cls = new ClientStatic();
+var cls;
+
+var cl_name;
+var cl_model;
 var cl_sensitivity;
 var cl_showTimeDelta;
 
@@ -18,6 +21,7 @@ function Init(sysinterface, cominterface) {
 
 	var exports = {
 		Bind:                        CmdBind,
+		GetKeyNamesForCmd:           GetKeyNamesForCmd,
 		GetGameState:                function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
 		GetUserCommand:              GetUserCommand,
@@ -33,9 +37,12 @@ function Init(sysinterface, cominterface) {
 	cg = cgame.CreateInstance(sys, com, exports, cm, re, ui);
 
 	ClearState();
-	clc = new ClientConnection();	
+	clc = new ClientConnection();
+	cls = new ClientStatic();
 	cls.realtime = 0;
 
+	cl_name = com.AddCvar('name', 'UnnamedPlayer'/*, CVAR_USERINFO | CVAR_ARCHIVE*/);
+	cl_model = com.AddCvar('model', 'sarge'/*, CVAR_USERINFO | CVAR_ARCHIVE*/);
 	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
 	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0);
 

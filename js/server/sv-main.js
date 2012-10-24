@@ -22,7 +22,7 @@ function Init(sysinterface, cominterface, isdedicated) {
 	svs = new ServerStatic();
 	cm = clipmap.CreateInstance(sys);
 	
-	sv_serverid = com.AddCvar('sv_serverid', 1337);
+	sv_serverid = com.AddCvar('sv_serverid', 0);
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
 	sv_fps = com.AddCvar('sv_fps', 20);
 
@@ -142,9 +142,9 @@ function SpawnServer(mapName) {
 
 	// Load the collision map.
 	cm.LoadMap(mapName, function () {
-		com.SetCvar('sv_mapname', mapName);
+		sv_mapname(mapName);
 		// serverid should be different each time.
-		com.SetCvar('sv_serverid', svs.frameTime);
+		sv_serverid(svs.frameTime);
 
 		// Clear physics interaction links.
 		ClearWorld();

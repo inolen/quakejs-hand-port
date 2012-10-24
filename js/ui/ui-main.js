@@ -244,7 +244,7 @@ function Render() {
 
 	// Add active menu to render list.
 	if (uil.activeMenu) {
-		RenderView(uil.activeMenu.id, uil.activeMenu.model);
+		RenderView(uil.activeMenu);
 	}
 
 	for (var name in views) {
@@ -274,13 +274,9 @@ function Render() {
 /**
  * RenderView
  */
-function RenderView(name, model) {
-	var view = GetView(name);
-
+function RenderView(view) {
 	// Update visFrame so the main render can show active views.
 	view.visFrame = uil.frameCount;
-
-	view.update(model);
 }
 
 /**

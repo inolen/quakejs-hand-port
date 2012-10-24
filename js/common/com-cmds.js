@@ -22,22 +22,6 @@ function GetCmd(cmd) {
 }
 
 /**
- * ExecuteCmdText
- */
-function ExecuteCmdText(str) {
-	var split = str.split(' ');
-	var cmdstr = split[0];
-	var args = split.slice(1);
-	var callback;
-
-	console.log('Executing', str);
-
-	if ((callback = GetCmd(cmdstr))) {
-		callback.apply(this, args);
-	}
-}
-
-/**
  * CmdExec
  */
 function CmdExec(filename) {

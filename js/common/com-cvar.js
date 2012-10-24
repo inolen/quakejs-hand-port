@@ -1,38 +1,25 @@
 var cvars = {};
 
-// TODO move to com-defines.
-function Cvar(defaultValue, changeCallback) {
-	var currentValue = defaultValue;
-
-	return function (newValue) {
-		this.modified = false;
-
-		if (arguments.length) {
-			var oldValue = currentValue;
-			currentValue = newValue;
-			//this.modified = true;
-			if (changeCallback) {
-				changeCallback(currentValue, oldValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-}
-
 /**
  * AddCvar
  */
-function AddCvar(name, defaultValue, changeCallback) {
-	var cvar = new Cvar(defaultValue, changeCallback);
+function AddCvar(name, defaultValue) {
+	var cvar = new Cvar(defaultValue);
 	cvars[name] = cvar;
 	return cvar;
 };
 
 /**
- * GetCvar
+ * FindCvar
  */
-function GetCvar(name) {
+function FindCvar(name) {
+	return cvars[name];
+}
+
+/**
+ * GetCvarVal
+ */
+function GetCvarVal(name) {
 	var cvar = cvars[name];
 
 	if (!cvar) {
@@ -44,9 +31,9 @@ function GetCvar(name) {
 }
 
 /**
- * SetCvar
+ * SetCvarVal
  */
-function SetCvar(name, value) {
+function SetCvarVal(name, value) {
 	var cvar = cvars[name];
 
 	if (!cvar) {
@@ -61,5 +48,13 @@ function SetCvar(name, value) {
  * WriteCvars
  */
 function WriteCvars(str) {
+	for (var name in cvars) {
+		if (!cvars.hasOwnProperty(name)) {
+			continue;
+		}
+
+		str += name + ' ' + cvars[name]() + '\n';
+	}
+
 	return str;
 }

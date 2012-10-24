@@ -4,9 +4,9 @@ var previousTime  = 0;
 var previousIdx   = 0;
 
 /**
- * GetFPS
+ * UpdateFPS
  */
-function GetFPS() {
+function UpdateFPS() {
 	var t = sys.GetMilliseconds();
 	var frameTime = t - previousTime;
 	previousTime = t;
@@ -26,7 +26,7 @@ function GetFPS() {
 			total = 1;
 		}
 
-		return parseInt(1000 * FPS_FRAMES / total);
+		cg_hud.setFPS(parseInt(1000 * FPS_FRAMES / total));
 	}
 
 	return 0;

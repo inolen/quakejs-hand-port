@@ -17,13 +17,13 @@ function Init(sysinterface, isdedicated) {
 	InitCmds();
 	
 	var exports = {
+		ExecuteCmdText: ExecuteCmdText,
 		SaveConfig:     SaveConfig,
 		AddCvar:        AddCvar,
-		GetCvar:        GetCvar,
-		SetCvar:        SetCvar,
+		GetCvarVal:     GetCvarVal,
+		SetCvarVal:     SetCvarVal,
 		AddCmd:         AddCmd,
 		GetCmd:         GetCmd,
-		ExecuteCmdText: ExecuteCmdText,
 		NetchanSetup:   NetchanSetup,
 		NetchanDestroy: NetchanDestroy,
 		NetchanSend:    NetchanSend,
@@ -105,6 +105,23 @@ function QueueEvent(ev) {
 	ev.time = sys.GetMilliseconds();
 	events.push(ev);
 };
+
+/**
+ * ExecuteCmdText
+ */
+function ExecuteCmdText(text) {
+	var split = text.split(' ');
+	var arg0 = split[0];
+	var args = split.slice(1);
+	var cmdcb;
+	var cvar;
+
+	if ((cmdcb = GetCmd(arg0))) {
+		cmdcb.apply(this, args);
+	} else if ((cvar = FindCvar(arg0))) {
+		cvar(args[0]);
+	}
+}
 
 /**
  * LoadConfig

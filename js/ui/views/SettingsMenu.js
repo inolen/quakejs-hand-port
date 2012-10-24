@@ -12,61 +12,101 @@ function (_, Backbone, templateSrc) {
 	var SettingsMenu = Backbone.View.extend({
 		id: 'settings',
 		className: 'menu',
+		template: _.template(templateSrc),
 		model: {
 			name: '',
-			forwardKey: 'w',
-			leftKey: 'a',
-			backKey: 's',
-			rightKey: 'd',
-			upKey: 'space'
+			forwardKey: '',
+			leftKey: '',
+			backKey: '',
+			rightKey: '',
+			upKey: ''
 		},
-		template: _.template(templateSrc),
+		nameEl: null,
+		forwardKeyEl: null,
+		leftKeyEl: null,
+		backKeyEl: null,
+		rightKeyEl: null,
+		upKeyEl: null,
 		events: {
-			'keypress .name': 'editName',
-			'keypress .forward-key': 'editForwardKey',
-			'keypress .left-key': 'editLeftKey',
-			'keypress .back-key': 'editBackKey',
-			'keypress .right-key': 'editRightKey',
-			'keypress .up-key': 'editUpKey',
-			'blur .control-group': 'saveConfig',
-			'click .close': 'closeMenu'
+			'keypress .name':        'updateName',
+			'keypress .forward-key': 'updateForwardKey',
+			'keypress .left-key':    'updateLeftKey',
+			'keypress .back-key':    'updateBackKey',
+			'keypress .right-key':   'updateRightKey',
+			'keypress .up-key':      'updateUpKey',
+			'blur .control-group':   'saveConfig',
+			'click .close':          'closeMenu'
 		},
 		initialize: function (opts) {
 			com = opts.com;
 			cl = opts.cl;
 			ui = opts.ui;
+
+			this.model.name = com.GetCvarVal('name');
+
+			var keys;
+
+			if ((keys = cl.GetKeyNamesForCmd('+forward'))) {
+				this.model.forwardKey = keys[0];
+			}
+
+			if ((keys = cl.GetKeyNamesForCmd('+left'))) {
+				this.model.leftKey = keys[0];
+			}
+
+			if ((keys = cl.GetKeyNamesForCmd('+back'))) {
+				this.model.backKey = keys[0];
+			}
+
+			if ((keys = cl.GetKeyNamesForCmd('+right'))) {
+				this.model.rightKey = keys[0];
+			}
+
+			if ((keys = cl.GetKeyNamesForCmd('+jump'))) {
+				this.model.upKey = keys[0];
+			}
+
 			this.render();
 		},
-		editName: function (ev, keyName) {
-			this.model.name = ui.ProcessTextInput(this.model.name, keyName);
-			this.$el.find('.name .control-input').text(this.model.name);
+		updateName: function (ev, keyName) {
+			var str = ui.ProcessTextInput(this.nameEl.text(), keyName);
+			this.nameEl.text(str);
 		},
-		editForwardKey: function (ev, keyName) {
-			this.model.forwardKey = ui.ProcessKeyBindInput(keyName);
-			this.$el.find('.forward-key .control-input').text(this.model.forwardKey);
+		updateForwardKey: function (ev, keyName) {
+			var str = ui.ProcessTextInput(this.forwardKeyEl.text(), keyName);
+			this.forwardKeyEl.text(str);
 		},
-		editLeftKey: function (ev, keyName) {
-			this.model.leftKey = ui.ProcessKeyBindInput(keyName);
-			this.$el.find('.left-key .control-input').text(this.model.leftKey);
+		updateLeftKey: function (ev, keyName) {
+			var str = ui.ProcessTextInput(this.leftKeyEl.text(), keyName);
+			this.leftKeyEl.text(str);
 		},
-		editBackKey: function (ev, keyName) {
-			this.model.backKey = ui.ProcessKeyBindInput(keyName);
-			this.$el.find('.back-key .control-input').text(this.model.backKey);
+		updateBackKey: function (ev, keyName) {
+			var str = ui.ProcessTextInput(this.backKeyEl.text(), keyName);
+			this.backKeyEl.text(str);
 		},
-		editRightKey: function (ev, keyName) {
-			this.model.rightKey = ui.ProcessKeyBindInput(keyName);
-			this.$el.find('.right-key .control-input').text(this.model.rightKey);
+		updateRightKey: function (ev, keyName) {
+			var str = ui.ProcessTextInput(this.rightKeyEl.text(), keyName);
+			this.rightKeyEl.text(str);
 		},
-		editUpKey: function (ev, keyName) {
-			this.model.upKey = ui.ProcessKeyBindInput(keyName);
-			this.$el.find('.up-key .control-input').text(this.model.upKey);
+		updateUpKey: function (ev, keyName) {
+			var str = ui.ProcessTextInput(this.upKeyEl.text(), keyName);
+			this.upKeyEl.text(str);
 		},
 		saveConfig: function () {
+			this.model.name = this.nameEl.text();
+			this.model.forwardKey = this.forwardKeyEl.text();
+			this.model.leftKey = this.leftKeyEl.text();
+			this.model.backKey = this.backKeyEl.text();
+			this.model.rightKey = this.rightKeyEl.text();
+			this.model.upKey = this.upKeyEl.text();
+
+			com.SetCvarVal('name', this.model.name);
 			cl.Bind(this.model.forwardKey, '+forward');
 			cl.Bind(this.model.leftKey, '+left');
 			cl.Bind(this.model.backKey, '+back');
 			cl.Bind(this.model.rightKey, '+right');
 			cl.Bind(this.model.upKey, '+jump');
+
 			com.SaveConfig(function () {
 				com.LoadConfig();
 			});
@@ -77,7 +117,15 @@ function (_, Backbone, templateSrc) {
 		update: function (newModel) {
 		},
 		render: function () {
-			$(this.el).html(this.template(this.model));
+			this.$el.html(this.template(this.model));
+
+			this.nameEl = this.$el.find('.name .control-input');
+			this.forwardKeyEl = this.$el.find('.forward-key .control-input');
+			this.leftKeyEl = this.$el.find('.left-key .control-input');
+			this.backKeyEl = this.$el.find('.back-key .control-input');
+			this.rightKeyEl = this.$el.find('.right-key .control-input');
+			this.upKeyEl = this.$el.find('.up-key .control-input');
+
 			return this;
 		}
 	});

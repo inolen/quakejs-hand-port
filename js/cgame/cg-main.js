@@ -1,7 +1,11 @@
 var cg;
 var cgs;
+
 var cg_errordecay;
+var cg_predict;
 var cg_showmiss;
+
+var cg_hud;
 
 /**
  * Init
@@ -15,6 +19,8 @@ function Init(serverMessageNum) {
 	cg_errordecay = com.AddCvar('cg_errordecay', 100);
 	cg_predict = com.AddCvar('cg_predict', 0);
 	cg_showmiss = com.AddCvar('cg_showmiss', 1);
+
+	cg_hud = ui.RegisterView('hud');
 
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
@@ -117,14 +123,15 @@ function Frame(serverTime) {
 	
 	r.RenderScene(cg.refdef);
 	
-	ui.RenderView('hud', { fps: GetFPS() });
+	UpdateFPS();
+	ui.RenderView(cg_hud);
 
 	if (cg.showScores === true) {
 		var players = [
 			{ name: 'Player 1' }
 		];
 
-		ui.RenderView('scoreboard', { players: players });
+		ui.RenderView('scoreboard');
 	}
 }
 
