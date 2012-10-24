@@ -96,13 +96,13 @@
 	border-bottom: 1px solid #222;
 }
 
-.menu .button {
+.menu .menu-item {
 	margin-bottom: .5em;
 	padding: .5em;
 	background: #222;
 }
 
-.menu .button.hover {
+.menu .menu-item.hover {
 	background: #333;
 }
 
@@ -133,14 +133,33 @@
 	border: 1px solid #0f0;
 }
 
+.menu .button {
+	float: left;
+	margin-bottom: .5em;
+	padding: .5em;
+	background-color: #222;
+	background-image: -moz-linear-gradient(top, #333, #222);
+	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));
+	background-image: -webkit-linear-gradient(top, #333, #222);
+	background-image: linear-gradient(to bottom, #303030, #222);
+}
+
+.menu .button.hover {
+	background: #333;
+}
+
+.menu .form-horizontal .form-actions {
+	margin-left: 11em;
+}
+
 /**
  * Ingame menu
  */
-#ingame .button {
+#ingame .menu-item {
 	text-align: center;
 }
 
-#ingame .settings.button {
+#ingame .settings.menu-item {
 	margin-bottom: 0;
 }
 

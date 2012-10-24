@@ -5,6 +5,6 @@
 </div>
 <ul class="levels">
 <% _.each(levels, function (level, i) { %>
-	<li data-idx="<%- i %>" class="button"><%- level.name %></li>
+	<li data-idx="<%- i %>" class="menu-item"><%- level.name %></li>
 <% }); %>
 </ul>

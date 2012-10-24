@@ -14,6 +14,7 @@ function (_, Backbone, templateSrc) {
 		template: _.template(templateSrc),
 		events: {
 			'click .singleplayer': 'openSinglePlayerMenu',
+			'click .multiplayer': 'openMultiPlayerMenu',
 			'click .settings': 'openSettingsMenu',
 			'click .close': 'closeMenu'
 		},
@@ -23,6 +24,9 @@ function (_, Backbone, templateSrc) {
 		},
 		openSinglePlayerMenu: function() {
 			ui.SetActiveMenu('singleplayer');
+		},
+		openMultiPlayerMenu: function() {
+			ui.SetActiveMenu('multiplayer');
 		},
 		openSettingsMenu: function() {
 			ui.SetActiveMenu('settings');

@@ -7,6 +7,7 @@ var map = {
 	'scoreboard': ScoreboardView,
 	'ingame': IngameMenu,
 	'singleplayer': SinglePlayerMenu,
+	'multiplayer': MultiPlayerMenu,
 	'settings': SettingsMenu
 };
 
@@ -46,12 +47,7 @@ function KeyPressEvent(keyName) {
 
 	// Forward key press events to our focused element.
 	if (uil.focusEl) {
-		if (keyName === 'enter') {
-			ClearFocusedElement();
-		} else {
-			$(uil.focusEl).trigger('keypress', [ keyName ]);
-		}
-		return;
+		$(uil.focusEl).trigger('keypress', [ keyName ]);
 	}
 }
 

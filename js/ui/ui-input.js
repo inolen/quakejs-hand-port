@@ -2,6 +2,10 @@
  * ProcessTextInput
  */
 function ProcessTextInput(str, keyName) {
+	if (keyName === 'enter') {
+		ClearFocusedElement();
+	}
+
 	// A-Z a-z 0-9... this seems like a bad idea.
 	if (keyName.length === 1) {
 		str += keyName;
@@ -21,6 +25,7 @@ function ProcessKeyBindInput(keyName) {
 	if (keyName === 'backspace') {
 		return '';
 	} else {
+		ClearFocusedElement();
 		return keyName;
 	}
 }
