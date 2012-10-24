@@ -18,9 +18,8 @@ function Init() {
 
 	uil = new UILocals();
 
-	//
-	document.addEventListener('resize', ScaleUI, false);
-	document.addEventListener('fullscreenchange', ScaleUI, false);
+	document.addEventListener('fullscreenchange', ScaleUI);
+	window.addEventListener('resize', ScaleUI);
 
 	//
 	$viewportUI = $(uiContext.handle);

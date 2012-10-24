@@ -20,8 +20,8 @@ function Init() {
 	viewport.height = viewportFrame.offsetHeight;
 
 	// Handle fullscreen transition.
-	document.addEventListener('fullscreenchange', ResizeViewport, false);
-	window.addEventListener('resize', ResizeViewport, false);
+	document.addEventListener('fullscreenchange', ResizeViewport);
+	window.addEventListener('resize', ResizeViewport);
 
 	InputInit();
 	com.Init(sysinterface, false);
