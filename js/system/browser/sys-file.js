@@ -11,14 +11,14 @@ window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileS
  */
 function InitLocalFs(callback, errorHandler) {
 	if (localFs) {
-		callback(localFs);
+		return callback(localFs);
 	}
 
 	// Initialize a persistent 1 mb filesystem.
 	window.webkitStorageInfo.requestQuota(PERSISTENT, 1024 * 1024, function (grantedBytes) {
 		window.requestFileSystem(window.PERSISTENT, grantedBytes, function (fs) {
 			localFs = fs;
-			callback(fs);
+			return callback(fs);
 		}, errorHandler);
 	}, errorHandler);
 }
@@ -73,7 +73,9 @@ function ReadLocalFile(path, encoding, callback) {
 				reader.onerror = errorHandler;
 
 				reader.onloadend = function () {
-					callback(null, this.result);
+					if (callback) {
+						return callback(null, this.result);
+					}
 				};
 
 				reader.readAsText(file);
@@ -131,13 +133,16 @@ function WriteLocalFile(path, data, encoding, callback) {
 		return callback(err);
 	};
 
-	console.log('writing', path);
-
 	InitLocalFs(function (fs) {
 		fs.root.getFile(path, { create: true }, function (fileEntry) {
 			fileEntry.createWriter(function (writer) {
 				var b = new Blob([data], { type: 'text/plain' });
+
 				writer.write(b);
+
+				if (callback) {
+					return callback(null);
+				}
 			}, errorHandler);
 		}, errorHandler);
 	}, errorHandler);

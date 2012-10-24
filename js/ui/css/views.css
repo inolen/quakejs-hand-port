@@ -27,8 +27,8 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	width: 16px;
-	height: 16px;
+	width: 1em;
+	height: 1em;
 	background: #f00;
 	z-index: 1;
 	/* Don't let elementFromPoint() return the actual pointer */
@@ -37,16 +37,6 @@
 
 #viewport-ui.active .pointer {
 	display: inline-block;
-}
-
-#viewport-ui h1 {
-	font-size: 1.2em;
-}
-
-#viewport-ui .control-label {
-	display: inline-block;
-	width: 10em;
-	color: #A6E22E;
 }
 
 /**
@@ -77,24 +67,12 @@
 	position: relative;
 	width: 40%;
 	margin: 10% auto 0;
-	padding: 1em 2em;
+	padding: 1.6em;
 	background: #111;
 	color: #bfbfbf;
-	border-radius: 10px;
+	border-radius: 1em;
 	word-break: break-all;
-}
-
-.menu div {
-	padding: 5px;
-	margin-bottom: 5px;
-}
-
-.menu div.hover {
-	background: #333;
-}
-
-.menu div.focus {
-	border: 1px solid #0f0;
+	overflow: hidden;
 }
 
 .menu .close {
@@ -110,9 +88,59 @@
 	color: #bfbfbf;
 }
 
+.menu h1 {
+	font-size: 1.2em;
+}
+
+.menu .button {
+	margin-bottom: .5em;
+	padding: .5em;
+	background: #222;
+}
+
+.menu .button.hover {
+	background: #333;
+}
+
+.menu .control-group {
+	margin-bottom: .5em;
+}
+
+.menu .control-label {
+	float: left;
+	padding: .5em 0;
+	width: 10em;
+	color: #A6E22E;
+	text-align: right
+}
+
+.menu .control-input {
+	margin-left: 11em;
+	padding: .5em;
+	background: #222;
+	border: 1px solid transparent;
+}
+
+.menu .control-input.hover {
+	background: #333;
+}
+
+.menu .control-input.focus {
+	border: 1px solid #0f0;
+}
+
+.menu .form-horizontal h1 {
+	padding-bottom: .2em;
+	border-bottom: 1px solid #222;
+}
+
 /**
  * Ingame menu
  */
-#ingame.menu {
+#ingame .button {
 	text-align: center;
+}
+
+#ingame .settings.button {
+	margin-bottom: 0;
 }

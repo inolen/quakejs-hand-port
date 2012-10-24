@@ -41,10 +41,10 @@ function Init(sysinterface, cominterface) {
 	cls = new ClientStatic();
 	cls.realtime = 0;
 
-	cl_name = com.AddCvar('name', 'UnnamedPlayer'/*, CVAR_USERINFO | CVAR_ARCHIVE*/);
-	cl_model = com.AddCvar('model', 'sarge'/*, CVAR_USERINFO | CVAR_ARCHIVE*/);
-	cl_sensitivity = com.AddCvar('cl_sensitivity', 2);
-	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0);
+	cl_name = com.AddCvar('name', 'UnnamedPlayer', CvarFlags.ARCHIVE | CvarFlags.USERINFO);
+	cl_model = com.AddCvar('model', 'sarge', CvarFlags.ARCHIVE | CvarFlags.USERINFO);
+	cl_sensitivity = com.AddCvar('cl_sensitivity', 2, CvarFlags.ARCHIVE);
+	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0, CvarFlags.ARCHIVE);
 
 	InitCmds();
 	InitDefaultBinds();

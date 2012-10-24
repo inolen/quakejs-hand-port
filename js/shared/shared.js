@@ -6,6 +6,41 @@
 var Q3W_BASE_FOLDER = 'baseq3';
 
 /**********************************************************
+ * Cvars
+ **********************************************************/
+var Cvar = function (defaultValue, flags) {
+	var currentValue = defaultValue;
+	var cvar = function (newValue) {
+		if (arguments.length) {
+			var oldValue = currentValue;
+
+			// Convert the new value to the same type
+			// as the default value.
+			if (typeof(defaultValue) === 'string') {
+				currentValue = newValue.toString();
+			} else if (defaultValue % 1 === 0) {
+				currentValue = parseInt(newValue);
+			} else {
+				currentValue = parseFloat(newValue);
+			}
+		} else {
+			return currentValue;
+		}
+	};
+
+	cvar.flags = flags;
+
+	return cvar;
+};
+
+var CvarFlags = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**********************************************************
  * Communicated across the network
  **********************************************************/
 var SNAPFLAG_RATE_DELAYED   = 1;

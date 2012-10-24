@@ -48,19 +48,3 @@ var ServerMessage = {
 	serverCommand:  3,                           // [string] to be executed by client game module
 	snapshot:       4
 };
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue) {
-	var currentValue = defaultValue;
-
-	return function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-			currentValue = newValue;
-		} else {
-			return currentValue;
-		}
-	};
-}

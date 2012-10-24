@@ -3,8 +3,8 @@ var cvars = {};
 /**
  * AddCvar
  */
-function AddCvar(name, defaultValue) {
-	var cvar = new Cvar(defaultValue);
+function AddCvar(name, defaultValue, flags) {
+	var cvar = new Cvar(defaultValue, flags || 0);
 	cvars[name] = cvar;
 	return cvar;
 };
@@ -53,7 +53,13 @@ function WriteCvars(str) {
 			continue;
 		}
 
-		str += name + ' ' + cvars[name]() + '\n';
+		var cvar = cvars[name];
+
+		if (!(cvar.flags & CvarFlags.ARCHIVE)) {
+			continue;
+		}
+
+		str += name + ' ' + cvar() + '\n';
 	}
 
 	return str;

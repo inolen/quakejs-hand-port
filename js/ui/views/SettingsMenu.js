@@ -34,7 +34,7 @@ function (_, Backbone, templateSrc) {
 			'keypress .back-key':    'updateBackKey',
 			'keypress .right-key':   'updateRightKey',
 			'keypress .up-key':      'updateUpKey',
-			'blur .control-group':   'saveConfig',
+			'blur .control-input':   'saveConfig',
 			'click .close':          'closeMenu'
 		},
 		initialize: function (opts) {
@@ -73,23 +73,23 @@ function (_, Backbone, templateSrc) {
 			this.nameEl.text(str);
 		},
 		updateForwardKey: function (ev, keyName) {
-			var str = ui.ProcessTextInput(this.forwardKeyEl.text(), keyName);
+			var str = ui.ProcessKeyBindInput(keyName);
 			this.forwardKeyEl.text(str);
 		},
 		updateLeftKey: function (ev, keyName) {
-			var str = ui.ProcessTextInput(this.leftKeyEl.text(), keyName);
+			var str = ui.ProcessKeyBindInput(keyName);
 			this.leftKeyEl.text(str);
 		},
 		updateBackKey: function (ev, keyName) {
-			var str = ui.ProcessTextInput(this.backKeyEl.text(), keyName);
+			var str = ui.ProcessKeyBindInput(keyName);
 			this.backKeyEl.text(str);
 		},
 		updateRightKey: function (ev, keyName) {
-			var str = ui.ProcessTextInput(this.rightKeyEl.text(), keyName);
+			var str = ui.ProcessKeyBindInput(keyName);
 			this.rightKeyEl.text(str);
 		},
 		updateUpKey: function (ev, keyName) {
-			var str = ui.ProcessTextInput(this.upKeyEl.text(), keyName);
+			var str = ui.ProcessKeyBindInput(keyName);
 			this.upKeyEl.text(str);
 		},
 		saveConfig: function () {
@@ -107,14 +107,16 @@ function (_, Backbone, templateSrc) {
 			cl.Bind(this.model.rightKey, '+right');
 			cl.Bind(this.model.upKey, '+jump');
 
-			com.SaveConfig(function () {
+			com.SaveConfig(function (err) {
+				if (err) {
+					throw new Error('Error saving configuration');
+				}
+
 				com.LoadConfig();
 			});
 		},
 		closeMenu: function () {
 			ui.CloseActiveMenu();
-		},
-		update: function (newModel) {
 		},
 		render: function () {
 			this.$el.html(this.template(this.model));

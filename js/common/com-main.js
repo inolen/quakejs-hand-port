@@ -18,6 +18,7 @@ function Init(sysinterface, isdedicated) {
 	
 	var exports = {
 		ExecuteCmdText: ExecuteCmdText,
+		LoadConfig:     LoadConfig,
 		SaveConfig:     SaveConfig,
 		AddCvar:        AddCvar,
 		GetCvarVal:     GetCvarVal,
@@ -133,15 +134,11 @@ function LoadConfig() {
 /**
  * SaveConfig
  */
-function SaveConfig() {
+function SaveConfig(callback) {
 	var cfg = 'unbindall\n';
 
 	cfg = cl.WriteBindings(cfg);
 	cfg = WriteCvars(cfg);
 
-	sys.WriteFile('default.cfg', cfg, 'utf8', function (err) {
-		if (!err) {
-			console.log('SHIT WAS SAVED');
-		}
-	});
+	sys.WriteFile('default.cfg', cfg, 'utf8', callback);
 }

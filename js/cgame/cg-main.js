@@ -16,9 +16,9 @@ function Init(serverMessageNum) {
 	cg = new ClientGame();
 	cgs = new ClientGameStatic();
 
-	cg_errordecay = com.AddCvar('cg_errordecay', 100);
-	cg_predict = com.AddCvar('cg_predict', 0);
-	cg_showmiss = com.AddCvar('cg_showmiss', 1);
+	cg_errordecay = com.AddCvar('cg_errordecay', 100, CvarFlags.ARCHIVE);
+	cg_predict = com.AddCvar('cg_predict', 0, CvarFlags.ARCHIVE);
+	cg_showmiss = com.AddCvar('cg_showmiss', 1, CvarFlags.ARCHIVE);
 
 	cg_hud = ui.RegisterView('hud');
 

@@ -24,7 +24,7 @@ function Init(sysinterface, cominterface, isdedicated) {
 	
 	sv_serverid = com.AddCvar('sv_serverid', 0);
 	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
-	sv_fps = com.AddCvar('sv_fps', 20);
+	sv_fps = com.AddCvar('sv_fps', 20, CvarFlags.ARCHIVE);
 
 	InitCmds();
 
