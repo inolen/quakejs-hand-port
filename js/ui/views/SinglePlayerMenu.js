@@ -13,12 +13,15 @@ function (_, Backbone, templateSrc) {
 		id: 'singleplayer',
 		className: 'menu',
 		model: {
+			defaultImg: null,
 			levels: []
 		},
 		template: _.template(templateSrc),
 		events: {
-			'click img': 'levelClicked',
-			'click .close': 'closeMenu'
+			'mouseenter .levels li': 'levelPreview',
+			'click .levels li': 'levelSelect',
+			'click .close': 'closeMenu',
+
 		},
 		initialize: function (opts) {
 			var self = this;
@@ -28,15 +31,20 @@ function (_, Backbone, templateSrc) {
 			ui = opts.ui;
 
 			var levels = [ 'q3dm7', 'q3dm17', 'q3tourney2' ];
-
 			var done = 0;
+
 			for (var i = 0; i < levels.length; i++) {
 				(function (i) {
-					var filename = 'levelshots/' + levels[i];
+					var levelName = levels[i];
+					var filename = 'levelshots/' + levelName;
 
 					ui.FindImage(filename, function (err, img) {
+						if (!self.model.defaultImg) {
+							self.model.defaultImg = img.data;
+						}
+
 						self.model.levels[i] = {
-							name: levels[i],
+							name: levelName,
 							url: img.data
 						};
 
@@ -47,19 +55,28 @@ function (_, Backbone, templateSrc) {
 				}(i));
 			}
 		},
-		levelClicked: function (ev) {
-			var $img = $(ev.target);
-			var levelName = $img.data('name');
-			com.ExecuteCmdText('map ' + levelName);
+		levelPreview: function (ev) {
+			var $li = $(ev.target);
+			var $preview = this.$el.find('.preview');
+
+			var idx = $li.data('idx');
+			var level = this.model.levels[idx];
+
+			$preview.html($('<img>', { src: level.url }));
+		},
+		levelSelect: function (ev) {
+			var $li = $(ev.target);
+
+			var idx = $li.data('idx');
+			var level = this.model.levels[idx];
+
+			com.ExecuteCmdText('map ' + level.name);
 		},
 		closeMenu: function () {
 			ui.CloseActiveMenu();
 		},
-		update: function (newModel) {
-
-		},
 		render: function () {
-			$(this.el).html(this.template(this.model));
+			this.$el.html(this.template(this.model));
 			return this;
 		}
 	});

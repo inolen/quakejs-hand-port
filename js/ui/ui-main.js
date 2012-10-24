@@ -39,9 +39,9 @@ function Init() {
  * KeyPressEvent
  */
 function KeyPressEvent(keyName) {
-	if (keyName === 'mouse0' && uil.hoverEls && uil.hoverEls.length > 0) {
-		SetFocusedElement(uil.hoverEls[0]);
-		$(uil.focusEl).click();
+	if (keyName === 'mouse0') {
+		UpdateFocusedElement();
+		$(uil.focusEl).trigger('click');
 		return;
 	}
 
@@ -77,8 +77,7 @@ function MouseMoveEvent(dx, dy) {
 
 	// Simulate browser by adding/removing hover classes.
 	if (uil.activeMenu) {
-		var els = GetAllElementsAtPoint(uil.activeMenu, uil.mx, uil.my);
-		SetHoverElements(els);
+		UpdateHoverElements();
 	}
 }
 
@@ -177,26 +176,34 @@ function CloseActiveMenu() {
 /**
  * SetHoverElements
  */
-function SetHoverElements(els) {
-	// Clear old hover elements.
+function UpdateHoverElements() {
+	var els = GetAllElementsAtPoint(uil.activeMenu, uil.mx, uil.my);
+
+	// Trigger mouseleave events.
 	if (uil.hoverEls) {
-		for (var i = 0; i < uil.hoverEls.length;) {
-			var old = uil.hoverEls[i];
-			// If the new array doesn't contain the old element, remove it.
-			if (!els || els.indexOf(old) === -1) {
-				$(old).removeClass('hover');
-				uil.hoverEls.splice(i, 1);
-				continue;
+		for (var i = 0; i < uil.hoverEls.length; i++) {
+			var oldel = uil.hoverEls[i];
+
+			if (!els || els.indexOf(oldel) === -1) {
+				$(oldel).removeClass('hover');
+				$(oldel).trigger('mouseleave');
 			}
-			i++;
+		}
+	}
+
+	// Trigger mouseenter events.
+	if (els) {
+		for (var i = 0; i < els.length; i++) {
+			var newel = els[i];
+
+			if (!uil.hoverEls || uil.hoverEls.indexOf(newel) === -1) {
+				$(newel).addClass('hover');
+				$(newel).trigger('mouseenter');
+			}
 		}
 	}
 
 	uil.hoverEls = els;
-
-	if (uil.hoverEls) {
-		$(uil.hoverEls).addClass('hover');
-	}
 }
 
 /**
@@ -207,13 +214,17 @@ function ClearHoverElements() {
 		$(uil.hoverEls).removeClass('hover');
 	}
 
-	uil.hoverEls = null;
+	uil.hoverEls = [];
 }
 
 /**
  * SetFocusedElement
  */
-function SetFocusedElement(el) {
+function UpdateFocusedElement() {
+	var el = uil.hoverEls && uil.hoverEls.length > 0 ?
+		uil.hoverEls[0] :
+		null;
+
 	// Nothing to do.
 	if (uil.focusEl === el) {
 		return;
@@ -222,7 +233,7 @@ function SetFocusedElement(el) {
 	ClearFocusedElement();
 
 	uil.focusEl = el;
-	$(uil.focusEl).addClass('focus');
+	$(el).addClass('focus');
 }
 
 /**
