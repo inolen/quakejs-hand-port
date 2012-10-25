@@ -46,5 +46,6 @@ var ServerMessage = {
 	configstring:   1,                           // [short] [string] only in gamestate messages
 	baseline:       2,                           // only in gamestate messages
 	serverCommand:  3,                           // [string] to be executed by client game module
-	snapshot:       4
+	snapshot:       4,
+	EOF:            5
 };

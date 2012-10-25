@@ -5,7 +5,7 @@ var MIN_WALK_NORMAL = 0.7;
 var STEPSIZE = 18;
 var OVERCLIP = 1.001;
 var DEFAULT_VIEWHEIGHT = 26;
-var ITEM_RADIUS = 15;                            // item sizes are needed for client side pickup detection
+var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
 /**********************************************************
  * Game item descriptions

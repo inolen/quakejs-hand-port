@@ -45,6 +45,29 @@ function SetCvarVal(name, value) {
 }
 
 /**
+ * GetCvarKeyValues
+ */
+function GetCvarKeyValues(flag) {
+	var data = {};
+	
+	for (var name in cvars) {
+		if (!cvars.hasOwnProperty(name)) {
+			continue;
+		}
+
+		var cvar = cvars[name];
+
+		if (!(cvar.flags & flag)) {
+			continue;
+		}
+
+		data[name] = cvar();
+	}
+
+	return data;
+}
+
+/**
  * WriteCvars
  */
 function WriteCvars(str) {

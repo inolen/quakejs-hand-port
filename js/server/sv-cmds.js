@@ -1,7 +1,7 @@
 /**
- * InitCmds
+ * RegisterCommands
  */
-function InitCmds() {
+function RegisterCommands() {
 	com.AddCmd('map', CmdLoadMap);
 	com.AddCmd('sectorlist', CmdSectorList);
 }

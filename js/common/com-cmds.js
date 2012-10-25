@@ -3,7 +3,7 @@ var commands = {};
 /**
  * InitCmd
  */
-function InitCmds() {
+function RegisterCommands() {
 	AddCmd('exec', CmdExec);
 }
 
@@ -27,10 +27,10 @@ function GetCmd(cmd) {
 function CmdExec(filename) {
 	sys.ReadFile(filename, 'utf8', function (err, data) {
 		if (err) {
-			console.error('Failed to execute \'' + filename + '\'');
+			console.warn('Failed to execute \'' + filename + '\'');
 			return;
 		}
-		
+
 		// Trim data.
 		data = data.replace(/^\s+|\s+$/g, '');
 

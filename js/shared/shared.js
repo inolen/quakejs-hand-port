@@ -6,6 +6,41 @@
 var Q3W_BASE_FOLDER = 'baseq3';
 
 /**********************************************************
+ * Communicated across the network
+ **********************************************************/
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+var MAX_CLIENTS            = 64;                           // absolute limit
+var MAX_LOCATIONS          = 64;
+var MAX_GENTITIES          = 1024;
+
+var ENTITYNUM_NONE         = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
+
+var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
+var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
+
+var NetAdrType = {
+	NAD:      0,
+	LOOPBACK: 1,
+	IP:       2
+};
+
+var NetSrc = {
+	CLIENT : 0,
+	SERVER: 1
+};
+
+var NetAdr = function (type, ip, port) {
+	this.type = type;
+	this.ip   = ip;
+	this.port = port;
+};
+
+/**********************************************************
  * Cvars
  **********************************************************/
 var Cvar = function (defaultValue, flags) {
@@ -41,40 +76,8 @@ var CvarFlags = {
 };
 
 /**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 64;                           // absolute limit
-var MAX_LOCATIONS          = 64;
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * A user command is what the client sends to the server
- * each frame to let it know its status.
+ * User commands are sent by the client to the server
+ * each frame to let the server know its status.
  **********************************************************/
 var UserCmd = function () {
 	this.serverTime  = 0;

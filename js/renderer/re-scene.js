@@ -6,7 +6,7 @@ function RenderScene(fd) {
 		//throw new Error('RenderScene: NULL worldmodel');
 		return;
 	}
-
+	
 	re.refdef.x = fd.x;
 	re.refdef.y = fd.y
 	re.refdef.width = fd.width;

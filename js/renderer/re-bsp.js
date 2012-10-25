@@ -4,6 +4,8 @@
 function LoadMap(mapName, callback) {
 	re.world = new WorldData();
 
+	console.log('Loading render map for ' + mapName);
+
 	sys.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
 		if (err) throw err;
 		

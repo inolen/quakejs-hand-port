@@ -1,7 +1,7 @@
 /**
- * InitCmd
+ * RegisterCommands
  */
-function InitCmds() {
+function RegisterCommands() {
 	com.AddCmd('bind', CmdBind);
 	com.AddCmd('unbind', CmdUnbind);
 	com.AddCmd('unbindall', CmdUnbindAll);
@@ -14,9 +14,9 @@ function InitCmds() {
 }
 
 /**
- * InitDefaultBinds
+ * RegisterDefaultBinds
  */
-function InitDefaultBinds() {
+function RegisterDefaultBinds() {
 	CmdBind('w', '+forward');
 	CmdBind('a', '+left');
 	CmdBind('s', '+back');

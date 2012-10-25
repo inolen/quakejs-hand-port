@@ -140,11 +140,22 @@ function SendClientGameState(client) {
 
 	msg.writeInt(client.lastClientCommand);
 
-	msg.writeUnsignedByte(ServerMessage.gamestate);
-	msg.writeCString('sv_mapname');
-	msg.writeCString(sv_mapname());
-	msg.writeCString('sv_serverid');
-	msg.writeCString(sv_serverid().toString());
+	msg.writeByte(ServerMessage.gamestate);
+
+	// Write the configstrings.
+	for (var key in sv.configstrings) {
+		if (!sv.configstrings.hasOwnProperty(key)) {
+			continue;
+		}
+
+		var cs = sv.configstrings[key];
+
+		msg.writeByte(ServerMessage.configstring);
+		msg.writeCString(key);
+		msg.writeCString(JSON.stringify(cs));
+	}
+
+	msg.writeByte(ServerMessage.EOF);
 
 	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }

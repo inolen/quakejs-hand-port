@@ -20,11 +20,20 @@ var ServerStatic = function () {
 };
 
 // Reset for each map.
+var ServerState = {
+	DEAD:    0,                                            // no map loaded
+	LOADING: 1,                                            // spawning level entities
+	GAME:    2                                             // actively running
+};
+
 var ServerLocals = function () {
+	this.state           = ServerState.DEAD;
+	this.restarting      = false;                          // if true, send configstring changes during SS_LOADING
 	this.serverId        = 0;                              // changes each server start
 	this.snapshotCounter = 0;                              // incremented for each snapshot built
 	this.time            = 0;
 	this.timeResidual    = 0;                              // <= 1000 / sv_frame->value
+	this.configstrings   = {};
 	this.svEntities      = new Array(MAX_GENTITIES);
 	this.gameEntities    = null;
 	this.gameClients     = null;

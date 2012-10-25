@@ -14,22 +14,23 @@ function Init(sysinterface, isdedicated) {
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
-	InitCmds();
+	RegisterCommands();
 	
 	var exports = {
-		ExecuteCmdText: ExecuteCmdText,
-		LoadConfig:     LoadConfig,
-		SaveConfig:     SaveConfig,
-		AddCvar:        AddCvar,
-		GetCvarVal:     GetCvarVal,
-		SetCvarVal:     SetCvarVal,
-		AddCmd:         AddCmd,
-		GetCmd:         GetCmd,
-		NetchanSetup:   NetchanSetup,
-		NetchanDestroy: NetchanDestroy,
-		NetchanSend:    NetchanSend,
-		NetchanPrint:   NetchanPrint,
-		NetchanProcess: NetchanProcess
+		ExecuteCmdText:   ExecuteCmdText,
+		LoadConfig:       LoadConfig,
+		SaveConfig:       SaveConfig,
+		AddCvar:          AddCvar,
+		GetCvarVal:       GetCvarVal,
+		SetCvarVal:       SetCvarVal,
+		GetCvarKeyValues: GetCvarKeyValues,
+		AddCmd:           AddCmd,
+		GetCmd:           GetCmd,
+		NetchanSetup:     NetchanSetup,
+		NetchanDestroy:   NetchanDestroy,
+		NetchanSend:      NetchanSend,
+		NetchanPrint:     NetchanPrint,
+		NetchanProcess:   NetchanProcess
 	};
 
 	sv.Init(sys, exports, dedicated);

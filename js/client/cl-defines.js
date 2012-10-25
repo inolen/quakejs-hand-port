@@ -21,6 +21,10 @@ var ClientLocals = function () {
 	this.mouseY               = 0;
 	this.viewangles           = [0, 0, 0];
 
+
+	this.serverId             = 0;                         // included in each client message so the server
+	                                                       // can tell if it is for a prior map_restart
+	                                                       
 	// cmds[cmdNumber] is the predicted command,
 	// [cmdNumber-1] is the last properly generated
 	// command.

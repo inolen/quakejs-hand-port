@@ -22,11 +22,11 @@ function Init(sysinterface, cominterface, isdedicated) {
 	svs = new ServerStatic();
 	cm = clipmap.CreateInstance(sys);
 	
-	sv_serverid = com.AddCvar('sv_serverid', 0);
-	sv_mapname = com.AddCvar('sv_mapname', 'nomap');
-	sv_fps = com.AddCvar('sv_fps', 20, CvarFlags.ARCHIVE);
+	sv_serverid = com.AddCvar('sv_serverid', 0, CvarFlags.SYSTEMINFO);
+	sv_mapname = com.AddCvar('sv_mapname', 'nomap', CvarFlags.SERVERINFO);
+	sv_fps = com.AddCvar('sv_fps', 20);
 
-	InitCmds();
+	RegisterCommands();
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
@@ -149,6 +149,11 @@ function SpawnServer(mapName) {
 		// Clear physics interaction links.
 		ClearWorld();
 
+		// Media configstring setting should be done during
+		// the loading stage, so connected clients don't have
+		// to load during actual gameplay.
+		sv.state = ServerState.LOADING;
+
 		// Initialize the game.
 		var exports = {
 			GetEntityDefs:     cm.EntityDefs,
@@ -190,76 +195,86 @@ function SpawnServer(mapName) {
 		sv.time += 100;
 		svs.time += 100;*/
 
+		SetConfigstring('systemInfo', com.GetCvarKeyValues(CvarFlags.SYSTEMINFO));
+		SetConfigstring('serverInfo', com.GetCvarKeyValues(CvarFlags.SERVERINFO));
+
+		// Any media configstring setting now should issue a warning
+		// and any configstring changes should be reliably transmitted
+		// to all clients.
+		sv.state = ServerState.GAME;
+
 		svs.initialized = true;
 	});
 }
 
-// /**
-//  * SendConfigString
-//  *
-//  * Creates and sends the server command necessary to update the CS index for the
-//  * given client.
-//  */
-// function SendConfigstring(client, index) {
-// 	SendServerCommand(client, 'cs %i "%s"\n', index, sv.configstrings[index]);
-// }
+/**
+ * SetConfigstring
+ */
+function SetConfigstring(key, val) {
+	// Don't bother broadcasting an update if no change.
+	if (_.isEqual(val, sv.configstrings[key])) {
+		return;
+	}
 
-// /**
-//  * UpdateConfigstrings
-//  * 
-//  * Called when a client goes from CS_PRIMED to CS_ACTIVE. Updates all
-//  * Configstring indexes that have changed while the client was in CS_PRIMED.
-//  */
-// function UpdateConfigstrings(client) {
-// 	for (var index = 0; index <= MAX_CONFIGSTRINGS; index++) {
-// 		// If the CS hasn't changed since we went to CS_PRIMED, ignore.
-// 		if (!client.csUpdated[index]) {
-// 			continue;
-// 		}
+	// Change the string.
+	sv.configstrings[key] = val;
 
-// 		SendConfigstring(client, index);
-// 		client.csUpdated[index] = false;
-// 	}
-// }
+	// Send it to all the clients if we aren't spawning a new server.
+	if (sv.state === ServerState.GAME || sv.restarting) {
+		// Send the data to all relevent clients
+		for (var i = 0; i < MAX_CLIENTS; i++) {
+			var client = svs.clients[i];
 
-// function SetConfigstring(index, val) {
-// 	if (index < 0 || index >= MAX_CONFIGSTRINGS) {
-// 		throw new Error('SetConfigstring: bad index ' + index);
-// 	}
-
-// 	// Don't bother broadcasting an update if no change.
-// 	if (val === sv.configstrings[index])) {
-// 		return;
-// 	}
-
-// 	// Change the string in sv.
-// 	sv.configstrings[index] = val;
-
-// 	// Send it to all the clients if we aren't spawning a new server.
-// 	if (sv.state == SS_GAME || sv.restarting) {
-// 		// Send the data to all relevent clients
-// 		for (var i = 0; i < MAX_CLIENTS; i++) {
-// 			var client = svs.clients[i];
-
-// 			if (client.state < ClientState.ACTIVE) {
-// 				if (client.state === CS_PRIMED) {
-// 					client.csUpdated[index] = true;
-// 				}
-// 				continue;
-// 			}
+			if (client.state < ClientState.ACTIVE) {
+				if (client.state === ClientState.PRIMED) {
+					client.csUpdated[key] = true;
+				}
+				continue;
+			}
 		
-// 			SendConfigstring(client, index);
-// 		}
-// 	}
-// }
+			SendConfigstring(client, key);
+		}
+	}
+}
 
-// function GetConfigstring(index) {
-// 	if (index < 0 || index >= MAX_CONFIGSTRINGS) {
-// 		throw new Error('GetConfigstring: bad index ' + index);
-// 	}
+/**
+ * GetConfigstring
+ */
+function GetConfigstring(key) {
+	return sv.configstrings[key];
+}
 
-// 	return sv.configstrings[index];
-// }
+/**
+ * SendConfigString
+ *
+ * Creates and sends the server command necessary to update the CS index for the
+ * given client.
+ */
+function SendConfigstring(client, key) {
+	SendServerCommand(client, 'cs ' + key + ' ' + JSON.stringify(sv.configstrings[key]) + '\n');
+}
+
+/**
+ * UpdateConfigstrings
+ * 
+ * Called when a client goes from ClientState.PRIMED to ClientState.ACTIVE. Updates all
+ * Configstring indexes that have changed while the client was in ClientState.PRIMED.
+ */
+function UpdateConfigstrings(client) {
+	for (var key in sv.configstrings) {
+		if (!sv.configstrings.hasOwnProperty(key)) {
+			continue;
+		}
+
+		// If the CS hasn't changed since we went to CS_PRIMED, ignore.
+		if (!client.csUpdated[key]) {
+			continue;
+		}
+
+		SendConfigstring(client, key);
+		client.csUpdated[key] = false;
+	}
+}
 
 // function SetUserinfo(index, val) {
 // 	if (index < 0 || index >= MAX_CLIENTS) {

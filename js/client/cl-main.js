@@ -46,8 +46,8 @@ function Init(sysinterface, cominterface) {
 	cl_sensitivity = com.AddCvar('cl_sensitivity', 2, CvarFlags.ARCHIVE);
 	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0, CvarFlags.ARCHIVE);
 
-	InitCmds();
-	InitDefaultBinds();
+	RegisterCommands();
+	RegisterDefaultBinds();
 	InitRenderer();
 	ui.Init();
 

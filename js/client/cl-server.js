@@ -118,7 +118,7 @@ function MouseMove(cmd) {
  */
 function WritePacket() {
 	var msg = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
-	var serverid = parseInt(cl.gameState['sv_serverid']);
+	var serverid = parseInt(cl.serverId);
 
 	msg.writeInt(serverid);
 	// Write the last message we received, which can
@@ -130,7 +130,7 @@ function WritePacket() {
 
 	// Write any unacknowledged client commands.
 	for (var i = clc.reliableAcknowledge + 1; i <= clc.reliableSequence; i++) {
-		msg.writeUnsignedByte(ClientMessage.clientCommand);
+		msg.writeByte(ClientMessage.clientCommand);
 		msg.writeInt(i);
 		msg.writeCString(clc.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
 	}
@@ -139,7 +139,7 @@ function WritePacket() {
 	// since we're rocking TCP.
 	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
 
-	msg.writeUnsignedByte(ClientMessage.moveNoDelta);
+	msg.writeByte(ClientMessage.moveNoDelta);
 	msg.writeInt(cmd.serverTime);
 	msg.writeUnsignedShort(cmd.angles[0]);
 	msg.writeUnsignedShort(cmd.angles[1]);
@@ -147,6 +147,7 @@ function WritePacket() {
 	msg.writeByte(cmd.forwardmove);
 	msg.writeByte(cmd.rightmove);
 	msg.writeByte(cmd.upmove);
+	msg.writeByte(ClientMessage.EOF);
 
 	com.NetchanSend(clc.netchan, msg.buffer, msg.index);
 }
@@ -167,11 +168,11 @@ function ParseServerMessage(msg) {
 		clc.reliableAcknowledge = clc.reliableSequence;
 	}
 
-	var type = msg.readUnsignedByte();
+	var cmd = msg.readByte();
 
-	if (type === ServerMessage.gamestate) {
+	if (cmd === ServerMessage.gamestate) {
 		ParseGameState(msg);
-	} else if (type === ServerMessage.snapshot) {
+	} else if (cmd === ServerMessage.snapshot) {
 		ParseSnapshot(msg);
 	}
 }
@@ -183,19 +184,106 @@ function ParseGameState(msg) {
 	// Wipe local client state.
 	ClearState();
 
-	// TODO make this read in an array of configstrings
-	var key = msg.readCString();
-	var val = msg.readCString();
-	cl.gameState[key] = val;
+	while (true) {
+		var cmd = msg.readByte();
 
-	key = msg.readCString();
-	val = msg.readCString();
-	cl.gameState[key] = val;
+		if (cmd === ServerMessage.EOF) {
+			break;
+		}
+		
+		if (cmd === ServerMessage.configstring) {
+			var key = msg.readCString();
+			var val = msg.readCString();
 
-	console.log('Received gamestate', cl.gameState['sv_mapname'], cl.gameState['sv_serverid']);
+			cl.gameState[key] = JSON.parse(val);
+		}/* else if ( cmd == svc_baseline ) {
+			newnum = MSG_ReadBits( msg, GENTITYNUM_BITS );
+			if ( newnum < 0 || newnum >= MAX_GENTITIES ) {
+				Com_Error( ERR_DROP, "Baseline number out of range: %i", newnum );
+			}
+			Com_Memset (&nullstate, 0, sizeof(nullstate));
+			es = &cl.entityBaselines[ newnum ];
+			MSG_ReadDeltaEntity( msg, &nullstate, es, newnum );
+		}*/ else {
+			throw new Error('ParseGamestate: bad command byte');
+		}
+	}
+
+	SystemInfoChanged();
+	ServerInfoChanged();
 
 	// Let the client game init and load data.
 	InitCGame();
+}
+
+/**
+ * SystemInfoChanged
+ *
+ * The systeminfo configstring has been changed, so parse
+ * new information out of it.  This will happen at every
+ * gamestate, and possibly during gameplay.
+ */
+function SystemInfoChanged() {
+	var systemInfo = cl.gameState['systemInfo'];
+
+	cl.serverId = systemInfo['sv_serverid'];
+
+// 	// scan through all the variables in the systeminfo and locally set cvars to match
+// 	s = systemInfo;
+// 	while ( s ) {
+// 		int cvar_flags;
+		
+// 		Info_NextPair( &s, key, value );
+// 		if ( !key[0] ) {
+// 			break;
+// 		}
+		
+// 		// ehw!
+// 		if (!Q_stricmp(key, "fs_game"))
+// 		{
+// 			if(FS_CheckDirTraversal(value))
+// 			{
+// 				Com_Printf(S_COLOR_YELLOW "WARNING: Server sent invalid fs_game value %s\n", value);
+// 				continue;
+// 			}
+				
+// 			gameSet = qtrue;
+// 		}
+
+// 		if((cvar_flags = Cvar_Flags(key)) == CVAR_NONEXISTENT)
+// 			Cvar_Get(key, value, CVAR_SERVER_CREATED | CVAR_ROM);
+// 		else
+// 		{
+// 			// If this cvar may not be modified by a server discard the value.
+// 			if(!(cvar_flags & (CVAR_SYSTEMINFO | CVAR_SERVER_CREATED | CVAR_USER_CREATED)))
+// 			{
+// #ifndef STANDALONE
+// 				if(Q_stricmp(key, "g_synchronousClients") && Q_stricmp(key, "pmove_fixed") &&
+// 				   Q_stricmp(key, "pmove_msec"))
+// #endif
+// 				{
+// 					Com_Printf(S_COLOR_YELLOW "WARNING: server is not allowed to set %s=%s\n", key, value);
+// 					continue;
+// 				}
+// 			}
+
+// 			Cvar_SetSafe(key, value);
+// 		}
+// 	}
+// 	// if game folder should not be set and it is set at the client side
+// 	if ( !gameSet && *Cvar_VariableString("fs_game") ) {
+// 		Cvar_Set( "fs_game", "" );
+// 	}
+// 	cl_connectedToPureServer = Cvar_VariableValue( "sv_pure" );
+}
+
+/**
+ * ServerInfoChanged
+ */
+function ServerInfoChanged() {
+	var serverInfo = cl.gameState['serverInfo'];
+
+	cl.mapname = serverInfo['sv_mapname'];
 }
 
 /**

@@ -25,9 +25,11 @@ function Init(serverMessageNum) {
 	cgs.processedSnapshotNum = serverMessageNum;
 	cgs.gameState = cl.GetGameState();
 
-	InitCommands();	
-	cm.LoadMap(cgs.gameState['sv_mapname'], function () {
-		r.LoadMap(cgs.gameState['sv_mapname'], function () {
+	RegisterCommands();
+	ParseServerinfo();
+
+	cm.LoadMap(cgs.mapname, function () {
+		r.LoadMap(cgs.mapname, function () {
 			RegisterGraphics();
 			RegisterClients();
 
@@ -41,6 +43,13 @@ function Init(serverMessageNum) {
  */
 function Shutdown() {
 	console.log('--------- CG Shutdown ---------');
+}
+
+/**
+ * ConfigString
+ */
+function ConfigString(key) {
+	return cgs.gameState[key];
 }
 
 /**
@@ -105,7 +114,7 @@ function Frame(serverTime) {
 	
 	cg.time = serverTime;
 	
-	ProcessSnapshots(); 
+	ProcessSnapshots();
 
 	if (!cg.snap || (cg.snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
 		//CG_DrawInformation();
