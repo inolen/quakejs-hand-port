@@ -43,8 +43,11 @@ var ClientGame = function () {
 
 var ClientGameStatic = function () {
 	this.gameState            = null;
-	this.mapename             = null;
+	this.mapname              = null;
 	this.processedSnapshotNum = 0;               // the number of snapshots cgame has requested
+
+	// locally derived information from gamestate
+	this.clientInfo           = new Array(MAX_CLIENTS);
 };
 
 // ClientGameEntity have a direct corespondence with GameEntity in the game, but

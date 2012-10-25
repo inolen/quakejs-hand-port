@@ -209,6 +209,8 @@ function ParseGameState(msg) {
 		}
 	}
 
+	clc.clientNum = msg.readInt();
+
 	SystemInfoChanged();
 	ServerInfoChanged();
 

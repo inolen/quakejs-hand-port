@@ -10,7 +10,7 @@ var cg_hud;
 /**
  * Init
  */
-function Init(serverMessageNum) {
+function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	console.log('--------- CG Init ---------');
 
 	cg = new ClientGame();
@@ -22,7 +22,9 @@ function Init(serverMessageNum) {
 
 	cg_hud = ui.RegisterView('hud');
 
+	cg.clientNum = clientNum;
 	cgs.processedSnapshotNum = serverMessageNum;
+	cgs.serverCommandSequence = serverCommandSequence;
 	cgs.gameState = cl.GetGameState();
 
 	RegisterCommands();
@@ -87,21 +89,21 @@ function RegisterItemVisuals(itemNum) {
  * RegisterClients
  */
 function RegisterClients() {
-	/*NewClientInfo(cg.clientNum);
+	NewClientInfo(cg.clientNum);
 
 	for (var i = 0; i < MAX_CLIENTS; i++) {
 		if (cg.clientNum === i) {
 			continue;
 		}
 
-		clientInfo = CG_ConfigString(CS_PLAYERS + i);
+		var cs = ConfigString('player' + i);
 
-		if ( !clientInfo[0]) {
+		if (!cs) {
 			continue;
 		}
 
 		NewClientInfo(i);
-	}*/
+	}
 }
 
 /**

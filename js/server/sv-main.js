@@ -14,6 +14,8 @@ var sv_fps;
  * Init
  */
 function Init(sysinterface, cominterface, isdedicated) {
+	console.log('--------- SV Init ---------');
+	
 	sys = sysinterface;
 	com = cominterface;
 	dedicated = isdedicated;
@@ -184,6 +186,13 @@ function SpawnServer(mapName) {
 			
 			// Clear gentity pointer to prevent bad snapshots from building.
 			client.gentity = null;
+
+			// Reconnect.
+			var denied = gm.ClientConnect(i, false);
+
+			if (denied) {
+				DropClient(client, denied);
+			}
 
 			// When we get the next packet from a connected client,
 			// the new gamestate will be sent.

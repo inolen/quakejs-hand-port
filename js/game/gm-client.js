@@ -2,15 +2,48 @@ var playerMins = [-15, -15, -24];
 var playerMaxs = [15, 15, 32];
 
 /**
+ * ClientConnect
+ *
+ * Called when a player begins connecting to the server.
+ * Called again for every map change or tournement restart.
+ *
+ * The session information will be valid after exit.
+ *
+ * Return NULL if the client should be allowed, otherwise return
+ * a string with the reason for denial.
+ * 
+ * Otherwise, the client will be sent the current gamestate
+ * and will eventually get to ClientBegin.
+ *
+ * firstTime will be qtrue the very first time a client connects
+ * to the server machine, but qfalse on map changes and tournement
+ * restarts.
+ */
+function ClientConnect(clientNum, firstTime) {
+	var client = level.clients[clientNum] = new GameClient();
+	var ent = level.gentities[clientNum] = new GameEntity();
+
+	ent.client = client;
+	
+	/*client.pers.connected = CON_CONNECTING;
+
+	// read or initialize the session data
+	if (firstTime || level.newSession) {
+		G_InitSessionData( client, userinfo );
+	}
+	G_ReadSessionData( client );*/
+
+	return null;
+}
+
+/**
  * ClientBegin
  *
  * Called when a client has connected and has the ACTIVE state.
  */
 function ClientBegin(clientNum) {
-	var client = level.clients[clientNum] = new GameClient();
-	var ent = level.gentities[clientNum] = new GameEntity();
+	var ent = level.gentities[clientNum];
 
-	ent.client = client;
 	ent.s.number = clientNum;
 	ent.client.ps.clientNum = clientNum;
 

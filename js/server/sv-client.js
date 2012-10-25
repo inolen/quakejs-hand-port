@@ -2,6 +2,10 @@
  * ClientConnect
  */
 function ClientConnect(addr, socket) {
+	if (!svs.initialized) {
+		return;
+	}
+
 	console.log('SV: A client is connecting');
 
 	// Find a slot for the client.
@@ -20,6 +24,19 @@ function ClientConnect(addr, socket) {
 	var newcl = svs.clients[clientNum];
 	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
 	newcl.state = ClientState.CONNECTED;
+
+	// TODO THIS SOMEHOW COMES AS A PARAM TO DIRECTCONNECT IN Q3
+	// Save the userinfo
+	//Q_strncpyz( newcl->userinfo, userinfo, sizeof(newcl->userinfo) );
+
+	// get the game a chance to reject this connection or modify the userinfo
+	var denied = gm.ClientConnect(clientNum, true);
+
+	if (denied) {
+		//NET_OutOfBandPrint( NS_SERVER, from, "print\n%s\n", str );
+		//Com_DPrintf ("Game rejected a connection: %s.\n", str);
+		return;
+	}
 
 	UserinfoChanged(newcl);
 
@@ -60,7 +77,7 @@ function DropClient(client, reason) {
 
 	// Call the game function for removing a client
 	// this will remove the body, among other things.
-	var clientNum = svs.clients.indexOf(client);
+	var clientNum = GetClientNum(client);
 	gm.ClientDisconnect(clientNum);
 
 	// add the disconnect command
@@ -80,6 +97,10 @@ function ClientEnterWorld(client) {
 	var clientNum = svs.clients.indexOf(client);
 
 	client.state = ClientState.ACTIVE;
+
+	// Resend all configstrings using the cs commands since these are
+	// no longer sent when the client is CS_PRIMED.
+	UpdateConfigstrings(client);
 
 	gm.ClientBegin(clientNum);
 
@@ -157,6 +178,8 @@ function SendClientGameState(client) {
 
 	msg.writeByte(ServerMessage.EOF);
 
+	msg.writeInt(GetClientNum(client));
+
 	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }
 
@@ -185,19 +208,7 @@ function UserinfoChanged(client) {
  * GetClientNum
  */
 function GetClientNum(client) {
-	for (var i = 0; i < svs.clients.length; i++) {
-		var c = svs.clients[i];
-
-		if (!c) {
-			continue;
-		}
-
-		if (_.isEqual(c.netchan.addr, client.netchan.addr)) {
-			return i;
-		}
-	}
-
-	return -1;
+	return svs.clients.indexOf(client);
 }
 
 /**

@@ -54,22 +54,26 @@ function AddCEntity(cent) {
 	switch (cent.currentState.eType) {
 		case EntityType.ITEM:
 			var refent = new RefEntity();
+			var item = bg.ItemList[cent.currentState.modelIndex];
 			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
 
-			// Autorotate at one of two speeds.
-			if (cent.giType === ItemType.HEALTH) {
-				vec3.set(cg.autoAnglesFast, cent.lerpAngles);
+			if (item.giType === ItemType.HEALTH) {
 			} else {
-				vec3.set(cg.autoAngles, cent.lerpAngles);
-			}
+				// Autorotate at one of two speeds.
+				if (item.giType === ItemType.HEALTH) {
+					vec3.set(cg.autoAnglesFast, cent.lerpAngles);
+				} else {
+					vec3.set(cg.autoAngles, cent.lerpAngles);
+				}
 
-			for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-				refent.reType = RefEntityType.MODEL;
-				vec3.set(cent.lerpOrigin, refent.origin);
-				AnglesToAxis(cent.lerpAngles, refent.axis);
-				refent.hModel = itemInfo.modelHandles[i];
-				
-				r.AddRefEntityToScene(refent);
+				for (var i = 0; i < itemInfo.modelHandles.length; i++) {
+					refent.reType = RefEntityType.MODEL;
+					vec3.set(cent.lerpOrigin, refent.origin);
+					AnglesToAxis(cent.lerpAngles, refent.axis);
+					refent.hModel = itemInfo.modelHandles[i];
+					
+					r.AddRefEntityToScene(refent);
+				}
 			}
 			break;
 

@@ -9,6 +9,8 @@ var g_gravity;
  * Init
  */
 function Init(cominterface, svinterface) {
+	console.log('--------- GM Init ---------');
+	
 	com = cominterface;
 	sv = svinterface;
 

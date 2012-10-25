@@ -70,6 +70,7 @@ var ServerClient = function () {
 	
 	this.netchan                 = null;
 	this.oldServerTime           = 0;
+	this.csUpdated               = {};
 	
 	for (var i = 0; i < PACKET_BACKUP; i++) {
 		this.frames[i] = new PlayerState();

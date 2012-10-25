@@ -55,7 +55,7 @@ function Init(sysinterface, cominterface) {
 
 	setTimeout(function () {
 		CmdConnect('localhost:9000');
-	}, 100);
+	}, 1000);
 }
 
 /**
@@ -72,7 +72,7 @@ function ClearState() {
  */
 function InitCGame() {
 	clc.state = ConnectionState.LOADING;
-	cg.Init(clc.serverMessageSequence);
+	cg.Init(clc.serverMessageSequence, clc.lastExecutedServerCommand, clc.clientNum);
 	// We will send a usercmd this frame, which will cause
 	// the server to send us the first snapshot.
 	clc.state = ConnectionState.PRIMED;
