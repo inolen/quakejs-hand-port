@@ -86,7 +86,7 @@ function Frame(frameTime, msec) {
 /**
  * PacketEvent
  */
-function PacketEvent(addr, socket, buffer) {
+function PacketEvent(addr, socket, buffer) {	
 	if (!svs.initialized) {
 		return;
 	}

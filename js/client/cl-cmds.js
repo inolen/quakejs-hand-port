@@ -67,6 +67,7 @@ function CmdConnect(serverName) {
 	clc.serverName = serverName;
 	clc.serverAddress = StringToAddr(clc.serverName);
 
+	clc.state = ConnectionState.CHALLENGING;
 	clc.connectTime = -99999; // CheckForResend() will fire immediately
 	clc.connectPacketCount = 0;
 }

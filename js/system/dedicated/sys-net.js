@@ -26,11 +26,21 @@ function NetCreateServer() {
 		//com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, addr: addr, socket: connection });
 
 		connection.on('message', function (message) {
+			// TODO Clean this up. It'd be nice if we found a Node WebSocket library
+			// that uses ArrayBuffers, but for now lets go ahead and convert this Buffer
+			// to one so it works correctly all across the board.
+			var data = message.binaryData;
+			var ab = new ArrayBuffer(data.length);
+			var view = new Uint8Array(ab);
+			for (var i = 0; i < data.length; ++i) {
+				view[i] = data[i];
+			}
+
 			com.QueueEvent({
 				type: com.EventTypes.NETSVMESSAGE,
 				addr: netchan.addr,
 				socket: netchan.socket,
-				buffer: message.binaryData
+				buffer: ab
 			});
 		});
 

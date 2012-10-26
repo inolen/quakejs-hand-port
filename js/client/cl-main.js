@@ -238,7 +238,7 @@ function CheckForResend() {
 	if (!clc.netchan) {
 		clc.netchan = com.NetchanSetup(NetSrc.CLIENT, clc.serverAddress);
 	}
-
+	
 	clc.connectTime = cls.realTime;  // for retransmit requests
 	clc.connectPacketCount++;
 

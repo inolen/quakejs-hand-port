@@ -236,7 +236,7 @@ function ExecuteClientMessage(client, msg) {
 		return;
 	}
 
-	cl.reliableAcknowledge = msg.readInt();
+	client.reliableAcknowledge = msg.readInt();
 	// NOTE: when the client message is fux0red the acknowledgement numbers
 	// can be out of range, this could cause the server to send thousands of server
 	// commands which the server thinks are not yet acknowledged in SV_UpdateServerCommandsToClient
@@ -320,7 +320,7 @@ function ClientCommand(client, msg) {
 
 	ExecuteClientCommand(client, str);
 
-	cl.lastClientCommand = sequence;
+	client.lastClientCommand = sequence;
 	client.lastClientCommandString = str;
 
 	return true; // continue procesing
