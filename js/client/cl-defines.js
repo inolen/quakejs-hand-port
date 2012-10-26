@@ -1,3 +1,5 @@
+var RETRANSMIT_TIMEOUT = 3000;                             // time between connection packet retransmits
+
 // The parseEntities array must be large enough to hold PACKET_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server
 // it can be un-deltad from the original.
@@ -83,6 +85,11 @@ var ClientConnection = function () {
 	this.clientNum                 = -1;
 	this.lastPacketSentTime        = 0;                    // for retransmits during connection
 	this.lastPacketTime            = 0;                    // for timeouts
+
+	this.servername                = null;                 // name of server from original connect (used by reconnect)
+	this.serverAddress             = null;
+	this.connectTime               = 0;                    // for connection retransmits
+	this.connectPacketCount        = 0;                    // for display on connection dialog
 
 	// These are our reliable messages that go to the
 	// server.

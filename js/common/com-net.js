@@ -17,9 +17,9 @@ function NetchanSetup(src, addr, socket) {
 
 	if (typeof (socket) !== 'undefined') {
 		netchan.socket = socket;
-	} else if (addr.type == NetAdrType.LOOPBACK) {
+	} else if (addr.type === NetAdrType.LOOPBACK) {
 		// Trigger a fake connect event for loopback sockets.
-		QueueEvent({ type: EventTypes.NETSVCONNECT, addr: addr, socket: null });
+		//QueueEvent({ type: EventTypes.NETSVCONNECT, addr: addr, socket: null });
 	} else {
 		netchan.socket = sys.NetConnectToServer(addr);
 	}
@@ -33,7 +33,7 @@ function NetchanSetup(src, addr, socket) {
 function NetchanDestroy(netchan) {
 	if (netchan.addr.type === NetAdrType.LOOPBACK) {
 		// Trigger a fake disconnect event for loopback sockets.
-		QueueEvent({ type: EventTypes.NETSVDISCONNECT, addr: netchan.addr });
+		//QueueEvent({ type: EventTypes.NETSVDISCONNECT, addr: netchan.addr });
 	} else {
 		sys.NetClose(netchan.socket);
 	}
@@ -52,6 +52,7 @@ function NetchanSendLoopPacket(netchan, buffer, length) {
 
 	QueueEvent({
 		type: netchan.src === NetSrc.CLIENT ? EventTypes.NETSVMESSAGE : EventTypes.NETCLMESSAGE,
+		socket: null,
 		addr: netchan.addr,
 		buffer: buffer,
 		length: length

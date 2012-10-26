@@ -1,4 +1,5 @@
 var sys;
+var cl;
 
 var dedicated = false;
 var events;
@@ -36,6 +37,7 @@ function Init(sysinterface, isdedicated) {
 	sv.Init(sys, exports, dedicated);
 
 	if (!dedicated) {
+		cl = require('client/cl');
 		cl.Init(sys, exports);
 
 		// Provide the user a way to interface with the client.
@@ -76,14 +78,14 @@ function EventLoop() {
 			case EventTypes.NETCLMESSAGE:
 				cl.PacketEvent(ev.addr, ev.buffer);
 				break;
-			case EventTypes.NETSVCONNECT:
+			/*case EventTypes.NETSVCONNECT:
 				sv.ClientConnect(ev.addr, ev.socket);
 				break;
 			case EventTypes.NETSVDISCONNECT:
-				//sv.ClientDisconnect(ev.addr);
-				break;
+				sv.ClientDisconnect(ev.addr);
+				break;*/
 			case EventTypes.NETSVMESSAGE:
-				sv.PacketEvent(ev.addr, ev.buffer);
+				sv.PacketEvent(ev.addr, ev.socket, ev.buffer);
 				break;
 			case EventTypes.KEYDOWN:
 				cl.KeyDownEvent(ev.time, ev.keyName);

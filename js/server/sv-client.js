@@ -1,7 +1,7 @@
 /**
  * ClientConnect
  */
-function ClientConnect(addr, socket) {
+function ClientConnect(addr, socket, infostr) {
 	if (!svs.initialized) {
 		return;
 	}
@@ -25,11 +25,10 @@ function ClientConnect(addr, socket) {
 	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
 	newcl.state = ClientState.CONNECTED;
 
-	// TODO THIS SOMEHOW COMES AS A PARAM TO DIRECTCONNECT IN Q3
 	// Save the userinfo
-	//Q_strncpyz( newcl->userinfo, userinfo, sizeof(newcl->userinfo) );
+	newcl.userInfo = JSON.parse(infostr);
 
-	// get the game a chance to reject this connection or modify the userinfo
+	// Give the game a chance to reject this connection or modify the userinfo.
 	var denied = gm.ClientConnect(clientNum, true);
 
 	if (denied) {

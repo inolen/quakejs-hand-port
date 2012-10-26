@@ -33,8 +33,40 @@ function ClientConnect(clientNum, firstTime) {
 	}
 	G_ReadSessionData( client );*/
 
+	// get and distribute relevent paramters
+	console.log('ClientConnect: ' + clientNum);
+	ClientUserinfoChanged(clientNum);
+
 	return null;
 }
+
+/**
+ *
+ * ClientUserInfoChanged
+ * 
+ * Called from ClientConnect when the player first connects and
+ * directly by the server system when the player updates a userinfo variable.
+ * 
+ * The game can override any of the settings and call trap_SetUserinfo
+ * if desired.
+ */
+function ClientUserinfoChanged(clientNum) {
+	var ent = level.gentities[clientNum];
+	var client = ent.client;
+
+	/*var userInfo = sv.GetUserinfo(clientNum);
+
+	client.pers.netname = userinfo['name'];
+
+	s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
+			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
+			client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
+	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
+
+	// This is not the userinfo, more like the configstring actually.
+	console.log('ClientUserinfoChanged: %i %s\n", clientNum, s );*/
+}
+
 
 /**
  * ClientBegin

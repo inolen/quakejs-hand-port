@@ -23,8 +23,8 @@ function ReadFile(path, encoding, callback) {
 		return;
 	}
 
-	fs.readFile(path.substring(3), 'utf8', function (err, data) {
+	fs.readFile(Q3W_BASE_FOLDER + '/' + path, 'utf8', function (err, data) {
 		if (err) throw err;
-		callback.apply(this, data);
+		callback(null, data);
 	});
 }

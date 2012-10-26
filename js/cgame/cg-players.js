@@ -2,25 +2,19 @@
  * NewClientInfo
  */
 function NewClientInfo(clientNum) {
-	console.log('Loading client info for', clientNum);
-	/*clientInfo_t *ci;
-	clientInfo_t newInfo;
-	const char	*configstring;
-	const char	*v;
-	char		*slash;
-
-	var ci = cgs.clientInfo[clientNum];
+	var ci = cgs.clientInfo[clientNum] = new ClientInfo();
 	var cs = ConfigString('player' + clientNum);
 
+	console.log('Loading client info for', clientNum, ci, cs);
+
 	if (!cs) {
-		memset( ci, 0, sizeof( *ci ) );
-		return;  // player just left
+		return; // player just left
 	}
 
 	// Isolate the player's name
-	ci.name = cs['n'];
+	//ci.name = cs['n'];
 
-	// force the model
+	/*// force the model
 	char modelStr[
 
 	trap_Cvar_VariableStringBuffer( "model", modelStr, sizeof( modelStr ) );
@@ -31,12 +25,11 @@ function NewClientInfo(clientNum) {
 	}
 
 	ci.skinName = skin;
-	ci.modelName = modelStr;
-
+	ci.modelName = modelStr;*/
 
 	// scan for an existing clientinfo that matches this modelname
 	// so we can avoid loading checks if possible
-	if (!ScanForExistingClientInfo(ci)) {
+	/*if (!ScanForExistingClientInfo(ci)) {
 		LoadClientInfo(clientNum, ci);
 	}
 

@@ -87,6 +87,29 @@ var ClientGameEntity =  function () {
 	this.lerpAngles = [0, 0, 0];
 };
 
+
+var ClientInfo = function () {
+	this.infoValid     = false;
+	this.name          = null;
+
+	// When clientinfo is changed, the loading of models/skins/sounds
+	// can be deferred until you are dead, to prevent hitches in
+	// gameplay.
+	this.modelName     = null;
+	this.skinName      = null;
+	this.headModelName = null;
+	this.headSkinName  = null;
+
+	this.legsModel     = -1;
+	this.legsSkin      = -1;
+
+	this.torsoModel    = -1;
+	this.torsoSkin     = -1;
+
+	this.headModel     = -1;
+	this.headSkin      = -1;
+};
+
 var ItemInfo = function () {
 	this.modelHandles = [];
 	this.icon         = -1;

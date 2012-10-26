@@ -52,10 +52,6 @@ function Init(sysinterface, cominterface) {
 	ui.Init();
 
 	cls.initialized = true;
-
-	setTimeout(function () {
-		CmdConnect('localhost:9000');
-	}, 1000);
 }
 
 /**
@@ -112,7 +108,11 @@ function Frame(frameTime, msec) {
 	cls.frameDelta = msec;
 	cls.realTime += cls.frameDelta;
 
+	// Send intentions now.
 	SendCommand();
+
+	// Resend a connection request if necessary.
+	CheckForResend();
 
 	// Decide on the serverTime to render.
 	SetCGameTime();
@@ -152,17 +152,16 @@ function MapLoading() {
 		clc.lastPacketSentTime = -9999;
 		SCR_UpdateScreen();*/
 	} else {
-		/*// clear nextmap so the cinematic shutdown doesn't execute it
-		Cvar_Set( "nextmap", "" );
-		CL_Disconnect( qtrue );
-		Q_strncpyz( clc.servername, "localhost", sizeof(clc.servername) );*/
-		clc.state = ConnectionState.CHALLENGING;		// so the connect screen is drawn
+		Disconnect();
+
+		clc.serverName = 'localhost:9000';
+		clc.serverAddress = StringToAddr(clc.serverName);
+
+		clc.state = ConnectionState.CHALLENGING;  // so the connect screen is drawn
 		/*Key_SetCatcher( 0 );
-		SCR_UpdateScreen();
-		clc.connectTime = -RETRANSMIT_TIMEOUT;
-		NET_StringToAdr( clc.servername, &clc.serverAddress, UNSPEC);
-		// we don't need a challenge on the localhost
-		CL_CheckForResend();*/
+		SCR_UpdateScreen();*/
+		clc.connectTime = -99999;
+		CheckForResend();
 	}
 }
 
@@ -188,7 +187,7 @@ function Disconnect(showMainMenu) {
 		//WritePacket();
 	}
 	
-	ClearState ();
+	ClearState();
 
 	// Wipe the client connection.
 	clc = new ClientConnection();
@@ -221,6 +220,56 @@ function AddReliableCommand(cmd/*, isDisconnectCmd*/) {
 }
 
 /**
+ * CheckForResend
+ *
+ * Resend a connect message if the last one has timed out
+ */
+function CheckForResend() {
+	// Resend if we haven't gotten a reply yet.
+	if (clc.state !== ConnectionState.CONNECTING && clc.state !== ConnectionState.CHALLENGING) {
+		return;
+	}
+
+	if (cls.realTime - clc.connectTime < RETRANSMIT_TIMEOUT) {
+		return;
+	}
+
+	// Since we're on TCP/IP, this whole CheckForResend() doesn't make much sense.
+	if (!clc.netchan) {
+		clc.netchan = com.NetchanSetup(NetSrc.CLIENT, clc.serverAddress);
+	}
+
+	clc.connectTime = cls.realTime;  // for retransmit requests
+	clc.connectPacketCount++;
+
+	switch (clc.state) {
+		/*case ConnectionState.CONNECTING:
+			// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
+			// Add the gamename so the server knows we're running the correct game or can reject the client
+			// with a meaningful message
+			Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, com_gamename->string);
+			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
+			break;*/
+			
+		case ConnectionState.CHALLENGING:
+			// sending back the challenge
+			//port = Cvar_VariableValue ("net_qport");
+			//Info_SetValueForKey(info, "protocol", va("%i", com_protocol->integer));
+			//Info_SetValueForKey( info, "qport", va("%i", port ) );
+			//Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
+			var str = 'connect' + JSON.stringify(com.GetCvarKeyValues(CvarFlags.USERINFO));
+			com.NetchanPrint(clc.netchan, str);
+			// The most current userinfo has been sent, so watch for any
+			// newer changes to userinfo variables.
+			//cvar_modifiedFlags &= ~CVAR_USERINFO;
+			break;
+
+		default:
+			throw new Error('CheckForResend: bad clc.state');
+	}
+}
+
+/**
  * PacketEvent
  */
 function PacketEvent(addr, buffer) {
@@ -232,7 +281,7 @@ function PacketEvent(addr, buffer) {
 
 	// Peek in and see if this is a string message.
 	if (buffer.byteLength > 4 && msg.view.getInt32(0, !!ByteBuffer.LITTLE_ENDIAN) === -1) {
-		ParseStringMessage(addr, msg);
+		ConnectionlessPacket(addr, msg);
 		return;
 	}
 
@@ -249,9 +298,9 @@ function PacketEvent(addr, buffer) {
 }
 
 /**
- * ParseStringMessage
+ * ConnectionlessPacket
  */
-function ParseStringMessage(addr, msg) {
+function ConnectionlessPacket(addr, msg) {
 	msg.readInt();  // Skip the -1.
 
 	var str = msg.readCString();

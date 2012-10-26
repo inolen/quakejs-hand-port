@@ -17,19 +17,26 @@ function NetCreateServer() {
 
 	wsServer.on('request', function(request) {
 		var connection = request.accept('q3js', request.origin);
-		var addr = com.NetchanSetup(NetSrc.SERVER, connection.remoteAddress, connection);
+		// TODO parse connection.remoteAddress to to NetAdr.
+		console.log(connection.remoteAddress);
+		var netchan = com.NetchanSetup(NetSrc.SERVER, connection.remoteAddress, connection);
 
 		console.log((new Date()) + ' Connection accepted.');
 
-		com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, addr: addr, socket: connection });
+		//com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, addr: addr, socket: connection });
 
 		connection.on('message', function (message) {
-			com.QueueEvent({ type: com.EventTypes.NETSVMESSAGE, addr: addr, buffer: message.binaryData });
+			com.QueueEvent({
+				type: com.EventTypes.NETSVMESSAGE,
+				addr: netchan.addr,
+				socket: netchan.socket,
+				buffer: message.binaryData
+			});
 		});
 
-		connection.on('close', function(reasonCode, description) {
+		/*connection.on('close', function(reasonCode, description) {
 			com.QueueEvent({ type: com.EventTypes.NETSVDISCONNECT, addr: addr });
-		});
+		});*/
 	});
 }
 

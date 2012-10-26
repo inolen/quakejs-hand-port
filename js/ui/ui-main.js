@@ -339,7 +339,7 @@ function UpdateAllFontSizes() {
 /**
  * UpdateFontSizes
  *
- * Update base font-size of view to be 1/64th of the viewport size.
+ * Update base font-size of view to be 1/100th of the viewport size.
  * This allows all of our text elements to scale properly with the window.
  */
 function UpdateFontSize(view) {

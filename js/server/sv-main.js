@@ -1,5 +1,6 @@
 var sys;
 var com;
+var cl;
 var dedicated;
 
 var sv;
@@ -19,6 +20,10 @@ function Init(sysinterface, cominterface, isdedicated) {
 	sys = sysinterface;
 	com = cominterface;
 	dedicated = isdedicated;
+
+	if (!dedicated) {
+		cl = require('client/cl');
+	}
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
@@ -86,12 +91,18 @@ function Frame(frameTime, msec) {
 /**
  * PacketEvent
  */
-function PacketEvent(addr, buffer) {
+function PacketEvent(addr, socket, buffer) {
 	if (!svs.initialized) {
 		return;
 	}
 
 	var msg = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+
+	// Peek in and see if this is a string message.
+	if (buffer.byteLength > 4 && msg.view.getInt32(0, !!ByteBuffer.LITTLE_ENDIAN) === -1) {
+		ConnectionlessPacket(addr, socket, msg);
+		return;
+	}
 
 	for (i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
@@ -108,6 +119,19 @@ function PacketEvent(addr, buffer) {
 			ExecuteClientMessage(client, msg);
 		}
 		return;
+	}
+}
+
+/**
+ * ConnectionlessPacket
+ */
+function ConnectionlessPacket(addr, socket, msg) {
+	msg.readInt();  // Skip the -1.
+
+	var str = msg.readCString();
+
+	if (str.indexOf('connect') === 0) {
+		ClientConnect(addr, socket, str.substr(7));
 	}
 }
 

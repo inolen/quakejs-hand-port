@@ -15,10 +15,11 @@ ALL_MODULES = \
 	js/game/gm.js \
 	js/server/sv.js \
 	js/renderer/re.js \
+	js/ui/ui.js \
 	js/system/browser/sys.js \
 	js/system/dedicated/sys.js \
-	js/vendor/gl-matrix.js \
 	js/vendor/byte-buffer.js \
+	js/vendor/gl-matrix.js \
 	js/vendor/underscore.js
 
 ALL_MODULES_OUT = $(subst js/,js/bin/, $(ALL_MODULES))

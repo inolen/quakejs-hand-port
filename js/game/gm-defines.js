@@ -1,5 +1,13 @@
 var FRAMETIME = 100; // msec
 
+var LevelLocals = function () {
+	this.framenum     = 0;
+	this.previousTime = 0;
+	this.time         = 0;
+	this.clients      = new Array(MAX_CLIENTS);
+	this.gentities    = new Array(MAX_GENTITIES);
+};
+
 // The server does not know how to interpret most of the values
 // in entityStates (level eType), so the game must explicitly flag
 // special server behaviors.
@@ -53,21 +61,16 @@ var GameEntity = function () {
 	this.nextthink     = 0;
 };
 
-// client data that stays across multiple respawns, but is cleared
-// on each level change or team change at ClientBegin()
-var GameClientPersistant = function () {
-	this.cmd = new UserCmd();
-};
-
+// This structure is cleared on each ClientSpawn(),
+// except for 'client->pers' and 'client->sess'.
 var GameClient = function () {
-	this.ps = new PlayerState();
+	this.ps   = new PlayerState();
 	this.pers = new GameClientPersistant();
 };
 
-var LevelLocals = function () {
-	this.framenum     = 0;
-	this.previousTime = 0;
-	this.time         = 0;
-	this.clients      = new Array(MAX_CLIENTS);
-	this.gentities    = new Array(MAX_GENTITIES);
+// Client data that stays across multiple respawns, but is cleared
+// on each level change or team change at ClientBegin()
+var GameClientPersistant = function () {
+	this.cmd     = new UserCmd();
+	this.netname = null;
 };

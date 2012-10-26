@@ -64,27 +64,11 @@ function CmdConnect(serverName) {
 
 	Disconnect(false);
 
-	/*Q_strncpyz( clc.servername, server, sizeof(clc.servername) );
+	clc.serverName = serverName;
+	clc.serverAddress = StringToAddr(clc.serverName);
 
-	if (!NET_StringToAdr(clc.servername, &clc.serverAddress, family) ) {
-		Com_Printf ("Bad server address\n");
-		clc.state = CA_DISCONNECTED;
-		return;
-	}
-	if (clc.serverAddress.port == 0) {
-		clc.serverAddress.port = BigShort( PORT_SERVER );
-	}
-
-	serverString = NET_AdrToStringwPort(clc.serverAddress);
-
-	Com_Printf( "%s resolved to %s\n", clc.servername, serverString);*/
-
-	var addr = StringToAddr('ws://' + host + ':' + port);
-	clc.netchan = com.NetchanSetup(NetSrc.CLIENT, addr);
-	clc.state = ConnectionState.CHALLENGING;
-
-	/*clc.connectTime = -99999;	// CL_CheckForResend() will fire immediately
-	clc.connectPacketCount = 0;*/
+	clc.connectTime = -99999; // CheckForResend() will fire immediately
+	clc.connectPacketCount = 0;
 }
 
 /**
@@ -99,12 +83,14 @@ function StringToAddr(str) {
 		addr.type = NetAdrType.IP;
 	}
 
-	// TODO: Add a default port support.
-	var ip = str;
-	var m = ip.match(/\/\/(.+)\:(\d+)/);
-	if (m) {
-		addr.ip = m[1];
-		addr.port = m[2];
+	var split = str.split(':');
+
+	if (!split.length) {
+		addr.ip = split[0];
+		addr.port = 9000;
+	} else {
+		addr.ip = split[0];
+		addr.port = split[1];
 	}
 
 	return addr;

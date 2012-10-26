@@ -46,8 +46,18 @@ var ServerEntity = function (number) {
 	this.snapshotCounter = 0;
 };
 
+var ClientState = {
+	FREE:      0,                                          // can be reused for a new connection
+	ZOMBIE:    1,                                          // client has been disconnected, but don't reuse
+	                                                       // connection for a couple seconds
+	CONNECTED: 2,                                          // has been assigned to a client_t, but no gamestate yet
+	PRIMED:    3,                                          // gamestate has been sent, but client hasn't sent a usercmd
+	ACTIVE:    4                                           // client is fully in game
+};
+
 var ServerClient = function () {
 	this.state                   = ClientState.FREE;
+	this.userInfo                = {};
 
 	this.messageAcknowledge      = 0;
 	this.reliableCommands        = new Array(MAX_RELIABLE_COMMANDS);
@@ -83,13 +93,4 @@ var ClientSnapshot = function () {
 	this.firstEntity  = 0;                                 // index into the circular sv_packet_entities[]
 	                                                       // the entities MUST be in increasing state number
 	                                                       // order, otherwise the delta compression will fail
-};
-
-var ClientState = {
-	FREE:      0,                                          // can be reused for a new connection
-	ZOMBIE:    1,                                          // client has been disconnected, but don't reuse
-	                                                       // connection for a couple seconds
-	CONNECTED: 2,                                          // has been assigned to a client_t, but no gamestate yet
-	PRIMED:    3,                                          // gamestate has been sent, but client hasn't sent a usercmd
-	ACTIVE:    4                                           // client is fully in game
 };
