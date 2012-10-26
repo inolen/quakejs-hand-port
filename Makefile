@@ -1,28 +1,23 @@
-.PHONY: modules protocol
+.PHONY: browser dedicated
 
-#default: modules protocol
+OPTIMIZE := optimize=none
+OUT_DIR := dist
+TMP_DIR := js_tmp
 
-###########################################################
-# Build the cgame, game and sys modules. We're being
-# overzealous with our dependencies, but alas, KISS.
-###########################################################
-ALL_MODULES = \
-	js/stub.js \
-	js/cgame/cg.js \
-	js/clipmap/cm.js \
-	js/common/com.js \
-	js/game/bg.js \
-	js/game/gm.js \
-	js/server/sv.js \
-	js/renderer/re.js \
-	js/system/dedicated/sys.js \
-	js/vendor/byte-buffer.js \
-	js/vendor/gl-matrix.js \
-	js/vendor/underscore.js
+define rwildcard
+	$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2)$(filter $(subst *,%,$2),$d))
+endef
 
-ALL_MODULES_OUT = $(subst js/,js/bin/, $(ALL_MODULES))
+define create_js_tmp
+	mkdir -p $(TMP_DIR)
+	cp -r js/* $(TMP_DIR)
+endef
 
-define preprocess_ejs_includes
+define remove_js_tmp
+	rm -r $(TMP_DIR)
+endef
+
+define preprocess_ejs
 	@mkdir -p $(dir $2)
 	@node -e "\
 		var input = require('fs').readFileSync('$(strip $1)', 'utf8'); \
@@ -30,17 +25,26 @@ define preprocess_ejs_includes
 		console.log(output)" > $2
 endef
 
-# Preprocess EJS files
-js/bin/%.js: js/%.js.ejs
-	$(call preprocess_ejs_includes, $<, $@)
+define preprocess_all_ejs
+	$(foreach f,$1,$(call preprocess_ejs,$(f),$(subst .ejs,,$(f))))
+endef
 
-# Just copy regular files
-js/bin/%.js: js/%.js
-	@mkdir -p $(dir $@)
-	cp $< $@
+TMP_EJS := $(call rwildcard,$(TMP_DIR),*.js.ejs)
 
-#define optimize
-#	@node r.js -o name=$(strip $1) out=$(strip $2) baseUrl=js
-#endef
+browser:
+	$(call create_js_tmp)
+	@$(MAKE) browser_finish
 
-modules: $(ALL_MODULES_OUT)
+browser_finish:
+	$(call preprocess_all_ejs, $(TMP_EJS))
+	@node js/vendor/r.js -o build/browser.build.js baseUrl=$(TMP_DIR) name=system/browser/sys out=$(OUT_DIR)/q3-browser-min.js $(OPTIMIZE)
+	$(call remove_js_tmp)
+
+dedicated:
+	$(call create_js_tmp)
+	@$(MAKE) dedicated_finish
+
+dedicated_finish:
+	$(call preprocess_all_ejs, $(TMP_EJS))
+	@node js/vendor/r.js -o build/dedicated.build.js baseUrl=$(TMP_DIR) name=system/dedicated/sys out=$(OUT_DIR)/q3-dedicated-min.js $(OPTIMIZE)
+	$(call remove_js_tmp)

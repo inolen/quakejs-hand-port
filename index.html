@@ -9,13 +9,13 @@
 			require.config({
 				baseUrl: 'js',
 				paths: {
-					'text':         'vendor/text',
-					'underscore':   'vendor/underscore',
-					'backbone':     'vendor/backbone',
-					'jquery':       'vendor/jquery-1.8.2',
-					'glmatrix':     'vendor/gl-matrix',
-					'ByteBuffer':   'vendor/byte-buffer',
-					'system/sys':   'system/browser/sys'
+					'text':               'vendor/text',
+					'underscore':         'vendor/underscore',
+					'backbone':           'vendor/backbone',
+					'jquery':             'vendor/jquery-1.8.2',
+					'glmatrix':           'vendor/gl-matrix',
+					'ByteBuffer':         'vendor/byte-buffer',
+					//'system/browser/sys': '../dist/q3-browser-min'
 				},
 				shim:  {
 					backbone: {
@@ -25,7 +25,7 @@
 				}
 			});
 
-			require(['system/sys'], function (sys) {
+			require(['system/browser/sys'], function (sys) {
 				window.addEventListener('load', sys.Init);
 			});
 		</script>
