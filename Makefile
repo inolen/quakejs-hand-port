@@ -1,5 +1,6 @@
 .PHONY: browser dedicated
 
+#OPTIMIZE := optimize=uglify
 OPTIMIZE := optimize=none
 OUT_DIR := dist
 TMP_DIR := js_tmp
