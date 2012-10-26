@@ -1,0 +1,3 @@
+define('stub', [], function () {
+	return {};
+});

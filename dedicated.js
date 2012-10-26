@@ -4,19 +4,12 @@ requirejs.config({
 	nodeRequire: require,
 	baseUrl: 'js/bin',
 	paths: {
-		'text':         'vendor/text',
+		'client/cl':    'stub',
+		'ui/ui':        'stub',
 		'underscore':   'vendor/underscore',
-		'backbone':     'vendor/backbone',
-		'jquery':       'vendor/jquery-1.8.2',
 		'glmatrix':     'vendor/gl-matrix',
 		'ByteBuffer':   'vendor/byte-buffer',
 		'system/sys':   'system/dedicated/sys'
-	},
-	shim:  {
-		backbone: {
-			'deps': ['underscore', 'jquery'],
-			'exports': 'Backbone'
-		}
 	}
 });
 

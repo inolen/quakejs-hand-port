@@ -14,7 +14,7 @@ function (_, Backbone, templateSrc) {
 		className: 'menu',
 		template: _.template(templateSrc),
 		model: {
-			address: 'localhost'
+			address: '192.168.0.102:9001'
 		},
 		addressEl: null,
 		events: {

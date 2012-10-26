@@ -1,6 +1,5 @@
 var sys;
 var com;
-var cl;
 var dedicated;
 
 var sv;
@@ -20,10 +19,6 @@ function Init(sysinterface, cominterface, isdedicated) {
 	sys = sysinterface;
 	com = cominterface;
 	dedicated = isdedicated;
-
-	if (!dedicated) {
-		cl = require('client/cl');
-	}
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();

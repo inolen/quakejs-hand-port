@@ -1,5 +1,4 @@
 var sys;
-var cl;
 
 var dedicated = false;
 var events;
@@ -37,7 +36,6 @@ function Init(sysinterface, isdedicated) {
 	sv.Init(sys, exports, dedicated);
 
 	if (!dedicated) {
-		cl = require('client/cl');
 		cl.Init(sys, exports);
 
 		// Provide the user a way to interface with the client.

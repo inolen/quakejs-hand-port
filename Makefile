@@ -7,16 +7,14 @@
 # overzealous with our dependencies, but alas, KISS.
 ###########################################################
 ALL_MODULES = \
+	js/stub.js \
 	js/cgame/cg.js \
-	js/client/cl.js \
 	js/clipmap/cm.js \
 	js/common/com.js \
 	js/game/bg.js \
 	js/game/gm.js \
 	js/server/sv.js \
 	js/renderer/re.js \
-	js/ui/ui.js \
-	js/system/browser/sys.js \
 	js/system/dedicated/sys.js \
 	js/vendor/byte-buffer.js \
 	js/vendor/gl-matrix.js \
