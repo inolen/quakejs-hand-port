@@ -251,16 +251,7 @@ function LoadMd3 (filename, callback) {
 					xyz.xyz[k] = bb.readShort();
 				}
 
-				// TODO may have to lerp these when animating? Look at LerpMeshVertexes_altivec.
-				var zenith = bb.readByte();
-				var azimuth = bb.readByte();
-
-				var lat = zenith * (2 * Math.PI) / 255;
-				var lng = azimuth * (2 * Math.PI) / 255;
-
-				xyz.normal[0] = Math.cos(lng) * Math.sin(lat);
-				xyz.normal[1] = Math.sin(lng) * Math.sin(lat);
-				xyz.normal[2] = Math.cos(lat);
+				xyz.normal = bb.readUnsignedShort();
 			}
 
 			meshOffset += sheader.ofsEnd;

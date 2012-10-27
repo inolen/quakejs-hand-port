@@ -367,6 +367,8 @@ function RenderDrawSurfaces() {
 	var oldEntityNum = -1;
 	var modelMatrix;
 
+	re.currentEntity = null;
+
 	for (var i = 0; i < refdef.numDrawSurfs; i++) {
 		var drawSurf = drawSurfs[i];
 		var face = drawSurf.surface;
@@ -406,8 +408,10 @@ function RenderDrawSurfaces() {
 		// Change the model view matrix for entity.
 		if (oldEntityNum !== entityNum) {
 			if (entityNum !== ENTITYNUM_WORLD) {
+				re.currentEntity = refdef.refEntities[entityNum];
+				
 				var or = new Orientation();
-				RotateModelMatrixForEntity(refdef.refEntities[entityNum], or);
+				RotateModelMatrixForEntity(re.currentEntity, or);
 				mat4.set(or.modelMatrix, tess.modelMatrix);
 			} else {
 				mat4.set(parms.or.modelMatrix, tess.modelMatrix);

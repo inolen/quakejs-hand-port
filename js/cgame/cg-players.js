@@ -559,6 +559,8 @@ function PlayerAnimation(cent, legs, torso/*, legsOld, legs, legsBackLerp, torso
 	// 	speedScale = 1.5;
 	// }
 
+	cent.currentState.legsAnim = Animations.LEGS_WALK;
+
 	// Do the shuffle turn frames locally.
 	// if (cent->pe.legs.yawing && (cent.currentState.legsAnim & ~ANIM_TOGGLEBIT) === LEGS_IDLE) {
 	// 	RunLerpFrame( ci, &cent->pe.legs, LEGS_TURN, speedScale );
@@ -597,7 +599,7 @@ function RunLerpFrame(ci, lf, newAnimation, speedScale) {
 		lf.oldFrameTime = lf.frameTime;
 
 		// Get the next frame based on the animation.
-		anim = lf.animation;
+		var anim = lf.animation;
 		if (!anim.frameLerp) {
 			return;  // shouldn't happen
 		}
@@ -606,8 +608,7 @@ function RunLerpFrame(ci, lf, newAnimation, speedScale) {
 		} else {
 			lf.frameTime = lf.oldFrameTime + anim.frameLerp;
 		}
-		f = (lf.frameTime - lf.animationTime) / anim.frameLerp;
-		f *= speedScale;  // adjust for haste, etc
+		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale);
 
 		numFrames = anim.numFrames;
 		if (anim.flipflop) {
@@ -666,7 +667,7 @@ function SetLerpFrameAnimation(ci, lf, newAnimation) {
 		throw new Error('Bad animation number: ' + newAnimation);
 	}
 
-	var anim = new Animation();//ci->animations[newAnimation];
+	var anim = ci.animations[newAnimation];
 
 	lf.animation = anim;
 	lf.animationTime = lf.frameTime + anim.initialLerp;

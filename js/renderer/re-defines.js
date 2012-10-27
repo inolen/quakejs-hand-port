@@ -34,6 +34,8 @@ var RenderLocals = function () {
 	this.world               = null;
 	this.refdef              = new RefDef();
 	this.viewParms           = null;
+	this.currentEntity       = null;
+
 	this.visCount            = 0;                          // incremented every time a new vis cluster is entered
 	this.frameCount          = 0;                          // incremented every frame
 	this.sceneCount          = 0;                          // incremented every scene
@@ -161,13 +163,23 @@ RefEntity.prototype.clone = function (refent) {
 		refent = new RefEntity();
 	}
 
+	refent.index = this.index;
 	refent.reType = this.reType;
 	vec3.set(this.origin, refent.origin);
-	mat3.set(this.axis, refent.axis);
+	vec3.set(this.lightingOrigin, refent.lightingOrigin);
+	vec3.set(this.axis[0], refent.axis[0]);
+	vec3.set(this.axis[1], refent.axis[1]);
+	vec3.set(this.axis[2], refent.axis[2]);
+	refent.frame = this.frame;
+	vec3.set(this.oldOrigin, refent.oldOrigin);
+	refent.oldFrame = this.oldFrame;
+	refent.backlerp = this.backlerp;
 	refent.hModel = this.hModel;
+	refent.skinNum = this.skinNum;
+	refent.customSkin = this.customSkin;
+	refent.customShader = this.customShader;
 	vec3.set(this.mins, refent.mins);
 	vec3.set(this.maxs, refent.maxs);
-	refent.index = this.index;
 
 	return refent;
 };
@@ -505,8 +517,7 @@ var Md3St = function () {
 
 var Md3XyzNormal = function () {
 	this.xyz    = [0, 0, 0];                               // short[3]
-	//this.normal = 0;                                     // short, zenith and azimuth angles of normal vector.
-	this.normal = [0, 0, 0];
+	this.normal = 0;                                       // short, zenith and azimuth angles of normal vector.
 };
 
 var Md3Frame = function () {
