@@ -203,18 +203,14 @@ function TesselateFace(tess, face) {
  * TesselateMd3
  */
 function TesselateMd3(tess, face) {
-	/*if (  backEnd.currentEntity->e.oldframe == backEnd.currentEntity->e.frame ) {
-		backlerp = 0;
-	} else  {
-		backlerp = backEnd.currentEntity->e.backlerp;
-	}
-	RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles*3 );
-	LerpMeshVertexes (surface, backlerp);*/
-
+	var refent = re.currentEntity;
+	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
 	var vertexOffset = tess.numVertexes * 14;
 	var indexOffset = tess.numVertexes;
 
-	LerpMeshVertexes(face, 0);
+	//RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles*3 );
+
+	LerpMeshVertexes(face, backlerp);
 
 	for (var i = 0; i < face.header.numVerts; i++) {
 		vertexOffset += 3;
@@ -258,8 +254,8 @@ function LerpMeshVertexes(face, backlerp) {
 	var newXyzScale = MD3_XYZ_SCALE * (1.0 - backlerp);
 	var newNormalScale = 1.0 - backlerp;
 
-	// if (backlerp === 0) {
-		// just copy the vertexes
+	if (backlerp === 0) {
+		// Just copy the vertexes
 		for (var i = 0; i < numVerts; i++) {
 			var newXyz = face.xyzNormals[re.currentEntity.frame * numVerts + i];
 
@@ -276,53 +272,49 @@ function LerpMeshVertexes(face, backlerp) {
 
 			vertexOffset += 14;
 		}
-	// } else {
-	// 	//
-	// 	// interpolate and copy the vertex and normal
-	// 	//
-	// 	oldXyz = (short *)((byte *)surf + surf->ofsXyzNormals)
-	// 		+ (backEnd.currentEntity->e.oldframe * surf->numVerts * 4);
-	// 	oldNormals = oldXyz + 3;
+	} else {
+		// Interpolate and copy the vertex and normal.
+		var oldXyzScale = MD3_XYZ_SCALE * backlerp;
+		var oldNormalScale = backlerp;
 
-	// 	oldXyzScale = MD3_XYZ_SCALE * backlerp;
-	// 	oldNormalScale = backlerp;
+		for (var i = 0; i < numVerts; i++) {
+			var oldXyz = face.xyzNormals[re.currentEntity.oldFrame * numVerts + i];
+			var newXyz = face.xyzNormals[re.currentEntity.frame * numVerts + i];
 
-	// 	for (vertNum=0 ; vertNum < numVerts ; vertNum++,
-	// 		oldXyz += 4, newXyz += 4, oldNormals += 4, newNormals += 4,
-	// 		outXyz += 4, outNormal += 4) 
-	// 	{
-	// 		vec3_t uncompressedOldNormal, uncompressedNewNormal;
+			// Interpolate the xyz.
+			tess.vertexes[vertexOffset+0] = oldXyz.xyz[0] * oldXyzScale + newXyz.xyz[0] * newXyzScale;
+			tess.vertexes[vertexOffset+1] = oldXyz.xyz[1] * oldXyzScale + newXyz.xyz[1] * newXyzScale;
+			tess.vertexes[vertexOffset+2] = oldXyz.xyz[2] * oldXyzScale + newXyz.xyz[2] * newXyzScale;
 
-	// 		// interpolate the xyz
-	// 		outXyz[0] = oldXyz[0] * oldXyzScale + newXyz[0] * newXyzScale;
-	// 		outXyz[1] = oldXyz[1] * oldXyzScale + newXyz[1] * newXyzScale;
-	// 		outXyz[2] = oldXyz[2] * oldXyzScale + newXyz[2] * newXyzScale;
+			// FIXME: interpolate lat/long instead?
+			var lat = (newXyz.normal >> 8) & 0xff;
+			var lng = (newXyz.normal & 0xff);
+			lat *= 4;
+			lng *= 4;
+			var uncompressedNewNormal = [Math.cos(lng) * Math.sin(lat),
+			                             Math.sin(lng) * Math.sin(lat),
+			                             Math.cos(lat)];
 
-	// 		// FIXME: interpolate lat/long instead?
-	// 		lat = ( newNormals[0] >> 8 ) & 0xff;
-	// 		lng = ( newNormals[0] & 0xff );
-	// 		lat *= 4;
-	// 		lng *= 4;
-	// 		uncompressedNewNormal[0] = tr.sinTable[(lat+(FUNCTABLE_SIZE/4))&FUNCTABLE_MASK] * tr.sinTable[lng];
-	// 		uncompressedNewNormal[1] = tr.sinTable[lat] * tr.sinTable[lng];
-	// 		uncompressedNewNormal[2] = tr.sinTable[(lng+(FUNCTABLE_SIZE/4))&FUNCTABLE_MASK];
+			lat = (oldXyz.normal >> 8) & 0xff;
+			lng = (oldXyz.normal & 0xff);
+			lat *= 4;
+			lng *= 4;
+			var uncompressedOldNormal = [Math.cos(lng) * Math.sin(lat),
+			                             Math.sin(lng) * Math.sin(lat),
+			                             Math.cos(lat)];
 
-	// 		lat = ( oldNormals[0] >> 8 ) & 0xff;
-	// 		lng = ( oldNormals[0] & 0xff );
-	// 		lat *= 4;
-	// 		lng *= 4;
+			var normal = [uncompressedOldNormal[0] * oldNormalScale + uncompressedNewNormal[0] * newNormalScale,
+			              uncompressedOldNormal[1] * oldNormalScale + uncompressedNewNormal[1] * newNormalScale,
+			              uncompressedOldNormal[2] * oldNormalScale + uncompressedNewNormal[2] * newNormalScale];
+			vec3.normalize(normal);
 
-	// 		uncompressedOldNormal[0] = tr.sinTable[(lat+(FUNCTABLE_SIZE/4))&FUNCTABLE_MASK] * tr.sinTable[lng];
-	// 		uncompressedOldNormal[1] = tr.sinTable[lat] * tr.sinTable[lng];
-	// 		uncompressedOldNormal[2] = tr.sinTable[(lng+(FUNCTABLE_SIZE/4))&FUNCTABLE_MASK];
+			tess.vertexes[vertexOffset+7] = normal[0];
+			tess.vertexes[vertexOffset+8] = normal[1];
+			tess.vertexes[vertexOffset+9] = normal[2];
 
-	// 		outNormal[0] = uncompressedOldNormal[0] * oldNormalScale + uncompressedNewNormal[0] * newNormalScale;
-	// 		outNormal[1] = uncompressedOldNormal[1] * oldNormalScale + uncompressedNewNormal[1] * newNormalScale;
-	// 		outNormal[2] = uncompressedOldNormal[2] * oldNormalScale + uncompressedNewNormal[2] * newNormalScale;
-
-	// 		vec3.normalize(outNormal);
-	// 	}
-	// }
+			vertexOffset += 14;
+		}
+	}
 }
 
 // Setup debug vertex/index buffer.

@@ -550,7 +550,7 @@ function AddRefEntityWithPowerups(refent, s/*, team*/) {
 /**
  * PlayerAnimation
  */
-function PlayerAnimation(cent, legs, torso/*, legsOld, legs, legsBackLerp, torsoOld, torso, torsoBackLerp*/) {
+function PlayerAnimation(cent, legs, torso) {
 	var clientNum = cent.currentState.clientNum;
 	var ci = cgs.clientinfo[clientNum];
 	var speedScale = 1;
@@ -570,13 +570,13 @@ function PlayerAnimation(cent, legs, torso/*, legsOld, legs, legsBackLerp, torso
 
 	legs.oldFrame = cent.pe.legs.oldFrame;
 	legs.frame = cent.pe.legs.frame;
-	legs.backLerp = cent.pe.legs.backlerp;
+	legs.backlerp = cent.pe.legs.backlerp;
 
 	RunLerpFrame(ci, cent.pe.torso, cent.currentState.torsoAnim, speedScale);
 
 	torso.oldFrame = cent.pe.torso.oldFrame;
 	torso.frame = cent.pe.torso.frame;
-	torso.backLerp = cent.pe.torso.backlerp;
+	torso.backlerp = cent.pe.torso.backlerp;
 }
 
 
