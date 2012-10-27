@@ -34,7 +34,7 @@ function ClientConnect(clientNum, firstTime) {
 	G_ReadSessionData( client );*/
 
 	// get and distribute relevent paramters
-	console.log('ClientConnect: ' + clientNum);
+	console.log('ClientConnect ' + clientNum);
 	ClientUserinfoChanged(clientNum);
 
 	return null;
@@ -53,18 +53,18 @@ function ClientConnect(clientNum, firstTime) {
 function ClientUserinfoChanged(clientNum) {
 	var ent = level.gentities[clientNum];
 	var client = ent.client;
-
-	/*var userInfo = sv.GetUserinfo(clientNum);
+	var userinfo = sv.GetUserinfo(clientNum);
 
 	client.pers.netname = userinfo['name'];
 
-	s = va("n\\%s\\t\\%i\\model\\%s\\hmodel\\%s\\g_redteam\\%s\\g_blueteam\\%s\\c1\\%s\\c2\\%s\\hc\\%i\\w\\%i\\l\\%i\\tt\\%d\\tl\\%d",
-			client->pers.netname, client->sess.sessionTeam, model, headModel, redTeam, blueTeam, c1, c2, 
-			client->pers.maxHealth, client->sess.wins, client->sess.losses, teamTask, teamLeader);
-	trap_SetConfigstring( CS_PLAYERS+clientNum, s );
+	var cs = {
+		'name': client.pers.netname
+	};
+
+	sv.SetConfigstring('player' + clientNum, cs);
 
 	// This is not the userinfo, more like the configstring actually.
-	console.log('ClientUserinfoChanged: %i %s\n", clientNum, s );*/
+	console.log('ClientUserinfoChanged: ' + clientNum + ' ' + JSON.stringify(cs));
 }
 
 

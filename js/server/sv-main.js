@@ -126,7 +126,7 @@ function ConnectionlessPacket(addr, socket, msg) {
 	var str = msg.readCString();
 
 	if (str.indexOf('connect') === 0) {
-		ClientConnect(addr, socket, str.substr(7));
+		ClientConnect(addr, socket, str.substr(8));
 	}
 }
 
@@ -177,13 +177,16 @@ function SpawnServer(mapName) {
 
 		// Initialize the game.
 		var exports = {
-			GetEntityDefs:     cm.EntityDefs,
 			LocateGameData:    LocateGameData,
 			GetUserCommand:    GetUserCommand,
+			GetConfigstring:   GetConfigstring,
+			SetConfigstring:   SetConfigstring,
+			GetUserinfo:       GetUserinfo,
 			SetBrushModel:     SetBrushModel,
 			LinkEntity:        LinkEntity,
 			UnlinkEntity:      UnlinkEntity,
 			FindEntitiesInBox: FindEntitiesInBox,
+			GetEntityDefs:     cm.EntityDefs,
 			Trace:             cm.Trace
 		};
 		gm.Init(com, exports);
@@ -236,6 +239,13 @@ function SpawnServer(mapName) {
 }
 
 /**
+ * GetConfigstring
+ */
+function GetConfigstring(key) {
+	return sv.configstrings[key];
+}
+
+/**
  * SetConfigstring
  */
 function SetConfigstring(key, val) {
@@ -266,13 +276,6 @@ function SetConfigstring(key, val) {
 }
 
 /**
- * GetConfigstring
- */
-function GetConfigstring(key) {
-	return sv.configstrings[key];
-}
-
-/**
  * SendConfigString
  *
  * Creates and sends the server command necessary to update the CS index for the
@@ -294,7 +297,7 @@ function UpdateConfigstrings(client) {
 			continue;
 		}
 
-		// If the CS hasn't changed since we went to CS_PRIMED, ignore.
+		// If the CS hasn't changed since we went to ClientState.PRIMED, ignore.
 		if (!client.csUpdated[key]) {
 			continue;
 		}
@@ -304,20 +307,13 @@ function UpdateConfigstrings(client) {
 	}
 }
 
-// function SetUserinfo(index, val) {
-// 	if (index < 0 || index >= MAX_CLIENTS) {
-// 		throw new Error('SetUserinfo: bad index ' + index);
-// 	}
+/**
+ * GetUserInfo
+ */
+function GetUserinfo(clientNum) {
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		throw new Error('GetUserinfo: bad index ' + clientNum);
+	}
 
-// 	svs.clients[index].userinfo = val;
-// 	svs.clients[index].name = Info_ValueForKey( val, "name" );
-// }
-
-
-// function GetUserinfo(index) {
-// 	if (index < 0 || index >= MAX_CLIENTS) {
-// 		throw new Error('GetUserinfo: bad index ' + index);
-// 	}
-
-// 	return svs.clients[index].userinfo;
-// }
+	return svs.clients[clientNum].userinfo;
+}

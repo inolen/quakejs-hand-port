@@ -58,6 +58,7 @@ function AddCEntity(cent) {
 			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
 
 			if (item.giType === ItemType.HEALTH) {
+				AddPlayer(cent);
 			} else {
 				// Autorotate at one of two speeds.
 				if (item.giType === ItemType.HEALTH) {
@@ -135,6 +136,61 @@ function AddCEntity(cent) {
 		CG_TeamBase( cent );
 		break;
 	}*/
+}
+
+/**
+ * PositionEntityOnTag
+ *
+ * Modifies the entities position and axis by the given
+ * tag location.
+ */
+// function PositionEntityOnTag(refent, parent, parentModel, tagName) {
+// 	int				i;
+// 	orientation_t	lerped;
+	
+// 	// Lerp the tag.
+// 	trap_R_LerpTag( &lerped, parentModel, parent->oldframe, parent->frame,
+// 		1.0 - parent->backlerp, tagName );
+
+// 	// FIXME: allow origin offsets along tag?
+// 	VectorCopy( parent->origin, entity->origin );
+// 	for ( i = 0 ; i < 3 ; i++ ) {
+// 		VectorMA( entity->origin, lerped.origin[i], parent->axis[i], entity->origin );
+// 	}
+
+// 	// had to cast away the const to avoid compiler problems...
+// 	MatrixMultiply( lerped.axis, ((refEntity_t *)parent)->axis, entity->axis );
+// 	entity->backlerp = parent->backlerp;
+// }
+
+/**
+ * PositionRotatedEntityOnTag
+ * 
+ * Modifies the entities position and axis by the given
+ * tag location.
+ */
+function PositionRotatedEntityOnTag(refent, parent, parentModel, tagName) {
+	// Lerp the tag.
+	var lerped = new Orientation();
+	r.LerpTag(lerped, parentModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, tagName);
+
+	// FIXME: allow origin offsets along tag?
+	var t = [0, 0, 0];
+
+	vec3.set(parent.origin, refent.origin);
+	for (var i = 0; i < 3; i++) {
+		vec3.add(refent.origin, vec3.scale(parent.axis[i], lerped.origin[i], t));
+	}
+
+	// had to cast away the const to avoid compiler problems...
+	var tempAxis = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+
+	AxisMultiply(refent.axis, lerped.axis, tempAxis);
+	AxisMultiply(tempAxis, parent.axis, refent.axis);
 }
 
 /**

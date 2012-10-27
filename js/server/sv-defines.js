@@ -57,7 +57,7 @@ var ClientState = {
 
 var ServerClient = function () {
 	this.state                   = ClientState.FREE;
-	this.userInfo                = {};
+	this.userinfo                = {};
 
 	this.messageAcknowledge      = 0;
 	this.reliableCommands        = new Array(MAX_RELIABLE_COMMANDS);
@@ -71,6 +71,7 @@ var ServerClient = function () {
 	this.lastMessageNum          = 0;                      // for delta compression
 	this.lastClientCommand       = 0;                      // reliable client message sequence
 	this.lastClientCommandString = null;
+	this.name                    = null;                   // extracted from userinfo, high bits masked
 
 	this.deltaMessage            = -1;                     // frame last client usercmd message
 	this.nextReliableTime        = 0;                      // svs.time when another reliable command will be allowed

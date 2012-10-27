@@ -22,11 +22,9 @@ function ClientConnect(addr, socket, infostr) {
 
 	// Create the client.
 	var newcl = svs.clients[clientNum];
-	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
 	newcl.state = ClientState.CONNECTED;
-
-	// Save the userinfo
-	newcl.userInfo = JSON.parse(infostr);
+	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
+	newcl.userinfo = JSON.parse(infostr);
 
 	// Give the game a chance to reject this connection or modify the userinfo.
 	var denied = gm.ClientConnect(clientNum, true);
@@ -184,8 +182,14 @@ function SendClientGameState(client) {
 
 /**
  * UserinfoChanged
+ *
+ * Pull specific info from a newly changed userinfo string 
+ * into a more C friendly form.
  */
 function UserinfoChanged(client) {
+	client.name = client.userinfo[name];
+
+	// Snaps command.
 	var snaps = 20;
 
 	if (snaps < 1) {

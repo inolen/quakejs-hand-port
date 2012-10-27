@@ -269,3 +269,60 @@ function LoadMd3 (filename, callback) {
 		callback(null, md3);
 	});
 }
+
+/**
+ * GetTag
+ */
+function GetTag(md3, frame, tagName) {
+	if (frame >= md3.numFrames) {
+		// It is possible to have a bad frame while changing models, so don't error.
+		frame = mod.numFrames - 1;
+	}
+
+	for (var i = 0; i < md3.tags.length; i++) {
+		var tag = md3.tags[i];
+
+		if (tag.name === tagName) {
+			return tag;  // found it
+		}
+	}
+
+	return null;
+}
+
+/**
+ * LerpTag
+ */
+function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
+	var model = GetModelByHandle(handle);
+
+	if (!model.md3[0] ) {
+		AxisClear(or.axis);
+		vec3.set(or.origin, [0, 0, 0]);
+		return false;
+	}
+
+	var start = GetTag(model.md3[0], startFrame, tagName);
+	var end = GetTag(model.md3[0], endFrame, tagName);
+
+	if (!start || !end) {
+		AxisClear(or.axis);
+		vec3.set(or.origin, [0, 0, 0]);
+		return false;
+	}
+	
+	var frontLerp = frac;
+	var backLerp = 1  - frac;
+
+	for (var i = 0; i < 3; i++) {
+		or.origin[i] = start.origin[i] * backLerp +  end.origin[i] * frontLerp;
+		or.axis[0][i] = start.axis[0][i] * backLerp +  end.axis[0][i] * frontLerp;
+		or.axis[1][i] = start.axis[1][i] * backLerp +  end.axis[1][i] * frontLerp;
+		or.axis[2][i] = start.axis[2][i] * backLerp +  end.axis[2][i] * frontLerp;
+	}
+	vec3.normalize(or.axis[0]);
+	vec3.normalize(or.axis[1]);
+	vec3.normalize(or.axis[2]);
+
+	return true;
+}

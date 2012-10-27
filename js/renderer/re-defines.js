@@ -131,16 +131,26 @@ var RefEntityType = {
 };
 
 var RefEntity = function () {
-	this.index  = 0;                                       // internal use only
-	this.reType = 0;
-	this.origin = [0, 0, 0];
-	this.axis   = [                                        // rotation vectors
+	this.index           = 0;                              // internal use only
+	this.reType          = 0;
+	this.origin          = [0, 0, 0];
+	this.lightingOrigin  = [0, 0, 0];                      // so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)
+	this.axis            = [                               // rotation vectors
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
 	];
+	this.frame           = 0;
+	// previous data for frame interpolation
+	this.oldOrigin       = [0, 0, 0];
+	this.oldFrame        = 0;
+	this.backlerp        = 0;
 	// model
-	this.hModel = -1;
+	this.hModel          = -1;
+	// texturing
+	this.skinNum         = -1;                             // inline skin index
+	this.customSkin      = -1;                             // NULL for default skin
+	this.customShader    = -1;                             // use one image for the entire thing
 	// bbox
 	this.mins   = [0, 0, 0];
 	this.maxs   = [0, 0, 0];

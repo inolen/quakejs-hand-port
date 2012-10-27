@@ -1,3 +1,5 @@
+var DEFAULT_MODEL = 'sarge';
+
 var CMD_BACKUP = 64;
 var CMD_MASK   = (CMD_BACKUP - 1);
 
@@ -47,7 +49,7 @@ var ClientGameStatic = function () {
 	this.processedSnapshotNum = 0;               // the number of snapshots cgame has requested
 
 	// locally derived information from gamestate
-	this.clientInfo           = new Array(MAX_CLIENTS);
+	this.clientinfo           = new Array(MAX_CLIENTS);
 };
 
 // ClientGameEntity have a direct corespondence with GameEntity in the game, but

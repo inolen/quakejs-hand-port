@@ -108,6 +108,9 @@ function Frame(frameTime, msec) {
 	cls.frameDelta = msec;
 	cls.realTime += cls.frameDelta;
 
+	// See if we need to update any userinfo.
+	CheckUserinfo();
+
 	// Send intentions now.
 	SendCommand();
 
@@ -118,6 +121,72 @@ function Frame(frameTime, msec) {
 	SetCGameTime();
 
 	UpdateScreen();
+}
+
+/**
+ * CheckUserinfo
+ */
+function CheckUserinfo() {
+	// Don't add reliable commands when not yet connected.
+	if (clc.state < ConnectionState.CONNECTED) {
+		return;
+	}
+
+	// Send a reliable userinfo update if needed.
+	/*if (cvar_modifiedFlags & CvarFlags.USERINFO) {
+		cvar_modifiedFlags &= ~CVAR_USERINFO;
+		AddReliableCommand('userinfo ' + JSON.stringify(com.GetCvarKeyValues(CvarFlags.USERINFO));
+	}*/
+}
+
+/**
+ * CheckForResend
+ *
+ * Resend a connect message if the last one has timed out
+ */
+function CheckForResend() {
+	// Resend if we haven't gotten a reply yet.
+	if (clc.state !== ConnectionState.CONNECTING && clc.state !== ConnectionState.CHALLENGING) {
+		return;
+	}
+
+	if (cls.realTime - clc.connectTime < RETRANSMIT_TIMEOUT) {
+		return;
+	}
+
+	// Since we're on TCP/IP, this whole CheckForResend() doesn't make much sense.
+	if (!clc.netchan) {
+		clc.netchan = com.NetchanSetup(NetSrc.CLIENT, clc.serverAddress);
+	}
+	
+	clc.connectTime = cls.realTime;  // for retransmit requests
+	clc.connectPacketCount++;
+
+	switch (clc.state) {
+		/*case ConnectionState.CONNECTING:
+			// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
+			// Add the gamename so the server knows we're running the correct game or can reject the client
+			// with a meaningful message
+			Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, com_gamename->string);
+			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
+			break;*/
+			
+		case ConnectionState.CHALLENGING:
+			// sending back the challenge
+			//port = Cvar_VariableValue ("net_qport");
+			//Info_SetValueForKey(info, "protocol", va("%i", com_protocol->integer));
+			//Info_SetValueForKey( info, "qport", va("%i", port ) );
+			//Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
+			var str = 'connect ' + JSON.stringify(com.GetCvarKeyValues(CvarFlags.USERINFO));
+			com.NetchanPrint(clc.netchan, str);
+			// The most current userinfo has been sent, so watch for any
+			// newer changes to userinfo variables.
+			//cvar_modifiedFlags &= ~CVAR_USERINFO;
+			break;
+
+		default:
+			throw new Error('CheckForResend: bad clc.state');
+	}
 }
 
 /**
@@ -217,56 +286,6 @@ function AddReliableCommand(cmd/*, isDisconnectCmd*/) {
 		}
 	}*/
 	clc.reliableCommands[++clc.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
-}
-
-/**
- * CheckForResend
- *
- * Resend a connect message if the last one has timed out
- */
-function CheckForResend() {
-	// Resend if we haven't gotten a reply yet.
-	if (clc.state !== ConnectionState.CONNECTING && clc.state !== ConnectionState.CHALLENGING) {
-		return;
-	}
-
-	if (cls.realTime - clc.connectTime < RETRANSMIT_TIMEOUT) {
-		return;
-	}
-
-	// Since we're on TCP/IP, this whole CheckForResend() doesn't make much sense.
-	if (!clc.netchan) {
-		clc.netchan = com.NetchanSetup(NetSrc.CLIENT, clc.serverAddress);
-	}
-	
-	clc.connectTime = cls.realTime;  // for retransmit requests
-	clc.connectPacketCount++;
-
-	switch (clc.state) {
-		/*case ConnectionState.CONNECTING:
-			// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
-			// Add the gamename so the server knows we're running the correct game or can reject the client
-			// with a meaningful message
-			Com_sprintf(data, sizeof(data), "getchallenge %d %s", clc.challenge, com_gamename->string);
-			NET_OutOfBandPrint(NS_CLIENT, clc.serverAddress, "%s", data);
-			break;*/
-			
-		case ConnectionState.CHALLENGING:
-			// sending back the challenge
-			//port = Cvar_VariableValue ("net_qport");
-			//Info_SetValueForKey(info, "protocol", va("%i", com_protocol->integer));
-			//Info_SetValueForKey( info, "qport", va("%i", port ) );
-			//Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
-			var str = 'connect' + JSON.stringify(com.GetCvarKeyValues(CvarFlags.USERINFO));
-			com.NetchanPrint(clc.netchan, str);
-			// The most current userinfo has been sent, so watch for any
-			// newer changes to userinfo variables.
-			//cvar_modifiedFlags &= ~CVAR_USERINFO;
-			break;
-
-		default:
-			throw new Error('CheckForResend: bad clc.state');
-	}
 }
 
 /**
