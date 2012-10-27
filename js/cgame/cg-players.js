@@ -1,146 +1,42 @@
 /**
- * AddPlayer
+ * TextTokenizer
  */
-function AddPlayer(cent) {
-	// The client number is stored in clientNum. It can't be derived
-	// from the entity number, because a single client may have
-	// multiple corpses on the level using the same clientinfo
-	var clientNum = cent.currentState.clientNum;
-	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		throw new Error('Bad clientNum on player entity');
+var TextTokenizer = function (src) {
+	// Strip out comments
+	src = src.replace(/\/\/.*$/mg, ''); // C++ style (//...)
+	src = src.replace(/\/\*[^*\/]*\*\//mg, ''); // C style (/*...*/) (Do the shaders even use these?)
+	this.tokens = src.match(/[^\s\n\r\"]+/mg);
+
+	this.offset = 0;
+};
+
+TextTokenizer.prototype.EOF = function() {
+	if (this.tokens === null) { return true; }
+	var token = this.tokens[this.offset];
+	while (token === '' && this.offset < this.tokens.length) {
+		this.offset++;
+		token = this.tokens[this.offset];
 	}
+	return this.offset >= this.tokens.length;
+};
 
-	var ci = cgs.clientinfo[clientNum];
-	// It is possible to see corpses from disconnected players that may
-	// not have valid clientinfo
-	if (!ci.infoValid) {
-		return;
+TextTokenizer.prototype.next = function() {
+	if (this.tokens === null) { return ; }
+	var token = '';
+	while (token === '' && this.offset < this.tokens.length) {
+		token = this.tokens[this.offset++];
 	}
+	return token;
+};
 
-	// Get the player model information
-	/*var renderfx = 0;
-	if ( cent->currentState.number == cg.snap->ps.clientNum) {
-		renderfx = RF_THIRD_PERSON;			// only draw in mirrors
-	}*/
-
-	// // get the rotation information
-	vec3.set(cg.autoAngles, cent.lerpAngles);
-	// CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
-	
-	// // get the animation state (after rotation, to allow feet shuffle)
-	// CG_PlayerAnimation( cent, &legs.oldframe, &legs.frame, &legs.backlerp,
-	// 	 &torso.oldframe, &torso.frame, &torso.backlerp );
-
-	// // add the talk baloon or disconnect icon
-	// CG_PlayerSprites( cent );
-
-	// // add the shadow
-	// shadow = CG_PlayerShadow( cent, &shadowPlane );
-
-	// // add a water splash if partially in and out of water
-	// CG_PlayerSplash( cent );
-
-	// if ( cg_shadows.integer == 3 && shadow ) {
-	// 	renderfx |= RF_SHADOW_PLANE;
-	// }
-	// renderfx |= RF_LIGHTING_ORIGIN;			// use the same origin for all
-
-	//
-	// Add the legs
-	//
-	var legs = new RefEntity();
-	legs.reType = RefEntityType.MODEL;
-	legs.hModel = ci.legsModel;
-	legs.customSkin = ci.legsSkin;
-	vec3.set(cent.lerpOrigin, legs.origin);
-	vec3.set(cent.lerpOrigin, legs.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, legs.axis);
-	// legs.shadowPlane = shadowPlane;
-	// legs.renderfx = renderfx;
-	vec3.set(legs.origin, legs.oldOrigin);  // don't positionally lerp at all
-	AddRefEntityWithPowerups(legs, cent.currentState/*, ci.team*/);
-
-	// if the model failed, allow the default nullmodel to be displayed
-	if (!legs.hModel) {
-		return;
+TextTokenizer.prototype.prev = function() {
+	if (this.tokens === null) { return ; }
+	var token = '';
+	while (token === '' && this.offset >= 0) {
+		token = this.tokens[this.offset--];
 	}
-
-	//
-	// add the torso
-	//
-	var torso = new RefEntity();
-	torso.reType = RefEntityType.MODEL;
-	torso.hModel = ci.torsoModel;
-	if (!torso.hModel) {
-		return;
-	}
-	torso.customSkin = ci.torsoSkin;
-	PositionRotatedEntityOnTag(torso, legs, ci.legsModel, 'tag_torso');
-	vec3.set(cent.lerpOrigin, torso.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, torso.axis);
-	// torso.shadowPlane = shadowPlane;
-	// torso.renderfx = renderfx;
-	AddRefEntityWithPowerups(torso, cent.currentState/*, ci.team*/);
-
-	//
-	// add the head
-	//
-	var head = new RefEntity();
-	head.reType = RefEntityType.MODEL;
-	head.hModel = ci.headModel;
-	if (!head.hModel) {
-		return;
-	}
-	head.customSkin = ci.headSkin;
-	PositionRotatedEntityOnTag(head, torso, ci.torsoModel, 'tag_head');
-	vec3.set(cent.lerpOrigin, head.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, head.axis);
-	// head.shadowPlane = shadowPlane;
-	// head.renderfx = renderfx;
-	AddRefEntityWithPowerups(head, cent.currentState/*, ci.team*/);
-
-	//
-	// add the gun / barrel / flash
-	//
-	//CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
-
-	// add powerups floating behind the player
-	//CG_PlayerPowerups( cent, &torso );
-}
-
-/**
- * AddRefEntityWithPowerups
- *
- * Adds a piece with modifications or duplications for powerups
- * Also called by CG_Missile for quad rockets, but nobody can tell...
- */
-function AddRefEntityWithPowerups(refent, s/*, team*/) {
-	// if ( state->powerups & ( 1 << PW_INVIS ) ) {
-	// 	ent->customShader = cgs.media.invisShader;
-	// 	trap_R_AddRefEntityToScene( ent );
-	// } else {
-		r.AddRefEntityToScene(refent);
-
-	// 	if ( state->powerups & ( 1 << PW_QUAD ) )
-	// 	{
-	// 		if (team == TEAM_RED)
-	// 			ent->customShader = cgs.media.redQuadShader;
-	// 		else
-	// 			ent->customShader = cgs.media.quadShader;
-	// 		trap_R_AddRefEntityToScene( ent );
-	// 	}
-	// 	if ( state->powerups & ( 1 << PW_REGEN ) ) {
-	// 		if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
-	// 			ent->customShader = cgs.media.regenShader;
-	// 			trap_R_AddRefEntityToScene( ent );
-	// 		}
-	// 	}
-	// 	if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
-	// 		ent->customShader = cgs.media.battleSuitShader;
-	// 		trap_R_AddRefEntityToScene( ent );
-	// 	}
-	// }
-}
+	return token;
+};
 
 /**
  * NewClientInfo
@@ -228,9 +124,12 @@ function NewClientInfo(clientNum) {
  */
 function LoadClientInfo(clientNum, ci) {
 	//if (!RegisterClientModelname(ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname)) {
-		if ( !RegisterClientModelname(ci, DEFAULT_MODEL, 'default', DEFAULT_MODEL, 'default'/*, teamname*/) ) {
-			throw new Error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register');
-		}
+		RegisterClientModelname(ci, DEFAULT_MODEL, 'default', DEFAULT_MODEL, 'default', function (err) {
+			if (err) {
+				console.log(err.message);
+				throw new Error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register');
+			}
+		});
 	//}
 
 	// ci->newAnims = qfalse;
@@ -257,27 +156,15 @@ function LoadClientInfo(clientNum, ci) {
 /**
  * RegisterClientModelname
  */
-function RegisterClientModelname(ci, modelName, skinName, headModelName, headSkinName/*, teamName*/) {
+function RegisterClientModelname(ci, modelName, skinName, headModelName, headSkinName, callback/*, teamName*/) {
 	var filename = 'models/players/' + modelName + '/lower.md3';
 	ci.legsModel = r.RegisterModel(filename);
-	if (!ci.legsModel) {
-		console.log('Failed to load model file ' + filename);
-		return false;
-	}
 
 	filename = 'models/players/' + modelName + '/upper.md3';
 	ci.torsoModel = r.RegisterModel(filename);
-	if (!ci.torsoModel) {
-		console.log('Failed to load model file ' + filename);
-		return false;
-	}
 
 	filename = 'models/players/' + headModelName + '/head.md3';
 	ci.headModel = r.RegisterModel(filename);
-	if (!ci.headModel) {
-		console.log('Failed to load model file ' + filename);
-		return false;
-	}
 
 	// if any skins failed to load, return failure
 	// if ( !CG_RegisterClientSkin( ci, teamName, modelName, skinName, headName, headSkinName ) ) {
@@ -299,16 +186,6 @@ function RegisterClientModelname(ci, modelName, skinName, headModelName, headSki
 	// 	}
 	// }
 
-	// // load the animations
-	// Com_sprintf( filename, sizeof( filename ), "models/players/%s/animation.cfg", modelName );
-	// if ( !CG_ParseAnimationFile( filename, ci ) ) {
-	// 	Com_sprintf( filename, sizeof( filename ), "models/players/characters/%s/animation.cfg", modelName );
-	// 	if ( !CG_ParseAnimationFile( filename, ci ) ) {
-	// 		Com_Printf( "Failed to load animation file %s\n", filename );
-	// 		return qfalse;
-	// 	}
-	// }
-
 	// if ( CG_FindClientHeadFile( filename, sizeof(filename), ci, teamName, headName, headSkinName, "icon", "skin" ) ) {
 	// 	ci->modelIcon = trap_R_RegisterShaderNoMip( filename );
 	// }
@@ -320,5 +197,486 @@ function RegisterClientModelname(ci, modelName, skinName, headModelName, headSki
 	// 	return qfalse;
 	// }
 
-	return true;
+	// load the animations
+	filename = 'models/players/' + modelName + '/animation.cfg';
+	ParseAnimationFile(filename, ci, function (err) {
+		if (err) return callback(err);
+		return callback(null);
+	});
+}
+
+/**
+ * ParseAnimationFile
+ *
+ * Read a configuration file containing animation coutns and rates
+ * models/players/visor/animation.cfg, etc
+ */
+function ParseAnimationFile(filename, ci, callback) {
+	var animations = ci.animations;
+
+	sys.ReadFile(filename, 'utf8', function (err, data) {
+		if (err) return callback(err);
+
+		// ci->footsteps = FOOTSTEP_NORMAL;
+		// VectorClear( ci->headOffset );
+		// ci->gender = GENDER_MALE;
+		ci.fixedlegs = false;
+		ci.fixedtorso = false;
+
+		// read optional parameters
+		var tokens = new TextTokenizer(data);
+
+		while (!tokens.EOF()) {
+			var token = tokens.next();
+			if (!token) {
+				break;
+			}
+
+			if (token === 'footsteps') {
+				token = tokens.next();
+				if (!token) {
+					break;
+				}
+
+				// if (token === 'default' || token === 'normal') {
+				// 	ci.footsteps = Animations.FOOTSTEP_NORMAL;
+				// } else if (token === 'boot') {
+				// 	ci.footsteps = Animations.FOOTSTEP_BOOT;
+				// } else if (token === 'flesh') {
+				// 	ci.footsteps = Animations.FOOTSTEP_FLESH;
+				// } else if (token === 'mech') {
+				// 	ci.footsteps = Animations.FOOTSTEP_MECH;
+				// } else if (token === 'energy') {
+				// 	ci.footsteps = Animations.FOOTSTEP_ENERGY;
+				// } else {
+				// 	console.log('Bad footsteps parm in ' + filename + ': ' + token);
+				// }
+
+				continue;
+			} else if (token === 'headoffset') {
+				for (var i = 0; i < 3; i++) {
+					token = tokens.next();
+					if (!token) {
+						break;
+					}
+
+					//ci.headOffset[i] = parseFloat(token);
+				}
+				continue;
+			} else if (token === 'sex') {
+				token = tokens.next();
+				if (!token) {
+					break;
+				}
+
+				// if (token[0] === 'f' || token[0] == 'F') {
+				// 	ci.gender = GENDER_FEMALE;
+				// } else if (token[0] === 'n' || token[0] === 'N') {
+				// 	ci.gender = GENDER_NEUTER;
+				// } else {
+				// 	ci.gender = GENDER_MALE;
+				// }
+				continue;
+			} else if (token === 'fixedlegs') {
+				ci.fixedlegs = true;
+				continue;
+			} else if (token === 'fixedtorso') {
+				ci.fixedtorso = true;
+				continue;
+			}
+
+			// If it is a number, start parsing animations.
+			if (token.charAt(0) >= '0' && token.charAt(0) <= '9') {
+				tokens.prev();  // unget the token
+				break;
+			}
+
+			console.log('Unknown token \'' + token + '\' in ' + filename);
+		}
+
+		// read information for each frame
+		for (var i = 0; i < Animations.MAX; i++) {
+			token = tokens.next();
+
+			if (!token) {
+				if (i >= Animations.TORSO_GETFLAG && i <= Animations.TORSO_NEGATIVE) {
+					animations[i].firstFrame = animations[Animations.TORSO_GESTURE].firstFrame;
+					animations[i].frameLerp = animations[Animations.TORSO_GESTURE].frameLerp;
+					animations[i].initialLerp = animations[Animations.TORSO_GESTURE].initialLerp;
+					animations[i].loopFrames = animations[Animations.TORSO_GESTURE].loopFrames;
+					animations[i].numFrames = animations[Animations.TORSO_GESTURE].numFrames;
+					animations[i].reversed = false;
+					animations[i].flipflop = false;
+					continue;
+				}
+				break;
+			}
+
+			animations[i].firstFrame = parseInt(token);
+			// leg only frames are adjusted to not count the upper body only frames
+			if (i === Animations.LEGS_WALKCR) {
+				skip = animations[Animations.LEGS_WALKCR].firstFrame - animations[Animations.TORSO_GESTURE].firstFrame;
+			}
+			if (i >= Animations.LEGS_WALKCR && i < Animations.TORSO_GETFLAG) {
+				animations[i].firstFrame -= skip;
+			}
+
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+			animations[i].numFrames = parseInt(token);
+			animations[i].reversed = false;
+			animations[i].flipflop = false;
+
+			// if NumFrames is negative the animation is reversed
+			if (animations[i].numFrames < 0) {
+				animations[i].numFrames = -animations[i].numFrames;
+				animations[i].reversed = true;
+			}
+
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+			animations[i].loopFrames = parseInt(token);
+
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+			fps = parseInt(token);
+			if (!fps) {
+				fps = 1;
+			}
+			animations[i].frameLerp = 1000 / fps;
+			animations[i].initialLerp = 1000 / fps;
+		}
+
+		if (i !== Animations.MAX) {
+			return callback(new Error('Error parsing animation file: ' + filename));
+		}
+
+		// Crouch backward animation.
+		animations[Animations.LEGS_BACKCR] = _.clone(animations[Animations.LEGS_WALKCR]);
+		animations[Animations.LEGS_BACKCR].reversed = true;
+
+		// Walk backward animation.
+		animations[Animations.LEGS_BACKWALK] = _.clone(animations[Animations.LEGS_WALK]);
+		animations[Animations.LEGS_BACKWALK].reversed = true;
+
+		// Flag moving fast.
+		animations[Animations.FLAG_RUN].firstFrame = 0;
+		animations[Animations.FLAG_RUN].numFrames = 16;
+		animations[Animations.FLAG_RUN].loopFrames = 16;
+		animations[Animations.FLAG_RUN].frameLerp = 1000 / 15;
+		animations[Animations.FLAG_RUN].initialLerp = 1000 / 15;
+		animations[Animations.FLAG_RUN].reversed = false;
+
+		// Flag not moving or moving slowly.
+		animations[Animations.FLAG_STAND].firstFrame = 16;
+		animations[Animations.FLAG_STAND].numFrames = 5;
+		animations[Animations.FLAG_STAND].loopFrames = 0;
+		animations[Animations.FLAG_STAND].frameLerp = 1000 / 20;
+		animations[Animations.FLAG_STAND].initialLerp = 1000 / 20;
+		animations[Animations.FLAG_STAND].reversed = false;
+
+		// Flag speeding up.
+		animations[Animations.FLAG_STAND2RUN].firstFrame = 16;
+		animations[Animations.FLAG_STAND2RUN].numFrames = 5;
+		animations[Animations.FLAG_STAND2RUN].loopFrames = 1;
+		animations[Animations.FLAG_STAND2RUN].frameLerp = 1000 / 15;
+		animations[Animations.FLAG_STAND2RUN].initialLerp = 1000 / 15;
+		animations[Animations.FLAG_STAND2RUN].reversed = true;
+	});
+}
+
+/**********************************************************
+ *
+ * Player rendering
+ *
+ **********************************************************/
+
+/**
+ * AddPlayer
+ */
+function AddPlayer(cent) {
+	// The client number is stored in clientNum. It can't be derived
+	// from the entity number, because a single client may have
+	// multiple corpses on the level using the same clientinfo
+	var clientNum = cent.currentState.clientNum;
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		throw new Error('Bad clientNum on player entity');
+	}
+
+	var ci = cgs.clientinfo[clientNum];
+	// It is possible to see corpses from disconnected players that may
+	// not have valid clientinfo
+	if (!ci.infoValid) {
+		return;
+	}
+
+	var legs = new RefEntity();
+	var torso = new RefEntity();
+	var head = new RefEntity();
+
+	// Get the player model information
+	/*var renderfx = 0;
+	if ( cent->currentState.number == cg.snap->ps.clientNum) {
+		renderfx = RF_THIRD_PERSON;			// only draw in mirrors
+	}*/
+
+	// // get the rotation information
+	vec3.set(cg.autoAngles, cent.lerpAngles);
+	// CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
+	
+	// // get the animation state (after rotation, to allow feet shuffle)
+	PlayerAnimation(cent, legs, torso);
+
+	// // add the talk baloon or disconnect icon
+	// CG_PlayerSprites( cent );
+
+	// // add the shadow
+	// shadow = CG_PlayerShadow( cent, &shadowPlane );
+
+	// // add a water splash if partially in and out of water
+	// CG_PlayerSplash( cent );
+
+	// if ( cg_shadows.integer == 3 && shadow ) {
+	// 	renderfx |= RF_SHADOW_PLANE;
+	// }
+	// renderfx |= RF_LIGHTING_ORIGIN;			// use the same origin for all
+
+	//
+	// Add the legs
+	//
+	legs.reType = RefEntityType.MODEL;
+	legs.hModel = ci.legsModel;
+	legs.customSkin = ci.legsSkin;
+	vec3.set(cent.lerpOrigin, legs.origin);
+	vec3.set(cent.lerpOrigin, legs.lightingOrigin);
+	AnglesToAxis(cent.lerpAngles, legs.axis);
+	// legs.shadowPlane = shadowPlane;
+	// legs.renderfx = renderfx;
+	vec3.set(legs.origin, legs.oldOrigin);  // don't positionally lerp at all
+	AddRefEntityWithPowerups(legs, cent.currentState/*, ci.team*/);
+
+	// if the model failed, allow the default nullmodel to be displayed
+	if (!legs.hModel) {
+		return;
+	}
+
+	//
+	// add the torso
+	//
+	torso.reType = RefEntityType.MODEL;
+	torso.hModel = ci.torsoModel;
+	if (!torso.hModel) {
+		return;
+	}
+	torso.customSkin = ci.torsoSkin;
+	PositionRotatedEntityOnTag(torso, legs, ci.legsModel, 'tag_torso');
+	vec3.set(cent.lerpOrigin, torso.lightingOrigin);
+	AnglesToAxis(cent.lerpAngles, torso.axis);
+	// torso.shadowPlane = shadowPlane;
+	// torso.renderfx = renderfx;
+	AddRefEntityWithPowerups(torso, cent.currentState/*, ci.team*/);
+
+	//
+	// add the head
+	//
+	head.reType = RefEntityType.MODEL;
+	head.hModel = ci.headModel;
+	if (!head.hModel) {
+		return;
+	}
+	head.customSkin = ci.headSkin;
+	PositionRotatedEntityOnTag(head, torso, ci.torsoModel, 'tag_head');
+	vec3.set(cent.lerpOrigin, head.lightingOrigin);
+	AnglesToAxis(cent.lerpAngles, head.axis);
+	// head.shadowPlane = shadowPlane;
+	// head.renderfx = renderfx;
+	AddRefEntityWithPowerups(head, cent.currentState/*, ci.team*/);
+
+	//
+	// add the gun / barrel / flash
+	//
+	//CG_AddPlayerWeapon( &torso, NULL, cent, ci->team );
+
+	// add powerups floating behind the player
+	//CG_PlayerPowerups( cent, &torso );
+}
+
+/**
+ * AddRefEntityWithPowerups
+ *
+ * Adds a piece with modifications or duplications for powerups
+ * Also called by CG_Missile for quad rockets, but nobody can tell...
+ */
+function AddRefEntityWithPowerups(refent, s/*, team*/) {
+	// if ( state->powerups & ( 1 << PW_INVIS ) ) {
+	// 	ent->customShader = cgs.media.invisShader;
+	// 	trap_R_AddRefEntityToScene( ent );
+	// } else {
+		r.AddRefEntityToScene(refent);
+
+	// 	if ( state->powerups & ( 1 << PW_QUAD ) )
+	// 	{
+	// 		if (team == TEAM_RED)
+	// 			ent->customShader = cgs.media.redQuadShader;
+	// 		else
+	// 			ent->customShader = cgs.media.quadShader;
+	// 		trap_R_AddRefEntityToScene( ent );
+	// 	}
+	// 	if ( state->powerups & ( 1 << PW_REGEN ) ) {
+	// 		if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
+	// 			ent->customShader = cgs.media.regenShader;
+	// 			trap_R_AddRefEntityToScene( ent );
+	// 		}
+	// 	}
+	// 	if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
+	// 		ent->customShader = cgs.media.battleSuitShader;
+	// 		trap_R_AddRefEntityToScene( ent );
+	// 	}
+	// }
+}
+
+/**********************************************************
+ *
+ * Player animation
+ *
+ *********************************************************/
+
+/**
+ * PlayerAnimation
+ */
+function PlayerAnimation(cent, legs, torso/*, legsOld, legs, legsBackLerp, torsoOld, torso, torsoBackLerp*/) {
+	var clientNum = cent.currentState.clientNum;
+	var ci = cgs.clientinfo[clientNum];
+	var speedScale = 1;
+
+	// if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
+	// 	speedScale = 1.5;
+	// }
+
+	// Do the shuffle turn frames locally.
+	// if (cent->pe.legs.yawing && (cent.currentState.legsAnim & ~ANIM_TOGGLEBIT) === LEGS_IDLE) {
+	// 	RunLerpFrame( ci, &cent->pe.legs, LEGS_TURN, speedScale );
+	// } else {
+		RunLerpFrame(ci, cent.pe.legs, cent.currentState.legsAnim, speedScale);
+	// }
+
+	legs.oldFrame = cent.pe.legs.oldFrame;
+	legs.frame = cent.pe.legs.frame;
+	legs.backLerp = cent.pe.legs.backlerp;
+
+	RunLerpFrame(ci, cent.pe.torso, cent.currentState.torsoAnim, speedScale);
+
+	torso.oldFrame = cent.pe.torso.oldFrame;
+	torso.frame = cent.pe.torso.frame;
+	torso.backLerp = cent.pe.torso.backlerp;
+}
+
+
+/**
+ * RunLerpFrame
+ *
+ * Sets cg.snap, cg.oldFrame, and cg.backlerp
+ * cg.time should be between oldFrameTime and frameTime after exit
+ */
+function RunLerpFrame(ci, lf, newAnimation, speedScale) {
+	// See if the animation sequence is switching.
+	if (newAnimation !== lf.animationNumber || !lf.animation) {
+		SetLerpFrameAnimation(ci, lf, newAnimation);
+	}
+
+	// If we have passed the current frame, move it to
+	// oldFrame and calculate a new frame.
+	if (cg.time >= lf.frameTime) {
+		lf.oldFrame = lf.frame;
+		lf.oldFrameTime = lf.frameTime;
+
+		// Get the next frame based on the animation.
+		anim = lf.animation;
+		if (!anim.frameLerp) {
+			return;  // shouldn't happen
+		}
+		if (cg.time < lf.animationTime) {
+			lf.frameTime = lf.animationTime;  // initial lerp
+		} else {
+			lf.frameTime = lf.oldFrameTime + anim.frameLerp;
+		}
+		f = (lf.frameTime - lf.animationTime) / anim.frameLerp;
+		f *= speedScale;  // adjust for haste, etc
+
+		numFrames = anim.numFrames;
+		if (anim.flipflop) {
+			numFrames *= 2;
+		}
+		if (f >= numFrames) {
+			f -= numFrames;
+			if (anim.loopFrames) {
+				f %= anim.loopFrames;
+				f += anim.numFrames - anim.loopFrames;
+			} else {
+				f = numFrames - 1;
+				// The animation is stuck at the end, so it
+				// can immediately transition to another sequence
+				lf.frameTime = cg.time;
+			}
+		}
+		if (anim.reversed) {
+			lf.frame = anim.firstFrame + anim.numFrames - 1 - f;
+		} else if (anim.flipflop && f >= anim.numFrames) {
+			lf.frame = anim.firstFrame + anim.numFrames - 1 - (f % anim.numFrames);
+		} else {
+			lf.frame = anim.firstFrame + f;
+		}
+		if (cg.time > lf.frameTime) {
+			lf.frameTime = cg.time;
+		}
+	}
+
+	if (lf.frameTime > cg.time + 200) {
+		lf.frameTime = cg.time;
+	}
+
+	if (lf.oldFrameTime > cg.time) {
+		lf.oldFrameTime = cg.time;
+	}
+
+	// Calculate current lerp value.
+	if (lf.frameTime === lf.oldFrameTime) {
+		lf.backlerp = 0;
+	} else {
+		lf.backlerp = 1.0 - (cg.time - lf.oldFrameTime) / (lf.frameTime - lf.oldFrameTime);
+	}
+}
+
+/**
+ * SetLerpFrameAnimation
+ *
+ * May include ANIM_TOGGLEBIT.
+ */
+function SetLerpFrameAnimation(ci, lf, newAnimation) {
+	lf.animationNumber = newAnimation;
+	newAnimation &= ~ANIM_TOGGLEBIT;
+
+	if (newAnimation < 0 || newAnimation >= Animations.MAX_TOTALANIMATIONS) {
+		throw new Error('Bad animation number: ' + newAnimation);
+	}
+
+	var anim = new Animation();//ci->animations[newAnimation];
+
+	lf.animation = anim;
+	lf.animationTime = lf.frameTime + anim.initialLerp;
+}
+
+/**
+ * ClearLerpFrame
+ */
+function ClearLerpFrame(ci, lf, animationNumber) {
+	lf.frameTime = lf.oldFrameTime = cg.time;
+	SetLerpFrameAnimation(ci, lf, animationNumber);
+	lf.oldFrame = lf.frame = lf.animation.firstFrame;
 }

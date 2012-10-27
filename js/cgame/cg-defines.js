@@ -39,7 +39,7 @@ var ClientGame = function () {
 	this.showScores           = false;
 
 	for (var i = 0; i < MAX_GENTITIES; i++) {
-		this.entities[i] = new ClientGameEntity();
+		this.entities[i] = new ClientEntity();
 	}
 };
 
@@ -52,9 +52,56 @@ var ClientGameStatic = function () {
 	this.clientinfo           = new Array(MAX_CLIENTS);
 };
 
-// ClientGameEntity have a direct corespondence with GameEntity in the game, but
+/**
+ * Player entities need to track more information
+ * than any other type of entity.
+ *
+ * Note that not every player entity is a client entity,
+ * because corpses after respawn are outside the normal
+ * client numbering range.
+
+ * When changing animation, set animationTime to frameTime + lerping time.
+ * The current lerp will finish out, then it will lerp to the new animation.
+*/
+var LerpFrame = function () {
+	this.oldFrame        = 0;
+	this.oldFrameTime    = 0;                              // time when ->oldFrame was exactly on
+
+	this.frame           = 0;
+	this.frameTime       = 0;                              // time when ->frame will be exactly on
+
+	this.backlerp        = 0.0;
+
+	this.yawAngle        = 0.0;
+	this.yawing          = false;
+	this.pitchAngle      = 0.0;
+	this.pitching        = false;
+
+	this.animationNumber = 0;
+	this.animation       = null;
+	this.animationTime   = 0;
+};
+
+
+var PlayerEntity = function () {
+	this.legs            = new LerpFrame();
+	this.torso           = new LerpFrame();
+	this.flag            = new LerpFrame();
+	this.paintTime       = 0;
+	this.painDirection   = 0;	// flip from 0 to 1
+	this.lightningFiring = false;
+
+	this.railFireTime    = 0;
+
+	// Machinegun spinning.
+	this.barrelAngle     = 0.0;
+	this.barrelTime      = 0;
+	this.barrelSpinning  = false;
+};
+
+// ClientEntity have a direct corespondence with GameEntity in the game, but
 // only the EntityState is directly communicated to the cgame.
-var ClientGameEntity =  function () {
+var ClientEntity =  function () {
 	this.currentState = new EntityState();       // from cg.frame
 	this.nextState    = new EntityState();       // from cg.nextFrame, if available
 	this.interpolate  = false;                   // true if next is valid to interpolate to
@@ -72,9 +119,8 @@ var ClientGameEntity =  function () {
 
 	this.snapShotTime = 0;                    // last time this entity was found in a snapshot
 
+	this.pe           = new PlayerEntity();
 	/*
-	playerEntity_t	pe;
-
 	int				errorTime;		// decay the error from this time
 	vec3_t			errorOrigin;
 	vec3_t			errorAngles;
@@ -102,6 +148,12 @@ var ClientInfo = function () {
 	this.headModelName = null;
 	this.headSkinName  = null;
 
+	this.fixedlegs     = false;		// true if legs yaw is always the same as torso yaw
+	this.fixedtorso    = false;		// true if torso never changes yaw
+
+	// footstep_t		footsteps;
+	// gender_t		gender;			// from model
+
 	this.legsModel     = -1;
 	this.legsSkin      = -1;
 
@@ -110,6 +162,12 @@ var ClientInfo = function () {
 
 	this.headModel     = -1;
 	this.headSkin      = -1;
+
+	this.animations    = new Animation(Animations.MAX_TOTALANIMATIONS);
+
+	for (var i = 0; i < Animations.MAX_TOTALANIMATIONS; i++) {
+		this.animations[i] = new Animation();
+	}
 };
 
 var ItemInfo = function () {
