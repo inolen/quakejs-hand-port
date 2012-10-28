@@ -194,7 +194,7 @@ function GetSnapshot(snapshotNumber) {
 	snap.entities = new Array(snap.numEntities);
 
 	for (var i = 0; i < snap.numEntities; i++) {
-		snap.entities[i] = cl.parseEntities[(snap.parseEntitiesNum + i) & (MAX_PARSE_ENTITIES-1)];
+		snap.entities[i] = cl.parseEntities[(snap.parseEntitiesNum + i) % MAX_PARSE_ENTITIES];
 	}
 
 	return snap;

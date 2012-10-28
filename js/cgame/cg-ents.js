@@ -11,8 +11,8 @@ function AddPacketEntities() {
 			cg.frameInterpolation = (cg.time - cg.snap.serverTime ) / delta;
 		}
 	} else {
-		cg.frameInterpolation = 0;	// actually, it should never be used, because 
-									// no entities should be marked as interpolating
+		cg.frameInterpolation = 0;  // actually, it should never be used, because 
+	                                // no entities should be marked as interpolating
 	}
 
 	// The auto-rotating items will all have the same axis.
@@ -228,8 +228,8 @@ function InterpolateEntityPosition(cent) {
 
 	// This will linearize a sine or parabolic curve, but it is important
 	// to not extrapolate player positions if more recent data is available
-	var current = vec3.create();
-	var next = vec3.create();
+	var current = [0, 0, 0];
+	var next = [0, 0, 0];
 
 	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, current);
 	bg.EvaluateTrajectory(cent.nextState.pos, cg.nextSnap.serverTime, next);
@@ -244,5 +244,4 @@ function InterpolateEntityPosition(cent) {
 	cent.lerpAngles[0] = LerpAngle(current[0], next[0], f);
 	cent.lerpAngles[1] = LerpAngle(current[1], next[1], f);
 	cent.lerpAngles[2] = LerpAngle(current[2], next[2], f);
-
 }

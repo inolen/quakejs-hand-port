@@ -122,8 +122,8 @@ function SetInitialSnapshot(snap) {
 
 	console.log('Setting initial snapshot');
 
-	for (var i = 0; i < cg.snap.numEntities; i++) {
-		var state = cg.snap.entities[i];
+	for (var i = 0; i < snap.numEntities; i++) {
+		var state = snap.entities[i];
 		var cent = cg.entities[state.number];
 
 		state.clone(cent.currentState);
@@ -169,7 +169,7 @@ function SetNextSnap(snap) {
 		cg.nextFrameTeleport = false;
 	}
 
-	// if changing server restarts, don't interpolate.
+	// If changing server restarts, don't interpolate.
 	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
 		cg.nextFrameTeleport = true;
 	}
@@ -259,7 +259,7 @@ function ResetEntity(cent) {
  * cent->nextState is moved to cent->currentState and events are fired.
  */
 function TransitionEntity(cent) {
-	cent.currentState = cent.nextState;
+	cent.nextState.clone(cent.currentState);
 	cent.currentValid = true;
 
 	// Reset if the entity wasn't in the last frame or was teleported.
