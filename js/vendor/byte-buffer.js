@@ -449,7 +449,7 @@ ByteBuffer = (function() {
     }
 
     limit = 1 << 16;
-    if (length < limit) {
+    if (bytes < limit) {
       return String.fromCharCode.apply(String, chars);
     } else {
       parts = [];

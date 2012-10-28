@@ -187,7 +187,7 @@ function SendClientGameState(client) {
  * into a more C friendly form.
  */
 function UserinfoChanged(client) {
-	client.name = client.userinfo[name];
+	client.name = client.userinfo['name'];
 
 	// Snaps command.
 	var snaps = 20;

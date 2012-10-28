@@ -106,7 +106,7 @@ function PacketEvent(addr, socket, buffer) {
 			continue;
 		}
 
-		if (!_.isEqual(client.netchan.addr, addr)) {
+		if (client.netchan.socket !== socket) {
 			continue;
 		}
 
@@ -282,7 +282,7 @@ function SetConfigstring(key, val) {
  * given client.
  */
 function SendConfigstring(client, key) {
-	SendServerCommand(client, 'cs ' + key + ' ' + JSON.stringify(sv.configstrings[key]) + '\n');
+	//SendServerCommand(client, 'cs ' + key + ' ' + JSON.stringify(sv.configstrings[key]) + '\n');
 }
 
 /**

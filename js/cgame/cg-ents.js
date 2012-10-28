@@ -75,7 +75,9 @@ function AddCEntity(cent) {
 			break;
 
 		case EntityType.PLAYER:
-			AddPlayer(cent);
+			if (cent.currentState.number !== cg.snap.ps.clientNum) {
+				AddPlayer(cent);
+			}
 			break;
 	}
 

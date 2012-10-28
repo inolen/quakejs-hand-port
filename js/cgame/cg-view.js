@@ -22,8 +22,11 @@ function CalcViewValues() {
 	// 	}
 	// }
 
-	OffsetThirdPersonView();
-	//OffsetFirstPersonView();
+	if (cg_thirdPerson()) {
+		OffsetThirdPersonView();
+	} else {
+		OffsetFirstPersonView();
+	}
 
 	AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
 

@@ -1242,13 +1242,13 @@ ByteBuffer = (function() {
 
   function ByteBuffer(source, order, implicitGrowth) {
     var buffer;
-    if (typeof (source) === 'undefined') {
+    if (source == null) {
       source = 0;
     }
-    if (typeof (order) === 'undefined') {
+    if (order == null) {
       order = self.BIG_ENDIAN;
     }
-    if (typeof (implicitGrowth) === 'undefined') {
+    if (implicitGrowth == null) {
       implicitGrowth = false;
     }
     this._buffer = null;
@@ -1274,11 +1274,11 @@ ByteBuffer = (function() {
   };
 
   extractBuffer = function(source, clone) {
-    if (typeof (clone) === 'undefined') {
+    if (clone == null) {
       clone = false;
     }
-    if (source.byteLength !== undefined) {
-      if (source.buffer !== undefined) {
+    if (source.byteLength != null) {
+      if (source.buffer != null) {
         if (clone) {
           return source.buffer.slice(0);
         } else {
@@ -1291,7 +1291,7 @@ ByteBuffer = (function() {
           return source;
         }
       }
-    } else if (source.length !== undefined) {
+    } else if (source.length != null) {
       try {
         return (new Uint8Array(source)).buffer;
       } catch (error) {
@@ -1367,7 +1367,7 @@ ByteBuffer = (function() {
   };
 
   ByteBuffer.prototype.seek = function(bytes) {
-    if (typeof (bytes) === 'undefined') {
+    if (bytes == null) {
       bytes = 1;
     }
     this.index += bytes;
@@ -1381,7 +1381,7 @@ ByteBuffer = (function() {
   reader = function(method, bytes) {
     return function(order) {
       var value;
-      if (typeof (order) === 'undefined') {
+      if (order == null) {
         order = this._order;
       }
       if (bytes > this.available) {
@@ -1396,7 +1396,7 @@ ByteBuffer = (function() {
   writer = function(method, bytes) {
     return function(value, order) {
       var available;
-      if (typeof (order) === 'undefined') {
+      if (order == null) {
         order = this._order;
       }
       available = this.available;
@@ -1447,7 +1447,7 @@ ByteBuffer = (function() {
 
   ByteBuffer.prototype.read = function(bytes) {
     var value;
-    if (typeof (bytes) === 'undefined') {
+    if (bytes == null) {
       bytes = this.available;
     }
     if (bytes > this.available) {
@@ -1487,7 +1487,7 @@ ByteBuffer = (function() {
 
   ByteBuffer.prototype.readString = function(bytes) {
     var b1, b2, b3, b4, c, chars, codepoints, cp, i, length, limit, raw, target;
-    if (typeof (bytes) === 'undefined') {
+    if (bytes == null) {
       bytes = this.available;
     }
     if (bytes > this.available) {
@@ -1649,7 +1649,7 @@ ByteBuffer = (function() {
     }
 
     limit = 1 << 16;
-    if (length < limit) {
+    if (bytes < limit) {
       return String.fromCharCode.apply(String, chars);
     } else {
       parts = [];
@@ -1700,10 +1700,10 @@ ByteBuffer = (function() {
 
   ByteBuffer.prototype.clip = function(begin, end) {
     var buffer;
-    if (typeof (begin) === 'undefined') {
+    if (begin == null) {
       begin = this._index;
     }
-    if (typeof (end) === 'undefined') {
+    if (end == null) {
       end = this.length;
     }
     if (begin < 0) {
@@ -1717,10 +1717,10 @@ ByteBuffer = (function() {
 
   ByteBuffer.prototype.slice = function(begin, end) {
     var slice;
-    if (typeof (begin) === 'undefined') {
+    if (begin == null) {
       begin = 0;
     }
-    if (typeof (end) === 'undefined') {
+    if (end == null) {
       end = this.length;
     }
     slice = new self(this._buffer.slice(begin, end));
@@ -1751,7 +1751,7 @@ ByteBuffer = (function() {
   };
 
   ByteBuffer.prototype.toHex = function(spacer) {
-    if (typeof (spacer) === 'undefined') {
+    if (spacer == null) {
       spacer = ' ';
     }
     return Array.prototype.map.call(this._raw, function(byte) {
@@ -1761,13 +1761,13 @@ ByteBuffer = (function() {
 
   ByteBuffer.prototype.toASCII = function(spacer, align, unknown) {
     var prefix;
-    if (typeof (spacer) === 'undefined') {
+    if (spacer == null) {
       spacer = ' ';
     }
-    if (typeof (align) === 'undefined') {
+    if (align == null) {
       align = true;
     }
-    if (typeof (unknown) === 'undefined') {
+    if (unknown == null) {
       unknown = '\uFFFD';
     }
     prefix = align ? ' ' : '';
@@ -10601,7 +10601,8 @@ var ClientGame = function () {
 	this.thisFrameTeleport    = false;
 	this.nextFrameTeleport    = false;
 	this.time                 = 0;                         // this is the time value that the client is rendering at.
-	//this.oldTime              = 0;                         // time at last frame, used for missile trails and prediction checking
+	this.oldTime              = 0;                         // time at last frame, used for missile trails and prediction checking
+	this.frameTime            = 0;                         // cg.time - cg.oldTime
 	this.physicsTime          = 0;                         // either cg.snap->time or cg.nextSnap->time
 	this.latestSnapshotNum    = 0;                         // the number of snapshots the client system has received
 	this.latestSnapshotTime   = 0;                         // the time from latestSnapshotNum, so we don't need to read the snapshot yet
@@ -10908,19 +10909,25 @@ function Frame(serverTime) {
 	if (!cg.hyperspace) {
 		AddPacketEntities();
 	}
+
+	cg.frameTime = cg.time - cg.oldTime;
+	if (cg.frametime < 0) {
+		cg.frametime = 0;
+	}
+	cg.oldTime = cg.time;
 	
+	// Issue rendering calls.
 	r.RenderScene(cg.refdef);
-	
 	UpdateFPS();
 	ui.RenderView(cg_hud);
 
-	if (cg.showScores === true) {
-		var players = [
-			{ name: 'Player 1' }
-		];
+	// if (cg.showScores === true) {
+	// 	var players = [
+	// 		{ name: 'Player 1' }
+	// 	];
 
-		ui.RenderView('scoreboard');
-	}
+	// 	ui.RenderView('scoreboard');
+	// }
 }
 		/**
  * RegisterCommands
@@ -10989,8 +10996,8 @@ function AddPacketEntities() {
 			cg.frameInterpolation = (cg.time - cg.snap.serverTime ) / delta;
 		}
 	} else {
-		cg.frameInterpolation = 0;	// actually, it should never be used, because 
-									// no entities should be marked as interpolating
+		cg.frameInterpolation = 0;  // actually, it should never be used, because 
+	                                // no entities should be marked as interpolating
 	}
 
 	// The auto-rotating items will all have the same axis.
@@ -11053,7 +11060,9 @@ function AddCEntity(cent) {
 			break;
 
 		case EntityType.PLAYER:
-			AddPlayer(cent);
+			if (cent.currentState.number !== cg.snap.ps.clientNum) {
+				AddPlayer(cent);
+			}
 			break;
 	}
 
@@ -11206,8 +11215,8 @@ function InterpolateEntityPosition(cent) {
 
 	// This will linearize a sine or parabolic curve, but it is important
 	// to not extrapolate player positions if more recent data is available
-	var current = vec3.create();
-	var next = vec3.create();
+	var current = [0, 0, 0];
+	var next = [0, 0, 0];
 
 	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, current);
 	bg.EvaluateTrajectory(cent.nextState.pos, cg.nextSnap.serverTime, next);
@@ -11222,7 +11231,6 @@ function InterpolateEntityPosition(cent) {
 	cent.lerpAngles[0] = LerpAngle(current[0], next[0], f);
 	cent.lerpAngles[1] = LerpAngle(current[1], next[1], f);
 	cent.lerpAngles[2] = LerpAngle(current[2], next[2], f);
-
 }
 
 		/**
@@ -11685,7 +11693,6 @@ function AddPlayer(cent) {
 	legs.customSkin = ci.legsSkin;
 	vec3.set(cent.lerpOrigin, legs.origin);
 	vec3.set(cent.lerpOrigin, legs.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, legs.axis);
 	// legs.shadowPlane = shadowPlane;
 	// legs.renderfx = renderfx;
 	vec3.set(legs.origin, legs.oldOrigin);  // don't positionally lerp at all
@@ -11707,7 +11714,6 @@ function AddPlayer(cent) {
 	torso.customSkin = ci.torsoSkin;
 	PositionRotatedEntityOnTag(torso, legs, ci.legsModel, 'tag_torso');
 	vec3.set(cent.lerpOrigin, torso.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, torso.axis);
 	// torso.shadowPlane = shadowPlane;
 	// torso.renderfx = renderfx;
 	AddRefEntityWithPowerups(torso, cent.currentState/*, ci.team*/);
@@ -11723,7 +11729,6 @@ function AddPlayer(cent) {
 	head.customSkin = ci.headSkin;
 	PositionRotatedEntityOnTag(head, torso, ci.torsoModel, 'tag_head');
 	vec3.set(cent.lerpOrigin, head.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, head.axis);
 	// head.shadowPlane = shadowPlane;
 	// head.renderfx = renderfx;
 	AddRefEntityWithPowerups(head, cent.currentState/*, ci.team*/);
@@ -11798,7 +11803,9 @@ function PlayerAngles(cent, legs, torso, head) {
 	}
 
 	var headAngles = vec3.create(cent.lerpAngles);
+	var before = headAngles[YAW];
 	headAngles[YAW] = AngleMod(headAngles[YAW]);
+
 	var torsoAngles = [0, 0, 0];
 	var legsAngles = [0, 0, 0];
 
@@ -11829,11 +11836,16 @@ function PlayerAngles(cent, legs, torso, head) {
 	torsoAngles[YAW] = headAngles[YAW] + 0.25 * movementOffsets[dir];
 
 	// torso
-	//SwingAngles(torsoAngles[YAW], 25, 90, swingSpeed, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-	//SwingAngles(legsAngles[YAW], 40, 90, swingSpeed, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+	var res = { angle: cent.pe.torso.yawAngle, swinging: cent.pe.torso.yawing };
+	SwingAngles(torsoAngles[YAW], 25, 90, swingSpeed, res);
+	torsoAngles[YAW] = cent.pe.torso.yawAngle = res.angle;
+	cent.pe.torso.yawing = res.swinging;
 
-	torsoAngles[YAW] = cent.pe.torso.yawAngle;
-	legsAngles[YAW] = cent.pe.legs.yawAngle;
+	// legs
+	res = { angle: cent.pe.legs.yawAngle, swinging: cent.pe.legs.yawing };
+	SwingAngles(legsAngles[YAW], 40, 90, swingSpeed, res);
+	legsAngles[YAW] = cent.pe.legs.yawAngle = res.angle;
+	cent.pe.legs.yawing = res.swinging;
 
 
 	// --------- pitch -------------
@@ -11845,8 +11857,10 @@ function PlayerAngles(cent, legs, torso, head) {
 	} else {
 		dest = headAngles[PITCH] * 0.75;
 	}
-	//SwingAngles(dest, 15, 30, 0.1, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching);
-	torsoAngles[PITCH] = cent.pe.torso.pitchAngle;
+	res = { angle: cent.pe.torso.pitchAngle, swinging: cent.pe.torso.pitching };
+	SwingAngles(dest, 15, 30, 0.1, res);
+	torsoAngles[PITCH] = cent.pe.torso.pitchAngle = res.angle;
+	cent.pe.torso.pitching = res.swinging;
 
 	//
 	if (ci && ci.fixedtorso) {
@@ -11857,7 +11871,8 @@ function PlayerAngles(cent, legs, torso, head) {
 
 	// Lean towards the direction of travel.
 	var velocity = vec3.create(cent.currentState.pos.trDelta);
-	var speed = vec3.normalize(velocity);
+	var speed = vec3.length(velocity);
+	vec3.normalize(velocity);
 
 	if (speed) {
 		speed *= 0.05;
@@ -11865,6 +11880,7 @@ function PlayerAngles(cent, legs, torso, head) {
 		var axis = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 		AnglesToAxis(legsAngles, axis);
+
 		var side = speed * vec3.dot(velocity, axis[1]);
 		legsAngles[ROLL] -= side;
 
@@ -11890,77 +11906,77 @@ function PlayerAngles(cent, legs, torso, head) {
 	AnglesToAxis(headAngles, head);
 }
 
-// /**
-//  * SwingAngles
-//  */
-// function SwingAngles(destination, swingTolerance, clampTolerance, speed, /*float *angle, qboolean *swinging*/) {
-// 	if (!*swinging) {
-// 		// See if a swing should be started
-// 		swing = AngleSubtract(*angle, destination);
-// 		if (swing > swingTolerance || swing < -swingTolerance) {
-// 			*swinging = true;
-// 		}
-// 	}
+/**
+ * SwingAngles
+ */
+function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
+	if (!res.swinging) {
+		// See if a swing should be started
+		swing = AngleSubtract(res.angle, destination);
+		if (swing > swingTolerance || swing < -swingTolerance) {
+			res.swinging = true;
+		}
+	}
 
-// 	if (!*swinging) {
-// 		return;
-// 	}
+	if (!res.swinging) {
+		return;
+	}
 	
-// 	// Modify the speed depending on the delta
-// 	// so it doesn't seem so linear
-// 	swing = AngleSubtract(destination, *angle);
-// 	scale = Math.abs(swing);
-// 	if (scale < swingTolerance * 0.5) {
-// 		scale = 0.5;
-// 	} else if (scale < swingTolerance) {
-// 		scale = 1.0;
-// 	} else {
-// 		scale = 2.0;
-// 	}
+	// Modify the speed depending on the delta
+	// so it doesn't seem so linear
+	swing = AngleSubtract(destination, res.angle);
+	scale = Math.abs(swing);
+	if (scale < swingTolerance * 0.5) {
+		scale = 0.5;
+	} else if (scale < swingTolerance) {
+		scale = 1.0;
+	} else {
+		scale = 2.0;
+	}
 
-// 	// Swing towards the destination angle
-// 	if (swing >= 0) {
-// 		move = cg.frametime * scale * speed;
-// 		if (move >= swing) {
-// 			move = swing;
-// 			*swinging = false;
-// 		}
-// 		*angle = AngleMod(*angle + move);
-// 	} else if ( swing < 0 ) {
-// 		move = cg.frametime * scale * -speed;
-// 		if (move <= swing) {
-// 			move = swing;
-// 			*swinging = false;
-// 		}
-// 		*angle = AngleMod(*angle + move);
-// 	}
+	// Swing towards the destination angle
+	if (swing >= 0) {
+		move = cg.frameTime * scale * speed;
+		if (move >= swing) {
+			move = swing;
+			res.swinging = false;
+		}
+		res.angle = AngleMod(res.angle + move);
+	} else if ( swing < 0 ) {
+		move = cg.frameTime * scale * -speed;
+		if (move <= swing) {
+			move = swing;
+			res.swinging = false;
+		}
+		res.angle = AngleMod(res.angle + move);
+	}
 
-// 	// clamp to no more than tolerance
-// 	swing = AngleSubtract(destination, *angle);
-// 	if ( swing > clampTolerance ) {
-// 		*angle = AngleMod( destination - (clampTolerance - 1) );
-// 	} else if ( swing < -clampTolerance ) {
-// 		*angle = AngleMod( destination + (clampTolerance - 1) );
-// 	}
-// }
+	// clamp to no more than tolerance
+	swing = AngleSubtract(destination, res.angle);
+	if (swing > clampTolerance) {
+		res.angle = AngleMod(destination - (clampTolerance - 1));
+	} else if ( swing < -clampTolerance ) {
+		res.angle = AngleMod(destination + (clampTolerance - 1));
+	}
+}
 
-// /**
-//  * AddPainTwitch
-//  */
-// function AddPainTwitch(cent, torsoAngles) {
-// 	var t = cg.time - cent.pe.painTime;
-// 	if (t >= PAIN_TWITCH_TIME) {
-// 		return;
-// 	}
+/**
+ * AddPainTwitch
+ */
+function AddPainTwitch(cent, torsoAngles) {
+	var t = cg.time - cent.pe.painTime;
+	if (t >= PAIN_TWITCH_TIME) {
+		return;
+	}
 
-// 	f = 1.0 - (t / PAIN_TWITCH_TIME);
+	f = 1.0 - (t / PAIN_TWITCH_TIME);
 
-// 	if (cent.pe.painDirection) {
-// 		torsoAngles[ROLL] += 20 * f;
-// 	} else {
-// 		torsoAngles[ROLL] -= 20 * f;
-// 	}
-// }
+	if (cent.pe.painDirection) {
+		torsoAngles[ROLL] += 20 * f;
+	} else {
+		torsoAngles[ROLL] -= 20 * f;
+	}
+}
 
 /**********************************************************
  *
@@ -12497,8 +12513,8 @@ function SetInitialSnapshot(snap) {
 
 	console.log('Setting initial snapshot');
 
-	for (var i = 0; i < cg.snap.numEntities; i++) {
-		var state = cg.snap.entities[i];
+	for (var i = 0; i < snap.numEntities; i++) {
+		var state = snap.entities[i];
 		var cent = cg.entities[state.number];
 
 		state.clone(cent.currentState);
@@ -12544,7 +12560,7 @@ function SetNextSnap(snap) {
 		cg.nextFrameTeleport = false;
 	}
 
-	// if changing server restarts, don't interpolate.
+	// If changing server restarts, don't interpolate.
 	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
 		cg.nextFrameTeleport = true;
 	}
@@ -12634,7 +12650,7 @@ function ResetEntity(cent) {
  * cent->nextState is moved to cent->currentState and events are fired.
  */
 function TransitionEntity(cent) {
-	cent.currentState = cent.nextState;
+	cent.nextState.clone(cent.currentState);
 	cent.currentValid = true;
 
 	// Reset if the entity wasn't in the last frame or was teleported.
@@ -12673,8 +12689,11 @@ function CalcViewValues() {
 	// 	}
 	// }
 
-	OffsetThirdPersonView();
-	//OffsetFirstPersonView();
+	if (cg_thirdPerson()) {
+		OffsetThirdPersonView();
+	} else {
+		OffsetFirstPersonView();
+	}
 
 	AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
 
@@ -16086,12 +16105,14 @@ function RenderDrawSurfaces() {
 	gl.viewport(0, 0, re.viewParms.width, re.viewParms.height);
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
 	gl.clearDepth(1.0);
-	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 	gl.enable(gl.DEPTH_TEST);
 	gl.enable(gl.BLEND);
 	gl.enable(gl.CULL_FACE);
-	gl.depthMask(true);
+
+	// Clear back buffer but not color buffer (we expect the entire scene to be overwritten)
+	gl.depthMask(true);	
+	gl.clear(gl.DEPTH_BUFFER_BIT);
 
 	//
 	var oldSort = -1;
@@ -32900,7 +32921,8 @@ var ClientGame = function () {
 	this.thisFrameTeleport    = false;
 	this.nextFrameTeleport    = false;
 	this.time                 = 0;                         // this is the time value that the client is rendering at.
-	//this.oldTime              = 0;                         // time at last frame, used for missile trails and prediction checking
+	this.oldTime              = 0;                         // time at last frame, used for missile trails and prediction checking
+	this.frameTime            = 0;                         // cg.time - cg.oldTime
 	this.physicsTime          = 0;                         // either cg.snap->time or cg.nextSnap->time
 	this.latestSnapshotNum    = 0;                         // the number of snapshots the client system has received
 	this.latestSnapshotTime   = 0;                         // the time from latestSnapshotNum, so we don't need to read the snapshot yet
@@ -33742,7 +33764,7 @@ function GetSnapshot(snapshotNumber) {
 	snap.entities = new Array(snap.numEntities);
 
 	for (var i = 0; i < snap.numEntities; i++) {
-		snap.entities[i] = cl.parseEntities[(snap.parseEntitiesNum + i) & (MAX_PARSE_ENTITIES-1)];
+		snap.entities[i] = cl.parseEntities[(snap.parseEntitiesNum + i) % MAX_PARSE_ENTITIES];
 	}
 
 	return snap;
@@ -35539,7 +35561,7 @@ function PacketEvent(addr, socket, buffer) {
 			continue;
 		}
 
-		if (!_.isEqual(client.netchan.addr, addr)) {
+		if (client.netchan.socket !== socket) {
 			continue;
 		}
 
@@ -35715,7 +35737,7 @@ function SetConfigstring(key, val) {
  * given client.
  */
 function SendConfigstring(client, key) {
-	SendServerCommand(client, 'cs ' + key + ' ' + JSON.stringify(sv.configstrings[key]) + '\n');
+	//SendServerCommand(client, 'cs ' + key + ' ' + JSON.stringify(sv.configstrings[key]) + '\n');
 }
 
 /**
@@ -35940,7 +35962,7 @@ function SendClientGameState(client) {
  * into a more C friendly form.
  */
 function UserinfoChanged(client) {
-	client.name = client.userinfo[name];
+	client.name = client.userinfo['name'];
 
 	// Snaps command.
 	var snaps = 20;
