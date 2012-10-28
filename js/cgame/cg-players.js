@@ -458,7 +458,6 @@ function AddPlayer(cent) {
 	legs.customSkin = ci.legsSkin;
 	vec3.set(cent.lerpOrigin, legs.origin);
 	vec3.set(cent.lerpOrigin, legs.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, legs.axis);
 	// legs.shadowPlane = shadowPlane;
 	// legs.renderfx = renderfx;
 	vec3.set(legs.origin, legs.oldOrigin);  // don't positionally lerp at all
@@ -480,7 +479,6 @@ function AddPlayer(cent) {
 	torso.customSkin = ci.torsoSkin;
 	PositionRotatedEntityOnTag(torso, legs, ci.legsModel, 'tag_torso');
 	vec3.set(cent.lerpOrigin, torso.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, torso.axis);
 	// torso.shadowPlane = shadowPlane;
 	// torso.renderfx = renderfx;
 	AddRefEntityWithPowerups(torso, cent.currentState/*, ci.team*/);
@@ -496,7 +494,6 @@ function AddPlayer(cent) {
 	head.customSkin = ci.headSkin;
 	PositionRotatedEntityOnTag(head, torso, ci.torsoModel, 'tag_head');
 	vec3.set(cent.lerpOrigin, head.lightingOrigin);
-	AnglesToAxis(cent.lerpAngles, head.axis);
 	// head.shadowPlane = shadowPlane;
 	// head.renderfx = renderfx;
 	AddRefEntityWithPowerups(head, cent.currentState/*, ci.team*/);
@@ -571,7 +568,9 @@ function PlayerAngles(cent, legs, torso, head) {
 	}
 
 	var headAngles = vec3.create(cent.lerpAngles);
+	var before = headAngles[YAW];
 	headAngles[YAW] = AngleMod(headAngles[YAW]);
+
 	var torsoAngles = [0, 0, 0];
 	var legsAngles = [0, 0, 0];
 
@@ -602,11 +601,16 @@ function PlayerAngles(cent, legs, torso, head) {
 	torsoAngles[YAW] = headAngles[YAW] + 0.25 * movementOffsets[dir];
 
 	// torso
-	//SwingAngles(torsoAngles[YAW], 25, 90, swingSpeed, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
-	//SwingAngles(legsAngles[YAW], 40, 90, swingSpeed, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+	var res = { angle: cent.pe.torso.yawAngle, swinging: cent.pe.torso.yawing };
+	SwingAngles(torsoAngles[YAW], 25, 90, swingSpeed, res);
+	torsoAngles[YAW] = cent.pe.torso.yawAngle = res.angle;
+	cent.pe.torso.yawing = res.swinging;
 
-	torsoAngles[YAW] = cent.pe.torso.yawAngle;
-	legsAngles[YAW] = cent.pe.legs.yawAngle;
+	// legs
+	res = { angle: cent.pe.legs.yawAngle, swinging: cent.pe.legs.yawing };
+	SwingAngles(legsAngles[YAW], 40, 90, swingSpeed, res);
+	legsAngles[YAW] = cent.pe.legs.yawAngle = res.angle;
+	cent.pe.legs.yawing = res.swinging;
 
 
 	// --------- pitch -------------
@@ -618,8 +622,10 @@ function PlayerAngles(cent, legs, torso, head) {
 	} else {
 		dest = headAngles[PITCH] * 0.75;
 	}
-	//SwingAngles(dest, 15, 30, 0.1, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching);
-	torsoAngles[PITCH] = cent.pe.torso.pitchAngle;
+	res = { angle: cent.pe.torso.pitchAngle, swinging: cent.pe.torso.pitching };
+	SwingAngles(dest, 15, 30, 0.1, res);
+	torsoAngles[PITCH] = cent.pe.torso.pitchAngle = res.angle;
+	cent.pe.torso.pitching = res.swinging;
 
 	//
 	if (ci && ci.fixedtorso) {
@@ -630,7 +636,8 @@ function PlayerAngles(cent, legs, torso, head) {
 
 	// Lean towards the direction of travel.
 	var velocity = vec3.create(cent.currentState.pos.trDelta);
-	var speed = vec3.normalize(velocity);
+	var speed = vec3.length(velocity);
+	vec3.normalize(velocity);
 
 	if (speed) {
 		speed *= 0.05;
@@ -638,6 +645,7 @@ function PlayerAngles(cent, legs, torso, head) {
 		var axis = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
 
 		AnglesToAxis(legsAngles, axis);
+
 		var side = speed * vec3.dot(velocity, axis[1]);
 		legsAngles[ROLL] -= side;
 
@@ -663,77 +671,77 @@ function PlayerAngles(cent, legs, torso, head) {
 	AnglesToAxis(headAngles, head);
 }
 
-// /**
-//  * SwingAngles
-//  */
-// function SwingAngles(destination, swingTolerance, clampTolerance, speed, /*float *angle, qboolean *swinging*/) {
-// 	if (!*swinging) {
-// 		// See if a swing should be started
-// 		swing = AngleSubtract(*angle, destination);
-// 		if (swing > swingTolerance || swing < -swingTolerance) {
-// 			*swinging = true;
-// 		}
-// 	}
+/**
+ * SwingAngles
+ */
+function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
+	if (!res.swinging) {
+		// See if a swing should be started
+		swing = AngleSubtract(res.angle, destination);
+		if (swing > swingTolerance || swing < -swingTolerance) {
+			res.swinging = true;
+		}
+	}
 
-// 	if (!*swinging) {
-// 		return;
-// 	}
+	if (!res.swinging) {
+		return;
+	}
 	
-// 	// Modify the speed depending on the delta
-// 	// so it doesn't seem so linear
-// 	swing = AngleSubtract(destination, *angle);
-// 	scale = Math.abs(swing);
-// 	if (scale < swingTolerance * 0.5) {
-// 		scale = 0.5;
-// 	} else if (scale < swingTolerance) {
-// 		scale = 1.0;
-// 	} else {
-// 		scale = 2.0;
-// 	}
+	// Modify the speed depending on the delta
+	// so it doesn't seem so linear
+	swing = AngleSubtract(destination, res.angle);
+	scale = Math.abs(swing);
+	if (scale < swingTolerance * 0.5) {
+		scale = 0.5;
+	} else if (scale < swingTolerance) {
+		scale = 1.0;
+	} else {
+		scale = 2.0;
+	}
 
-// 	// Swing towards the destination angle
-// 	if (swing >= 0) {
-// 		move = cg.frametime * scale * speed;
-// 		if (move >= swing) {
-// 			move = swing;
-// 			*swinging = false;
-// 		}
-// 		*angle = AngleMod(*angle + move);
-// 	} else if ( swing < 0 ) {
-// 		move = cg.frametime * scale * -speed;
-// 		if (move <= swing) {
-// 			move = swing;
-// 			*swinging = false;
-// 		}
-// 		*angle = AngleMod(*angle + move);
-// 	}
+	// Swing towards the destination angle
+	if (swing >= 0) {
+		move = cg.frameTime * scale * speed;
+		if (move >= swing) {
+			move = swing;
+			res.swinging = false;
+		}
+		res.angle = AngleMod(res.angle + move);
+	} else if ( swing < 0 ) {
+		move = cg.frameTime * scale * -speed;
+		if (move <= swing) {
+			move = swing;
+			res.swinging = false;
+		}
+		res.angle = AngleMod(res.angle + move);
+	}
 
-// 	// clamp to no more than tolerance
-// 	swing = AngleSubtract(destination, *angle);
-// 	if ( swing > clampTolerance ) {
-// 		*angle = AngleMod( destination - (clampTolerance - 1) );
-// 	} else if ( swing < -clampTolerance ) {
-// 		*angle = AngleMod( destination + (clampTolerance - 1) );
-// 	}
-// }
+	// clamp to no more than tolerance
+	swing = AngleSubtract(destination, res.angle);
+	if (swing > clampTolerance) {
+		res.angle = AngleMod(destination - (clampTolerance - 1));
+	} else if ( swing < -clampTolerance ) {
+		res.angle = AngleMod(destination + (clampTolerance - 1));
+	}
+}
 
-// /**
-//  * AddPainTwitch
-//  */
-// function AddPainTwitch(cent, torsoAngles) {
-// 	var t = cg.time - cent.pe.painTime;
-// 	if (t >= PAIN_TWITCH_TIME) {
-// 		return;
-// 	}
+/**
+ * AddPainTwitch
+ */
+function AddPainTwitch(cent, torsoAngles) {
+	var t = cg.time - cent.pe.painTime;
+	if (t >= PAIN_TWITCH_TIME) {
+		return;
+	}
 
-// 	f = 1.0 - (t / PAIN_TWITCH_TIME);
+	f = 1.0 - (t / PAIN_TWITCH_TIME);
 
-// 	if (cent.pe.painDirection) {
-// 		torsoAngles[ROLL] += 20 * f;
-// 	} else {
-// 		torsoAngles[ROLL] -= 20 * f;
-// 	}
-// }
+	if (cent.pe.painDirection) {
+		torsoAngles[ROLL] += 20 * f;
+	} else {
+		torsoAngles[ROLL] -= 20 * f;
+	}
+}
 
 /**********************************************************
  *

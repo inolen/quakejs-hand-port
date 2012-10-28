@@ -138,17 +138,23 @@ function Frame(serverTime) {
 	if (!cg.hyperspace) {
 		AddPacketEntities();
 	}
+
+	cg.frameTime = cg.time - cg.oldTime;
+	if (cg.frametime < 0) {
+		cg.frametime = 0;
+	}
+	cg.oldTime = cg.time;
 	
+	// Issue rendering calls.
 	r.RenderScene(cg.refdef);
-	
 	UpdateFPS();
 	ui.RenderView(cg_hud);
 
-	if (cg.showScores === true) {
-		var players = [
-			{ name: 'Player 1' }
-		];
+	// if (cg.showScores === true) {
+	// 	var players = [
+	// 		{ name: 'Player 1' }
+	// 	];
 
-		ui.RenderView('scoreboard');
-	}
+	// 	ui.RenderView('scoreboard');
+	// }
 }
