@@ -37,11 +37,6 @@ function Init(sysinterface, isdedicated) {
 
 	if (!dedicated) {
 		cl.Init(sys, exports);
-
-		// Provide the user a way to interface with the client.
-		/*window.$ = function (str) {
-			ExecuteCmdText(str);
-		};*/
 	}
 
 	LoadConfig();

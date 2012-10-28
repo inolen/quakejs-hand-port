@@ -56,6 +56,14 @@
 // }
 
 /**
+ * CmdShowCluster
+ */
+function CmdShowCluster() {
+	var leaf = PointInLeaf(re.viewParms.pvsOrigin);	
+	console.log('Current cluster: ' + leaf.cluster);
+}
+
+/**
  * PointInLeaf
  */
 function PointInLeaf(p) {

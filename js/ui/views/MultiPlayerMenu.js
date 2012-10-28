@@ -1,10 +1,11 @@
 define('ui/views/MultiPlayerMenu',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/templates/multiplayer.tpl'
 ],
-function (_, Backbone, templateSrc) {
+function (_, $, Backbone, templateSrc) {
 	var sys;
 	var com;
 	var ui;

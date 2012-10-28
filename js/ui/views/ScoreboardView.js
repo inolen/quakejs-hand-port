@@ -1,10 +1,11 @@
 define('ui/views/ScoreboardView',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/templates/scoreboard.tpl'
 ],
-function (_, Backbone, templateSrc) {
+function (_, $, Backbone, templateSrc) {
 	var ui;
 	
 	var ScoreboardView = Backbone.View.extend({

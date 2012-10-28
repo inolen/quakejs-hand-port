@@ -1,10 +1,11 @@
 define('ui/views/HudView',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/templates/hud.tpl'
 ],
-function (_, Backbone, templateSrc) {
+function (_, $, Backbone, templateSrc) {
 	var ui;
 
 	var HudView = Backbone.View.extend({

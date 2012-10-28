@@ -1,6 +1,7 @@
 define('ui/ui',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/css/views.css',
 	'ui/views/HudView',
@@ -10,7 +11,7 @@ define('ui/ui',
 	'ui/views/MultiPlayerMenu',
 	'ui/views/SettingsMenu'
 ],
-function (_, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu) {
+function (_, $, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu) {
 	<%- include ui-defines.js %>
 
 	function UserInterface(sys, com, cl, r) {

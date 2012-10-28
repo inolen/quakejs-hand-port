@@ -1,10 +1,11 @@
 define('ui/views/SinglePlayerMenu',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/templates/singleplayer.tpl'
 ],
-function (_, Backbone, templateSrc) {
+function (_, $, Backbone, templateSrc) {
 	var sys;
 	var com;
 	var ui;

@@ -26,6 +26,11 @@ function Init() {
 	InputInit();
 	com.Init(sysinterface, false);
 
+	// Provide the user a way to interface with the client.
+	window.$ = function (str) {
+		com.ExecuteCmdText(str);
+	};
+
 	function onRequestedFrame(timestamp) {
 		window.requestAnimationFrame(onRequestedFrame, viewport);
 		com.Frame();

@@ -1,10 +1,11 @@
 define('ui/views/SettingsMenu',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/templates/settings.tpl' 
 ],
-function (_, Backbone, templateSrc) {
+function (_, $, Backbone, templateSrc) {
 	var com;
 	var cl;
 	var ui;

@@ -721,7 +721,7 @@ function Pmove(pm) {
 	var cmd = pm.cmd;
 
 	if (cmd.serverTime < ps.commandTime) {
-		throw new Error('Pmove: cmd.serverTime < ps.commandTime');
+		throw new Error('Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
 		return;	// should not happen
 	}
 

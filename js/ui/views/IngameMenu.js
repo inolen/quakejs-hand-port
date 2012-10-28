@@ -1,10 +1,11 @@
 define('ui/views/IngameMenu',
 [
 	'underscore',
+	'jquery',
 	'backbone',
 	'text!ui/templates/ingame.tpl' 
 ],
-function (_, Backbone, templateSrc) {
+function (_, $, Backbone, templateSrc) {
 	var ui;
 
 	var IngameMenu = Backbone.View.extend({

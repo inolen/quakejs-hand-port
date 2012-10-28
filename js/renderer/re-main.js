@@ -8,7 +8,6 @@ var r_cull;
 var r_subdivisions;
 var r_znear;
 var r_zproj;
-
 var shardmd3;
 
 var flipMatrix = mat4.create([
@@ -33,6 +32,8 @@ function Init(sysinterface, cominterface) {
 	r_subdivisions = com.AddCvar('r_subdivisions', 4);
 	r_znear = com.AddCvar('r_znear', 4);
 	r_zproj = com.AddCvar('r_zproj', 64);
+
+	com.AddCmd('showcluster', CmdShowCluster);
 
 	var gameContext = sys.GetGameRenderContext();
 	gl = gameContext.gl;
