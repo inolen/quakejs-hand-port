@@ -48,7 +48,6 @@ function Init(sysinterface, cominterface) {
 
 	RegisterCommands();
 	RegisterDefaultBinds();
-	InitRenderer();
 	ui.Init();
 
 	cls.initialized = true;

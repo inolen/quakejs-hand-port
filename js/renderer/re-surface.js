@@ -303,6 +303,7 @@ function LerpMeshVertexes(face, backlerp) {
 			                             Math.sin(lng) * Math.sin(lat),
 			                             Math.cos(lat)];
 
+			// TODO clean up this temp var.
 			var normal = [uncompressedOldNormal[0] * oldNormalScale + uncompressedNewNormal[0] * newNormalScale,
 			              uncompressedOldNormal[1] * oldNormalScale + uncompressedNewNormal[1] * newNormalScale,
 			              uncompressedOldNormal[2] * oldNormalScale + uncompressedNewNormal[2] * newNormalScale];

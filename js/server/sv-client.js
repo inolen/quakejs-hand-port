@@ -60,7 +60,7 @@ function DropClient(client, reason) {
 	/*// see if we already have a challenge for this ip
 	challenge = &svs.challenges[0];
 
-	for (i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
+	for (var i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
 	{
 		if(NET_CompareAdr(drop->netchan.remoteAddress, challenge->adr))
 		{

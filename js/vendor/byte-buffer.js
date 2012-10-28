@@ -428,13 +428,19 @@ ByteBuffer = (function() {
     return ++bytes;
   };
 
-  ByteBuffer.prototype.readASCIIString = function(fixedLength) {
-    var bytes, i, c, length, limit, chars, parts;
-    bytes = this._raw;
+  ByteBuffer.prototype.readASCIIString = function(bytes) {
+    var i, c, limit, chars, parts;
+
+    if (bytes > this.available) {
+      throw new Error('Cannot read ' + bytes + ' byte(s), ' + this.available + ' available');
+    }
+    if (bytes <= 0) {
+      throw new RangeError('Invalid number of bytes ' + bytes);
+    }
+
     i = 0;
-    length = fixedLength || bytes.length;
     chars = [];
-    while (i < length) {
+    while (i < bytes) {
       c = this.readByte();
       if (c !== 0x00) {
         chars[i] = c;
@@ -448,7 +454,7 @@ ByteBuffer = (function() {
     } else {
       parts = [];
       i = 0;
-      while (i < length) {
+      while (i < bytes) {
         parts.push(String.fromCharCode.apply(String, chars.slice(i, i + limit)));
         i += limit;
       }

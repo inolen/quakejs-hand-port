@@ -513,7 +513,7 @@ function FlyMove(pm) {
 
 	var scale = CmdScale(cmd, ps.speed);
 	var wishvel = [0, 0, 0];
-	for (i=0 ; i < 3; i++) {
+	for (var i = 0; i < 3; i++) {
 		wishvel[i] = scale * forward[i]*cmd.forwardmove + scale * right[i]*cmd.rightmove;
 	}
 	wishvel[2] += cmd.upmove;

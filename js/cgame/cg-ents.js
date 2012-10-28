@@ -57,40 +57,25 @@ function AddCEntity(cent) {
 			var item = bg.ItemList[cent.currentState.modelIndex];
 			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
 
+			// Autorotate at one of two speeds.
 			if (item.giType === ItemType.HEALTH) {
-				AddPlayer(cent);
+				vec3.set(cg.autoAnglesFast, cent.lerpAngles);
 			} else {
-				// Autorotate at one of two speeds.
-				if (item.giType === ItemType.HEALTH) {
-					vec3.set(cg.autoAnglesFast, cent.lerpAngles);
-				} else {
-					vec3.set(cg.autoAngles, cent.lerpAngles);
-				}
+				vec3.set(cg.autoAngles, cent.lerpAngles);
+			}
 
-				for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-					refent.reType = RefEntityType.MODEL;
-					vec3.set(cent.lerpOrigin, refent.origin);
-					AnglesToAxis(cent.lerpAngles, refent.axis);
-					refent.hModel = itemInfo.modelHandles[i];
-					
-					r.AddRefEntityToScene(refent);
-				}
+			for (var i = 0; i < itemInfo.modelHandles.length; i++) {
+				refent.reType = RefEntityType.MODEL;
+				vec3.set(cent.lerpOrigin, refent.origin);
+				AnglesToAxis(cent.lerpAngles, refent.axis);
+				refent.hModel = itemInfo.modelHandles[i];
+				
+				r.AddRefEntityToScene(refent);
 			}
 			break;
 
 		case EntityType.PLAYER:
-			var refent = new RefEntity();
-			if (cent.currentState.number !== cg.predictedPlayerState.clientNum) {
-				refent.reType = RefEntityType.BBOX;
-				
-				vec3.set(cent.lerpOrigin, refent.origin);
-				AnglesToAxis(cent.lerpAngles, refent.axis);
-
-				vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], refent.mins);
-				vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], refent.maxs);
-
-				r.AddRefEntityToScene(refent);
-			}
+			AddPlayer(cent);
 			break;
 	}
 

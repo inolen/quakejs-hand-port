@@ -1,4 +1,12 @@
 /**
+ * InitModels
+ */
+function InitModels() {
+	var mod = re.models[0] = new Model();
+	mod.type = ModelType.BAD;
+}
+
+/**
  * GetModelByHandle
  */
 function GetModelByHandle(index) {
@@ -26,7 +34,7 @@ function RegisterModel(name) {
 	}
 
 	// Search the currently loaded models.
-	for (var hModel = 0; hModel < re.models.length; hModel++) {
+	for (var hModel = 1; hModel < re.models.length; hModel++) {
 		mod = re.models[hModel];
 
 		if (mod.name === name) {
@@ -55,8 +63,7 @@ function RegisterMd3(mod, name) {
 	// Strip off file extension.
 	var filename = name.substr(0, name.lastIndexOf('.')) || name;
 
-	// TODO Enable lods (ugh.. all the failed HTTP requests).
-	for (var lod = 0/*MD3_MAX_LODS - 1*/; lod >= 0 ; lod--) {
+	var loadLOD = function (lod) {
 		var lodFilename;
 
 		if (lod) {
@@ -64,46 +71,48 @@ function RegisterMd3(mod, name) {
 		} else {
 			lodFilename = filename + '.md3';
 		}
-	
-		(function (lod) {
-			LoadMd3(lodFilename, function (err, md3) {
-				if (!err) {
-					// Once we load one valid MD3.
-					mod.type = ModelType.MD3;
-					mod.md3[lod] = md3;
-					mod.numLods++;
-				}
 
-				// Once we've attempted to load all LODs.
-				if (++done === MD3_MAX_LODS) {
-					var best;
+		LoadMd3(lodFilename, function (err, md3) {
+			if (!err) {
+				// Once we load one valid MD3.
+				mod.type = ModelType.MD3;
+				mod.md3[lod] = md3;
+				mod.numLods++;
+			}
 
-					// Fill in higher lods that weren't loaded with the next best lod.
-					for (var i = MD3_MAX_LODS -1; i >= 0; i--) {
-						if (mod.md3[i]) {
-							best = mod.md3[i];
-						} else if (best) {
-							mod.md3[i] = best;
-							mod.numLods++;
-						}
+			// Once we've attempted to load all LODs.
+			if (++done === MD3_MAX_LODS) {
+				var best;
+
+				// Fill in higher lods that weren't loaded with the next best lod.
+				for (var i = MD3_MAX_LODS -1; i >= 0; i--) {
+					if (mod.md3[i]) {
+						best = mod.md3[i];
+					} else if (best) {
+						mod.md3[i] = best;
+						mod.numLods++;
 					}
 				}
-			});
-		}(lod));
+			}
+		});
+	};
+
+	// TODO Enable lods (ugh.. all the failed HTTP requests).
+	for (var lod = 0/*MD3_MAX_LODS - 1*/; lod >= 0 ; lod--) {
+		loadLOD(lod);
 	}
 }
 
 /**
  * LoadMd3
  */
-function LoadMd3 (filename, callback) {
+function LoadMd3(filename, callback) {
 	sys.ReadFile(filename, 'binary', function (err, data) {
 		if (err) return callback(err);
-
+	
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
 
 		var header = new Md3Header();
-
 		header.ident = bb.readInt();
 		header.version = bb.readInt();
 
@@ -130,6 +139,7 @@ function LoadMd3 (filename, callback) {
 		}
 
 		var md3 = new Md3();
+		md3.header = header;
 		md3.name = header.name;
 		md3.frames = new Array(header.numFrames);
 		md3.tags = new Array(header.numTags);
@@ -154,9 +164,10 @@ function LoadMd3 (filename, callback) {
 		// Read all of the tags.
 		bb.index = header.ofsTags;
 
-		for (var i = 0; i < header.numTags; i++) {
+		for (var i = 0; i < header.numFrames * header.numTags; i++) {
 			var tag = md3.tags[i] = new Md3Tag();
 			tag.name = bb.readASCIIString(MAX_QPATH);
+
 			for (var j = 0; j < 3; j++) {
 				tag.origin[j] = bb.readFloat();
 			}
@@ -166,9 +177,11 @@ function LoadMd3 (filename, callback) {
 		}
 
 		// Read all of the meshes.
-		var meshOffset = bb.index = header.ofsSurfaces;
+		var meshOffset = header.ofsSurfaces;
 
 		for (var i = 0; i < header.numSurfaces; i++) {
+			bb.index = meshOffset;
+
 			var sheader = new Md3SurfaceHeader();
 			sheader.ident = bb.readInt();
 			sheader.name = bb.readASCIIString(MAX_QPATH);
@@ -215,7 +228,7 @@ function LoadMd3 (filename, callback) {
 			for (var j = 0; j < sheader.numShaders; j++) {
 				var shader = surf.shaders[j] = new Md3Shader();
 				// Strip extension.
-				shader.name = bb.readASCIIString(MAX_QPATH).replace(/\.[^/.]+$/, '');
+				shader.name = bb.readASCIIString(MAX_QPATH).replace(/\.[^\/.]+$/, '');
 				shader.shader = FindShader(shader.name, LightmapType.NONE);
 			}
 
@@ -257,7 +270,7 @@ function LoadMd3 (filename, callback) {
 			meshOffset += sheader.ofsEnd;
 		}
 
-		callback(null, md3);
+		return callback(null, md3);
 	});
 }
 
@@ -270,8 +283,10 @@ function GetTag(md3, frame, tagName) {
 		frame = mod.numFrames - 1;
 	}
 
-	for (var i = 0; i < md3.tags.length; i++) {
-		var tag = md3.tags[i];
+	var offset = frame * md3.header.numTags;
+
+	for (var i = 0; i < md3.header.numTags; i++) {
+		var tag = md3.tags[offset + i];
 
 		if (tag.name === tagName) {
 			return tag;  // found it
@@ -286,6 +301,10 @@ function GetTag(md3, frame, tagName) {
  */
 function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	var model = GetModelByHandle(handle);
+
+	if (model.type === ModelType.BAD) {
+		return false;
+	}
 
 	if (!model.md3[0] ) {
 		AxisClear(or.axis);
@@ -306,10 +325,10 @@ function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	var backLerp = 1  - frac;
 
 	for (var i = 0; i < 3; i++) {
-		or.origin[i] = start.origin[i] * backLerp +  end.origin[i] * frontLerp;
-		or.axis[0][i] = start.axis[0][i] * backLerp +  end.axis[0][i] * frontLerp;
-		or.axis[1][i] = start.axis[1][i] * backLerp +  end.axis[1][i] * frontLerp;
-		or.axis[2][i] = start.axis[2][i] * backLerp +  end.axis[2][i] * frontLerp;
+		or.origin[i] = start.origin[i] * backLerp + end.origin[i] * frontLerp;
+		or.axis[0][i] = start.axis[0][i] * backLerp + end.axis[0][i] * frontLerp;
+		or.axis[1][i] = start.axis[1][i] * backLerp + end.axis[1][i] * frontLerp;
+		or.axis[2][i] = start.axis[2][i] * backLerp + end.axis[2][i] * frontLerp;
 	}
 	vec3.normalize(or.axis[0]);
 	vec3.normalize(or.axis[1]);

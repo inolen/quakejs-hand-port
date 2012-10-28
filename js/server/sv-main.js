@@ -99,7 +99,7 @@ function PacketEvent(addr, socket, buffer) {
 		return;
 	}
 
-	for (i = 0; i < svs.clients.length; i++) {
+	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
 		if (client.state === ClientState.FREE) {

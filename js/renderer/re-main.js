@@ -39,6 +39,7 @@ function Init(sysinterface, cominterface) {
 
 	InitImages();
 	InitShaders();
+	InitModels();
 }
 
 /**

@@ -119,7 +119,7 @@ function ScanAndLoadShaderScripts(callback) {
 
 	var done = 0;
 
-	for (var i = 0; i < allShaders.length; ++i) {
+	for (var i = 0; i < allShaders.length; i++) {
 		LoadShaderScript(allShaders[i], function () {			
 			// Trigger callback if we've processed all the programs.
 			if (++done === allShaders.length) {
@@ -175,11 +175,11 @@ function ScanAndLoadShaderPrograms(callback) {
 
 	var done = 0;
 
-	for (var i = 0; i < allPrograms.length; ++i) {
+	for (var i = 0; i < allPrograms.length; i++) {
 		LoadShaderProgram(allPrograms[i], function () {
 			// Trigger callback if we've processed all the programs.
 			if (++done === allPrograms.length) {
-				if (callback) callback();
+				if (callback) return callback();
 			}
 		});
 	}
@@ -195,7 +195,7 @@ function LoadShaderProgram(path, callback) {
 		// Use basename as name.
 		var programName = path.replace(/.*\//, '');
 		re.programBodies[programName] = data;
-		if (callback) callback();
+		if (callback) return callback();
 	});
 }
 

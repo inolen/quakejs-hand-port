@@ -4,6 +4,7 @@ var localWhitelist = [
 ];
 
 // Cross-browser shim.
+window.storageInfo = window.storageInfo || window.webkitStorageInfo;
 window.requestFileSystem = window.requestFileSystem || window.webkitRequestFileSystem;
 
 /**
@@ -14,31 +15,18 @@ function InitLocalFs(callback, errorHandler) {
 		return callback(localFs);
 	}
 
+	if (window.storageInfo === undefined ||
+		window.requestFileSystem === undefined) {
+		return errorHandler(new Error('Browser does not support FileSystem APIs'));
+	}
+
 	// Initialize a persistent 1 mb filesystem.
-	window.webkitStorageInfo.requestQuota(PERSISTENT, 1024 * 1024, function (grantedBytes) {
+	window.storageInfo.requestQuota(PERSISTENT, 1024 * 1024, function (grantedBytes) {
 		window.requestFileSystem(window.PERSISTENT, grantedBytes, function (fs) {
 			localFs = fs;
 			return callback(fs);
 		}, errorHandler);
 	}, errorHandler);
-}
-
-/**
- * TranslateFsError
- */
-function TranslateFsError(err) {
-	switch (err.code) {
-		case FileError.NOT_FOUND_ERR:
-			return 'File or directory not found';
-		case FileError.NOT_READABLE_ERR:
-			return 'File or directory not readable';
-		case FileError.PATH_EXISTS_ERR:
-			return 'File or directory already exists';
-		case FileError.TYPE_MISMATCH_ERR:
-			return 'Invalid filetype';
-		default:
-			return 'Unknown Error';
-	};
 }
 
 /**
@@ -60,7 +48,7 @@ function ReadFile(path, encoding, callback) {
  */
 function ReadLocalFile(path, encoding, callback) {
 	var errorHandler = function (err) {
-		console.log('Couldn\'t read \'' + path + '\'', TranslateFsError(err));
+		console.log('Couldn\'t read \'' + path + '\'', err.message);
 		return callback(err);
 	};
 
@@ -104,7 +92,7 @@ function ReadRemoteFile(path, encoding, callback) {
 		if (request.readyState !== 4 || request.status !== 200) {
 			return callback(new Error('ReadFile received response code ' + request.readyState));
 		}
-
+		
 		return callback(null, binary ? request.response : request.responseText);
 	});
 	request.send(null);
@@ -129,7 +117,7 @@ function WriteFile(path, data, encoding, callback) {
  */
 function WriteLocalFile(path, data, encoding, callback) {
 	var errorHandler = function (err) {
-		console.log('Couldn\'t write to \'' + path + '\'', TranslateFsError(err));
+		console.log('Couldn\'t write to \'' + path + '\'', err.message);
 		return callback(err);
 	};
 

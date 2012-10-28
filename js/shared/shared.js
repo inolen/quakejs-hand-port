@@ -256,6 +256,33 @@ function LerpAngle(from, to, frac) {
 	return from + frac * (to - from);
 }
 
+/**
+ * AngleSubtract
+ *
+ * Always returns a value from -180 to 180
+ */
+function AngleSubtract(a1, a2) {
+	var a = a1 - a2;
+	while (a > 180) {
+		a -= 360;
+	}
+	while (a < -180) {
+		a += 360;
+	}
+	return a;
+}
+
+function AnglesSubtract(v1, v2, v3) {
+	v3[0] = AngleSubtract(v1[0], v2[0]);
+	v3[1] = AngleSubtract(v1[1], v2[1]);
+	v3[2] = AngleSubtract(v1[2], v2[2]);
+}
+
+function AngleMod(a) {
+	a = (360.0/65536) * (parseInt((a*(65536/360.0))) & 65535);
+	return a;
+}
+
 function AnglesToVectors(angles, forward, right, up) {
 	var angle;
 	var sr, sp, sy, cr, cp, cy;

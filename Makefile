@@ -1,7 +1,7 @@
 .PHONY: browser dedicated
 
-OPTIMIZE := optimize=uglify
-#OPTIMIZE := optimize=none
+#OPTIMIZE := optimize=uglify
+OPTIMIZE := optimize=none
 OUT_DIR := dist
 TMP_DIR := js_tmp
 
@@ -49,3 +49,6 @@ dedicated_finish:
 	$(call preprocess_all_ejs, $(TMP_EJS))
 	@node js/vendor/r.js -o build/dedicated.build.js baseUrl=$(TMP_DIR) name=system/dedicated/sys out=$(OUT_DIR)/q3-dedicated-min.js $(OPTIMIZE)
 	$(call remove_js_tmp)
+
+jshint:
+	find . -type d \( -name node_modules -o -name dist -o -name vendor \) -prune -o -name '*.js' -print0 | xargs -0 jshint

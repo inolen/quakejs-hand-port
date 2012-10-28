@@ -426,9 +426,12 @@ function AddPlayer(cent) {
 		renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 	}*/
 
+	// Hulk smash for now.
+	cent.currentState.legsAnim = Animations.LEGS_WALK;
+	cent.currentState.torsoAnim = Animations.TORSO_GESTURE;
+
 	// // get the rotation information
-	vec3.set(cg.autoAngles, cent.lerpAngles);
-	// CG_PlayerAngles( cent, legs.axis, torso.axis, head.axis );
+	PlayerAngles(cent, legs.axis, torso.axis, head.axis);
 	
 	// // get the animation state (after rotation, to allow feet shuffle)
 	PlayerAnimation(cent, legs, torso);
@@ -543,6 +546,197 @@ function AddRefEntityWithPowerups(refent, s/*, team*/) {
 
 /**********************************************************
  *
+ * Player angles
+ *
+ **********************************************************/
+
+/**
+ * PlayerAngles
+ * 
+ * Handles seperate torso motion. 
+ * Legs pivot based on direction of movement.
+ * Head always looks exactly at cent->lerpAngles.
+ * 
+ * If motion < 20 degrees, show in head only.
+ * If < 45 degrees, also show in torso.
+ */
+var swingSpeed = 0.3;
+var movementOffsets = [0, 22, 45, -22, 0, 22, -45, -22];
+function PlayerAngles(cent, legs, torso, head) {
+	var ci;
+
+	var clientNum = cent.currentState.clientNum;
+	if (clientNum >= 0 && clientNum < MAX_CLIENTS) {
+		ci = cgs.clientinfo[clientNum];
+	}
+
+	var headAngles = vec3.create(cent.lerpAngles);
+	headAngles[YAW] = AngleMod(headAngles[YAW]);
+	var torsoAngles = [0, 0, 0];
+	var legsAngles = [0, 0, 0];
+
+	// --------- yaw -------------
+
+	// Allow yaw to drift a bit
+	if ((cent.currentState.legsAnim & ~ANIM_TOGGLEBIT ) !== Animations.LEGS_IDLE ||
+		((cent.currentState.torsoAnim & ~ANIM_TOGGLEBIT) !== Animations.TORSO_STAND &&
+		(cent.currentState.torsoAnim & ~ANIM_TOGGLEBIT) !== Animations.TORSO_STAND2)) {
+		// If not standing still, always point all in the same direction.
+		cent.pe.torso.yawing = true;    // always center
+		cent.pe.torso.pitching = true;  // always center
+		cent.pe.legs.yawing = true;     // always center
+	}
+
+	// Adjust legs for movement dir.
+	var dir;
+	if (cent.currentState.eFlags & EntityFlags.DEAD) {
+		// Don't let dead bodies twitch.
+		dir = 0;
+	} else {
+		dir = cent.currentState.angles2[YAW];
+		if (dir < 0 || dir > 7) {
+			throw new Error('Bad player movement angle');
+		}
+	}
+	legsAngles[YAW] = headAngles[YAW] + movementOffsets[dir];
+	torsoAngles[YAW] = headAngles[YAW] + 0.25 * movementOffsets[dir];
+
+	// torso
+	//SwingAngles(torsoAngles[YAW], 25, 90, swingSpeed, &cent->pe.torso.yawAngle, &cent->pe.torso.yawing );
+	//SwingAngles(legsAngles[YAW], 40, 90, swingSpeed, &cent->pe.legs.yawAngle, &cent->pe.legs.yawing );
+
+	torsoAngles[YAW] = cent.pe.torso.yawAngle;
+	legsAngles[YAW] = cent.pe.legs.yawAngle;
+
+
+	// --------- pitch -------------
+
+	// Only show a fraction of the pitch angle in the torso.
+	var dest;
+	if (headAngles[PITCH] > 180) {
+		dest = (-360 + headAngles[PITCH]) * 0.75;
+	} else {
+		dest = headAngles[PITCH] * 0.75;
+	}
+	//SwingAngles(dest, 15, 30, 0.1, &cent->pe.torso.pitchAngle, &cent->pe.torso.pitching);
+	torsoAngles[PITCH] = cent.pe.torso.pitchAngle;
+
+	//
+	if (ci && ci.fixedtorso) {
+		torsoAngles[PITCH] = 0;
+	}
+
+	// --------- roll -------------
+
+	// Lean towards the direction of travel.
+	var velocity = vec3.create(cent.currentState.pos.trDelta);
+	var speed = vec3.normalize(velocity);
+
+	if (speed) {
+		speed *= 0.05;
+
+		var axis = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+
+		AnglesToAxis(legsAngles, axis);
+		var side = speed * vec3.dot(velocity, axis[1]);
+		legsAngles[ROLL] -= side;
+
+		side = speed * vec3.dot(velocity, axis[0]);
+		legsAngles[PITCH] += side;
+	}
+
+	//
+	if (ci && ci.fixedlegs) {
+		legsAngles[YAW] = torsoAngles[YAW];
+		legsAngles[PITCH] = 0.0;
+		legsAngles[ROLL] = 0.0;
+	}
+
+	// // pain twitch
+	// AddPainTwitch( cent, torsoAngles );
+
+	// pull the angles back out of the hierarchial chain
+	AnglesSubtract(headAngles, torsoAngles, headAngles);
+	AnglesSubtract(torsoAngles, legsAngles, torsoAngles);
+	AnglesToAxis(legsAngles, legs);
+	AnglesToAxis(torsoAngles, torso);
+	AnglesToAxis(headAngles, head);
+}
+
+// /**
+//  * SwingAngles
+//  */
+// function SwingAngles(destination, swingTolerance, clampTolerance, speed, /*float *angle, qboolean *swinging*/) {
+// 	if (!*swinging) {
+// 		// See if a swing should be started
+// 		swing = AngleSubtract(*angle, destination);
+// 		if (swing > swingTolerance || swing < -swingTolerance) {
+// 			*swinging = true;
+// 		}
+// 	}
+
+// 	if (!*swinging) {
+// 		return;
+// 	}
+	
+// 	// Modify the speed depending on the delta
+// 	// so it doesn't seem so linear
+// 	swing = AngleSubtract(destination, *angle);
+// 	scale = Math.abs(swing);
+// 	if (scale < swingTolerance * 0.5) {
+// 		scale = 0.5;
+// 	} else if (scale < swingTolerance) {
+// 		scale = 1.0;
+// 	} else {
+// 		scale = 2.0;
+// 	}
+
+// 	// Swing towards the destination angle
+// 	if (swing >= 0) {
+// 		move = cg.frametime * scale * speed;
+// 		if (move >= swing) {
+// 			move = swing;
+// 			*swinging = false;
+// 		}
+// 		*angle = AngleMod(*angle + move);
+// 	} else if ( swing < 0 ) {
+// 		move = cg.frametime * scale * -speed;
+// 		if (move <= swing) {
+// 			move = swing;
+// 			*swinging = false;
+// 		}
+// 		*angle = AngleMod(*angle + move);
+// 	}
+
+// 	// clamp to no more than tolerance
+// 	swing = AngleSubtract(destination, *angle);
+// 	if ( swing > clampTolerance ) {
+// 		*angle = AngleMod( destination - (clampTolerance - 1) );
+// 	} else if ( swing < -clampTolerance ) {
+// 		*angle = AngleMod( destination + (clampTolerance - 1) );
+// 	}
+// }
+
+// /**
+//  * AddPainTwitch
+//  */
+// function AddPainTwitch(cent, torsoAngles) {
+// 	var t = cg.time - cent.pe.painTime;
+// 	if (t >= PAIN_TWITCH_TIME) {
+// 		return;
+// 	}
+
+// 	f = 1.0 - (t / PAIN_TWITCH_TIME);
+
+// 	if (cent.pe.painDirection) {
+// 		torsoAngles[ROLL] += 20 * f;
+// 	} else {
+// 		torsoAngles[ROLL] -= 20 * f;
+// 	}
+// }
+
+/**********************************************************
+ *
  * Player animation
  *
  *********************************************************/
@@ -558,8 +752,6 @@ function PlayerAnimation(cent, legs, torso) {
 	// if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
 	// 	speedScale = 1.5;
 	// }
-
-	cent.currentState.legsAnim = Animations.LEGS_WALK;
 
 	// Do the shuffle turn frames locally.
 	// if (cent->pe.legs.yawing && (cent.currentState.legsAnim & ~ANIM_TOGGLEBIT) === LEGS_IDLE) {

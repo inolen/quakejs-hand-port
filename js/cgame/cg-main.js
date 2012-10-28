@@ -4,6 +4,9 @@ var cgs;
 var cg_errordecay;
 var cg_predict;
 var cg_showmiss;
+var cg_thirdPerson;
+var cg_thirdPersonAngle;
+var cg_thirdPersonRange;
 
 var cg_hud;
 
@@ -19,6 +22,10 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	cg_errordecay = com.AddCvar('cg_errordecay', 100, CvarFlags.ARCHIVE);
 	cg_predict = com.AddCvar('cg_predict', 0, CvarFlags.ARCHIVE);
 	cg_showmiss = com.AddCvar('cg_showmiss', 1, CvarFlags.ARCHIVE);
+
+	cg_thirdPerson = com.AddCvar('cg_thirdPerson', 0);
+	cg_thirdPersonAngle = com.AddCvar('cg_thirdPersonAngle', 0);
+	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
 
 	cg_hud = ui.RegisterView('hud');
 
@@ -144,52 +151,4 @@ function Frame(serverTime) {
 
 		ui.RenderView('scoreboard');
 	}
-}
-
-/**
- * CalcViewValues
- */
-function CalcViewValues() {
-	var ps = cg.predictedPlayerState;
-
-	cg.refdef.x = 0;
-	cg.refdef.y = 0;
-	cg.refdef.width = viewport.width;
-	cg.refdef.height = viewport.height;
-	vec3.set(ps.origin, cg.refdef.vieworg);
-	AnglesToAxis(ps.viewangles, cg.refdef.viewaxis);
-
-	// Add error decay.
-	// if (cg_errorDecay() > 0) {
-	// 	var t = cg.time - cg.predictedErrorTime;
-	// 	var f = (cg_errorDecay() - t) / cg_errorDecay();
-	// 	if (f > 0 && f < 1) {
-	// 		VectorMA( cg.refdef.vieworg, f, cg.predictedError, cg.refdef.vieworg );
-	// 	} else {
-	// 		cg.predictedErrorTime = 0;
-	// 	}
-	// }
-
-	OffsetFirstPersonView();
-	CalcFov();
-}
-
-/**
- * OffsetFirstPersonView
- */
-function OffsetFirstPersonView() {
-	// add view height
-	cg.refdef.vieworg[2] += DEFAULT_VIEWHEIGHT;//ps.viewheight;
-}
-
-/**
- * CalcFov
- */
-function CalcFov() {
-	var fovX = 90;
-	var x = cg.refdef.width / Math.tan(fovX / 360 * Math.PI);
-	var fovY = Math.atan2(cg.refdef.height, x) * 360 / Math.PI;
-
-	cg.refdef.fovX = fovX;
-	cg.refdef.fovY = fovY;
 }
