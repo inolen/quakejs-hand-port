@@ -23,7 +23,7 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	cg_predict = com.AddCvar('cg_predict', 0, CvarFlags.ARCHIVE);
 	cg_showmiss = com.AddCvar('cg_showmiss', 1, CvarFlags.ARCHIVE);
 
-	cg_thirdPerson = com.AddCvar('cg_thirdPerson', 0);
+	cg_thirdPerson = com.AddCvar('cg_thirdPerson', 1, CvarFlags.ARCHIVE);
 	cg_thirdPersonAngle = com.AddCvar('cg_thirdPersonAngle', 0);
 	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
 

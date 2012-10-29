@@ -56,8 +56,19 @@ function CreateCommand() {
  * KeyMove
  */
 function KeyMove(cmd) {
-	var movespeed = 127;
+	var movespeed;
 	var forward = 0, side = 0, up = 0;
+
+	// adjust for speed key / running
+	// the walking flag is to keep animations consistant
+	// even during acceleration and develeration
+	// if ( in_speed.active ^ cl_run->integer ) {
+		movespeed = 127;
+		cmd.buttons &= ~Buttons.WALKING;
+	// } else {
+	// 	cmd->buttons |= BUTTON_WALKING;
+	// 	movespeed = 64;
+	// }
 
 	if (cls.forwardKey) forward += movespeed * GetKeyState(cls.forwardKey);
 	if (cls.backKey) forward -= movespeed * GetKeyState(cls.backKey);
@@ -407,6 +418,14 @@ function ParsePacketPlayerstate(msg, snap) {
 	snap.ps.delta_angles[0] = msg.readShort();
 	snap.ps.delta_angles[1] = msg.readShort();
 	snap.ps.delta_angles[2] = msg.readShort();
+	snap.ps.speed = msg.readInt();
+	snap.ps.gravity = msg.readInt();
+	snap.ps.groundEntityNum = msg.readInt();
+	snap.ps.legsTimer = msg.readInt();
+	snap.ps.legsAnim = msg.readShort();
+	snap.ps.torsoTimer = msg.readInt();
+	snap.ps.torsoAnim = msg.readShort();
+	snap.ps.movementDir = msg.readByte();
 }
 
 /**
@@ -464,6 +483,10 @@ function ParsePacketEntities(msg, snap) {
 		state.angles2[2] = msg.readFloat();*/
 		state.groundEntityNum = msg.readInt();
 		state.modelIndex = msg.readInt();
+		state.modelIndex2 = msg.readInt();
+		state.solid = msg.readInt();
+		state.legsAnim = msg.readShort();
+		state.torsoAnim = msg.readShort();
 
 		cl.parseEntitiesNum++;
 		snap.numEntities++;

@@ -187,7 +187,7 @@ function SpawnServer(mapName) {
 			UnlinkEntity:      UnlinkEntity,
 			FindEntitiesInBox: FindEntitiesInBox,
 			GetEntityDefs:     cm.EntityDefs,
-			Trace:             cm.Trace
+			Trace:             Trace
 		};
 		gm.Init(com, exports);
 

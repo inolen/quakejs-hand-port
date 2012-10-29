@@ -50,6 +50,9 @@ function AddBboxSurfaces(refent) {
 function AddMd3Surfaces(refent) {
 	var model = GetModelByHandle(refent.hModel);
 
+	// Don't add third_person objects if not in a portal.
+	var personalModel = (refent.renderfx & RenderFx.THIRD_PERSON);/* && !tr.viewParms.isPortal*/;
+
 	/*if (ent->e.renderfx & RF_WRAP_FRAMES) {
 		ent->e.frame %= tr.currentModel->md3[0]->numFrames;
 		ent->e.oldframe %= tr.currentModel->md3[0]->numFrames;
@@ -152,10 +155,10 @@ function AddMd3Surfaces(refent) {
 			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
 		}*/
 
-		// don't add third_person objects if not viewing through a portal
-		//if ( !personalModel ) {
+		// Don't add third_person objects if not viewing through a portal.
+		if (!personalModel) {
 			AddDrawSurf(face, face.shaders[0].shader, refent.index);
-		//}
+		}
 	}
 }
 

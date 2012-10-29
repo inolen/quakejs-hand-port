@@ -210,21 +210,26 @@ function SendClientSnapshot(client) {
 	msg.writeInt(frame.ps.pm_time);
 	msg.writeInt(frame.ps.gravity);
 	msg.writeInt(frame.ps.speed);
-
 	msg.writeFloat(frame.ps.origin[0]);
 	msg.writeFloat(frame.ps.origin[1]);
 	msg.writeFloat(frame.ps.origin[2]);
-
 	msg.writeFloat(frame.ps.velocity[0]);
 	msg.writeFloat(frame.ps.velocity[1]);
 	msg.writeFloat(frame.ps.velocity[2]);
-
 	msg.writeFloat(frame.ps.viewangles[0]);
 	msg.writeFloat(frame.ps.viewangles[1]);
 	msg.writeFloat(frame.ps.viewangles[2]);
 	msg.writeShort(frame.ps.delta_angles[0]);
 	msg.writeShort(frame.ps.delta_angles[1]);
 	msg.writeShort(frame.ps.delta_angles[2]);
+	msg.writeInt(frame.ps.speed);
+	msg.writeInt(frame.ps.gravity);
+	msg.writeInt(frame.ps.groundEntityNum);
+	msg.writeInt(frame.ps.legsTimer);
+	msg.writeShort(frame.ps.legsAnim);
+	msg.writeInt(frame.ps.torsoTimer);
+	msg.writeShort(frame.ps.torsoAnim);
+	msg.writeByte(frame.ps.movementDir);
 
 	// Should not write an int, and instead write a bitstream of GENTITYNUM_BITS length.
 	for (var i = 0; i < frame.numEntities; i++) {
@@ -268,6 +273,10 @@ function SendClientSnapshot(client) {
 		msg.writeFloat(state.angles2[2]);*/
 		msg.writeInt(state.groundEntityNum);
 		msg.writeInt(state.modelIndex);
+		msg.writeInt(state.modelIndex2);
+		msg.writeInt(state.solid);
+		msg.writeShort(state.legsAnim);
+		msg.writeShort(state.torsoAnim);
 	}
 
 	msg.writeUnsignedInt(MAX_GENTITIES-1);

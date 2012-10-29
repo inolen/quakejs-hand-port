@@ -122,6 +122,11 @@ function SetInitialSnapshot(snap) {
 
 	console.log('Setting initial snapshot');
 
+	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].currentState);
+
+	// Sort out solid entities.
+	BuildSolidList();
+
 	for (var i = 0; i < snap.numEntities; i++) {
 		var state = snap.entities[i];
 		var cent = cg.entities[state.number];
@@ -173,6 +178,8 @@ function SetNextSnap(snap) {
 	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
 		cg.nextFrameTeleport = true;
 	}
+
+	BuildSolidList();
 }
 
 /**

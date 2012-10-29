@@ -24,8 +24,8 @@ function PlayerStateToEntityState(ps, state) {
 	vec3.set(ps.viewangles, state.apos.trBase);
 
 	state.angles2[YAW] = ps.movementDir;
-	//s.legsAnim = ps->legsAnim;
-	//s.torsoAnim = ps->torsoAnim;
+	state.legsAnim = ps.legsAnim;
+	state.torsoAnim = ps.torsoAnim;
 	state.clientNum = ps.clientNum;                  // ET_PLAYER looks here instead of at number
 	                                             // so corpses can also reference the proper config
 	state.eFlags = ps.eFlags;

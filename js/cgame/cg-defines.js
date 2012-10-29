@@ -18,6 +18,11 @@ var ClientGame = function () {
 	this.snap                 = null;                      // cg.snap->serverTime <= cg.time
 	this.nextSnap             = null;                      // cg.nextSnap->serverTime > cg.time, or NULL
 	this.entities             = new Array(MAX_GENTITIES);
+
+	//
+	this.pmove                = new PmoveInfo();
+	this.solidEntities        = [];
+	this.triggerEntities      = [];
 	
 	// prediction state
 	this.hyperspace           = false;                     // true if prediction has hit a trigger_teleport

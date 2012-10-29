@@ -161,6 +161,10 @@ function ClientSpawn(ent) {
 
 	sv.GetUserCommand(client.ps.clientNum, ent.client.pers.cmd);
 	SetClientViewAngle(ent, spawnpoint.s.angles);
+
+	// Set default animations.
+	ps.torsoAnim = Animations.TORSO_STAND;
+	ps.legsAnim = Animations.LEGS_IDLE;
 }
 
 /**

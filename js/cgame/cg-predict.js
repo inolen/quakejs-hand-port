@@ -1,4 +1,104 @@
 /**
+ * BuildSolidList
+ *
+ * When a new cg.snap has been set, this function builds a sublist
+ * of the entities that are actually solid, to make for more
+ * efficient collision detection.
+ */
+function BuildSolidList() {
+	// TODO Is this safe?
+	cg.solidEntities.length = 0;
+	cg.triggerEntities.length = 0;
+
+	var snap;
+
+	if (cg.nextSnap && !cg.nextFrameTeleport && !cg.thisFrameTeleport) {
+		snap = cg.nextSnap;
+	} else {
+		snap = cg.snap;
+	}
+
+	for (var i = 0; i < snap.numEntities; i++ ) {
+		var cent = cg.entities[snap.entities[i].number];
+		var es = cent.currentState;
+
+		if (es.eType === EntityType.ITEM || es.eType == EntityType.PUSH_TRIGGER || es.eType === EntityType.TELEPORT_TRIGGER) {
+			cg.triggerEntities.push(cent);
+			continue;
+		}
+
+		if (cent.nextState.solid) {
+			cg.solidEntities.push(cent);
+			continue;
+		}
+	}
+}
+
+/**
+ * ClipMoveToEntities
+ */
+function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
+	for (var i = 0; i < cg_numSolidEntities; i++) {
+		var cent = cg_solidEntities[ i ];
+		var es = cent.currentState;
+
+		if (es.number === skipNumber) {
+			continue;
+		}
+
+		if (es.solid == SOLID_BMODEL) {
+			// Special value for bmodel.
+			var cmodel = cm.InlineModel(es.modelIndex);
+			vec3.set(cent.lerpAngles, angles);
+			bg.EvaluateTrajectory(cent.currentState.pos, cg.physicsTime, origin);
+		} else {
+			// Encoded bbox.
+			var x = (es.solid & 255);
+			var zd = ((es.solid>>8) & 255);
+			var zu = ((es.solid>>16) & 255) - 32;
+
+			var bmins = [0, 0, 0];
+			var bmaxs = [0, 0, 0];
+
+			bmins[0] = bmins[1] = -x;
+			bmaxs[0] = bmaxs[1] = x;
+			bmins[2] = -zd;
+			bmaxs[2] = zu;
+
+			var cmodel = cm.TempBoxModel(bmins, bmaxs);
+			vec3.set(angles, [0, 0, 0]);
+			vec3.set(cent.lerpOrigin, origin);
+		}
+
+		var trace = cm.TransformedBoxTrace(start, end, mins, maxs, cmodel, mask, origin, angles);
+
+		if (trace.allSolid || trace.fraction < tw.fraction) {
+			trace.entityNum = es.number;
+			trace.clone(tr);
+		} else if (trace.startSolid) {
+			tr.startSolid = true;
+		}
+
+		if (tr.allSolid) {
+			return;
+		}
+	}
+}
+
+/**
+ * Trace
+ */
+function Trace(start, end, mins, maxs, skipNumber, mask) {
+	var trace = cm.BoxTrace(start, end, mins, maxs, 0, mask);
+	trace.entityNum = trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+
+	// check all other solid models
+	//CG_ClipMoveToEntities (start, mins, maxs, end, skipNumber, mask, &t);
+
+	return trace;
+}
+
+/**
  * InterpolatePlayerState
  */
 function InterpolatePlayerState(grabAngles) {
@@ -96,33 +196,33 @@ function PredictPlayerState() {
 	}
 
 	// Prepare for pmove.
-	var cg_pmove = new PmoveInfo();
-	cg_pmove.ps = cg.predictedPlayerState;
-	cg_pmove.trace = cm.Trace;
-	// cg_pmove.pointcontents = CG_PointContents;
-	if (cg_pmove.ps.pm_type === PmoveType.DEAD) {
-		cg_pmove.tracemask = ContentMasks.PLAYERSOLID & ~ContentTypes.BODY;
+	// TODO memset() this thing
+	cg.pmove.ps = cg.predictedPlayerState;
+	cg.pmove.trace = Trace;
+	// cg.pmove.pointcontents = CG_PointContents;
+	if (cg.pmove.ps.pm_type === PmoveType.DEAD) {
+		cg.pmove.tracemask = ContentMasks.PLAYERSOLID & ~ContentTypes.BODY;
 	} else {
-		cg_pmove.tracemask = ContentMasks.PLAYERSOLID;
+		cg.pmove.tracemask = ContentMasks.PLAYERSOLID;
 	}
 	// if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
-	// 	cg_pmove.tracemask &= ~ContentTypes.BODY;	// spectators can fly through bodies
+	// 	cg.pmove.tracemask &= ~ContentTypes.BODY;	// spectators can fly through bodies
 	// }
-	// cg_pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
+	// cg.pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
 
 	// Run cmds.
 	var moved = false;
 	for (var cmdNum = oldest; cmdNum <= latest; cmdNum++) {
 		// Get the command.
-		cg_pmove.cmd = cl.GetUserCommand(cmdNum);
+		cg.pmove.cmd = cl.GetUserCommand(cmdNum);
 
 		// Don't do anything if the time is before the snapshot player time.
-		if (cg_pmove.cmd.serverTime <= cg.predictedPlayerState.commandTime) {
+		if (cg.pmove.cmd.serverTime <= cg.predictedPlayerState.commandTime) {
 			continue;
 		}
 
 		// Don't do anything if the command was from a previous map_restart.
-		if (cg_pmove.cmd.serverTime > latestCmd.serverTime) {
+		if (cg.pmove.cmd.serverTime > latestCmd.serverTime) {
 			continue;
 		}
 
@@ -175,9 +275,9 @@ function PredictPlayerState() {
 
 		// don't predict gauntlet firing, which is only supposed to happen
 		// when it actually inflicts damage
-		//cg_pmove.gauntletHit = qfalse;
+		//cg.pmove.gauntletHit = qfalse;
 		
-		bg.Pmove(cg_pmove);
+		bg.Pmove(cg.pmove);
 
 		moved = true;
 
@@ -186,7 +286,7 @@ function PredictPlayerState() {
 	}
 
 	if (cg_showmiss() > 1) {
-		console.log('[' + cg_pmove.cmd.serverTime + ' : ' + cg.time + ']');
+		console.log('[' + cg.pmove.cmd.serverTime + ' : ' + cg.time + ']');
 	}
 
 	if (!moved) {

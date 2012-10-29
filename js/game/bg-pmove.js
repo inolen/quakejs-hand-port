@@ -19,6 +19,80 @@ var walking;
 var msec;
 
 /**
+ * StartTorsoAnim
+ */
+function StartTorsoAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if (ps.pm_type >= PmoveType.DEAD) {
+		return;
+	}
+
+	ps.torsoAnim = ((ps.torsoAnim & ANIM_TOGGLEBIT) ^ ANIM_TOGGLEBIT ) | anim;
+}
+
+/**
+ * StartLegsAnim
+ */
+function StartLegsAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if (ps.pm_type >= PmoveType.DEAD) {
+		return;
+	}
+
+	if (ps.legsTimer > 0) {
+		return;  // a high priority animation is running
+	}
+
+	ps.legsAnim = ((ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+}
+
+/**
+ * ContinueLegsAnim
+ */
+function ContinueLegsAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if ((ps.legsAnim & ~ANIM_TOGGLEBIT) === anim) {
+		return;
+	}
+
+	if (ps.legsTimer > 0) {
+		return;  // a high priority animation is running
+	}
+
+	StartLegsAnim(pm, anim);
+}
+
+/**
+ * ContinueTorsoAnim
+ */
+function ContinueTorsoAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if ((ps.torsoAnim & ~ANIM_TOGGLEBIT) === anim) {
+		return;
+	}
+
+	if (ps.torsoTimer > 0) {
+		return;  // a high priority animation is running
+	}
+
+	StartTorsoAnim(pm, anim);
+}
+
+/**
+ * ForceLegsAnim
+ */
+function ForceLegsAnim(pm, anim) {
+	var ps = pm.ps;
+	
+	ps.legsTimer = 0;
+	StartLegsAnim(pm, anim);
+}
+
+/**
  * CmdScale
  *
  * Returns the scale factor to apply to cmd movements
@@ -77,7 +151,7 @@ function Friction(pm, flying) {
 
 	// Apply water friction even if just wading.
 	/*if (pm.waterlevel) {
-		drop += speed*pm_waterfriction*pm->waterlevel*pml.frametime;
+		drop += speed*pm_waterfriction*pm.waterlevel*pml.frametime;
 	}*/
 
 	if (flying) {
@@ -169,15 +243,15 @@ function CheckJump(pm) {
 
 	ps.groundEntityNum = ENTITYNUM_NONE;
 	ps.velocity[2] = JUMP_VELOCITY;
-	/*PM_AddEvent( EV_JUMP );
+	// PM_AddEvent( EV_JUMP );
 
-	if ( pm->cmd.forwardmove >= 0 ) {
-		PM_ForceLegsAnim( LEGS_JUMP );
-		pm->ps->pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
+	if (pm.cmd.forwardmove >= 0) {
+		ForceLegsAnim(pm, Animations.LEGS_JUMP);
+		ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
 	} else {
-		PM_ForceLegsAnim( LEGS_JUMPB );
-		pm->ps->pm_flags |= PmoveFlags.BACKWARDS_JUMP;
-	}*/
+		ForceLegsAnim(pm, Animations.LEGS_JUMPB);
+		ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
+	}
 
 	return true;
 }
@@ -188,7 +262,7 @@ function CheckJump(pm) {
 function GroundTrace(pm) {
 	var ps = pm.ps;
 	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
-	var trace = groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, pm.tracemask);
+	var trace = groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 
 	// do something corrective if the trace starts in a solid...
 	if (trace.allSolid) {
@@ -205,14 +279,14 @@ function GroundTrace(pm) {
 
 	// check if getting thrown off the ground
 	if (ps.velocity[2] > 0 && vec3.dot(ps.velocity, trace.plane.normal) > 10 ) {
-		/*// go into jump animation
-		if ( pm->cmd.forwardmove >= 0 ) {
-			PM_ForceLegsAnim( LEGS_JUMP );
-			pm->ps->pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
+		// go into jump animation
+		if (pm.cmd.forwardmove >= 0) {
+			ForceLegsAnim(pm, Animations.LEGS_JUMP);
+			ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
 		} else {
-			PM_ForceLegsAnim( LEGS_JUMPB );
-			pm->ps->pm_flags |= PmoveFlags.BACKWARDS_JUMP;
-		}*/
+			ForceLegsAnim(pm, Animations.LEGS_JUMPB);
+			ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
+		}
 
 		ps.groundEntityNum = ENTITYNUM_NONE;
 		groundPlane = false;
@@ -230,7 +304,7 @@ function GroundTrace(pm) {
 	}
 
 	// TODO return entitynum in tracework
-	//ps.groundEntityNum = trace.entityNum;
+	ps.groundEntityNum = trace.entityNum;
 	groundPlane = true;
 	walking = true;
 }
@@ -251,14 +325,14 @@ function CorrectAllSolid(pm, trace) {
 				point[0] += i;
 				point[1] += j;
 				point[2] += k;
-				trace = pm.trace(point, point, pm.mins, pm.maxs, pm.tracemask);
+				trace = pm.trace(point, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 
 				if (!trace.allSolid) {
 					point[0] = ps.origin[0];
 					point[1] = ps.origin[1];
 					point[2] = ps.origin[2] - 0.25;
 
-					groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, /*pm->ps->clientNum,*/ pm.tracemask)
+					groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask)
 					return true;
 				}
 			}
@@ -276,6 +350,26 @@ function CorrectAllSolid(pm, trace) {
  * GroundTraceMissed
  */
 function GroundTraceMissed(pm) {
+	var ps = pm.ps;
+
+	if (ps.groundEntityNum !== ENTITYNUM_NONE) {
+		// If they aren't in a jumping animation and the ground is a ways away, force into it.
+		// If we didn't do the trace, the player would be backflipping down staircases.
+		var point = vec3.create(ps.origin);
+		point[2] -= 64;
+
+		var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+		if (trace.fraction === 1.0) {
+			if (pm.cmd.forwardmove >= 0) {
+				ForceLegsAnim(Animations.LEGS_JUMP);
+				ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
+			} else {
+				ForceLegsAnim(Animations.LEGS_JUMPB);
+				ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
+			}
+		}
+	}
+
 	pm.ps.groundEntityNum = ENTITYNUM_NONE;
 	groundPlane = false;
 	walking = false;
@@ -316,7 +410,7 @@ function SlideMove(pm, gravity) {
 		vec3.add(ps.origin, vec3.scale(ps.velocity, time_left, [0,0,0]), end);
 
 		// see if we can make it there
-		var trace = pm.trace(ps.origin, end, pm.mins, pm.maxs, pm.tracemask);
+		var trace = pm.trace(ps.origin, end, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 
 		if (trace.allSolid) {
 			// entity is completely trapped in another solid
@@ -450,7 +544,7 @@ function StepSlideMove(pm, gravity) {
 	
 	var down = vec3.create(start_o);
 	down[2] -= STEPSIZE;
-	var trace = pm.trace(start_o, down, pm.mins, pm.maxs, pm.tracemask);
+	var trace = pm.trace(start_o, down, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 	var up = [0, 0, 1];
 
 	// never step up when you still have up velocity
@@ -462,7 +556,7 @@ function StepSlideMove(pm, gravity) {
 	up[2] += STEPSIZE;
 
 	// test the player position if they were a stepheight higher
-	trace = pm.trace(start_o, up, pm.mins, pm.maxs, pm.tracemask);
+	trace = pm.trace(start_o, up, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 	if (trace.allSolid) {
 		return; // can't step up
 	}
@@ -476,7 +570,7 @@ function StepSlideMove(pm, gravity) {
 	// push down the final amount
 	vec3.set(ps.origin, down);
 	down[2] -= stepSize;
-	trace = pm.trace(ps.origin, down, pm.mins, pm.maxs, pm.tracemask);
+	trace = pm.trace(ps.origin, down, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 	if (!trace.allSolid) {
 		vec3.set(trace.endPos, ps.origin);
 	}
@@ -487,7 +581,7 @@ function StepSlideMove(pm, gravity) {
 	/*// use the step move
 	float	delta;
 
-	delta = pm->ps->origin[2] - start_o[2];
+	delta = ps.origin[2] - start_o[2];
 	if ( delta > 2 ) {
 		if ( delta < 7 ) {
 			PM_AddEvent( EV_STEP_4 );
@@ -533,6 +627,9 @@ function AirMove(pm) {
 
 	Friction(pm);
 
+	// Set the movementDir so clients can rotate the legs for strafing.
+	SetMovementDir(pm);
+
 	// project moves down to flat plane
 	forward[2] = 0;
 	right[2] = 0;
@@ -575,11 +672,14 @@ function WalkMove(pm) {
 
 	Friction(pm);
 
-	// project moves down to flat plane
+	// Set the movementDir so clients can rotate the legs for strafing.
+	SetMovementDir(pm);
+
+	// Project moves down to flat plane.
 	forward[2] = 0;
 	right[2] = 0;
 
-	// project the forward and right directions onto the ground plane
+	// Project the forward and right directions onto the ground plane.
 	forward = ClipVelocity(forward, groundTrace.plane.normal, OVERCLIP);
 	right = ClipVelocity(right, groundTrace.plane.normal, OVERCLIP);	
 	vec3.normalize(forward);
@@ -598,10 +698,10 @@ function WalkMove(pm) {
 	/*if (pm.waterlevel) {
 		float	waterScale;
 
-		waterScale = pm->waterlevel / 3.0;
+		waterScale = pm.waterlevel / 3.0;
 		waterScale = 1.0 - ( 1.0 - pm_swimScale ) * waterScale;
-		if ( wishspeed > pm->ps->speed * waterScale ) {
-			wishspeed = pm->ps->speed * waterScale;
+		if ( wishspeed > ps.speed * waterScale ) {
+			wishspeed = ps.speed * waterScale;
 		}
 	}*/
 
@@ -680,6 +780,149 @@ function DropTimers(pm) {
 }
 
 /**
+ * TorsoAnimation
+ */
+function TorsoAnimation(pm) {
+	// if (ps.weaponstate === WEAPON_READY) {
+	// 	if (ps.weapon == WP_GAUNTLET) {
+	// 		ContinueTorsoAnim(pm, Animations.TORSO_STAND2);
+	// 	} else {
+			ContinueTorsoAnim(pm, Animations.TORSO_STAND);
+	// 	}
+	// 	return;
+	// }
+}
+
+/**
+ * Footsteps
+ */
+function Footsteps(pm) {
+	var ps = pm.ps;
+
+	// Calculate speed and cycle to be used for
+	// all cyclic walking effects.
+	pm.xyspeed = Math.sqrt( ps.velocity[0] * ps.velocity[0] + ps.velocity[1] * ps.velocity[1]);
+
+	if (ps.groundEntityNum === ENTITYNUM_NONE) {
+		// if (ps.powerups[PW_INVULNERABILITY]) {
+		// 	ContinueLegsAnim(pm, Animations.LEGS_IDLECR);
+		// }
+		// Airborne leaves position in cycle intact, but doesn't advance.
+		if (pm.waterlevel > 1) {
+			ContinueLegsAnim(pm, Animations.LEGS_SWIM);
+		}
+		return;
+	}
+
+	// If not trying to move.
+	if (!pm.cmd.forwardmove && !pm.cmd.rightmove) {
+		if (pm.xyspeed < 5) {
+			ps.bobCycle = 0;  // start at beginning of cycle again
+			if (ps.pm_flags & PmoveFlags.DUCKED) {
+				ContinueLegsAnim(pm, Animations.LEGS_IDLECR);
+			} else {
+				ContinueLegsAnim(pm, Animations.LEGS_IDLE);
+			}
+		}
+		return;
+	}
+	
+	var footstep = false;
+	var bobmove = 0.0;
+
+	if (ps.pm_flags & PmoveFlags.DUCKED) {
+		bobmove = 0.5;  // ducked characters bob much faster
+		if (ps.pm_flags & PmoveFlags.BACKWARDS_RUN) {
+			ContinueLegsAnim(pm, Animations.LEGS_BACKCR);
+		} else {
+			ContinueLegsAnim(pm, Animations.LEGS_WALKCR);
+		}
+		// Ducked characters never play footsteps.
+	} else {
+		if ( !(pm.cmd.buttons & Buttons.WALKING)) {
+			bobmove = 0.4; // faster speeds bob faster
+			if (ps.pm_flags & PmoveFlags.BACKWARDS_RUN) {
+				ContinueLegsAnim(pm, Animations.LEGS_BACK);
+			}
+			else {
+				ContinueLegsAnim(pm, Animations.LEGS_RUN);
+			}
+			footstep = true;
+		} else {
+			bobmove = 0.3;  // walking bobs slow
+			if (ps.pm_flags & PmoveFlags.BACKWARDS_RUN) {
+				ContinueLegsAnim(pm, Animations.LEGS_BACKWALK);
+			} else {
+				ContinueLegsAnim(pm, Animations.LEGS_WALK);
+			}
+		}
+	}
+
+	// // Check for footstep / splash sounds.
+	// var old = ps.bobCycle;
+	// ps.bobCycle = parseInt(old + bobmove * pml.msec) & 255;
+
+	// // If we just crossed a cycle boundary, play an apropriate footstep event.
+	// if (((old + 64) ^ (ps.bobCycle + 64)) & 128) {
+	// 	if (pm.waterlevel === 0) {
+	// 		// On ground will only play sounds if running
+	// 		if (footstep && !pm.noFootsteps) {
+	// 			PM_AddEvent( PM_FootstepForSurface() );
+	// 		}
+	// 	} else if (pm.waterlevel === 1) {
+	// 		// splashing
+	// 		PM_AddEvent( EV_FOOTSPLASH );
+	// 	} else if (pm.waterlevel === 2) {
+	// 		// wading / swimming at surface
+	// 		PM_AddEvent( EV_SWIM );
+	// 	} else if (pm.waterlevel === 3) {
+	// 		// no sound when completely underwater
+	// 	}
+	// }
+}
+
+
+/**
+ * SetMovementDir
+ * 
+ * Determine the rotation of the legs relative
+ * to the facing dir
+ */
+function SetMovementDir(pm) {
+	var ps = pm.ps;
+
+	if (pm.cmd.forwardmove || pm.cmd.rightmove) {
+		if (pm.cmd.rightmove === 0 && pm.cmd.forwardmove > 0) {
+			ps.movementDir = 0;
+		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove > 0) {
+			ps.movementDir = 1;
+		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove === 0) {
+			ps.movementDir = 2;
+		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove < 0) {
+			ps.movementDir = 3;
+		} else if (pm.cmd.rightmove === 0 && pm.cmd.forwardmove < 0) {
+			ps.movementDir = 4;
+		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove < 0) {
+			ps.movementDir = 5;
+		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove === 0) {
+			ps.movementDir = 6;
+		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove > 0) {
+			ps.movementDir = 7;
+		}
+	} else {
+		// If they aren't actively going directly sideways,
+		// change the animation to the diagonal so they
+		// don't stop too crooked.
+		if (ps.movementDir === 2) {
+			ps.movementDir = 1;
+		} else if (ps.movementDir === 6) {
+			ps.movementDir = 7;
+		} 
+	}
+}
+
+
+/**
  * PmoveSingle
  */
 function PmoveSingle(pm) {
@@ -694,9 +937,22 @@ function PmoveSingle(pm) {
 	UpdateViewAngles(ps, cmd);
 	AnglesToVectors(ps.viewangles, forward, right, up);
 
+	// Make sure walking button is clear if they are running, to avoid
+	// proxy no-footsteps cheats.
+	if (Math.abs(cmd.forwardmove) > 64 || Math.abs(cmd.rightmove) > 64) {
+		cmd.buttons &= ~Buttons.WALKING;
+	}
+
 	if (pm.cmd.upmove < 10) {
-		// not holding jump
+		// Not holding jump.
 		ps.pm_flags &= ~PmoveFlags.JUMP_HELD;
+	}
+
+	// Decide if backpedaling animations should be used
+	if (cmd.forwardmove < 0) {
+		ps.pm_flags |= PmoveFlags.BACKWARDS_RUN;
+	} else if (pm.cmd.forwardmove > 0 || (cmd.forwardmove === 0 && cmd.rightmove)) {
+		ps.pm_flags &= ~PmoveFlags.BACKWARDS_RUN;
 	}
 
 	CheckDuck(pm);
@@ -711,6 +967,13 @@ function PmoveSingle(pm) {
 	}
 
 	GroundTrace(pm);
+
+
+	// Torso animations.
+	TorsoAnimation(pm);
+
+	// Footstep events / legs animations.
+	Footsteps(pm);
 }
 
 /**

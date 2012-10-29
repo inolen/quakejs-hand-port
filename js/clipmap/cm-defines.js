@@ -1,3 +1,7 @@
+var MAX_SUBMODELS        = 256;
+var BOX_MODEL_HANDLE     = 255;
+var CAPSULE_MODEL_HANDLE = 254;
+
 // keep 1/8 unit away to keep the position valid before network snapping
 // and to avoid various numeric issues
 var SURFACE_CLIP_EPSILON = 0.125;
@@ -63,11 +67,33 @@ var TraceResults = function () {
 	this.plane      = null;                      // surface normal at impact, transformed to world space
 };
 
+TraceResults.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new TraceResults();
+	}
+
+	to.allSolid = this.allSolid;
+	to.startSolid = this.startSolid;
+	to.fraction = this.fraction;
+	vec3.set(this.endPos, to.endPos);
+	to.plane = this.plane;
+
+	return to;
+}
+
 var MAX_POSITION_LEAFS = 1024;
 
 var LeafList = function () {
 	this.list  = new Uint32Array(MAX_POSITION_LEAFS);
 	this.count = 0;
+};
+
+// Used for oriented capsule collision detection
+var Sphere = function () {
+	this.use        = false;
+	this.radius     = 0;
+	this.halfheight = 0;
+	this.offset     = [0, 0, 0];
 };
 
 var TraceWork = function () {

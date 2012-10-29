@@ -416,6 +416,13 @@ function AddPlayer(cent) {
 		return;
 	}
 
+	var renderfx = 0;
+	if (cent.currentState.number === cg.snap.ps.clientNum) {
+		if (!cg_thirdPerson()) {
+			renderfx = RenderFx.THIRD_PERSON;  // only draw in mirrors
+		}
+	}
+
 	var legs = new RefEntity();
 	var torso = new RefEntity();
 	var head = new RefEntity();
@@ -425,10 +432,6 @@ function AddPlayer(cent) {
 	if ( cent->currentState.number == cg.snap->ps.clientNum) {
 		renderfx = RF_THIRD_PERSON;			// only draw in mirrors
 	}*/
-
-	// Hulk smash for now.
-	cent.currentState.legsAnim = Animations.LEGS_WALK;
-	cent.currentState.torsoAnim = Animations.TORSO_GESTURE;
 
 	// // get the rotation information
 	PlayerAngles(cent, legs.axis, torso.axis, head.axis);
@@ -454,6 +457,7 @@ function AddPlayer(cent) {
 	// Add the legs
 	//
 	legs.reType = RefEntityType.MODEL;
+	legs.renderfx = renderfx;
 	legs.hModel = ci.legsModel;
 	legs.customSkin = ci.legsSkin;
 	vec3.set(cent.lerpOrigin, legs.origin);
@@ -472,6 +476,7 @@ function AddPlayer(cent) {
 	// add the torso
 	//
 	torso.reType = RefEntityType.MODEL;
+	torso.renderfx = renderfx;
 	torso.hModel = ci.torsoModel;
 	if (!torso.hModel) {
 		return;
@@ -487,6 +492,7 @@ function AddPlayer(cent) {
 	// add the head
 	//
 	head.reType = RefEntityType.MODEL;
+	head.renderfx = renderfx;
 	head.hModel = ci.headModel;
 	if (!head.hModel) {
 		return;

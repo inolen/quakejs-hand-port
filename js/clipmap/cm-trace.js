@@ -1,3 +1,36 @@
+// TODO Clean up some of this with built in gl-matrix types.
+
+/**
+ * RotatePoint
+ */
+function RotatePoint(point, matrix) {
+	var tvec = vec3.create(point);
+
+	point[0] = vec3.dot(matrix[0], tvec);
+	point[1] = vec3.dot(matrix[1], tvec);
+	point[2] = vec3.dot(matrix[2], tvec);
+}
+
+/**
+ * TransposeMatrix
+ */
+function TransposeMatrix(matrix, transpose) {
+	for (var i = 0; i < 3; i++) {
+		for (var j = 0; j < 3; j++) {
+			transpose[i][j] = matrix[j][i];
+		}
+	}
+}
+
+/**
+ * CreateRotationMatrix
+ */
+function CreateRotationMatrix(angles, matrix) {
+	AnglesToVectors(angles, matrix[0], matrix[1], matrix[2]);
+	vec3.negate(matrix[1]);
+}
+
+
 /*********************************************************************
  *
  * Position testing
@@ -376,8 +409,8 @@ function TraceThroughBrush(tw, brush) {
 /**
  * Trace
  */
-function Trace(start, end, mins, maxs, brushmask, tw) {
-	tw = tw || new TraceWork();
+function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere) {
+	var tw = new TraceWork();
 	var trace = tw.trace;
 
 	if (!cm.checkcount) cm.checkcount = 0;
@@ -473,5 +506,115 @@ function Trace(start, end, mins, maxs, brushmask, tw) {
 		tw.trace.endPos[i] = start[i] + tw.trace.fraction * (end[i] - start[i]);
 	}
 	
+	return trace;
+}
+
+/**
+ * BoxTrace
+ */
+function BoxTrace(start, end, mins, maxs, model, brushmask, capsule ) {
+	return Trace(start, end, mins, maxs, model, [0, 0, 0], brushmask, capsule, null);
+}
+
+
+/**
+ * TransformedBoxTrace
+ *
+ * Handles offseting and rotation of the end points for moving and
+ * rotating entities
+ */
+function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, angles, capsule) {
+	if (typeof(mins) === 'undefined') {
+		mins = [0, 0, 0];
+	}
+	
+	if (typeof(maxs) === 'undefined') {
+		maxs = [0, 0, 0];
+	}
+
+	var start_l = [0, 0, 0];
+	var end_l = [0, 0, 0];
+	var offset = [0, 0, 0];
+	var symetricSize = [
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	var matrix = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	var transpose = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];	
+
+	// Adjust so that mins and maxs are always symetric, which
+	// avoids some complications with plane expanding of rotated
+	// bmodels.
+	for (var i = 0; i < 3; i++) {
+		offset[i] = (mins[i] + maxs[i]) * 0.5;
+		symetricSize[0][i] = mins[i] - offset[i];
+		symetricSize[1][i] = maxs[i] - offset[i];
+		start_l[i] = start[i] + offset[i];
+		end_l[i] = end[i] + offset[i];
+	}
+
+	// Subtract origin offset.
+	vec3.subtract(start_l, origin);
+	vec3.subtract(end_l, origin);
+
+	// Rotate start and end into the models frame of reference
+	var rotated = false;
+	if (model !== BOX_MODEL_HANDLE && (angles[0] || angles[1] || angles[2])) {
+		rotated = true;
+	}
+
+	var halfwidth = symetricSize[1][0];
+	var halfheight = symetricSize[1][2];
+
+	var sphere = new Sphere();
+	sphere.use = capsule;
+	sphere.radius = (halfwidth > halfheight) ? halfheight : halfwidth;
+	sphere.halfheight = halfheight;
+
+	var t = halfheight - sphere.radius;
+
+	if (rotated) {
+		// Rotation on trace line (start-end) instead of rotating the bmodel
+		// NOTE: This is still incorrect for bounding boxes because the actual bounding
+		//		 box that is swept through the model is not rotated. We cannot rotate
+		//		 the bounding box or the bmodel because that would make all the brush
+		//		 bevels invalid.
+		//		 However this is correct for capsules since a capsule itself is rotated too.
+		CreateRotationMatrix(angles, matrix);
+		RotatePoint(start_l, matrix);
+		RotatePoint(end_l, matrix);
+		// rotated sphere offset for capsule
+		sphere.offset[0] = matrix[0][ 2 ] * t;
+		sphere.offset[1] = -matrix[1][ 2 ] * t;
+		sphere.offset[2] = matrix[2][ 2 ] * t;
+	}
+	else {
+		vec3.set([0, 0, t], sphere.offset);
+	}
+
+	// Sweep the box through the model
+	var trace = Trace(start_l, end_l, symetricSize[0], symetricSize[1], model, origin, brushmask, capsule, sphere);
+
+	// if the bmodel was rotated and there was a collision
+	if (rotated && trace.fraction !== 1.0) {
+		// rotation of bmodel collision plane
+		TransposeMatrix(matrix, transpose);
+		RotatePoint(trace.plane.normal, transpose);
+	}
+
+	// Re-calculate the end position of the trace because the trace.endpos
+	// calculated by Trace could be rotated and have an offset.
+	trace.endpos[0] = start[0] + trace.fraction * (end[0] - start[0]);
+	trace.endpos[1] = start[1] + trace.fraction * (end[1] - start[1]);
+	trace.endpos[2] = start[2] + trace.fraction * (end[2] - start[2]);
+
 	return trace;
 }

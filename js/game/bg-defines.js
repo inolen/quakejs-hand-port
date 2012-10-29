@@ -232,19 +232,20 @@ var PmoveFlags = {
 };
 
 var PmoveInfo = function () {
-	this.ps = null;
-	this.cmd = null;
+	this.ps        = null;
+	this.cmd       = null;
 	this.frameTime = 0;
-	this.mins = [0, 0, 0];
-	this.maxs = [0, 0, 0];
+	this.mins      = [0, 0, 0];
+	this.maxs      = [0, 0, 0];
 	//this.tracemask = 0;                          // collide against these surfaces
 	//this.framecount = 0;
 
 	// results (out)
 	//this.numtouch = 0;
 	//this.touchents = null; //[MAXTOUCH];
+	this.xyspeed   = 0;
 
 	// callbacks to test the world
 	// these will be different functions during game and cgame
-	this.trace = null;
+	this.trace     = null;
 };

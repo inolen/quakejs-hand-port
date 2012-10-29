@@ -303,3 +303,52 @@ function UnlinkEntity(gent) {
 	delete node.entities[ent.number];
 	ent.worldSector = null;
 }
+
+/**
+ * Trace
+ *
+ * Moves the given mins/maxs volume through the world from start to end.
+ * passEntityNum and entities owned by passEntityNum are explicitly not checked.
+ */
+function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
+	if (typeof(mins) === 'undefined') {
+		mins = [0, 0, 0];
+	}
+	if (typeof(maxs) === 'undefined') {
+		maxs = [0, 0, 0];
+	}
+
+	// Clip to world
+	var trace = cm.BoxTrace(start, end, mins, maxs, 0, contentmask, capsule);
+	trace.entityNum = trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+	if (trace.fraction === 0) {
+		return trace;  // blocked immediately by the world
+	}
+
+	// clip.contentmask = contentmask;
+	// clip.start = start;
+	// vec3.set(end, clip.end);
+	// clip.mins = mins;
+	// clip.maxs = maxs;
+	// clip.passEntityNum = passEntityNum;
+	// clip.capsule = capsule;
+
+	// // Create the bounding box of the entire move.
+	// // We can limit it to the part of the move not
+	// // already clipped off by the world, which can be
+	// // a significant savings for line of sight and shot traces.
+	// for (var i = 0; i < 3; i++) {
+	// 	if (end[i] > start[i]) {
+	// 		clip.boxmins[i] = clip.start[i] + clip.mins[i] - 1;
+	// 		clip.boxmaxs[i] = clip.end[i] + clip.maxs[i] + 1;
+	// 	} else {
+	// 		clip.boxmins[i] = clip.end[i] + clip.mins[i] - 1;
+	// 		clip.boxmaxs[i] = clip.start[i] + clip.maxs[i] + 1;
+	// 	}
+	// }
+
+	// // clip to other solid entities
+	// SV_ClipMoveToEntities ( &clip );
+
+	return trace;
+}
