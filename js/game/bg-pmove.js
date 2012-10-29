@@ -361,10 +361,10 @@ function GroundTraceMissed(pm) {
 		var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 		if (trace.fraction === 1.0) {
 			if (pm.cmd.forwardmove >= 0) {
-				ForceLegsAnim(Animations.LEGS_JUMP);
+				ForceLegsAnim(pm, Animations.LEGS_JUMP);
 				ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
 			} else {
-				ForceLegsAnim(Animations.LEGS_JUMPB);
+				ForceLegsAnim(pm, Animations.LEGS_JUMPB);
 				ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
 			}
 		}
