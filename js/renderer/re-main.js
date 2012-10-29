@@ -40,6 +40,7 @@ function Init(sysinterface, cominterface) {
 
 	InitImages();
 	InitShaders();
+	InitSkins();
 	InitModels();
 }
 

@@ -70,7 +70,7 @@ function AddCEntity(cent) {
 				AnglesToAxis(cent.lerpAngles, refent.axis);
 				refent.hModel = itemInfo.modelHandles[i];
 				
-				r.AddRefEntityToScene(refent);
+				re.AddRefEntityToScene(refent);
 			}
 			break;
 
@@ -157,7 +157,7 @@ function AddCEntity(cent) {
 function PositionRotatedEntityOnTag(refent, parent, parentModel, tagName) {
 	// Lerp the tag.
 	var lerped = new Orientation();
-	r.LerpTag(lerped, parentModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, tagName);
+	re.LerpTag(lerped, parentModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, tagName);
 
 	// FIXME: allow origin offsets along tag?
 	var t = [0, 0, 0];

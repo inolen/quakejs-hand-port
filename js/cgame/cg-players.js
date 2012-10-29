@@ -124,7 +124,7 @@ function NewClientInfo(clientNum) {
  */
 function LoadClientInfo(clientNum, ci) {
 	//if (!RegisterClientModelname(ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname)) {
-		RegisterClientModelname(ci, DEFAULT_MODEL, 'default', DEFAULT_MODEL, 'default', function (err) {
+		RegisterClientModelname(ci, DEFAULT_MODEL, 'default', null, function (err) {
 			if (err) {
 				console.log(err.message);
 				throw new Error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register');
@@ -156,18 +156,18 @@ function LoadClientInfo(clientNum, ci) {
 /**
  * RegisterClientModelname
  */
-function RegisterClientModelname(ci, modelName, skinName, headModelName, headSkinName, callback/*, teamName*/) {
+function RegisterClientModelname(ci, modelName, skinName, teamName, callback) {
 	var filename = 'models/players/' + modelName + '/lower.md3';
-	ci.legsModel = r.RegisterModel(filename);
+	ci.legsModel = re.RegisterModel(filename);
 
 	filename = 'models/players/' + modelName + '/upper.md3';
-	ci.torsoModel = r.RegisterModel(filename);
+	ci.torsoModel = re.RegisterModel(filename);
 
-	filename = 'models/players/' + headModelName + '/head.md3';
-	ci.headModel = r.RegisterModel(filename);
+	filename = 'models/players/' + modelName + '/head.md3';
+	ci.headModel = re.RegisterModel(filename);
 
-	// if any skins failed to load, return failure
-	// if ( !CG_RegisterClientSkin( ci, teamName, modelName, skinName, headName, headSkinName ) ) {
+	RegisterClientSkin(ci, modelName, skinName, teamName);
+
 	// 	if ( teamName && *teamName) {
 	// 		Com_Printf( "Failed to load skin file: %s : %s : %s, %s : %s\n", teamName, modelName, skinName, headName, headSkinName );
 	// 		if( ci->team == TEAM_BLUE ) {
@@ -180,17 +180,6 @@ function RegisterClientModelname(ci, modelName, skinName, headModelName, headSki
 	// 			Com_Printf( "Failed to load skin file: %s : %s : %s, %s : %s\n", newTeamName, modelName, skinName, headName, headSkinName );
 	// 			return qfalse;
 	// 		}
-	// 	} else {
-	// 		Com_Printf( "Failed to load skin file: %s : %s, %s : %s\n", modelName, skinName, headName, headSkinName );
-	// 		return qfalse;
-	// 	}
-	// }
-
-	// if ( CG_FindClientHeadFile( filename, sizeof(filename), ci, teamName, headName, headSkinName, "icon", "skin" ) ) {
-	// 	ci->modelIcon = trap_R_RegisterShaderNoMip( filename );
-	// }
-	// else if ( CG_FindClientHeadFile( filename, sizeof(filename), ci, teamName, headName, headSkinName, "icon", "tga" ) ) {
-	// 	ci->modelIcon = trap_R_RegisterShaderNoMip( filename );
 	// }
 
 	// if ( !ci->modelIcon ) {
@@ -203,6 +192,20 @@ function RegisterClientModelname(ci, modelName, skinName, headModelName, headSki
 		if (err) return callback(err);
 		return callback(null);
 	});
+}
+
+function RegisterClientSkin(ci, modelName, skinName, teamName) {
+	teamName = teamName || 'default';
+
+	var filename = 'models/players/' + modelName + '/lower_' + teamName + '.skin';
+	ci.legsSkin = re.RegisterSkin(filename);
+
+	filename = 'models/players/' + modelName + '/upper_' + teamName + '.skin';
+	ci.torsoSkin = re.RegisterSkin(filename);
+
+	filename = 'models/players/' + modelName + '/head_' + teamName + '.skin';
+	ci.headSkin = re.RegisterSkin(filename);
+
 }
 
 /**
@@ -524,7 +527,7 @@ function AddRefEntityWithPowerups(refent, s/*, team*/) {
 	// 	ent->customShader = cgs.media.invisShader;
 	// 	trap_R_AddRefEntityToScene( ent );
 	// } else {
-		r.AddRefEntityToScene(refent);
+		re.AddRefEntityToScene(refent);
 
 	// 	if ( state->powerups & ( 1 << PW_QUAD ) )
 	// 	{

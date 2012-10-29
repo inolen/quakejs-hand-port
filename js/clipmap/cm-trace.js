@@ -647,7 +647,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	// If allsolid is set (was entirely inside something solid), the plane is not valid.
 	// If fraction == 1.0, we never hit anything, and thus the plane is not valid.
 	// Otherwise, the normal on the plane should have unit length.
-	if (!tw.trace.allsolid && tw.trace.fraction !== 1.0 && vec3.squaredLength(tw.trace.plane.normal) <= 0.9999) {
+	if (!tw.trace.allSolid && tw.trace.fraction !== 1.0 && vec3.squaredLength(tw.trace.plane.normal) <= 0.9999) {
 		throw new Error('Invalid trace result');
 	}
 

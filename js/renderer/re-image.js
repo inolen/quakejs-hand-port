@@ -135,3 +135,98 @@ function CreateImage(name, buffer, width, height, clamp) {
 
 	return image;
 }
+
+/**
+ * InitSkins
+ */
+function InitSkins() {
+	var skin = new Skin();
+	skin.name = '<default skin>';
+
+	var surface = new SkinSurface();
+	surface.shader = re.defaultShader;
+	
+	re.skins[1] = skin;
+}
+
+/**
+ * RegisterSkin
+ */
+function RegisterSkin(filename) {
+	if (!filename) {
+		console.log('Empty name passed to RegisterSkin');
+		return 0;
+	}
+
+	// See if the skin is already loaded.
+	var skin;
+	var hSkin;
+
+	for (var hSkin = 1; hSkin < re.skins.length; hSkin++) {
+		skin = re.skins[hSkin];
+
+		if (skin.name == name) {
+			// if (skin.numSurfaces === 0) {
+			// 	return 0;  // default skin
+			// }
+			return hSkin;
+		}
+	}
+
+	// We're adding this on to the end.
+	hSkin = re.skins.length;
+
+	// Allocate new skin.
+	skin = new Skin();
+	skin.name = filename;
+	re.skins.push(skin);
+
+	// If not a .skin file, load as a single shader.
+	if (filename.indexOf('.skin') === -1) {
+		var surface = new SkinSurface();
+		surface.shader = FindShader(filename, LightmapType.NONE);
+		skin.surfaces.push(surface);
+		return hSkin;
+	}
+
+	console.log('Loading skin', filename);
+
+	// Load and parse the skin file
+	sys.ReadFile(filename, 'utf8', function (err, data) {
+		// Trim before we split.
+		var lines = data.replace(/^\s+|\s+$/g,'').split(/\r\n/);
+
+		for (var i = 0; i < lines.length; i++) {
+			var split = lines[i].split(/,/);
+
+			var surfaceName = split[0].toLowerCase();
+			if (surfaceName.indexOf('tag_') !== -1) {
+				continue;
+			}
+
+			var shaderName = split[1];
+			var surface = new SkinSurface();
+			surface.name = surfaceName;
+			surface.shader = FindShader(shaderName.replace(/\.[^\.]+$/, ''), LightmapType.UV);
+			skin.surfaces.push(surface);
+		}
+
+		// // Never let a skin have 0 shaders
+		// if (skin.surfaces.length === 0) {
+		// 	return 0;  // use default skin
+		// }
+	});
+
+	return hSkin;
+}
+
+/**
+ * GetSkinByHandle
+ */
+function GetSkinByHandle(hSkin) {
+	if (hSkin < 1 || hSkin >= re.skins.length) {
+		return re.skins[0];
+	}
+
+	return re.skins[hSkin];
+}

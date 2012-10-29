@@ -38,7 +38,7 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	ParseServerinfo();
 
 	cm.LoadMap(cgs.mapname, function () {
-		r.LoadMap(cgs.mapname, function () {
+		re.LoadMap(cgs.mapname, function () {
 			RegisterGraphics();
 			RegisterClients();
 
@@ -84,7 +84,7 @@ function RegisterItemVisuals(itemNum) {
 	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
 
 	for (var i = 0; i < gitem.modelPaths.length; i++) {
-		itemInfo.modelHandles[i] = r.RegisterModel(gitem.modelPaths[i]);
+		itemInfo.modelHandles[i] = re.RegisterModel(gitem.modelPaths[i]);
 	}
 
 	/*if ( item->giType == IT_WEAPON ) {
@@ -146,7 +146,7 @@ function Frame(serverTime) {
 	cg.oldTime = cg.time;
 	
 	// Issue rendering calls.
-	r.RenderScene(cg.refdef);
+	re.RenderScene(cg.refdef);
 	UpdateFPS();
 	ui.RenderView(cg_hud);
 

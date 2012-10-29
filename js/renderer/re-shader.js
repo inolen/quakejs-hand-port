@@ -21,27 +21,37 @@ function InitDefaultShaders() {
 	re.defaultProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
 	re.defaultModelProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['defaultModel.fp']);
 
-	// Register green debug shader.
-	var debugGreenShader = new Shader();
-	var debugGreenShaderStage = new ShaderStage();
-	debugGreenShader.mode = gl.LINE_LOOP;
-	debugGreenShader.name = 'debugGreenShader';
-	debugGreenShaderStage.program = CompileShaderProgram(re.programBodies['world.vp'], re.programBodies['green.fp']);
-	debugGreenShader.stages.push(debugGreenShaderStage);
 
-	RegisterShader('debugGreenShader', debugGreenShader);
+	// Default shader.
+	var shader = re.defaultShader = new Shader();
+	var stage = new ShaderStage();
+	shader.name = '<default>';
+	stage.program = re.defaultModelProgram;
+	stage.texture = FindImage('*default');
+	shader.stages.push(stage);
+	RegisterShader(shader.name, shader);
+
+	// Register green debug shader.
+	shader = new Shader();
+	stage = new ShaderStage();
+	shader.mode = gl.LINE_LOOP;
+	shader.name = 'debugGreenShader';
+	stage.program = CompileShaderProgram(re.programBodies['world.vp'], re.programBodies['green.fp']);
+	shader.stages.push(stage);
+	RegisterShader(shader.name, shader);
 }
 
 /**
  * FindShader
  */
 function FindShader(shaderName, lightmapIndex) {
-	var shader;
-
-	if ((shader = re.compiledShaders[shaderName])) {
-		return shader;
+	for (var i = 0; i < re.shaders.length; i++) {
+		if (re.shaders[i].name === shaderName) {
+			return re.shaders[i];
+		}
 	}
 
+	var shader;
 	if (re.shaderBodies[shaderName]) {
 		var shaderText = re.shaderBodies[shaderName];
 		var q3shader = ParseShader(shaderText, lightmapIndex);
@@ -61,12 +71,9 @@ function FindShader(shaderName, lightmapIndex) {
 		shader.stages.push(stage);
 	}
 
-	return RegisterShader(shaderName, shader);
+	RegisterShader(shaderName, shader);
 
-	// Add the shader to the sorted cache.
-	SortShader(shader);
-
-	return (re.compiledShaders[shaderName] = shader);
+	return shader;
 }
 
 /**
@@ -78,9 +85,12 @@ function RegisterShader(shaderName, shader) {
 		return FindShader('*default');
 	}
 
+	shader.index = re.shaders.length;
+	re.shaders.push(shader);
+
 	SortShader(shader);
 
-	return (re.compiledShaders[shaderName] = shader);
+	return shader.index;
 }
 
 /**
@@ -99,6 +109,22 @@ function SortShader(shader) {
 	}
 	shader.sortedIndex = i+1;
 	sortedShaders[i+1] = shader;
+}
+
+/**
+ * GetShaderByHandle
+ */
+function GetShaderByHandle(hShader) {
+	if (hShader < 0) {
+		console.warn('GetShaderByHandle: out of range hShader \'' + hShader + '\'');
+		return re.defaultShader;
+	}
+	if (hShader >= re.shaders.length) {
+		console.warn('GetShaderByHandle: out of range hShader \'' + hShader + '\'');
+		return re.defaultShader;
+	}
+
+	return re.shaders[hShader];
 }
 
 /**

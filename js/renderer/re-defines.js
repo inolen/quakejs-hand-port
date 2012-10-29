@@ -42,15 +42,20 @@ var RenderLocals = function () {
 	this.viewCount           = 0;                          // incremented every view (twice a scene if portaled)
 	this.frameSceneNum       = 0;                          // zeroed at RE_BeginFrame
 
-	this.models              = [];
-
 	// shaders
 	this.shaderBodies        = {};
 	this.programBodies       = {};
-	this.compiledShaders     = {};
+	this.shaders             = [];
 	this.sortedShaders       = [];
+	this.defaultShader       = null;
 	this.defaultModelProgram = null;
 	this.modelProgram        = null;
+
+	// skins
+	this.skins               = [];
+
+	// models
+	this.models              = [];
 
 	// bbox surface pool
 	this.bboxSurfaces        = new Array(MAX_BBOX_SURFACES);
@@ -164,11 +169,11 @@ var RefEntity = function () {
 	this.oldFrame        = 0;
 	this.backlerp        = 0;
 	// model
-	this.hModel          = -1;
+	this.hModel          = 0;
 	// texturing
-	this.skinNum         = -1;                             // inline skin index
-	this.customSkin      = -1;                             // NULL for default skin
-	this.customShader    = -1;                             // use one image for the entire thing
+	this.skinNum         = 0;                             // inline skin index
+	this.customSkin      = 0;                             // NULL for default skin
+	this.customShader    = 0;                             // use one image for the entire thing
 	// bbox
 	this.mins   = [0, 0, 0];
 	this.maxs   = [0, 0, 0];
@@ -366,6 +371,7 @@ var Shader = function () {
 	this.cull        = gl.FRONT;
 	this.mode        = gl.TRIANGLES;
 	this.stages      = [];
+	this.index       = 0;                                  // assigned internally
 	this.sortedIndex = 0;                                  // assigned internally
 };
 
@@ -411,6 +417,21 @@ var Q3ShaderStage = function () {
 	this.depthFunc     = 'lequal';
 	this.depthWrite    = true;
 	this.isLightmap    = false;
+};
+
+/*********************************************************
+ * Skins
+ *
+ * Allow models to be retextured without modifying the model file.
+ *********************************************************/
+var Skin = function () {
+	this.name     = null;
+	this.surfaces = [];
+};
+
+var SkinSurface = function () {
+	this.name   = null;
+	this.shader = null;
 };
 
 /**********************************************************

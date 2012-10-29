@@ -104,38 +104,29 @@ function AddMd3Surfaces(refent) {
 	for (var i = 0; i < md3.surfaces.length; i++) {
 		var face = md3.surfaces[i];
 
-		/*if ( ent->e.customShader ) {
-			shader = R_GetShaderByHandle( ent->e.customShader );
-		} else if ( ent->e.customSkin > 0 && ent->e.customSkin < tr.numSkins ) {
-			skin_t *skin;
-			int		j;
+		var shader;
 
-			skin = R_GetSkinByHandle( ent->e.customSkin );
+		if (refent.customShader) {
+			shader = GetShaderByHandle(refent.customShader);
+		} else if (refent.customSkin) {
+			var skin = GetSkinByHandle(refent.customSkin);
 
-			// match the surface name to something in the skin file
-			shader = tr.defaultShader;
-			for ( j = 0 ; j < skin->numSurfaces ; j++ ) {
-				// the names have both been lowercased
-				if ( !strcmp( skin->surfaces[j]->name, surface->name ) ) {
-					shader = skin->surfaces[j]->shader;
+			// Match the surface name to something in the skin file.
+			shader = re.defaultShader;
+
+			for (var j = 0 ; j < skin.surfaces.length; j++) {
+				// The names have both been lowercased.
+				if (skin.surfaces[j].name === face.name) {
+					shader = skin.surfaces[j].shader;
 					break;
 				}
 			}
-			if (shader == tr.defaultShader) {
-				ri.Printf( PRINT_DEVELOPER, "WARNING: no shader for surface %s in skin %s\n", surface->name, skin->name);
-			}
-			else if (shader->defaultShader) {
-				ri.Printf( PRINT_DEVELOPER, "WARNING: shader %s in skin %s not found\n", shader->name, skin->name);
-			}
-		} else if ( surface->numShaders <= 0 ) {
-			shader = tr.defaultShader;
+		} else if (face.shaders.length <= 0) {
+			shader = re.defaultShader;
 		} else {
-			md3Shader = (md3Shader_t *) ( (byte *)surface + surface->ofsShaders );
-			md3Shader += ent->e.skinNum % surface->numShaders;
-			shader = tr.shaders[ md3Shader->shaderIndex ];
-		}*/
-
-
+			shader = face.shaders[refent.skinNum % face.shaders.length].shader;
+		}
+		
 		// we will add shadows even if the main object isn't visible in the view
 
 		// stencil shadows can't do personal models unless I polyhedron clip
@@ -157,7 +148,7 @@ function AddMd3Surfaces(refent) {
 
 		// Don't add third_person objects if not viewing through a portal.
 		if (!personalModel) {
-			AddDrawSurf(face, face.shaders[0].shader, refent.index);
+			AddDrawSurf(face, shader, refent.index);
 		}
 	}
 }
