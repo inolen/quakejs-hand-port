@@ -55,19 +55,45 @@ function TestBoxInBrush(tw, brush) {
 		return;
 	}
 
-	// The first six planes are the axial planes, so we only
-	// need to test the remainder.
-	for (var i = 6; i < brush.numsides; i++) {
-		var side = brush.sides[i];
-		var plane = side.plane;
+	if (tw.sphere.use) {
+		// The first six planes are the axial planes, so we only
+		// need to test the remainder.
+		for (var i = 6; i < brush.numsides; i++) {
+			var side = brush.sides[i];
+			var plane = side.plane;
 
-		// adjust the plane distance apropriately for mins/maxs
-		var dist = plane.dist - vec3.dot(tw.offsets[plane.signbits], plane.normal);
-		var d1 = vec3.dot(tw.start, plane.normal) - dist;
+			// Adjust the plane distance apropriately for radius.
+			var dist = plane.dist + tw.sphere.radius;
 
-		// if completely in front of face, no intersection
-		if (d1 > 0) {
-			return;
+			// Find the closest point on the capsule to the plane.
+			var startp = [0, 0, 0];
+			var t = vec3.dot(plane.normal, tw.sphere.offset);
+			if (t > 0) {
+				vec3.subtract(tw.start, tw.sphere.offset, startp);
+			} else {
+				vec3.add(tw.start, tw.sphere.offset, startp);
+			}
+			var d1 = vec3.dot(startp, plane.normal) - dist;
+			// If completely in front of face, no intersection.
+			if (d1 > 0) {
+				return;
+			}
+		}
+	} else {
+		// The first six planes are the axial planes, so we only
+		// need to test the remainder.
+		for (var i = 6; i < brush.numsides; i++) {
+			var side = brush.sides[i];
+			var plane = side.plane;
+
+			// adjust the plane distance apropriately for mins/maxs
+			var dist = plane.dist - vec3.dot(tw.offsets[plane.signbits], plane.normal);
+			var d1 = vec3.dot(tw.start, plane.normal) - dist;
+
+			// if completely in front of face, no intersection
+			if (d1 > 0) {
+				return;
+			}
 		}
 	}
 
@@ -325,55 +351,120 @@ function TraceThroughBrush(tw, brush) {
 		return;
 	}
 
-	//
-	// compare the trace against all planes of the brush
-	// find the latest time the trace crosses a plane towards the interior
-	// and the earliest time the trace crosses a plane towards the exterior
-	//
-	for (var i = 0; i < brush.numsides; i++) {
-		var side = brush.sides[i];
-		var plane = side.plane;
+	if (tw.sphere.use) {
+		// Compare the trace against all planes of the brush.
+		// Find the latest time the trace crosses a plane towards the interior
+		// and the earliest time the trace crosses a plane towards the exterior.
+		for (var i = 0; i < brush.numsides; i++) {
+			var side = brush.sides[i];
+			var plane = side.plane;
 
-		// adjust the plane distance apropriately for mins/maxs
-		var dist = plane.dist - vec3.dot(tw.offsets[plane.signbits], plane.normal);
-		var d1 = vec3.dot(tw.start, plane.normal) - dist;
-		var d2 = vec3.dot(tw.end, plane.normal) - dist;
+			// Adjust the plane distance apropriately for radius.
+			var dist = plane.dist + tw.sphere.radius;
 
-		if (d2 > 0) {
-			getout = true; // endpoint is not in solid
-		}
-		if (d1 > 0) {
-			startout = true;
-		}
+			// Find the closest point on the capsule to the plane.
+			var startp = [0, 0, 0];
+			var endp = [0, 0, 0];
+			var t = vec3.dot(plaen.normal, tw.sphere.offset);
 
-		// if completely in front of face, no intersection with the entire brush
-		if (d1 > 0 && (d2 >= SURFACE_CLIP_EPSILON || d2 >= d1)) {
-			return;
-		}
-
-		// if it doesn't cross the plane, the plane isn't relevent
-		if (d1 <= 0 && d2 <= 0) {
-			continue;
-		}
-
-		// crosses face
-		if (d1 > d2) {	// enter
-			var f = (d1-SURFACE_CLIP_EPSILON) / (d1-d2);
-			if (f < 0) {
-				f = 0;
+			if (t > 0) {
+				vec3.subtract(tw.start, tw.sphere.offset, startp);
+				vec3.subtract(tw.end, tw.sphere.offset, endp);
+			} else {
+				vec3.add(tw.start, tw.sphere.offset, startp);
+				vec3.add(tw.end, tw.sphere.offset, endp);
 			}
-			if (f > enterFrac) {
-				enterFrac = f;
-				clipplane = plane;
-				leadside = side;
+
+			var d1 = vec3.dot(startp, plane.normal ) - dist;
+			var d2 = vec3.dot(endp, plane.normal ) - dist;
+
+			if (d2 > 0) {
+				getout = true;  // endpoint is not in solid
 			}
-		} else {	// leave
-			var f = (d1+SURFACE_CLIP_EPSILON) / (d1-d2);
-			if (f > 1) {
-				f = 1;
+			if (d1 > 0) {
+				startout = true;
 			}
-			if (f < leaveFrac) {
-				leaveFrac = f;
+
+			// If completely in front of face, no intersection with the entire brush.
+			if (d1 > 0 && (d2 >= SURFACE_CLIP_EPSILON || d2 >= d1)) {
+				return;
+			}
+
+			// If it doesn't cross the plane, the plane isn't relevent.
+			if (d1 <= 0 && d2 <= 0 ) {
+				continue;
+			}
+
+			// Crosses face
+			if (d1 > d2) {	// enter
+				var f = (d1 - SURFACE_CLIP_EPSILON) / (d1 - d2);
+				if (f < 0) {
+					f = 0;
+				}
+				if (f > enterFrac) {
+					enterFrac = f;
+					clipplane = plane;
+					leadside = side;
+				}
+			} else {	// leave
+				var f = (d1 + SURFACE_CLIP_EPSILON) / (d1 - d2);
+				if (f > 1) {
+					f = 1;
+				}
+				if (f < leaveFrac) {
+					leaveFrac = f;
+				}
+			}
+		}
+	} else {
+		// Compare the trace against all planes of the brush.
+		// Find the latest time the trace crosses a plane towards the interior
+		// and the earliest time the trace crosses a plane towards the exterior.
+		for (var i = 0; i < brush.numsides; i++) {
+			var side = brush.sides[i];
+			var plane = side.plane;
+
+			// Adjust the plane distance apropriately for mins/maxs.
+			var dist = plane.dist - vec3.dot(tw.offsets[plane.signbits], plane.normal);
+			var d1 = vec3.dot(tw.start, plane.normal) - dist;
+			var d2 = vec3.dot(tw.end, plane.normal) - dist;
+
+			if (d2 > 0) {
+				getout = true;  // endpoint is not in solid
+			}
+			if (d1 > 0) {
+				startout = true;
+			}
+
+			// If completely in front of face, no intersection with the entire brush.
+			if (d1 > 0 && (d2 >= SURFACE_CLIP_EPSILON || d2 >= d1)) {
+				return;
+			}
+
+			// If it doesn't cross the plane, the plane isn't relevent.
+			if (d1 <= 0 && d2 <= 0) {
+				continue;
+			}
+
+			// Crosses face.
+			if (d1 > d2) {  // enter
+				var f = (d1-SURFACE_CLIP_EPSILON) / (d1-d2);
+				if (f < 0) {
+					f = 0;
+				}
+				if (f > enterFrac) {
+					enterFrac = f;
+					clipplane = plane;
+					leadside = side;
+				}
+			} else {  // leave
+				var f = (d1+SURFACE_CLIP_EPSILON) / (d1-d2);
+				if (f > 1) {
+					f = 1;
+				}
+				if (f < leaveFrac) {
+					leaveFrac = f;
+				}
 			}
 		}
 	}
@@ -431,6 +522,16 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 		tw.end[i] = end[i] + offset[i];
 	}
 
+	// If a sphere is already specified.
+	if (sphere) {
+		sphere.clone(tw.sphere);
+	} else {
+		tw.sphere.use = capsule;
+		tw.sphere.radius = (tw.size[1][0] > tw.size[1][2]) ? tw.size[1][2]: tw.size[1][0];
+		tw.sphere.halfheight = tw.size[1][2];
+		vec3.set([0, 0, tw.size[1][2] - tw.sphere.radius], tw.sphere.offset);
+	}
+
 	tw.maxOffset = tw.size[1][0] + tw.size[1][1] + tw.size[1][2];
 
 	// tw.offsets[signbits] = vector to apropriate corner from origin
@@ -469,13 +570,25 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	//
 	// calculate bounds
 	//
-	for (var i = 0 ; i < 3 ; i++) {
-		if (tw.start[i] < tw.end[i]) {
-			tw.bounds[0][i] = tw.start[i] + tw.size[0][i];
-			tw.bounds[1][i] = tw.end[i] + tw.size[1][i];
-		} else {
-			tw.bounds[0][i] = tw.end[i] + tw.size[0][i];
-			tw.bounds[1][i] = tw.start[i] + tw.size[1][i];
+	if (tw.sphere.use) {
+		for (var i = 0; i < 3; i++) {
+			if (tw.start[i] < tw.end[i]) {
+				tw.bounds[0][i] = tw.start[i] - Math.abs(tw.sphere.offset[i]) - tw.sphere.radius;
+				tw.bounds[1][i] = tw.end[i] + Math.abs(tw.sphere.offset[i]) + tw.sphere.radius;
+			} else {
+				tw.bounds[0][i] = tw.end[i] - Math.abs(tw.sphere.offset[i]) - tw.sphere.radius;
+				tw.bounds[1][i] = tw.start[i] + Math.abs(tw.sphere.offset[i]) + tw.sphere.radius;
+			}
+		}
+	} else {
+		for (var i = 0 ; i < 3 ; i++) {
+			if (tw.start[i] < tw.end[i]) {
+				tw.bounds[0][i] = tw.start[i] + tw.size[0][i];
+				tw.bounds[1][i] = tw.end[i] + tw.size[1][i];
+			} else {
+				tw.bounds[0][i] = tw.end[i] + tw.size[0][i];
+				tw.bounds[1][i] = tw.start[i] + tw.size[1][i];
+			}
 		}
 	}
 
@@ -483,7 +596,20 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	// check for position test special case
 	//
 	if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
-		PositionTest(tw);
+		// if (model) {
+		// 	if (model == CAPSULE_MODEL_HANDLE) {
+		// 		if (tw.sphere.use) {
+		// 			TestCapsuleInCapsule(tw, model);
+		// 		}
+		// 		else {
+		// 			TestBoundingBoxInCapsule(tw, model);
+		// 		}
+		// 	} else {
+		// 		TestInLeaf(tw, cmod.leaf);
+		// 	}
+		// } else {
+			PositionTest(tw);
+		// }
 	} else {
 		//
 		// check for point special case
@@ -498,7 +624,19 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 			tw.extents[2] = tw.size[1][2];
 		}
 
-		TraceThroughTree(tw, 0, 0, 1, tw.start, tw.end);
+		// if (model) {
+		// 	if (model === CAPSULE_MODEL_HANDLE) {
+		// 		if (tw.sphere.use) {
+		// 			TraceCapsuleThroughCapsule(tw, model);
+		// 		} else {
+		// 			TraceBoundingBoxThroughCapsule(tw, model);
+		// 		}
+		// 	} else {
+		// 		TraceThroughLeaf(tw, cmod.leaf);
+		// 	}
+		// } else {
+			TraceThroughTree(tw, 0, 0, 1, tw.start, tw.end);
+		// }
 	}
 
 	// generate endpos from the original, unmodified start/end
@@ -506,6 +644,13 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 		tw.trace.endPos[i] = start[i] + tw.trace.fraction * (end[i] - start[i]);
 	}
 	
+	// If allsolid is set (was entirely inside something solid), the plane is not valid.
+	// If fraction == 1.0, we never hit anything, and thus the plane is not valid.
+	// Otherwise, the normal on the plane should have unit length.
+	if (!tw.trace.allsolid && tw.trace.fraction !== 1.0 && vec3.squaredLength(tw.trace.plane.normal) <= 0.9999) {
+		throw new Error('Invalid trace result');
+	}
+
 	return trace;
 }
 
