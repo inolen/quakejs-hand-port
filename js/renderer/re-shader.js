@@ -145,13 +145,15 @@ function ScanAndLoadShaderScripts(callback) {
 
 	var done = 0;
 
+	var shaderLoaded = function () {
+		// Trigger callback if we've processed all the programs.
+		if (++done === allShaders.length) {
+			if (callback) callback();
+		}
+	};
+
 	for (var i = 0; i < allShaders.length; i++) {
-		LoadShaderScript(allShaders[i], function () {			
-			// Trigger callback if we've processed all the programs.
-			if (++done === allShaders.length) {
-				if (callback) callback();
-			}
-		});
+		LoadShaderScript(allShaders[i], shaderLoaded);
 	}
 }
 
@@ -201,13 +203,15 @@ function ScanAndLoadShaderPrograms(callback) {
 
 	var done = 0;
 
+	var programLoaded = function () {
+		// Trigger callback if we've processed all the programs.
+		if (++done === allPrograms.length) {
+			if (callback) return callback();
+		}
+	};
+
 	for (var i = 0; i < allPrograms.length; i++) {
-		LoadShaderProgram(allPrograms[i], function () {
-			// Trigger callback if we've processed all the programs.
-			if (++done === allPrograms.length) {
-				if (callback) return callback();
-			}
-		});
+		LoadShaderProgram(allPrograms[i], programLoaded);
 	}
 }
 
@@ -472,7 +476,7 @@ function ParseShaderStage(shader, tokens) {
 			break;
 		}
 
-		switch(token.toLowerCase()) {
+		switch (token.toLowerCase()) {
 			case 'clampmap':
 				stage.clamp = true;
 			case 'map':
@@ -1015,15 +1019,15 @@ ShaderBuilder.prototype.addWaveform = function(name, wf, timeVar) {
 
 	switch (wf.funcName) {
 		case 'sin':
-		this.statements.push('float ' + name + ' = ' + wf.base.toFixed(4) + ' + sin((' + wf.phase + ' + ' + timeVar + ' * ' + wf.freq.toFixed(4) + ') * 6.283) * ' + wf.amp.toFixed(4) + ';');
-		return;
+			this.statements.push('float ' + name + ' = ' + wf.base.toFixed(4) + ' + sin((' + wf.phase + ' + ' + timeVar + ' * ' + wf.freq.toFixed(4) + ') * 6.283) * ' + wf.amp.toFixed(4) + ';');
+			return;
 		case 'square': funcName = 'square'; this.addSquareFunc(); break;
 		case 'triangle': funcName = 'triangle'; this.addTriangleFunc(); break;
 		case 'sawtooth': funcName = 'fract'; break;
 		case 'inversesawtooth': funcName = '1.0 - fract'; break;
 		default:
-		this.statements.push('float ' + name + ' = 0.0;');
-		return;
+			this.statements.push('float ' + name + ' = 0.0;');
+			return;
 	}
 
 	this.statements.push('float ' + name + ' = ' + wf.base.toFixed(4) + ' + ' + funcName + '(' + wf.phase + ' + ' + timeVar + ' * ' + wf.freq.toFixed(4) + ') * ' + wf.amp.toFixed(4) + ';');
@@ -1033,7 +1037,7 @@ ShaderBuilder.prototype.addSquareFunc = function() {
 	this.addFunction('square', [
 		'float square(float val) {',
 		'   return (mod(floor(val*2.0)+1.0, 2.0) * 2.0) - 1.0;',
-		'}',
+		'}'
 	]);
 };
 
@@ -1041,7 +1045,7 @@ ShaderBuilder.prototype.addTriangleFunc = function() {
 	this.addFunction('triangle', [
 		'float triangle(float val) {',
 		'   return abs(2.0 * fract(val) - 1.0);',
-		'}',
+		'}'
 	]);
 };
 
