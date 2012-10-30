@@ -162,35 +162,39 @@ function TesselateFace(tess, face) {
 	var vertexOffset = tess.numVertexes * 14;
 	var indexOffset = tess.numVertexes;
 
-	for (var i = 0; i < face.vertCount; i++) {
-		var vert = verts[face.vertex + i];
+	// for (var i = 0; i < face.vertCount; i++) {
+	// 	var vert = verts[face.vertex + i];
 
-		tess.vertexes[vertexOffset++] = vert.pos[0];
-		tess.vertexes[vertexOffset++] = vert.pos[1];
-		tess.vertexes[vertexOffset++] = vert.pos[2];
+	// 	tess.vertexes[vertexOffset++] = vert.pos[0];
+	// 	tess.vertexes[vertexOffset++] = vert.pos[1];
+	// 	tess.vertexes[vertexOffset++] = vert.pos[2];
 
-		tess.vertexes[vertexOffset++] = vert.texCoord[0];
-		tess.vertexes[vertexOffset++] = vert.texCoord[1];
+	// 	tess.vertexes[vertexOffset++] = vert.texCoord[0];
+	// 	tess.vertexes[vertexOffset++] = vert.texCoord[1];
 
-		tess.vertexes[vertexOffset++] = vert.lmCoord[0];
-		tess.vertexes[vertexOffset++] = vert.lmCoord[1];
+	// 	tess.vertexes[vertexOffset++] = vert.lmCoord[0];
+	// 	tess.vertexes[vertexOffset++] = vert.lmCoord[1];
 
-		tess.vertexes[vertexOffset++] = vert.normal[0];
-		tess.vertexes[vertexOffset++] = vert.normal[1];
-		tess.vertexes[vertexOffset++] = vert.normal[2];
+	// 	tess.vertexes[vertexOffset++] = vert.normal[0];
+	// 	tess.vertexes[vertexOffset++] = vert.normal[1];
+	// 	tess.vertexes[vertexOffset++] = vert.normal[2];
 
-		tess.vertexes[vertexOffset++] = vert.color[0];
-		tess.vertexes[vertexOffset++] = vert.color[1];
-		tess.vertexes[vertexOffset++] = vert.color[2];
-		tess.vertexes[vertexOffset++] = vert.color[3];
+	// 	tess.vertexes[vertexOffset++] = vert.color[0];
+	// 	tess.vertexes[vertexOffset++] = vert.color[1];
+	// 	tess.vertexes[vertexOffset++] = vert.color[2];
+	// 	tess.vertexes[vertexOffset++] = vert.color[3];
 
-		tess.numVertexes++;
-	}
+	// 	tess.numVertexes++;
+	// }
 
-	for (var i = 0; i < face.meshVertCount; i++) {
-		var meshVert = meshVerts[face.meshVert + i];
-		tess.indexes[tess.numIndexes++] = indexOffset + meshVert;
-	}
+	// for (var i = 0; i < face.meshVertCount; i++) {
+	// 	var meshVert = meshVerts[face.meshVert + i];
+	// 	tess.indexes[tess.numIndexes++] = indexOffset + meshVert;
+	// }
+
+	tess.staticVertexBuffer = re.worldVertexBuffer;
+	tess.staticIndexBuffer  = re.worldIndexBuffer;
+	tess.staticShaderMap = re.worldShaderMap;
 }
 
 /**

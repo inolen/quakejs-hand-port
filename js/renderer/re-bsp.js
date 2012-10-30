@@ -38,7 +38,7 @@ function LoadMap(mapName, callback) {
 			header.lumps[Lumps.LEAFSURFACES]);
 		LoadVisibility(data, header.lumps[Lumps.VISIBILITY]);
 
-		//BuildWorldBuffers();
+		BuildWorldBuffers();
 
 		if (callback) {
 			callback();
@@ -182,7 +182,7 @@ function LoadLightmaps(buffer, lightmapLump) {
 		}
 	}
 
-	CreateImage('*lightmap', re.world.lightmaps, textureSize, textureSize);
+	re.lightmapTexture = CreateImage('*lightmap', re.world.lightmaps, textureSize, textureSize);
 }
 
 /**

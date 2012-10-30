@@ -443,6 +443,10 @@ function BeginSurface(shader) {
 	tess.numVertexes = 0;
 	tess.shader = shader;
 	tess.shaderTime = re.refdef.time / 1000;
+
+	tess.staticVertexBuffer = null;
+	tess.staticIndexBuffer = null;
+	tess.staticShaderMap = null;
 }
 
 /**
@@ -451,16 +455,23 @@ function BeginSurface(shader) {
 function EndSurface() {
 	var shader = tess.shader;
 
-	// Create new views into the underlying ArrayBuffer that represent the
-	// much smaller subset of data we need to actually send to the GPU.
-	var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * 14);
-	var indexView = new Uint16Array(tess.abindexes, 0, tess.numIndexes);
+	var staticPass = tess.staticVertexBuffer && tess.staticIndexBuffer && tess.staticShaderMap;
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, tess.vertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, vertexView, gl.DYNAMIC_DRAW);
+	if (staticPass) {
+		gl.bindBuffer(gl.ARRAY_BUFFER, tess.staticVertexBuffer);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.staticIndexBuffer);
+	} else {
+		// Create new views into the underlying ArrayBuffer that represent the
+		// much smaller subset of data we need to actually send to the GPU.
+		var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * 14);
+		var indexView = new Uint16Array(tess.abindexes, 0, tess.numIndexes);
 
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexView, gl.DYNAMIC_DRAW);
+		gl.bindBuffer(gl.ARRAY_BUFFER, tess.vertexBuffer);
+		gl.bufferData(gl.ARRAY_BUFFER, vertexView, gl.DYNAMIC_DRAW);
+
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexView, gl.DYNAMIC_DRAW);
+	}
 
 	// Bind the surface shader
 	SetShader(shader);
@@ -499,6 +510,11 @@ function EndSurface() {
 			gl.vertexAttribPointer(program.attrib.color, 4, gl.FLOAT, false, 56, 10*4);
 		}
 
-		gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, 0);
+		if (staticPass) {
+			var entry = tess.staticShaderMap[shader.index];
+			gl.drawElements(gl.TRIANGLES, entry.elementCount, gl.UNSIGNED_SHORT, entry.indexOffset);
+		} else {
+			gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, 0);
+		}
 	}
 }

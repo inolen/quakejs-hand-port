@@ -51,6 +51,12 @@ var RenderLocals = function () {
 	this.defaultModelProgram = null;
 	this.modelProgram        = null;
 
+	// textures
+	this.textures            = {};
+	this.defaultTexture      = null;
+	this.lightmapTexture     = null;
+	this.whiteTexture        = null;
+
 	// skins
 	this.skins               = [];
 
@@ -61,9 +67,10 @@ var RenderLocals = function () {
 	this.bboxSurfaces        = new Array(MAX_BBOX_SURFACES);
 	this.bboxSurfaceNum      = 0;
 
-	/*// static vertex buffers
+	// static vertex buffers
 	this.worldVertexBuffer   = null;
-	this.worldIndexBuffer    = null;*/
+	this.worldIndexBuffer    = null;
+	this.worldShaderMap      = null;
 
 	for (var i = 0; i < MAX_BBOX_SURFACES; i++) {
 		this.bboxSurfaces[i] = new BboxSurface();
@@ -251,16 +258,20 @@ var ShaderCommands = function () {
 	this.numIndexes      = 0;
 
 	// Underlying data for the buffers.
-	this.abindexes       = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
 	this.abvertexes      = new ArrayBuffer(SHADER_MAX_VERTEXES * 4 * 14);
+	this.abindexes       = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
 
 	// Views into the underlying buffer.
-	this.indexes         = new Uint16Array(this.abindexes);
 	this.vertexes        = new Float32Array(this.abvertexes);
+	this.indexes         = new Uint16Array(this.abindexes);
 
-	// Actual OpenGL buffers that we upload our buffers to.
-	this.indexBuffer     = gl.createBuffer();
+	// Actual OpenGL buffers that we upload our data to.
 	this.vertexBuffer    = gl.createBuffer();
+	this.indexBuffer     = gl.createBuffer();
+
+	this.staticVertexBuffer = null;
+	this.staticIndexBuffer  = null;
+	this.staticShaderMap    = null;
 
 	// int			fogNum;
 

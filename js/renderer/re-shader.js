@@ -330,10 +330,9 @@ function SetShaderStage(shader, stage, time) {
 	}
 
 	if (stage.program.uniform.lightmap) {
-		var lightmap = FindImage('*lightmap');
 		gl.activeTexture(gl.TEXTURE1);
 		gl.uniform1i(stage.program.uniform.lightmap, 1);
-		gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
+		gl.bindTexture(gl.TEXTURE_2D, re.lightmapTexture.texnum);
 	}
 
 	if (stage.program.uniform.time) {
