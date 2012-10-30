@@ -52,6 +52,7 @@ function FindShader(shaderName, lightmapIndex) {
 	}
 
 	var shader;
+	// TODO We should free up these shader bodies, they occupy ~4 MB of memory for no reason.
 	if (re.shaderBodies[shaderName]) {
 		var shaderText = re.shaderBodies[shaderName];
 		var q3shader = ParseShader(shaderText, lightmapIndex);

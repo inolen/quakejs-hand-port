@@ -3,7 +3,7 @@ var RETRANSMIT_TIMEOUT = 3000;                             // time between conne
 // The parseEntities array must be large enough to hold PACKET_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server
 // it can be un-deltad from the original.
-var MAX_PARSE_ENTITIES = 2048;
+var MAX_PARSE_ENTITIES = PACKET_BACKUP * 64;
 
 // The ClientLocals structure is wiped completely at every
 // new gamestate, potentially several times during an established connection.

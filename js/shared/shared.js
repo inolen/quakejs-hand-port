@@ -12,8 +12,7 @@ var SNAPFLAG_RATE_DELAYED   = 1;
 var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
 var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
 
-var MAX_CLIENTS            = 64;                           // absolute limit
-var MAX_LOCATIONS          = 64;
+var MAX_CLIENTS            = 32;                           // absolute limit
 var MAX_GENTITIES          = 1024;
 
 var ENTITYNUM_NONE         = MAX_GENTITIES-1;

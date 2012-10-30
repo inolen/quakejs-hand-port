@@ -7,7 +7,7 @@ function BuildWorldBuffers() {
 		meshVerts = re.world.meshVerts,
 		shaders = re.world.shaders;
 
-	// Compile vert list
+	// Compile vert list.
 	var vertices = new Array(verts.length*14);
 	var offset = 0;
 	for (var i = 0; i < verts.length; i++) {
@@ -77,16 +77,6 @@ function BuildWorldBuffers() {
 		entry.faces = null; // Don't need this in memory anymore.
 	}
 
-	// for (var i = 0; i < faces.length; i++) {
-	// 	var face = faces[i];
-
-	// 	face.indexOffset = indices.length * 2; // Offset is in bytes
-
-	// 	for(var j = 0; j < face.meshVertCount; j++) {
-	// 		indices.push(face.vertex + meshVerts[face.meshVert + j]);
-	// 	}
-	// }
-
 	re.worldVertexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, re.worldVertexBuffer);
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -94,6 +84,10 @@ function BuildWorldBuffers() {
 	re.worldIndexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, re.worldIndexBuffer);
 	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+	// We no longer need the vert info, let's free up ~8mb of memory.
+	re.world.verts = null;
+	re.world.meshVerts = null;
 }
 
 /**
