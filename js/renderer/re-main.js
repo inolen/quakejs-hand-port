@@ -2,6 +2,7 @@ var sys;
 var com;
 
 var re;
+var backend;
 var gl;
 var viewportUi;
 var r_cull;
@@ -27,6 +28,7 @@ function Init(sysinterface, cominterface) {
 	com = cominterface;
 	
 	re = new RenderLocals();
+	backend = new BackendLocals();
 
 	r_cull = com.AddCvar('r_cull', 1);
 	r_subdivisions = com.AddCvar('r_subdivisions', 4);
@@ -94,7 +96,7 @@ function RotateModelMatrixForEntity(refent, or) {
 	vec3.set(refent.axis[1], or.axis[1]);
 	vec3.set(refent.axis[2], or.axis[2]);
 	
-	var modelMatrix = mat4.create();
+	var modelMatrix = or.modelMatrix;
 	modelMatrix[0] = or.axis[0][0];
 	modelMatrix[4] = or.axis[1][0];
 	modelMatrix[8] = or.axis[2][0];
@@ -115,7 +117,7 @@ function RotateModelMatrixForEntity(refent, or) {
 	modelMatrix[11] = 0;
 	modelMatrix[15] = 1;
 
-	mat4.multiply(re.viewParms.or.modelMatrix, modelMatrix, or.modelMatrix);
+	mat4.multiply(re.viewParms.or.modelMatrix, or.modelMatrix, or.modelMatrix);
 
 	/*// calculate the viewer origin in the model's space
 	// needed for fog, specular, and environment mapping
@@ -330,191 +332,4 @@ function AddDrawSurf(face, shader, entityNum/*, fogIndex, dlightMap*/) {
  */
 function SortDrawSurfaces() {
 	RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
-}
-
-var tess;
-var tessFns = {};
-tessFns[SurfaceType.BAD] = TesselateFace;
-tessFns[SurfaceType.FACE] = TesselateFace;
-tessFns[SurfaceType.GRID] = TesselateFace;
-tessFns[SurfaceType.BBOX] = TesselateBbox;
-tessFns[SurfaceType.MD3] = TesselateMd3;
-
-/**
- * RenderDrawSurfaces
- */
-function RenderDrawSurfaces() {
-	var world = re.world;
-	var parms = re.viewParms;
-	var refdef = re.refdef;
-	var drawSurfs = refdef.drawSurfs;
-	var shaders = world.shaders;
-
-	if (!tess) {
-		tess = new ShaderCommands();
-	}
-
-	gl.viewport(0, 0, re.viewParms.width, re.viewParms.height);
-	gl.clearColor(0.0, 0.0, 0.0, 1.0);
-	gl.clearDepth(1.0);
-
-	gl.enable(gl.DEPTH_TEST);
-	gl.enable(gl.BLEND);
-	gl.enable(gl.CULL_FACE);
-
-	// Clear back buffer but not color buffer (we expect the entire scene to be overwritten)
-	gl.depthMask(true);	
-	gl.clear(gl.DEPTH_BUFFER_BIT);
-
-	//
-	var oldSort = -1;
-	var oldShader = null;
-	var oldEntityNum = -1;
-	var modelMatrix;
-
-	re.currentEntity = null;
-
-	for (var i = 0; i < refdef.numDrawSurfs; i++) {
-		var drawSurf = drawSurfs[i];
-		var face = drawSurf.surface;
-
-		//var fogNum = (drawSurf.sort >> QSORT_FOGNUM_SHIFT) & 31;
-		var shader = re.sortedShaders[(drawSurf.sort >> QSORT_SHADERNUM_SHIFT) % MAX_SHADERS];
-		var entityNum = (drawSurf.sort >> QSORT_ENTITYNUM_SHIFT) % MAX_ENTITIES;
-		//var dlightMap = drawSurf.sort & 3;
-
-		if (drawSurfs.sort === oldSort) {
-			// Fast path, same as previous sort.
-			tessFns[face.surfaceType](tess, face);
-			continue;
-		}
-		oldSort = drawSurf.sort;
-
-		// Change the tess parameters if needed.
-		if (shader != oldShader || entityNum != oldEntityNum) {
-			/*if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
-				foobar = tess.numIndexes;
-				console.log('max indexes', foobar);
-			}
-
-			if (typeof(foobar2) === 'undefined' || tess.numVertexes > foobar2) {
-				foobar2 = tess.numVertexes;
-				console.log('max vertexes', foobar2);
-			}*/
-
-			if (oldShader) {
-				EndSurface();
-			}
-
-			BeginSurface(shader);
-			oldShader = shader;
-		}
-
-		// Change the model view matrix for entity.
-		if (oldEntityNum !== entityNum) {
-			if (entityNum !== ENTITYNUM_WORLD) {
-				re.currentEntity = refdef.refEntities[entityNum];
-				
-				var or = new Orientation();
-				RotateModelMatrixForEntity(re.currentEntity, or);
-				mat4.set(or.modelMatrix, tess.modelMatrix);
-			} else {
-				mat4.set(parms.or.modelMatrix, tess.modelMatrix);
-			}
-
-			oldEntityNum = entityNum;
-		}
-
-		// Add surface.
-		tessFns[face.surfaceType](tess, face);
-	}
-
-	// Draw the contents of the last shader batch.
-	if (oldShader) {
-		EndSurface();
-	}
-}
-
-/**
- * BeginSurface
- */
-function BeginSurface(shader) {
-	tess.numIndexes = 0;
-	tess.numVertexes = 0;
-	tess.shader = shader;
-	tess.shaderTime = re.refdef.time / 1000;
-
-	tess.staticVertexBuffer = null;
-	tess.staticIndexBuffer = null;
-	tess.staticShaderMap = null;
-}
-
-/**
- * EndSurface
- */
-function EndSurface() {
-	var shader = tess.shader;
-
-	var staticPass = tess.staticVertexBuffer && tess.staticIndexBuffer && tess.staticShaderMap;
-
-	if (staticPass) {
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.staticVertexBuffer);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.staticIndexBuffer);
-	} else {
-		// Create new views into the underlying ArrayBuffer that represent the
-		// much smaller subset of data we need to actually send to the GPU.
-		var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * 14);
-		var indexView = new Uint16Array(tess.abindexes, 0, tess.numIndexes);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.vertexBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, vertexView, gl.DYNAMIC_DRAW);
-
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexView, gl.DYNAMIC_DRAW);
-	}
-
-	// Bind the surface shader
-	SetShader(shader);
-	
-	for (var i = 0; i < shader.stages.length; i++) {
-		var stage = shader.stages[i];
-		var program = stage.program;
-
-		SetShaderStage(shader, stage, tess.shaderTime);
-
-		// Set uniforms
-		gl.uniformMatrix4fv(program.uniform.modelViewMat, false, tess.modelMatrix);
-		gl.uniformMatrix4fv(program.uniform.projectionMat, false, re.viewParms.projectionMatrix);
-
-		// Setup vertex attributes
-		gl.enableVertexAttribArray(program.attrib.position);
-		gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 56, 0);
-
-		if (program.attrib.texCoord !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.texCoord);
-			gl.vertexAttribPointer(program.attrib.texCoord, 2, gl.FLOAT, false, 56, 3*4);
-		}
-
-		if (program.attrib.lightCoord !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.lightCoord);
-			gl.vertexAttribPointer(program.attrib.lightCoord, 2, gl.FLOAT, false, 56, 5*4);
-		}
-
-		if (program.attrib.normal !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.normal);
-			gl.vertexAttribPointer(program.attrib.normal, 3, gl.FLOAT, false, 56, 7*4);
-		}
-
-		if (program.attrib.color !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.color);
-			gl.vertexAttribPointer(program.attrib.color, 4, gl.FLOAT, false, 56, 10*4);
-		}
-
-		if (staticPass) {
-			var entry = tess.staticShaderMap[shader.index];
-			gl.drawElements(gl.TRIANGLES, entry.elementCount, gl.UNSIGNED_SHORT, entry.indexOffset);
-		} else {
-			gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, 0);
-		}
-	}
 }

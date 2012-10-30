@@ -31,9 +31,12 @@ var MAX_SHADERS          = (1<<SHADERNUM_BITS);
 var MAX_BBOX_SURFACES = 32;
 
 var RenderLocals = function () {
-	this.world               = null;
+	// frontend
 	this.refdef              = new RefDef();
-	this.viewParms           = null;
+	this.viewParms           = new ViewParms();
+	this.or                  = new Orientation();
+
+	this.world               = null;
 	this.currentEntity       = null;
 
 	this.visCount            = 0;                          // incremented every time a new vis cluster is entered
@@ -76,6 +79,12 @@ var RenderLocals = function () {
 		this.bboxSurfaces[i] = new BboxSurface();
 	}
 };
+
+var BackendLocals = function () {
+	this.refdef    = new RefDef();
+	this.viewParms = new ViewParms();
+	this.or        = new Orientation();
+}
 
 var WorldData = function () {
 	this.name         = null;
@@ -131,6 +140,32 @@ var RefDef = function () {
 	}
 };
 
+RefDef.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new RefDef();
+	}
+
+	to.x = this.x;
+	to.y = this.y;
+	to.width = this.width;
+	to.height = this.height;
+	to.fovX = this.fovX;
+	to.fovY = this.fovY;
+	vec3.set(this.vieworg, to.vieworg);
+	vec3.set(this.viewaxis[0], to.viewaxis[0]);
+	vec3.set(this.viewaxis[1], to.viewaxis[1]);
+	vec3.set(this.viewaxis[2], to.viewaxis[2]);
+	to.time = this.time;
+
+	// Shallow copy is OK.
+	to.drawSurfs = this.drawSurfs;
+	to.numDrawSurfs = this.numDrawSurfs;
+	to.refEntities = this.refEntities;
+	to.numRefEntities = this.numRefEntities;
+
+	return to;
+};
+
 var RefEntityType = {
 	BBOX:                0,
 	MODEL:               1,
@@ -157,7 +192,6 @@ var RenderFx = {
 	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
 	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
 };
-
 
 var RefEntity = function () {
 	this.index           = 0;                              // internal use only
@@ -224,10 +258,25 @@ var Orientation = function () {
 	this.modelMatrix = mat4.create();
 };
 
+Orientation.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new Orientation();
+	}
+
+	vec3.set(this.origin, to.origin);
+	vec3.set(this.axis[0], to.axis[0]);
+	vec3.set(this.axis[1], to.axis[1]);
+	vec3.set(this.axis[2], to.axis[2]);
+	vec3.set(this.viewOrigin, to.viewOrigin);
+	mat4.set(this.modelMatrix, to.modelMatrix);
+
+	return to;
+}
+
 var ViewParms = function () {
 	this.or               = new Orientation();
 	this.world            = new Orientation();
-	this.pvsOrigin        = vec3.create();                 // may be different than or.origin for portals
+	this.pvsOrigin        = [0, 0, 0];                     // may be different than or.origin for portals
 	this.x                = 0;
 	this.y                = 0;
 	this.width            = 0;
@@ -241,8 +290,8 @@ var ViewParms = function () {
 		new Plane()
 	];
 	this.visBounds        = [
-		vec3.create(),
-		vec3.create()
+		[0, 0, 0],
+		[0, 0, 0]
 	];
 	this.zFar             = 0;
 	this.projectionMatrix = mat4.create();
@@ -250,10 +299,37 @@ var ViewParms = function () {
 	this.frameCount       = 0;
 };
 
+ViewParms.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new ViewParms();
+	}
+
+	this.or.clone(to.or);
+	this.world.clone(to.world);
+	vec3.set(this.pvsOrigin, to.pvsOrigin);
+	to.x = this.x;
+	to.y = this.y;
+	to.width = this.width;
+	to.height = this.height;
+	to.fovX = this.fovX;
+	to.fovY = this.fovY;
+	this.frustum[0].clone(to.frustum[0]);
+	this.frustum[1].clone(to.frustum[1]);
+	this.frustum[2].clone(to.frustum[2]);
+	this.frustum[3].clone(to.frustum[3]);
+	vec3.set(this.visBounds[0], to.visBounds[0]);
+	vec3.set(this.visBounds[1], to.visBounds[1]);
+	to.zFar = this.zFar;
+	mat4.set(this.projectionMatrix, to.projectionMatrix);
+	to.frameSceneNum = this.frameSceneNum;
+	to.frameCount = this.frameCount;
+
+	return to;
+};
+
 var ShaderCommands = function () {
 	this.shader          = null;
 	this.shaderTime      = 0;
-	this.modelMatrix     = mat4.create();
 	this.numVertexes     = 0;
 	this.numIndexes      = 0;
 
