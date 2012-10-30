@@ -70,7 +70,7 @@ function MouseDownEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
 	if (!document.pointerLockElement && ev.button === 0) {
-		viewport.requestPointerLock();
+		viewportFrame.requestPointerLock();
 	}
 
 	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });

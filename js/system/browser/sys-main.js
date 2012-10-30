@@ -68,7 +68,7 @@ function ResizeViewport() {
 		viewport.height = screen.height;
 
 		// Request automatically on fullscreen.
-		viewport.requestPointerLock();
+		viewportFrame.requestPointerLock();
 	} else {
 		viewport.width = viewportFrame.offsetWidth;
 		viewport.height = viewportFrame.offsetHeight;
