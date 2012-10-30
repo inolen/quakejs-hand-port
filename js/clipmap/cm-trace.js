@@ -755,11 +755,11 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		RotatePoint(trace.plane.normal, transpose);
 	}
 
-	// Re-calculate the end position of the trace because the trace.endpos
+	// Re-calculate the end position of the trace because the trace.endPos
 	// calculated by Trace could be rotated and have an offset.
-	trace.endpos[0] = start[0] + trace.fraction * (end[0] - start[0]);
-	trace.endpos[1] = start[1] + trace.fraction * (end[1] - start[1]);
-	trace.endpos[2] = start[2] + trace.fraction * (end[2] - start[2]);
+	trace.endPos[0] = start[0] + trace.fraction * (end[0] - start[0]);
+	trace.endPos[1] = start[1] + trace.fraction * (end[1] - start[1]);
+	trace.endPos[2] = start[2] + trace.fraction * (end[2] - start[2]);
 
 	return trace;
 }

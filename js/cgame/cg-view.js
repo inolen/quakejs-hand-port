@@ -45,8 +45,8 @@ function OffsetFirstPersonView() {
  * OffsetThirdPersonView
  */
 var FOCUS_DISTANCE = 512;
-// var mins = [-4, -4, -4];
-// var maxs = [4, 4, 4];
+var thirdPersonCameraMins = [-4, -4, -4];
+var thirdPersonCameraMaxs = [4, 4, 4];
 function OffsetThirdPersonView() {
 	var forward = [0, 0, 0];
 	var right = [0, 0, 0];
@@ -81,22 +81,19 @@ function OffsetThirdPersonView() {
 	vec3.add(view, vec3.scale(forward, -cg_thirdPersonRange() * forwardScale, [0, 0, 0]));
 	vec3.add(view, vec3.scale(right, -cg_thirdPersonRange() * sideScale, [0, 0, 0]));
 
-	// trace a ray from the origin to the viewpoint to make sure the view isn't
-	// in a solid block.  Use an 8 by 8 block to prevent the view from near clipping anything
+	// Trace a ray from the origin to the viewpoint to make sure the view isn't
+	// in a solid block. Use an 8 by 8 block to prevent the view from near clipping anything
+	var trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs, cg.predictedPlayerState.clientNum, ContentMasks.SOLID);
 
-	// if (!cg_cameraMode.integer) {
-	// 	CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
+	if (trace.fraction !== 1.0) {
+		vec3.set(trace.endPos, view);
+		view[2] += (1.0 - trace.fraction) * 32;
 
-	// 	if ( trace.fraction != 1.0 ) {
-	// 		VectorCopy( trace.endpos, view );
-	// 		view[2] += (1.0 - trace.fraction) * 32;
-	// 		// try another trace to this position, because a tunnel may have the ceiling
-	// 		// close enogh that this is poking out
-
-	// 		CG_Trace( &trace, cg.refdef.vieworg, mins, maxs, view, cg.predictedPlayerState.clientNum, MASK_SOLID );
-	// 		VectorCopy( trace.endpos, view );
-	// 	}
-	// }
+		// Try another trace to this position, because a tunnel may have the ceiling
+		// close enogh that this is poking out.
+		trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs, cg.predictedPlayerState.clientNum, ContentMasks.SOLID);
+		vec3.set(trace.endPos, view);
+	}
 
 	vec3.set(view, cg.refdef.vieworg);
 

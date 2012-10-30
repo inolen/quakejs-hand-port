@@ -57,7 +57,7 @@ function FinishSpawningItem(ent) {
 		// allow to ride movers
 		ent->s.groundEntityNum = tr.entityNum;
 
-		G_SetOrigin( ent, tr.endpos );*/
+		G_SetOrigin( ent, tr.endPos );*/
 	//}
 
 	/*// team slaves and targeted items aren't present at start
