@@ -68,7 +68,7 @@ function SetBrushModel(gent, name) {
 		throw new Error('SV: SetBrushModel: ' + name + 'isn\'t a brush model');
 	}
 
-	gent.s.modelindex = parseInt(name.substr(1));
+	gent.s.modelindex = parseInt(name.substr(1), 10);
 
 	var h = cm.InlineModel(gent.s.modelindex);
 	cm.ModelBounds(h, gent.mins, gent.maxs);

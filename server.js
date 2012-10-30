@@ -4,7 +4,7 @@ var express = require('express'),
 
 function main() {
 	var app = express();
-	var server = http.createServer(app)
+	var server = http.createServer(app);
 
 	app.engine('ejs', require('ejs').__express);
 	app.use(express.compress({

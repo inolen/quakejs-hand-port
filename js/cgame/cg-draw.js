@@ -26,7 +26,7 @@ function UpdateFPS() {
 			total = 1;
 		}
 
-		cg_hud.setFPS(parseInt(1000 * FPS_FRAMES / total));
+		cg_hud.setFPS(parseInt(1000 * FPS_FRAMES / total, 10));
 	}
 
 	return 0;

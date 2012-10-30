@@ -173,7 +173,7 @@ function EventLoop() {
 
 		ev = events.shift();
 	}
-};
+}
 
 /**
  * QueueEvent
@@ -181,7 +181,7 @@ function EventLoop() {
 function QueueEvent(ev) {
 	ev.time = sys.GetMilliseconds();
 	events.push(ev);
-};
+}
 
 /**
  * ExecuteCmdText

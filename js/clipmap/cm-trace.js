@@ -46,12 +46,12 @@ function TestBoxInBrush(tw, brush) {
 	}
 
 	// Special test for axial.
-	if (tw.bounds[0][0] > brush.bounds[1][0]
-		|| tw.bounds[0][1] > brush.bounds[1][1]
-		|| tw.bounds[0][2] > brush.bounds[1][2]
-		|| tw.bounds[1][0] < brush.bounds[0][0]
-		|| tw.bounds[1][1] < brush.bounds[0][1]
-		|| tw.bounds[1][2] < brush.bounds[0][2]) {
+	if (tw.bounds[0][0] > brush.bounds[1][0] ||
+		tw.bounds[0][1] > brush.bounds[1][1] ||
+		tw.bounds[0][2] > brush.bounds[1][2] ||
+		tw.bounds[1][0] < brush.bounds[0][0] ||
+		tw.bounds[1][1] < brush.bounds[0][1] ||
+		tw.bounds[1][2] < brush.bounds[0][2]) {
 		return;
 	}
 
@@ -593,7 +593,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	}
 
 	//
-	// check for position test special case
+	// Check for position test special case.
 	//
 	if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
 		// if (model) {
@@ -612,9 +612,9 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 		// }
 	} else {
 		//
-		// check for point special case
+		// Check for point special case.
 		//
-		if (tw.size[0][0] == 0 && tw.size[0][1] == 0 && tw.size[0][2] == 0) {
+		if (tw.size[0][0] === 0 && tw.size[0][1] === 0 && tw.size[0][2] === 0) {
 			tw.isPoint = true;
 			tw.extents = [0, 0, 0];
 		} else {

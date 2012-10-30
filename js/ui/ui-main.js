@@ -99,7 +99,7 @@ function GetAllElementsAtPoint(view, x, y) {
 			x: [offset.left, offset.left + $parent.outerWidth()],
 			y: [offset.top, offset.top + $parent.outerHeight()]
 		};
-		return (x >= range.x[0] && x <= range.x[1]) && (y >= range.y[0] && y <= range.y[1])
+		return (x >= range.x[0] && x <= range.x[1]) && (y >= range.y[0] && y <= range.y[1]);
 	});
 
 	// Make sure to add the origin, lowest element as the first index

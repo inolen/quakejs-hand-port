@@ -372,7 +372,7 @@ function LoadPlanes(buffer, planeLump) {
 	for (var i = 0; i < planes.length; i++) {
 		var plane = planes[i] = new Plane();
 
-		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()]
+		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
 		plane.dist = bb.readFloat();
 		plane.signbits = GetPlaneSignbits(plane);
 		plane.type = PlaneTypeForNormal(plane.normal);

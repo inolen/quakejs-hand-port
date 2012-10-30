@@ -151,7 +151,7 @@ function LinkEntity(gent) {
 	// encode the size into the entityState_t for client prediction
 	/*if (gent.bmodel) {
 		gent.s.solid = SOLID_BMODEL; // a solid_box will never create this value
-	} else 	if (gent.contents & (ContentTypes.SOLID | ContentTypes.BODY)) {
+	} else if (gent.contents & (ContentTypes.SOLID | ContentTypes.BODY)) {
 		// assume that x/y are equal and symetric
 		var i = gEnt.maxs[0];
 		if (i < 1) {

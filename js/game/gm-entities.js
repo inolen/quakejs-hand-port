@@ -4,7 +4,7 @@ var entityEvents = {};
 var keyMap = {
 	'origin': ['s.origin', 'currentOrigin'],
 	'angles': ['s.angles']
-}
+};
 
 /**
  * SpawnEntity

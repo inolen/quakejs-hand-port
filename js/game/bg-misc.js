@@ -105,7 +105,6 @@ function EvaluateTrajectory(tr, atTime, result) {
 			break;
 		default:
 			throw new Error('EvaluateTrajectory: unknown trType: ' + tr.trType);
-			break;
 	}
 }
 

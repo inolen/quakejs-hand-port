@@ -32,7 +32,7 @@ var ClientGame = function () {
 	this.predictedPlayerState = null;
 
 	// item resource info
-	this.itemInfo             = new Array();
+	this.itemInfo             = [];
 
 	// auto rotating items
 	this.autoAngles           = [0, 0, 0];

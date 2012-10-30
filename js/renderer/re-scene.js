@@ -8,7 +8,7 @@ function RenderScene(fd) {
 	}
 	
 	re.refdef.x = fd.x;
-	re.refdef.y = fd.y
+	re.refdef.y = fd.y;
 	re.refdef.width = fd.width;
 	re.refdef.height = fd.height;
 	re.refdef.fovX = fd.fovX;
@@ -21,7 +21,7 @@ function RenderScene(fd) {
 
 	var parms = new ViewParms();
 	parms.x = fd.x;
-	parms.y = fd.y
+	parms.y = fd.y;
 	parms.width = fd.width;
 	parms.height = fd.height;
 	parms.fovX = fd.fovX;

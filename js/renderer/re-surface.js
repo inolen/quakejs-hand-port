@@ -51,7 +51,7 @@ function AddMd3Surfaces(refent) {
 	var model = GetModelByHandle(refent.hModel);
 
 	// Don't add third_person objects if not in a portal.
-	var personalModel = (refent.renderfx & RenderFx.THIRD_PERSON);/* && !tr.viewParms.isPortal*/;
+	var personalModel = (refent.renderfx & RenderFx.THIRD_PERSON);// && !tr.viewParms.isPortal;
 
 	/*if (ent->e.renderfx & RF_WRAP_FRAMES) {
 		ent->e.frame %= tr.currentModel->md3[0]->numFrames;

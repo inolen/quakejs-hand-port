@@ -111,17 +111,17 @@ function MarkLeaves() {
 	var world = re.world;
 	var nodes = world.nodes;
 
-	// current viewcluster
+	// Get current viewcluster.
 	var leaf = PointInLeaf(re.viewParms.pvsOrigin);
-	var cluster = leaf.cluster;
+	var viewCluster = leaf.cluster;
 
-	// if the cluster is the same and the area visibility matrix
-	// hasn't changed, we don't need to mark everything again
-	if (re.viewCluster === cluster) {
+	// If the cluster is the same and the area visibility matrix
+	// hasn't changed, we don't need to mark everything again.
+	if (re.viewCluster === viewCluster) {
 		return;
 	}
 
-	re.viewCluster = cluster;
+	re.viewCluster = viewCluster;
 	re.visCount++;
 
 	/*if (re.viewCluster == -1 ) {

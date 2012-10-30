@@ -54,7 +54,7 @@ var Cvar = function (defaultValue, flags) {
 			if (typeof(defaultValue) === 'string') {
 				currentValue = newValue.toString();
 			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue);
+				currentValue = parseInt(newValue, 10);
 			} else {
 				currentValue = parseFloat(newValue);
 			}
@@ -222,7 +222,7 @@ Trajectory.prototype.clone = function (tr) {
 	vec3.set(this.trDelta, tr.trDelta);
 
 	return tr;
-}
+};
 
 /**********************************************************
  * EntityState is the information conveyed from the server
@@ -329,7 +329,7 @@ function AnglesSubtract(v1, v2, v3) {
 }
 
 function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0))) & 65535);
+	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
 	return a;
 }
 
@@ -404,11 +404,11 @@ function AxisMultiply(in1, in2, out) {
 
 var AngleToShort = function (x) {
 	return (((x)*65536/360) & 65535);
-}
+};
 
 var ShortToAngle = function (x) {
 	return ((x)*(360.0/65536));
-}
+};
 
 /**********************************************************
  * Planes
@@ -426,7 +426,7 @@ var Plane = function () {
 };
 
 function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL))
+	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
 }
 
 function GetPlaneSignbits(p) {

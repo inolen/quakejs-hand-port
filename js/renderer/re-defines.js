@@ -25,7 +25,7 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
 // 14 bits
 // can't be increased without changing bit packing for drawsurfs
 // see QSORT_SHADERNUM_SHIFT
-var SHADERNUM_BITS       = 14
+var SHADERNUM_BITS       = 14;
 var MAX_SHADERS          = (1<<SHADERNUM_BITS);
 
 var MAX_BBOX_SURFACES = 32;
@@ -148,7 +148,7 @@ var RenderFx = {
 	                                                       // with their origin going solid, and allows all parts of a
 	                                                       // player to get the same lighting
 	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
-	WRAP_FRAMES:     0x0200,                               // mod the model frames by the maxframes to allow continuous
+	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
 };
 
 
@@ -311,7 +311,7 @@ var BboxSurface = function () {
 	this.surfaceType = SurfaceType.BBOX;
 	this.shader      = null;
 	this.refent      = null;
-}
+};
 
 var Md3Surface = function () {
 	this.surfaceType   = SurfaceType.MD3;

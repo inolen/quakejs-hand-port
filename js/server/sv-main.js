@@ -46,7 +46,7 @@ function FrameMsec() {
 	var frameMsec = 1000 / fps;
 
 	if (frameMsec < 1) {
-		frameMsec = 1
+		frameMsec = 1;
 	}
 
 	return frameMsec;

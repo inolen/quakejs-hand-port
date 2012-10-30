@@ -2,7 +2,7 @@ var MAX_PACKETLEN = 1400;
 var MAX_LOOPBACK  = 16;
 var loopbacks = [
 	{ msgs: new Array(MAX_LOOPBACK), send: 0 },
-	{ msgs: new Array(MAX_LOOPBACK), send: 0 },
+	{ msgs: new Array(MAX_LOOPBACK), send: 0 }
 ];
 var msgBuffer = new ArrayBuffer(MAX_MSGLEN);
 

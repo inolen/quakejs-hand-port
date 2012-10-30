@@ -62,7 +62,7 @@ function ProcessSnapshots() {
 
 		// we have passed the transition from nextFrame to frame
 		TransitionSnapshot();
-	};
+	}
 
 	// Assert our valid conditions upon exiting
 	if (cg.snap === null) {

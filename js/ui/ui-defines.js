@@ -13,4 +13,4 @@ var UILocals = function () {
 
 var UIImage = function () {
 	this.b64 = null;
-}
+};

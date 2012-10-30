@@ -39,8 +39,8 @@ function GetMilliseconds() {
 	var time = process.hrtime();
 
 	if (!timeBase) {
-		timeBase = time[0] * 1000 + parseInt(time[1] / 1000000);
+		timeBase = time[0] * 1000 + parseInt(time[1] / 1000000, 10);
 	}
 
-	return (time[0] * 1000 + parseInt(time[1] / 1000000)) - timeBase;
+	return (time[0] * 1000 + parseInt(time[1] / 1000000, 10)) - timeBase;
 }

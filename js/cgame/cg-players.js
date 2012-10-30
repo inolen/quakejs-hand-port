@@ -228,9 +228,10 @@ function ParseAnimationFile(filename, ci, callback) {
 
 		// read optional parameters
 		var tokens = new TextTokenizer(data);
+		var token;
 
 		while (!tokens.EOF()) {
-			var token = tokens.next();
+			token = tokens.next();
 			if (!token) {
 				break;
 			}
@@ -315,7 +316,7 @@ function ParseAnimationFile(filename, ci, callback) {
 				break;
 			}
 
-			animations[i].firstFrame = parseInt(token);
+			animations[i].firstFrame = parseInt(token, 10);
 			// leg only frames are adjusted to not count the upper body only frames
 			if (i === Animations.LEGS_WALKCR) {
 				skip = animations[Animations.LEGS_WALKCR].firstFrame - animations[Animations.TORSO_GESTURE].firstFrame;
@@ -328,7 +329,7 @@ function ParseAnimationFile(filename, ci, callback) {
 			if (!token) {
 				break;
 			}
-			animations[i].numFrames = parseInt(token);
+			animations[i].numFrames = parseInt(token, 10);
 			animations[i].reversed = false;
 			animations[i].flipflop = false;
 
@@ -342,13 +343,13 @@ function ParseAnimationFile(filename, ci, callback) {
 			if (!token) {
 				break;
 			}
-			animations[i].loopFrames = parseInt(token);
+			animations[i].loopFrames = parseInt(token, 10);
 
 			token = tokens.next();
 			if (!token) {
 				break;
 			}
-			fps = parseInt(token);
+			fps = parseInt(token, 10);
 			if (!fps) {
 				fps = 1;
 			}
@@ -817,7 +818,7 @@ function RunLerpFrame(ci, lf, newAnimation, speedScale) {
 		} else {
 			lf.frameTime = lf.oldFrameTime + anim.frameLerp;
 		}
-		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale);
+		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale, 10);
 
 		numFrames = anim.numFrames;
 		if (anim.flipflop) {

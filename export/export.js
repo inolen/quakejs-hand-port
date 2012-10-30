@@ -31,7 +31,7 @@ function findFilesByExtension(dir, ext) {
     };
 
     return _find(dir);
-};
+}
 
 console.log('Converting JPEG files');
 var filenames = findFilesByExtension(path, '.jpg');

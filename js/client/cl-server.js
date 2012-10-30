@@ -129,7 +129,7 @@ function MouseMove(cmd) {
  */
 function WritePacket() {
 	var msg = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
-	var serverid = parseInt(cl.serverId);
+	var serverid = parseInt(cl.serverId, 10);
 
 	msg.writeInt(serverid);
 	// Write the last message we received, which can

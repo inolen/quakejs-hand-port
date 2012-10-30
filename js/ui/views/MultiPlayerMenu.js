@@ -21,7 +21,7 @@ function (_, $, Backbone, templateSrc) {
 		events: {
 			'keypress .address': 'updateAddress',
 			'click .connect': 'connect',
-			'click .close': 'closeMenu',
+			'click .close': 'closeMenu'
 		},
 		initialize: function (opts) {
 			var self = this;

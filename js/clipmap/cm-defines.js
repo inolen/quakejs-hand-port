@@ -79,7 +79,7 @@ TraceResults.prototype.clone = function (to) {
 	to.plane = this.plane;
 
 	return to;
-}
+};
 
 var MAX_POSITION_LEAFS = 1024;
 
@@ -105,7 +105,7 @@ Sphere.prototype.clone = function (to) {
 	to.radius = this.radius;
 	to.halfheight = this.halfheight;
 	vec3.set(this.offset, to.offset);
-}
+};
 
 var TraceWork = function () {
 	this.trace     = new TraceResults();

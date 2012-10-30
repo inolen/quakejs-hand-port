@@ -198,11 +198,11 @@ var ContentTypes = {
 var ContentMasks = {
 	ALL:         -1,
 	SOLID:       ContentTypes.SOLID,
-	PLAYERSOLID: ContentTypes.SOLID | ContentTypes.PLAYERCLIP  | ContentTypes.BODY,
+	PLAYERSOLID: ContentTypes.SOLID | ContentTypes.PLAYERCLIP | ContentTypes.BODY,
 	DEADSOLID:   ContentTypes.SOLID | ContentTypes.PLAYERCLIP,
-	WATER:       ContentTypes.WATER | ContentTypes.LAVA        | ContentTypes.SLIME,
-	OPAQUE:      ContentTypes.SOLID | ContentTypes.SLIME       | ContentTypes.LAVA,
-	SHOT:        ContentTypes.SOLID | ContentTypes.BODY       | ContentTypes.CORPSE,
+	WATER:       ContentTypes.WATER | ContentTypes.LAVA | ContentTypes.SLIME,
+	OPAQUE:      ContentTypes.SOLID | ContentTypes.SLIME | ContentTypes.LAVA,
+	SHOT:        ContentTypes.SOLID | ContentTypes.BODY | ContentTypes.CORPSE
 };
 
 var PmoveType = {

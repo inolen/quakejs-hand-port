@@ -99,9 +99,9 @@ function GetUIRenderContext() {
  */
 function GetMilliseconds() {
 	if (window.performance.now) {
-		return parseInt(window.performance.now());
+		return parseInt(window.performance.now(), 10);
 	} else if (window.performance.webkitNow) {
-		return parseInt(window.performance.webkitNow());
+		return parseInt(window.performance.webkitNow(), 10);
 	} else {
 		return Date.now();
 	}

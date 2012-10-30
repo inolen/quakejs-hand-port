@@ -21,7 +21,7 @@ function (_, $, Backbone, templateSrc) {
 		events: {
 			'mouseenter .levels li': 'levelPreview',
 			'click .levels li': 'levelSelect',
-			'click .close': 'closeMenu',
+			'click .close': 'closeMenu'
 
 		},
 		initialize: function (opts) {
@@ -34,26 +34,28 @@ function (_, $, Backbone, templateSrc) {
 			var levels = [ 'q3dm7', 'q3dm17', 'q3tourney2' ];
 			var done = 0;
 
+			var loadLevelshot = function (i) {
+				var levelName = levels[i];
+				var filename = 'levelshots/' + levelName;
+
+				ui.FindImage(filename, function (err, img) {
+					if (!self.model.defaultImg) {
+						self.model.defaultImg = img.data;
+					}
+
+					self.model.levels[i] = {
+						name: levelName,
+						url: img.data
+					};
+
+					if (++done === levels.length) {
+						self.render();
+					}
+				});
+			};
+
 			for (var i = 0; i < levels.length; i++) {
-				(function (i) {
-					var levelName = levels[i];
-					var filename = 'levelshots/' + levelName;
-
-					ui.FindImage(filename, function (err, img) {
-						if (!self.model.defaultImg) {
-							self.model.defaultImg = img.data;
-						}
-
-						self.model.levels[i] = {
-							name: levelName,
-							url: img.data
-						};
-
-						if (++done === levels.length) {
-							self.render();
-						}
-					});
-				}(i));
+				loadLevelshot(i);
 			}
 		},
 		levelPreview: function (ev) {

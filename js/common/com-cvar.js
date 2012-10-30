@@ -7,7 +7,7 @@ function AddCvar(name, defaultValue, flags) {
 	var cvar = new Cvar(defaultValue, flags || 0);
 	cvars[name] = cvar;
 	return cvar;
-};
+}
 
 /**
  * FindCvar

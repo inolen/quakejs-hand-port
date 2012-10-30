@@ -5,7 +5,7 @@ function FindImage(name, callback) {
 	var img;
 
 	// Currently we're only going to support PNG images.
-	name = name.replace(/\.[^/.]+$/, '');
+	name = name.replace(/\.[^\/.]+$/, '');
 	name += '.png';
 
 	if ((img = uil.images[name])) {

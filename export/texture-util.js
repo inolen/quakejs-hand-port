@@ -86,12 +86,12 @@ utils.loadJpegToCanvas = function (filename) {
     ctx.drawImage(img, 0, 0, potWidth, potHeight);
 
     return canvas;
-}
+};
 
 utils.loadTgaToCanvas = function (filename) {
     var buffer = fs.readFileSync(filename);
     return decodeTga(buffer);
-}
+};
 
 utils.writeCanvasToPng = function (canvas, filename) {
     fs.writeFileSync(filename, canvas.toBuffer());

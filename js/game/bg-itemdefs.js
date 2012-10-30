@@ -61,8 +61,8 @@ var itemList = [
 	/**
 	 * WEAPONS
 	 */
-	 new GameItemDesc(
-	 	'weapon_shotgun',
+	new GameItemDesc(
+		'weapon_shotgun',
 		[
 			'models/weapons2/shotgun/shotgun.md3'
 		],

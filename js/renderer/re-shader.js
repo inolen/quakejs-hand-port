@@ -328,7 +328,7 @@ function SetShaderStage(shader, stage, time) {
 	if (stage.program.uniform.lightmap) {
 		var lightmap = FindImage('*lightmap');
 		gl.activeTexture(gl.TEXTURE1);
-		gl.uniform1i(stage.program.uniform.lightmap, 1);;
+		gl.uniform1i(stage.program.uniform.lightmap, 1);
 		gl.bindTexture(gl.TEXTURE_2D, lightmap.texnum);
 	}
 
@@ -423,8 +423,8 @@ function ParseShader(shaderText, lightmapIndex) {
 					case 'additive':   shader.sort = ShaderSort.BLEND1;         break;
 					case 'nearest':    shader.sort = ShaderSort.NEAREST;        break;
 					case 'underwater': shader.sort = ShaderSort.UNDERWATER;     break;
-					default:           shader.sort = parseInt(sort);    break;
-				};
+					default:           shader.sort = parseInt(sort, 10);        break;
+				}
 				break;
 
 			case 'surfaceparm':
@@ -510,24 +510,24 @@ function ParseShaderStage(shader, tokens) {
 				break;
 
 			case 'rgbgen':
-				stage.rgbGen = tokens.next().toLowerCase();;
-				switch(stage.rgbGen) {
+				stage.rgbGen = tokens.next().toLowerCase();
+				switch (stage.rgbGen) {
 					case 'wave':
 						stage.rgbWaveform = ParseWaveform(tokens);
 						if(!stage.rgbWaveform) { stage.rgbGen == 'identity'; }
 						break;
-				};
+				}
 				break;
 
 			case 'alphagen':
 				stage.alphaGen = tokens.next().toLowerCase();
-				switch(stage.alphaGen) {
+				switch (stage.alphaGen) {
 					case 'wave':
 						stage.alphaWaveform = ParseWaveform(tokens);
 						if(!stage.alphaWaveform) { stage.alphaGen == '1.0'; }
 						break;
 					default: break;
-				};
+				}
 				break;
 
 			case 'alphafunc':
@@ -574,7 +574,7 @@ function ParseShaderStage(shader, tokens) {
 			case 'tcmod':
 				var tcMod = {
 					type: tokens.next().toLowerCase()
-				}
+				};
 				switch(tcMod.type) {
 					case 'rotate':
 						tcMod.angle = parseFloat(tokens.next()) * (3.1415/180);
@@ -589,7 +589,7 @@ function ParseShaderStage(shader, tokens) {
 						break;
 					case 'stretch':
 						tcMod.waveform = ParseWaveform(tokens);
-						if(!tcMod.waveform) { tcMod.type == null; }
+						if (!tcMod.waveform) { tcMod.type = null; }
 						break;
 					case 'turb':
 						tcMod.turbulance = {
@@ -599,7 +599,7 @@ function ParseShaderStage(shader, tokens) {
 							freq: parseFloat(tokens.next())
 						};
 						break;
-					default: tcMod.type == null; break;
+					default: tcMod.type = null; break;
 				}
 				if(tcMod.type) {
 					stage.tcMods.push(tcMod);
@@ -731,18 +731,18 @@ function GenerateVertexShader(q3shader, stage) {
 	builder.addAttribs({
 		position: 'vec3',
 		normal: 'vec3',
-		color: 'vec4',
+		color: 'vec4'
 	});
 
 	builder.addVaryings({
 		vTexCoord: 'vec2',
-		vColor: 'vec4',
+		vColor: 'vec4'
 	});
 
 	builder.addUniforms({
 		modelViewMat: 'mat4',
 		projectionMat: 'mat4',
-		time: 'float',
+		time: 'float'
 	});
 
 	if (stage.isLightmap) {
@@ -804,7 +804,7 @@ function GenerateVertexShader(q3shader, stage) {
 					'float r = ' + tcMod.angle.toFixed(4) + ' * time;',
 					'vTexCoord -= vec2(0.5, 0.5);',
 					'vTexCoord = vec2(vTexCoord.s * cos(r) - vTexCoord.t * sin(r), vTexCoord.t * cos(r) + vTexCoord.s * sin(r));',
-					'vTexCoord += vec2(0.5, 0.5);',
+					'vTexCoord += vec2(0.5, 0.5);'
 				]);
 				break;
 			case 'scroll':
@@ -822,7 +822,7 @@ function GenerateVertexShader(q3shader, stage) {
 				builder.addLines([
 					'stretchWave = 1.0 / stretchWave;',
 					'vTexCoord *= stretchWave;',
-					'vTexCoord += vec2(0.5 - (0.5 * stretchWave), 0.5 - (0.5 * stretchWave));',
+					'vTexCoord += vec2(0.5 - (0.5 * stretchWave), 0.5 - (0.5 * stretchWave));'
 				]);
 				break;
 			case 'turb':
@@ -861,12 +861,12 @@ function GenerateFragmentShader(q3shader, stage) {
 
 	builder.addVaryings({
 		vTexCoord: 'vec2',
-		vColor: 'vec4',
+		vColor: 'vec4'
 	});
 
 	builder.addUniforms({
 		texture: 'sampler2D',
-		time: 'float',
+		time: 'float'
 	});
 
 	builder.addLines(['vec4 texColor = texture2D(texture, vTexCoord.st);']);
@@ -946,19 +946,19 @@ var ShaderBuilder = function () {
 
 ShaderBuilder.prototype.addAttribs = function (attribs) {
 	for (var name in attribs) {
-		this.attrib[name] = 'attribute ' + attribs[name] + ' ' + name + ';'
+		this.attrib[name] = 'attribute ' + attribs[name] + ' ' + name + ';';
 	}
 };
 
 ShaderBuilder.prototype.addVaryings = function (varyings) {
 	for (var name in varyings) {
-		this.varying[name] = 'varying ' + varyings[name] + ' ' + name + ';'
+		this.varying[name] = 'varying ' + varyings[name] + ' ' + name + ';';
 	}
 };
 
 ShaderBuilder.prototype.addUniforms = function (uniforms) {
 	for (var name in uniforms) {
-		this.uniform[name] = 'uniform ' + uniforms[name] + ' ' + name + ';'
+		this.uniform[name] = 'uniform ' + uniforms[name] + ' ' + name + ';';
 	}
 };
 
@@ -1010,7 +1010,7 @@ ShaderBuilder.prototype.addWaveform = function(name, wf, timeVar) {
 	if (!timeVar) { timeVar = 'time'; }
 
 	if (typeof(wf.phase) == "number") {
-		wf.phase = wf.phase.toFixed(4)
+		wf.phase = wf.phase.toFixed(4);
 	}
 
 	switch (wf.funcName) {

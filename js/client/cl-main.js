@@ -28,7 +28,7 @@ function Init(sysinterface, cominterface) {
 		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
 		GetSnapshot:                 GetSnapshot,
 		CaptureInput:                CaptureInput
-	}
+	};
 
 	sys = sysinterface;
 	com = cominterface;

@@ -46,9 +46,10 @@ function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
 			continue;
 		}
 
+		var cmodel;
 		if (es.solid == SOLID_BMODEL) {
 			// Special value for bmodel.
-			var cmodel = cm.InlineModel(es.modelIndex);
+			cmodel = cm.InlineModel(es.modelIndex);
 			vec3.set(cent.lerpAngles, angles);
 			bg.EvaluateTrajectory(cent.currentState.pos, cg.physicsTime, origin);
 		} else {
@@ -65,7 +66,7 @@ function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
 			bmins[2] = -zd;
 			bmaxs[2] = zu;
 
-			var cmodel = cm.TempBoxModel(bmins, bmaxs);
+			cmodel = cm.TempBoxModel(bmins, bmaxs);
 			vec3.set(angles, [0, 0, 0]);
 			vec3.set(cent.lerpOrigin, origin);
 		}
@@ -159,8 +160,8 @@ function PredictPlayerState() {
 	}
 
 	if (cg_predict()) {
- 		InterpolatePlayerState(true);
- 		return;
+		InterpolatePlayerState(true);
+		return;
 	}
 
 	// Save the state before the pmove so we can detect transitions.
