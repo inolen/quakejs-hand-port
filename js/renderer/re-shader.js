@@ -18,15 +18,14 @@ function InitShaders(callback) {
  */
 function InitDefaultShaders() {
 	// These default programs are used to render textures without a shader.
-	re.defaultProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
-	re.defaultModelProgram = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['defaultModel.fp']);
-
+	re.programDefault = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
+	re.programNoLightmap = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['nolightmap.fp']);
 
 	// Default shader.
 	var shader = re.defaultShader = new Shader();
 	var stage = new ShaderStage();
 	shader.name = '<default>';
-	stage.program = re.defaultModelProgram;
+	stage.program = re.programDefault;
 	stage.texture = FindImage('*default');
 	shader.stages.push(stage);
 	RegisterShader(shader.name, shader);
@@ -36,7 +35,7 @@ function InitDefaultShaders() {
 	stage = new ShaderStage();
 	shader.mode = gl.LINE_LOOP;
 	shader.name = 'debugGreenShader';
-	stage.program = CompileShaderProgram(re.programBodies['world.vp'], re.programBodies['green.fp']);
+	stage.program = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['green.fp']);
 	shader.stages.push(stage);
 	RegisterShader(shader.name, shader);
 }
@@ -65,10 +64,13 @@ function FindShader(shaderName, lightmapIndex) {
 
 		var stage = new ShaderStage();
 		stage.texture = FindImage(shader.name);
-		stage.program = lightmapIndex === LightmapType.VERTEX || lightmapIndex === LightmapType.NONE ?
-			re.defaultModelProgram :
-			re.defaultProgram;
 
+		if (lightmapIndex === LightmapType.VERTEX || lightmapIndex === LightmapType.NONE) {
+			stage.program = re.programNoLightmap;
+		} else {
+			stage.program = re.programDefault;
+		}
+		
 		shader.stages.push(stage);
 	}
 
@@ -198,8 +200,8 @@ function LoadShaderScript(path, callback) {
  */
 function ScanAndLoadShaderPrograms(callback) {
 	var allPrograms = [
-		'programs/default.vp', 'programs/world.vp',
-		'programs/default.fp', 'programs/defaultModel.fp', 'programs/green.fp'
+		'programs/default.vp',
+		'programs/default.fp', 'programs/nolightmap.fp', 'programs/green.fp'
 	];
 
 	var done = 0;
@@ -243,6 +245,10 @@ function CompileShaderProgram(vertexSrc, fragmentSrc) {
 	gl.compileShader(fragmentShader);
 
 	if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+		console.debug('Could not compile fragment shader:');
+		console.debug(gl.getShaderInfoLog(fragmentShader));
+		console.debug(vertexSrc);
+		console.debug(fragmentSrc);
 		gl.deleteShader(fragmentShader);
 		return null;
 	}
@@ -252,6 +258,10 @@ function CompileShaderProgram(vertexSrc, fragmentSrc) {
 	gl.compileShader(vertexShader);
 
 	if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+		console.debug('Could not compile vertex shader:');
+		console.debug(gl.getShaderInfoLog(vertexShader));
+		console.debug(vertexSrc);
+		console.debug(fragmentSrc);
 		gl.deleteShader(vertexShader);
 		return null;
 	}
@@ -262,6 +272,9 @@ function CompileShaderProgram(vertexSrc, fragmentSrc) {
 	gl.linkProgram(shaderProgram);
 
 	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+		console.debug('Could not link shaders');
+		console.debug(vertexSrc);
+		console.debug(fragmentSrc);
 		gl.deleteProgram(shaderProgram);
 		gl.deleteShader(vertexShader);
 		gl.deleteShader(fragmentShader);
@@ -284,61 +297,6 @@ function CompileShaderProgram(vertexSrc, fragmentSrc) {
 	}
 
 	return shaderProgram;
-}
-
-/**
- * SetShader
- */
-function SetShader(shader) {
-	if (shader.cull) {
-		gl.enable(gl.CULL_FACE);
-		gl.cullFace(shader.cull);
-	} else {
-		gl.disable(gl.CULL_FACE);
-	}
-}
-
-/**
- * SetShaderStage
- */
-function SetShaderStage(shader, stage, time) {
-	if (!time || isNaN(time)) {
-		throw new Error('Invalid time for shader');
-	}
-	
-	gl.blendFunc(stage.blendSrc, stage.blendDest);
-	if (stage.depthWrite) {
-		gl.depthMask(true);
-	} else {
-		gl.depthMask(false);
-	}
-	gl.depthFunc(stage.depthFunc);
-
-	gl.useProgram(stage.program);
-
-	var texture;
-	if (stage.animFreq) {
-		var animFrame = Math.floor(time * stage.animFreq) % stage.animTextures.length;
-		texture = stage.animTextures[animFrame];
-	} else {
-		texture = stage.texture;
-	}
-
-	if (texture) {
-		gl.activeTexture(gl.TEXTURE0);
-		gl.uniform1i(stage.program.uniform.texture, 0);
-		gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
-	}
-
-	if (stage.program.uniform.lightmap) {
-		gl.activeTexture(gl.TEXTURE1);
-		gl.uniform1i(stage.program.uniform.lightmap, 1);
-		gl.bindTexture(gl.TEXTURE_2D, re.lightmapTexture.texnum);
-	}
-
-	if (stage.program.uniform.time) {
-		gl.uniform1f(stage.program.uniform.time, time);
-	}
 }
 
 /**********************************************************
@@ -489,7 +447,7 @@ function ParseShaderStage(shader, tokens) {
 				} else if (stage.map == '$lightmap') {
 					stage.isLightmap = true;
 
-					if ( shader.lightmapIndex < 0) {
+					if (shader.lightmapIndex < 0) {
 						stage.texture = FindImage('*white');
 					} else {
 						stage.texture = FindImage('*lightmap');
@@ -664,11 +622,11 @@ function TranslateShader(q3shader) {
 		stage.depthFunc = TranslateDepthFunc(q3stage.depthFunc);
 		stage.depthWrite = q3stage.depthWrite;
 
-		var vertexSrc = GenerateVertexShader(q3shader, q3stage);
-		var fragmentSrc = GenerateFragmentShader(q3shader, q3stage);
-		stage.program = CompileShaderProgram(vertexSrc, fragmentSrc);
-		stage.vertexSrc = vertexSrc;
-		stage.fragmentSrc = fragmentSrc;
+		var vs = GenerateVertexShader(q3shader, q3stage);
+		var fs = GenerateFragmentShader(q3shader, q3stage);
+		// TODO affect these based on ShaderFlag.MESH, maybe GenerateVertexShader should
+		// take in a root builder?
+		stage.program = CompileShaderProgram(vs.getSource(), fs.getSource());
 
 		shader.stages.push(stage);
 	}
@@ -733,8 +691,10 @@ function GenerateVertexShader(q3shader, stage) {
 	var builder = new ShaderBuilder();
 
 	builder.addAttribs({
-		position: 'vec3',
-		normal: 'vec3',
+		xyz: 'vec3',
+		xyz2: 'vec3',
+		norm: 'vec3',
+		norm2: 'vec3',
 		color: 'vec4'
 	});
 
@@ -746,6 +706,7 @@ function GenerateVertexShader(q3shader, stage) {
 	builder.addUniforms({
 		modelViewMat: 'mat4',
 		projectionMat: 'mat4',
+		backlerp: 'float',
 		time: 'float'
 	});
 
@@ -755,7 +716,14 @@ function GenerateVertexShader(q3shader, stage) {
 		builder.addAttribs({ texCoord: 'vec2' });
 	}
 
-	builder.addLines(['vec3 defPosition = position;']);
+	builder.addLines([
+		'vec3 position = xyz;',
+		'vec3 normal = norm;',
+		'if (backlerp != 0.0) {',
+		'	position = xyz + backlerp * (xyz2 - xyz);',
+		'	normal = norm + backlerp * (norm2 - norm);',
+		'}'
+	]);
 
 	for(var i = 0; i < q3shader.vertexDeforms.length; ++i) {
 		var deform = q3shader.vertexDeforms[i];
@@ -766,7 +734,7 @@ function GenerateVertexShader(q3shader, stage) {
 				var offName = 'deformOff' + i;
 
 				builder.addLines([
-					'float ' + offName + ' = (position.x + position.y + position.z) * ' + deform.spread.toFixed(4) + ';'
+					'float ' + offName + ' = (xyz.x + xyz.y + xyz.z) * ' + deform.spread.toFixed(4) + ';'
 				]);
 
 				var phase = deform.waveform.phase;
@@ -774,13 +742,13 @@ function GenerateVertexShader(q3shader, stage) {
 				builder.addWaveform(name, deform.waveform);
 				deform.waveform.phase = phase;
 
-				builder.addLines(['defPosition += normal * ' + name + ';']);
+				builder.addLines(['position += normal * ' + name + ';']);
 				break;
 			default: break;
 		}
 	}
 
-	builder.addLines(['vec4 worldPosition = modelViewMat * vec4(defPosition, 1.0);']);
+	builder.addLines(['vec4 worldPosition = modelViewMat * vec4(position, 1.0);']);
 	builder.addLines(['vColor = color;']);
 
 	if (stage.tcGen == 'environment') {
@@ -833,8 +801,8 @@ function GenerateVertexShader(q3shader, stage) {
 				var tName = 'turbTime' + i;
 				builder.addLines([
 					'float ' + tName + ' = ' + tcMod.turbulance.phase.toFixed(4) + ' + time * ' + tcMod.turbulance.freq.toFixed(4) + ';',
-					'vTexCoord.s += sin( ( ( position.x + position.z )* 1.0/128.0 * 0.125 + ' + tName + ' ) * 6.283) * ' + tcMod.turbulance.amp.toFixed(4) + ';',
-					'vTexCoord.t += sin( ( position.y * 1.0/128.0 * 0.125 + ' + tName + ' ) * 6.283) * ' + tcMod.turbulance.amp.toFixed(4) + ';'
+					'vTexCoord.s += sin( ( ( xyz.x + xyz.z )* 1.0/128.0 * 0.125 + ' + tName + ' ) * 6.283) * ' + tcMod.turbulance.amp.toFixed(4) + ';',
+					'vTexCoord.t += sin( ( xyz.y * 1.0/128.0 * 0.125 + ' + tName + ' ) * 6.283) * ' + tcMod.turbulance.amp.toFixed(4) + ';'
 				]);
 				break;
 			default:
@@ -842,7 +810,7 @@ function GenerateVertexShader(q3shader, stage) {
 		}
 	}
 
-	switch(stage.alphaGen) {
+	switch (stage.alphaGen) {
 		case 'lightingspecular':
 			builder.addAttribs({ lightCoord: 'vec2' });
 			builder.addVaryings({ vLightCoord: 'vec2' });
@@ -854,7 +822,7 @@ function GenerateVertexShader(q3shader, stage) {
 
 	builder.addLines(['gl_Position = projectionMat * worldPosition;']);
 
-	return builder.getSource();
+	return builder;
 }
 
 /**
@@ -931,7 +899,7 @@ function GenerateFragmentShader(q3shader, stage) {
 
 	builder.addLines(['gl_FragColor = vec4(rgb, alpha);']);
 
-	return builder.getSource();
+	return builder;
 }
 
 
@@ -1021,10 +989,20 @@ ShaderBuilder.prototype.addWaveform = function(name, wf, timeVar) {
 		case 'sin':
 			this.statements.push('float ' + name + ' = ' + wf.base.toFixed(4) + ' + sin((' + wf.phase + ' + ' + timeVar + ' * ' + wf.freq.toFixed(4) + ') * 6.283) * ' + wf.amp.toFixed(4) + ';');
 			return;
-		case 'square': funcName = 'square'; this.addSquareFunc(); break;
-		case 'triangle': funcName = 'triangle'; this.addTriangleFunc(); break;
-		case 'sawtooth': funcName = 'fract'; break;
-		case 'inversesawtooth': funcName = '1.0 - fract'; break;
+		case 'square':
+			funcName = 'square';
+			this.addSquareFunc();
+			break;
+		case 'triangle':
+			funcName = 'triangle';
+			this.addTriangleFunc();
+			break;
+		case 'sawtooth':
+			funcName = 'fract';
+			break;
+		case 'inversesawtooth':
+			funcName = '1.0 - fract';
+			break;
 		default:
 			this.statements.push('float ' + name + ' = 0.0;');
 			return;
@@ -1048,7 +1026,6 @@ ShaderBuilder.prototype.addTriangleFunc = function() {
 		'}'
 	]);
 };
-
 /**
  * ShaderTokenizer
  * 

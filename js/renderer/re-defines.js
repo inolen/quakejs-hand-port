@@ -51,8 +51,8 @@ var RenderLocals = function () {
 	this.shaders             = [];
 	this.sortedShaders       = [];
 	this.defaultShader       = null;
-	this.defaultModelProgram = null;
-	this.modelProgram        = null;
+	this.programDefault      = null;
+	this.programNoLightmap   = null;
 
 	// textures
 	this.textures            = {};
@@ -327,27 +327,37 @@ ViewParms.prototype.clone = function (to) {
 	return to;
 };
 
+var RenderBufferDef = function (dynamic) {
+	this.dynamic = dynamic;
+
+
+	this.stride       = 0;
+	this.attrs        = {};
+
+	// Only used by dynamic buffers.
+
+};
+
 var ShaderCommands = function () {
-	this.shader          = null;
-	this.shaderTime      = 0;
-	this.numVertexes     = 0;
-	this.numIndexes      = 0;
+	this.shader             = null;
+	this.shaderTime         = 0;
 
-	// Underlying data for the buffers.
-	this.abvertexes      = new ArrayBuffer(SHADER_MAX_VERTEXES * 4 * 14);
-	this.abindexes       = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
+	// Buffers used for dynamic rendering (e.g. debug bboxes)
+	this.numVertexes        = 0;
+	this.abvertexes         = new ArrayBuffer(SHADER_MAX_VERTEXES * 4 * 14); // underlying data
+	this.abindexes          = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
+	this.vertexes           = new Float32Array(this.abvertexes);             // views you use to manipulate the data
+	this.indexes            = new Uint16Array(this.abindexes);
+	this.vertexBuffer       = gl.createBuffer();
+	this.indexBuffer        = gl.createBuffer();
 
-	// Views into the underlying buffer.
-	this.vertexes        = new Float32Array(this.abvertexes);
-	this.indexes         = new Uint16Array(this.abindexes);
-
-	// Actual OpenGL buffers that we upload our data to.
-	this.vertexBuffer    = gl.createBuffer();
-	this.indexBuffer     = gl.createBuffer();
-
-	this.staticVertexBuffer = null;
-	this.staticIndexBuffer  = null;
-	this.staticShaderMap    = null;
+	// What we actually bind and render with.
+	this.activeVertexBuffer = null;
+	this.activeIndexBuffer  = null;
+	this.numIndexes         = 0;
+	this.indexOffset        = 0;
+	this.stride             = 0;
+	this.attrs              = null;
 
 	// int			fogNum;
 
@@ -453,13 +463,13 @@ var Texture = function () {
 
 // This is the final, compiled shader struct we use in the game.
 var Shader = function () {
-	this.name        = null;
-	this.sort        = ShaderSort.OPAQUE;
-	this.cull        = gl.FRONT;
-	this.mode        = gl.TRIANGLES;
-	this.stages      = [];
-	this.index       = 0;                                  // assigned internally
-	this.sortedIndex = 0;                                  // assigned internally
+	this.name          = null;
+	this.sort          = ShaderSort.OPAQUE;
+	this.cull          = gl.FRONT;
+	this.mode          = gl.TRIANGLES;
+	this.stages        = [];
+	this.index         = 0;                                // assigned internally
+	this.sortedIndex   = 0;                                // assigned internally
 };
 
 var ShaderStage = function () {

@@ -86,6 +86,7 @@ function RenderDrawSurfaces() {
 				re.currentEntity = refdef.refEntities[entityNum];
 				RotateModelMatrixForEntity(re.currentEntity, backend.or);
 			} else {
+				re.currentEntity = null;
 				parms.or.clone(backend.or);
 			}
 
@@ -106,14 +107,13 @@ function RenderDrawSurfaces() {
  * BeginSurface
  */
 function BeginSurface(shader) {
-	tess.numIndexes = 0;
-	tess.numVertexes = 0;
 	tess.shader = shader;
 	tess.shaderTime = backend.refdef.time / 1000;
-
-	tess.staticVertexBuffer = null;
-	tess.staticIndexBuffer = null;
-	tess.staticShaderMap = null;
+	tess.numVertexes = 0;
+	tess.activeVertexBuffer = tess.vertexBuffer;
+	tess.activeIndexBuffer = tess.indexBuffer;
+	tess.numIndexes = 0;
+	tess.indexOffset = 0;
 }
 
 /**
@@ -122,22 +122,22 @@ function BeginSurface(shader) {
 function EndSurface() {
 	var shader = tess.shader;
 
-	var staticPass = tess.staticVertexBuffer && tess.staticIndexBuffer && tess.staticShaderMap;
-
-	if (staticPass) {
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.staticVertexBuffer);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.staticIndexBuffer);
-	} else {
+	// If we're using the scratch buffers.
+	if (tess.activeVertexBuffer === tess.vertexBuffer &&
+		tess.activeIndexBuffer === tess.indexBuffer) {
 		// Create new views into the underlying ArrayBuffer that represent the
 		// much smaller subset of data we need to actually send to the GPU.
-		var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * 14);
+		var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * (tess.stride/4));
 		var indexView = new Uint16Array(tess.abindexes, 0, tess.numIndexes);
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.vertexBuffer);
+		gl.bindBuffer(gl.ARRAY_BUFFER, tess.activeVertexBuffer);
 		gl.bufferData(gl.ARRAY_BUFFER, vertexView, gl.DYNAMIC_DRAW);
 
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.indexBuffer);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.activeIndexBuffer);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexView, gl.DYNAMIC_DRAW);
+	} else {
+		gl.bindBuffer(gl.ARRAY_BUFFER, tess.activeVertexBuffer);
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.activeIndexBuffer);
 	}
 
 	// Bind the surface shader
@@ -145,43 +145,92 @@ function EndSurface() {
 	
 	for (var i = 0; i < shader.stages.length; i++) {
 		var stage = shader.stages[i];
-		var program = stage.program;
 
-		SetShaderStage(shader, stage, tess.shaderTime);
+		SetShaderStage(shader, stage, tess.stride, tess.attrs);
 
-		// Set uniforms
-		gl.uniformMatrix4fv(program.uniform.modelViewMat, false, backend.or.modelMatrix);
-		gl.uniformMatrix4fv(program.uniform.projectionMat, false, backend.viewParms.projectionMatrix);
+		gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, tess.indexOffset);
+	}
+}
 
-		// Setup vertex attributes
-		gl.enableVertexAttribArray(program.attrib.position);
-		gl.vertexAttribPointer(program.attrib.position, 3, gl.FLOAT, false, 56, 0);
+/**
+ * SetShader
+ */
+function SetShader(shader) {
+	if (shader.cull) {
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(shader.cull);
+	} else {
+		gl.disable(gl.CULL_FACE);
+	}
+}
 
-		if (program.attrib.texCoord !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.texCoord);
-			gl.vertexAttribPointer(program.attrib.texCoord, 2, gl.FLOAT, false, 56, 3*4);
+/**
+ * SetShaderStage
+ */
+function SetShaderStage(shader, stage, stride, attrs) {
+	var program = stage.program;
+
+	// Sanity check after being burned so many times by this.
+	if (!tess.shaderTime || isNaN(tess.shaderTime)) {
+		throw new Error('Invalid time for shader');
+	}
+	
+	gl.blendFunc(stage.blendSrc, stage.blendDest);
+
+	if (stage.depthWrite) {
+		gl.depthMask(true);
+	} else {
+		gl.depthMask(false);
+	}
+	gl.depthFunc(stage.depthFunc);
+
+	gl.useProgram(program);
+
+	var texture;
+	if (stage.animFreq) {
+		var animFrame = Math.floor(tess.shaderTime * stage.animFreq) % stage.animTextures.length;
+		texture = stage.animTextures[animFrame];
+	} else {
+		texture = stage.texture;
+	}
+
+	if (texture) {
+		gl.activeTexture(gl.TEXTURE0);
+		gl.uniform1i(program.uniform.texture, 0);
+		gl.bindTexture(gl.TEXTURE_2D, texture.texnum);
+	}
+
+	// Set uniforms
+	gl.uniformMatrix4fv(program.uniform.modelViewMat, false, backend.or.modelMatrix);
+	gl.uniformMatrix4fv(program.uniform.projectionMat, false, backend.viewParms.projectionMatrix);
+
+	if (program.uniform.backlerp !== undefined) {
+		var refent = re.currentEntity;
+		var backlerp = !refent || refent.oldFrame === refent.frame ? 0 : refent.backlerp;
+		gl.uniform1f(program.uniform.backlerp, backlerp);
+	}
+
+	if (program.uniform.lightmap !== undefined) {
+		gl.activeTexture(gl.TEXTURE1);
+		gl.uniform1i(program.uniform.lightmap, 1);
+		gl.bindTexture(gl.TEXTURE_2D, re.lightmapTexture.texnum);
+	}
+
+	if (program.uniform.time !== undefined) {
+		gl.uniform1f(program.uniform.time, tess.shaderTime);
+	}
+
+	// Setup vertex attributes.
+	for (var name in attrs) {
+		if (!attrs.hasOwnProperty(name)) {
+			continue;
 		}
 
-		if (program.attrib.lightCoord !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.lightCoord);
-			gl.vertexAttribPointer(program.attrib.lightCoord, 2, gl.FLOAT, false, 56, 5*4);
-		}
+		var tuple = attrs[name];
 
-		if (program.attrib.normal !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.normal);
-			gl.vertexAttribPointer(program.attrib.normal, 3, gl.FLOAT, false, 56, 7*4);
-		}
-
-		if (program.attrib.color !== undefined) {
-			gl.enableVertexAttribArray(program.attrib.color);
-			gl.vertexAttribPointer(program.attrib.color, 4, gl.FLOAT, false, 56, 10*4);
-		}
-
-		if (staticPass) {
-			var entry = tess.staticShaderMap[shader.index];
-			gl.drawElements(gl.TRIANGLES, entry.elementCount, gl.UNSIGNED_SHORT, entry.indexOffset);
-		} else {
-			gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, 0);
+		if (program.attrib[name] !== undefined) {
+			gl.enableVertexAttribArray(program.attrib[name]);
+			gl.vertexAttribPointer(program.attrib[name], tuple[0], gl.FLOAT, false, stride, tuple[1]);
 		}
 	}
 }

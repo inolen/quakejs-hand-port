@@ -155,12 +155,24 @@ function AddMd3Surfaces(refent) {
 
 /**
  * TesselateFace
+ *
+ * Stubbed out, we render straight from the pre-compiled static VBO.
  */
+var worldAttrs = {
+	xyz:        [3,  0],
+	xyz2:       [3,  0],
+	norm:       [3, 12],
+	norm2:      [3, 12],
+	texCoord:   [2, 24],
+	lightCoord: [2, 32],
+	color:      [4, 40]
+};
+
 function TesselateFace(tess, face) {
-	var verts = re.world.verts;
-	var meshVerts = re.world.meshVerts;
-	var vertexOffset = tess.numVertexes * 14;
-	var indexOffset = tess.numVertexes;
+	// var verts = re.world.verts;
+	// var meshVerts = re.world.meshVerts;
+	// var vertexOffset = tess.numVertexes * 14;
+	// var indexOffset = tess.numVertexes;
 
 	// for (var i = 0; i < face.vertCount; i++) {
 	// 	var vert = verts[face.vertex + i];
@@ -169,15 +181,15 @@ function TesselateFace(tess, face) {
 	// 	tess.vertexes[vertexOffset++] = vert.pos[1];
 	// 	tess.vertexes[vertexOffset++] = vert.pos[2];
 
+	// 	tess.vertexes[vertexOffset++] = vert.normal[0];
+	// 	tess.vertexes[vertexOffset++] = vert.normal[1];
+	// 	tess.vertexes[vertexOffset++] = vert.normal[2];
+
 	// 	tess.vertexes[vertexOffset++] = vert.texCoord[0];
 	// 	tess.vertexes[vertexOffset++] = vert.texCoord[1];
 
 	// 	tess.vertexes[vertexOffset++] = vert.lmCoord[0];
 	// 	tess.vertexes[vertexOffset++] = vert.lmCoord[1];
-
-	// 	tess.vertexes[vertexOffset++] = vert.normal[0];
-	// 	tess.vertexes[vertexOffset++] = vert.normal[1];
-	// 	tess.vertexes[vertexOffset++] = vert.normal[2];
 
 	// 	tess.vertexes[vertexOffset++] = vert.color[0];
 	// 	tess.vertexes[vertexOffset++] = vert.color[1];
@@ -192,40 +204,77 @@ function TesselateFace(tess, face) {
 	// 	tess.indexes[tess.numIndexes++] = indexOffset + meshVert;
 	// }
 
-	tess.staticVertexBuffer = re.worldVertexBuffer;
-	tess.staticIndexBuffer  = re.worldIndexBuffer;
-	tess.staticShaderMap = re.worldShaderMap;
+	var shader = tess.shader;
+	var entry = re.worldShaderMap[shader.index];
+
+	tess.stride = 56;
+	tess.attrs = worldAttrs;
+	tess.activeVertexBuffer = re.worldVertexBuffer;
+	tess.activeIndexBuffer = re.worldIndexBuffer;
+	tess.numIndexes = entry.elementCount;
+	tess.indexOffset = entry.indexOffset;
 }
 
 /**
  * TesselateMd3
  */
+var meshAttrs = {
+	xyz:        [3,  0],
+	xyz2:       [3, 12],
+	norm:       [3, 24],
+	norm2:      [3, 36],
+	texCoord:   [2, 48],
+	lightCoord: [2, 56],
+	color:      [4, 64]
+};
+
 function TesselateMd3(tess, face) {
-	var refent = re.currentEntity;
-	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
-	var vertexOffset = tess.numVertexes * 14;
+	var vertexOffset = tess.numVertexes * 20;
 	var indexOffset = tess.numVertexes;
+	var numVerts = face.header.numVerts;
 
-	//RB_CHECKOVERFLOW( surface->numVerts, surface->numTriangles*3 );
+	var oldNormal = [0, 0, 0];
+	var newNormal = [0, 0, 0];
 
-	LerpMeshVertexes(face, backlerp);
+	for (var i = 0; i < numVerts; i++) {
+		var oldXyz = face.xyzNormals[re.currentEntity.oldFrame * numVerts + i];
+		var newXyz = face.xyzNormals[re.currentEntity.frame * numVerts + i];
 
-	for (var i = 0; i < face.header.numVerts; i++) {
-		vertexOffset += 3;
-		// tess.vertexes[vertexOffset++] = face.xyzNormals[i].xyz[0] * MD3_XYZ_SCALE;
-		// tess.vertexes[vertexOffset++] = face.xyzNormals[i].xyz[1] * MD3_XYZ_SCALE;
-		// tess.vertexes[vertexOffset++] = face.xyzNormals[i].xyz[2] * MD3_XYZ_SCALE;
+		var lat = (oldXyz.normal >> 8) & 0xff;
+		var lng = (oldXyz.normal & 0xff);
+		oldNormal[0] = Math.cos(lng) * Math.sin(lat);
+		oldNormal[1] = Math.sin(lng) * Math.sin(lat);
+		oldNormal[2] = Math.cos(lat);
+		vec3.normalize(oldNormal);
+
+		lat = (newXyz.normal >> 8) & 0xff;
+		lng = (newXyz.normal & 0xff);
+		newNormal[0] = Math.cos(lng) * Math.sin(lat);
+		newNormal[1] = Math.sin(lng) * Math.sin(lat);
+		newNormal[2] = Math.cos(lat);
+		vec3.normalize(newNormal);
+
+		tess.vertexes[vertexOffset++] = newXyz.xyz[0] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = newXyz.xyz[1] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = newXyz.xyz[2] * MD3_XYZ_SCALE;
+
+		tess.vertexes[vertexOffset++] = oldXyz.xyz[0] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = oldXyz.xyz[1] * MD3_XYZ_SCALE;
+		tess.vertexes[vertexOffset++] = oldXyz.xyz[2] * MD3_XYZ_SCALE;
+
+		tess.vertexes[vertexOffset++] = newNormal[0];
+		tess.vertexes[vertexOffset++] = newNormal[1];
+		tess.vertexes[vertexOffset++] = newNormal[2];
+
+		tess.vertexes[vertexOffset++] = oldNormal[0];
+		tess.vertexes[vertexOffset++] = oldNormal[1];
+		tess.vertexes[vertexOffset++] = oldNormal[2];
 
 		tess.vertexes[vertexOffset++] = face.st[i].st[0];
 		tess.vertexes[vertexOffset++] = face.st[i].st[1];
 
 		tess.vertexes[vertexOffset++] = 0;
 		tess.vertexes[vertexOffset++] = 0;
-
-		vertexOffset += 3;
-		// tess.vertexes[vertexOffset++] = face.xyzNormals[i].normal[0];
-		// tess.vertexes[vertexOffset++] = face.xyzNormals[i].normal[1];
-		// tess.vertexes[vertexOffset++] = face.xyzNormals[i].normal[2];
 
 		tess.vertexes[vertexOffset++] = 0;
 		tess.vertexes[vertexOffset++] = 0;
@@ -242,78 +291,9 @@ function TesselateMd3(tess, face) {
 		tess.indexes[tess.numIndexes++] = indexOffset + tri.indexes[1];
 		tess.indexes[tess.numIndexes++] = indexOffset + tri.indexes[2];
 	}
-}
 
-
-function LerpMeshVertexes(face, backlerp) {
-	var vertexOffset = tess.numVertexes * 14;
-	var numVerts = face.header.numVerts;
-
-	var newXyzScale = MD3_XYZ_SCALE * (1.0 - backlerp);
-	var newNormalScale = 1.0 - backlerp;
-
-	if (backlerp === 0) {
-		// Just copy the vertexes
-		for (var i = 0; i < numVerts; i++) {
-			var newXyz = face.xyzNormals[re.currentEntity.frame * numVerts + i];
-
-			tess.vertexes[vertexOffset+0] = newXyz.xyz[0] * newXyzScale;
-			tess.vertexes[vertexOffset+1] = newXyz.xyz[1] * newXyzScale;
-			tess.vertexes[vertexOffset+2] = newXyz.xyz[2] * newXyzScale;
-
-			var lat = (newXyz.normal >> 8) & 0xff;
-			var lng = (newXyz.normal & 0xff);
-
-			tess.vertexes[vertexOffset+7] = Math.cos(lng) * Math.sin(lat);
-			tess.vertexes[vertexOffset+8] = Math.sin(lng) * Math.sin(lat);
-			tess.vertexes[vertexOffset+9] = Math.cos(lat);
-
-			vertexOffset += 14;
-		}
-	} else {
-		// Interpolate and copy the vertex and normal.
-		var oldXyzScale = MD3_XYZ_SCALE * backlerp;
-		var oldNormalScale = backlerp;
-
-		for (var i = 0; i < numVerts; i++) {
-			var oldXyz = face.xyzNormals[re.currentEntity.oldFrame * numVerts + i];
-			var newXyz = face.xyzNormals[re.currentEntity.frame * numVerts + i];
-
-			// Interpolate the xyz.
-			tess.vertexes[vertexOffset+0] = oldXyz.xyz[0] * oldXyzScale + newXyz.xyz[0] * newXyzScale;
-			tess.vertexes[vertexOffset+1] = oldXyz.xyz[1] * oldXyzScale + newXyz.xyz[1] * newXyzScale;
-			tess.vertexes[vertexOffset+2] = oldXyz.xyz[2] * oldXyzScale + newXyz.xyz[2] * newXyzScale;
-
-			// FIXME: interpolate lat/long instead?
-			var lat = (newXyz.normal >> 8) & 0xff;
-			var lng = (newXyz.normal & 0xff);
-			lat *= 4;
-			lng *= 4;
-			var uncompressedNewNormal = [Math.cos(lng) * Math.sin(lat),
-			                             Math.sin(lng) * Math.sin(lat),
-			                             Math.cos(lat)];
-
-			lat = (oldXyz.normal >> 8) & 0xff;
-			lng = (oldXyz.normal & 0xff);
-			lat *= 4;
-			lng *= 4;
-			var uncompressedOldNormal = [Math.cos(lng) * Math.sin(lat),
-			                             Math.sin(lng) * Math.sin(lat),
-			                             Math.cos(lat)];
-
-			// TODO clean up this temp var.
-			var normal = [uncompressedOldNormal[0] * oldNormalScale + uncompressedNewNormal[0] * newNormalScale,
-			              uncompressedOldNormal[1] * oldNormalScale + uncompressedNewNormal[1] * newNormalScale,
-			              uncompressedOldNormal[2] * oldNormalScale + uncompressedNewNormal[2] * newNormalScale];
-			vec3.normalize(normal);
-
-			tess.vertexes[vertexOffset+7] = normal[0];
-			tess.vertexes[vertexOffset+8] = normal[1];
-			tess.vertexes[vertexOffset+9] = normal[2];
-
-			vertexOffset += 14;
-		}
-	}
+	tess.stride = 80;
+	tess.attrs = meshAttrs;
 }
 
 // Setup debug vertex/index buffer.
@@ -392,4 +372,7 @@ function TesselateBbox(face) {
 	for (var i = 0; i < bboxIndexes.length; i++) {
 		tess.indexes[tess.numIndexes++] = indexOffset + bboxIndexes[i];
 	}
+
+	tess.stride = 56;
+	tess.attrs = worldAttrs;
 }

@@ -127,8 +127,9 @@ function MouseMove(cmd) {
  * 1    command count
  * <count * usercmds>
  */
+var msgBuffer = new ArrayBuffer(MAX_MSGLEN);
 function WritePacket() {
-	var msg = new ByteBuffer(MAX_MSGLEN, ByteBuffer.LITTLE_ENDIAN);
+	var msg = new ByteBuffer(msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 	var serverid = parseInt(cl.serverId, 10);
 
 	msg.writeInt(serverid);

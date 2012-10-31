@@ -17,15 +17,15 @@ function BuildWorldBuffers() {
 		vertices[offset++] = vert.pos[1];
 		vertices[offset++] = vert.pos[2];
 
+		vertices[offset++] = vert.normal[0];
+		vertices[offset++] = vert.normal[1];
+		vertices[offset++] = vert.normal[2];
+
 		vertices[offset++] = vert.texCoord[0];
 		vertices[offset++] = vert.texCoord[1];
 
 		vertices[offset++] = vert.lmCoord[0];
 		vertices[offset++] = vert.lmCoord[1];
-
-		vertices[offset++] = vert.normal[0];
-		vertices[offset++] = vert.normal[1];
-		vertices[offset++] = vert.normal[2];
 
 		vertices[offset++] = vert.color[0];
 		vertices[offset++] = vert.color[1];
