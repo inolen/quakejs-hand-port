@@ -37,6 +37,8 @@ function LoadMap(mapName, callback) {
 			header.lumps[Lumps.LEAFS],
 			header.lumps[Lumps.LEAFSURFACES]);
 		LoadVisibility(data, header.lumps[Lumps.VISIBILITY]);
+		LoadSubmodels(data, header.lumps[Lumps.MODELS]);
+		LoadLightGrid(data, header.lumps[Lumps.LIGHTGRID]);
 
 		BuildWorldBuffers();
 
@@ -233,7 +235,7 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 
 		dface.shaderNum = bb.readInt();
 		dface.fogNum = bb.readInt();
-		dface.surfaceType  = bb.readInt();
+		dface.surfaceType = bb.readInt();
 		dface.vertex = bb.readInt();
 		dface.vertCount = bb.readInt();
 		dface.meshVert = bb.readInt();
@@ -484,4 +486,69 @@ function LoadVisibility(buffer, visLump) {
 	for (var i = 0; i < vissize; i++) {
 		world.vis[i] = bb.readUnsignedByte();
 	}
+}
+
+/**
+ * LoadSubmodels
+ */
+function LoadSubmodels(buffer, modelLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = modelLump.fileofs;
+
+	var models = re.world.bmodels = new Array(modelLump.filelen / dmodel_t.size);
+
+	for (var i = 0; i < models.length; i++) {
+		var model = models[i] = new bmodel_t();
+
+		model.bounds[0] = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
+		model.bounds[1] = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
+
+		model.firstSurface = bb.readInt();
+		model.numSurfaces = bb.readInt();
+
+		bb.readInt(); // firstBrush
+		bb.readInt(); // numBrushes
+	}
+}
+
+/**
+ * LoadLightGrid
+ */
+function LoadLightGrid(buffer, gridLump) {
+	var world = re.world;
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = gridLump.fileofs;
+
+	world.lightGridInverseSize[0] = 1 / world.lightGridSize[0];
+	world.lightGridInverseSize[1] = 1 / world.lightGridSize[1];
+	world.lightGridInverseSize[2] = 1 / world.lightGridSize[2];
+
+	var wMins = world.bmodels[0].bounds[0];
+	var wMaxs = world.bmodels[0].bounds[1];
+
+	for (var i = 0; i < 3; i++) {
+		world.lightGridOrigin[i] = world.lightGridSize[i] * Math.ceil(wMins[i] / world.lightGridSize[i]);
+		var t = world.lightGridSize[i] * Math.floor(wMaxs[i] / world.lightGridSize[i]);
+		world.lightGridBounds[i] = (t - world.lightGridOrigin[i])/world.lightGridSize[i] + 1;
+	}
+
+	var numGridPoints = world.lightGridBounds[0] * world.lightGridBounds[1] * world.lightGridBounds[2];
+
+	if (gridLump.filelen !== numGridPoints * 8 ) {
+		throw new Error('WARNING: light grid mismatch');
+		world.lightGridData = null;
+		return;
+	}
+
+	var len = gridLump.filelen;
+	world.lightGridData = new Uint8Array(len);
+	for (var i = 0; i < len; i++) {
+		world.lightGridData[i] = bb.readUnsignedByte();
+	}
+
+	// Deal with overbright bits.
+	// for ( i = 0 ; i < numGridPoints ; i++ ) {
+	// 	R_ColorShiftLightingBytes( &world.lightGridData[i*8], &world.lightGridData[i*8] );
+	// 	R_ColorShiftLightingBytes( &world.lightGridData[i*8+3], &world.lightGridData[i*8+3] );
+	// }
 }

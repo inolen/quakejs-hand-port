@@ -87,25 +87,29 @@ var BackendLocals = function () {
 }
 
 var WorldData = function () {
-	this.name         = null;
-	this.path         = null;
-	this.lightmaps    = null;
-	this.shaders      = [];
-	this.verts        = [];
-	this.meshVerts    = [];
-	this.faces        = [];
-	this.planes       = [];
-	this.leafSurfaces = [];
-	this.nodes        = [];
-	this.leafs        = [];
-	this.entities     = {};
-	this.numClusters  = 0;
+	this.name                 = null;
+	this.path                 = null;
 
-	/*vec3_t    lightGridOrigin;
-	vec3_t      lightGridSize;
-	vec3_t      lightGridInverseSize;
-	int         lightGridBounds[3];
-	byte        *lightGridData;*/
+	this.lightmaps            = null;
+	this.shaders              = null;
+	this.verts                = null;
+	this.meshVerts            = null;
+	this.faces                = null;
+	this.planes               = null;
+	this.leafSurfaces         = null;
+	this.nodes                = null
+	this.leafs                = null;
+	
+	this.numClusters          = 0;
+	this.clusterBytes         = 0;
+	this.vis                  = null;
+
+	this.bmodels              = null;
+	this.lightGridOrigin      = [0, 0, 0];
+	this.lightGridSize        = [64, 64, 128];
+	this.lightGridInverseSize = [0, 0, 0];
+	this.lightGridBounds      = [0, 0, 0];
+	this.lightGridData        = null;
 };
 
 /**********************************************************
@@ -194,30 +198,37 @@ var RenderFx = {
 };
 
 var RefEntity = function () {
-	this.index           = 0;                              // internal use only
-	this.reType          = 0;
-	this.renderfx        = 0;
-	this.origin          = [0, 0, 0];
-	this.lightingOrigin  = [0, 0, 0];                      // so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)
-	this.axis            = [                               // rotation vectors
+	this.index              = 0;                           // internal use only
+	this.reType             = 0;
+	this.renderfx           = 0;
+	this.origin             = [0, 0, 0];
+	this.lightingOrigin     = [0, 0, 0];                   // so multi-part models can be lit identically (RF_LIGHTING_ORIGIN)
+	this.axis               = [                            // rotation vectors
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
 	];
-	this.frame           = 0;
+	this.frame              = 0;
 	// previous data for frame interpolation
-	this.oldOrigin       = [0, 0, 0];
-	this.oldFrame        = 0;
-	this.backlerp        = 0;
+	this.oldOrigin          = [0, 0, 0];
+	this.oldFrame           = 0;
+	this.backlerp           = 0;
 	// model
-	this.hModel          = 0;
+	this.hModel             = 0;
 	// texturing
-	this.skinNum         = 0;                             // inline skin index
-	this.customSkin      = 0;                             // NULL for default skin
-	this.customShader    = 0;                             // use one image for the entire thing
+	this.skinNum            = 0;                          // inline skin index
+	this.customSkin         = 0;                          // NULL for default skin
+	this.customShader       = 0;                          // use one image for the entire thing
 	// bbox
-	this.mins   = [0, 0, 0];
-	this.maxs   = [0, 0, 0];
+	this.mins               = [0, 0, 0];
+	this.maxs               = [0, 0, 0];
+
+	// internal use only	
+	this.lightingCalculated = false;
+	this.lightDir           = [0, 0, 0];                   // normalized direction towards light
+	this.ambientLight       = [0, 0, 0];                   // color normalized to 0-255
+	this.ambientLightInt    = 0;                           // 32 bit rgba packed
+	this.directedLight      = [0, 0, 0];
 };
 
 RefEntity.prototype.clone = function (refent) {
@@ -374,16 +385,16 @@ var ShaderCommands = function () {
  **********************************************************/
 var SurfaceType = {
 	BAD:          0,
-	BBOX:         1,
-	SKIP:         2,                                       // ignore
-	FACE:         3,
-	GRID:         4,
-	TRIANGLES:    5,
-	POLY:         6,
-	MD3:          7,
-	FLARE:        8,
-	ENTITY:       9,                                      // beams, rails, lightning, etc that can be determined by entity
-	DISPLAY_LIST: 10
+	SKIP:         1,                                       // ignore
+	FACE:         2,
+	GRID:         3,
+	TRIANGLES:    4,
+	POLY:         5,
+	MD3:          6,
+	FLARE:        7,
+	ENTITY:       8,                                      // beams, rails, lightning, etc that can be determined by entity
+	DISPLAY_LIST: 9,
+	BBOX:         10
 };
 
 var msurface_t = function () {
