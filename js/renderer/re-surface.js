@@ -240,18 +240,14 @@ function TesselateMd3(tess, face) {
 		var oldXyz = face.xyzNormals[re.currentEntity.oldFrame * numVerts + i];
 		var newXyz = face.xyzNormals[re.currentEntity.frame * numVerts + i];
 
-		var lat = (oldXyz.normal >> 8) & 0xff;
-		var lng = (oldXyz.normal & 0xff);
-		oldNormal[0] = Math.cos(lng) * Math.sin(lat);
-		oldNormal[1] = Math.sin(lng) * Math.sin(lat);
-		oldNormal[2] = Math.cos(lat);
+		oldNormal[0] = Math.cos(oldXyz.lng) * Math.sin(oldXyz.lat);
+		oldNormal[1] = Math.sin(oldXyz.lng) * Math.sin(oldXyz.lat);
+		oldNormal[2] = Math.cos(oldXyz.lat);
 		vec3.normalize(oldNormal);
 
-		lat = (newXyz.normal >> 8) & 0xff;
-		lng = (newXyz.normal & 0xff);
-		newNormal[0] = Math.cos(lng) * Math.sin(lat);
-		newNormal[1] = Math.sin(lng) * Math.sin(lat);
-		newNormal[2] = Math.cos(lat);
+		newNormal[0] = Math.cos(newXyz.lng) * Math.sin(newXyz.lat);
+		newNormal[1] = Math.sin(newXyz.lng) * Math.sin(newXyz.lat);
+		newNormal[2] = Math.cos(newXyz.lat);
 		vec3.normalize(newNormal);
 
 		tess.vertexes[vertexOffset++] = newXyz.xyz[0] * MD3_XYZ_SCALE;

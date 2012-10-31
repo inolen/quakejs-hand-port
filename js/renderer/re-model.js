@@ -264,7 +264,11 @@ function LoadMd3(filename, callback) {
 					xyz.xyz[k] = bb.readShort();
 				}
 
-				xyz.normal = bb.readUnsignedShort();
+				var zenith = bb.readByte();
+				var azimuth = bb.readByte();
+
+				xyz.lat = zenith * (2 * Math.PI) / 255;
+				xyz.lng = azimuth * (2 * Math.PI) / 255;
 			}
 
 			meshOffset += sheader.ofsEnd;

@@ -663,7 +663,8 @@ var Md3St = function () {
 
 var Md3XyzNormal = function () {
 	this.xyz    = [0, 0, 0];                               // short[3]
-	this.normal = 0;                                       // short, zenith and azimuth angles of normal vector.
+	this.lat    = 0;                                       // short, zenith and azimuth angles of normal vector.
+	this.lng    = 0;
 };
 
 var Md3Frame = function () {
