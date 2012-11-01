@@ -2,8 +2,19 @@
  * InitImages
  */
 function InitImages() {
+	SetColorMappings();
+
 	BuildWhiteTexture();
 	BuildDefaultTexture();
+}
+
+/**
+ * SetColorMappings
+ */
+function SetColorMappings() {	
+	// Setup the overbright lighting.
+	re.overbrightBits = r_overBrightBits();
+	re.identityLight = 1 / (1 << re.overbrightBits);
 }
 
 /**
@@ -207,7 +218,7 @@ function RegisterSkin(filename) {
 			var shaderName = split[1];
 			var surface = new SkinSurface();
 			surface.name = surfaceName;
-			surface.shader = FindShader(shaderName.replace(/\.[^\.]+$/, ''), LightmapType.UV);
+			surface.shader = FindShader(shaderName.replace(/\.[^\.]+$/, ''), LightmapType.NONE);
 			skin.surfaces.push(surface);
 		}
 

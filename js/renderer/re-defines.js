@@ -45,6 +45,9 @@ var RenderLocals = function () {
 	this.viewCount           = 0;                          // incremented every view (twice a scene if portaled)
 	this.frameSceneNum       = 0;                          // zeroed at RE_BeginFrame
 
+	this.identityLight       = 0;                          // 1.0 / ( 1 << overbrightBits )
+	this.overbrightBits      = 0;                          // r_overbrightBits
+
 	// shaders
 	this.shaderBodies        = {};
 	this.programBodies       = {};
@@ -84,7 +87,7 @@ var BackendLocals = function () {
 	this.refdef    = new RefDef();
 	this.viewParms = new ViewParms();
 	this.or        = new Orientation();
-}
+};
 
 var WorldData = function () {
 	this.name                 = null;
@@ -227,8 +230,7 @@ var RefEntity = function () {
 	this.lightingCalculated = false;
 	this.lightDir           = [0, 0, 0];                   // normalized direction towards light
 	this.ambientLight       = [0, 0, 0];                   // color normalized to 0-255
-	this.ambientLightInt    = 0;                           // 32 bit rgba packed
-	this.directedLight      = [0, 0, 0];
+	this.directedLight      = [0, 0, 0];                   // color normalized to 0-255
 };
 
 RefEntity.prototype.clone = function (refent) {
@@ -336,17 +338,6 @@ ViewParms.prototype.clone = function (to) {
 	to.frameCount = this.frameCount;
 
 	return to;
-};
-
-var RenderBufferDef = function (dynamic) {
-	this.dynamic = dynamic;
-
-
-	this.stride       = 0;
-	this.attrs        = {};
-
-	// Only used by dynamic buffers.
-
 };
 
 var ShaderCommands = function () {

@@ -84,9 +84,9 @@ function AddMd3Surfaces(refent) {
 	}*/
 
 	// set up lighting now that we know we aren't culled
-	/*if ( !personalModel || r_shadows->integer > 1 ) {
-		R_SetupEntityLighting( &tr.refdef, ent );
-	}*/
+	if (!personalModel) {
+		SetupEntityLighting(refent);
+	}
 
 	// see if we are in a fog volume
 	//fogNum = R_ComputeFogNum( header, ent );
@@ -272,10 +272,8 @@ function TesselateMd3(tess, face) {
 		tess.vertexes[vertexOffset++] = 0;
 		tess.vertexes[vertexOffset++] = 0;
 
-		tess.vertexes[vertexOffset++] = 0;
-		tess.vertexes[vertexOffset++] = 0;
-		tess.vertexes[vertexOffset++] = 0;
-		tess.vertexes[vertexOffset++] = 0;
+		CalcDiffuseColor(re.currentEntity, newNormal, tess.vertexes, vertexOffset);
+		vertexOffset += 4;
 
 		tess.numVertexes++;
 	}

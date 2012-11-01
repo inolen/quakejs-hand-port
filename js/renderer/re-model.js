@@ -229,7 +229,7 @@ function LoadMd3(filename, callback) {
 				var shader = surf.shaders[j] = new Md3Shader();
 				// Strip extension.
 				shader.name = bb.readASCIIString(MAX_QPATH).replace(/\.[^\/.]+$/, '');
-				shader.shader = FindShader(shader.name, LightmapType.UV);
+				shader.shader = FindShader(shader.name, LightmapType.NONE);
 			}
 
 			// Read all of the triangles.

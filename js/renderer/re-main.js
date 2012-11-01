@@ -9,7 +9,10 @@ var r_cull;
 var r_subdivisions;
 var r_znear;
 var r_zproj;
-var shardmd3;
+var r_overBrightBits;
+var r_mapOverBrightBits;
+var r_ambientScale;
+var r_directedScale;
 
 var flipMatrix = mat4.create([
 	0, 0, -1, 0,
@@ -34,6 +37,10 @@ function Init(sysinterface, cominterface) {
 	r_subdivisions = com.AddCvar('r_subdivisions', 4);
 	r_znear = com.AddCvar('r_znear', 4);
 	r_zproj = com.AddCvar('r_zproj', 64);
+	r_overBrightBits = com.AddCvar('r_overBrightBits', 0, CvarFlags.ARCHIVE);
+	r_mapOverBrightBits = com.AddCvar('r_mapOverBrightBits', 2, CvarFlags.ARCHIVE);
+	r_ambientScale = com.AddCvar('r_ambientScale', 0.6);
+	r_directedScale = com.AddCvar('r_directedScale', 1);
 
 	com.AddCmd('showcluster', CmdShowCluster);
 

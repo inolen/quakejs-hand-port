@@ -455,7 +455,7 @@ function AddPlayer(cent) {
 	// if ( cg_shadows.integer == 3 && shadow ) {
 	// 	renderfx |= RF_SHADOW_PLANE;
 	// }
-	// renderfx |= RF_LIGHTING_ORIGIN;			// use the same origin for all
+	renderfx |= RenderFx.LIGHTING_ORIGIN;  // use the same origin for all
 
 	//
 	// Add the legs

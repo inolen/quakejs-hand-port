@@ -983,6 +983,7 @@ function Pmove(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
+	// TODO WHY DOES THIS HAPPEN
 	if (cmd.serverTime < ps.commandTime) {
 		throw new Error('Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
 		return;	// should not happen

@@ -45,8 +45,11 @@ function AddRefEntityToScene(refent) {
 		throw new Error('AddRefEntityToScene: bad reType ' + ent.reType);
 	}
 
-	refent.index = re.refdef.numRefEntities;
-	refent.clone(re.refdef.refEntities[re.refdef.numRefEntities]);
+	var newRefent = re.refdef.refEntities[re.refdef.numRefEntities];
+	refent.clone(newRefent);
+
+	newRefent.index = re.refdef.numRefEntities;
+	newRefent.lightingCalculated = false;
 
 	re.refdef.numRefEntities++;
 }

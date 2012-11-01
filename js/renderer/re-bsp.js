@@ -49,46 +49,33 @@ function LoadMap(mapName, callback) {
 }
 
 /**
- * BrightnessAdjust
+ * ColorShiftLightingBytes
  */
-function BrightnessAdjust(color, factor) {
-	var scale = 1.0, temp = 0.0;
-
-	color[0] *= factor;
-	color[1] *= factor;
-	color[2] *= factor;
-
-	if(color[0] > 255 && (temp = 255/color[0]) < scale) { scale = temp; }
-	if(color[1] > 255 && (temp = 255/color[1]) < scale) { scale = temp; }
-	if(color[2] > 255 && (temp = 255/color[2]) < scale) { scale = temp; }
-
-	color[0] *= scale;
-	color[1] *= scale;
-	color[2] *= scale;
-
-	return color;
-}
-
-/**
- * ColorToVec
- */
-function ColorToVec(color) {
-	var r, g, b;
-
-	r = color[0] / 255;
-	g = color[1] / 255;
-	b = color[2] / 255;
-
-	// normalize by color instead of saturating to white
-	if (( r | g | b ) > 1) {
-		var max = r > g ? r : g;
-		max = max > b ? max : b;
-		r /= max;
-		g /= max;
-		b /= max;
+function ColorShiftLightingBytes(color, offset) {
+	if (typeof(offset) === 'undefined') {
+		offset = 0;
 	}
 
-	return [r, g, b, color[3] / 255];
+	// Shift the color data based on overbright range.
+	var shift = r_mapOverBrightBits() - re.overbrightBits;
+
+	var r = color[offset+0] << shift;
+	var g = color[offset+1] << shift;
+	var b = color[offset+2] << shift;
+	
+	// Normalize by color instead of saturating to white.
+	if ((r | g | b) > 255) {
+		var max = r > g ? r : g;
+		max = max > b ? max : b;
+		r = r * 255 / max;
+		g = g * 255 / max;
+		b = b * 255 / max;
+	}
+
+	color[offset+0] = r;
+	color[offset+1] = g;
+	color[offset+2] = b;
+	color[offset+3] = color[offset+3];
 }
 
 /**
@@ -154,7 +141,7 @@ function LoadLightmaps(buffer, lightmapLump) {
 				bb.readUnsignedByte()
 			];
 
-			BrightnessAdjust(rgb, 4.0);
+			ColorShiftLightingBytes(rgb);
 
 			elements[j] = rgb[0];
 			elements[j+1] = rgb[1];
@@ -210,7 +197,13 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 			bb.readUnsignedByte(), bb.readUnsignedByte()
 		];
 
-		vert.color = ColorToVec(BrightnessAdjust(vert.color, 4.0));
+		ColorShiftLightingBytes(vert.color);
+
+		// HACK Convert from 0 - 255 to 0 - 1
+		vert.color[0] /= 255;
+		vert.color[1] /= 255;
+		vert.color[2] /= 255;
+		vert.color[3] /= 255;
 	}
 
 	// Load vert indexes.
@@ -516,8 +509,6 @@ function LoadSubmodels(buffer, modelLump) {
  */
 function LoadLightGrid(buffer, gridLump) {
 	var world = re.world;
-	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
-	bb.index = gridLump.fileofs;
 
 	world.lightGridInverseSize[0] = 1 / world.lightGridSize[0];
 	world.lightGridInverseSize[1] = 1 / world.lightGridSize[1];
@@ -534,21 +525,24 @@ function LoadLightGrid(buffer, gridLump) {
 
 	var numGridPoints = world.lightGridBounds[0] * world.lightGridBounds[1] * world.lightGridBounds[2];
 
-	if (gridLump.filelen !== numGridPoints * 8 ) {
+	if (gridLump.filelen !== numGridPoints * 8) {
 		throw new Error('WARNING: light grid mismatch');
 		world.lightGridData = null;
 		return;
 	}
 
+	// Read the actual light grid data.
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = gridLump.fileofs;
 	var len = gridLump.filelen;
 	world.lightGridData = new Uint8Array(len);
 	for (var i = 0; i < len; i++) {
-		world.lightGridData[i] = bb.readUnsignedByte();
+		world.lightGridData[i] = bb.readByte();
 	}
 
 	// Deal with overbright bits.
-	// for ( i = 0 ; i < numGridPoints ; i++ ) {
-	// 	R_ColorShiftLightingBytes( &world.lightGridData[i*8], &world.lightGridData[i*8] );
-	// 	R_ColorShiftLightingBytes( &world.lightGridData[i*8+3], &world.lightGridData[i*8+3] );
-	// }
+	for (var i = 0; i < numGridPoints; i++) {
+		ColorShiftLightingBytes(world.lightGridData, i*8);
+		ColorShiftLightingBytes(world.lightGridData, i*8+3);
+	}
 }

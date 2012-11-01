@@ -1,5 +1,37 @@
-var r_ambientScale = 0.6;
-var r_directedScale = 1.0;
+/**
+ * CalcDiffuseColor
+ */
+// TODO This has to be slow.
+function CalcDiffuseColor(refent, normal, colors, offset) {
+	var incoming = vec3.dot(normal, refent.lightDir);
+	if (incoming <= 0) {
+		colors[offset+0] = refent.ambientLight[0] / 255;
+		colors[offset+1] = refent.ambientLight[1] / 255;
+		colors[offset+2] = refent.ambientLight[2] / 255;
+		colors[offset+3] = 1;
+	 	return;
+	} 
+
+	var j = parseInt(refent.ambientLight[0]/* + incoming * refent.directedLight[0]*/, 10);
+	if (j > 255) {
+		j = 255;
+	}
+	colors[offset+0] = j / 255;
+
+	j = parseInt(refent.ambientLight[1]/* + incoming * refent.directedLight[1]*/, 10);
+	if (j > 255) {
+		j = 255;
+	}
+	colors[offset+1] = j / 255;
+
+	j = parseInt(refent.ambientLight[2]/* + incoming * refent.directedLight[2]*/, 10);
+	if (j > 255) {
+		j = 255;
+	}
+	colors[offset+2] = j / 255;
+
+	colors[offset+3] = 1;
+}
 
 /**
  * SetupEntityLightingGrid
@@ -43,15 +75,17 @@ function SetupEntityLightingGrid(refent) {
 	var gridStep    = [8,
 	                   8 * world.lightGridBounds[0],
 	                   8 * world.lightGridBounds[0] * world.lightGridBounds[1]];
-	var offset      = pos[0] * gridStep[0] + pos[1] * gridStep[1] + pos[2] * gridStep[2];
+	var gridOffset  = pos[0] * gridStep[0] + pos[1] * gridStep[1] + pos[2] * gridStep[2];
+	var normal      = [0, 0, 0];
 	var direction   = [0, 0, 0];
 	var totalFactor = 0;
 
 	for (var i = 0; i < 8; i++) {
 		var factor = 1;
+		var offset = gridOffset;
 
 		for (var j = 0; j < 3; j++) {
-			if (i & (1<<j)) {
+			if (i & (1 << j)) {
 				factor *= frac[j];
 				offset += gridStep[j];
 			} else {
@@ -60,11 +94,12 @@ function SetupEntityLightingGrid(refent) {
 		}
 
 		if (!(data[offset]+data[offset+1]+data[offset+2])) {
-			continue;	// ignore samples in walls
+			continue;  // ignore samples in walls
 		}
 
 		totalFactor += factor;
-		refent.ambientLight[0] += factor * data[offset];
+
+		refent.ambientLight[0] += factor * data[offset+0];
 		refent.ambientLight[1] += factor * data[offset+1];
 		refent.ambientLight[2] += factor * data[offset+2];
 
@@ -87,17 +122,16 @@ function SetupEntityLightingGrid(refent) {
 		vec3.scale(refent.directedLight, totalFactor);
 	}
 
-	vec3.scale(refent.ambientLight, r_ambientScale);
-	vec3.scale(refent.directedLight, r_directedScale);
+	vec3.scale(refent.ambientLight, r_ambientScale());
+	vec3.scale(refent.directedLight, r_directedScale());
 
-	vec3.normalize(direction, ent.lightDir);
+	vec3.normalize(direction, refent.lightDir);
 }
 
 /**
  * SetupEntityLighting
  */
-function SetupEntityLighting(refdef, refent) {
-	var lightDir = [0, 0, 0];
+function SetupEntityLighting(refent) {
 	var lightOrigin = [0, 0, 0];
 
 	// Lighting calculations.
@@ -121,13 +155,13 @@ function SetupEntityLighting(refdef, refent) {
 	// if NOWORLDMODEL, only use dynamic lights (menu system, etc)
 	// if ( !(refdef->rdflags & RDF_NOWORLDMODEL ) 
 	// 	&& tr.world->lightGridData ) {
-	// 	R_SetupEntityLightingGrid( ent );
+	 	SetupEntityLightingGrid(refent);
 	// } else {
-		refent.ambientLight[0] = refent.ambientLight[1] = 
-			refent.ambientLight[2] = re.identityLight * 150;
-		refent.directedLight[0] = refent.directedLight[1] = 
-			refent.directedLight[2] = re.identityLight * 150;
-		vec3.set(re.sunDirection, refent.lightDir);
+	// 	refent.ambientLight[0] = refent.ambientLight[1] = 
+	// 		refent.ambientLight[2] = re.identityLight * 150;
+	// 	refent.directedLight[0] = refent.directedLight[1] = 
+	// 		refent.directedLight[2] = re.identityLight * 150;
+	// 	vec3.set(re.sunDirection, refent.lightDir);
 	// }
 
 	// Give everything a minimum light add
@@ -138,8 +172,9 @@ function SetupEntityLighting(refdef, refent) {
 	//
 	// Modify the light by dynamic lights.
 	//
-	// var d = vec3.length(refent.directedLight);
-	// vec3.scale(refent.lightDir, d, lightDir);
+	var lightDir = [0, 0, 0];
+	var d = vec3.length(refent.directedLight);
+	vec3.scale(refent.lightDir, d, lightDir);
 	// 
 	// for ( i = 0 ; i < refdef->num_dlights ; i++ ) {
 	// 	dl = &refdef->dlights[i];
@@ -155,22 +190,16 @@ function SetupEntityLighting(refdef, refent) {
 	// 	VectorMA( ent->directedLight, d, dl->color, ent->directedLight );
 	// 	VectorMA( lightDir, d, dir, lightDir );
 	// }
+	vec3.normalize(lightDir);
 
 	// Clamp ambient.
 	for (var i = 0; i < 3; i++) {
-		if (refent.ambientLight[i] > re.identityLightByte ) {
+		if (refent.ambientLight[i] > re.identityLightByte) {
 			refent.ambientLight[i] = re.identityLightByte;
 		}
 	}
 
-	// Save out the byte packet version.
-	// ((byte *)&ent->ambientLightInt)[0] = ri.ftol(ent->ambientLight[0]);
-	// ((byte *)&ent->ambientLightInt)[1] = ri.ftol(ent->ambientLight[1]);
-	// ((byte *)&ent->ambientLightInt)[2] = ri.ftol(ent->ambientLight[2]);
-	// ((byte *)&ent->ambientLightInt)[3] = 0xff;
-	
 	// Transform the direction to local space.
-	vec3.normalize(lightDir);
 	refent.lightDir[0] = vec3.dot(lightDir, refent.axis[0]);
 	refent.lightDir[1] = vec3.dot(lightDir, refent.axis[1]);
 	refent.lightDir[2] = vec3.dot(lightDir, refent.axis[2]);
