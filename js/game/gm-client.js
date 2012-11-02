@@ -153,7 +153,7 @@ function ClientSpawn(ent) {
 
 	var spawnpoint = SelectRandomDeathmatchSpawnPoint();
 	var spawnorigin = vec3.create(spawnpoint.s.origin);
-	spawnorigin[2] += 70;
+	spawnorigin[2] += 9;
 
 	SetOrigin(ent, spawnorigin);
 	vec3.set(spawnorigin, ps.origin);
