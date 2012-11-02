@@ -264,20 +264,22 @@ function GroundTrace(pm) {
 	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
 	var trace = groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 
-	// do something corrective if the trace starts in a solid...
+	// Do something corrective if the trace starts in a solid.
 	if (trace.allSolid) {
+		// This will nudge us around and, if successful, copy its
+		// new successful trace results into ours.
 		if (!CorrectAllSolid(pm, trace)) {
 			return;
 		}
 	}
 
-	// if the trace didn't hit anything, we are in free fall
+	// If the trace didn't hit anything, we are in free fall.
 	if (trace.fraction === 1.0) {
 		GroundTraceMissed(pm);
 		return;
 	}
 
-	// check if getting thrown off the ground
+	// Check if getting thrown off the ground.
 	if (ps.velocity[2] > 0 && vec3.dot(ps.velocity, trace.plane.normal) > 10 ) {
 		// go into jump animation
 		if (pm.cmd.forwardmove >= 0) {
@@ -315,7 +317,7 @@ function GroundTrace(pm) {
 function CorrectAllSolid(pm, trace) {
 	var ps = pm.ps;
 	var point = [0, 0, 0];
-	var trace;
+	var tr;
 
 	// Jitter around.
 	for (var i = -1; i <= 1; i++) {
@@ -325,14 +327,12 @@ function CorrectAllSolid(pm, trace) {
 				point[0] += i;
 				point[1] += j;
 				point[2] += k;
-				trace = pm.trace(point, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+				tr = pm.trace(point, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 
-				if (!trace.allSolid) {
-					point[0] = ps.origin[0];
-					point[1] = ps.origin[1];
-					point[2] = ps.origin[2] - 0.25;
+				if (!tr.allSolid) {
+					// Copy the results back into the original so GroundTrace can carry on.
+					tr.clone(trace);
 
-					groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask)
 					return true;
 				}
 			}
