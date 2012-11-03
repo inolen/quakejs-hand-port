@@ -6,7 +6,7 @@ function FindImage(name, callback) {
 
 	// Currently we're only going to support PNG images.
 	name = name.replace(/\.[^\/.]+$/, '');
-	name += '.png';
+	name += '.dds';
 
 	if ((img = uil.images[name])) {
 		return img;

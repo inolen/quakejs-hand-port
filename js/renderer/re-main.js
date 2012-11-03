@@ -44,8 +44,7 @@ function Init(sysinterface, cominterface) {
 
 	com.AddCmd('showcluster', CmdShowCluster);
 
-	var gameContext = sys.GetGameRenderContext();
-	gl = gameContext.gl;
+	gl = sys.GetGLContext();
 
 	InitImages();
 	InitShaders();
@@ -59,6 +58,20 @@ function Init(sysinterface, cominterface) {
 function Shutdown() {
 	console.log('--------- RE Shutdown ---------');
 	DeleteTextures();
+}
+
+/**
+ * GetGLExtension
+ */
+var vendorPrefixes = ['', 'WEBKIT_', 'MOZ_'];
+function GetGLExtension(name) {
+	for (var i in vendorPrefixes) {
+		var ext = gl.getExtension(vendorPrefixes[i] + name);
+		if (ext) {
+			return ext;
+		}
+	}
+	return null;
 }
 
 /**

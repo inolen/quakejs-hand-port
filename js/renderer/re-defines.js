@@ -78,6 +78,9 @@ var RenderLocals = function () {
 	this.worldIndexBuffer    = null;
 	this.worldShaderMap      = null;
 
+	// OpenGL extension handles	
+	this.ext_s3tc            = null;
+
 	for (var i = 0; i < MAX_BBOX_SURFACES; i++) {
 		this.bboxSurfaces[i] = new BboxSurface();
 	}

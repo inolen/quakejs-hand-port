@@ -2,8 +2,9 @@
  * InitImages
  */
 function InitImages() {
-	SetColorMappings();
+	re.ext_s3tc = GetGLExtension('WEBGL_compressed_texture_s3tc');
 
+	SetColorMappings();
 	BuildWhiteTexture();
 	BuildDefaultTexture();
 }
@@ -44,13 +45,16 @@ function DeleteTextures() {
 /**
  * FindImage
  */
-function FindImage(name, clamp) {
-	// TODO we're constantly finding *lightmap.
-	//console.log('FindImage', name);
-	
-	// Only load .png files. Retrying on missing files is an expensive
+function FindImage(name, clamp) {	
+	return re.defaultTexture;
+
+	// Only load .dds files. Retrying on missing files is an expensive
 	// operation in the browser.
-	name = name.replace(/\.[^\.]+$/, '.png');
+	if (name.match(/\.[^\.]+$/)) {
+		name = name.replace(/\.[^\.]+$/, '.dds');
+	} else if (name.charAt(0) !== '*') {
+		name += '.dds';
+	}
 
 	// Try to find the image in our cache.
 	var image;
@@ -62,14 +66,14 @@ function FindImage(name, clamp) {
 		image.texnum = re.defaultTexture.texnum;
 	}
 
-	// TODO Convert this to use sys.ReadFile.
-	// However, using a raw img is much faster than sys.ReadFile + atob64.
-	var el = new Image();
-	el.onload = function() {
-		image.texnum = BuildTexture(el, null, null, clamp);
-	};
+	sys.ReadFile(name, 'binary', function (err, data) {
+		if (err) {
+			console.warn(err.message);
+			return;
+		}
 
-	el.src = Q3W_BASE_FOLDER + '/' + name;
+		image.texnum = BuildTexture(data, null, null, clamp);
+	});
 
 	return image;
 }
@@ -85,16 +89,26 @@ function BuildWhiteTexture() {
  * BuildDefaultTexture
  */
 function BuildDefaultTexture() {
-	var image = re.textures['*default'] = new Texture();
-	image.name = name;
+	var data = new Uint8Array(64*64*4);
 
-	var el = new Image();
-	el.onload = function() {
-		image.texnum = BuildTexture(el);
-	};
-	el.src = "data:image/png;base64,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";
+	var offset = 0;
+	for (var i = 0; i < 64; i++) {
+		for (var j = 0; j < 64; j++) {
+			if ((i%16 < 8 && j%16 < 8) || (i%16 >= 8 && j%16 >= 8)) {
+				data[offset++] = 127;
+				data[offset++] = 168;
+				data[offset++] = 255;
+				data[offset++] = 255;
+			} else {
+				data[offset++] = 255;
+				data[offset++] = 255;
+				data[offset++] = 255;
+				data[offset++] = 255;
+			}
+		}
+	}
 
-	re.defaultTexture = image;
+	re.defaultTexture = CreateImage('*default', data, 64, 64);
 }
 
 /**
@@ -102,29 +116,44 @@ function BuildDefaultTexture() {
  */
 function BuildTexture(buffer, width, height, clamp) {
 	var texture = gl.createTexture();
+	var mipmaps = 1;
 
 	gl.bindTexture(gl.TEXTURE_2D, texture);
 
-	if (buffer instanceof Image) {
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
-	} else if (buffer instanceof Uint8Array) {
+	// DXT compressed textures.
+	if (buffer instanceof ArrayBuffer) {
+		mipmaps = UploadDDSLevels(gl, re.ext_s3tc, buffer, true);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mipmaps > 1 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
+	}
+	// Default textures.
+	else if (buffer instanceof Uint8Array) {
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
-	} else {
+
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+	}
+	// Lightmaps.
+	else {
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
 		for (var i = 0; i < buffer.length; i++) {
 			var sub = buffer[i];
 			gl.texSubImage2D(gl.TEXTURE_2D, 0, sub.x, sub.y, sub.width, sub.height, gl.RGBA, gl.UNSIGNED_BYTE, sub.buffer);
 		}
-	}
 
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+	}
+	
 	if (clamp) {
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 	}
-	gl.generateMipmap(gl.TEXTURE_2D);
+	
+	if (mipmaps <= 1) {
+		gl.generateMipmap(gl.TEXTURE_2D);
+	}
 
 	return texture;
 }
@@ -146,6 +175,216 @@ function CreateImage(name, buffer, width, height, clamp) {
 
 	return image;
 }
+
+/**********************************************************
+ *
+ * DXT compressed textures
+ *
+ **********************************************************/
+
+// All values and structures referenced from:
+// http://msdn.microsoft.com/en-us/library/bb943991.aspx/
+var DDS_MAGIC = 0x20534444;
+
+var DDSD_CAPS = 0x1,
+	DDSD_HEIGHT = 0x2,
+	DDSD_WIDTH = 0x4,
+	DDSD_PITCH = 0x8,
+	DDSD_PIXELFORMAT = 0x1000,
+	DDSD_MIPMAPCOUNT = 0x20000,
+	DDSD_LINEARSIZE = 0x80000,
+	DDSD_DEPTH = 0x800000;
+
+var DDSCAPS_COMPLEX = 0x8,
+	DDSCAPS_MIPMAP = 0x400000,
+	DDSCAPS_TEXTURE = 0x1000;
+	
+var DDSCAPS2_CUBEMAP = 0x200,
+	DDSCAPS2_CUBEMAP_POSITIVEX = 0x400,
+	DDSCAPS2_CUBEMAP_NEGATIVEX = 0x800,
+	DDSCAPS2_CUBEMAP_POSITIVEY = 0x1000,
+	DDSCAPS2_CUBEMAP_NEGATIVEY = 0x2000,
+	DDSCAPS2_CUBEMAP_POSITIVEZ = 0x4000,
+	DDSCAPS2_CUBEMAP_NEGATIVEZ = 0x8000,
+	DDSCAPS2_VOLUME = 0x200000;
+
+var DDPF_ALPHAPIXELS = 0x1,
+	DDPF_ALPHA = 0x2,
+	DDPF_FOURCC = 0x4,
+	DDPF_RGB = 0x40,
+	DDPF_YUV = 0x200,
+	DDPF_LUMINANCE = 0x20000;
+
+function FourCCToInt32(value) {
+	return value.charCodeAt(0) +
+		(value.charCodeAt(1) << 8) +
+		(value.charCodeAt(2) << 16) +
+		(value.charCodeAt(3) << 24);
+}
+
+function Int32ToFourCC(value) {
+	return String.fromCharCode(
+		value & 0xff,
+		(value >> 8) & 0xff,
+		(value >> 16) & 0xff,
+		(value >> 24) & 0xff
+	);
+}
+
+var FOURCC_DXT1 = FourCCToInt32("DXT1");
+var FOURCC_DXT3 = FourCCToInt32("DXT3");
+var FOURCC_DXT5 = FourCCToInt32("DXT5");
+
+// Header length and offsets.
+var dxtHeaderLength = 31;
+var DXTOFF_MAGIC       = 0,
+	DXTOFF_SIZE        = 1,
+	DXTOFF_FLAGS       = 2,
+	DXTOFF_HEIGHT      = 3,
+	DXTOFF_WIDTH       = 4,
+	DXTOFF_MIPMAPCOUNT = 7,
+	DXTOFF_PFFLAGS     = 20,
+	DXTOFF_PFFOURCC    = 21;
+
+function DxtToRgb565(src, src16Offset, width, height) {
+	var c = new Uint16Array(4);
+	var dst = new Uint16Array(width * height);
+	var nWords = (width * height) / 4;
+	var m = 0;
+	var dstI = 0;
+	var i = 0;
+	var r0 = 0, g0 = 0, b0 = 0, r1 = 0, g1 = 0, b1 = 0;
+
+	var blockWidth = width / 4;
+	var blockHeight = height / 4;
+	for (var blockY = 0; blockY < blockHeight; blockY++) {
+		for (var blockX = 0; blockX < blockWidth; blockX++) {
+			i = src16Offset + 4 * (blockY * blockWidth + blockX);
+			c[0] = src[i];
+			c[1] = src[i + 1];
+			r0 = c[0] & 0x1f;
+			g0 = c[0] & 0x7e0;
+			b0 = c[0] & 0xf800;
+			r1 = c[1] & 0x1f;
+			g1 = c[1] & 0x7e0;
+			b1 = c[1] & 0xf800;
+			// Interpolate between c0 and c1 to get c2 and c3.
+			// Note that we approximate 1/3 as 3/8 and 2/3 as 5/8 for
+			// speed.  This also appears to be what the hardware DXT
+			// decoder in many GPUs does :)
+			c[2] = ((5 * r0 + 3 * r1) >> 3)
+				| (((5 * g0 + 3 * g1) >> 3) & 0x7e0)
+				| (((5 * b0 + 3 * b1) >> 3) & 0xf800);
+			c[3] = ((5 * r1 + 3 * r0) >> 3)
+				| (((5 * g1 + 3 * g0) >> 3) & 0x7e0)
+				| (((5 * b1 + 3 * b0) >> 3) & 0xf800);
+			m = src[i + 2];
+			dstI = (blockY * 4) * width + blockX * 4;
+			dst[dstI] = c[m & 0x3];
+			dst[dstI + 1] = c[(m >> 2) & 0x3];
+			dst[dstI + 2] = c[(m >> 4) & 0x3];
+			dst[dstI + 3] = c[(m >> 6) & 0x3];
+			dstI += width;
+			dst[dstI] = c[(m >> 8) & 0x3];
+			dst[dstI + 1] = c[(m >> 10) & 0x3];
+			dst[dstI + 2] = c[(m >> 12) & 0x3];
+			dst[dstI + 3] = c[(m >> 14)];
+			m = src[i + 3];
+			dstI += width;
+			dst[dstI] = c[m & 0x3];
+			dst[dstI + 1] = c[(m >> 2) & 0x3];
+			dst[dstI + 2] = c[(m >> 4) & 0x3];
+			dst[dstI + 3] = c[(m >> 6) & 0x3];
+			dstI += width;
+			dst[dstI] = c[(m >> 8) & 0x3];
+			dst[dstI + 1] = c[(m >> 10) & 0x3];
+			dst[dstI + 2] = c[(m >> 12) & 0x3];
+			dst[dstI + 3] = c[(m >> 14)];
+		}
+	}
+	return dst;
+}
+
+function UploadDDSLevels(gl, ext, arrayBuffer, loadMipmaps) {
+	var header = new Int32Array(arrayBuffer, 0, dxtHeaderLength),
+		fourCC, blockBytes, internalFormat,
+		width, height, dataLength, dataOffset,
+		rgb565Data, byteArray, mipmapCount, i;
+
+	if (header[DXTOFF_MAGIC] !== DDS_MAGIC) {
+		console.error("Invalid magic number in DDS header");
+		return 0;
+	}
+	
+	if (!header[DXTOFF_PFFLAGS] & DDPF_FOURCC) {
+		console.error("Unsupported format, must contain a FourCC code");
+		return 0;
+	}
+
+	fourCC = header[DXTOFF_PFFOURCC];
+	switch (fourCC) {
+		case FOURCC_DXT1:
+			blockBytes = 8;
+			internalFormat = ext ? ext.COMPRESSED_RGB_S3TC_DXT1_EXT : null;
+			break;
+
+		case FOURCC_DXT3:
+			blockBytes = 16;
+			internalFormat = ext ? ext.COMPRESSED_RGBA_S3TC_DXT3_EXT : null;
+			break;
+
+		case FOURCC_DXT5:
+			blockBytes = 16;
+			internalFormat = ext ? ext.COMPRESSED_RGBA_S3TC_DXT5_EXT : null;
+			break;
+
+		default:
+			console.error("Unsupported FourCC code:", Int32ToFourCC(fourCC));
+			return null;
+	}
+
+	mipmapCount = 1;
+	if (header[DXTOFF_FLAGS] & DDSD_MIPMAPCOUNT && loadMipmaps !== false) {
+		mipmapCount = Math.max(1, header[DXTOFF_MIPMAPCOUNT]);
+	}
+
+	width = header[DXTOFF_WIDTH];
+	height = header[DXTOFF_HEIGHT];
+	dataOffset = header[DXTOFF_SIZE] + 4;
+
+	if (ext) {
+		for (i = 0; i < mipmapCount; ++i) {
+			dataLength = Math.max( 4, width )/4 * Math.max( 4, height )/4 * blockBytes;
+			byteArray = new Uint8Array(arrayBuffer, dataOffset, dataLength);
+
+			gl.compressedTexImage2D(gl.TEXTURE_2D, i, internalFormat, width, height, 0, byteArray);
+			dataOffset += dataLength;
+			width = Math.max( width * 0.5, 1 );
+			height = Math.max( height * 0.5, 1 );
+		}
+	} else {
+		if (fourCC == FOURCC_DXT1) {
+			dataLength = Math.max( 4, width )/4 * Math.max( 4, height )/4 * blockBytes;
+			byteArray = new Uint16Array(arrayBuffer);
+			rgb565Data = DxtToRgb565(byteArray, dataOffset / 2, width, height);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, width, height, 0, gl.RGB, gl.UNSIGNED_SHORT_5_6_5, rgb565Data);
+			if(loadMipmaps) {
+				gl.generateMipmap(gl.TEXTURE_2D);
+			}
+		} else {
+			console.error('No manual decoder for', Int32ToFourCC(fourCC), 'and no native support');
+			return 0;
+		}
+	}
+
+	return mipmapCount;
+}
+
+/**********************************************************
+ *
+ * Skins
+ *
+ **********************************************************/
 
 /**
  * InitSkins
@@ -218,7 +457,7 @@ function RegisterSkin(filename) {
 			var shaderName = split[1];
 			var surface = new SkinSurface();
 			surface.name = surfaceName;
-			surface.shader = FindShader(shaderName.replace(/\.[^\.]+$/, ''), LightmapType.NONE);
+			surface.shader = FindShader(shaderName, LightmapType.NONE);
 			skin.surfaces.push(surface);
 		}
 

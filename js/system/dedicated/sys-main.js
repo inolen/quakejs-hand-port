@@ -18,16 +18,16 @@ function FullscreenChanged() {
 }
 
 /**
- * GetGameRenderContext
+ * GetGLContext
  */
-function GetGameRenderContext() {
+function GetGLContext() {
 	throw new Error('Should not happen');
 }
 
 /**
- * GetUIRenderContext
+ * GetUIContext
  */
-function GetUIRenderContext() {
+function GetUIContext() {
 	throw new Error('Should not happen');
 }
 

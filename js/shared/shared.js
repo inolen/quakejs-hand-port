@@ -751,11 +751,6 @@ function ClampChar(i) {
 	return i;
 }
 
-var RenderContext = function () {
-	this.gl     = null;
-	this.handle = null;
-};
-
 function atob64(arr) {
 	var limit = 1 << 16;
 	var length = arr.length;

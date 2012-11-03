@@ -44,6 +44,11 @@ function InitDefaultShaders() {
  * FindShader
  */
 function FindShader(shaderName, lightmapIndex) {
+	var mapName = shaderName;
+
+	// Never use file extension for shader lookup.
+	shaderName = shaderName.replace(/\.[^\.]+$/, '');
+
 	for (var i = 0; i < re.shaders.length; i++) {
 		if (re.shaders[i].name === shaderName) {
 			return re.shaders[i];
@@ -60,10 +65,10 @@ function FindShader(shaderName, lightmapIndex) {
 	} else {
 		// There is no shader for this name, let's create a default.
 		shader = new Shader();
-		shader.name = shaderName !== '*default' ? shaderName + '.png' : shaderName;
+		shader.name = shaderName;
 
 		var stage = new ShaderStage();
-		stage.texture = FindImage(shader.name);
+		stage.texture = FindImage(mapName);
 
 		if (lightmapIndex === LightmapType.VERTEX || lightmapIndex === LightmapType.NONE) {
 			stage.program = re.programNoLightmap;
@@ -438,7 +443,7 @@ function ParseShaderStage(shader, tokens) {
 			case 'clampmap':
 				stage.clamp = true;
 			case 'map':
-				stage.map = tokens.next().replace(/(\.jpg|\.tga)/, '.png');
+				stage.map = tokens.next();
 				if (!stage.map) {
 					throw new Error('WARNING: missing parameter for \'map\' keyword in shader \'' + shader.name + '\'');
 				}
@@ -462,8 +467,8 @@ function ParseShaderStage(shader, tokens) {
 				stage.animFreq = parseFloat(tokens.next());
 				var nextMap = tokens.next();
 				stage.animTextures = [];
-				while (nextMap.match(/(\.jpg|\.tga)/)) {
-					var map = nextMap.replace(/(\.jpg|\.tga)/, '.png');
+				while (nextMap.match(/\.[^\/.]+$/)) {
+					var map = nextMap;
 					stage.animMaps.push(map);
 					stage.animTextures.push(FindImage(map, stage.clamp));
 					nextMap = tokens.next();

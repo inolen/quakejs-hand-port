@@ -76,22 +76,17 @@ function ResizeViewport() {
 }
 
 /**
- * GetGameRenderContext
+ * GetGLContext
  */
-function GetGameRenderContext() {
-	var ctx = new RenderContext();
-	ctx.handle = viewport;
-	ctx.gl = gl;
-	return ctx;
+function GetGLContext() {
+	return gl;
 }
 
 /**
- * GetUIRenderContext
+ * GetUIContext
  */
-function GetUIRenderContext() {
-	var ctx = new RenderContext();
-	ctx.handle = viewportUi;
-	return ctx;
+function GetUIContext() {
+	return viewportUi;
 }
 
 /**

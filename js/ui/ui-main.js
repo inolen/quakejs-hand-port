@@ -15,7 +15,7 @@ var map = {
  * Init
  */
 function Init() {	
-	var uiContext = sys.GetUIRenderContext();
+	var uiContext = sys.GetUIContext();
 
 	uil = new UILocals();
 
