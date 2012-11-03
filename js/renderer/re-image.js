@@ -121,6 +121,7 @@ function BuildTexture(buffer, width, height, clamp) {
 	// DXT compressed textures.
 	if (buffer instanceof ArrayBuffer) {
 		mipmaps = UploadDDSLevels(gl, re.ext_s3tc, buffer, true);
+		
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mipmaps > 1 ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
 	}

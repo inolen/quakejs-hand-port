@@ -26,7 +26,7 @@ function GetModelByHandle(index) {
  * An entry will be retained for failed models as an
  * optimization to prevent disk rescanning if they are
  * asked for again.
-*/
+ */
 function RegisterModel(name) {
 	if (!name) {
 		console.log('RegisterModel: null name');
@@ -270,7 +270,7 @@ function LoadMd3(filename, callback) {
 				xyz.lat = zenith * (2 * Math.PI) / 255;
 				xyz.lng = azimuth * (2 * Math.PI) / 255;
 			}
-
+			
 			meshOffset += sheader.ofsEnd;
 		}
 

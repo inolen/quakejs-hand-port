@@ -206,6 +206,7 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 
 	// try to cull before dlighting or adding
 	if (CullSurface(surf, surf.shader)) {
+		re.counts.culledFaces++;
 		return;
 	}
 
@@ -231,7 +232,7 @@ function CullSurface(surface, shader) {
 		return false;
 	}
 
-	if (surface.type === SurfaceType.GRID/*SurfaceType.GRID*/) {
+	if (surface.surfaceType === SurfaceType.GRID/*SurfaceType.GRID*/) {
 		//return R_CullGrid( (srfGridMesh_t *)surface );
 		return false;
 	}
@@ -240,7 +241,7 @@ function CullSurface(surface, shader) {
 		return R_CullTriSurf( (srfTriangles_t *)surface );
 	}*/
 
-	if (surface.type !== SurfaceType.FACE) {
+	if (surface.surfaceType !== SurfaceType.FACE) {
 		return false;
 	}
 
@@ -248,12 +249,13 @@ function CullSurface(surface, shader) {
 		return false;
 	}
 
-	var d = vec3.dot(re.viewParms.or.origin, surface.plane.normal);
+	// TODO shouldn't this be re.or.viewOrigin (for the current ent that is).
+	var d = vec3.dot(re.viewParms.or.viewOrigin, surface.plane.normal);
 
 	// Don't cull exactly on the plane, because there are levels of rounding
 	// through the BSP, ICD, and hardware that may cause pixel gaps if an
 	// epsilon isn't allowed here.
-	if (shader.cull === 'front') {
+	if (shader.cull === gl.FRONT) {
 		if (d < surface.plane.dist - 8) {
 			return true;
 		}

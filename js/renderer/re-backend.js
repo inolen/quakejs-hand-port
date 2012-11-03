@@ -122,6 +122,9 @@ function BeginSurface(shader) {
 function EndSurface() {
 	var shader = tess.shader;
 
+	re.counts.shaders++;
+	re.counts.indexes += tess.numIndexes;
+
 	// If we're using the scratch buffers.
 	if (tess.activeVertexBuffer === tess.vertexBuffer &&
 		tess.activeIndexBuffer === tess.indexBuffer) {
@@ -148,7 +151,7 @@ function EndSurface() {
 
 		SetShaderStage(shader, stage, tess.stride, tess.attrs);
 
-		gl.drawElements(shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, tess.indexOffset);
+		gl.drawElements(r_showtris() ? gl.LINE_LOOP : shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, tess.indexOffset);
 	}
 }
 

@@ -52,6 +52,18 @@
 	right: 1em;
 }
 
+#hud .render-counts {
+	position: absolute;
+	bottom: 1em;
+	right: 1em;
+}
+
+#hud .count-label {
+	display: inline-block;
+	width: 10em;
+	text-align: right;
+}
+
 #scoreboard {
 	position: absolute;
 	top: 25%;

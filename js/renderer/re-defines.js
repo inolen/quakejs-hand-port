@@ -28,16 +28,23 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
 var SHADERNUM_BITS       = 14;
 var MAX_SHADERS          = (1<<SHADERNUM_BITS);
 
-var MAX_BBOX_SURFACES = 32;
+var MAX_BBOX_SURFACES    = 32;
+
+var Cull = {
+	IN:   0,                                               // completely unclipped
+	CLIP: 1,                                               // clipped by one or more planes
+	OUT:  2                                                // completely outside the clipping planes
+};
 
 var RenderLocals = function () {
 	// frontend
 	this.refdef              = new RefDef();
 	this.viewParms           = new ViewParms();
-	this.or                  = new Orientation();
+	//this.or                  = new Orientation();          // for current entity
 
 	this.world               = null;
 	this.currentEntity       = null;
+	this.counts              = new RenderCounts();
 
 	this.visCount            = 0;                          // incremented every time a new vis cluster is entered
 	this.frameCount          = 0;                          // incremented every frame
@@ -84,6 +91,13 @@ var RenderLocals = function () {
 	for (var i = 0; i < MAX_BBOX_SURFACES; i++) {
 		this.bboxSurfaces[i] = new BboxSurface();
 	}
+};
+
+var RenderCounts = function () {
+	this.shaders        = 0;
+	this.indexes        = 0;
+	this.culledFaces    = 0;
+	this.culledEnts = 0;
 };
 
 var BackendLocals = function () {
@@ -264,13 +278,13 @@ RefEntity.prototype.clone = function (refent) {
 };
 
 var Orientation = function () {
-	this.origin      = vec3.create();
-	this.axis    = [
+	this.origin      = vec3.create();                      // in world coordinates
+	this.axis        = [                                   // orientation in world
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
 	];
-	this.viewOrigin  = vec3.create();
+	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
 	this.modelMatrix = mat4.create();
 };
 

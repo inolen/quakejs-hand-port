@@ -13,6 +13,7 @@ var r_overBrightBits;
 var r_mapOverBrightBits;
 var r_ambientScale;
 var r_directedScale;
+var r_showtris;
 
 var flipMatrix = mat4.create([
 	0, 0, -1, 0,
@@ -41,6 +42,7 @@ function Init(sysinterface, cominterface) {
 	r_mapOverBrightBits = com.AddCvar('r_mapOverBrightBits', 2, CvarFlags.ARCHIVE);
 	r_ambientScale = com.AddCvar('r_ambientScale', 0.6);
 	r_directedScale = com.AddCvar('r_directedScale', 1);
+	r_showtris = com.AddCvar('r_showtris', 0);
 
 	com.AddCmd('showcluster', CmdShowCluster);
 
@@ -74,14 +76,132 @@ function GetGLExtension(name) {
 	return null;
 }
 
+// /**
+//  * CullLocalBox
+//  *
+//  * Returns CULL_IN, CULL_CLIP, or CULL_OUT
+//  */
+// function CullLocalBox(bounds) {
+// 	// if ( r_nocull->integer ) {
+// 	// 	return CULL_CLIP;
+// 	// }
+
+// 	// Transform into world space.
+// 	var v = [0, 0, 0];
+// 	var transformed = [
+// 		[0, 0, 0],
+// 		[0, 0, 0],
+// 		[0, 0, 0],
+// 		[0, 0, 0],
+// 		[0, 0, 0],
+// 		[0, 0, 0],
+// 		[0, 0, 0],
+// 		[0, 0, 0]
+// 	];
+
+// 	for (var i = 0; i < 8; i++) {
+// 		v[0] = bounds[i&1][0];
+// 		v[1] = bounds[(i>>1)&1][1];
+// 		v[2] = bounds[(i>>2)&1][2];
+
+// 		vec3.set(re.or.origin, transformed[i]);
+// 		vec3.add(transformed[i], vec3.scale(re.or.axis[0], v[0], [0, 0, 0]));
+// 		vec3.add(transformed[i], vec3.scale(re.or.axis[1], v[1], [0, 0, 0]));
+// 		vec3.add(transformed[i], vec3.scale(re.or.axis[2], v[2], [0, 0, 0]));
+// 	}
+
+// 	// Check against frustum planes.
+// 	var anyBack = 0;
+// 	var dists = [0, 0, 0, 0, 0, 0, 0, 0];
+
+// 	for (var i = 0; i < 4; i++) {
+// 		var frust = &tr.viewParms.frustum[i];
+// 		var front = back = 0;
+
+// 		for (var j = 0; j < 8; j++) {
+// 			dists[j] = vec3.dot(transformed[j], frust.normal);
+
+// 			if (dists[j] > frust.dist) {
+// 				front = 1;
+
+// 				if (back) {
+// 					break;  // a point is in front
+// 				}
+// 			} else {
+// 				back = 1;
+// 			}
+// 		}
+
+// 		if (!front) {			
+// 			return CULL_OUT;  // all points were behind one of the planes
+// 		}
+// 		anyBack |= back;
+// 	}
+
+// 	if (!anyBack) {
+// 		return CULL_IN;  // completely inside frustum
+// 	}
+
+// 	return CULL_CLIP;  // partially clipped
+// }
+
+// /**
+//  * CullLocalPointAndRadius
+//  */
+// function CullLocalPointAndRadius(pt, radius) {
+// 	var transformed = [0, 0, 0];
+
+// 	LocalPointToWorld(pt, transformed);
+
+// 	return CullPointAndRadius(transformed, radius);
+// }
+
+/**
+ * CullPointAndRadius
+ */
+function CullPointAndRadius(pt, radius) {
+	// if ( r_nocull->integer ) {
+	// 	return CULL_CLIP;
+	// }
+
+	var parms = re.viewParms;
+	var mightBeClipped = false;
+
+	// check against frustum planes
+	for (var i = 0; i < 4; i++) {
+		var frust = parms.frustum[i];
+		var dist = vec3.dot(pt, frust.normal) - frust.dist;
+
+		if ( dist < -radius ) {
+			return Cull.OUT;
+		} else if ( dist <= radius ) {
+			mightBeClipped = true;
+		}
+	}
+
+	if (mightBeClipped) {
+		return Cull.CLIP;
+	}
+
+	return Cull.IN; // completely inside frustum
+}
+
+/**
+ * LocalPointToWorld
+ */
+function LocalPointToWorld (local, world) {
+	world[0] = local[0] * re.or.axis[0][0] + local[1] * re.or.axis[1][0] + local[2] * re.or.axis[2][0] + re.or.origin[0];
+	world[1] = local[0] * re.or.axis[0][1] + local[1] * re.or.axis[1][1] + local[2] * re.or.axis[2][1] + re.or.origin[1];
+	world[2] = local[0] * re.or.axis[0][2] + local[1] * re.or.axis[1][2] + local[2] * re.or.axis[2][2] + re.or.origin[2];
+}
+
 /**
  * RotateModelMatrixForViewer
  */
-function RotateModelMatrixForViewer() {
-	var or = re.viewParms.or;
-
+function RotateModelMatrixForViewer(or) {
 	// Create model view matrix.
 	var modelMatrix = mat4.create();
+
 	modelMatrix[0] = or.axis[0][0];
 	modelMatrix[4] = or.axis[0][1];
 	modelMatrix[8] = or.axis[0][2];
@@ -102,15 +222,23 @@ function RotateModelMatrixForViewer() {
 	modelMatrix[11] = 0;
 	modelMatrix[15] = 1;
 
-	// convert from our coordinate system (looking down X)
-	// to OpenGL's coordinate system (looking down -Z)
+	// Convert from our coordinate system (looking down X)
+	// to OpenGL's coordinate system (looking down -Z).
 	mat4.multiply(flipMatrix, modelMatrix, or.modelMatrix);
+
+	// View origin is the same as origin for the viewer.
+	vec3.set(or.origin, or.viewOrigin);
+
+	// Update global world orientiation info.
+	or.clone(re.viewParms.world);
 }
 
 /**
  * RotateModelMatrixForEntity
  */
 function RotateModelMatrixForEntity(refent, or) {
+	var viewParms = re.viewParms;
+
 	vec3.set(refent.origin, or.origin);
 	vec3.set(refent.axis[0], or.axis[0]);
 	vec3.set(refent.axis[1], or.axis[1]);
@@ -137,27 +265,27 @@ function RotateModelMatrixForEntity(refent, or) {
 	modelMatrix[11] = 0;
 	modelMatrix[15] = 1;
 
-	mat4.multiply(re.viewParms.or.modelMatrix, or.modelMatrix, or.modelMatrix);
+	mat4.multiply(viewParms.or.modelMatrix, or.modelMatrix, or.modelMatrix);
 
-	/*// calculate the viewer origin in the model's space
-	// needed for fog, specular, and environment mapping
-	VectorSubtract( viewParms->or.origin, or->origin, delta );
+	// Calculate the viewer origin in the model's space
+	// needed for fog, specular, and environment mapping.
+	var delta = vec3.subtract(viewParms.or.origin, or.origin, [0, 0, 0]);
 
-	// compensate for scale in the axes if necessary
-	if ( ent->e.nonNormalizedAxes ) {
-		axisLength = VectorLength( ent->e.axis[0] );
-		if ( !axisLength ) {
-			axisLength = 0;
-		} else {
-			axisLength = 1.0f / axisLength;
-		}
-	} else {
-		axisLength = 1.0f;
-	}
+	// Compensate for scale in the axes if necessary.
+	// if ( ent->e.nonNormalizedAxes ) {
+	// 	axisLength = VectorLength( ent->e.axis[0] );
+	// 	if ( !axisLength ) {
+	// 		axisLength = 0;
+	// 	} else {
+	// 		axisLength = 1.0f / axisLength;
+	// 	}
+	// } else {
+	// 	axisLength = 1.0f;
+	// }
 
-	or->viewOrigin[0] = DotProduct( delta, or->axis[0] ) * axisLength;
-	or->viewOrigin[1] = DotProduct( delta, or->axis[1] ) * axisLength;
-	or->viewOrigin[2] = DotProduct( delta, or->axis[2] ) * axisLength;*/
+	or.viewOrigin[0] = vec3.dot(delta, or.axis[0]);// * axisLength;
+	or.viewOrigin[1] = vec3.dot(delta, or.axis[1]);// * axisLength;
+	or.viewOrigin[2] = vec3.dot(delta, or.axis[2]);// * axisLength;
 }
 
 /**
@@ -307,10 +435,7 @@ function RenderView(parms) {
 	//var firstDrawSurf = re.refdef.numDrawSurfs;
 	re.viewCount++;
 
-	// SETUP tr.or
-	//vec3.set(re.viewParms.or.origin, re.or.viewOrigin);
-
-	RotateModelMatrixForViewer();
+	RotateModelMatrixForViewer(re.viewParms.or);
 	SetupProjectionMatrix(r_zproj());
 
 	GenerateDrawSurfs();

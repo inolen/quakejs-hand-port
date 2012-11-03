@@ -14,16 +14,15 @@ var map = {
 /**
  * Init
  */
-function Init() {	
-	var uiContext = sys.GetUIContext();
-
+function Init() {
 	uil = new UILocals();
 
 	document.addEventListener('fullscreenchange', ScaleUI);
 	window.addEventListener('resize', ScaleUI);
 
 	//
-	$viewportUI = $(uiContext.handle);
+	var context = sys.GetUIContext();
+	$viewportUI = $(context);
 	ScaleUI();
 
 	// Embed our CSS.

@@ -147,7 +147,7 @@ function Frame(serverTime) {
 	
 	// Issue rendering calls.
 	re.RenderScene(cg.refdef);
-	UpdateFPS();
+	UpdateRenderCounts();
 	ui.RenderView(cg_hud);
 
 	// if (cg.showScores === true) {

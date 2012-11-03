@@ -4,9 +4,10 @@ var previousTime  = 0;
 var previousIdx   = 0;
 
 /**
- * UpdateFPS
+ * UpdateRenderCounters
  */
-function UpdateFPS() {
+function UpdateRenderCounts() {
+	// We calculate FPS on the client.
 	var t = sys.GetMilliseconds();
 	var frameTime = t - previousTime;
 	previousTime = t;
@@ -29,5 +30,10 @@ function UpdateFPS() {
 		cg_hud.setFPS(parseInt(1000 * FPS_FRAMES / total, 10));
 	}
 
-	return 0;
+	// Grab everything else from the renderer.
+	var counts = re.GetCounts();
+	cg_hud.setShaders(counts.shaders);
+	cg_hud.setIndexes(counts.indexes);
+	cg_hud.setCulledFaces(counts.culledFaces);
+	cg_hud.setCulledEnts(counts.culledEnts);
 }

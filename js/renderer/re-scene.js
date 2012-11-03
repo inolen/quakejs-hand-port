@@ -7,6 +7,7 @@ function RenderScene(fd) {
 		return;
 	}
 	
+	// Copy over render def.
 	re.refdef.x = fd.x;
 	re.refdef.y = fd.y;
 	re.refdef.width = fd.width;
@@ -17,8 +18,7 @@ function RenderScene(fd) {
 	re.refdef.viewaxis = fd.viewaxis;
 	re.refdef.time = fd.time;
 
-	re.refdef.numDrawSurfs = 0;
-
+	// Create view parms from render def.
 	var parms = new ViewParms();
 	parms.x = fd.x;
 	parms.y = fd.y;
@@ -31,6 +31,13 @@ function RenderScene(fd) {
 	vec3.set(fd.viewaxis[1], parms.or.axis[1]);
 	vec3.set(fd.viewaxis[2], parms.or.axis[2]);
 	vec3.set(fd.vieworg, parms.pvsOrigin);
+
+	re.counts.shaders = 0;
+	re.counts.indexes = 0;
+	re.counts.culledFaces = 0;
+	re.counts.culledEnts = 0;
+
+	re.refdef.numDrawSurfs = 0;
 
 	RenderView(parms);
 
