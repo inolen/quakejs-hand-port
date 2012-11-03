@@ -45,9 +45,7 @@ function DeleteTextures() {
 /**
  * FindImage
  */
-function FindImage(name, clamp) {	
-	return re.defaultTexture;
-
+function FindImage(name, clamp) {
 	// Only load .dds files. Retrying on missing files is an expensive
 	// operation in the browser.
 	if (name.match(/\.[^\.]+$/)) {
@@ -150,7 +148,7 @@ function BuildTexture(buffer, width, height, clamp) {
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
 		gl.texParameterf(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 	}
-	
+
 	if (mipmaps <= 1) {
 		gl.generateMipmap(gl.TEXTURE_2D);
 	}
