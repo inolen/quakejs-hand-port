@@ -427,9 +427,6 @@ var Md3Surface = function () {
 	this.triangles     = null;
 	this.xyzNormals    = null;
 	this.model         = null;
-
-	// used by static buffers
-	this.vertex        = 0;
 };
 
 var DrawSurface = function () {

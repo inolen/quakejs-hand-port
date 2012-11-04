@@ -333,47 +333,47 @@ function TesselateMd3(tess, face) {
 	var refent = backend.currentEntity;
 	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
 	var numVerts = face.header.numVerts;
+	var oldXyz = [0, 0, 0];
+	var newXyz = [0, 0, 0];
 	var oldNormal = [0, 0, 0];
 	var newNormal = [0, 0, 0];
-	var xyz = [0, 0, 0];
-	var normal = [0, 0, 0];
 
 	//
 	// Update the scratch vertex buffers.
 	//
 	var vb = re.modelVertexBuffers[0];
+	var indexOffset = vb.count / 12;
 
 	for (var i = 0; i < numVerts; i++) {
 		var oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
 		var newXyzNormal = face.xyzNormals[refent.frame * numVerts + i];
 
+		vec3.scale(oldXyzNormal.xyz, MD3_XYZ_SCALE, oldXyz);
 		oldNormal[0] = Math.cos(oldXyzNormal.lng) * Math.sin(oldXyzNormal.lat);
 		oldNormal[1] = Math.sin(oldXyzNormal.lng) * Math.sin(oldXyzNormal.lat);
 		oldNormal[2] = Math.cos(oldXyzNormal.lat);
 		vec3.normalize(oldNormal);
 
+		vec3.scale(newXyzNormal.xyz, MD3_XYZ_SCALE, newXyz);
 		newNormal[0] = Math.cos(newXyzNormal.lng) * Math.sin(newXyzNormal.lat);
 		newNormal[1] = Math.sin(newXyzNormal.lng) * Math.sin(newXyzNormal.lat);
 		newNormal[2] = Math.cos(newXyzNormal.lat);
 		vec3.normalize(newNormal);
 
-		vec3.set(newXyzNormal.xyz, xyz);
-		vec3.set(newNormal, normal);
-
 		if (backlerp != 0.0) {
 			for (var j = 0; j < 3; j++) {
-				xyz[j] = newXyzNormal.xyz[j] + backlerp * (oldXyzNormal.xyz[j] - newXyzNormal.xyz[j]);
-				normal[j] = newNormal[j] + backlerp * (oldNormal[j] - newNormal[j]);
+				newXyz[j] = newXyz[j] + backlerp * (oldXyz[j] - newXyz[j]);
+				newNormal[j] = newNormal[j] + backlerp * (oldNormal[j] - newNormal[j]);
 			}
 		}
 
-		vb.view[vb.count++] = xyz[0] * MD3_XYZ_SCALE;
-		vb.view[vb.count++] = xyz[1] * MD3_XYZ_SCALE;
-		vb.view[vb.count++] = xyz[2] * MD3_XYZ_SCALE;
+		vb.view[vb.count++] = newXyz[0];
+		vb.view[vb.count++] = newXyz[1];
+		vb.view[vb.count++] = newXyz[2];
 
-		vb.view[vb.count++] = normal[0];
-		vb.view[vb.count++] = normal[1];
-		vb.view[vb.count++] = normal[2];
+		vb.view[vb.count++] = newNormal[0];
+		vb.view[vb.count++] = newNormal[1];
+		vb.view[vb.count++] = newNormal[2];
 
 		vb.view[vb.count++] = face.st[i].st[0];
 		vb.view[vb.count++] = face.st[i].st[1];
@@ -392,9 +392,9 @@ function TesselateMd3(tess, face) {
 	for (var i = 0; i < face.triangles.length; i++) {
 		var tri = face.triangles[i];
 
-		ib.view[ib.count++] = face.vertex + tri.indexes[0];
-		ib.view[ib.count++] = face.vertex + tri.indexes[1];
-		ib.view[ib.count++] = face.vertex + tri.indexes[2];
+		ib.view[ib.count++] = indexOffset + tri.indexes[0];
+		ib.view[ib.count++] = indexOffset + tri.indexes[1];
+		ib.view[ib.count++] = indexOffset + tri.indexes[2];
 	}
 
 	ib.modified = true;
