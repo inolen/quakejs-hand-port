@@ -1,7 +1,6 @@
 /**
  * CalcDiffuseColor
  */
-// TODO This has to be slow.
 function CalcDiffuseColor(refent, normal, colors, offset) {
 	var incoming = vec3.dot(normal, refent.lightDir);
 	if (incoming <= 0) {

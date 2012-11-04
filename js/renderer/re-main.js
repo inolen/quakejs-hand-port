@@ -14,6 +14,7 @@ var r_mapOverBrightBits;
 var r_ambientScale;
 var r_directedScale;
 var r_showtris;
+var r_shownormals;
 
 var flipMatrix = mat4.create([
 	0, 0, -1, 0,
@@ -43,6 +44,7 @@ function Init(sysinterface, cominterface) {
 	r_ambientScale = com.AddCvar('r_ambientScale', 0.6);
 	r_directedScale = com.AddCvar('r_directedScale', 1);
 	r_showtris = com.AddCvar('r_showtris', 0);
+	r_shownormals = com.AddCvar('r_shownormals', 0);
 
 	com.AddCmd('showcluster', CmdShowCluster);
 

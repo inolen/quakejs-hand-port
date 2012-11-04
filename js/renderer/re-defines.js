@@ -3,7 +3,7 @@ var MAX_DRAWSURFS = 0x10000;
 // Surface geometry should not exceed these limits
 // TODO How does Q3 stay so low? There limit is 1000, we can fit under 2000 in most cases, but q3ctf2 is ~4300.
 var SHADER_MAX_VERTEXES = 5000;
-var SHADER_MAX_INDEXES  = (6*SHADER_MAX_VERTEXES);
+var SHADER_MAX_INDEXES  = 0xFFFF;
 
 var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
 var MAX_ENTITIES   = (1 << ENTITYNUM_BITS);
@@ -28,8 +28,6 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + ENTITYNUM_BITS;
 var SHADERNUM_BITS       = 14;
 var MAX_SHADERS          = (1<<SHADERNUM_BITS);
 
-var MAX_BBOX_SURFACES    = 32;
-
 var Cull = {
 	IN:   0,                                               // completely unclipped
 	CLIP: 1,                                               // clipped by one or more planes
@@ -38,59 +36,47 @@ var Cull = {
 
 var RenderLocals = function () {
 	// frontend
-	this.refdef              = new RefDef();
-	this.viewParms           = new ViewParms();
-	//this.or                  = new Orientation();          // for current entity
+	this.refdef             = new RefDef();
+	this.viewParms          = new ViewParms();
+	//this.or                 = new Orientation();           // for current entity
 
-	this.world               = null;
-	this.currentEntity       = null;
-	this.counts              = new RenderCounts();
+	this.world              = null;
+	this.counts             = new RenderCounts();
 
-	this.visCount            = 0;                          // incremented every time a new vis cluster is entered
-	this.frameCount          = 0;                          // incremented every frame
-	this.sceneCount          = 0;                          // incremented every scene
-	this.viewCount           = 0;                          // incremented every view (twice a scene if portaled)
-	this.frameSceneNum       = 0;                          // zeroed at RE_BeginFrame
+	this.visCount           = 0;                           // incremented every time a new vis cluster is entered
+	this.frameCount         = 0;                           // incremented every frame
+	this.sceneCount         = 0;                           // incremented every scene
+	this.viewCount          = 0;                           // incremented every view (twice a scene if portaled)
+	this.frameSceneNum      = 0;                           // zeroed at RE_BeginFrame
 
-	this.identityLight       = 0;                          // 1.0 / ( 1 << overbrightBits )
-	this.overbrightBits      = 0;                          // r_overbrightBits
+	this.identityLight      = 0;                           // 1.0 / ( 1 << overbrightBits )
+	this.overbrightBits     = 0;                           // r_overbrightBits
 
 	// shaders
-	this.shaderBodies        = {};
-	this.programBodies       = {};
-	this.shaders             = [];
-	this.sortedShaders       = [];
-	this.defaultShader       = null;
-	this.programDefault      = null;
-	this.programNoLightmap   = null;
+	this.shaderBodies       = {};
+	this.programBodies      = {};
+	this.shaders            = [];
+	this.sortedShaders      = [];
+	this.defaultShader      = null;
+	this.debugShader        = null;
+	this.programDefault     = null;
+	this.programNoLightmap  = null;
 
 	// textures
-	this.textures            = {};
-	this.defaultTexture      = null;
-	this.lightmapTexture     = null;
-	this.whiteTexture        = null;
+	this.textures           = {};
+	this.defaultTexture     = null;
+	this.lightmapTexture    = null;
+	this.whiteTexture       = null;
 
 	// skins
-	this.skins               = [];
+	this.skins              = [];
 
 	// models
-	this.models              = [];
-
-	// bbox surface pool
-	this.bboxSurfaces        = new Array(MAX_BBOX_SURFACES);
-	this.bboxSurfaceNum      = 0;
-
-	// static vertex buffers
-	this.worldVertexBuffer   = null;
-	this.worldIndexBuffer    = null;
-	this.worldShaderMap      = null;
+	this.modelVertexBuffers = [];
+	this.models             = [];
 
 	// OpenGL extension handles	
-	this.ext_s3tc            = null;
-
-	for (var i = 0; i < MAX_BBOX_SURFACES; i++) {
-		this.bboxSurfaces[i] = new BboxSurface();
-	}
+	this.ext_s3tc           = null;
 };
 
 var RenderCounts = function () {
@@ -98,12 +84,6 @@ var RenderCounts = function () {
 	this.indexes        = 0;
 	this.culledFaces    = 0;
 	this.culledEnts = 0;
-};
-
-var BackendLocals = function () {
-	this.refdef    = new RefDef();
-	this.viewParms = new ViewParms();
-	this.or        = new Orientation();
 };
 
 var WorldData = function () {
@@ -130,6 +110,9 @@ var WorldData = function () {
 	this.lightGridInverseSize = [0, 0, 0];
 	this.lightGridBounds      = [0, 0, 0];
 	this.lightGridData        = null;
+
+	// static world buffers
+	this.vertexBuffers        = [];
 };
 
 /**********************************************************
@@ -191,16 +174,15 @@ RefDef.prototype.clone = function (to) {
 };
 
 var RefEntityType = {
-	BBOX:                0,
-	MODEL:               1,
-	POLY:                2,
-	SPRITE:              3,
-	BEAM:                4,
-	RAIL_CORE:           5,
-	RAIL_RINGS:          6,
-	LIGHTNING:           7,
-	PORTALSURFACE:       8,                                // doesn't draw anything, just info for portals
-	MAX_REF_ENTITY_TYPE: 9
+	MODEL:               0,
+	POLY:                1,
+	SPRITE:              2,
+	BEAM:                3,
+	RAIL_CORE:           4,
+	RAIL_RINGS:          5,
+	LIGHTNING:           6,
+	PORTALSURFACE:       7,                                // doesn't draw anything, just info for portals
+	MAX_REF_ENTITY_TYPE: 8
 };
 
 var RenderFx = {
@@ -239,9 +221,6 @@ var RefEntity = function () {
 	this.skinNum            = 0;                          // inline skin index
 	this.customSkin         = 0;                          // NULL for default skin
 	this.customShader       = 0;                          // use one image for the entire thing
-	// bbox
-	this.mins               = [0, 0, 0];
-	this.maxs               = [0, 0, 0];
 
 	// internal use only	
 	this.lightingCalculated = false;
@@ -271,8 +250,6 @@ RefEntity.prototype.clone = function (refent) {
 	refent.skinNum = this.skinNum;
 	refent.customSkin = this.customSkin;
 	refent.customShader = this.customShader;
-	vec3.set(this.mins, refent.mins);
-	vec3.set(this.maxs, refent.maxs);
 
 	return refent;
 };
@@ -357,35 +334,49 @@ ViewParms.prototype.clone = function (to) {
 	return to;
 };
 
+/**********************************************************
+ * Backend
+ **********************************************************/
+var BackendLocals = function () {
+	this.refdef        = new RefDef();
+	this.viewParms     = new ViewParms();
+	this.or            = new Orientation();
+
+	this.currentEntity = null;
+	this.currentModel  = null;
+};
+
 var ShaderCommands = function () {
 	this.shader             = null;
 	this.shaderTime         = 0;
 
-	// Buffers used for dynamic rendering (e.g. debug bboxes)
-	this.numVertexes        = 0;
-	this.abvertexes         = new ArrayBuffer(SHADER_MAX_VERTEXES * 4 * 14); // underlying data
-	this.abindexes          = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
-	this.vertexes           = new Float32Array(this.abvertexes);             // views you use to manipulate the data
-	this.indexes            = new Uint16Array(this.abindexes);
-	this.vertexBuffer       = gl.createBuffer();
-	this.indexBuffer        = gl.createBuffer();
-
 	// What we actually bind and render with.
-	this.activeVertexBuffer = null;
-	this.activeIndexBuffer  = null;
-	this.numIndexes         = 0;
-	this.indexOffset        = 0;
-	this.stride             = 0;
-	this.attrs              = null;
+	this.vertexBuffers = null;
+	this.indexBuffer   = new RenderBuffer(RenderBufferType.INDEX_DYNAMIC);
+};
 
-	// int			fogNum;
+var RenderBufferType = {
+	VERTEX_STATIC:  0,
+	VERTEX_DYNAMIC: 1,
+	INDEX_DYNAMIC:  2
+};
 
-	// int			dlightBits;	// or together of all vertexDlightBits
+var RenderBuffer = function (type, stride, elements) {
+	if (type == RenderBufferType.VERTEX_DYNAMIC ||
+		type == RenderBufferType.VERTEX_STATIC) {
+		this.ab = new ArrayBuffer(stride * elements);
+		this.view = new Float32Array(this.ab);
+	} else {
+		this.ab = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
+		this.view = new Uint16Array(this.ab);
+	}
 
-	// info extracted from current shader
-	// int			numPasses;
-	// void		(*currentStageIteratorFunc)( void );
-	// shaderStage_t	**xstages;
+	this.type     = type;
+	this.stride   = stride;
+	this.glbuffer = gl.createBuffer();
+	this.attrs    = null;
+	this.count    = 0;
+	this.modified = false;
 };
 
 /**********************************************************
@@ -401,8 +392,7 @@ var SurfaceType = {
 	MD3:          6,
 	FLARE:        7,
 	ENTITY:       8,                                      // beams, rails, lightning, etc that can be determined by entity
-	DISPLAY_LIST: 9,
-	BBOX:         10
+	DISPLAY_LIST: 9
 };
 
 var msurface_t = function () {
@@ -416,17 +406,16 @@ var msurface_t = function () {
 	this.meshVertCount = 0;
 	this.lightmapNum   = 0;
 	this.normal        = [0, 0, 0];
+
 	// grid meshes
 	this.patchWidth    = 0;
 	this.patchHeight   = 0;
+
 	// normal faces
 	this.plane         = new Plane();
-};
 
-var BboxSurface = function () {
-	this.surfaceType = SurfaceType.BBOX;
-	this.shader      = null;
-	this.refent      = null;
+	// used by static buffers
+	this.indexOffset   = 0;
 };
 
 var Md3Surface = function () {
@@ -437,6 +426,10 @@ var Md3Surface = function () {
 	this.st            = null;
 	this.triangles     = null;
 	this.xyzNormals    = null;
+	this.model         = null;
+
+	// used by static buffers
+	this.vertex        = 0;
 };
 
 var DrawSurface = function () {
@@ -556,16 +549,18 @@ var SkinSurface = function () {
 var ModelType = {
 	BAD:   0,
 	BRUSH: 1,
-	Md3:   2
+	MD3:   2
 };
 
 var Model = function () {
-	this.type     = ModelType.BAD;
-	this.name     = null;
-	this.index    = 0;                                    // model = tr.models[model->index]
-	this.bmodel   = null;
-	this.md3      = new Array(MD3_MAX_LODS);
-	this.numLods  = 0;
+	this.type          = ModelType.BAD;
+	this.name          = null;
+	this.index         = 0;                                // model = tr.models[model->index]
+	this.bmodel        = null;
+	this.md3           = [];
+	this.numLods       = 0;
+
+	this.vertexBuffers = [];
 };
 
 /************************************************

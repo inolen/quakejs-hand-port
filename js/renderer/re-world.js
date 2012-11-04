@@ -2,92 +2,50 @@
  * BuildWorldBuffers
  */
 function BuildWorldBuffers() {
-	var faces = re.world.faces,
-		verts = re.world.verts,
-		meshVerts = re.world.meshVerts,
-		shaders = re.world.shaders;
+	var verts = re.world.verts;
+	var buffers = re.world.vertexBuffers;
 
-	// Compile vert list.
-	var vertices = new Array(verts.length*14);
-	var offset = 0;
+	// 
+	// Setup vertex buffer.
+	//
+	var vb = buffers[0] = new RenderBuffer(RenderBufferType.VERTEX_STATIC, 56, verts.length);
+
+	vb.attrs = {
+		xyz:        [3,  0],
+		normal:     [3, 12],
+		texCoord:   [2, 24],
+		lightCoord: [2, 32],
+		color:      [4, 40]
+	};
+
 	for (var i = 0; i < verts.length; i++) {
 		var vert = verts[i];
 
-		vertices[offset++] = vert.pos[0];
-		vertices[offset++] = vert.pos[1];
-		vertices[offset++] = vert.pos[2];
+		vb.view[vb.count++] = vert.pos[0];
+		vb.view[vb.count++] = vert.pos[1];
+		vb.view[vb.count++] = vert.pos[2];
 
-		vertices[offset++] = vert.normal[0];
-		vertices[offset++] = vert.normal[1];
-		vertices[offset++] = vert.normal[2];
+		vb.view[vb.count++] = vert.normal[0];
+		vb.view[vb.count++] = vert.normal[1];
+		vb.view[vb.count++] = vert.normal[2];
 
-		vertices[offset++] = vert.texCoord[0];
-		vertices[offset++] = vert.texCoord[1];
+		vb.view[vb.count++] = vert.texCoord[0];
+		vb.view[vb.count++] = vert.texCoord[1];
 
-		vertices[offset++] = vert.lmCoord[0];
-		vertices[offset++] = vert.lmCoord[1];
+		vb.view[vb.count++] = vert.lmCoord[0];
+		vb.view[vb.count++] = vert.lmCoord[1];
 
-		vertices[offset++] = vert.color[0];
-		vertices[offset++] = vert.color[1];
-		vertices[offset++] = vert.color[2];
-		vertices[offset++] = vert.color[3];
+		vb.view[vb.count++] = vert.color[0];
+		vb.view[vb.count++] = vert.color[1];
+		vb.view[vb.count++] = vert.color[2];
+		vb.view[vb.count++] = vert.color[3];
 	}
 
-	// Start setting up shader map (groups faces by shader).
-	re.worldShaderMap = [];
-
-	for (var i = 0; i < faces.length; i++) {
-		var face = faces[i];
-		var shader = face.shader;
-		var entry = re.worldShaderMap[shader.index];
-
-		if (!entry) {
-			entry = re.worldShaderMap[shader.index] = {
-				faces: [],
-				indexOffset: 0,
-				elementCount: 0
-			};
-		}
-
-		entry.faces.push(face);
-	}
-		
-	// Compile index list / shader map.
-	var indices = new Array();
-
-	for (var i = 0; i < re.worldShaderMap.length; i++) {
-		var entry = re.worldShaderMap[i];
-
-		if (!entry) {
-			continue;
-		}
-
-		entry.indexOffset = indices.length * 2; // Offset is in bytes
-
-		for (var j = 0; j < entry.faces.length; j++) {
-			var face = entry.faces[j];
-
-			for (var k = 0; k < face.meshVertCount; k++) {
-				indices.push(face.vertex + meshVerts[face.meshVert + k]);
-			}
-
-			entry.elementCount += face.meshVertCount;
-		}
-		
-		entry.faces = null; // Don't need this in memory anymore.
-	}
-
-	re.worldVertexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, re.worldVertexBuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-	re.worldIndexBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, re.worldIndexBuffer);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+	gl.bindBuffer(gl.ARRAY_BUFFER, vb.glbuffer);
+	gl.bufferData(gl.ARRAY_BUFFER, vb.view, gl.STATIC_DRAW);
 
 	// We no longer need the vert info, let's free up ~8mb of memory.
 	re.world.verts = null;
-	re.world.meshVerts = null;
 }
 
 /**
@@ -197,15 +155,15 @@ function MarkLeaves() {
 	}
 }
 
-function AddWorldSurface(surf/*, dlightBits*/) {
-	if (surf.viewCount === re.viewCount) {
+function AddWorldSurface(face/*, dlightBits*/) {
+	if (face.viewCount === re.viewCount) {
 		return; // already in this view
 	}
 
-	surf.viewCount = re.viewCount;
+	face.viewCount = re.viewCount;
 
 	// try to cull before dlighting or adding
-	if (CullSurface(surf, surf.shader)) {
+	if (CullSurface(face, face.shader)) {
 		re.counts.culledFaces++;
 		return;
 	}
@@ -216,7 +174,7 @@ function AddWorldSurface(surf/*, dlightBits*/) {
 		dlightBits = (dlightBits !== 0);
 	}*/
 
-	AddDrawSurf(surf, surf.shader, ENTITYNUM_WORLD);
+	AddDrawSurf(face, face.shader, ENTITYNUM_WORLD);
 }
 
 /**

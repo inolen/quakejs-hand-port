@@ -3,7 +3,6 @@ var tessFns = {};
 tessFns[SurfaceType.BAD] = TesselateFace;
 tessFns[SurfaceType.FACE] = TesselateFace;
 tessFns[SurfaceType.GRID] = TesselateFace;
-tessFns[SurfaceType.BBOX] = TesselateBbox;
 tessFns[SurfaceType.MD3] = TesselateMd3;
 
 /**
@@ -42,7 +41,7 @@ function RenderDrawSurfaces() {
 	var oldEntityNum = -1;
 	var modelMatrix;
 
-	re.currentEntity = null;
+	backend.currentEntity = null;
 
 	for (var i = 0; i < refdef.numDrawSurfs; i++) {
 		var drawSurf = drawSurfs[i];
@@ -62,16 +61,6 @@ function RenderDrawSurfaces() {
 
 		// Change the tess parameters if needed.
 		if (shader != oldShader || entityNum != oldEntityNum) {
-			/*if (typeof(foobar) === 'undefined' || tess.numIndexes > foobar) {
-				foobar = tess.numIndexes;
-				console.log('max indexes', foobar);
-			}
-
-			if (typeof(foobar2) === 'undefined' || tess.numVertexes > foobar2) {
-				foobar2 = tess.numVertexes;
-				console.log('max vertexes', foobar2);
-			}*/
-
 			if (oldShader) {
 				EndSurface();
 			}
@@ -83,10 +72,10 @@ function RenderDrawSurfaces() {
 		// Change the model view matrix for entity.
 		if (oldEntityNum !== entityNum) {
 			if (entityNum !== ENTITYNUM_WORLD) {
-				re.currentEntity = refdef.refEntities[entityNum];
-				RotateModelMatrixForEntity(re.currentEntity, backend.or);
+				backend.currentEntity = refdef.refEntities[entityNum];
+				RotateModelMatrixForEntity(backend.currentEntity, backend.or);
 			} else {
-				re.currentEntity = null;
+				backend.currentEntity = null;
 				parms.or.clone(backend.or);
 			}
 
@@ -109,11 +98,23 @@ function RenderDrawSurfaces() {
 function BeginSurface(shader) {
 	tess.shader = shader;
 	tess.shaderTime = backend.refdef.time / 1000;
-	tess.numVertexes = 0;
-	tess.activeVertexBuffer = tess.vertexBuffer;
-	tess.activeIndexBuffer = tess.indexBuffer;
-	tess.numIndexes = 0;
-	tess.indexOffset = 0;
+
+	// Reset count on dynamic vertex buffers.
+	if (tess.vertexBuffers) {
+		for (var i = 0; i < tess.vertexBuffers.length; i++) {
+			var vb = tess.vertexBuffers[i];
+
+			if (vb.type === RenderBufferType.VERTEX_DYNAMIC) {
+				vb.count = 0;
+			}
+		}
+	}
+	tess.vertexBuffers = null;
+
+	// Resten count on dynamic index buffers.
+	if (tess.indexBuffer.type == RenderBufferType.INDEX_DYNAMIC) {
+		tess.indexBuffer.count = 0;
+	}
 }
 
 /**
@@ -123,35 +124,118 @@ function EndSurface() {
 	var shader = tess.shader;
 
 	re.counts.shaders++;
-	re.counts.indexes += tess.numIndexes;
+	re.counts.indexes += tess.indexBuffer.count;
 
-	// If we're using the scratch buffers.
-	if (tess.activeVertexBuffer === tess.vertexBuffer &&
-		tess.activeIndexBuffer === tess.indexBuffer) {
-		// Create new views into the underlying ArrayBuffer that represent the
-		// much smaller subset of data we need to actually send to the GPU.
-		var vertexView = new Float32Array(tess.abvertexes, 0, tess.numVertexes * (tess.stride/4));
-		var indexView = new Uint16Array(tess.abindexes, 0, tess.numIndexes);
+	BindBuffer(tess.indexBuffer);
 
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.activeVertexBuffer);
-		gl.bufferData(gl.ARRAY_BUFFER, vertexView, gl.DYNAMIC_DRAW);
-
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.activeIndexBuffer);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexView, gl.DYNAMIC_DRAW);
-	} else {
-		gl.bindBuffer(gl.ARRAY_BUFFER, tess.activeVertexBuffer);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, tess.activeIndexBuffer);
+	for (var i = 0; i < tess.vertexBuffers.length; i++) {
+		BindBuffer(tess.vertexBuffers[i]);
 	}
 
-	// Bind the surface shader
+	// Bind the surface shader.
 	SetShader(shader);
 	
 	for (var i = 0; i < shader.stages.length; i++) {
 		var stage = shader.stages[i];
 
-		SetShaderStage(shader, stage, tess.stride, tess.attrs);
+		SetShaderStage(shader, stage);
 
-		gl.drawElements(r_showtris() ? gl.LINE_LOOP : shader.mode, tess.numIndexes, gl.UNSIGNED_SHORT, tess.indexOffset);
+		for (var j = 0; j < tess.vertexBuffers.length; j++) {
+			BindBufferAttributes(tess.vertexBuffers[j], stage);
+		}
+
+		gl.drawElements(shader.mode, tess.indexBuffer.count, gl.UNSIGNED_SHORT, 0);
+	}
+
+	if (r_showtris()) {
+		DrawTris();
+	}
+	
+	if (r_shownormals()) {
+		DrawNormals();
+	}
+}
+
+/**
+ * DrawTris
+ */
+function DrawTris() {
+	gl.depthMask(true);
+	gl.depthRange(0, 0);
+
+	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
+	gl.drawElements(gl.LINE_LOOP, tess.indexBuffer.count, gl.UNSIGNED_SHORT, 0);
+
+	gl.depthRange(0, 1);
+}
+
+
+/**
+ * DrawNormals
+ */
+function DrawNormals() {
+	gl.depthMask(true);
+	gl.depthRange(0, 0); // never occluded
+
+	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
+	// for (var i = 0; i < input->numVertexes; i++) {
+	// 	qglVertex3fv (input->xyz[i]);
+	// 	VectorMA (input->xyz[i], 2, input->normal[i], temp);
+	// 	qglVertex3fv (temp);
+	// }
+
+	gl.DepthRange(0, 1);
+}
+
+/** 
+ * BindBuffer
+ */
+function BindBuffer(rb) {
+	var isvb = rb.type === RenderBufferType.VERTEX_DYNAMIC ||
+	           rb.type === RenderBufferType.VERTEX_STATIC;
+
+	gl.bindBuffer(isvb ? gl.ARRAY_BUFFER : gl.ELEMENT_ARRAY_BUFFER, rb.glbuffer);
+
+	if (rb.modified) {
+		// Create new views into the underlying array that represent the
+		// much smaller subset of data we need to actually send to the GPU.
+		var view;
+
+		if (isvb) {
+		 	view = new Float32Array(rb.ab, 0, rb.count);
+		 } else {
+			view = new Uint16Array(rb.ab, 0, rb.count);
+		}
+
+		gl.bufferData(isvb ? gl.ARRAY_BUFFER : gl.ELEMENT_ARRAY_BUFFER, view, gl.DYNAMIC_DRAW);
+
+		rb.modified = false;
+	}
+}
+
+/** 
+ * BindBufferAttributes
+ */
+function BindBufferAttributes(rb, stage) {
+	var program = stage.program;
+	var attrs = rb.attrs;
+
+	if (!attrs) {
+		return;
+	}
+
+	for (var name in attrs) {
+		if (!attrs.hasOwnProperty(name)) {
+			continue;
+		}
+
+		var tuple = attrs[name];
+		var idx;
+
+		if ((idx = program.attrib[name]) !== undefined) {
+			gl.enableVertexAttribArray(idx);
+			gl.vertexAttribPointer(idx, tuple[0], gl.FLOAT, false, rb.stride, tuple[1]);
+		}
 	}
 }
 
@@ -170,7 +254,7 @@ function SetShader(shader) {
 /**
  * SetShaderStage
  */
-function SetShaderStage(shader, stage, stride, attrs) {
+function SetShaderStage(shader, stage) {
 	var program = stage.program;
 
 	// Sanity check after being burned so many times by this.
@@ -208,7 +292,7 @@ function SetShaderStage(shader, stage, stride, attrs) {
 	gl.uniformMatrix4fv(program.uniform.projectionMat, false, backend.viewParms.projectionMatrix);
 
 	if (program.uniform.backlerp !== undefined) {
-		var refent = re.currentEntity;
+		var refent = backend.currentEntity;
 		var backlerp = !refent || refent.oldFrame === refent.frame ? 0 : refent.backlerp;
 		gl.uniform1f(program.uniform.backlerp, backlerp);
 	}
@@ -222,18 +306,98 @@ function SetShaderStage(shader, stage, stride, attrs) {
 	if (program.uniform.time !== undefined) {
 		gl.uniform1f(program.uniform.time, tess.shaderTime);
 	}
+}
 
-	// Setup vertex attributes.
-	for (var name in attrs) {
-		if (!attrs.hasOwnProperty(name)) {
-			continue;
-		}
+/**
+ * TesselateFace
+ */
+function TesselateFace(tess, face) {
+	var meshVerts = re.world.meshVerts;
 
-		var tuple = attrs[name];
+	// Append to our index buffer.
+	var ib = tess.indexBuffer;
 
-		if (program.attrib[name] !== undefined) {
-			gl.enableVertexAttribArray(program.attrib[name]);
-			gl.vertexAttribPointer(program.attrib[name], tuple[0], gl.FLOAT, false, stride, tuple[1]);
-		}
+	for (var i = 0; i < face.meshVertCount; i++) {
+		ib.view[ib.count++] = face.vertex + meshVerts[face.meshVert + i];
 	}
+
+	ib.modified = true;
+
+	tess.vertexBuffers = re.world.vertexBuffers;
+}
+
+/**
+ * TesselateMd3
+ */
+function TesselateMd3(tess, face) {
+	var refent = backend.currentEntity;
+	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
+	var numVerts = face.header.numVerts;
+	var oldNormal = [0, 0, 0];
+	var newNormal = [0, 0, 0];
+	var xyz = [0, 0, 0];
+	var normal = [0, 0, 0];
+
+	//
+	// Update the scratch vertex buffers.
+	//
+	var vb = re.modelVertexBuffers[0];
+
+	for (var i = 0; i < numVerts; i++) {
+		var oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
+		var newXyzNormal = face.xyzNormals[refent.frame * numVerts + i];
+
+		oldNormal[0] = Math.cos(oldXyzNormal.lng) * Math.sin(oldXyzNormal.lat);
+		oldNormal[1] = Math.sin(oldXyzNormal.lng) * Math.sin(oldXyzNormal.lat);
+		oldNormal[2] = Math.cos(oldXyzNormal.lat);
+		vec3.normalize(oldNormal);
+
+		newNormal[0] = Math.cos(newXyzNormal.lng) * Math.sin(newXyzNormal.lat);
+		newNormal[1] = Math.sin(newXyzNormal.lng) * Math.sin(newXyzNormal.lat);
+		newNormal[2] = Math.cos(newXyzNormal.lat);
+		vec3.normalize(newNormal);
+
+		vec3.set(newXyzNormal.xyz, xyz);
+		vec3.set(newNormal, normal);
+
+		if (backlerp != 0.0) {
+			for (var j = 0; j < 3; j++) {
+				xyz[j] = newXyzNormal.xyz[j] + backlerp * (oldXyzNormal.xyz[j] - newXyzNormal.xyz[j]);
+				normal[j] = newNormal[j] + backlerp * (oldNormal[j] - newNormal[j]);
+			}
+		}
+
+		vb.view[vb.count++] = xyz[0] * MD3_XYZ_SCALE;
+		vb.view[vb.count++] = xyz[1] * MD3_XYZ_SCALE;
+		vb.view[vb.count++] = xyz[2] * MD3_XYZ_SCALE;
+
+		vb.view[vb.count++] = normal[0];
+		vb.view[vb.count++] = normal[1];
+		vb.view[vb.count++] = normal[2];
+
+		vb.view[vb.count++] = face.st[i].st[0];
+		vb.view[vb.count++] = face.st[i].st[1];
+
+		CalcDiffuseColor(backend.currentEntity, newNormal, vb.view, vb.count);
+		vb.count += 4;
+	}
+
+	vb.modified = true;
+
+	//
+	// Update the scratch index buffer.
+	//
+	var ib = tess.indexBuffer;
+
+	for (var i = 0; i < face.triangles.length; i++) {
+		var tri = face.triangles[i];
+
+		ib.view[ib.count++] = face.vertex + tri.indexes[0];
+		ib.view[ib.count++] = face.vertex + tri.indexes[1];
+		ib.view[ib.count++] = face.vertex + tri.indexes[2];
+	}
+
+	ib.modified = true;
+
+	tess.vertexBuffers = re.modelVertexBuffers;
 }

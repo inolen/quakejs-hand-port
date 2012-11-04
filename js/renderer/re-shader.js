@@ -31,10 +31,10 @@ function InitDefaultShaders() {
 	RegisterShader(shader.name, shader);
 
 	// Register green debug shader.
-	shader = new Shader();
+	shader = re.debugShader = new Shader();
 	stage = new ShaderStage();
 	shader.mode = gl.LINE_LOOP;
-	shader.name = 'debugGreenShader';
+	shader.name = 'debugShader';
 	stage.program = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['green.fp']);
 	shader.stages.push(stage);
 	RegisterShader(shader.name, shader);
@@ -697,9 +697,7 @@ function GenerateVertexShader(q3shader, stage) {
 
 	builder.addAttribs({
 		xyz: 'vec3',
-		xyz2: 'vec3',
-		norm: 'vec3',
-		norm2: 'vec3',
+		normal: 'vec3',
 		color: 'vec4'
 	});
 
@@ -711,7 +709,6 @@ function GenerateVertexShader(q3shader, stage) {
 	builder.addUniforms({
 		modelViewMat: 'mat4',
 		projectionMat: 'mat4',
-		backlerp: 'float',
 		time: 'float'
 	});
 
@@ -722,12 +719,7 @@ function GenerateVertexShader(q3shader, stage) {
 	}
 
 	builder.addLines([
-		'vec3 position = xyz;',
-		'vec3 normal = norm;',
-		'if (backlerp != 0.0) {',
-		'	position = xyz + backlerp * (xyz2 - xyz);',
-		'	normal = norm + backlerp * (norm2 - norm);',
-		'}'
+		'vec3 position = xyz;'
 	]);
 
 	for(var i = 0; i < q3shader.vertexDeforms.length; ++i) {

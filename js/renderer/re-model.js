@@ -4,6 +4,17 @@
 function InitModels() {
 	var mod = re.models[0] = new Model();
 	mod.type = ModelType.BAD;
+
+	// Initialize scratch model vertex buffers.
+	var buffers = re.modelVertexBuffers;
+	var vb = buffers[0] = new RenderBuffer(RenderBufferType.VERTEX_DYNAMIC, 48, SHADER_MAX_VERTEXES);
+
+	vb.attrs = {
+		xyz:      [3,  0],
+		normal:   [3, 12],
+		texCoord: [2, 24],
+		color:    [4, 32]
+	};
 }
 
 /**
@@ -34,6 +45,7 @@ function RegisterModel(name) {
 	}
 
 	// Search the currently loaded models.
+	var mod;
 	for (var hModel = 1; hModel < re.models.length; hModel++) {
 		mod = re.models[hModel];
 
@@ -47,6 +59,7 @@ function RegisterModel(name) {
 	mod = re.models[hModel] = new Model();
 	mod.type = ModelType.BAD;
 	mod.name = name;
+	mod.index = hModel;
 
 	// Async load it.
 	RegisterMd3(mod, name);
@@ -57,7 +70,7 @@ function RegisterModel(name) {
 /**
  * RegisterMd3
  */
-function RegisterMd3(mod, name) {
+function RegisterMd3(mod, name, callback) {
 	var done = 0;
 
 	// Strip off file extension.
@@ -72,8 +85,10 @@ function RegisterMd3(mod, name) {
 			lodFilename = filename + '.md3';
 		}
 
-		LoadMd3(lodFilename, function (err, md3) {
-			if (!err) {
+		LoadMd3(mod, lodFilename, function (err, md3) {
+			if (err) {
+				console.log(err.message);
+			} else {
 				// Once we load one valid MD3.
 				mod.type = ModelType.MD3;
 				mod.md3[lod] = md3;
@@ -81,17 +96,21 @@ function RegisterMd3(mod, name) {
 			}
 
 			// Once we've attempted to load all LODs.
-			if (++done === MD3_MAX_LODS) {
-				var best;
-
+			if (++done === 1/*MD3_MAX_LODS*/) {
+				// var best;
+				// 
 				// Fill in higher lods that weren't loaded with the next best lod.
-				for (var i = MD3_MAX_LODS -1; i >= 0; i--) {
-					if (mod.md3[i]) {
-						best = mod.md3[i];
-					} else if (best) {
-						mod.md3[i] = best;
-						mod.numLods++;
-					}
+				// for (var i = MD3_MAX_LODS-1; i >= 0; i--) {
+				// 	if (mod.md3[i]) {
+				// 		best = mod.md3[i];
+				// 	} else if (best) {
+				// 		mod.md3[i] = best;
+				// 		mod.numLods++;
+				// 	}
+				// }
+
+				if (callback) {
+					return callback.apply(this);
 				}
 			}
 		});
@@ -106,7 +125,7 @@ function RegisterMd3(mod, name) {
 /**
  * LoadMd3
  */
-function LoadMd3(filename, callback) {
+function LoadMd3(mod, filename, callback) {
 	sys.ReadFile(filename, 'binary', function (err, data) {
 		if (err) return callback(err);
 	
@@ -209,6 +228,9 @@ function LoadMd3(filename, callback) {
 			var surf = md3.surfaces[i] = new Md3Surface();
 			surf.header = sheader;
 			surf.name = sheader.name.toLowerCase();
+
+			// Store a reference to the model to help out the backend.
+			surf.model = mod;
 
 			/*// strip off a trailing _1 or _2
 			// this is a crutch for q3data being a mess
