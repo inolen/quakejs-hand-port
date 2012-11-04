@@ -3,12 +3,11 @@
  */
 function BuildWorldBuffers() {
 	var verts = re.world.verts;
-	var buffers = re.world.vertexBuffers;
 
 	// 
 	// Setup vertex buffer.
 	//
-	var vb = buffers[0] = new RenderBuffer(RenderBufferType.VERTEX_STATIC, 56, verts.length);
+	var vb = re.world.vertexBuffer = new RenderBuffer(RenderBufferType.VERTEX_STATIC, 56, verts.length);
 
 	vb.attrs = {
 		xyz:        [3,  0],

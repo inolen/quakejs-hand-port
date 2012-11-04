@@ -35,7 +35,7 @@ function InitDefaultShaders() {
 	stage = new ShaderStage();
 	shader.mode = gl.LINE_LOOP;
 	shader.name = 'debugShader';
-	stage.program = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['green.fp']);
+	stage.program = CompileShaderProgram(re.programBodies['debug.vp'], re.programBodies['green.fp']);
 	shader.stages.push(stage);
 	RegisterShader(shader.name, shader);
 }
@@ -205,7 +205,7 @@ function LoadShaderScript(path, callback) {
  */
 function ScanAndLoadShaderPrograms(callback) {
 	var allPrograms = [
-		'programs/default.vp',
+		'programs/default.vp', 'programs/debug.vp',
 		'programs/default.fp', 'programs/nolightmap.fp', 'programs/green.fp'
 	];
 

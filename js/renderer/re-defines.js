@@ -72,7 +72,6 @@ var RenderLocals = function () {
 	this.skins              = [];
 
 	// models
-	this.modelVertexBuffers = [];
 	this.models             = [];
 
 	// OpenGL extension handles	
@@ -112,7 +111,7 @@ var WorldData = function () {
 	this.lightGridData        = null;
 
 	// static world buffers
-	this.vertexBuffers        = [];
+	this.vertexBuffer         = null;
 };
 
 /**********************************************************
@@ -338,21 +337,30 @@ ViewParms.prototype.clone = function (to) {
  * Backend
  **********************************************************/
 var BackendLocals = function () {
-	this.refdef        = new RefDef();
-	this.viewParms     = new ViewParms();
-	this.or            = new Orientation();
+	this.refdef            = new RefDef();
+	this.viewParms         = new ViewParms();
+	this.or                = new Orientation();
 
-	this.currentEntity = null;
-	this.currentModel  = null;
+	this.currentEntity     = null;
+	this.currentModel      = null;
+
+	// scratch vertex buffers
+	this.modelVertexBuffer = null;
+	this.debugVertexBuffer = null;
+	this.debugIndexBuffer  = null;
+
+	// shader commands for the current frame
+	this.tess              = new ShaderCommands();
+	this.tessFns           = {};
 };
 
 var ShaderCommands = function () {
-	this.shader             = null;
-	this.shaderTime         = 0;
+	this.shader        = null;
+	this.shaderTime    = 0;
 
 	// What we actually bind and render with.
-	this.vertexBuffers = null;
-	this.indexBuffer   = new RenderBuffer(RenderBufferType.INDEX_DYNAMIC);
+	this.vertexBuffers = [];
+	this.indexBuffer   = null;
 };
 
 var RenderBufferType = {
@@ -413,9 +421,6 @@ var msurface_t = function () {
 
 	// normal faces
 	this.plane         = new Plane();
-
-	// used by static buffers
-	this.indexOffset   = 0;
 };
 
 var Md3Surface = function () {
@@ -556,8 +561,6 @@ var Model = function () {
 	this.bmodel        = null;
 	this.md3           = [];
 	this.numLods       = 0;
-
-	this.vertexBuffers = [];
 };
 
 /************************************************

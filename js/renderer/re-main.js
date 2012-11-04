@@ -54,6 +54,7 @@ function Init(sysinterface, cominterface) {
 	InitShaders();
 	InitSkins();
 	InitModels();
+	InitBackend();
 }
 
 /**

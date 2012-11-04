@@ -4,17 +4,6 @@
 function InitModels() {
 	var mod = re.models[0] = new Model();
 	mod.type = ModelType.BAD;
-
-	// Initialize scratch model vertex buffers.
-	var buffers = re.modelVertexBuffers;
-	var vb = buffers[0] = new RenderBuffer(RenderBufferType.VERTEX_DYNAMIC, 48, SHADER_MAX_VERTEXES);
-
-	vb.attrs = {
-		xyz:      [3,  0],
-		normal:   [3, 12],
-		texCoord: [2, 24],
-		color:    [4, 32]
-	};
 }
 
 /**

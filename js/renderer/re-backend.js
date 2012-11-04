@@ -1,9 +1,29 @@
-var tess;
-var tessFns = {};
-tessFns[SurfaceType.BAD] = TesselateFace;
-tessFns[SurfaceType.FACE] = TesselateFace;
-tessFns[SurfaceType.GRID] = TesselateFace;
-tessFns[SurfaceType.MD3] = TesselateMd3;
+/**
+ * InitBackend
+ */
+function InitBackend() {
+	// Scratch model vertex buffers.
+	backend.modelVertexBuffer = new RenderBuffer(RenderBufferType.VERTEX_DYNAMIC, 48, SHADER_MAX_VERTEXES);
+	backend.modelVertexBuffer.attrs = {
+		xyz:      [3,  0],
+		normal:   [3, 12],
+		texCoord: [2, 24],
+		color:    [4, 32]
+	};
+
+	// Scratch debug vertex buffers.
+	backend.debugVertexBuffer = new RenderBuffer(RenderBufferType.VERTEX_DYNAMIC, 12, 8192);
+	backend.debugVertexBuffer.attrs = { xyz: [3, 0] };
+	backend.debugIndexBuffer = new RenderBuffer(RenderBufferType.INDEX_DYNAMIC);
+
+	// Setup tesselation struct.
+	backend.tess.indexBuffer = new RenderBuffer(RenderBufferType.INDEX_DYNAMIC);
+
+	backend.tessFns[SurfaceType.BAD] = TesselateFace;
+	backend.tessFns[SurfaceType.FACE] = TesselateFace;
+	backend.tessFns[SurfaceType.GRID] = TesselateFace;
+	backend.tessFns[SurfaceType.MD3] = TesselateMd3;
+}
 
 /**
  * RenderDrawSurfaces
@@ -18,10 +38,6 @@ function RenderDrawSurfaces() {
 	var refdef = backend.refdef;
 	var parms = backend.viewParms;
 	var drawSurfs = refdef.drawSurfs;
-
-	if (!tess) {
-		tess = new ShaderCommands();
-	}
 
 	gl.viewport(0, 0, parms.width, parms.height);
 	gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -54,7 +70,7 @@ function RenderDrawSurfaces() {
 
 		if (drawSurfs.sort === oldSort) {
 			// Fast path, same as previous sort.
-			tessFns[face.surfaceType](tess, face);
+			backend.tessFns[face.surfaceType](face);
 			continue;
 		}
 		oldSort = drawSurf.sort;
@@ -83,7 +99,7 @@ function RenderDrawSurfaces() {
 		}
 
 		// Add surface.
-		tessFns[face.surfaceType](tess, face);
+		backend.tessFns[face.surfaceType](face);
 	}
 
 	// Draw the contents of the last shader batch.
@@ -96,20 +112,20 @@ function RenderDrawSurfaces() {
  * BeginSurface
  */
 function BeginSurface(shader) {
+	var tess = backend.tess;
+
 	tess.shader = shader;
 	tess.shaderTime = backend.refdef.time / 1000;
 
 	// Reset count on dynamic vertex buffers.
-	if (tess.vertexBuffers) {
-		for (var i = 0; i < tess.vertexBuffers.length; i++) {
-			var vb = tess.vertexBuffers[i];
+	for (var i = 0; i < tess.vertexBuffers.length; i++) {
+		var vb = tess.vertexBuffers[i];
 
-			if (vb.type === RenderBufferType.VERTEX_DYNAMIC) {
-				vb.count = 0;
-			}
+		if (vb.type === RenderBufferType.VERTEX_DYNAMIC) {
+			vb.count = 0;
 		}
-	}
-	tess.vertexBuffers = null;
+	}	
+	tess.vertexBuffers = [];
 
 	// Resten count on dynamic index buffers.
 	if (tess.indexBuffer.type == RenderBufferType.INDEX_DYNAMIC) {
@@ -121,6 +137,7 @@ function BeginSurface(shader) {
  * EndSurface
  */
 function EndSurface() {
+	var tess = backend.tess;
 	var shader = tess.shader;
 
 	re.counts.shaders++;
@@ -147,23 +164,27 @@ function EndSurface() {
 		gl.drawElements(shader.mode, tess.indexBuffer.count, gl.UNSIGNED_SHORT, 0);
 	}
 
-	if (r_showtris()) {
-		DrawTris();
-	}
+	//if (r_showtris()) {
+	//	DrawTris();
+	//}
 	
-	if (r_shownormals()) {
+	//if (r_shownormals()) {
 		DrawNormals();
-	}
+	//}
 }
 
 /**
  * DrawTris
  */
 function DrawTris() {
+	var tess = backend.tess;
+
 	gl.depthMask(true);
 	gl.depthRange(0, 0);
 
 	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
+	BindBufferAttributes(tess.vertexBuffers[0], re.debugShader.stages[0]);
+
 	gl.drawElements(gl.LINE_LOOP, tess.indexBuffer.count, gl.UNSIGNED_SHORT, 0);
 
 	gl.depthRange(0, 1);
@@ -174,17 +195,46 @@ function DrawTris() {
  * DrawNormals
  */
 function DrawNormals() {
+	var tess = backend.tess;
+
 	gl.depthMask(true);
 	gl.depthRange(0, 0); // never occluded
 
-	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
-	// for (var i = 0; i < input->numVertexes; i++) {
-	// 	qglVertex3fv (input->xyz[i]);
-	// 	VectorMA (input->xyz[i], 2, input->normal[i], temp);
-	// 	qglVertex3fv (temp);
-	// }
+	var oldvb = tess.vertexBuffers[0];
+	var oldib = tess.indexBuffer;
 
-	gl.DepthRange(0, 1);
+	var ib = backend.debugIndexBuffer;
+	var vb = backend.debugVertexBuffer;
+	
+	ib.count = 0;
+	ib.modified = true;
+
+	vb.count = 0;
+	vb.modified = true;
+
+	for (var i = 0; i < oldib.count; i += 3) {
+		var idx = oldib.view[i] * (oldvb.stride/4);
+
+		vb.view[vb.count++] = oldvb.view[idx+0];
+		vb.view[vb.count++] = oldvb.view[idx+1]
+		vb.view[vb.count++] = oldvb.view[idx+2]
+		ib.view[ib.count] = ib.count++;
+
+		vb.view[vb.count++] = oldvb.view[idx+0] + oldvb.view[idx+3] * 2;
+		vb.view[vb.count++] = oldvb.view[idx+1] + oldvb.view[idx+4] * 2;
+		vb.view[vb.count++] = oldvb.view[idx+2] + oldvb.view[idx+5] * 2;
+		ib.view[ib.count] = ib.count++;
+	}
+
+	BindBuffer(ib);
+	BindBuffer(vb);
+	
+	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
+	BindBufferAttributes(vb, re.debugShader.stages[0]);
+
+	gl.drawElements(gl.LINES, ib.count, gl.UNSIGNED_SHORT, 0);
+
+	gl.depthRange(0, 1);
 }
 
 /** 
@@ -255,6 +305,7 @@ function SetShader(shader) {
  * SetShaderStage
  */
 function SetShaderStage(shader, stage) {
+	var tess = backend.tess;
 	var program = stage.program;
 
 	// Sanity check after being burned so many times by this.
@@ -311,7 +362,8 @@ function SetShaderStage(shader, stage) {
 /**
  * TesselateFace
  */
-function TesselateFace(tess, face) {
+function TesselateFace(face) {
+	var tess = backend.tess;
 	var meshVerts = re.world.meshVerts;
 
 	// Append to our index buffer.
@@ -323,13 +375,14 @@ function TesselateFace(tess, face) {
 
 	ib.modified = true;
 
-	tess.vertexBuffers = re.world.vertexBuffers;
+	tess.vertexBuffers.push(re.world.vertexBuffer);
 }
 
 /**
  * TesselateMd3
  */
-function TesselateMd3(tess, face) {
+function TesselateMd3(face) {
+	var tess = backend.tess;
 	var refent = backend.currentEntity;
 	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
 	var numVerts = face.header.numVerts;
@@ -341,7 +394,7 @@ function TesselateMd3(tess, face) {
 	//
 	// Update the scratch vertex buffers.
 	//
-	var vb = re.modelVertexBuffers[0];
+	var vb = backend.modelVertexBuffer;
 	var indexOffset = vb.count / 12;
 
 	for (var i = 0; i < numVerts; i++) {
@@ -399,5 +452,5 @@ function TesselateMd3(tess, face) {
 
 	ib.modified = true;
 
-	tess.vertexBuffers = re.modelVertexBuffers;
+	tess.vertexBuffers.push(backend.modelVertexBuffer);
 }
