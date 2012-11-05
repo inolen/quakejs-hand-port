@@ -14,12 +14,14 @@ function (_, $, Backbone, templateSrc) {
 		model: {
 			fps: 0,
 			shaders: 0,
+			vertexes: 0,
 			indexes: 0,
 			culledFaces: 0,
 			culledEnts: 0
 		},
 		fpsEl: null,
 		shadersEl: null,
+		vertexesEl: null,
 		indexesEl: null,
 		culledFacesEl: null,
 		culledEntsEl: null,
@@ -36,6 +38,11 @@ function (_, $, Backbone, templateSrc) {
 			if (!this.shadersEl) this.shadersEl = this.$el.find('.count-shaders');
 			this.model.shaders = shaders;
 			this.shadersEl.text(this.model.shaders);
+		},
+		setVertexes: function (vertexes) {
+			if (!this.vertexesEl) this.vertexesEl = this.$el.find('.count-vertexes');
+			this.model.vertexes = vertexes;
+			this.vertexesEl.text(this.model.vertexes);
 		},
 		setIndexes: function (indexes) {
 			if (!this.indexesEl) this.indexesEl = this.$el.find('.count-indexes');

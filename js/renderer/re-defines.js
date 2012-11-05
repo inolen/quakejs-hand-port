@@ -80,6 +80,7 @@ var RenderLocals = function () {
 
 var RenderCounts = function () {
 	this.shaders        = 0;
+	this.vertexes       = 0;
 	this.indexes        = 0;
 	this.culledFaces    = 0;
 	this.culledEnts = 0;

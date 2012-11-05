@@ -33,6 +33,7 @@ function UpdateRenderCounts() {
 	// Grab everything else from the renderer.
 	var counts = re.GetCounts();
 	cg_hud.setShaders(counts.shaders);
+	cg_hud.setVertexes(counts.vertexes);
 	cg_hud.setIndexes(counts.indexes);
 	cg_hud.setCulledFaces(counts.culledFaces);
 	cg_hud.setCulledEnts(counts.culledEnts);

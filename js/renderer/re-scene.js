@@ -33,6 +33,7 @@ function RenderScene(fd) {
 	vec3.set(fd.vieworg, parms.pvsOrigin);
 
 	re.counts.shaders = 0;
+	re.counts.vertexes = 0;
 	re.counts.indexes = 0;
 	re.counts.culledFaces = 0;
 	re.counts.culledEnts = 0;

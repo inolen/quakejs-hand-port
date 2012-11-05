@@ -132,6 +132,8 @@ function EndSurface() {
 	var shader = tess.shader;
 
 	re.counts.shaders++;
+
+	re.counts.vertexes += tess.index.elementCount * 3;
 	re.counts.indexes += tess.index.elementCount;
 
 	// Bind the index buffer.
