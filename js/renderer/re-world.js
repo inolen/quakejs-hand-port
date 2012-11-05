@@ -5,43 +5,31 @@ function BuildWorldBuffers() {
 	var verts = re.world.verts;
 
 	// 
-	// Setup vertex buffer.
+	// Setup vertex buffers.
 	//
-	var vb = re.world.vertexBuffer = new RenderBuffer(RenderBufferType.VERTEX_STATIC, 56, verts.length);
-
-	vb.attrs = {
-		xyz:        [3,  0],
-		normal:     [3, 12],
-		texCoord:   [2, 24],
-		lightCoord: [2, 32],
-		color:      [4, 40]
+	var buffers = re.world.buffers = {
+		xyz:        CreateBuffer('float32', 3, verts.length),
+		normal:     CreateBuffer('float32', 3, verts.length),
+		texCoord:   CreateBuffer('float32', 2, verts.length),
+		lightCoord: CreateBuffer('float32', 2, verts.length),
+		color:      CreateBuffer('float32', 4, verts.length)
 	};
 
 	for (var i = 0; i < verts.length; i++) {
 		var vert = verts[i];
 
-		vb.view[vb.count++] = vert.pos[0];
-		vb.view[vb.count++] = vert.pos[1];
-		vb.view[vb.count++] = vert.pos[2];
-
-		vb.view[vb.count++] = vert.normal[0];
-		vb.view[vb.count++] = vert.normal[1];
-		vb.view[vb.count++] = vert.normal[2];
-
-		vb.view[vb.count++] = vert.texCoord[0];
-		vb.view[vb.count++] = vert.texCoord[1];
-
-		vb.view[vb.count++] = vert.lmCoord[0];
-		vb.view[vb.count++] = vert.lmCoord[1];
-
-		vb.view[vb.count++] = vert.color[0];
-		vb.view[vb.count++] = vert.color[1];
-		vb.view[vb.count++] = vert.color[2];
-		vb.view[vb.count++] = vert.color[3];
+		WriteBufferElement(buffers.xyz, vert.pos[0], vert.pos[1], vert.pos[2]);
+		WriteBufferElement(buffers.normal, vert.normal[0], vert.normal[1], vert.normal[2]);
+		WriteBufferElement(buffers.texCoord, vert.texCoord[0], vert.texCoord[1]);
+		WriteBufferElement(buffers.lightCoord, vert.lmCoord[0], vert.lmCoord[1]);
+		WriteBufferElement(buffers.color, vert.color[0], vert.color[1], vert.color[2], vert.color[3]);
 	}
 
-	gl.bindBuffer(gl.ARRAY_BUFFER, vb.glbuffer);
-	gl.bufferData(gl.ARRAY_BUFFER, vb.view, gl.STATIC_DRAW);
+	LockBuffer(buffers.xyz);
+	LockBuffer(buffers.normal);
+	LockBuffer(buffers.texCoord);
+	LockBuffer(buffers.lightCoord);
+	LockBuffer(buffers.color);
 
 	// We no longer need the vert info, let's free up ~8mb of memory.
 	re.world.verts = null;

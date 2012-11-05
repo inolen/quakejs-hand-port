@@ -1,35 +1,35 @@
 /**
  * CalcDiffuseColor
  */
-function CalcDiffuseColor(refent, normal, colors, offset) {
-	var incoming = vec3.dot(normal, refent.lightDir);
-	if (incoming <= 0) {
-		colors[offset+0] = refent.ambientLight[0] / 255;
-		colors[offset+1] = refent.ambientLight[1] / 255;
-		colors[offset+2] = refent.ambientLight[2] / 255;
-		colors[offset+3] = 1;
-	 	return;
-	} 
+function CalcDiffuseColor(refent, normal, out) {
+	// var incoming = vec3.dot(normal, refent.lightDir);
+	// if (incoming <= 0) {
+		out[0] = refent.ambientLight[0] / 255;
+		out[1] = refent.ambientLight[1] / 255;
+		out[2] = refent.ambientLight[2] / 255;
+		out[3] = 1;
+	//	return;
+	//}
 
-	var j = parseInt(refent.ambientLight[0]/* + incoming * refent.directedLight[0]*/, 10);
-	if (j > 255) {
-		j = 255;
-	}
-	colors[offset+0] = j / 255;
+	// var j = parseInt(refent.ambientLight[0 + incoming * refent.directedLight[0], 10);
+	// if (j > 255) {
+	// 	j = 255;
+	// }
+	// out[0] = j / 255;
 
-	j = parseInt(refent.ambientLight[1]/* + incoming * refent.directedLight[1]*/, 10);
-	if (j > 255) {
-		j = 255;
-	}
-	colors[offset+1] = j / 255;
+	// j = parseInt(refent.ambientLight[1] + incoming * refent.directedLight[1], 10);
+	// if (j > 255) {
+	// 	j = 255;
+	// }
+	// out[1] = j / 255;
 
-	j = parseInt(refent.ambientLight[2]/* + incoming * refent.directedLight[2]*/, 10);
-	if (j > 255) {
-		j = 255;
-	}
-	colors[offset+2] = j / 255;
+	// j = parseInt(refent.ambientLight[2] + incoming * refent.directedLight[2], 10);
+	// if (j > 255) {
+	// 	j = 255;
+	// }
+	// out[2] = j / 255;
 
-	colors[offset+3] = 1;
+	// out[3] = 1;
 }
 
 /**
@@ -124,6 +124,7 @@ function SetupEntityLightingGrid(refent) {
 	vec3.scale(refent.ambientLight, r_ambientScale());
 	vec3.scale(refent.directedLight, r_directedScale());
 
+	//console.log(refent.ambientLight[0], refent.index);
 	vec3.normalize(direction, refent.lightDir);
 }
 

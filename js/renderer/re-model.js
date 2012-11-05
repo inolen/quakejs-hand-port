@@ -275,11 +275,17 @@ function LoadMd3(mod, filename, callback) {
 					xyz.xyz[k] = bb.readShort();
 				}
 
+				// Convert from spherical coordinates to normalized vec3.
 				var zenith = bb.readByte();
 				var azimuth = bb.readByte();
 
-				xyz.lat = zenith * (2 * Math.PI) / 255;
-				xyz.lng = azimuth * (2 * Math.PI) / 255;
+				var lat = zenith * (2 * Math.PI) / 255;
+				var lng = azimuth * (2 * Math.PI) / 255;
+
+				xyz.normal[0] = Math.cos(lng) * Math.sin(lat);
+				xyz.normal[1] = Math.sin(lng) * Math.sin(lat);
+				xyz.normal[2] = Math.cos(lat);
+				vec3.normalize(xyz.normal);
 			}
 			
 			meshOffset += sheader.ofsEnd;

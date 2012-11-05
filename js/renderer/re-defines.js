@@ -1,9 +1,9 @@
 var MAX_DRAWSURFS = 0x10000;
 
 // Surface geometry should not exceed these limits
-// TODO How does Q3 stay so low? There limit is 1000, we can fit under 2000 in most cases, but q3ctf2 is ~4300.
-var SHADER_MAX_VERTEXES = 5000;
-var SHADER_MAX_INDEXES  = 0xFFFF;
+// TODO How does Q3 stay so low? Their limit is 1000, we can fit under 2000 in most cases, but q3ctf2 is ~4300.
+var SHADER_MAX_VERTEXES = 3000;
+var SHADER_MAX_INDEXES  = 6 * SHADER_MAX_VERTEXES;
 
 var ENTITYNUM_BITS = 10;// can't be increased without changing drawsurf bit packing
 var MAX_ENTITIES   = (1 << ENTITYNUM_BITS);
@@ -111,7 +111,7 @@ var WorldData = function () {
 	this.lightGridData        = null;
 
 	// static world buffers
-	this.vertexBuffer         = null;
+	this.buffers              = null;
 };
 
 /**********************************************************
@@ -249,6 +249,11 @@ RefEntity.prototype.clone = function (refent) {
 	refent.skinNum = this.skinNum;
 	refent.customSkin = this.customSkin;
 	refent.customShader = this.customShader;
+	refent.lightingCalculated = this.lightingCalculated;
+	vec3.set(this.lightDir, refent.lightDir);
+	vec3.set(this.ambientLight, refent.ambientLight);
+	vec3.set(this.directedLight, refent.directedLight);
+
 
 	return refent;
 };
@@ -344,47 +349,41 @@ var BackendLocals = function () {
 	this.currentEntity     = null;
 	this.currentModel      = null;
 
-	// scratch vertex buffers
-	this.modelVertexBuffer = null;
-	this.debugVertexBuffer = null;
-	this.debugIndexBuffer  = null;
+	// Scratch buffers to be used by anyone.
+	this.scratchBuffers    = null;
 
-	// shader commands for the current frame
+	// Used for debug lines.
+	this.debugBuffers      = null;
+
+	// Shader commands for the current frame
 	this.tess              = new ShaderCommands();
 	this.tessFns           = {};
 };
 
 var ShaderCommands = function () {
-	this.shader        = null;
-	this.shaderTime    = 0;
+	this.shader     = null;
+	this.shaderTime = 0;
 
-	// What we actually bind and render with.
-	this.vertexBuffers = [];
-	this.indexBuffer   = null;
+	// What we're actually rendering.
+	this.index      = null;
+	this.xyz        = null;
+	this.normal     = null;
+	this.texCoord   = null;
+	this.lightCoord = null;
+	this.color      = null;
 };
 
-var RenderBufferType = {
-	VERTEX_STATIC:  0,
-	VERTEX_DYNAMIC: 1,
-	INDEX_DYNAMIC:  2
-};
-
-var RenderBuffer = function (type, stride, elements) {
-	if (type == RenderBufferType.VERTEX_DYNAMIC ||
-		type == RenderBufferType.VERTEX_STATIC) {
-		this.ab = new ArrayBuffer(stride * elements);
-		this.view = new Float32Array(this.ab);
-	} else {
-		this.ab = new ArrayBuffer(SHADER_MAX_INDEXES * 2);
-		this.view = new Uint16Array(this.ab);
-	}
-
-	this.type     = type;
-	this.stride   = stride;
-	this.glbuffer = gl.createBuffer();
-	this.attrs    = null;
-	this.count    = 0;
-	this.modified = false;
+var RenderBuffer = function () {
+	this.ab            = null;                             // underlying arraybuffer data
+	this.abView        = null;
+	this.glBuffer      = null;
+	this.glBufferType  = 0;
+	this.glElementType = 0;
+	this.elementSize   = 0;                                // length of elements (e.g. xyz buffer is 3 floats)
+	this.elementCount  = 0;                                // number of elements
+	this.offset        = 0;                                // current offset into view
+	this.locked        = false;                            // locked arrays won't be reset by BeginSurface()
+	this.modified      = false;                            // tells the backend to rebind data to glBuffer
 };
 
 /**********************************************************
@@ -666,8 +665,7 @@ var Md3St = function () {
 
 var Md3XyzNormal = function () {
 	this.xyz    = [0, 0, 0];                               // short[3]
-	this.lat    = 0;                                       // short, zenith and azimuth angles of normal vector.
-	this.lng    = 0;
+	this.normal = [0, 0, 0];                               // 
 };
 
 var Md3Frame = function () {
