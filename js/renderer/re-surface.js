@@ -24,7 +24,10 @@ function AddEntitySurfaces() {
 				break;
 
 			case RefEntityType.MODEL:
-				AddMd3Surfaces(refent);
+				// We must set up parts of tr.or for model culling.
+				RotateForEntity(refent, re.or);
+
+				AddModelSurfaces(refent);
 				break;
 			default:
 				throw new Error('AddEntitySurfaces: Bad reType');
@@ -45,10 +48,14 @@ function AddBboxSurfaces(refent) {
 }
 
 /**
- * AddMd3Surfaces
+ * AddModelSurfaces
  */
-function AddMd3Surfaces(refent) {
+function AddModelSurfaces(refent) {
 	var mod = GetModelByHandle(refent.hModel);
+
+	if (mod.type === ModelType.BAD) {
+		return;  // probably still async loading
+	}
 
 	// Don't add third_person objects if not in a portal.
 	var personalModel = (refent.renderfx & RenderFx.THIRD_PERSON);// && !tr.viewParms.isPortal;
@@ -75,13 +82,15 @@ function AddMd3Surfaces(refent) {
 
 	// compute LOD
 	//lod = R_ComputeLOD( ent );
+	var lod = 0;
+	var header = mod.md3[lod];
 
-	// cull the entire model if merged bounding box of both frames
+	// Cull the entire model if merged bounding box of both frames
 	// is outside the view frustum.
-	/*cull = R_CullModel ( header, ent );
-	if ( cull == CULL_OUT ) {
+	var cull = CullModel(header, refent);
+	if (cull === Cull.OUT ) {
 		return;
-	}*/
+	}
 
 	// set up lighting now that we know we aren't culled
 	if (!personalModel) {
@@ -150,5 +159,79 @@ function AddMd3Surfaces(refent) {
 		if (!personalModel) {
 			AddDrawSurf(face, shader, refent.index);
 		}
+	}
+}
+
+
+/**
+ * CullModel
+ */
+function CullModel(md3, refent) {
+	var newFrame = md3.frames[refent.frame];
+	var oldFrame = md3.frames[refent.oldFrame];
+
+	// Cull bounding sphere ONLY if this is not an upscaled entity.
+	// if (!ent->e.nonNormalizedAxes) {
+		if (refent.frame === refent.oldframe) {
+			switch (CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius)) {
+				case Cull.OUT:
+					re.counts.culledModelOut++;
+					return Cull.OUT;
+
+				case Cull.IN:
+					re.counts.culledModelIn++;
+					return Cull.IN;
+
+				case Cull.CLIP:
+					re.counts.culledModelClip++;
+					break;
+			}
+		} else {
+			var sphereCull  = CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius);
+			var sphereCullB;
+
+			if ( newFrame === oldFrame ) {
+				sphereCullB = sphereCull;
+			} else {
+				sphereCullB = CullLocalPointAndRadius(oldFrame.localOrigin, oldFrame.radius);
+			}
+
+			if (sphereCull === sphereCullB) {
+				if (sphereCull === Cull.OUT) {
+					re.counts.culledModelOut++;
+					return Cull.OUT;
+				} else if (sphereCull === Cull.IN) {
+					re.counts.culledModelIn++;
+					return Cull.IN;
+				} else {
+					re.counts.culledModelClip++;
+				}
+			}
+		}
+	// }
+	
+	// Calculate a bounding box in the current coordinate system.
+	var bounds = [
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+
+	for (var i = 0 ; i < 3 ; i++) {
+		bounds[0][i] = oldFrame.bounds[0][i] < newFrame.bounds[0][i] ? oldFrame.bounds[0][i] : newFrame.bounds[0][i];
+		bounds[1][i] = oldFrame.bounds[1][i] > newFrame.bounds[1][i] ? oldFrame.bounds[1][i] : newFrame.bounds[1][i];
+	}
+
+	switch (CullLocalBox(bounds)) {
+		case Cull.OUT:
+			re.counts.culledModelOut++;
+			return Cull.OUT;
+		case Cull.IN:
+			re.counts.culledModelIn++;
+			return Cull.IN;
+		case Cull.CLIP:
+			re.counts.culledModelClip++;
+			return Cull.CLIP;
+		default:
+			throw new Error('Invalid cull result');
 	}
 }

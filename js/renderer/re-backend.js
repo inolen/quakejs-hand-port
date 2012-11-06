@@ -87,7 +87,7 @@ function RenderDrawSurfaces() {
 		if (oldEntityNum !== entityNum) {
 			if (entityNum !== ENTITYNUM_WORLD) {
 				backend.currentEntity = refdef.refEntities[entityNum];
-				RotateModelMatrixForEntity(backend.currentEntity, backend.or);
+				RotateForEntity(backend.currentEntity, backend.or);
 			} else {
 				backend.currentEntity = null;
 				parms.or.clone(backend.or);
@@ -133,7 +133,7 @@ function EndSurface() {
 
 	re.counts.shaders++;
 
-	re.counts.vertexes += tess.index.elementCount * 3;
+	re.counts.vertexes += tess.index.elementCount / 3;
 	re.counts.indexes += tess.index.elementCount;
 
 	// Bind the index buffer.

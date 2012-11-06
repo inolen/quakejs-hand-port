@@ -36,5 +36,7 @@ function UpdateRenderCounts() {
 	cg_hud.setVertexes(counts.vertexes);
 	cg_hud.setIndexes(counts.indexes);
 	cg_hud.setCulledFaces(counts.culledFaces);
-	cg_hud.setCulledEnts(counts.culledEnts);
+	cg_hud.setCulledModelOut(counts.culledModelOut);
+	cg_hud.setCulledModelIn(counts.culledModelIn);
+	cg_hud.setCulledModelClip(counts.culledModelClip);
 }

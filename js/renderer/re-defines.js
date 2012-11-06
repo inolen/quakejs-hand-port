@@ -38,7 +38,7 @@ var RenderLocals = function () {
 	// frontend
 	this.refdef             = new RefDef();
 	this.viewParms          = new ViewParms();
-	//this.or                 = new Orientation();           // for current entity
+	this.or                 = new Orientation()            // for current entity
 
 	this.world              = null;
 	this.counts             = new RenderCounts();
@@ -79,11 +79,13 @@ var RenderLocals = function () {
 };
 
 var RenderCounts = function () {
-	this.shaders        = 0;
-	this.vertexes       = 0;
-	this.indexes        = 0;
-	this.culledFaces    = 0;
-	this.culledEnts = 0;
+	this.shaders         = 0;
+	this.vertexes        = 0;
+	this.indexes         = 0;
+	this.culledFaces     = 0;
+	this.culledModelOut  = 0;
+	this.culledModelIn   = 0;
+	this.culledModelClip = 0;
 };
 
 var WorldData = function () {
@@ -287,7 +289,7 @@ Orientation.prototype.clone = function (to) {
 
 var ViewParms = function () {
 	this.or               = new Orientation();
-	this.world            = new Orientation();
+	// this.world            = new Orientation();
 	this.pvsOrigin        = [0, 0, 0];                     // may be different than or.origin for portals
 	this.x                = 0;
 	this.y                = 0;
@@ -317,7 +319,7 @@ ViewParms.prototype.clone = function (to) {
 	}
 
 	this.or.clone(to.or);
-	this.world.clone(to.world);
+	// this.world.clone(to.world);
 	vec3.set(this.pvsOrigin, to.pvsOrigin);
 	to.x = this.x;
 	to.y = this.y;

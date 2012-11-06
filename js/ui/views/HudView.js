@@ -17,14 +17,18 @@ function (_, $, Backbone, templateSrc) {
 			vertexes: 0,
 			indexes: 0,
 			culledFaces: 0,
-			culledEnts: 0
+			culledModelOut: 0,
+			culledModelIn: 0,
+			culledModelClip: 0
 		},
 		fpsEl: null,
 		shadersEl: null,
 		vertexesEl: null,
 		indexesEl: null,
 		culledFacesEl: null,
-		culledEntsEl: null,
+		culledModelOutEl: null,
+		culledModelInEl: null,
+		culledModelClipEl: null,
 		initialize: function (opts) {
 			ui = opts.ui;
 			this.render();
@@ -54,10 +58,20 @@ function (_, $, Backbone, templateSrc) {
 			this.model.culledFaces = culled;
 			this.culledFacesEl.text(this.model.culledFaces);
 		},
-		setCulledEnts: function (culled) {
-			if (!this.culledEntsEl) this.culledEntsEl = this.$el.find('.count-culled-ents');
-			this.model.culledEnts = culled;
-			this.culledEntsEl.text(this.model.culledEnts);
+		setCulledModelOut: function (culled) {
+			if (!this.culledModelOutEl) this.culledModelOutEl = this.$el.find('.count-culled-model-out');
+			this.model.culledModelOut = culled;
+			this.culledModelOutEl.text(this.model.culledModelOut);
+		},
+		setCulledModelIn: function (culled) {
+			if (!this.culledModelInEl) this.culledModelInEl = this.$el.find('.count-culled-model-in');
+			this.model.culledModelIn = culled;
+			this.culledModelInEl.text(this.model.culledModelIn);
+		},
+		setCulledModelClip: function (culled) {
+			if (!this.culledModelClipEl) this.culledModelClipEl = this.$el.find('.count-culled-model-clip');
+			this.model.culledModelClip = culled;
+			this.culledModelClipEl.text(this.model.culledModelClip);
 		},
 		render: function () {
 			this.$el.html(this.template(this.model));

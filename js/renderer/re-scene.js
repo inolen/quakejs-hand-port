@@ -36,7 +36,9 @@ function RenderScene(fd) {
 	re.counts.vertexes = 0;
 	re.counts.indexes = 0;
 	re.counts.culledFaces = 0;
-	re.counts.culledEnts = 0;
+	re.counts.culledModelOut = 0;
+	re.counts.culledModelIn = 0;
+	re.counts.culledModelClip = 0;
 
 	re.refdef.numDrawSurfs = 0;
 

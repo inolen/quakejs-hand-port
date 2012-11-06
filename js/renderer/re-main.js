@@ -79,85 +79,87 @@ function GetGLExtension(name) {
 	return null;
 }
 
-// /**
-//  * CullLocalBox
-//  *
-//  * Returns CULL_IN, CULL_CLIP, or CULL_OUT
-//  */
-// function CullLocalBox(bounds) {
-// 	// if ( r_nocull->integer ) {
-// 	// 	return CULL_CLIP;
-// 	// }
+/**
+ * CullLocalBox
+ *
+ * Returns CULL_IN, CULL_CLIP, or CULL_OUT
+ */
+function CullLocalBox(bounds) {
+	// if ( r_nocull->integer ) {
+	// 	return CULL_CLIP;
+	// }
+	var or = re.or;
 
-// 	// Transform into world space.
-// 	var v = [0, 0, 0];
-// 	var transformed = [
-// 		[0, 0, 0],
-// 		[0, 0, 0],
-// 		[0, 0, 0],
-// 		[0, 0, 0],
-// 		[0, 0, 0],
-// 		[0, 0, 0],
-// 		[0, 0, 0],
-// 		[0, 0, 0]
-// 	];
+	// Transform into world space.
+	var v = [0, 0, 0];
+	var transformed = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
 
-// 	for (var i = 0; i < 8; i++) {
-// 		v[0] = bounds[i&1][0];
-// 		v[1] = bounds[(i>>1)&1][1];
-// 		v[2] = bounds[(i>>2)&1][2];
+	for (var i = 0; i < 8; i++) {
+		v[0] = bounds[i&1][0];
+		v[1] = bounds[(i>>1)&1][1];
+		v[2] = bounds[(i>>2)&1][2];
 
-// 		vec3.set(re.or.origin, transformed[i]);
-// 		vec3.add(transformed[i], vec3.scale(re.or.axis[0], v[0], [0, 0, 0]));
-// 		vec3.add(transformed[i], vec3.scale(re.or.axis[1], v[1], [0, 0, 0]));
-// 		vec3.add(transformed[i], vec3.scale(re.or.axis[2], v[2], [0, 0, 0]));
-// 	}
+		vec3.set(or.origin, transformed[i]);
+		vec3.add(transformed[i], vec3.scale(or.axis[0], v[0], [0, 0, 0]));
+		vec3.add(transformed[i], vec3.scale(or.axis[1], v[1], [0, 0, 0]));
+		vec3.add(transformed[i], vec3.scale(or.axis[2], v[2], [0, 0, 0]));
+	}
 
-// 	// Check against frustum planes.
-// 	var anyBack = 0;
-// 	var dists = [0, 0, 0, 0, 0, 0, 0, 0];
+	// Check against frustum planes.
+	var anyBack = 0;
+	var dists = [0, 0, 0, 0, 0, 0, 0, 0];
+	var parms = re.viewParms;
 
-// 	for (var i = 0; i < 4; i++) {
-// 		var frust = &tr.viewParms.frustum[i];
-// 		var front = back = 0;
+	for (var i = 0; i < 4; i++) {
+		var frust = parms.frustum[i];
+		var front = back = 0;
 
-// 		for (var j = 0; j < 8; j++) {
-// 			dists[j] = vec3.dot(transformed[j], frust.normal);
+		for (var j = 0; j < 8; j++) {
+			dists[j] = vec3.dot(transformed[j], frust.normal);
 
-// 			if (dists[j] > frust.dist) {
-// 				front = 1;
+			if (dists[j] > frust.dist) {
+				front = 1;
 
-// 				if (back) {
-// 					break;  // a point is in front
-// 				}
-// 			} else {
-// 				back = 1;
-// 			}
-// 		}
+				if (back) {
+					break;  // a point is in front
+				}
+			} else {
+				back = 1;
+			}
+		}
 
-// 		if (!front) {			
-// 			return CULL_OUT;  // all points were behind one of the planes
-// 		}
-// 		anyBack |= back;
-// 	}
+		if (!front) {			
+			return Cull.OUT;  // all points were behind one of the planes
+		}
+		anyBack |= back;
+	}
 
-// 	if (!anyBack) {
-// 		return CULL_IN;  // completely inside frustum
-// 	}
+	if (!anyBack) {
+		return Cull.IN;  // completely inside frustum
+	}
 
-// 	return CULL_CLIP;  // partially clipped
-// }
+	return Cull.CLIP;  // partially clipped
+}
 
-// /**
-//  * CullLocalPointAndRadius
-//  */
-// function CullLocalPointAndRadius(pt, radius) {
-// 	var transformed = [0, 0, 0];
+/**
+ * CullLocalPointAndRadius
+ */
+function CullLocalPointAndRadius(pt, radius) {
+	var transformed = [0, 0, 0];
 
-// 	LocalPointToWorld(pt, transformed);
+	LocalPointToWorld(pt, transformed);
 
-// 	return CullPointAndRadius(transformed, radius);
-// }
+	return CullPointAndRadius(transformed, radius);
+}
 
 /**
  * CullPointAndRadius
@@ -170,7 +172,7 @@ function CullPointAndRadius(pt, radius) {
 	var parms = re.viewParms;
 	var mightBeClipped = false;
 
-	// check against frustum planes
+	// Check against frustum planes.
 	for (var i = 0; i < 4; i++) {
 		var frust = parms.frustum[i];
 		var dist = vec3.dot(pt, frust.normal) - frust.dist;
@@ -193,15 +195,16 @@ function CullPointAndRadius(pt, radius) {
  * LocalPointToWorld
  */
 function LocalPointToWorld (local, world) {
-	world[0] = local[0] * re.or.axis[0][0] + local[1] * re.or.axis[1][0] + local[2] * re.or.axis[2][0] + re.or.origin[0];
-	world[1] = local[0] * re.or.axis[0][1] + local[1] * re.or.axis[1][1] + local[2] * re.or.axis[2][1] + re.or.origin[1];
-	world[2] = local[0] * re.or.axis[0][2] + local[1] * re.or.axis[1][2] + local[2] * re.or.axis[2][2] + re.or.origin[2];
+	var or = re.or;
+	world[0] = local[0] * or.axis[0][0] + local[1] * or.axis[1][0] + local[2] * or.axis[2][0] + or.origin[0];
+	world[1] = local[0] * or.axis[0][1] + local[1] * or.axis[1][1] + local[2] * or.axis[2][1] + or.origin[1];
+	world[2] = local[0] * or.axis[0][2] + local[1] * or.axis[1][2] + local[2] * or.axis[2][2] + or.origin[2];
 }
 
 /**
- * RotateModelMatrixForViewer
+ * RotateForViewer
  */
-function RotateModelMatrixForViewer(or) {
+function RotateForViewer(or) {
 	// Create model view matrix.
 	var modelMatrix = mat4.create();
 
@@ -233,13 +236,13 @@ function RotateModelMatrixForViewer(or) {
 	vec3.set(or.origin, or.viewOrigin);
 
 	// Update global world orientiation info.
-	or.clone(re.viewParms.world);
+	// or.clone(re.viewParms.world);
 }
 
 /**
- * RotateModelMatrixForEntity
+ * RotateForEntity
  */
-function RotateModelMatrixForEntity(refent, or) {
+function RotateForEntity(refent, or) {
 	var viewParms = re.viewParms;
 
 	vec3.set(refent.origin, or.origin);
@@ -434,11 +437,9 @@ function RenderView(parms) {
 	re.viewParms = parms;
 	re.viewParms.frameSceneNum = re.frameSceneNum;
 	re.viewParms.frameCount = re.frameCount;
-	// TODO not needed until we support portals
-	//var firstDrawSurf = re.refdef.numDrawSurfs;
 	re.viewCount++;
 
-	RotateModelMatrixForViewer(re.viewParms.or);
+	RotateForViewer(re.viewParms.or);
 	SetupProjectionMatrix(r_zproj());
 
 	GenerateDrawSurfs();
