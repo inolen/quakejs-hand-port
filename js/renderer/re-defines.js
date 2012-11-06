@@ -378,7 +378,7 @@ var ShaderCommands = function () {
 
 var RenderBuffer = function () {
 	this.ab            = null;                             // underlying arraybuffer data
-	this.abView        = null;
+	this.data          = null;                             // view into the arraybuffer
 	this.glBuffer      = null;
 	this.glBufferType  = 0;
 	this.glElementType = 0;

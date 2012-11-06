@@ -299,9 +299,9 @@ function LoadMd3(mod, filename, callback) {
  * GetTag
  */
 function GetTag(md3, frame, tagName) {
-	if (frame >= md3.numFrames) {
+	if (frame >= md3.header.numFrames) {
 		// It is possible to have a bad frame while changing models, so don't error.
-		frame = mod.numFrames - 1;
+		frame = md3.header.numFrames - 1;
 	}
 
 	var offset = frame * md3.header.numTags;

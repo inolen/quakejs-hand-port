@@ -14,7 +14,7 @@ function InitBackend() {
 	// Scratch debug vertex buffers.
 	backend.debugBuffers = {
 		index: CreateBuffer('uint16',  1, SHADER_MAX_INDEXES, true),
-		xyz:   CreateBuffer('float32', 3, 8192)
+		xyz:   CreateBuffer('float32', 3, 32000)
 	};
 
 	backend.tessFns[SurfaceType.BAD] = TesselateFace;
@@ -165,9 +165,9 @@ function EndSurface() {
 		DrawTris();
 	}
 	
-	//if (r_shownormals()) {
-	//	DrawNormals();
-	//}
+	if (r_shownormals()) {
+		DrawNormals();
+	}
 }
 
 /**
@@ -206,37 +206,41 @@ function DrawNormals() {
 	gl.depthRange(0, 0); // never occluded
 
 	// Build up new index/vertex buffer.
-	var buffers = backend.debugBuffers;
+	var tindex = tess.index;
+	var txyz = tess.xyz;
+	var tnormal = tess.normal;
+	var bindex = backend.debugBuffers.index;
+	var bxyz = backend.debugBuffers.xyz;
 
-	ResetBuffer(buffers.index);
-	ResetBuffer(buffers.xyz);
+	ResetBuffer(bindex);
+	ResetBuffer(bxyz);
 
+	var idx = [0];
 	var xyz = [0, 0, 0];
 	var normal = [0, 0, 0];
 	
-	for (var i = 0; i < tess.xyz.elementCount; i++) {
-		// ReadBufferElement(tess.xyz, i, xyz);
-		// ReadBufferElement(tess.normal, i, normal);
+	for (var i = 0; i < tindex.elementCount; i++) {
+		ReadBufferElement(tindex, i, idx);
+		ReadBufferElement(txyz, idx[0], xyz);
+		ReadBufferElement(tnormal, idx[0], normal);
 
-		// WriteBufferElement(buffers.xyz, xyz[0], xyz[1], xyz[2]);
-		// WriteBufferElement(buffers.index, buffers.index.elementCount);
+		WriteBufferElement(bxyz, xyz[0], xyz[1], xyz[2]);
+		WriteBufferElement(bindex, i*2);
 
-		// WriteBufferElement(buffers.xyz,
-		// 	xyz[0] + normal[0] * 2,
-		// 	xyz[1] + normal[1] * 2,
-		// 	xyz[2] + normal[2] * 2);
-		// WriteBufferElement(buffers.index, buffers.index.elementCount);
+		WriteBufferElement(bxyz,
+			xyz[0] + normal[0] * 2,
+			xyz[1] + normal[1] * 2,
+			xyz[2] + normal[2] * 2);
+		WriteBufferElement(bindex, i*2+1);
 	}
 
-	//console.log(tess.xyz.elementCount);
-
 	// Render!
-	// var shader = re.debugShader;
-	// var stage = shader.stages[0];
-	// BindBuffer(buffers.index);
-	// SetShaderStage(shader, stage);
-	// BindBuffer(buffers.xyz, stage.program.attrib.xyz);
-	// gl.drawElements(gl.LINES, buffers.index.elementCount, gl.UNSIGNED_SHORT, 0);
+	var shader = re.debugShader;
+	var stage = shader.stages[0];
+	BindBuffer(bindex);
+	SetShaderStage(shader, stage);
+	BindBuffer(bxyz, stage.program.attrib.xyz);
+	gl.drawElements(gl.LINES, bindex.elementCount, gl.UNSIGNED_SHORT, 0);
 
 	// Back to default.
 	gl.depthRange(0, 1);
@@ -251,17 +255,17 @@ function CreateBuffer(dataType, elementSize, maxElements, isIndexBuffer) {
 	switch (dataType) {
 		case 'float32':
 			buf.ab = new ArrayBuffer(elementSize * maxElements * 4);
-			buf.abView = new Float32Array(buf.ab);
+			buf.data = new Float32Array(buf.ab);
 			buf.glElementType = gl.FLOAT;
 			break;
 		case 'uint8':
 			buf.ab = new ArrayBuffer(elementSize * maxElements);
-			buf.abView = new Uint8Array(buf.ab);
+			buf.data = new Uint8Array(buf.ab);
 			buf.glElementType = gl.UNSIGNED_BYTE;
 			break;
 		case 'uint16':
 			buf.ab = new ArrayBuffer(elementSize * maxElements * 2);
-			buf.abView = new Uint16Array(buf.ab);
+			buf.data = new Uint16Array(buf.ab);
 			buf.glElementType = gl.UNSIGNED_SHORT;
 			break;
 	}
@@ -287,7 +291,7 @@ function LockBuffer(buf) {
  */
 function WriteBufferElement(buf) {
 	for (var i = 0; i < buf.elementSize; i++) {
-		buf.abView[buf.offset++] = arguments[1+i];  // offset by 1 to account for buf param
+		buf.data[buf.offset++] = arguments[1+i];  // offset by 1 to account for buf param
 	}
 	buf.elementCount++;
 	buf.modified = true;
@@ -296,9 +300,11 @@ function WriteBufferElement(buf) {
 /**
  * ReadBufferElement
  */
-function ReadBufferElement(buf, offset, out) {
+function ReadBufferElement(buf, elementOffset, out) {
+	elementOffset *= buf.elementSize;
+
 	for (var i = 0; i < buf.elementSize; i++) {
-		out[i] = buf.abView[offset+i];
+		out[i] = buf.data[elementOffset+i];
 	}
 }
 
@@ -324,7 +330,7 @@ function BindBuffer(buf, attrId) {
 	if (buf.modified) {
 		// Create new views into the underlying array that represent the
 		// much smaller subset of data we need to actually send to the GPU.
-		var view = buf.abView.subarray(0, buf.offset);
+		var view = buf.data.subarray(0, buf.offset);
 		gl.bufferData(buf.glBufferType, view, gl.DYNAMIC_DRAW);
 		buf.modified = false;
 	}
@@ -439,13 +445,16 @@ function TesselateMd3(face) {
 	var newXyz = [0, 0, 0];
 	var oldNormal = [0, 0, 0];
 	var newNormal = [0, 0, 0];
-	var color = [0, 0, 0, 0];
+	var newColor = [0, 0, 0, 0];
 
 	//
 	// Update the scratch vertex buffers.
 	//
-	var buffers = backend.scratchBuffers;
-	var indexOffset = buffers.xyz.elementCount;
+	var bxyz = backend.scratchBuffers.xyz;
+	var bnormal = backend.scratchBuffers.normal;
+	var btexCoord = backend.scratchBuffers.texCoord;
+	var bcolor = backend.scratchBuffers.color;
+	var indexOffset = bxyz.elementCount;
 
 	for (var i = 0; i < numVerts; i++) {
 		var oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
@@ -466,30 +475,30 @@ function TesselateMd3(face) {
 		}
 
 		// 
-		CalcDiffuseColor(refent, newNormal, color);
+		CalcDiffuseColor(refent, newNormal, newColor);
 
-		WriteBufferElement(buffers.xyz, newXyz[0], newXyz[1], newXyz[2]);
-		WriteBufferElement(buffers.normal, newNormal[0], newNormal[1], newNormal[2]);
-		WriteBufferElement(buffers.texCoord, face.st[i].st[0], face.st[i].st[1]);
-		WriteBufferElement(buffers.color, color[0], color[1], color[2], color[3]);
+		WriteBufferElement(bxyz, newXyz[0], newXyz[1], newXyz[2]);
+		WriteBufferElement(bnormal, newNormal[0], newNormal[1], newNormal[2]);
+		WriteBufferElement(btexCoord, face.st[i].st[0], face.st[i].st[1]);
+		WriteBufferElement(bcolor, newColor[0], newColor[1], newColor[2], newColor[3]);
 	}
 
 	//
 	// Update the scratch index buffer.
 	//
-	var indexes = backend.scratchBuffers.index;
+	var bindexes = backend.scratchBuffers.index;
 
 	for (var i = 0; i < face.triangles.length; i++) {
 		var tri = face.triangles[i];
 
-		WriteBufferElement(indexes, indexOffset + tri.indexes[0]);
-		WriteBufferElement(indexes, indexOffset + tri.indexes[1]);
-		WriteBufferElement(indexes, indexOffset + tri.indexes[2]);
+		WriteBufferElement(bindexes, indexOffset + tri.indexes[0]);
+		WriteBufferElement(bindexes, indexOffset + tri.indexes[1]);
+		WriteBufferElement(bindexes, indexOffset + tri.indexes[2]);
 	}
 
-	tess.index = indexes;
-	tess.xyz = buffers.xyz;
-	tess.normal = buffers.normal;
-	tess.texCoord = buffers.texCoord;
-	tess.color = buffers.color;
+	tess.index = bindexes;
+	tess.xyz = bxyz;
+	tess.normal = bnormal;
+	tess.texCoord = btexCoord;
+	tess.color = bcolor;
 }
