@@ -40,13 +40,16 @@ ByteBuffer = (function() {
     });
   };
 
-  function ByteBuffer(source, order, implicitGrowth) {
+  function ByteBuffer(source, order, clone, implicitGrowth) {
     var buffer;
     if (source == null) {
       source = 0;
     }
     if (order == null) {
       order = self.BIG_ENDIAN;
+    }
+    if (clone == null) {
+      clone = false;
     }
     if (implicitGrowth == null) {
       implicitGrowth = false;
@@ -57,7 +60,7 @@ ByteBuffer = (function() {
     this._order = !!order;
     this._implicitGrowth = !!implicitGrowth;
     this._index = 0;
-    buffer = extractBuffer(source, true);
+    buffer = extractBuffer(source, clone);
     if (!buffer) {
       buffer = new ArrayBuffer(source);
     }
