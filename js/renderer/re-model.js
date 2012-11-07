@@ -124,7 +124,7 @@ function LoadMd3(mod, filename, callback) {
 		header.ident = bb.readInt();
 		header.version = bb.readInt();
 
-		if (header.version != MD3_VERSION) {
+		if (header.version !== MD3_VERSION) {
 			console.warn('LoadMd3: ' + filename + ' has wrong version (' + header.version + ' should be ' + MD3_VERSION + ')');
 			return null;
 		}
@@ -150,9 +150,11 @@ function LoadMd3(mod, filename, callback) {
 		md3.header = header;
 		md3.name = header.name;
 		md3.frames = new Array(header.numFrames);
-		md3.tags = new Array(header.numTags);
+		md3.tags = new Array(header.numFrames * header.numTags);
 		md3.surfaces = new Array(header.numSurfaces);
 		md3.skins = new Array(header.numSkins);
+
+		//console.log('LoadMD3', mod.name, header.numFrames, header.numTags, header.numFrames * header.numTags);
 
 		// Read all of the frames.
 		bb.index = header.ofsFrames;
