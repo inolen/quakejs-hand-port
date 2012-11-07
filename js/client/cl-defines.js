@@ -1,7 +1,6 @@
 var RETRANSMIT_TIMEOUT = 3000;                             // time between connection packet retransmits
 
 var CMD_BACKUP = 64;
-var CMD_MASK   = (CMD_BACKUP - 1);
 
 // The parseEntities array must be large enough to hold PACKET_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server

@@ -20,6 +20,7 @@ function Init(sysinterface, cominterface) {
 	console.log('--------- CL Init ---------');
 
 	var exports = {
+		CMD_BACKUP:                  CMD_BACKUP,
 		Bind:                        CmdBind,
 		GetKeyNamesForCmd:           GetKeyNamesForCmd,
 		GetGameState:                function () { return cl.gameState; },

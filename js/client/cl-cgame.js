@@ -16,13 +16,13 @@ function GetUserCommand(cmdNumber) {
 		throw new Error('GetUserCommandd: ' + cmdNumber + ' >= ' + cl.cmdNumber);
 	}
 
-	// the usercmd has been overwritten in the wrapping
-	// buffer because it is too far out of date
+	// The usercmd has been overwritten in the wrapping
+	// buffer because it is too far out of date.
 	if (cmdNumber <= cl.cmdNumber - CMD_BACKUP) {
 		return null;
 	}
 
-	return cl.cmds[cmdNumber & CMD_MASK];
+	return cl.cmds[cmdNumber & (CMD_BACKUP-1)];
 }
 
 /**

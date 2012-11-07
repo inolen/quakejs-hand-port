@@ -171,7 +171,7 @@ function PredictPlayerState() {
 	// can't accurately predict a current position, so just freeze at
 	// the last good position we had.
 	var latest = cl.GetCurrentUserCommandNumber();
-	var oldest = latest - CMD_BACKUP + 1;
+	var oldest = latest - cl.CMD_BACKUP + 1;
 	var oldestCmd = cl.GetUserCommand(oldest);
 
 	// Special check for map_restart.

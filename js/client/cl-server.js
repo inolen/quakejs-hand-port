@@ -33,7 +33,7 @@ function CreateNewCommands() {
 	}
 
 	cl.cmdNumber++;
-	cl.cmds[cl.cmdNumber & CMD_MASK] = CreateCommand();
+	cl.cmds[cl.cmdNumber % CMD_BACKUP] = CreateCommand();
 }
 
 /**
@@ -149,7 +149,7 @@ function WritePacket() {
 
 	// Write only the latest client command for now
 	// since we're rocking TCP.
-	var cmd = cl.cmds[cl.cmdNumber & CMD_MASK];
+	var cmd = cl.cmds[cl.cmdNumber % CMD_BACKUP];
 
 	msg.writeByte(ClientMessage.moveNoDelta);
 	msg.writeInt(cmd.serverTime);
