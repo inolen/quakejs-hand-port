@@ -155,7 +155,7 @@ function SetupEntityLighting(refent) {
 	// if NOWORLDMODEL, only use dynamic lights (menu system, etc)
 	// if ( !(refdef->rdflags & RDF_NOWORLDMODEL ) 
 	// 	&& tr.world->lightGridData ) {
-	 	SetupEntityLightingGrid(refent);
+		SetupEntityLightingGrid(refent);
 	// } else {
 	// 	refent.ambientLight[0] = refent.ambientLight[1] = 
 	// 		refent.ambientLight[2] = re.identityLight * 150;

@@ -1,3 +1,5 @@
+/*global vec3: true, mat4: true */
+
 define('renderer/re',
 ['underscore', 'glmatrix', 'ByteBuffer'],
 function (_, glmatrix, ByteBuffer) {
@@ -17,14 +19,21 @@ function (_, glmatrix, ByteBuffer) {
 	<%- include re-world.js %>
 
 	return {
-		Init: Init,
-		Shutdown: Shutdown,
-		LoadMap: LoadMap,
-		RenderScene: RenderScene,
+		// exported data structures
+		RefDef:        RefDef,
+		RefEntityType: RefEntityType,
+		RenderFx:      RenderFx,
+		RefEntity:     RefEntity,
+
+		// exported fns
+		Init:                Init,
+		Shutdown:            Shutdown,
+		LoadMap:             LoadMap,
+		RenderScene:         RenderScene,
 		AddRefEntityToScene: AddRefEntityToScene,
-		GetCounts: function () { return re.counts; },
-		RegisterModel: RegisterModel,
-		RegisterSkin: RegisterSkin,
-		LerpTag: LerpTag
+		GetCounts:           function () { return re.counts; },
+		RegisterModel:       RegisterModel,
+		RegisterSkin:        RegisterSkin,
+		LerpTag:             LerpTag
 	};
 });

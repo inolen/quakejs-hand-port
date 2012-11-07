@@ -52,7 +52,7 @@ function RenderScene(fd) {
  */
 function AddRefEntityToScene(refent) {
 	if (refent.reType < 0 || refent.reType >= RefEntityType.MAX_REF_ENTITY_TYPE) {
-		throw new Error('AddRefEntityToScene: bad reType ' + ent.reType);
+		throw new Error('AddRefEntityToScene: bad reType ' + refent.reType);
 	}
 
 	var newRefent = re.refdef.refEntities[re.refdef.numRefEntities];

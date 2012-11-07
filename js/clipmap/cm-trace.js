@@ -365,7 +365,7 @@ function TraceThroughBrush(tw, brush) {
 			// Find the closest point on the capsule to the plane.
 			var startp = [0, 0, 0];
 			var endp = [0, 0, 0];
-			var t = vec3.dot(plaen.normal, tw.sphere.offset);
+			var t = vec3.dot(plane.normal, tw.sphere.offset);
 
 			if (t > 0) {
 				vec3.subtract(tw.start, tw.sphere.offset, startp);

@@ -19,10 +19,6 @@ function AddEntitySurfaces() {
 
 		// simple generated models, like sprites and beams, are not culled
 		switch (refent.reType) {
-			case RefEntityType.BBOX:
-				//AddBboxSurfaces(refent);
-				break;
-
 			case RefEntityType.MODEL:
 				// We must set up parts of tr.or for model culling.
 				RotateForEntity(refent, re.or);
@@ -33,18 +29,6 @@ function AddEntitySurfaces() {
 				throw new Error('AddEntitySurfaces: Bad reType');
 		}
 	}
-}
-
-/**
- * AddBboxSurfaces
- */
-function AddBboxSurfaces(refent) {
-	var face = re.bboxSurfaces[re.bboxSurfaceNum++ % MAX_BBOX_SURFACES];
-
-	face.shader = re.debugShader;
-	face.refent = refent;
-
-	AddDrawSurf(face, face.shader, refent.index);
 }
 
 /**

@@ -61,7 +61,9 @@ endef
 # Javascript targets
 #
 jshint:
-	find . -type d \( -name node_modules -o -name dist -o -name vendor \) -prune -o -name '*.js' -print0 | xargs -0 jshint
+	$(call create_js_tmp)
+	$(call preprocess_all_ejs, $(subst $(JS_DIR)/, $(JS_TMP_DIR)/, $(JS_EJS)))
+	jshint $(JS_TMP_DIR)/ui/ui.js
 
 browser: $(BROWSER_R_SCRIPT) $(JS_EJS)
 	$(call create_js_tmp)

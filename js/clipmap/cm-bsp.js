@@ -360,39 +360,39 @@ function InlineModel(num) {
 // 	}	
 // }
 
-/**
- * TempBoxModel
- *
- * To keep everything totally uniform, bounding boxes are turned into small
- * BSP trees instead of being compared directly.
- * Capsules are handled differently though.
- */
-function TempBoxModel(mins, maxs, capsule) {
-	vec3.set(mins, box_model.mins);
-	vec3.set(maxs, box_model.maxs);
+// /**
+//  * TempBoxModel
+//  *
+//  * To keep everything totally uniform, bounding boxes are turned into small
+//  * BSP trees instead of being compared directly.
+//  * Capsules are handled differently though.
+//  */
+// function TempBoxModel(mins, maxs, capsule) {
+// 	vec3.set(mins, box_model.mins);
+// 	vec3.set(maxs, box_model.maxs);
 
-	if (capsule) {
-		return CAPSULE_MODEL_HANDLE;
-	}
+// 	if (capsule) {
+// 		return CAPSULE_MODEL_HANDLE;
+// 	}
 
-	box_planes[0].dist = maxs[0];
-	box_planes[1].dist = -maxs[0];
-	box_planes[2].dist = mins[0];
-	box_planes[3].dist = -mins[0];
-	box_planes[4].dist = maxs[1];
-	box_planes[5].dist = -maxs[1];
-	box_planes[6].dist = mins[1];
-	box_planes[7].dist = -mins[1];
-	box_planes[8].dist = maxs[2];
-	box_planes[9].dist = -maxs[2];
-	box_planes[10].dist = mins[2];
-	box_planes[11].dist = -mins[2];
+// 	box_planes[0].dist = maxs[0];
+// 	box_planes[1].dist = -maxs[0];
+// 	box_planes[2].dist = mins[0];
+// 	box_planes[3].dist = -mins[0];
+// 	box_planes[4].dist = maxs[1];
+// 	box_planes[5].dist = -maxs[1];
+// 	box_planes[6].dist = mins[1];
+// 	box_planes[7].dist = -mins[1];
+// 	box_planes[8].dist = maxs[2];
+// 	box_planes[9].dist = -maxs[2];
+// 	box_planes[10].dist = mins[2];
+// 	box_planes[11].dist = -mins[2];
 
-	vec3.set(mins, box_brush.bounds[0]);
-	vec3.set(maxs, box_brush.bounds[1]);
+// 	vec3.set(mins, box_brush.bounds[0]);
+// 	vec3.set(maxs, box_brush.bounds[1]);
 
-	return BOX_MODEL_HANDLE;
-}
+// 	return BOX_MODEL_HANDLE;
+// }
 
 /**
  * ModelBounds

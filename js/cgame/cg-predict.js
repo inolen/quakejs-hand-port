@@ -34,57 +34,57 @@ function BuildSolidList() {
 	}
 }
 
-/**
- * ClipMoveToEntities
- */
-function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
-	for (var i = 0; i < cg_numSolidEntities; i++) {
-		var cent = cg_solidEntities[ i ];
-		var es = cent.currentState;
+// /**
+//  * ClipMoveToEntities
+//  */
+// function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
+// 	for (var i = 0; i < cg_numSolidEntities; i++) {
+// 		var cent = cg_solidEntities[ i ];
+// 		var es = cent.currentState;
 
-		if (es.number === skipNumber) {
-			continue;
-		}
+// 		if (es.number === skipNumber) {
+// 			continue;
+// 		}
 
-		var cmodel;
-		if (es.solid == SOLID_BMODEL) {
-			// Special value for bmodel.
-			cmodel = cm.InlineModel(es.modelIndex);
-			vec3.set(cent.lerpAngles, angles);
-			bg.EvaluateTrajectory(cent.currentState.pos, cg.physicsTime, origin);
-		} else {
-			// Encoded bbox.
-			var x = (es.solid & 255);
-			var zd = ((es.solid>>8) & 255);
-			var zu = ((es.solid>>16) & 255) - 32;
+// 		var cmodel;
+// 		if (es.solid == SOLID_BMODEL) {
+// 			// Special value for bmodel.
+// 			cmodel = cm.InlineModel(es.modelIndex);
+// 			vec3.set(cent.lerpAngles, angles);
+// 			bg.EvaluateTrajectory(cent.currentState.pos, cg.physicsTime, origin);
+// 		} else {
+// 			// Encoded bbox.
+// 			var x = (es.solid & 255);
+// 			var zd = ((es.solid>>8) & 255);
+// 			var zu = ((es.solid>>16) & 255) - 32;
 
-			var bmins = [0, 0, 0];
-			var bmaxs = [0, 0, 0];
+// 			var bmins = [0, 0, 0];
+// 			var bmaxs = [0, 0, 0];
 
-			bmins[0] = bmins[1] = -x;
-			bmaxs[0] = bmaxs[1] = x;
-			bmins[2] = -zd;
-			bmaxs[2] = zu;
+// 			bmins[0] = bmins[1] = -x;
+// 			bmaxs[0] = bmaxs[1] = x;
+// 			bmins[2] = -zd;
+// 			bmaxs[2] = zu;
 
-			cmodel = cm.TempBoxModel(bmins, bmaxs);
-			vec3.set(angles, [0, 0, 0]);
-			vec3.set(cent.lerpOrigin, origin);
-		}
+// 			cmodel = cm.TempBoxModel(bmins, bmaxs);
+// 			vec3.set(angles, [0, 0, 0]);
+// 			vec3.set(cent.lerpOrigin, origin);
+// 		}
 
-		var trace = cm.TransformedBoxTrace(start, end, mins, maxs, cmodel, mask, origin, angles);
+// 		var trace = cm.TransformedBoxTrace(start, end, mins, maxs, cmodel, mask, origin, angles);
 
-		if (trace.allSolid || trace.fraction < tw.fraction) {
-			trace.entityNum = es.number;
-			trace.clone(tr);
-		} else if (trace.startSolid) {
-			tr.startSolid = true;
-		}
+// 		if (trace.allSolid || trace.fraction < tw.fraction) {
+// 			trace.entityNum = es.number;
+// 			trace.clone(tr);
+// 		} else if (trace.startSolid) {
+// 			tr.startSolid = true;
+// 		}
 
-		if (tr.allSolid) {
-			return;
-		}
-	}
-}
+// 		if (tr.allSolid) {
+// 			return;
+// 		}
+// 	}
+// }
 
 /**
  * Trace

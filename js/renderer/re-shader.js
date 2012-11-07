@@ -481,7 +481,7 @@ function ParseShaderStage(shader, tokens) {
 				switch (stage.rgbGen) {
 					case 'wave':
 						stage.rgbWaveform = ParseWaveform(tokens);
-						if(!stage.rgbWaveform) { stage.rgbGen == 'identity'; }
+						if(!stage.rgbWaveform) { stage.rgbGen = 'identity'; }
 						break;
 				}
 				break;
@@ -491,7 +491,7 @@ function ParseShaderStage(shader, tokens) {
 				switch (stage.alphaGen) {
 					case 'wave':
 						stage.alphaWaveform = ParseWaveform(tokens);
-						if(!stage.alphaWaveform) { stage.alphaGen == '1.0'; }
+						if(!stage.alphaWaveform) { stage.alphaGen = '1.0'; }
 						break;
 					default: break;
 				}
@@ -982,6 +982,8 @@ ShaderBuilder.prototype.addWaveform = function(name, wf, timeVar) {
 		wf.phase = wf.phase.toFixed(4);
 	}
 
+	var funcName;
+	
 	switch (wf.funcName) {
 		case 'sin':
 			this.statements.push('float ' + name + ' = ' + wf.base.toFixed(4) + ' + sin((' + wf.phase + ' + ' + timeVar + ' * ' + wf.freq.toFixed(4) + ') * 6.283) * ' + wf.amp.toFixed(4) + ';');

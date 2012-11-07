@@ -467,7 +467,7 @@ function TesselateMd3(face) {
 		vec3.scale(newXyzNormal.xyz, MD3_XYZ_SCALE, newXyz);
 		vec3.set(newXyzNormal.normal, newNormal);
 
-		if (backlerp != 0.0) {
+		if (backlerp !== 0.0) {
 			for (var j = 0; j < 3; j++) {
 				newXyz[j] = newXyz[j] + backlerp * (oldXyz[j] - newXyz[j]);
 				newNormal[j] = newNormal[j] + backlerp * (oldNormal[j] - newNormal[j]);

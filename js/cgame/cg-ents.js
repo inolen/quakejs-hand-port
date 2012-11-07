@@ -53,7 +53,8 @@ function AddCEntity(cent) {
 
 	switch (cent.currentState.eType) {
 		case EntityType.ITEM:
-			var refent = new RefEntity();
+			// TODO Pool these?
+			var refent = new re.RefEntity();
 			var item = bg.ItemList[cent.currentState.modelIndex];
 			var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
 
@@ -65,7 +66,7 @@ function AddCEntity(cent) {
 			}
 
 			for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-				refent.reType = RefEntityType.MODEL;
+				refent.reType = re.RefEntityType.MODEL;
 				vec3.set(cent.lerpOrigin, refent.origin);
 				AnglesToAxis(cent.lerpAngles, refent.axis);
 				refent.hModel = itemInfo.modelHandles[i];

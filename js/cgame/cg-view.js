@@ -6,8 +6,11 @@ function CalcViewValues() {
 
 	cg.refdef.x = 0;
 	cg.refdef.y = 0;
+	// TODO FIX THIS
+	// viewport is only resolving because it matches the dom ID and Chrome/FF auto make globals per-id
 	cg.refdef.width = viewport.width;
 	cg.refdef.height = viewport.height;
+
 	vec3.set(ps.origin, cg.refdef.vieworg);
 	vec3.set(ps.viewangles, cg.refdefViewAngles);
 

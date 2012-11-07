@@ -262,7 +262,9 @@ function CheckJump(pm) {
 function GroundTrace(pm) {
 	var ps = pm.ps;
 	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
-	var trace = groundTrace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+	var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+
+	groundTrace = trace;
 
 	// Do something corrective if the trace starts in a solid.
 	if (trace.allSolid) {
@@ -985,8 +987,8 @@ function Pmove(pm) {
 
 	// TODO WHY DOES THIS HAPPEN
 	if (cmd.serverTime < ps.commandTime) {
-		throw new Error('Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
-		return;	// should not happen
+		//throw new Error('Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
+		return;  // should not happen
 	}
 
 	if (cmd.serverTime > ps.commandTime + 1000) {
@@ -995,8 +997,8 @@ function Pmove(pm) {
 
 	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
 
-	// chop the move up if it is too long, to prevent framerate
-	// dependent behavior
+	// Chop the move up if it is too long, to prevent framerate
+	// dependent behavior.
 	while (ps.commandTime != cmd.serverTime) {
 		msec = cmd.serverTime - ps.commandTime;
 

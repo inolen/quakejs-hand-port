@@ -38,7 +38,7 @@ var RenderLocals = function () {
 	// frontend
 	this.refdef             = new RefDef();
 	this.viewParms          = new ViewParms();
-	this.or                 = new Orientation()            // for current entity
+	this.or                 = new Orientation();           // for current entity
 
 	this.world              = null;
 	this.counts             = new RenderCounts();
@@ -99,7 +99,7 @@ var WorldData = function () {
 	this.faces                = null;
 	this.planes               = null;
 	this.leafSurfaces         = null;
-	this.nodes                = null
+	this.nodes                = null;
 	this.leafs                = null;
 	
 	this.numClusters          = 0;
@@ -261,17 +261,6 @@ RefEntity.prototype.clone = function (refent) {
 	return refent;
 };
 
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
 Orientation.prototype.clone = function (to) {
 	if (typeof(to) === 'undefined') {
 		to = new Orientation();
@@ -285,7 +274,7 @@ Orientation.prototype.clone = function (to) {
 	mat4.set(this.modelMatrix, to.modelMatrix);
 
 	return to;
-}
+};
 
 var ViewParms = function () {
 	this.or               = new Orientation();

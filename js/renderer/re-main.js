@@ -4,7 +4,7 @@ var com;
 var re;
 var backend;
 var gl;
-var viewportUi;
+
 var r_cull;
 var r_subdivisions;
 var r_znear;
@@ -32,23 +32,22 @@ function Init(sysinterface, cominterface) {
 	sys = sysinterface;
 	com = cominterface;
 	
-	re = new RenderLocals();
+	re      = new RenderLocals();
 	backend = new BackendLocals();
+	gl      = sys.GetGLContext();
 
-	r_cull = com.AddCvar('r_cull', 1);
-	r_subdivisions = com.AddCvar('r_subdivisions', 4);
-	r_znear = com.AddCvar('r_znear', 4);
-	r_zproj = com.AddCvar('r_zproj', 64);
-	r_overBrightBits = com.AddCvar('r_overBrightBits', 0, CvarFlags.ARCHIVE);
+	r_cull              = com.AddCvar('r_cull',              1);
+	r_subdivisions      = com.AddCvar('r_subdivisions',      4);
+	r_znear             = com.AddCvar('r_znear',             4);
+	r_zproj             = com.AddCvar('r_zproj',             64);
+	r_overBrightBits    = com.AddCvar('r_overBrightBits',    0, CvarFlags.ARCHIVE);
 	r_mapOverBrightBits = com.AddCvar('r_mapOverBrightBits', 2, CvarFlags.ARCHIVE);
-	r_ambientScale = com.AddCvar('r_ambientScale', 0.6);
-	r_directedScale = com.AddCvar('r_directedScale', 1);
-	r_showtris = com.AddCvar('r_showtris', 0);
-	r_shownormals = com.AddCvar('r_shownormals', 0);
+	r_ambientScale      = com.AddCvar('r_ambientScale',      0.6);
+	r_directedScale     = com.AddCvar('r_directedScale',     1);
+	r_showtris          = com.AddCvar('r_showtris',          0);
+	r_shownormals       = com.AddCvar('r_shownormals',       0);
 
 	com.AddCmd('showcluster', CmdShowCluster);
-
-	gl = sys.GetGLContext();
 
 	InitImages();
 	InitShaders();
@@ -121,7 +120,7 @@ function CullLocalBox(bounds) {
 
 	for (var i = 0; i < 4; i++) {
 		var frust = parms.frustum[i];
-		var front = back = 0;
+		var front = 0, back = 0;
 
 		for (var j = 0; j < 8; j++) {
 			dists[j] = vec3.dot(transformed[j], frust.normal);

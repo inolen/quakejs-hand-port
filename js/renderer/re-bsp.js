@@ -526,7 +526,7 @@ function LoadLightGrid(buffer, gridLump) {
 	var numGridPoints = world.lightGridBounds[0] * world.lightGridBounds[1] * world.lightGridBounds[2];
 
 	if (gridLump.filelen !== numGridPoints * 8) {
-		throw new Error('WARNING: light grid mismatch');
+		console.log('WARNING: light grid mismatch');
 		world.lightGridData = null;
 		return;
 	}

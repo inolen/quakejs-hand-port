@@ -59,7 +59,7 @@ function FindImage(name, clamp) {
 	if ((image = re.textures[name])) {
 		return image;
 	} else {
-		var image = re.textures[name] = new Texture();
+		image = re.textures[name] = new Texture();
 		image.name = name;
 		image.texnum = re.defaultTexture.texnum;
 	}
@@ -411,7 +411,7 @@ function RegisterSkin(filename) {
 	var skin;
 	var hSkin;
 
-	for (var hSkin = 1; hSkin < re.skins.length; hSkin++) {
+	for (hSkin = 1; hSkin < re.skins.length; hSkin++) {
 		skin = re.skins[hSkin];
 
 		if (skin.name == name) {

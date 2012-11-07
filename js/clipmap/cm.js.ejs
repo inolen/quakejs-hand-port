@@ -1,3 +1,5 @@
+/*global vec3: true, mat4: true */
+
 define('clipmap/cm',
 ['underscore', 'glmatrix', 'ByteBuffer'],
 function (_, glmatrix, ByteBuffer) {
@@ -20,7 +22,7 @@ function (_, glmatrix, ByteBuffer) {
 			BoxTrace: BoxTrace,
 			TransformedBoxTrace: TransformedBoxTrace
 		};
-	};
+	}
 
 	return {
 		CreateInstance: function (cominterface) {

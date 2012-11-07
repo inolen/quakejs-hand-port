@@ -1,3 +1,7 @@
 {
-	"smarttabs": true
+	"maxerr": 1000,
+	"browser": true,
+	"devel": true,
+	"smarttabs": true,
+	"undef": true
 }

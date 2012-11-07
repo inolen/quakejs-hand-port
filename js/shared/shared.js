@@ -223,6 +223,18 @@ Trajectory.prototype.clone = function (tr) {
 	return tr;
 };
 
+var Orientation = function () {
+	this.origin      = vec3.create();                      // in world coordinates
+	this.axis        = [                                   // orientation in world
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	// Used by renderer.
+	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
+	this.modelMatrix = mat4.create();
+};
+
 /**********************************************************
  * EntityState is the information conveyed from the server
  * in an update message about entities that the client will

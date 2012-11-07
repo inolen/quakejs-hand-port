@@ -34,7 +34,7 @@ function RegisterModel(name) {
 	}
 
 	// Search the currently loaded models.
-	var mod;
+	//var mod;
 	for (var hModel = 1; hModel < re.models.length; hModel++) {
 		mod = re.models[hModel];
 
@@ -125,7 +125,7 @@ function LoadMd3(mod, filename, callback) {
 		header.version = bb.readInt();
 
 		if (header.version != MD3_VERSION) {
-			console.warn('LoadMd3: ' + filename + ' has wrong version (' + version + ' should be ' + MD3_VERSION + ')');
+			console.warn('LoadMd3: ' + filename + ' has wrong version (' + header.version + ' should be ' + MD3_VERSION + ')');
 			return null;
 		}
 
@@ -210,7 +210,7 @@ function LoadMd3(mod, filename, callback) {
 			}
 
 			if (sheader.numTriangles * 3 > SHADER_MAX_INDEXES) {
-				console.warn('LoadMd3: ' + filename + ' has more than ' + (SHADER_MAX_INDEXES / 3) + ' triangles on a surface (' + shead.numTriangles + ')');
+				console.warn('LoadMd3: ' + filename + ' has more than ' + (SHADER_MAX_INDEXES / 3) + ' triangles on a surface (' + sheader.numTriangles + ')');
 				return null;
 			}
 

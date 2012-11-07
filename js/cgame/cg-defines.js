@@ -1,8 +1,5 @@
 var DEFAULT_MODEL = 'sarge';
 
-var CMD_BACKUP = 64;
-var CMD_MASK   = (CMD_BACKUP - 1);
-
 var ClientGame = function () {
 	this.initialized          = false;
 	this.frameInterpolation   = 0;                         // (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
@@ -39,7 +36,7 @@ var ClientGame = function () {
 	this.autoAnglesFast       = [0, 0, 0];
 
 	// view rendering
-	this.refdef               = new RefDef();
+	this.refdef               = new re.RefDef();
 	this.refdefViewAngles     = [0, 0 ,0];                 // will be converted to refdef.viewaxis
 
 	// scoreboard

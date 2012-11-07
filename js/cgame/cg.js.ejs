@@ -1,12 +1,13 @@
+/*global vec3: true, mat4: true */
+
 define('cgame/cg',
 ['underscore', 'glmatrix', 'game/bg'],
 function (_, glmatrix, bg) {
 	<%- include ../shared/shared.js %>
 	<%- include ../game/bg-defines.js %>
-	<%- include ../renderer/re-defines.js %>
-	<%- include cg-defines.js %>
 
 	function CGame(sys, com, cl, cm, re, ui) {
+		<%- include cg-defines.js %>
 		<%- include cg-main.js %>
 		<%- include cg-cmds.js %>
 		<%- include cg-draw.js %>

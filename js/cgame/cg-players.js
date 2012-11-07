@@ -216,6 +216,7 @@ function RegisterClientSkin(ci, modelName, skinName, teamName) {
  */
 function ParseAnimationFile(filename, ci, callback) {
 	var animations = ci.animations;
+	var skip = 0;
 
 	sys.ReadFile(filename, 'utf8', function (err, data) {
 		if (err) return callback(err);
@@ -349,7 +350,8 @@ function ParseAnimationFile(filename, ci, callback) {
 			if (!token) {
 				break;
 			}
-			fps = parseInt(token, 10);
+			
+			var fps = parseInt(token, 10);
 			if (!fps) {
 				fps = 1;
 			}
@@ -423,13 +425,14 @@ function AddPlayer(cent) {
 	var renderfx = 0;
 	if (cent.currentState.number === cg.snap.ps.clientNum) {
 		if (!cg_thirdPerson()) {
-			renderfx = RenderFx.THIRD_PERSON;  // only draw in mirrors
+			renderfx = re.RenderFx.THIRD_PERSON;  // only draw in mirrors
 		}
 	}
 
-	var legs = new RefEntity();
-	var torso = new RefEntity();
-	var head = new RefEntity();
+	// TODO Pool these?
+	var legs = new re.RefEntity();
+	var torso = new re.RefEntity();
+	var head = new re.RefEntity();
 
 	// Get the player model information
 	/*var renderfx = 0;
@@ -455,12 +458,12 @@ function AddPlayer(cent) {
 	// if ( cg_shadows.integer == 3 && shadow ) {
 	// 	renderfx |= RF_SHADOW_PLANE;
 	// }
-	renderfx |= RenderFx.LIGHTING_ORIGIN;  // use the same origin for all
+	renderfx |= re.RenderFx.LIGHTING_ORIGIN;  // use the same origin for all
 
 	//
 	// Add the legs
 	//
-	legs.reType = RefEntityType.MODEL;
+	legs.reType = re.RefEntityType.MODEL;
 	legs.renderfx = renderfx;
 	legs.hModel = ci.legsModel;
 	legs.customSkin = ci.legsSkin;
@@ -479,7 +482,7 @@ function AddPlayer(cent) {
 	//
 	// add the torso
 	//
-	torso.reType = RefEntityType.MODEL;
+	torso.reType = re.RefEntityType.MODEL;
 	torso.renderfx = renderfx;
 	torso.hModel = ci.torsoModel;
 	if (!torso.hModel) {
@@ -495,7 +498,7 @@ function AddPlayer(cent) {
 	//
 	// add the head
 	//
-	head.reType = RefEntityType.MODEL;
+	head.reType = re.RefEntityType.MODEL;
 	head.renderfx = renderfx;
 	head.hModel = ci.headModel;
 	if (!head.hModel) {
@@ -685,6 +688,8 @@ function PlayerAngles(cent, legs, torso, head) {
  * SwingAngles
  */
 function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
+	var swing, move, scale;
+
 	if (!res.swinging) {
 		// See if a swing should be started
 		swing = AngleSubtract(res.angle, destination);
@@ -735,23 +740,23 @@ function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
 	}
 }
 
-/**
- * AddPainTwitch
- */
-function AddPainTwitch(cent, torsoAngles) {
-	var t = cg.time - cent.pe.painTime;
-	if (t >= PAIN_TWITCH_TIME) {
-		return;
-	}
+// /**
+//  * AddPainTwitch
+//  */
+// function AddPainTwitch(cent, torsoAngles) {
+// 	var t = cg.time - cent.pe.painTime;
+// 	if (t >= PAIN_TWITCH_TIME) {
+// 		return;
+// 	}
 
-	f = 1.0 - (t / PAIN_TWITCH_TIME);
+// 	f = 1.0 - (t / PAIN_TWITCH_TIME);
 
-	if (cent.pe.painDirection) {
-		torsoAngles[ROLL] += 20 * f;
-	} else {
-		torsoAngles[ROLL] -= 20 * f;
-	}
-}
+// 	if (cent.pe.painDirection) {
+// 		torsoAngles[ROLL] += 20 * f;
+// 	} else {
+// 		torsoAngles[ROLL] -= 20 * f;
+// 	}
+// }
 
 /**********************************************************
  *
@@ -813,17 +818,19 @@ function RunLerpFrame(ci, lf, newAnimation, speedScale) {
 		if (!anim.frameLerp) {
 			return;  // shouldn't happen
 		}
+
 		if (cg.time < lf.animationTime) {
 			lf.frameTime = lf.animationTime;  // initial lerp
 		} else {
 			lf.frameTime = lf.oldFrameTime + anim.frameLerp;
 		}
-		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale, 10);
 
-		numFrames = anim.numFrames;
+		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale, 10);
+		var numFrames = anim.numFrames;
 		if (anim.flipflop) {
 			numFrames *= 2;
 		}
+
 		if (f >= numFrames) {
 			f -= numFrames;
 			if (anim.loopFrames) {
@@ -836,6 +843,7 @@ function RunLerpFrame(ci, lf, newAnimation, speedScale) {
 				lf.frameTime = cg.time;
 			}
 		}
+
 		if (anim.reversed) {
 			lf.frame = anim.firstFrame + anim.numFrames - 1 - f;
 		} else if (anim.flipflop && f >= anim.numFrames) {
@@ -843,6 +851,7 @@ function RunLerpFrame(ci, lf, newAnimation, speedScale) {
 		} else {
 			lf.frame = anim.firstFrame + f;
 		}
+
 		if (cg.time > lf.frameTime) {
 			lf.frameTime = cg.time;
 		}
