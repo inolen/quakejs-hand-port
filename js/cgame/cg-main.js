@@ -11,28 +11,43 @@ var cg_thirdPersonRange;
 var cg_hud;
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'CG:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
+ * error
+ */
+function error(str) {
+	com.error(Err.DROP, str);
+}
+
+/**
  * Init
  */
 function Init(serverMessageNum, serverCommandSequence, clientNum) {
-	console.log('--------- CG Init ---------');
+	log('Initializing');
 
-	cg = new ClientGame();
+	cg  = new ClientGame();
+	cg.clientNum = clientNum;
+
 	cgs = new ClientGameStatic();
+	cgs.processedSnapshotNum = serverMessageNum;
+	cgs.serverCommandSequence = serverCommandSequence;
+	cgs.gameState = cl.GetGameState();
 
-	cg_errordecay = com.AddCvar('cg_errordecay', 100, CvarFlags.ARCHIVE);
-	cg_predict = com.AddCvar('cg_predict', 0, CvarFlags.ARCHIVE);
-	cg_showmiss = com.AddCvar('cg_showmiss', 1, CvarFlags.ARCHIVE);
-
-	cg_thirdPerson = com.AddCvar('cg_thirdPerson', 1, CvarFlags.ARCHIVE);
+	cg_errordecay       = com.AddCvar('cg_errordecay',       100, CvarFlags.ARCHIVE);
+	cg_predict          = com.AddCvar('cg_predict',          0,   CvarFlags.ARCHIVE);
+	cg_showmiss         = com.AddCvar('cg_showmiss',         1,   CvarFlags.ARCHIVE);
+	cg_thirdPerson      = com.AddCvar('cg_thirdPerson',      0,   CvarFlags.ARCHIVE);
 	cg_thirdPersonAngle = com.AddCvar('cg_thirdPersonAngle', 0);
 	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
 
 	cg_hud = ui.RegisterView('hud');
-
-	cg.clientNum = clientNum;
-	cgs.processedSnapshotNum = serverMessageNum;
-	cgs.serverCommandSequence = serverCommandSequence;
-	cgs.gameState = cl.GetGameState();
 
 	RegisterCommands();
 	ParseServerinfo();
@@ -51,7 +66,7 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
  * Shutdown
  */
 function Shutdown() {
-	console.log('--------- CG Shutdown ---------');
+	log('Shutting down');
 }
 
 /**

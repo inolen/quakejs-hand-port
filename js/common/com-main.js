@@ -6,6 +6,19 @@ var frameTime;
 var lastFrameTime;
 
 /**
+ * error
+ */
+function error(level, str) {
+	// if (level === Err.DROP) {
+	// 	console.error('Server crashed: ' + str);
+	// 	sv.Shutdown();
+	// 	cl.Disconnect();
+	// } else {
+		throw new Error(str);
+	// }
+}
+
+/**
  * Init
  */
 function Init(sysinterface, isdedicated) {
@@ -17,6 +30,7 @@ function Init(sysinterface, isdedicated) {
 	RegisterCommands();
 	
 	var exports = {
+		error:            error,
 		ExecuteCmdText:   ExecuteCmdText,
 		LoadConfig:       LoadConfig,
 		SaveConfig:       SaveConfig,
@@ -149,16 +163,13 @@ function EventLoop() {
 	while (ev) {
 		switch (ev.type) {
 			case EventTypes.NETCLMESSAGE:
-				cl.PacketEvent(ev.addr, ev.buffer);
+				cl.PacketEvent(ev.buffer);
 				break;
-			/*case EventTypes.NETSVCONNECT:
-				sv.ClientConnect(ev.addr, ev.socket);
-				break;
-			case EventTypes.NETSVDISCONNECT:
-				sv.ClientDisconnect(ev.addr);
-				break;*/
 			case EventTypes.NETSVMESSAGE:
-				sv.PacketEvent(ev.addr, ev.socket, ev.buffer);
+				sv.PacketEvent(ev.socket, ev.buffer);
+				break;
+			case EventTypes.NETSVSOCKETCLOSED:
+				sv.SocketClosed(ev.socket);
 				break;
 			case EventTypes.KEYDOWN:
 				cl.KeyDownEvent(ev.time, ev.keyName);

@@ -3,7 +3,7 @@
  */
 function RenderScene(fd) {
 	if (!re.world) {
-		//throw new Error('RenderScene: NULL worldmodel');
+		com.error(Err.DROP, 'RenderScene: NULL worldmodel');
 		return;
 	}
 	
@@ -52,7 +52,7 @@ function RenderScene(fd) {
  */
 function AddRefEntityToScene(refent) {
 	if (refent.reType < 0 || refent.reType >= RefEntityType.MAX_REF_ENTITY_TYPE) {
-		throw new Error('AddRefEntityToScene: bad reType ' + refent.reType);
+		com.error(Err.DROP, 'AddRefEntityToScene: bad reType ' + refent.reType);
 	}
 
 	var newRefent = re.refdef.refEntities[re.refdef.numRefEntities];

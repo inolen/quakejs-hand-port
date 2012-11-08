@@ -403,7 +403,7 @@ function InitSkins() {
  */
 function RegisterSkin(filename) {
 	if (!filename) {
-		console.log('Empty name passed to RegisterSkin');
+		log('Empty name passed to RegisterSkin');
 		return 0;
 	}
 
@@ -438,7 +438,7 @@ function RegisterSkin(filename) {
 		return hSkin;
 	}
 
-	console.log('Loading skin', filename);
+	log('Loading skin', filename);
 
 	// Load and parse the skin file
 	sys.ReadFile(filename, 'utf8', function (err, data) {

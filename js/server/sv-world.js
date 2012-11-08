@@ -23,7 +23,7 @@ var WorldSector = function () {
 function CmdSectorList() {	
 	for (var i = 0; i < worldSectors.length; i++) {
 		var node = worldSectors[i];
-		console.log('sector ' + i + ': ' + _.keys(node.entities).length + ' entities');
+		log('sector ' + i + ': ' + _.keys(node.entities).length + ' entities');
 	}
 }
 

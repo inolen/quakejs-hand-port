@@ -177,7 +177,7 @@ function DrawTris() {
 	var tess = backend.tess;
 
 	if (!tess.xyz) {
-		throw new Error('Can\'t draw triangles without xyz.');  // shouldn't happen
+		com.error(Err.DROP, 'Can\'t draw triangles without xyz.');  // shouldn't happen
 	}
 
 	gl.depthMask(true);
@@ -199,7 +199,7 @@ function DrawNormals() {
 	var tess = backend.tess;
 
 	if (!tess.xyz || !tess.normal) {
-		throw new Error('Can\'t draw normal without xyz and normal.');  // shouldn't happen
+		com.error(Err.DROP, 'Can\'t draw normal without xyz and normal.');  // shouldn't happen
 	}
 
 	gl.depthMask(true);
@@ -362,7 +362,7 @@ function SetShaderStage(shader, stage) {
 
 	// Sanity check after being burned so many times by this.
 	if (!tess.shaderTime || isNaN(tess.shaderTime)) {
-		throw new Error('Invalid time for shader');
+		com.error(Err.DROP, 'Invalid time for shader');
 	}
 	
 	gl.blendFunc(stage.blendSrc, stage.blendDest);

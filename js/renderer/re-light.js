@@ -124,7 +124,7 @@ function SetupEntityLightingGrid(refent) {
 	vec3.scale(refent.ambientLight, r_ambientScale());
 	vec3.scale(refent.directedLight, r_directedScale());
 
-	//console.log(refent.ambientLight[0], refent.index);
+	//log(refent.ambientLight[0], refent.index);
 	vec3.normalize(direction, refent.lightDir);
 }
 

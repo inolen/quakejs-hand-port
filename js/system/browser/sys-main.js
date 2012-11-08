@@ -4,6 +4,22 @@ var viewport = document.getElementById('viewport');
 var viewportUi = document.getElementById('viewport-ui');
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'SYS:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
+ * error
+ */
+function error(str) {
+	throw new Error(str);
+}
+
+/**
  * Init
  */
 function Init() {

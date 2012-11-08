@@ -12,7 +12,7 @@ function SvEntityForGentity(gent) {
 	var num = gent.s.number;
 
 	if (!gent || num < 0 || num >= MAX_GENTITIES) {
-		throw new Error('SvEntityForSharedEntity: bad game entity');
+		com.error(Err.DROP, 'SvEntityForSharedEntity: bad game entity');
 	}
 
 	var ent = sv.svEntities[num];
@@ -31,7 +31,7 @@ function GentityForSvEntity(ent) {
 	var num = ent.number;
 
 	if (!ent || num < 0 || num >= MAX_GENTITIES) {
-		throw new Error('SharedEntityForSvEntity: bad sv entity');
+		com.error(Err.DROP, 'SharedEntityForSvEntity: bad sv entity');
 	}
 
 	return sv.gameEntities[num];
@@ -50,7 +50,7 @@ function LocateGameData(gameEntities, gameClients) {
  */
 function GetUserCommand(clientNum, cmd) {
 	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		throw new Error('GetUsercmd: bad clientNum: ' + clientNum);
+		com.error(Err.DROP, 'GetUsercmd: bad clientNum: ' + clientNum);
 	}
 
 	svs.clients[clientNum].lastUserCmd.clone(cmd);
@@ -61,11 +61,11 @@ function GetUserCommand(clientNum, cmd) {
  */
 function SetBrushModel(gent, name) {
 	if (!name) {
-		throw new Error('SV: SetBrushModel: null');
+		com.error(Err.DROP, 'SV: SetBrushModel: null');
 	}
 
 	if (name.charAt(0) !== '*') {
-		throw new Error('SV: SetBrushModel: ' + name + 'isn\'t a brush model');
+		com.error(Err.DROP, 'SV: SetBrushModel: ' + name + 'isn\'t a brush model');
 	}
 
 	gent.s.modelindex = parseInt(name.substr(1), 10);

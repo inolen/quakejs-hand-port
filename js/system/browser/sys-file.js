@@ -48,7 +48,7 @@ function ReadFile(path, encoding, callback) {
  */
 function ReadLocalFile(path, encoding, callback) {
 	var errorHandler = function (err) {
-		console.log('Couldn\'t read \'' + path + '\'', err.message);
+		log('Couldn\'t read \'' + path + '\'', err.message);
 		return callback(err);
 	};
 
@@ -105,7 +105,7 @@ function WriteFile(path, data, encoding, callback) {
 	var local = localWhitelist.indexOf(path) > -1;
 
 	if (!local) {
-		throw new Error('Browser can\'t write to remote files');
+		error('Browser can\'t write to remote files');
 	}
 
 	WriteLocalFile(path, data, encoding, callback);
@@ -117,7 +117,7 @@ function WriteFile(path, data, encoding, callback) {
  */
 function WriteLocalFile(path, data, encoding, callback) {
 	var errorHandler = function (err) {
-		console.log('Couldn\'t write to \'' + path + '\'', err.message);
+		log('Couldn\'t write to \'' + path + '\'', err.message);
 		return callback(err);
 	};
 

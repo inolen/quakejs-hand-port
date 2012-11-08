@@ -12,18 +12,14 @@ function NetCreateServer() {
 	});
 
 	server.listen(9001, function() {
-		console.log((new Date()) + ' Server is listening on port 8080');
+		log((new Date()) + ' Server is listening on port 8080');
 	});
 
 	wsServer.on('request', function(request) {
 		var connection = request.accept('q3js', request.origin);
-		// TODO parse connection.remoteAddress to to NetAdr.
-		console.log(connection.remoteAddress);
-		var netchan = com.NetchanSetup(NetSrc.SERVER, connection.remoteAddress, connection);
+		log((new Date()) + ' Connection accepted.');
 
-		console.log((new Date()) + ' Connection accepted.');
-
-		//com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, addr: addr, socket: connection });
+		com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, socket: connection });
 
 		connection.on('message', function (message) {
 			// TODO Clean this up. It'd be nice if we found a Node WebSocket library
@@ -38,20 +34,19 @@ function NetCreateServer() {
 
 			com.QueueEvent({
 				type: com.EventTypes.NETSVMESSAGE,
-				addr: netchan.addr,
-				socket: netchan.socket,
+				socket: connection,
 				buffer: ab
 			});
 		});
 
-		/*connection.on('close', function(reasonCode, description) {
-			com.QueueEvent({ type: com.EventTypes.NETSVDISCONNECT, addr: addr });
-		});*/
+		connection.on('close', function(reasonCode, description) {
+			com.QueueEvent({ type: com.EventTypes.NETSVDISCONNECT, socket: connection });
+		});
 	});
 }
 
 function NetConnectToServer(addr) {
-	throw new Error('Should not happen');
+	error('Should not happen');
 }
 
 function NetSend(socket, ab, length) {

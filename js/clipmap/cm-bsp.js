@@ -4,8 +4,8 @@ var cm;
  * LoadMap
  */
 function LoadMap(mapName, callback) {
-	console.log('--------- CM Init ---------');
-	console.log('Loading clipmap for ' + mapName);
+	log('Initializing');
+	log('Loading map for ' + mapName);
 
 	cm = new ClipMapLocals();
 
@@ -285,7 +285,7 @@ function LoadEntities(buffer, entityLump) {
  */
 function ClipHandleToModel(handle) {
 	if (handle < 0) {
-		throw new Error('ClipHandleToModel: bad handle ' + handle);
+		com.error(Err.DROP, 'ClipHandleToModel: bad handle ' + handle);
 	}
 	if (handle < cm.models.length) {
 		return cm.models[handle];
@@ -294,7 +294,7 @@ function ClipHandleToModel(handle) {
 		return &box_model;
 	}*/
 	
-	throw new Error('ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
+	com.error(Err.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 
 /**
@@ -302,7 +302,7 @@ function ClipHandleToModel(handle) {
  */
 function InlineModel(num) {
 	if (num < 0 || num >= cm.models.length) {
-		throw new Error('GetInlineModel: bad number');
+		com.error(Err.DROP, 'GetInlineModel: bad number');
 	}
 
 	return num;

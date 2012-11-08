@@ -12,7 +12,7 @@ function ProcessSnapshots() {
 	if (info.snapshotNumber !== cg.latestSnapshotNum) {
 		if (info.snapshotNumber < cg.latestSnapshotNum) {
 			// this should never happen
-			throw new Error('ProcessSnapshots: info.snapshotNumber < cg.latestSnapshotNum');
+			error('ProcessSnapshots: info.snapshotNumber < cg.latestSnapshotNum');
 		}
 
 		cg.latestSnapshotNum = info.snapshotNumber;
@@ -51,7 +51,7 @@ function ProcessSnapshots() {
 
 			// If time went backwards, we have a level restart.
 			if (cg.nextSnap.serverTime < cg.snap.serverTime ) {
-				throw new Error('ProcessSnapshots: Server time went backwards');
+				error('ProcessSnapshots: Server time went backwards');
 			}
 		}
 
@@ -66,7 +66,7 @@ function ProcessSnapshots() {
 
 	// Assert our valid conditions upon exiting
 	if (cg.snap === null) {
-		throw new Error('ProcessSnapshots: cg.snap == NULL');
+		error('ProcessSnapshots: cg.snap == NULL');
 	}
 
 	if (cg.time < cg.snap.serverTime) {
@@ -75,11 +75,11 @@ function ProcessSnapshots() {
 	}
 
 	if (cg.nextSnap && cg.nextSnap.serverTime <= cg.time ) {
-		throw new Error('ProcessSnapshots: cg.nextSnap.serverTime <= cg.time');
+		error('ProcessSnapshots: cg.nextSnap.serverTime <= cg.time');
 	}
 
 	/*if (!cg.nextSnap) {
-		console.log('ProcessSnapshots: No valid nextSnap.');
+		log('ProcessSnapshots: No valid nextSnap.');
 	}*/
 }
 
@@ -120,7 +120,7 @@ function ReadNextSnapshot() {
 function SetInitialSnapshot(snap) {
 	cg.snap = snap;
 
-	console.log('Setting initial snapshot');
+	log('Setting initial snapshot');
 
 	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].currentState);
 
@@ -189,10 +189,10 @@ function SetNextSnap(snap) {
  */
 function TransitionSnapshot() {
 	if (!cg.snap) {
-		throw new Error('TransitionSnapshot: NULL cg.snap');
+		error('TransitionSnapshot: NULL cg.snap');
 	}
 	if (!cg.nextSnap) {
-		throw new Error('TransitionSnapshot: NULL cg.nextSnap');
+		error('TransitionSnapshot: NULL cg.nextSnap');
 	}
 
 	// execute any server string commands before transitioning entities

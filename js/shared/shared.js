@@ -4,6 +4,13 @@
  **********************************************************/
 
 var Q3W_BASE_FOLDER = 'baseq3';
+var MAX_QPATH = 64;
+
+var Err = {
+	FATAL:      0,                                         // exit the entire game with a popup window
+	DROP:       1,
+	DISCONNECT: 2,                                         // client disconnected from the server
+};
 
 /**********************************************************
  * Communicated across the network
@@ -630,8 +637,6 @@ var Lumps = {
 	VISIBILITY:   16,
 	NUM_LUMPS:    17
 };
-
-var MAX_QPATH = 64;
 
 var lumps_t = function () {
 	this.fileofs  = 0;                           // int32

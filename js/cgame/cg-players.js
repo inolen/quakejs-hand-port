@@ -126,8 +126,7 @@ function LoadClientInfo(clientNum, ci) {
 	//if (!RegisterClientModelname(ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname)) {
 		RegisterClientModelname(ci, DEFAULT_MODEL, 'default', null, function (err) {
 			if (err) {
-				console.log(err.message);
-				throw new Error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register');
+				error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register.');
 			}
 		});
 	//}
@@ -254,7 +253,7 @@ function ParseAnimationFile(filename, ci, callback) {
 				// } else if (token === 'energy') {
 				// 	ci.footsteps = Animations.FOOTSTEP_ENERGY;
 				// } else {
-				// 	console.log('Bad footsteps parm in ' + filename + ': ' + token);
+				// 	log('Bad footsteps parm in ' + filename + ': ' + token);
 				// }
 
 				continue;
@@ -296,7 +295,7 @@ function ParseAnimationFile(filename, ci, callback) {
 				break;
 			}
 
-			console.log('Unknown token \'' + token + '\' in ' + filename);
+			log('Unknown token \'' + token + '\' in ' + filename);
 		}
 
 		// read information for each frame
@@ -412,7 +411,7 @@ function AddPlayer(cent) {
 	// multiple corpses on the level using the same clientinfo
 	var clientNum = cent.currentState.clientNum;
 	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		throw new Error('Bad clientNum on player entity');
+		error('Bad clientNum on player entity');
 	}
 
 	var ci = cgs.clientinfo[clientNum];
@@ -607,7 +606,7 @@ function PlayerAngles(cent, legs, torso, head) {
 	} else {
 		dir = cent.currentState.angles2[YAW];
 		if (dir < 0 || dir > 7) {
-			throw new Error('Bad player movement angle');
+			error('Bad player movement angle');
 		}
 	}
 	legsAngles[YAW] = headAngles[YAW] + movementOffsets[dir];
@@ -883,7 +882,7 @@ function SetLerpFrameAnimation(ci, lf, newAnimation) {
 	newAnimation &= ~ANIM_TOGGLEBIT;
 
 	if (newAnimation < 0 || newAnimation >= Animations.MAX_TOTALANIMATIONS) {
-		throw new Error('Bad animation number: ' + newAnimation);
+		error('Bad animation number: ' + newAnimation);
 	}
 
 	var anim = ci.animations[newAnimation];

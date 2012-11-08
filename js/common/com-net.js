@@ -9,20 +9,31 @@ var msgBuffer = new ArrayBuffer(MAX_MSGLEN);
 /**
  * NetchanSetup
  */
-function NetchanSetup(src, addr, socket) {
+function NetchanSetup(src, addrOrSocket) {
 	var netchan = new NetChan();
+
+	var addr;
+	var socket;
+
+	// TODO Stop including defines files, they break instanceof comparisons.
+	//if (addrOrSocket instanceof NetAdr) {
+	if (addrOrSocket.type !== undefined) {
+		addr = addrOrSocket;
+
+		if (addr.type === NetAdrType.LOOPBACK) {
+			socket = { remoteAddress: addr };
+		} else {
+			socket = sys.NetConnectToServer(addr);
+		}
+	} else {
+		socket = addrOrSocket;
+		// TODO Parse this into a NetAdr.
+		addr = socket.remoteAddress;
+	}
 
 	netchan.src = src;
 	netchan.addr = addr;
-
-	if (typeof (socket) !== 'undefined') {
-		netchan.socket = socket;
-	} else if (addr.type === NetAdrType.LOOPBACK) {
-		// Trigger a fake connect event for loopback sockets.
-		//QueueEvent({ type: EventTypes.NETSVCONNECT, addr: addr, socket: null });
-	} else {
-		netchan.socket = sys.NetConnectToServer(addr);
-	}
+	netchan.socket = socket;
 
 	return netchan;
 }
@@ -33,7 +44,7 @@ function NetchanSetup(src, addr, socket) {
 function NetchanDestroy(netchan) {
 	if (netchan.addr.type === NetAdrType.LOOPBACK) {
 		// Trigger a fake disconnect event for loopback sockets.
-		//QueueEvent({ type: EventTypes.NETSVDISCONNECT, addr: netchan.addr });
+		QueueEvent({ type: EventTypes.NETSVCLOSED, socket: netchan.socket });
 	} else {
 		sys.NetClose(netchan.socket);
 	}
@@ -52,7 +63,7 @@ function NetchanSendLoopPacket(netchan, buffer, length) {
 
 	QueueEvent({
 		type: netchan.src === NetSrc.CLIENT ? EventTypes.NETSVMESSAGE : EventTypes.NETCLMESSAGE,
-		socket: null,
+		socket: netchan.socket,
 		addr: netchan.addr,
 		buffer: buffer,
 		length: length

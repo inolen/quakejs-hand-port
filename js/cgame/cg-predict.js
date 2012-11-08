@@ -177,7 +177,7 @@ function PredictPlayerState() {
 	// Special check for map_restart.
 	if (oldestCmd.serverTime > cg.snap.ps.commandTime && oldestCmd.serverTime < cg.time) {
 		if (cg_showmiss()) {
-			console.log('exceeded PACKET_BACKUP on commands');
+			log('exceeded PACKET_BACKUP on commands');
 		}
 		return;
 	}
@@ -235,7 +235,7 @@ function PredictPlayerState() {
 		// 		// A teleport will not cause an error decay
 		// 		cg.predictedError = [0, 0, 0];
 		// 		if (cg_showmiss()) {
-		// 			console.log('PredictionTeleport');
+		// 			log('PredictionTeleport');
 		// 		}
 		// 		cg.thisFrameTeleport = false;
 		// 	} else {
@@ -247,14 +247,14 @@ function PredictPlayerState() {
 		// 			if (oldPlayerState.origin[0] !== adjusted[0] ||
 		// 				oldPlayerState.origin[1] !== adjusted[1]
 		// 				oldPlayerState.origin[2] !== adjusted[2]) {
-		// 				console.log('Prediction error');
+		// 				log('Prediction error');
 		// 			}
 		// 		}
 		// 		var delta = vec3.subtract(oldPlayerState.origin, adjusted, [0, 0, 0]);
 		// 		var len = vec3.length(delta);
 		// 		if (len > 0.1) {
 		// 			if (cg_showmiss()) {
-		// 				console.log('Prediction miss: ' + len);
+		// 				log('Prediction miss: ' + len);
 		// 			}
 		// 			if (cg_errorDecay()) {
 		// 				var t = cg.time - cg.predictedErrorTime;
@@ -262,7 +262,7 @@ function PredictPlayerState() {
 		// 				if (f < 0) {
 		// 					f = 0;
 		// 				} else if (f > 0 && cg_showmiss()) {
-		// 					console.log('Double prediction decay: ' + f);
+		// 					log('Double prediction decay: ' + f);
 		// 				}
 		// 				vec3.scale(cg.predictedError, f);
 		// 			} else {
@@ -287,12 +287,12 @@ function PredictPlayerState() {
 	}
 
 	if (cg_showmiss() > 1) {
-		console.log('[' + cg.pmove.cmd.serverTime + ' : ' + cg.time + ']');
+		log('[' + cg.pmove.cmd.serverTime + ' : ' + cg.time + ']');
 	}
 
 	if (!moved) {
 		if (cg_showmiss()) {
-			console.log("not moved");
+			log("not moved");
 		}
 		return;
 	}
@@ -313,7 +313,7 @@ function PredictPlayerState() {
 
 	if (cg_showmiss()) {
 		if (cg.eventSequence > cg.predictedPlayerState.eventSequence) {
-			console.log('WARNING: double event');
+			log('WARNING: double event');
 			cg.eventSequence = cg.predictedPlayerState.eventSequence;
 		}
 	}*/

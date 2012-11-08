@@ -7,13 +7,12 @@ var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibilit
 
 // Event types for the main message pump.
 var EventTypes = {
-	NETCLMESSAGE:    0,
-	// NETSVCONNECT:    1,
-	// NETSVDISCONNECT: 2,
-	NETSVMESSAGE:    3,
-	KEYDOWN:         4,
-	KEYUP:           5,
-	MOUSEMOVE:       6
+	NETCLMESSAGE:      0,
+	NETSVMESSAGE:      1,
+	NETSVSOCKETCLOSED: 2,
+	KEYDOWN:           3,
+	KEYUP:             4,
+	MOUSEMOVE:         5
 };
 
 /**********************************************************

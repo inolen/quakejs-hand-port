@@ -4,12 +4,12 @@ define('clipmap/cm',
 ['underscore', 'glmatrix', 'ByteBuffer'],
 function (_, glmatrix, ByteBuffer) {
 	<%- include ../shared/shared.js %>
-	<%- include cm-defines.js %>
 
 	// We don't want everyone who requires us to 
 	// have the same version of clipmap.
-	function ClipMap(cominterface) {
-		var com = cominterface;
+	function ClipMap(com) {
+		<%- include cm-defines.js %>
+		<%- include cm-main.js %>
 		<%- include cm-bsp.js %>
 		<%- include cm-test.js %>
 		<%- include cm-trace.js %>
@@ -25,8 +25,8 @@ function (_, glmatrix, ByteBuffer) {
 	}
 
 	return {
-		CreateInstance: function (cominterface) {
-			return new ClipMap(cominterface);
+		CreateInstance: function (com) {
+			return new ClipMap(com);
 		}
 	};
 });

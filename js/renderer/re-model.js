@@ -29,7 +29,7 @@ function GetModelByHandle(index) {
  */
 function RegisterModel(name) {
 	if (!name) {
-		console.log('RegisterModel: null name');
+		log('RegisterModel: null name');
 		return 0;
 	}
 
@@ -76,7 +76,7 @@ function RegisterMd3(mod, name, callback) {
 
 		LoadMd3(mod, lodFilename, function (err, md3) {
 			if (err) {
-				console.log(err.message);
+				log(err.message);
 			} else {
 				// Once we load one valid MD3.
 				mod.type = ModelType.MD3;
@@ -154,7 +154,7 @@ function LoadMd3(mod, filename, callback) {
 		md3.surfaces = new Array(header.numSurfaces);
 		md3.skins = new Array(header.numSkins);
 
-		//console.log('LoadMD3', mod.name, header.numFrames, header.numTags, header.numFrames * header.numTags);
+		//log('LoadMD3', mod.name, header.numFrames, header.numTags, header.numFrames * header.numTags);
 
 		// Read all of the frames.
 		bb.index = header.ofsFrames;

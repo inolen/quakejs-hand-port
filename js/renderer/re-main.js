@@ -24,10 +24,19 @@ var flipMatrix = mat4.create([
 ]);
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'RE:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
  * Init
  */
 function Init(sysinterface, cominterface) {
-	console.log('--------- RE Init ---------');
+	log('Initializing');
 
 	sys = sysinterface;
 	com = cominterface;
@@ -60,7 +69,7 @@ function Init(sysinterface, cominterface) {
  * Shutdown
  */
 function Shutdown() {
-	console.log('--------- RE Shutdown ---------');
+	log('Shutting down');
 	DeleteTextures();
 }
 

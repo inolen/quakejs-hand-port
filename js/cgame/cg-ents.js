@@ -222,7 +222,7 @@ function InterpolateEntityPosition(cent) {
 	// It would be an internal error to find an entity that interpolates without
 	// a snapshot ahead of the current one
 	if (!cg.nextSnap) {
-		throw new Error('InterpoateEntityPosition: !cg.nextSnap');
+		error('InterpoateEntityPosition: !cg.nextSnap');
 	}
 
 	var f = cg.frameInterpolation;

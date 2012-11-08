@@ -26,7 +26,7 @@ function AddEntitySurfaces() {
 				AddModelSurfaces(refent);
 				break;
 			default:
-				throw new Error('AddEntitySurfaces: Bad reType');
+				com.error(Err.DROP, 'AddEntitySurfaces: Bad reType');
 		}
 	}
 }
@@ -216,6 +216,6 @@ function CullModel(md3, refent) {
 			re.counts.culledModelClip++;
 			return Cull.CLIP;
 		default:
-			throw new Error('Invalid cull result');
+			com.error(Err.DROP, 'Invalid cull result');
 	}
 }

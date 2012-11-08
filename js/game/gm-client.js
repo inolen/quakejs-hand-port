@@ -34,7 +34,7 @@ function ClientConnect(clientNum, firstTime) {
 	G_ReadSessionData( client );*/
 
 	// get and distribute relevent paramters
-	console.log('ClientConnect ' + clientNum);
+	log('ClientConnect ' + clientNum);
 	ClientUserinfoChanged(clientNum);
 
 	return null;
@@ -64,7 +64,7 @@ function ClientUserinfoChanged(clientNum) {
 	sv.SetConfigstring('player' + clientNum, cs);
 
 	// This is not the userinfo, more like the configstring actually.
-	console.log('ClientUserinfoChanged: ' + clientNum + ' ' + JSON.stringify(cs));
+	log('ClientUserinfoChanged: ' + clientNum + ' ' + JSON.stringify(cs));
 }
 
 
@@ -183,7 +183,7 @@ function ClientDisconnect(clientNum) {
 		return;
 	}
 
-	console.log('ClientDisconnect: ' + clientNum);
+	log('ClientDisconnect: ' + clientNum);
 
 	sv.UnlinkEntity (ent);
 	ent.s.modelindex = 0;

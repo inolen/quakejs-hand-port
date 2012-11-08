@@ -13,7 +13,7 @@ function GetUserCommand(cmdNumber) {
 
 	// Can't return anything that we haven't created yet.
 	if (cmdNumber > cl.cmdNumber) {
-		throw new Error('GetUserCommandd: ' + cmdNumber + ' >= ' + cl.cmdNumber);
+		com.error(Err.DROP, 'GetUserCommand: ' + cmdNumber + ' >= ' + cl.cmdNumber);
 	}
 
 	// The usercmd has been overwritten in the wrapping
@@ -55,13 +55,13 @@ function AdjustTimeDelta() {
 		cl.oldServerTime = cl.snap.serverTime;
 		cl.serverTime = cl.snap.serverTime;
 		if (cl_showTimeDelta()) {
-			console.log('AdjustTimeDelta: <RESET>');
+			log('AdjustTimeDelta: <RESET>');
 		}
 	} else if (deltaDelta > 100) {
 		// fast adjust, cut the difference in half
 		cl.serverTimeDelta = (cl.serverTimeDelta + newDelta) >> 1;
 		if (cl_showTimeDelta()) {
-			console.log('AdjustTimeDelta: <FAST>');
+			log('AdjustTimeDelta: <FAST>');
 		}
 	} else {
 		// slow drift adjust, only move 1 or 2 msec
@@ -81,7 +81,7 @@ function AdjustTimeDelta() {
 	}
 
 	if (cl_showTimeDelta()) {
-		console.log('AdjustTimeDelta: ' + cl.serverTimeDelta);
+		log('AdjustTimeDelta: ' + cl.serverTimeDelta);
 	}
 }
 
@@ -95,6 +95,8 @@ function SetCGameTime() {
 			return;
 		}
 
+		log('Waiting for first snapshot');
+
 		if (cl.newSnapshots) {
 			cl.newSnapshots = false;
 			FirstSnapshot();
@@ -107,11 +109,11 @@ function SetCGameTime() {
 
 	// If we have gotten to this point, cl.snap is guaranteed to be valid.
 	if (!cl.snap.valid) {
-		throw new Error('SetCGameTime: !cl.snap.valid');
+		com.error(Err.DROP, 'SetCGameTime: !cl.snap.valid');
 	}
 
 	if (cl.snap.serverTime < cl.oldFrameServerTime) {
-		throw new Error('cl.snap.serverTime < cl.oldFrameServerTime');
+		com.error(Err.DROP, 'cl.snap.serverTime < cl.oldFrameServerTime');
 	}
 	cl.oldFrameServerTime = cl.snap.serverTime;
 
@@ -170,7 +172,7 @@ function GetCurrentSnapshotNumber() {
  */
 function GetSnapshot(snapshotNumber) {
 	if (snapshotNumber > cl.snap.messageNum) {
-		throw new Error('GetSnapshot: snapshotNumber > cl.snapshot.messageNum');
+		com.error(Err.DROP, 'GetSnapshot: snapshotNumber > cl.snapshot.messageNum');
 	}
 
 	// If the frame has fallen out of the circular buffer, we can't return it.

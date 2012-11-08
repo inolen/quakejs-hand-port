@@ -2,7 +2,7 @@
  * NetCreateServer
  */
 function NetCreateServer() {
-	throw new Error('Should not happen');
+	error('Should not happen');
 }
 
 /**
@@ -19,6 +19,8 @@ function NetConnectToServer(addr) {
 		com.QueueEvent({ type: com.EventTypes.NETCLMESSAGE, addr: addr, buffer: event.data });
 	};
 	socket.onerror = function (error) {
+	};
+	socket.onclose = function () {
 	};
 
 	return socket;

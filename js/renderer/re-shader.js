@@ -445,7 +445,7 @@ function ParseShaderStage(shader, tokens) {
 			case 'map':
 				stage.map = tokens.next();
 				if (!stage.map) {
-					throw new Error('WARNING: missing parameter for \'map\' keyword in shader \'' + shader.name + '\'');
+					com.error(Err.DROP, 'WARNING: missing parameter for \'map\' keyword in shader \'' + shader.name + '\'');
 				}
 				if (stage.map === '$whiteimage') {
 					stage.texture = FindImage('*white');

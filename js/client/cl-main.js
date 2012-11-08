@@ -14,10 +14,19 @@ var cl_sensitivity;
 var cl_showTimeDelta;
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'CL:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
  * Init
  */
 function Init(sysinterface, cominterface) {
-	console.log('--------- CL Init ---------');
+	log('Initializing');
 
 	var exports = {
 		CMD_BACKUP:                  CMD_BACKUP,
@@ -58,7 +67,7 @@ function Init(sysinterface, cominterface) {
  * ClearState
  */
 function ClearState() {
-	console.log('Clearing client state');
+	log('Clearing state');
 
 	cl = new ClientLocals();
 }
@@ -162,6 +171,8 @@ function CheckForResend() {
 	clc.connectTime = cls.realTime;  // for retransmit requests
 	clc.connectPacketCount++;
 
+	log('CheckForResend', clc.state);
+
 	switch (clc.state) {
 		/*case ConnectionState.CONNECTING:
 			// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
@@ -173,10 +184,10 @@ function CheckForResend() {
 			
 		case ConnectionState.CHALLENGING:
 			// sending back the challenge
-			//port = Cvar_VariableValue ("net_qport");
-			//Info_SetValueForKey(info, "protocol", va("%i", com_protocol->integer));
-			//Info_SetValueForKey( info, "qport", va("%i", port ) );
-			//Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
+			// port = Cvar_VariableValue ("net_qport");
+			// Info_SetValueForKey(info, "protocol", va("%i", com_protocol->integer));
+			// Info_SetValueForKey( info, "qport", va("%i", port ) );
+			// Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
 			var str = 'connect ' + JSON.stringify(com.GetCvarKeyValues(CvarFlags.USERINFO));
 			com.NetchanPrint(clc.netchan, str);
 			// The most current userinfo has been sent, so watch for any
@@ -185,7 +196,7 @@ function CheckForResend() {
 			break;
 
 		default:
-			throw new Error('CheckForResend: bad clc.state');
+			error(Err.FATAL, 'CheckForResend: bad clc.state');
 	}
 }
 
@@ -282,7 +293,7 @@ function AddReliableCommand(cmd/*, isDisconnectCmd*/) {
 		if (com_errorEntered) {
 			return;
 		} else {
-			throw new Error('Client command overflow');
+			com.error(Err.DROP, 'Client command overflow');
 		}
 	}*/
 	clc.reliableCommands[++clc.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
@@ -291,7 +302,7 @@ function AddReliableCommand(cmd/*, isDisconnectCmd*/) {
 /**
  * PacketEvent
  */
-function PacketEvent(addr, buffer) {
+function PacketEvent(buffer) {
 	if (!cls.initialized) {
 		return;
 	}
@@ -300,8 +311,12 @@ function PacketEvent(addr, buffer) {
 
 	// Peek in and see if this is a string message.
 	if (buffer.byteLength > 4 && msg.view.getInt32(0, !!ByteBuffer.LITTLE_ENDIAN) === -1) {
-		ConnectionlessPacket(addr, msg);
+		ConnectionlessPacket(msg);
 		return;
+	}
+
+	if (clc.state < ConnectionState.CONNECTED) {
+		return;  // can't be a valid sequenced packet
 	}
 
 	if (!com.NetchanProcess(clc.netchan, msg)) {
@@ -319,7 +334,7 @@ function PacketEvent(addr, buffer) {
 /**
  * ConnectionlessPacket
  */
-function ConnectionlessPacket(addr, msg) {
+function ConnectionlessPacket(msg) {
 	msg.readInt();  // Skip the -1.
 
 	var str = msg.readCString();
@@ -341,7 +356,7 @@ function ConnectionlessPacket(addr, msg) {
 		// TODO Setup netchan here, make cl-cmd.js just send the connect request.
 		//Netchan_Setup(NS_CLIENT, &clc.netchan, from, Cvar_VariableValue("net_qport"), clc.challenge, qfalse);
 
-		console.log('Got connection response');
+		log('Got connection response');
 		
 		clc.state = ConnectionState.CONNECTED;
 		clc.lastPacketSentTime = -9999;  // send first packet immediately

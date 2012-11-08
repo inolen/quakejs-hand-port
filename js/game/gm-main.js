@@ -6,10 +6,26 @@ var level;
 var g_gravity;
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'GM:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
+ * error
+ */
+function error(str) {
+	com.error(Err.DROP, str);
+}
+
+/**
  * Init
  */
 function Init(cominterface, svinterface) {
-	console.log('--------- GM Init ---------');
+	log('Initializing');
 	
 	com = cominterface;
 	sv = svinterface;

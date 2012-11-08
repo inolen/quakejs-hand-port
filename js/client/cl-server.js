@@ -193,6 +193,8 @@ function ParseServerMessage(msg) {
  * ParseGameState
  */
 function ParseGameState(msg) {
+	log('Parsing game state');
+	
 	// Wipe local client state.
 	ClearState();
 
@@ -217,7 +219,7 @@ function ParseGameState(msg) {
 			es = &cl.entityBaselines[ newnum ];
 			MSG_ReadDeltaEntity( msg, &nullstate, es, newnum );
 		}*/ else {
-			throw new Error('ParseGamestate: bad command byte');
+			com.error(Err.DROP, 'ParseGamestate: bad command byte');
 		}
 	}
 
@@ -332,13 +334,13 @@ function ParseSnapshot(msg) {
 		old = cl.snapshots[newSnap.deltaNum % PACKET_BACKUP];
 		if (!old.valid) {
 			// should never happen
-			throw new Error('Delta from invalid frame (not supposed to happen!).');
+			log('Delta from invalid frame (not supposed to happen!).');
 		} else if (old.messageNum != newSnap.deltaNum) {
 			// The frame that the server did the delta from
 			// is too old, so we can't reconstruct it properly.
-			throw new Error('Delta frame too old.');
+			log('Delta frame too old.');
 		} else if (cl.parseEntitiesNum - old.parseEntitiesNum > MAX_PARSE_ENTITIES-128) {
-			throw new Error('Delta parseEntitiesNum too old.');
+			log('Delta parseEntitiesNum too old.');
 		} else {
 			newSnap.valid = true;	// valid delta parse
 		}

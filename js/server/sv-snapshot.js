@@ -58,8 +58,8 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 		}
 
 		if (ent.s.number !== i) {
-			throw new Error('Entity number does not match.. WTF');
-			/*console.log('FIXING ENT->S.NUMBER!!!');
+			com.error(Err.DROP, 'Entity number does not match.. WTF');
+			/*log('FIXING ENT->S.NUMBER!!!');
 			ent.s.number = e;*/
 		}
 

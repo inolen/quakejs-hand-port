@@ -19,7 +19,7 @@ function FindImage(name, callback) {
 
 	sys.ReadFile(name, 'binary', function (err, data) {
 		if (err) {
-			console.log('Failed to load image \'' + name + '\'');
+			log('Failed to load image \'' + name + '\'');
 		} else {
 			img.data = 'data:image/png;base64,' + atob64(new Uint8Array(data));
 		}

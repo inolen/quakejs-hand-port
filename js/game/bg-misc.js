@@ -104,7 +104,7 @@ function EvaluateTrajectory(tr, atTime, result) {
 			result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;  // FIXME: local gravity...
 			break;
 		default:
-			throw new Error('EvaluateTrajectory: unknown trType: ' + tr.trType);
+			com.error(Err.DROP, 'EvaluateTrajectory: unknown trType: ' + tr.trType);
 	}
 }
 

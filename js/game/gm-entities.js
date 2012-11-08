@@ -83,7 +83,7 @@ function EntityThink(ent) {
 	ent.nextthink = 0;
 
 	if (!ent.think) {
-		throw new Error('NULL ent->think');
+		error('NULL ent->think');
 	}
 
 	ent.think.call(this, ent);
@@ -94,13 +94,13 @@ function EntityThink(ent) {
  */
 function EntityPickTarget(targetName) {
 	if (!targetName) {
-		throw new Error('SV: EntityPickTarget called with NULL targetname');
+		error('EntityPickTarget called with NULL targetname');
 	}
 
 	var choices = FindEntity('targetname', targetName);
 
 	if (!choices.length) {
-		throw new Error('SV: EntityPickTarget: target ' + targetName + ' not found');
+		error('EntityPickTarget: target ' + targetName + ' not found');
 	}
 
 	return choices[Math.floor(Math.random()*choices.length)];
@@ -155,7 +155,7 @@ function SpawnEntityFromDef(def) {
 
 	if (!ent.spawn) {
 		FreeEntity(ent);
-		//console.log(ent.classname + ' doesn\'t have a spawn function', ent.targetname);
+		//log(ent.classname + ' doesn\'t have a spawn function', ent.targetname);
 		return;
 	}
 

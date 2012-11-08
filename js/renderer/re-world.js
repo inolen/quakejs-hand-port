@@ -40,7 +40,7 @@ function BuildWorldBuffers() {
  */
 function CmdShowCluster() {
 	var leaf = PointInLeaf(re.viewParms.pvsOrigin);	
-	console.log('Current cluster: ' + leaf.cluster);
+	log('Current cluster: ' + leaf.cluster);
 }
 
 /**
@@ -48,7 +48,7 @@ function CmdShowCluster() {
  */
 function PointInLeaf(p) {
 	if (!re.world) {
-		throw new Error('PointInLeaf: bad model');
+		com.error(Err.DROP, 'PointInLeaf: bad model');
 	}
 
 	var node = re.world.nodes[0];
@@ -194,7 +194,6 @@ function CullSurface(surface, shader) {
 		return false;
 	}
 
-	// TODO shouldn't this be re.or.viewOrigin (for the current ent that is).
 	var d = vec3.dot(re.viewParms.or.viewOrigin, surface.plane.normal);
 
 	// Don't cull exactly on the plane, because there are levels of rounding

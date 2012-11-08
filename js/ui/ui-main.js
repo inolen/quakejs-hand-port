@@ -12,6 +12,15 @@ var map = {
 };
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'UI:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
  * Init
  */
 function Init() {

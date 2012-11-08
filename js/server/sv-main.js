@@ -11,10 +11,19 @@ var sv_mapname;
 var sv_fps;
 
 /**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'SV:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
  * Init
  */
 function Init(sysinterface, cominterface, isdedicated) {
-	console.log('--------- SV Init ---------');
+	log('Initializing');
 	
 	sys = sysinterface;
 	com = cominterface;
@@ -77,6 +86,8 @@ function Frame(frameTime, msec) {
 		frames++;
 	}
 
+	CheckTimeouts();
+
 	// Don't send out duplicate snapshots if we didn't run any gameframes.
 	if (frames > 0) {
 		SendClientMessages();
@@ -84,9 +95,55 @@ function Frame(frameTime, msec) {
 }
 
 /**
+ * CheckTimeouts
+ * 
+ * If a packet has not been received from a client for timeout->integer 
+ * seconds, drop the conneciton. Server time is used instead of
+ * realtime to avoid dropping the local client while debugging.
+ * 
+ * When a client is normally dropped, the client_t goes into a zombie state
+ * for a few seconds to make sure any final reliable message gets resent
+ * if necessary
+ */
+function CheckTimeouts() {
+	// int		i;
+	// client_t	*cl;
+	// int			droppoint;
+	// int			zombiepoint;
+
+	// droppoint = svs.time - 1000 * sv_timeout->integer;
+	// zombiepoint = svs.time - 1000 * sv_zombietime->integer;
+
+	// for (i=0,cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++) {
+	// 	// message times may be wrong across a changelevel
+	// 	if (cl->lastPacketTime > svs.time) {
+	// 		cl->lastPacketTime = svs.time;
+	// 	}
+
+	// 	if (cl->state == CS_ZOMBIE
+	// 	&& cl->lastPacketTime < zombiepoint) {
+	// 		// using the client id cause the cl->name is empty at this point
+	// 		Com_DPrintf( "Going from CS_ZOMBIE to CS_FREE for client %d\n", i );
+	// 		cl->state = CS_FREE;	// can now be reused
+	// 		continue;
+	// 	}
+	// 	if ( cl->state >= CS_CONNECTED && cl->lastPacketTime < droppoint) {
+	// 		// wait several frames so a debugger session doesn't
+	// 		// cause a timeout
+	// 		if ( ++cl->timeoutCount > 5 ) {
+	// 			SV_DropClient (cl, "timed out"); 
+	// 			cl->state = CS_FREE;	// don't bother with zombie state
+	// 		}
+	// 	} else {
+	// 		cl->timeoutCount = 0;
+	// 	}
+	// }
+}
+
+/**
  * PacketEvent
  */
-function PacketEvent(addr, socket, buffer) {	
+function PacketEvent(socket, buffer) {	
 	if (!svs.initialized) {
 		return;
 	}
@@ -95,7 +152,7 @@ function PacketEvent(addr, socket, buffer) {
 
 	// Peek in and see if this is a string message.
 	if (buffer.byteLength > 4 && msg.view.getInt32(0, !!ByteBuffer.LITTLE_ENDIAN) === -1) {
-		ConnectionlessPacket(addr, socket, msg);
+		ConnectionlessPacket(socket, msg);
 		return;
 	}
 
@@ -120,13 +177,13 @@ function PacketEvent(addr, socket, buffer) {
 /**
  * ConnectionlessPacket
  */
-function ConnectionlessPacket(addr, socket, msg) {
+function ConnectionlessPacket(socket, msg) {
 	msg.readInt();  // Skip the -1.
 
 	var str = msg.readCString();
 
 	if (str.indexOf('connect') === 0) {
-		ClientConnect(addr, socket, str.substr(8));
+		AcceptClient(socket, str.substr(8));
 	}
 }
 
@@ -134,8 +191,7 @@ function ConnectionlessPacket(addr, socket, msg) {
  * SpawnServer
  */
 function SpawnServer(mapName) {
-	console.log('--------- SV SpawnServer ---------');
-	console.log('Spawning new server for ' + mapName);
+	log('Spawning new server for ' + mapName);
 
 	svs.initialized = false;
 	
@@ -312,7 +368,7 @@ function UpdateConfigstrings(client) {
  */
 function GetUserinfo(clientNum) {
 	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		throw new Error('GetUserinfo: bad index ' + clientNum);
+		com.error(Err.DROP, 'GetUserinfo: bad index ' + clientNum);
 	}
 
 	return svs.clients[clientNum].userinfo;

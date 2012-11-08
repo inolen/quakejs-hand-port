@@ -1,29 +1,51 @@
 /**
- * ClientConnect
+ * SocketClosed
  */
-function ClientConnect(addr, socket, infostr) {
+function SocketClosed(socket) {
+	log('SHIT GOT CLOSED');
+	
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (client.state === ClientState.FREE) {
+			continue;
+		}
+
+		if (client.netchan.socket === socket) {
+			DropClient(client, 'disconnected');
+			return;
+		}
+	}
+}
+
+/**
+ * AcceptClient
+ */
+function AcceptClient(socket, infostr) {
 	if (!svs.initialized) {
 		return;
 	}
 
-	console.log('SV: A client is connecting');
+	log('A client is connecting');
 
 	// Find a slot for the client.
 	var clientNum;
 	for (var i = 0; i < MAX_CLIENTS; i++) {
-		if (svs.clients[i].state == ClientState.FREE) {
+		if (svs.clients[i].state === ClientState.FREE) {
 			clientNum = i;
 			break;
 		}
 	}
 	if (clientNum === undefined) {
-		throw new Error('Server is full');
+		//NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is full.\n" );
+		log('Rejected a connection.');
+		return
 	}
 
 	// Create the client.
 	var newcl = svs.clients[clientNum];
 	newcl.state = ClientState.CONNECTED;
-	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, addr, socket);
+	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, socket);
 	newcl.userinfo = JSON.parse(infostr);
 
 	// Give the game a chance to reject this connection or modify the userinfo.
@@ -34,7 +56,7 @@ function ClientConnect(addr, socket, infostr) {
 		//Com_DPrintf ("Game rejected a connection: %s.\n", str);
 		return;
 	}
-
+	
 	UserinfoChanged(newcl);
 
 	// Let the client know we've accepted them.
@@ -214,6 +236,19 @@ function GetClientNum(client) {
 	return svs.clients.indexOf(client);
 }
 
+
+/** 
+ * UpdateUserinfo
+ */
+function UpdateUserinfo(client, infostr) {
+	client.userinfo = JSON.parse(infostr);
+	UserinfoChanged(client);
+
+	// call prog code to allow overrides
+	var clientNum = GetClientNum(client);
+	gm.ClientUserinfoChanged(clientNum);
+}
+
 /**
  * Disconnect
  */
@@ -342,7 +377,9 @@ function ExecuteClientCommand(client, str) {
 			break;
 		}
 	}*/
-	if (str === 'disconnect') {
+	if (str.indexOf('userinfo') === 0) {
+		UpdateUserInfo(client, str.substr(9));
+	} else if (str === 'disconnect') {
 		Disconnect(client);
 	}
 

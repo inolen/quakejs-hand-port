@@ -4,7 +4,7 @@
 function LoadMap(mapName, callback) {
 	re.world = new WorldData();
 
-	console.log('Loading render map for ' + mapName);
+	log('Loading map for', mapName);
 
 	sys.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
 		if (err) throw err;
@@ -84,7 +84,7 @@ function ColorShiftLightingBytes(color, offset) {
 function ShaderForShaderNum(shaderNum, lightmapNum) {
 	var shaders = re.world.shaders;
 	if (shaderNum < 0 || shaderNum >= shaders.length) {
-		throw new Error('ShaderForShaderNum: bad num ' + shaderNum);
+		com.error(Err.DROP, 'ShaderForShaderNum: bad num ' + shaderNum);
 	}
 	var dsh = shaders[shaderNum];
 	var shader = FindShader(dsh.shaderName, lightmapNum);
@@ -526,7 +526,7 @@ function LoadLightGrid(buffer, gridLump) {
 	var numGridPoints = world.lightGridBounds[0] * world.lightGridBounds[1] * world.lightGridBounds[2];
 
 	if (gridLump.filelen !== numGridPoints * 8) {
-		console.log('WARNING: light grid mismatch');
+		log('WARNING: light grid mismatch');
 		world.lightGridData = null;
 		return;
 	}
