@@ -9,6 +9,8 @@ var cm;
 var sv_serverid;
 var sv_mapname;
 var sv_fps;
+var sv_timeout;
+var sv_zombietime;
 
 /**
  * log
@@ -33,9 +35,12 @@ function Init(sysinterface, cominterface, isdedicated) {
 	svs = new ServerStatic();
 	cm = clipmap.CreateInstance(sys);
 	
-	sv_serverid = com.AddCvar('sv_serverid', 0, CvarFlags.SYSTEMINFO);
-	sv_mapname = com.AddCvar('sv_mapname', 'nomap', CvarFlags.SERVERINFO);
-	sv_fps = com.AddCvar('sv_fps', 20);
+	sv_serverid   = com.AddCvar('sv_serverid',   0,       CvarFlags.SYSTEMINFO);
+	sv_mapname    = com.AddCvar('sv_mapname',    'nomap', CvarFlags.SERVERINFO);
+	// TODO We need to run clientthink outside of our main Frame() think loop.
+	sv_fps        = com.AddCvar('sv_fps',        20);   // time rate for running non-clients
+	sv_timeout    = com.AddCvar('sv_timeout',    200);  // seconds without any message
+	sv_zombietime = com.AddCvar('sv_zombietime', 2);    // seconds to sink messages after disconnect
 
 	RegisterCommands();
 
@@ -106,38 +111,32 @@ function Frame(frameTime, msec) {
  * if necessary
  */
 function CheckTimeouts() {
-	// int		i;
-	// client_t	*cl;
-	// int			droppoint;
-	// int			zombiepoint;
+	var droppoint = svs.time - 1000 * sv_timeout();
+	var zombiepoint = svs.time - 1000 * sv_zombietime();
 
-	// droppoint = svs.time - 1000 * sv_timeout->integer;
-	// zombiepoint = svs.time - 1000 * sv_zombietime->integer;
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		var client = svs.clients[i];
 
-	// for (i=0,cl=svs.clients ; i < sv_maxclients->integer ; i++,cl++) {
-	// 	// message times may be wrong across a changelevel
-	// 	if (cl->lastPacketTime > svs.time) {
-	// 		cl->lastPacketTime = svs.time;
-	// 	}
+		if (!client) {
+			continue;
+		}
 
-	// 	if (cl->state == CS_ZOMBIE
-	// 	&& cl->lastPacketTime < zombiepoint) {
-	// 		// using the client id cause the cl->name is empty at this point
-	// 		Com_DPrintf( "Going from CS_ZOMBIE to CS_FREE for client %d\n", i );
-	// 		cl->state = CS_FREE;	// can now be reused
-	// 		continue;
-	// 	}
-	// 	if ( cl->state >= CS_CONNECTED && cl->lastPacketTime < droppoint) {
-	// 		// wait several frames so a debugger session doesn't
-	// 		// cause a timeout
-	// 		if ( ++cl->timeoutCount > 5 ) {
-	// 			SV_DropClient (cl, "timed out"); 
-	// 			cl->state = CS_FREE;	// don't bother with zombie state
-	// 		}
-	// 	} else {
-	// 		cl->timeoutCount = 0;
-	// 	}
-	// }
+		// Message times may be wrong across a changelevel.
+		if (client.lastPacketTime > svs.time) {
+			client.lastPacketTime = svs.time;
+		}
+
+		if (client.state === ClientState.ZOMBIE && client.lastPacketTime < zombiepoint) {
+			log('Going from CS_ZOMBIE to CS_FREE for client', i);
+			client.state = ClientState.FREE;  // can now be reused
+			continue;
+		}
+
+		if (client.state >= ClientState.CONNECTED && client.lastPacketTime < droppoint) {
+			DropClient(client, 'timed out'); 
+			client.state = ClientState.FREE;  // don't bother with zombie state
+		}
+	}
 }
 
 /**
@@ -168,6 +167,7 @@ function PacketEvent(socket, buffer) {
 		}
 
 		if (com.NetchanProcess(client, msg)) {
+			client.lastPacketTime = svs.time;  // don't timeout
 			ExecuteClientMessage(client, msg);
 		}
 		return;

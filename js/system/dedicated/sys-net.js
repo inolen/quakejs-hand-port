@@ -40,7 +40,7 @@ function NetCreateServer() {
 		});
 
 		connection.on('close', function(reasonCode, description) {
-			com.QueueEvent({ type: com.EventTypes.NETSVDISCONNECT, socket: connection });
+			com.QueueEvent({ type: com.EventTypes.NETSVSOCKETCLOSED, socket: connection });
 		});
 	});
 }

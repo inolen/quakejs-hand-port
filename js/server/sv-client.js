@@ -1,9 +1,7 @@
 /**
  * SocketClosed
  */
-function SocketClosed(socket) {
-	log('SHIT GOT CLOSED');
-	
+function SocketClosed(socket) {	
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
@@ -44,7 +42,7 @@ function AcceptClient(socket, infostr) {
 
 	// Create the client.
 	var newcl = svs.clients[clientNum];
-	newcl.state = ClientState.CONNECTED;
+
 	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, socket);
 	newcl.userinfo = JSON.parse(infostr);
 
@@ -58,6 +56,12 @@ function AcceptClient(socket, infostr) {
 	}
 	
 	UserinfoChanged(newcl);
+
+	log('Going from CS_FREE to CS_CONNECTED for ', clientNum);
+
+	newcl.state = ClientState.CONNECTED;
+	newcl.lastSnapshotTime = svs.time;
+	newcl.lastPacketTime = svs.time;
 
 	// Let the client know we've accepted them.
 	com.NetchanPrint(newcl.netchan, 'connectResponse');
