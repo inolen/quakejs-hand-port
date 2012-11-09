@@ -7,15 +7,17 @@ var CAPSULE_MODEL_HANDLE = 254;
 var SURFACE_CLIP_EPSILON = 0.125;
 
 var ClipMapLocals = function () {
-	this.shaders     = null;
-	this.brushes     = null;
-	this.models      = null;
-	this.leafs       = null;
-	this.leafBrushes = null;
-	this.nodes       = null;
-	this.planes      = null;
-	this.shaders     = null;
-	this.entities    = null;
+	this.shaders      = null;
+	this.brushes      = null;
+	this.models       = null;
+	this.leafs        = null;
+	this.leafBrushes  = null;
+	this.leafSurfaces = null;
+	this.nodes        = null;
+	this.planes       = null;
+	this.shaders      = null;
+	this.entities     = null;
+	this.surfaces     = null;                              // only patches
 };
 
 /**********************************************************
@@ -54,6 +56,112 @@ var cbrush_t = function () {
 	this.numsides   = 0;
 	this.sides      = null;
 	this.checkcount = 0;                                   // to avoid repeated testings
+};
+
+/**********************************************************
+ * Polylib
+ **********************************************************/
+var winding_t = function () {
+	this.numpoints = 0;
+	this.p = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+};
+
+winding_t.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new winding_t();
+	}
+
+	to.numpoints = this.numpoints;
+	vec3.set(this.p[0], to.p[0]);
+	vec3.set(this.p[1], to.p[1]);
+	vec3.set(this.p[2], to.p[2]);
+	vec3.set(this.p[3], to.p[3]);
+
+	return to;
+};
+
+var MAX_POINTS_ON_WINDING = 64;
+
+var SIDE_FRONT = 0;
+var SIDE_BACK  = 1;
+var SIDE_ON    = 2;
+var SIDE_CROSS = 3;
+
+var CLIP_EPSILON = 0.1;
+
+var MAX_MAP_BOUNDS = 65535;
+
+/**********************************************************
+ * Patch clipping
+ **********************************************************/
+var MAX_FACETS         = 1024;
+var MAX_PATCH_VERTS    = 1024;
+var MAX_PATCH_PLANES   = 2048;
+var MAX_GRID_SIZE      = 129;
+var SUBDIVIDE_DISTANCE = 16;                               // never more than this units away from curve
+var PLANE_TRI_EPSILON  = 0.1;
+var WRAP_POINT_EPSILON = 0.1;
+
+var pplane_t = function () {
+	this.plane    = [0, 0, 0, 0];
+	this.signbits = 0;                                     // signx + (signy<<1) + (signz<<2), used as lookup during collision
+};
+
+var pfacet_t = function () {
+	this.surfacePlane = 0;
+	this.numBorders   = 0;                                 // 3 or four + 6 axial bevels + 4 or 3 * 4 edge bevels
+	this.borderPlanes = [
+		0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	];
+	this.borderInward = [
+		0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	];
+	this.borderNoAdjust = [
+		false, false, false, false,
+		false, false, false, false, false, false,
+		false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
+	];
+};
+
+var pcollide_t = function () {
+	this.bounds = [
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	this.planes = [];                                      // surface planes plus edge planes
+	this.facets = [];
+};
+
+var cgrid_t = function () {
+	this.width      = 0;
+	this.height     = 0;
+	this.wrapWidth  = 0;
+	this.wrapHeight = 0;
+	this.points     = new Array(MAX_GRID_SIZE);
+
+	for (var i = 0; i < MAX_GRID_SIZE; i++) {
+		this.points[i] = new Array(MAX_GRID_SIZE);
+
+		for (var j = 0; j < MAX_GRID_SIZE; j++) {
+			this.points[i][j] = [0, 0, 0];
+		}
+	}
+};
+
+var cpatch_t = function () {
+	this.checkcount   = 0;                                 // to avoid repeated testings
+	this.surfaceFlags = 0;
+	this.contents     = 0;
+	this.pc           = null;
 };
 
 /**********************************************************

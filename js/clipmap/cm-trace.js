@@ -302,23 +302,23 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
  * TraceThroughLeaf
  */
 function TraceThroughLeaf(tw, leaf) {
+	var i;
 	var brushes = cm.brushes;
 	var leafBrushes = cm.leafBrushes;
 	var shaders = cm.shaders;
 
-	// trace line against all brushes in the leaf
-	for (var i = 0; i < leaf.numLeafBrushes; i++) {
+	// Trace line against all brushes in the leaf.
+	for (i = 0; i < leaf.numLeafBrushes; i++) {
 		var brushNum = leafBrushes[leaf.firstLeafBrush + i];
 		var brush = brushes[brushNum];
 
 		if (brush.checkcount === cm.checkcount) {
-			continue;	// already checked this brush in another leaf
+			continue;  // already checked this brush in another leaf
 		}
 
 		brush.checkcount = cm.checkcount;
 
-		// TODO Support this
-		if ( !(brush.contents & tw.contents) ) {
+		if (!(brush.contents & tw.contents)) {
 			continue;
 		}
 
@@ -328,6 +328,29 @@ function TraceThroughLeaf(tw, leaf) {
 
 		TraceThroughBrush(tw, brush);
 
+		if (!tw.trace.fraction) {
+			return;
+		}
+	}
+
+	// Trace line against all patches in the leaf.
+	for (i = 0 ; i < leaf.numLeafSurfaces; i++) {
+		var patch = cm.surfaces[cm.leafSurfaces[leaf.firstLeafSurface + i]];
+
+		if (!patch) {
+			continue;
+		}
+
+		if (patch.checkcount === cm.checkcount) {
+			continue;  // already checked this patch in another leaf
+		}
+		patch.checkcount = cm.checkcount;
+
+		if (!(patch.contents & tw.contents)) {
+			continue;
+		}
+
+		TraceThroughPatch(tw, patch);
 		if (!tw.trace.fraction) {
 			return;
 		}
@@ -494,6 +517,20 @@ function TraceThroughBrush(tw, brush) {
 			//tw.trace.surfaceFlags = leadside.surfaceFlags;
 			tw.trace.contents = brush.contents;
 		}
+	}
+}
+
+/**
+ * TraceThroughPatch
+ */
+function TraceThroughPatch(tw, patch) {
+	var oldFrac = tw.trace.fraction;
+
+	TraceThroughPatchCollide(tw, patch.pc);
+
+	if (tw.trace.fraction < oldFrac) {
+		tw.trace.surfaceFlags = patch.surfaceFlags;
+		tw.trace.contents = patch.contents;
 	}
 }
 

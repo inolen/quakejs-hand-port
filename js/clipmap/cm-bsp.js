@@ -30,12 +30,14 @@ function LoadMap(mapName, callback) {
 		LoadShaders(data, header.lumps[Lumps.SHADERS]);
 		LoadLeafs(data, header.lumps[Lumps.LEAFS]);
 		LoadLeafBrushes(data, header.lumps[Lumps.LEAFBRUSHES]);
+		LoadLeafSurfaces(data, header.lumps[Lumps.LEAFSURFACES]);
 		LoadPlanes(data, header.lumps[Lumps.PLANES]);
 		LoadBrushSides(data, header.lumps[Lumps.BRUSHSIDES]);
 		LoadBrushes(data, header.lumps[Lumps.BRUSHES]);
 		LoadSubmodels(data, header.lumps[Lumps.MODELS]);
 		LoadNodes(data, header.lumps[Lumps.NODES]);
 		LoadEntities(data, header.lumps[Lumps.ENTITIES]);
+		LoadPatches(data, header.lumps[Lumps.SURFACES], header.lumps[Lumps.DRAWVERTS]);
 
 		if (callback) {
 			callback();
@@ -97,6 +99,19 @@ function LoadLeafBrushes(buffer, leafBrushLump) {
 
 	for (var i = 0; i < leafBrushes.length; i++) {
 		leafBrushes[i] = bb.readInt();
+	}
+}
+
+/**
+ * LoadLeafSurfaces
+ */
+function LoadLeafSurfaces(buffer, leafSurfacesLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);	
+	bb.index = leafSurfacesLump.fileofs;
+
+	var leafSurfaces = cm.leafSurfaces = new Array(leafSurfacesLump.filelen / 4);
+	for (var i = 0; i < leafSurfaces.length; i++) {
+		leafSurfaces[i] = bb.readInt();
 	}
 }
 
@@ -278,6 +293,86 @@ function LoadEntities(buffer, entityLump) {
 		
 		entities.push(entity);
 	});
+}
+
+/**
+ * LoadPatches
+ */
+function LoadPatches(buffer, surfsLump, vertsLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+
+	var count = surfsLump.filelen / dsurface_t.size;
+	cm.surfaces = new Array(count);
+
+	// Scan through all the surfaces, but only load patches,
+	// not planar faces.
+	var patch;
+	var width;
+	var height;
+	var c;
+	var dface = new dsurface_t();
+	var points = new Array(MAX_PATCH_VERTS);
+	for (var i = 0; i < MAX_PATCH_VERTS; i++) {
+		points[i] = [0, 0, 0];
+	}
+
+	var surfidx = surfsLump.fileofs;
+
+	for (var i = 0; i < count; i++) {
+		// Read face into temp variable.
+		bb.index = surfidx;
+
+		dface.shaderNum = bb.readInt();
+		dface.fogNum = bb.readInt();
+		dface.surfaceType = bb.readInt();
+		dface.vertex = bb.readInt();
+		dface.vertCount = bb.readInt();
+		dface.meshVert = bb.readInt();
+		dface.meshVertCount = bb.readInt();
+		dface.lightmapNum = bb.readInt();
+		dface.lmStart = [bb.readInt(), bb.readInt()];
+		dface.lmSize = [bb.readInt(), bb.readInt()];
+		dface.lmOrigin = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
+		dface.lmVecs = [
+			[bb.readFloat(), bb.readFloat(), bb.readFloat()],
+			[bb.readFloat(), bb.readFloat(), bb.readFloat()],
+			[bb.readFloat(), bb.readFloat(), bb.readFloat()]
+		];
+		dface.patchWidth = bb.readInt();
+		dface.patchHeight = bb.readInt();
+
+		if (dface.surfaceType !== MapSurfaceType.PATCH) {
+			continue;  // ignore other surfaces
+		}
+
+		cm.surfaces[i] = patch = new cpatch_t();
+
+		// Store our current pos before we read the verts.
+		surfidx = bb.index;
+
+		// Load the full drawverts onto the stack.
+		width = dface.patchWidth;
+		height = dface.patchHeight;
+		c = width * height;
+
+		if (c > MAX_PATCH_VERTS) {
+			com.error(Err.DROP, 'ParseMesh: MAX_PATCH_VERTS');
+		}
+
+		for (var j = 0; j < c ; j++) {
+			bb.index = vertsLump.fileofs + (dface.vertex + j) * drawVert_t.size;
+
+			points[j][0] = bb.readFloat();
+			points[j][1] = bb.readFloat();
+			points[j][2] = bb.readFloat();
+		}
+
+		patch.contents = cm.shaders[dface.shaderNum].contents;
+		patch.surfaceFlags = cm.shaders[dface.shaderNum].flags;
+
+		// Create the internal facet structure
+		patch.pc = GeneratePatchCollide(width, height, points);
+	}
 }
 
 /**

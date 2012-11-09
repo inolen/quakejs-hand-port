@@ -506,6 +506,88 @@ function BoxOnPlaneSide(mins, maxs, p) {
 	return sides;
 }
 
+/**********************************************************
+ * Bounds
+ **********************************************************/
+function RadiusFromBounds(mins, maxs) {
+	var a, b;
+	var corner = [0, 0, 0];
+
+	for (var i = 0; i < 3; i++) {
+		a = Math.abs(mins[i]);
+		b = Math.abs(maxs[i]);
+		corner[i] = a > b ? a : b;
+	}
+
+	return vec3.length(corner);
+}
+
+function ClearBounds(mins, maxs) {
+	mins[0] = mins[1] = mins[2] = 99999;
+	maxs[0] = maxs[1] = maxs[2] = -99999;
+}
+
+function AddPointToBounds(v, mins, maxs) {
+	if (v[0] < mins[0]) {
+		mins[0] = v[0];
+	}
+	if (v[0] > maxs[0]) {
+		maxs[0] = v[0];
+	}
+
+	if (v[1] < mins[1]) {
+		mins[1] = v[1];
+	}
+	if (v[1] > maxs[1]) {
+		maxs[1] = v[1];
+	}
+
+	if (v[2] < mins[2]) {
+		mins[2] = v[2];
+	}
+	if (v[2] > maxs[2]) {
+		maxs[2] = v[2];
+	}
+}
+
+function BoundsIntersect(mins, maxs, mins2, maxs2) {
+	if (maxs[0] < mins2[0] ||
+		maxs[1] < mins2[1] ||
+		maxs[2] < mins2[2] ||
+		mins[0] > maxs2[0] ||
+		mins[1] > maxs2[1] ||
+		mins[2] > maxs2[2]) {
+		return false;
+	}
+
+	return true;
+}
+
+function BoundsIntersectSphere(mins, maxs, origin, radius) {
+	if (origin[0] - radius > maxs[0] ||
+		origin[0] + radius < mins[0] ||
+		origin[1] - radius > maxs[1] ||
+		origin[1] + radius < mins[1] ||
+		origin[2] - radius > maxs[2] ||
+		origin[2] + radius < mins[2]) {
+		return false;
+	}
+
+	return true;
+}
+
+function BoundsIntersectPoint(mins, maxs, origin) {
+	if (origin[0] > maxs[0] ||
+		origin[0] < mins[0] ||
+		origin[1] > maxs[1] ||
+		origin[1] < mins[1] ||
+		origin[2] > maxs[2] ||
+		origin[2] < mins[2]) {
+		return false;
+	}
+
+	return true;
+}
 
 /**********************************************************
  * Radix sort 32 bit ints into 8 bit buckets.
