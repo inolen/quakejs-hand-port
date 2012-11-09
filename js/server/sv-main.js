@@ -191,7 +191,7 @@ function ConnectionlessPacket(socket, msg) {
  * SpawnServer
  */
 function SpawnServer(mapName) {
-	log('Spawning new server for ' + mapName);
+	log('Spawning new server for', mapName, 'at', svs.frameTime);
 
 	svs.initialized = false;
 	

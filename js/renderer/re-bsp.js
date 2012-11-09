@@ -246,7 +246,7 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 		dface.patchHeight = bb.readInt();
 
 		// Setup our in-memory representation.
-		face.surfaceType = SurfaceType.FACE;
+		face.surfaceType = SurfaceType.BAD;
 		face.shader = ShaderForShaderNum(dface.shaderNum, dface.lightmapNum);
 		face.fogIndex = dface.fogNum + 1;
 		face.vertex = dface.vertex;
@@ -259,9 +259,13 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 
 		if (dface.surfaceType === MapSurfaceType.PATCH) {
 			ParseMesh(dface, face, r_subdivisions());
-		} else if (dface.surfaceType === MapSurfaceType.PLANAR) {
+		} else if (dface.surfaceType === MapSurfaceType.PLANAR ||
+				   // TODO Parse and render these as tri strips.
+				   dface.surfaceType === MapSurfaceType.TRIANGLE_SOUP) {
 			ParseFace(dface, face);
-		}
+		}/* else if (dface.surfaceType === MapSurfaceType.TRIANGLE_SOUP) {
+			ParseTriSurf(dface, face);
+		}*/
 	}
 
 	// Transform lightmap coords to match position in combined texture.
@@ -353,6 +357,13 @@ function ParseFace(dface, face) {
 	face.plane.dist = vec3.dot(verts[face.vertex].pos, face.plane.normal);
 	face.plane.signbits = GetPlaneSignbits(face.plane);
 	face.plane.type = PlaneTypeForNormal(face.plane.normal);
+}
+
+/**
+ * ParseTriSurf
+ */
+function ParseTriSurf(dface, face) {
+
 }
 
 /**

@@ -115,6 +115,7 @@ var WorldData = function () {
 
 	// static world buffers
 	this.buffers              = null;
+	this.shaderMap            = null;
 };
 
 /**********************************************************
@@ -355,6 +356,10 @@ var BackendLocals = function () {
 var ShaderCommands = function () {
 	this.shader     = null;
 	this.shaderTime = 0;
+
+	// Used by static index buffers.
+	this.numIndexes  = 0;
+	this.indexOffset = 0;
 
 	// What we're actually rendering.
 	this.index      = null;

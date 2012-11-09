@@ -17,7 +17,6 @@ function InitBackend() {
 		xyz:   CreateBuffer('float32', 3, 32000)
 	};
 
-	backend.tessFns[SurfaceType.BAD] = TesselateFace;
 	backend.tessFns[SurfaceType.FACE] = TesselateFace;
 	backend.tessFns[SurfaceType.GRID] = TesselateFace;
 	backend.tessFns[SurfaceType.MD3] = TesselateMd3;
@@ -74,7 +73,7 @@ function RenderDrawSurfaces() {
 		oldSort = drawSurf.sort;
 
 		// Change the tess parameters if needed.
-		if (shader != oldShader || entityNum != oldEntityNum) {
+		if (shader !== oldShader || entityNum !== oldEntityNum) {
 			if (oldShader) {
 				EndSurface();
 			}
@@ -96,8 +95,16 @@ function RenderDrawSurfaces() {
 			oldEntityNum = entityNum;
 		}
 
-		// Add surface.
 		backend.tessFns[face.surfaceType](face);
+
+		// HACK - Normal faces are part of a static buffer pre-sorted by shader, 
+		// we don't need to add any more faces for this shader.
+		if (face.surfaceType === SurfaceType.FACE) {
+			while (drawSurfs[i].sort === oldSort) {
+				i++;
+			}
+			i--;
+		}
 	}
 
 	// Draw the contents of the last shader batch.
@@ -115,13 +122,15 @@ function BeginSurface(shader) {
 	tess.shader = shader;
 	tess.shaderTime = backend.refdef.time / 1000;
 
+	tess.numIndexes = 0;
+	tess.indexOffset = 0;
+
 	if (tess.index)      ResetBuffer(tess.index);      tess.index = null;
 	if (tess.xyz)        ResetBuffer(tess.xyz);        tess.xyz = null;
 	if (tess.normal)     ResetBuffer(tess.normal);     tess.normal = null;
 	if (tess.texCoord)   ResetBuffer(tess.texCoord);   tess.texCoord = null;
 	if (tess.lightCoord) ResetBuffer(tess.lightCoord); tess.lightCoord = null;
 	if (tess.color)      ResetBuffer(tess.color);      tess.color = null;
-
 }
 
 /**
@@ -130,11 +139,12 @@ function BeginSurface(shader) {
 function EndSurface() {
 	var tess = backend.tess;
 	var shader = tess.shader;
+	var numIndexes = tess.numIndexes || tess.index.elementCount;
+	var indexOffset = tess.indexOffset;
 
 	re.counts.shaders++;
-
-	re.counts.vertexes += tess.index.elementCount / 3;
-	re.counts.indexes += tess.index.elementCount;
+	re.counts.vertexes += numIndexes / 3;
+	re.counts.indexes += numIndexes;
 
 	// Bind the index buffer.
 	BindBuffer(tess.index);
@@ -158,7 +168,7 @@ function EndSurface() {
 		if (tess.lightCoord) BindBuffer(tess.lightCoord, stage.program.attrib.lightCoord);
 		if (tess.color)      BindBuffer(tess.color,      stage.program.attrib.color);
 
-		gl.drawElements(shader.mode, tess.index.elementCount, gl.UNSIGNED_SHORT, 0);
+		gl.drawElements(shader.mode, numIndexes, gl.UNSIGNED_SHORT, indexOffset * 2); // offset is in bytes
 	}
 
 	if (r_showtris()) {
@@ -211,6 +221,8 @@ function DrawNormals() {
 	var tnormal = tess.normal;
 	var bindex = backend.debugBuffers.index;
 	var bxyz = backend.debugBuffers.xyz;
+	var numIndexes = tess.numIndexes || tess.index.elementCount;
+	var indexOffset = tess.indexOffset;
 
 	ResetBuffer(bindex);
 	ResetBuffer(bxyz);
@@ -219,8 +231,8 @@ function DrawNormals() {
 	var xyz = [0, 0, 0];
 	var normal = [0, 0, 0];
 	
-	for (var i = 0; i < tindex.elementCount; i++) {
-		ReadBufferElement(tindex, i, idx);
+	for (var i = 0; i < numIndexes; i++) {
+		ReadBufferElement(tindex, indexOffset + i, idx);
 		ReadBufferElement(txyz, idx[0], xyz);
 		ReadBufferElement(tnormal, idx[0], normal);
 
@@ -273,8 +285,6 @@ function CreateBuffer(dataType, elementSize, maxElements, isIndexBuffer) {
 	buf.elementSize = elementSize;
 	buf.glBuffer = gl.createBuffer();
 	buf.glBufferType = isIndexBuffer ? gl.ELEMENT_ARRAY_BUFFER : gl.ARRAY_BUFFER;
-	buf.count = 0;
-	buf.modified = false;
 
 	return buf;
 }
@@ -413,19 +423,19 @@ function SetShaderStage(shader, stage) {
 
 /**
  * TesselateFace
+ * 
+ * This function is a bit of a sham. We don't actually append each face to
+ * any buffer as the world's index buffer is already pre-sorted. There is a
+ * special case in the main render loop to only call this once per face.
  */
 function TesselateFace(face) {
 	var tess = backend.tess;
-	var meshVerts = re.world.meshVerts;
+	var entry = re.world.shaderMap[tess.shader.index];
 
-	// Append to our index buffer.
-	var indexes = backend.scratchBuffers.index;
+	tess.numIndexes = entry.elementCount;
+	tess.indexOffset = entry.indexOffset;
 
-	for (var i = 0; i < face.meshVertCount; i++) {
-		WriteBufferElement(indexes, face.vertex + meshVerts[face.meshVert + i]);
-	}
-
-	tess.index = indexes;
+	tess.index = re.world.buffers.index;
 	tess.xyz = re.world.buffers.xyz;
 	tess.normal = re.world.buffers.normal;
 	tess.texCoord = re.world.buffers.texCoord;

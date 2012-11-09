@@ -2,12 +2,15 @@
  * BuildWorldBuffers
  */
 function BuildWorldBuffers() {
-	var verts = re.world.verts;
+	var world = re.world;
+	var faces = world.faces;
+	var verts = world.verts;
+	var meshVerts = world.meshVerts;
 
 	// 
 	// Setup vertex buffers.
 	//
-	var buffers = re.world.buffers = {
+	var buffers = world.buffers = {
 		xyz:        CreateBuffer('float32', 3, verts.length),
 		normal:     CreateBuffer('float32', 3, verts.length),
 		texCoord:   CreateBuffer('float32', 2, verts.length),
@@ -25,6 +28,62 @@ function BuildWorldBuffers() {
 		WriteBufferElement(buffers.color, vert.color[0], vert.color[1], vert.color[2], vert.color[3]);
 	}
 
+	//
+	// For the world data, we go ahead and group faces by shader (just as the render loop
+	// does) in order to avoid uploading a new index buffer each frame.
+	//
+	world.shaderMap = [];
+	var numIndexes = 0;
+
+	for (var i = 0; i < faces.length; i++) {
+		var face = faces[i];
+
+		// Only add these surface types to the list.
+		if (face.surfaceType !== SurfaceType.FACE &&
+			face.surfaceType !== SurfaceType.GRID &&
+			face.surfaceType !== SurfaceType.TRIANGLES) {
+			continue;
+		}
+
+		var shader = face.shader;
+		var entry = world.shaderMap[shader.index];
+
+		if (!entry) {
+			entry = world.shaderMap[shader.index] = { faces: [], indexOffset: 0, elementCount: 0 };
+		}
+
+		entry.faces.push(face);
+		numIndexes += face.meshVertCount;
+	}
+
+	//
+	// Create the pre-sorted index buffer.
+	//
+	buffers.index = CreateBuffer('uint16', 1, numIndexes, true);
+
+	for (var i = 0; i < world.shaderMap.length; i++) {
+		var entry = world.shaderMap[i];
+
+		if (!entry) {
+			continue;
+		}
+
+		entry.indexOffset = buffers.index.elementCount;
+
+		for (var j = 0; j < entry.faces.length; j++) {
+			var face = entry.faces[j];
+
+			for (var k = 0; k < face.meshVertCount; k++) {
+				WriteBufferElement(buffers.index, face.vertex + meshVerts[face.meshVert + k]);
+			}
+
+			entry.elementCount += face.meshVertCount;
+		}
+
+		entry.faces = null;  // Don't need this in memory anymore.
+	}
+
+	LockBuffer(buffers.index);
 	LockBuffer(buffers.xyz);
 	LockBuffer(buffers.normal);
 	LockBuffer(buffers.texCoord);
@@ -33,6 +92,7 @@ function BuildWorldBuffers() {
 
 	// We no longer need the vert info, let's free up ~8mb of memory.
 	re.world.verts = null;
+	re.world.meshVerts = null;
 }
 
 /**
@@ -143,6 +203,10 @@ function MarkLeaves() {
 }
 
 function AddWorldSurface(face/*, dlightBits*/) {
+	if (face.surfaceType === SurfaceType.BAD) {
+		return;
+	}
+
 	if (face.viewCount === re.viewCount) {
 		return; // already in this view
 	}
