@@ -31,6 +31,7 @@ function Init(sysinterface, isdedicated) {
 	
 	var exports = {
 		error:            error,
+		frameTime:        function() { return frameTime; },
 		ExecuteCmdText:   ExecuteCmdText,
 		LoadConfig:       LoadConfig,
 		SaveConfig:       SaveConfig,
@@ -67,10 +68,10 @@ function Frame() {
 
 	EventLoop();
 
-	sv.Frame(frameTime, msec);
+	sv.Frame(msec);
 
 	if (!dedicated) {
-		cl.Frame(frameTime, msec);
+		cl.Frame(msec);
 	}
 }
 

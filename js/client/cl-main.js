@@ -111,9 +111,7 @@ function ShutdownRenderer() {
 /**
  * Frame
  */
-function Frame(frameTime, msec) {
-	cls.frameTime = frameTime;
-
+function Frame(msec) {
 	if (!cls.initialized) {
 		return;
 	}

@@ -136,9 +136,9 @@ function SetCGameTime() {
 	// If we have gotten new snapshots, drift serverTimeDelta.
 	// Don't do this every frame, or a period of packet loss would
 	// make a huge adjustment.
-	if (cl.newSnapshots) {
+	//if (cl.newSnapshots) {
 		AdjustTimeDelta();
-	}
+	//}
 }
 
 /**

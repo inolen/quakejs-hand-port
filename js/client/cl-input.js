@@ -110,10 +110,10 @@ function GetKeyState(key) {
 	key.partial = 0;
 
 	if (key.active) {
-		msec += cls.frameTime - key.downtime;
+		msec += com.frameTime() - key.downtime;
 	}
 
-	key.downtime = cls.frameTime;
+	key.downtime = com.frameTime();
 
 	var val = msec / cls.frameDelta;
 	if (val < 0) val = 0;

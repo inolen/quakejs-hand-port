@@ -46,7 +46,7 @@ function Init(sysinterface, cominterface, isdedicated) {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		CmdLoadMap('q3tourney2');
+		CmdLoadMap('q3dm17');
 	}, 50);
 }
 
@@ -69,9 +69,7 @@ function FrameMsec() {
 /**
  * Frame
  */
-function Frame(frameTime, msec) {
-	svs.frameTime = frameTime;
-	
+function Frame(msec) {
 	if (!svs.initialized) {
 		return;
 	}
@@ -191,7 +189,7 @@ function ConnectionlessPacket(socket, msg) {
  * SpawnServer
  */
 function SpawnServer(mapName) {
-	log('Spawning new server for', mapName, 'at', svs.frameTime);
+	log('Spawning new server for', mapName, 'at', com.frameTime());
 
 	svs.initialized = false;
 	
@@ -221,7 +219,7 @@ function SpawnServer(mapName) {
 	cm.LoadMap(mapName, function () {
 		sv_mapname(mapName);
 		// serverid should be different each time.
-		sv_serverid(svs.frameTime);
+		sv_serverid(com.frameTime());
 
 		// Clear physics interaction links.
 		ClearWorld();
