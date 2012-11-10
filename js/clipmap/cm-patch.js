@@ -1472,8 +1472,7 @@ function CheckFacetPlane(plane, start, end, cw) {
 // 	return qfalse;
 // }
 
-// TODO Call this once and build a static buffer
-function AddCollisionSurfaces(tessFn) {
+function EmitCollisionSurfaces(tessFn) {
 	var plane = [0, 0, 0, 0];
 	var mins = [-15, -15, -28];
 	var maxs = [15, 15, 28];
@@ -1484,7 +1483,7 @@ function AddCollisionSurfaces(tessFn) {
 	for (var pcnum = 0; pcnum < debugPatchCollides.length; pcnum++) {
 		var pc = debugPatchCollides[pcnum];
 
-		for (var i = 0; i < 1/*pc.facets.length*/; i++) {
+		for (var i = 0; i < pc.facets.length; i++) {
 			var facet = pc.facets[i];
 
 			for (var k = 0; k < facet.numBorders + 1; k++) {

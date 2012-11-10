@@ -95,7 +95,7 @@ function ShutdownCGame() {
  */
 function InitRenderer() {
 	var exports = {
-		AddCollisionSurfaces: cm.AddCollisionSurfaces
+		EmitCollisionSurfaces: cm.EmitCollisionSurfaces
 	};
 
 	re.Init(sys, com, exports);

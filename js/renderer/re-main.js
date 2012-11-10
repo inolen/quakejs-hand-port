@@ -16,6 +16,7 @@ var r_ambientScale;
 var r_directedScale;
 var r_showtris;
 var r_shownormals;
+var r_showcollision;
 
 var flipMatrix = mat4.create([
 	0, 0, -1, 0,
@@ -57,6 +58,7 @@ function Init(sysinterface, cominterface, clinterface) {
 	r_directedScale     = com.AddCvar('r_directedScale',     1);
 	r_showtris          = com.AddCvar('r_showtris',          0);
 	r_shownormals       = com.AddCvar('r_shownormals',       0);
+	r_showcollision     = com.AddCvar('r_showcollision',     1);
 
 	com.AddCmd('showcluster', CmdShowCluster);
 
@@ -451,7 +453,9 @@ function RenderView(parms) {
 	SortDrawSurfaces();
 
 	RenderDrawSurfaces();
-	//RenderDebugSurfaces();
+	if (r_showcollision()) {
+		RenderCollisionSurfaces();
+	}
 }
 
 /**

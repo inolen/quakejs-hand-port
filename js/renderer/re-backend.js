@@ -13,8 +13,8 @@ function InitBackend() {
 
 	// Scratch debug vertex buffers.
 	backend.debugBuffers = {
-		index: CreateBuffer('uint16',  1, SHADER_MAX_INDEXES, true),
-		xyz:   CreateBuffer('float32', 3, 32000)
+		index: CreateBuffer('uint16',  1, 0xFFFF, true),
+		xyz:   CreateBuffer('float32', 3, 0xFFFF)
 	};
 
 	backend.tessFns[SurfaceType.FACE] = TesselateFace;
@@ -113,32 +113,20 @@ function RenderDrawSurfaces() {
 	}
 }
 
-function RenderDebugSurfaces() {
+function RenderCollisionSurfaces() {
+	if (!re.world.cmbuffers) {
+		return;
+	}
+
+	// Reset the modelview matrix.
 	backend.currentEntity = null;
 	backend.viewParms.or.clone(backend.or);
 
 	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.FRONT);
 
-	gl.depthMask(true);
-	gl.depthRange(0, 0); // never occluded
-
-	// Build up new index/vertex buffer.
-	var bindex = backend.debugBuffers.index;
-	var bxyz = backend.debugBuffers.xyz;
-
-	ResetBuffer(bindex);
-	ResetBuffer(bxyz);
-	
-	var tessFn = function (pts) {
-		for (var i = 0; i < pts.length; i++) {
-			var pt = pts[i];
-			WriteBufferElement(bxyz, pt[0], pt[1], pt[2]);
-			WriteBufferElement(bindex, bindex.elementCount);
-		}
-	};
-
-	//cl.AddCollisionSurfaces(tessFn);
+	var bindex = re.world.cmbuffers.index;
+	var bxyz = re.world.cmbuffers.xyz;
 
 	// Render!
 	var shader = re.debugShader;
@@ -147,9 +135,6 @@ function RenderDebugSurfaces() {
 	SetShaderStage(shader, stage);
 	BindBuffer(bxyz, stage.program.attrib.xyz);
 	gl.drawElements(gl.LINE_LOOP, bindex.elementCount, gl.UNSIGNED_SHORT, 0);
-
-	// Back to default.
-	gl.depthRange(0, 1);
 }
 
 /**
@@ -229,15 +214,10 @@ function DrawTris() {
 		com.error(Err.DROP, 'Can\'t draw triangles without xyz.');  // shouldn't happen
 	}
 
-	gl.depthMask(true);
-	gl.depthRange(0, 0);
-
 	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
 	BindBuffer(tess.xyz, re.debugShader.stages[0]);
 
 	gl.drawElements(gl.LINE_LOOP, tess.index.elementCount, gl.UNSIGNED_SHORT, 0);
-
-	gl.depthRange(0, 1);
 }
 
 
@@ -250,9 +230,6 @@ function DrawNormals() {
 	if (!tess.xyz || !tess.normal) {
 		com.error(Err.DROP, 'Can\'t draw normal without xyz and normal.');  // shouldn't happen
 	}
-
-	gl.depthMask(true);
-	gl.depthRange(0, 0); // never occluded
 
 	// Build up new index/vertex buffer.
 	var tindex = tess.index;
@@ -292,9 +269,6 @@ function DrawNormals() {
 	SetShaderStage(shader, stage);
 	BindBuffer(bxyz, stage.program.attrib.xyz);
 	gl.drawElements(gl.LINES, bindex.elementCount, gl.UNSIGNED_SHORT, 0);
-
-	// Back to default.
-	gl.depthRange(0, 1);
 }
 
 /** 

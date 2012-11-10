@@ -26,14 +26,15 @@ function (_, glmatrix, ByteBuffer) {
 		RefEntity:     RefEntity,
 
 		// exported fns
-		Init:                Init,
-		Shutdown:            Shutdown,
-		LoadMap:             LoadMap,
-		RenderScene:         RenderScene,
-		AddRefEntityToScene: AddRefEntityToScene,
-		GetCounts:           function () { return re.counts; },
-		RegisterModel:       RegisterModel,
-		RegisterSkin:        RegisterSkin,
-		LerpTag:             LerpTag
+		Init:                  Init,
+		Shutdown:              Shutdown,
+		LoadMap:               LoadMap,
+		RenderScene:           RenderScene,
+		AddRefEntityToScene:   AddRefEntityToScene,
+		GetCounts:             function () { return re.counts; },
+		RegisterModel:         RegisterModel,
+		RegisterSkin:          RegisterSkin,
+		LerpTag:               LerpTag,
+		BuildCollisionBuffers: BuildCollisionBuffers
 	};
 });

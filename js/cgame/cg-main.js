@@ -54,6 +54,9 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 
 	cm.LoadMap(cgs.mapname, function () {
 		re.LoadMap(cgs.mapname, function () {
+			// The renderer uses our clipmap data to build the buffers.
+			re.BuildCollisionBuffers();
+
 			RegisterGraphics();
 			RegisterClients();
 

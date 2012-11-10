@@ -96,6 +96,32 @@ function BuildWorldBuffers() {
 }
 
 /**
+ * BuildCollisionBuffers
+ */
+function BuildCollisionBuffers() {
+	var buffers = re.world.cmbuffers = {
+		index: CreateBuffer('uint16',  1, 0xFFFF, true),
+		xyz:   CreateBuffer('float32', 3, 0xFFFF)
+	};
+
+	var bindex = buffers.index;
+	var bxyz = buffers.xyz;
+
+	ResetBuffer(bindex);
+	ResetBuffer(bxyz);
+	
+	var tessFn = function (pts) {
+		for (var i = 0; i < pts.length; i++) {
+			var pt = pts[i];
+			WriteBufferElement(bxyz, pt[0], pt[1], pt[2]);
+			WriteBufferElement(bindex, bindex.elementCount);
+		}
+	};
+
+	cl.EmitCollisionSurfaces(tessFn);
+}
+
+/**
  * CmdShowCluster
  */
 function CmdShowCluster() {

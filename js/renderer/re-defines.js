@@ -116,6 +116,9 @@ var WorldData = function () {
 	// static world buffers
 	this.buffers              = null;
 	this.shaderMap            = null;
+
+	// static collision buffers
+	this.cmbuffers            = null;
 };
 
 /**********************************************************
