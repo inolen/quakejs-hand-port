@@ -1,46 +1,47 @@
 var DEFAULT_MODEL = 'sarge';
 
 var ClientGame = function () {
-	this.initialized          = false;
-	this.frameInterpolation   = 0;                         // (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
+	this.initialized           = false;
+	this.frameInterpolation    = 0;                        // (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
 
-	this.thisFrameTeleport    = false;
-	this.nextFrameTeleport    = false;
-	this.time                 = 0;                         // this is the time value that the client is rendering at.
-	this.oldTime              = 0;                         // time at last frame, used for missile trails and prediction checking
-	this.frameTime            = 0;                         // cg.time - cg.oldTime
-	this.physicsTime          = 0;                         // either cg.snap->time or cg.nextSnap->time
-	this.latestSnapshotNum    = 0;                         // the number of snapshots the client system has received
-	this.latestSnapshotTime   = 0;                         // the time from latestSnapshotNum, so we don't need to read the snapshot yet
-	this.snap                 = null;                      // cg.snap->serverTime <= cg.time
-	this.nextSnap             = null;                      // cg.nextSnap->serverTime > cg.time, or NULL
-	this.entities             = new Array(MAX_GENTITIES);
+	this.thisFrameTeleport     = false;
+	this.nextFrameTeleport     = false;
+	this.time                  = 0;                        // this is the time value that the client is rendering at.
+	this.oldTime               = 0;                        // time at last frame, used for missile trails and prediction checking
+	this.frameTime             = 0;                        // cg.time - cg.oldTime
+	this.physicsTime           = 0;                        // either cg.snap->time or cg.nextSnap->time
+	this.latestSnapshotNum     = 0;                        // the number of snapshots the client system has received
+	this.latestSnapshotTime    = 0;                        // the time from latestSnapshotNum, so we don't need to read the snapshot yet
+	this.snap                  = null;                     // cg.snap->serverTime <= cg.time
+	this.nextSnap              = null;                     // cg.nextSnap->serverTime > cg.time, or NULL
+	this.entities              = new Array(MAX_GENTITIES);
 
 	//
-	this.pmove                = new PmoveInfo();
-	this.solidEntities        = [];
-	this.triggerEntities      = [];
+	this.pmove                 = new PmoveInfo();
+	this.solidEntities         = [];
+	this.triggerEntities       = [];
 	
 	// prediction state
-	this.hyperspace           = false;                     // true if prediction has hit a trigger_teleport
-	this.validPPS             = false;
-	this.predictedErrorTime   = 0;
-	this.predictedError       = [0, 0, 0];
-	this.predictedPlayerState = null;
+	this.hyperspace            = false;                    // true if prediction has hit a trigger_teleport
+	this.validPPS              = false;
+	this.predictedErrorTime    = 0;
+	this.predictedError        = [0, 0, 0];
+	this.predictedPlayerState  = new PlayerState();
+	this.predictedPlayerEntity = new ClientEntity();
 
 	// item resource info
-	this.itemInfo             = [];
+	this.itemInfo              = [];
 
 	// auto rotating items
-	this.autoAngles           = [0, 0, 0];
-	this.autoAnglesFast       = [0, 0, 0];
+	this.autoAngles            = [0, 0, 0];
+	this.autoAnglesFast        = [0, 0, 0];
 
 	// view rendering
-	this.refdef               = new re.RefDef();
-	this.refdefViewAngles     = [0, 0 ,0];                 // will be converted to refdef.viewaxis
+	this.refdef                = new re.RefDef();
+	this.refdefViewAngles      = [0, 0 ,0];                // will be converted to refdef.viewaxis
 
 	// scoreboard
-	this.showScores           = false;
+	this.showScores            = false;
 
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		this.entities[i] = new ClientEntity();

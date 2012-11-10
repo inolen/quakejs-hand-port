@@ -17,6 +17,12 @@ function BuildClientSnapshot(client, msg) {
 	var clientNum = GetClientNum(client);
 	frame.ps = gm.GetClientPlayerstate(clientNum);
 
+	// Never send client's own entity, because it can
+	// be regenerated from the playerstate.
+	var clientNum = frame.ps.clientNum;
+	var svEnt = sv.svEntities[clientNum];
+	svEnt.snapshotCounter = sv.snapshotCounter;
+
 	var entityNumbers = [];
 	AddEntitiesVisibleFromPoint(frame.ps.origin, frame, entityNumbers, false);
 

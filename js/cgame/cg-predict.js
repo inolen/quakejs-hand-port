@@ -103,7 +103,7 @@ function Trace(start, end, mins, maxs, skipNumber, mask) {
  * InterpolatePlayerState
  */
 function InterpolatePlayerState(grabAngles) {
-	var ps = cg.predictedPlayerState = cg.snap.ps.clone();
+	var ps = cg.snap.ps.clone(cg.predictedPlayerState);
 	var prev = cg.snap;
 	var next = cg.nextSnap;
 
@@ -144,13 +144,13 @@ function InterpolatePlayerState(grabAngles) {
  * PredictPlayerState
  */
 function PredictPlayerState() {
-	cg.hyperspace = false;	// will be set if touching a trigger_teleport
+	cg.hyperspace = false;  // will be set if touching a trigger_teleport
 
 	// If this is the first frame we must guarantee predictedPlayerState 
 	// is valid even if there is some other error condition.
 	if (!cg.validPPS) {
 		cg.validPPS = true;
-		cg.predictedPlayerState = cg.snap.ps.clone();
+		cg.snap.ps.clone(cg.predictedPlayerState);
 	}
 
 	// Just copy the moves when following.
@@ -189,10 +189,10 @@ function PredictPlayerState() {
 	// is beyond our current cg.time, because predicted player positions
 	// are going to be ahead of everything else anyway.
 	if (cg.nextSnap && !cg.nextFrameTeleport && !cg.thisFrameTeleport) {
-		cg.predictedPlayerState = cg.nextSnap.ps.clone();
+		cg.nextSnap.ps.clone(cg.predictedPlayerState);
 		cg.physicsTime = cg.nextSnap.serverTime;
 	} else {
-		cg.predictedPlayerState = cg.snap.ps.clone();
+		cg.snap.ps.clone(cg.predictedPlayerState);
 		cg.physicsTime = cg.snap.serverTime;
 	}
 

@@ -58,7 +58,7 @@ function Init(sysinterface, cominterface, clinterface) {
 	r_directedScale     = com.AddCvar('r_directedScale',     1);
 	r_showtris          = com.AddCvar('r_showtris',          0);
 	r_shownormals       = com.AddCvar('r_shownormals',       0);
-	r_showcollision     = com.AddCvar('r_showcollision',     1);
+	r_showcollision     = com.AddCvar('r_showcollision',     0);
 
 	com.AddCmd('showcluster', CmdShowCluster);
 

@@ -8,7 +8,7 @@ function AddPacketEntities() {
 		if (delta === 0) {
 			cg.frameInterpolation = 0;
 		} else {
-			cg.frameInterpolation = (cg.time - cg.snap.serverTime ) / delta;
+			cg.frameInterpolation = (cg.time - cg.snap.serverTime) / delta;
 		}
 	} else {
 		cg.frameInterpolation = 0;  // actually, it should never be used, because 
@@ -24,13 +24,13 @@ function AddPacketEntities() {
 	cg.autoAnglesFast[1] = ( cg.time & 1023 ) * 360 / 1024.0;
 	cg.autoAnglesFast[2] = 0;
 
-	/*// generate and add the entity from the playerstate
+	// Generate and add the entity from the playerstate.
 	var ps = cg.predictedPlayerState;
-	BG_PlayerStateToEntityState( ps, &cg.predictedPlayerEntity.currentState, qfalse );
-	CG_AddCEntity( &cg.predictedPlayerEntity );
+	bg.PlayerStateToEntityState(ps, cg.predictedPlayerEntity.currentState);
+	AddCEntity(cg.predictedPlayerEntity);
 
-	// lerp the non-predicted value for lightning gun origins
-	CG_CalcEntityLerpPositions( &cg_entities[ cg.snap->ps.clientNum ] );*/
+	// // Lerp the non-predicted value for lightning gun origins.
+	// CalcEntityLerpPositions( &cg_entities[ cg.snap->ps.clientNum ] );
 
 	// add each entity sent over by the server
 	for (var i = 0; i < cg.snap.numEntities; i++) {
