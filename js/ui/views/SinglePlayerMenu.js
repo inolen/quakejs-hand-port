@@ -12,7 +12,6 @@ function (_, $, Backbone, templateSrc) {
 
 	var SinglePlayerMenu = Backbone.View.extend({
 		id: 'singleplayer',
-		className: 'menu',
 		model: {
 			previewLevel: 0,
 			levels: [
@@ -24,8 +23,8 @@ function (_, $, Backbone, templateSrc) {
 		template: _.template(templateSrc),
 		events: {
 			'mouseenter .levels li': 'levelPreview',
-			'click .levels li': 'levelSelect',
-			'click .close': 'closeMenu'
+			'click .levels li':      'levelSelect',
+			'click .back' :          'goBack'
 
 		},
 		initialize: function (opts) {
@@ -75,12 +74,12 @@ function (_, $, Backbone, templateSrc) {
 
 			com.ExecuteCmdText('map ' + level.name);
 		},
-		closeMenu: function () {
-			ui.CloseActiveMenu();
-		},
 		render: function () {
 			this.$el.html(this.template(this.model));
 			return this;
+		},
+		goBack: function () {
+			ui.PopMenu();
 		}
 	});
 

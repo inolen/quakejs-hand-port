@@ -52,11 +52,11 @@ function KeyDownEvent(time, keyName) {
 	// Some browsers repeat keydown events, we don't want that.
 	if (key.active) return;
 
-	if (keyName === 'graveaccent') {
+	if (keyName === 'graveaccent' && clc.state == ConnectionState.ACTIVE) {
 		if (!cls.keyCallback) {
-			ui.SetActiveMenu('ingame');
+			ui.PushMenu('ingame');
 		} else {
-			ui.CloseActiveMenu();
+			ui.PopAllMenus();
 		}
 		return;
 	}

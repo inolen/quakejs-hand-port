@@ -7,35 +7,31 @@ define('ui/views/IngameMenu',
 ],
 function (_, $, Backbone, templateSrc) {
 	var ui;
+	var cl;
 
 	var IngameMenu = Backbone.View.extend({
 		id: 'ingame',
-		className: 'menu',
 		model: {},
 		template: _.template(templateSrc),
 		events: {
-			'click .singleplayer': 'openSinglePlayerMenu',
-			'click .multiplayer': 'openMultiPlayerMenu',
-			'click .settings': 'openSettingsMenu',
-			'click .close': 'closeMenu'
+			'click .settings':  'openSettingsMenu',
+			'click .exit-game': 'exitGame',
+			'click .close':     'closeMenu'
 		},
 		initialize: function (opts) {
 			ui = opts.ui;
+			cl = opts.cl;
+			
 			this.render();
 		},
-		openSinglePlayerMenu: function() {
-			ui.SetActiveMenu('singleplayer');
+		openSettingsMenu: function () {
+			ui.PushMenu('settings');
 		},
-		openMultiPlayerMenu: function() {
-			ui.SetActiveMenu('multiplayer');
-		},
-		openSettingsMenu: function() {
-			ui.SetActiveMenu('settings');
+		exitGame: function () {
+			cl.Disconnect();
 		},
 		closeMenu: function () {
-			ui.CloseActiveMenu();
-		},
-		update: function (newModel) {
+			ui.PopAllMenus();
 		},
 		render: function () {
 			$(this.el).html(this.template(this.model));

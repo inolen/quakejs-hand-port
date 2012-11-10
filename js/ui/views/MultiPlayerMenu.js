@@ -12,7 +12,6 @@ function (_, $, Backbone, templateSrc) {
 
 	var MultiPlayerMenu = Backbone.View.extend({
 		id: 'multiplayer',
-		className: 'menu',
 		template: _.template(templateSrc),
 		model: {
 			address: '192.168.0.102:9001'
@@ -20,8 +19,8 @@ function (_, $, Backbone, templateSrc) {
 		addressEl: null,
 		events: {
 			'keypress .address': 'updateAddress',
-			'click .connect': 'connect',
-			'click .close': 'closeMenu'
+			'click .connect':    'connect',
+			'click .back':       'goBack'
 		},
 		initialize: function (opts) {
 			var self = this;
@@ -40,13 +39,13 @@ function (_, $, Backbone, templateSrc) {
 			var address = this.addressEl.text();
 			com.ExecuteCmdText('connect ' + address);
 		},
-		closeMenu: function () {
-			ui.CloseActiveMenu();
-		},
 		render: function () {
 			this.$el.html(this.template(this.model));
 			this.addressEl = this.$el.find('.address .control-input');
 			return this;
+		},
+		goBack: function () {
+			ui.PopMenu();
 		}
 	});
 

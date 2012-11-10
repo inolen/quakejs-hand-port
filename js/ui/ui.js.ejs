@@ -4,32 +4,35 @@ define('ui/ui',
 	'jquery',
 	'backbone',
 	'text!ui/css/views.css',
+	'ui/views/ConnectView',
 	'ui/views/HudView',
 	'ui/views/ScoreboardView',
 	'ui/views/IngameMenu',
+	'ui/views/MainMenu',
 	'ui/views/SinglePlayerMenu',
 	'ui/views/MultiPlayerMenu',
 	'ui/views/SettingsMenu'
 ],
-function (_, $, Backbone, viewsCss, HudView, ScoreboardView, IngameMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu) {
+function (_, $, Backbone, viewsCss, ConnectView, HudView, ScoreboardView, IngameMenu, MainMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu) {
 	<%- include ui-defines.js %>
 
-	function UserInterface(sys, com, cl, r) {
+	function UserInterface(sys, com, cl) {
 		<%- include ../shared/shared.js %>
 		<%- include ui-main.js %>
 		<%- include ui-image.js %>
 		<%- include ui-input.js %>
 
 		return {
-			Init:            Init,
-			RegisterView:    RegisterView,
-			IsFullscreen:    IsFullscreen,
-			SetActiveMenu:   SetActiveMenu,
-			CloseActiveMenu: CloseActiveMenu,
-			KeyPressEvent:   KeyPressEvent,
-			MouseMoveEvent:  MouseMoveEvent,
-			RenderView:      RenderView,
-			Render:          Render
+			Init:           Init,
+			GetView:        GetView,
+			PeekMenu:       PeekMenu,
+			PushMenu:       PushMenu,
+			PopMenu:        PopMenu,
+			PopAllMenus:    PopAllMenus,
+			KeyPressEvent:  KeyPressEvent,
+			MouseMoveEvent: MouseMoveEvent,
+			RenderView:     RenderView,
+			Render:         Render
 		};
 	}
 

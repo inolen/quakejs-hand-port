@@ -1,15 +1,15 @@
-define('ui/views/LoadingView',
+define('ui/views/ConnectView',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/loading.tpl'
+	'text!ui/templates/connect.tpl'
 ],
 function (_, $, Backbone, templateSrc) {
 	var ui;
 
 	var HudView = Backbone.View.extend({
-		id: 'hud',
+		id: 'connect',
 		template: _.template(templateSrc),
 		model: {
 			loading: 'N/A'

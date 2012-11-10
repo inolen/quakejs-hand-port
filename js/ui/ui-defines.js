@@ -1,7 +1,7 @@
 var UILocals = function () {
 	this.frameCount    = 0;
 	this.views         = {};
-	this.activeMenu    = null;                             // active view
+	this.activeMenus   = [];                               // active view stack
 	this.hoverEls      = null;                             // currently hovered element
 	this.focusEl       = null;                             // currently focused element
 	this.mx            = 0;                                // mouse x

@@ -47,7 +47,7 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	cg_thirdPersonAngle = com.AddCvar('cg_thirdPersonAngle', 0);
 	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
 
-	cg_hud = ui.RegisterView('hud');
+	cg_hud = ui.GetView('hud');
 
 	RegisterCommands();
 	ParseServerinfo();

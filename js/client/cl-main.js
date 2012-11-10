@@ -32,12 +32,13 @@ function Init(sysinterface, cominterface) {
 		CMD_BACKUP:                  CMD_BACKUP,
 		Bind:                        CmdBind,
 		GetKeyNamesForCmd:           GetKeyNamesForCmd,
+		CaptureInput:                CaptureInput,
+		Disconnect:                  Disconnect,
 		GetGameState:                function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
 		GetUserCommand:              GetUserCommand,
 		GetCurrentSnapshotNumber:    GetCurrentSnapshotNumber,
-		GetSnapshot:                 GetSnapshot,
-		CaptureInput:                CaptureInput
+		GetSnapshot:                 GetSnapshot
 	};
 
 	sys = sysinterface;
@@ -208,8 +209,9 @@ function CheckForResend() {
 function UpdateScreen() {
 	switch (clc.state) {
 		case ConnectionState.DISCONNECTED:
-			if (!ui.IsFullscreen()) {
-				ui.SetActiveMenu('ingame');
+			// Don't push a menu if one already exists.
+			if (!ui.PeekMenu()) {
+				ui.PushMenu('main');
 			}
 			break;
 		case ConnectionState.CONNECTING:
@@ -217,6 +219,8 @@ function UpdateScreen() {
 		case ConnectionState.CONNECTED:
 		case ConnectionState.LOADING:
 		case ConnectionState.PRIMED:
+			ui.PopAllMenus();
+			ui.RenderView(ui.GetView('connect'));
 			break;
 		case ConnectionState.ACTIVE:
 			cg.Frame(cl.serverTime);
@@ -257,11 +261,9 @@ function MapLoading() {
 function Disconnect(showMainMenu) {
 	/*if (!com_cl_running || !com_cl_running->integer) {
 		return;
-	}
-
-	if (uivm && showMainMenu) {
-		VM_Call( uivm, UI_SET_ACTIVE_MENU, UIMENU_NONE );
 	}*/
+
+	ui.PushMenu('main');
 
 	// Send a disconnect message to the server.
 	// Send it a few times in case one is dropped.

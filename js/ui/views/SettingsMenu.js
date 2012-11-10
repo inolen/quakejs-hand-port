@@ -12,7 +12,6 @@ function (_, $, Backbone, templateSrc) {
 
 	var SettingsMenu = Backbone.View.extend({
 		id: 'settings',
-		className: 'menu',
 		template: _.template(templateSrc),
 		model: {
 			name: '',
@@ -36,7 +35,7 @@ function (_, $, Backbone, templateSrc) {
 			'keypress .right-key':   'updateRightKey',
 			'keypress .up-key':      'updateUpKey',
 			'blur .control-input':   'saveConfig',
-			'click .close':          'closeMenu'
+			'click .back' :          'goBack'
 		},
 		initialize: function (opts) {
 			com = opts.com;
@@ -116,8 +115,8 @@ function (_, $, Backbone, templateSrc) {
 				com.LoadConfig();
 			});
 		},
-		closeMenu: function () {
-			ui.CloseActiveMenu();
+		goBack: function () {
+			ui.PopMenu();
 		},
 		render: function () {
 			this.$el.html(this.template(this.model));

@@ -3,12 +3,14 @@ var $viewportUI;
 var $ptr;
 
 var map = {
-	'hud': HudView,
-	'scoreboard': ScoreboardView,
-	'ingame': IngameMenu,
+	'connect':      ConnectView,
+	'hud':          HudView,
+	'scoreboard':   ScoreboardView,
+	'ingame':       IngameMenu,
+	'main':         MainMenu,
 	'singleplayer': SinglePlayerMenu,
-	'multiplayer': MultiPlayerMenu,
-	'settings': SettingsMenu
+	'multiplayer':  MultiPlayerMenu,
+	'settings':     SettingsMenu
 };
 
 /**
@@ -44,31 +46,84 @@ function Init() {
 }
 
 /**
- * IsFullscreen
+ * PeekMenu
  */
-function IsFullscreen() {
-	return !!uil.activeMenu;
+function PeekMenu() {
+	return uil.activeMenus.length ? uil.activeMenus[uil.activeMenus.length-1] : null;
 }
 
 /**
- * SetActiveMenu
+ * PushMenu
  */
-function SetActiveMenu(name) {
-	$viewportUI.addClass('active');
-	uil.activeMenu = GetView(name);
-	cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
+function PushMenu(name) {
+	if (!uil.activeMenus.length) {
+		$viewportUI.addClass('active');
+		cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
+	}
+
+	uil.activeMenus.push(GetView(name));
 }
 
 /**
- * CloseActiveMenu
+ * PopMenu
  */
-function CloseActiveMenu() {
-	$viewportUI.removeClass('active');
-	uil.activeMenu = null;
-	cl.CaptureInput(null, null);
-
+function PopMenu() {
+	uil.activeMenus.pop();
+	
 	ClearHoverElements();
 	ClearFocusedElement();
+
+	if (!uil.activeMenus.length) {
+		$viewportUI.removeClass('active');
+		cl.CaptureInput(null, null);
+	}
+}
+
+/**
+ * PopAllMenus
+ */
+function PopAllMenus() {
+	while (uil.activeMenus.length) {
+		PopMenu();
+	}
+}
+
+/**
+ * GetView
+ */
+function GetView(name) {
+	var view = uil.views[name];
+
+	if (!view) {
+		view = RegisterView(name);
+	}
+
+	return view;
+}
+
+/**
+ * RegisterView
+ */
+function RegisterView(name) {
+	var view = uil.views[name] = new map[name]({
+		sys: sys,
+		com: com,
+		cl: cl,
+		ui: {
+			PushMenu:            PushMenu,
+			PopMenu:             PopMenu,
+			PopAllMenus:         PopAllMenus,
+			FindImage:           FindImage,
+			ProcessTextInput:    ProcessTextInput,
+			ProcessKeyBindInput: ProcessKeyBindInput
+		}
+	});
+
+	$viewportUI.append(view.$el);
+
+	HideView(view);
+
+	return view;
 }
 
 /**
@@ -107,9 +162,7 @@ function MouseMoveEvent(dx, dy) {
 	$ptr.css({ 'top': uil.my + 'px', 'left': uil.mx + 'px' });
 
 	// Simulate browser by adding/removing hover classes.
-	if (uil.activeMenu) {
-		UpdateHoverElements();
-	}
+	UpdateHoverElements();
 }
 
 /**
@@ -147,47 +200,11 @@ function GetAllElementsAtPoint(view, x, y) {
 }
 
 /**
- * RegisterView
- */
-function RegisterView(name) {
-	var view = uil.views[name] = new map[name]({
-		sys: sys,
-		com: com,
-		cl: cl,
-		ui: {
-			SetActiveMenu:       SetActiveMenu,
-			CloseActiveMenu:     CloseActiveMenu,
-			FindImage:           FindImage,
-			ProcessTextInput:    ProcessTextInput,
-			ProcessKeyBindInput: ProcessKeyBindInput
-		}
-	});
-
-	$viewportUI.append(view.$el);
-
-	HideView(view);
-
-	return view;
-}
-
-/**
- * GetView
- */
-function GetView(name) {
-	var view = uil.views[name];
-
-	if (!view) {
-		view = RegisterView(name);
-	}
-
-	return view;
-}
-
-/**
  * SetHoverElements
  */
 function UpdateHoverElements() {
-	var els = GetAllElementsAtPoint(uil.activeMenu, uil.mx, uil.my);
+	var activeMenu = PeekMenu();
+	var els = GetAllElementsAtPoint(activeMenu, uil.mx, uil.my);
 
 	// Trigger mouseleave events.
 	if (uil.hoverEls) {
@@ -264,8 +281,9 @@ function Render() {
 	var views = uil.views;
 
 	// Add active menu to render list.
-	if (uil.activeMenu) {
-		RenderView(uil.activeMenu);
+	var activeMenu = PeekMenu();
+	if (activeMenu) {
+		RenderView(activeMenu);
 	}
 
 	for (var name in views) {
@@ -297,6 +315,10 @@ function Render() {
  * RenderView
  */
 function RenderView(view) {
+	if (view instanceof String) {
+		view = RegisterView
+	}
+
 	// Update visFrame so the main render can show active views.
 	view.visFrame = uil.frameCount;
 }
