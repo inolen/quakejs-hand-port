@@ -32,7 +32,7 @@ function Vector4Copy(a, b) {
 	b[3] = a[3];
 }
 
-function GetPlaneSignbits(p) {
+function GetPlaneSignbits2(p) {
 	var bits = 0;
 
 	for (var i = 0; i < 3; i++) {
@@ -608,7 +608,7 @@ function FindPlane(pc, p1, p2, p3) {
 
 	var pp = new pplane_t();
 	Vector4Copy(plane, pp.plane);
-	pp.signbits = GetPlaneSignbits(plane);
+	pp.signbits = GetPlaneSignbits2(plane);
 	pc.planes.push(pp);
 
 	return index;
@@ -1081,7 +1081,7 @@ function FindPlane2(pc, plane, flipped) {
 
 	var pp = new pplane_t();
 	Vector4Copy(plane, pp.plane);
-	pp.signbits = GetPlaneSignbits(plane);
+	pp.signbits = GetPlaneSignbits2(plane);
 	pc.planes.push(pp);
 
 	flipped[0] = false;
