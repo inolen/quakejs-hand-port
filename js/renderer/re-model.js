@@ -345,7 +345,7 @@ function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	}
 	
 	var frontLerp = frac;
-	var backLerp = 1  - frac;
+	var backLerp = 1 - frac;
 
 	for (var i = 0; i < 3; i++) {
 		or.origin[i] = start.origin[i] * backLerp + end.origin[i] * frontLerp;

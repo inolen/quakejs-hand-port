@@ -164,11 +164,17 @@ function CullLocalBox(bounds) {
  * CullLocalPointAndRadius
  */
 function CullLocalPointAndRadius(pt, radius) {
-	var transformed = [0, 0, 0];
+	var or = re.or,
+		x = pt[0],
+		y = pt[1],
+		z = pt[2],
+		world = [0, 0, 0];
 
-	LocalPointToWorld(pt, transformed);
+	world[0] = x * or.axis[0][0] + y * or.axis[1][0] + z * or.axis[2][0] + or.origin[0];
+	world[1] = x * or.axis[0][1] + y * or.axis[1][1] + z * or.axis[2][1] + or.origin[1];
+	world[2] = x * or.axis[0][2] + y * or.axis[1][2] + z * or.axis[2][2] + or.origin[2];
 
-	return CullPointAndRadius(transformed, radius);
+	return CullPointAndRadius(world, radius);
 }
 
 /**
@@ -199,16 +205,6 @@ function CullPointAndRadius(pt, radius) {
 	}
 
 	return Cull.IN; // completely inside frustum
-}
-
-/**
- * LocalPointToWorld
- */
-function LocalPointToWorld (local, world) {
-	var or = re.or;
-	world[0] = local[0] * or.axis[0][0] + local[1] * or.axis[1][0] + local[2] * or.axis[2][0] + or.origin[0];
-	world[1] = local[0] * or.axis[0][1] + local[1] * or.axis[1][1] + local[2] * or.axis[2][1] + or.origin[1];
-	world[2] = local[0] * or.axis[0][2] + local[1] * or.axis[1][2] + local[2] * or.axis[2][2] + or.origin[2];
 }
 
 /**
@@ -299,9 +295,8 @@ function RotateForEntity(refent, or) {
 	// 	axisLength = 1.0f;
 	// }
 
-	or.viewOrigin[0] = vec3.dot(delta, or.axis[0]);// * axisLength;
-	or.viewOrigin[1] = vec3.dot(delta, or.axis[1]);// * axisLength;
-	or.viewOrigin[2] = vec3.dot(delta, or.axis[2]);// * axisLength;
+	vec3.set(delta, or.viewOrigin);
+	RotatePoint(delta, or.axis); // scale axis by axisLength
 }
 
 /**

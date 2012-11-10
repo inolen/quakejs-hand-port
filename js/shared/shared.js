@@ -242,6 +242,21 @@ var Orientation = function () {
 	this.modelMatrix = mat4.create();
 };
 
+Orientation.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new Orientation();
+	}
+
+	vec3.set(this.origin, to.origin);
+	vec3.set(this.axis[0], to.axis[0]);
+	vec3.set(this.axis[1], to.axis[1]);
+	vec3.set(this.axis[2], to.axis[2]);
+	vec3.set(this.viewOrigin, to.viewOrigin);
+	mat4.set(this.modelMatrix, to.modelMatrix);
+
+	return to;
+};
+
 /**********************************************************
  * EntityState is the information conveyed from the server
  * in an update message about entities that the client will
@@ -384,12 +399,23 @@ function AnglesToVectors(angles, forward, right, up) {
 	}
 }
 
-function AnglesToAxis(angles, axis) {
-	var right = [0, 0, 0];
+var AngleToShort = function (x) {
+	return (((x)*65536/360) & 65535);
+};
 
+var ShortToAngle = function (x) {
+	return ((x)*(360.0/65536));
+};
+
+/**********************************************************
+ * Axis
+ *
+ * TODO Perhaps we should be using mat3's instead.
+ **********************************************************/
+function AnglesToAxis(angles, axis) {
+	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
 	// angle vectors returns "right" instead of "y axis"
-	AnglesToVectors(angles, axis[0], right, axis[2]);
-	vec3.subtract([0, 0, 0], right, axis[1]);
+	vec3.negate(axis[1]);
 }
 
 function AxisClear(axis) {
@@ -420,13 +446,12 @@ function AxisMultiply(in1, in2, out) {
 	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
 }
 
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
-};
-
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
-};
+function RotatePoint(point, axis) {
+	var tvec = vec3.create(point);
+	point[0] = vec3.dot(axis[0], tvec);
+	point[1] = vec3.dot(axis[1], tvec);
+	point[2] = vec3.dot(axis[2], tvec);
+}
 
 /**********************************************************
  * Planes

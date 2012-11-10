@@ -262,21 +262,6 @@ RefEntity.prototype.clone = function (refent) {
 	return refent;
 };
 
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
 var ViewParms = function () {
 	this.or               = new Orientation();
 	// this.world            = new Orientation();

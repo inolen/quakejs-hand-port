@@ -1,16 +1,3 @@
-// TODO Clean up some of this with built in gl-matrix types.
-
-/**
- * RotatePoint
- */
-function RotatePoint(point, matrix) {
-	var tvec = vec3.create(point);
-
-	point[0] = vec3.dot(matrix[0], tvec);
-	point[1] = vec3.dot(matrix[1], tvec);
-	point[2] = vec3.dot(matrix[2], tvec);
-}
-
 /**
  * TransposeMatrix
  */
@@ -21,15 +8,6 @@ function TransposeMatrix(matrix, transpose) {
 		}
 	}
 }
-
-/**
- * CreateRotationMatrix
- */
-function CreateRotationMatrix(angles, matrix) {
-	AnglesToVectors(angles, matrix[0], matrix[1], matrix[2]);
-	vec3.negate(matrix[1]);
-}
-
 
 /*********************************************************************
  *
@@ -772,7 +750,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		//		 the bounding box or the bmodel because that would make all the brush
 		//		 bevels invalid.
 		//		 However this is correct for capsules since a capsule itself is rotated too.
-		CreateRotationMatrix(angles, matrix);
+		AnglesToAxis(angles, matrix);
 		RotatePoint(start_l, matrix);
 		RotatePoint(end_l, matrix);
 		// rotated sphere offset for capsule

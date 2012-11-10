@@ -355,9 +355,6 @@ function ConnectionlessPacket(msg) {
 			return;
 		}*/
 
-		// TODO Setup netchan here, make cl-cmd.js just send the connect request.
-		//Netchan_Setup(NS_CLIENT, &clc.netchan, from, Cvar_VariableValue("net_qport"), clc.challenge, qfalse);
-
 		log('Got connection response');
 		
 		clc.state = ConnectionState.CONNECTED;
