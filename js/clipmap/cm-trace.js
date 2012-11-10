@@ -334,27 +334,27 @@ function TraceThroughLeaf(tw, leaf) {
 	}
 
 	// Trace line against all patches in the leaf.
-	// for (i = 0 ; i < leaf.numLeafSurfaces; i++) {
-	// 	var patch = cm.surfaces[cm.leafSurfaces[leaf.firstLeafSurface + i]];
+	for (i = 0 ; i < leaf.numLeafSurfaces; i++) {
+		var patch = cm.surfaces[cm.leafSurfaces[leaf.firstLeafSurface + i]];
 
-	// 	if (!patch) {
-	// 		continue;
-	// 	}
+		if (!patch) {
+			continue;
+		}
 
-	// 	if (patch.checkcount === cm.checkcount) {
-	// 		continue;  // already checked this patch in another leaf
-	// 	}
-	// 	patch.checkcount = cm.checkcount;
+		if (patch.checkcount === cm.checkcount) {
+			continue;  // already checked this patch in another leaf
+		}
+		patch.checkcount = cm.checkcount;
 
-	// 	if (!(patch.contents & tw.contents)) {
-	// 		continue;
-	// 	}
+		if (!(patch.contents & tw.contents)) {
+			continue;
+		}
 
-	// 	TraceThroughPatch(tw, patch);
-	// 	if (!tw.trace.fraction) {
-	// 		return;
-	// 	}
-	// }
+		TraceThroughPatch(tw, patch);
+		if (!tw.trace.fraction) {
+			return;
+		}
+	}
 }
 
 /**
