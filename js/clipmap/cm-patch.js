@@ -12,6 +12,8 @@ var EN_RIGHT = 1;
 var EN_BOTTOM = 2;
 var EN_LEFT = 3;
 
+var debugPatchCollides = [];
+
 // /*
 // =================
 // CM_ClearLevelPatches
@@ -144,6 +146,8 @@ function GeneratePatchCollide(width, height, points) {
 	pc.bounds[1][0] += 1;
 	pc.bounds[1][1] += 1;
 	pc.bounds[1][2] += 1;
+
+	debugPatchCollides.push(pc);
 
 	return pc;
 }
@@ -435,8 +439,6 @@ function PatchCollideFromGrid(grid, pc) {
 	}
 
 	// Create the borders for each facet.
-	console.log('creating facets', grid.width, grid.height);
-
 	for (i = 0; i < grid.width - 1; i++) {
 		for (j = 0; j < grid.height - 1; j++) {
 			borders[EN_TOP] = -1;
@@ -505,7 +507,8 @@ function PatchCollideFromGrid(grid, pc) {
 				facet.borderNoAdjust[3] = noAdjust[EN_LEFT];
 				SetBorderInward(pc, facet, grid, gridPlanes, i, j, -1);
 				if (ValidateFacet(pc, facet)) {
-				// 	AddFacetBevels(facet);
+				 	AddFacetBevels(pc, facet);
+					pc.facets.push(facet);
 				}
 			} else {
 				// two seperate triangles
@@ -524,32 +527,33 @@ function PatchCollideFromGrid(grid, pc) {
 				}
 				SetBorderInward(pc, facet, grid, gridPlanes, i, j, 0);
 				if (ValidateFacet(pc, facet)) {
-				// 	AddFacetBevels(facet);
+				 	AddFacetBevels(pc, facet);
+					pc.facets.push(facet);
 				}
 
-				// if (pc.facets.length >= MAX_FACETS) {
-				// 	com.error(Err.DROP, 'MAX_FACETS');
-				// }
-				// facet = &facets[numFacets];
-				// Com_Memset( facet, 0, sizeof( *facet ) );
+				if (pc.facets.length >= MAX_FACETS) {
+					com.error(Err.DROP, 'MAX_FACETS');
+				}
 
-				// facet.surfacePlane = gridPlanes[i][j][1];
-				// facet.numBorders = 3;
-				// facet.borderPlanes[0] = borders[EN_BOTTOM];
-				// facet.borderNoAdjust[0] = noAdjust[EN_BOTTOM];
-				// facet.borderPlanes[1] = borders[EN_LEFT];
-				// facet.borderNoAdjust[1] = noAdjust[EN_LEFT];
-				// facet.borderPlanes[2] = gridPlanes[i][j][0];
-				// if (facet.borderPlanes[2] === -1) {
-				// 	facet.borderPlanes[2] = borders[EN_TOP];
-				// 	if ( facet.borderPlanes[2] === -1 ) {
-				// 		facet.borderPlanes[2] = EdgePlaneNum(pc, grid, gridPlanes, i, j, 5);
-				// 	}
-				// }
-				// SetBorderInward(pc, facet, grid, gridPlanes, i, j, 1);
-				// if (ValidateFacet(pc, facet)) {
-				// 	AddFacetBevels(facet);
-				// }
+				facet = facet = new pfacet_t();
+				facet.surfacePlane = gridPlanes[i][j][1];
+				facet.numBorders = 3;
+				facet.borderPlanes[0] = borders[EN_BOTTOM];
+				facet.borderNoAdjust[0] = noAdjust[EN_BOTTOM];
+				facet.borderPlanes[1] = borders[EN_LEFT];
+				facet.borderNoAdjust[1] = noAdjust[EN_LEFT];
+				facet.borderPlanes[2] = gridPlanes[i][j][0];
+				if (facet.borderPlanes[2] === -1) {
+					facet.borderPlanes[2] = borders[EN_TOP];
+					if ( facet.borderPlanes[2] === -1 ) {
+						facet.borderPlanes[2] = EdgePlaneNum(pc, grid, gridPlanes, i, j, 5);
+					}
+				}
+				SetBorderInward(pc, facet, grid, gridPlanes, i, j, 1);
+				if (ValidateFacet(pc, facet)) {
+					AddFacetBevels(pc, facet);
+					pc.facets.push(facet);
+				}
 			}
 		}
 	}
@@ -615,50 +619,57 @@ function FindPlane(pc, p1, p2, p3) {
  */
 function EdgePlaneNum(pc, grid, gridPlanes, i, j, k) {
 	var p1, p2;
-	var p;
+	var planeNum;
+	var pp;
 	var up = [0, 0, 0];
 
 	switch (k) {
 		case 0:  // top border
 			p1 = grid.points[i][j];
 			p2 = grid.points[i+1][j];
-			p = GridPlane(gridPlanes, i, j, 0);
-			vec3.add(p1, vec3.scale(pc.planes[p], 4, [0, 0, 0]), up);
+			planeNum = GridPlane(gridPlanes, i, j, 0);
+			pp = pc.planes[planeNum];
+			vec3.add(p1, vec3.scale(pp.plane, 4, [0, 0, 0]), up);
 			return FindPlane(pc, p1, p2, up);
 
 		case 2:  // bottom border
 			p1 = grid.points[i][j+1];
 			p2 = grid.points[i+1][j+1];
-			p = GridPlane(gridPlanes, i, j, 1);
-			vec3.add(p1, vec3.scale(pc.planes[p], 4, [0, 0, 0]), up);
+			planeNum = GridPlane(gridPlanes, i, j, 1);
+			pp = pc.planes[planeNum];
+			vec3.add(p1, vec3.scale(pp.plane, 4, [0, 0, 0]), up);
 			return FindPlane(pc, p2, p1, up);
 
 		case 3:  // left border
 			p1 = grid.points[i][j];
 			p2 = grid.points[i][j+1];
-			p = GridPlane(gridPlanes, i, j, 1);
-			vec3.add(p1, vec3.scale(pc.planes[p], 4, [0, 0, 0]), up);
+			planeNum = GridPlane(gridPlanes, i, j, 1);
+			pp = pc.planes[planeNum];
+			vec3.add(p1, vec3.scale(pp.plane, 4, [0, 0, 0]), up);
 			return FindPlane(pc, p2, p1, up);
 
 		case 1:  // right border
 			p1 = grid.points[i+1][j];
 			p2 = grid.points[i+1][j+1];
-			p = GridPlane(gridPlanes, i, j, 0);
-			vec3.add(p1, vec3.scale(pc.planes[p], 4, [0, 0, 0]), up);
+			planeNum = GridPlane(gridPlanes, i, j, 0);
+			pp = pc.planes[planeNum];
+			vec3.add(p1, vec3.scale(pp.plane, 4, [0, 0, 0]), up);
 			return FindPlane(pc, p1, p2, up);
 
 		case 4:  // diagonal out of triangle 0
 			p1 = grid.points[i+1][j+1];
 			p2 = grid.points[i][j];
-			p = GridPlane(gridPlanes, i, j, 0);
-			vec3.add(p1, vec3.scale(pc.planes[p], 4, [0, 0, 0]), up);
+			planeNum = GridPlane(gridPlanes, i, j, 0);
+			pp = pc.planes[planeNum];
+			vec3.add(p1, vec3.scale(pp.plane, 4, [0, 0, 0]), up);
 			return FindPlane(pc, p1, p2, up);
 
 		case 5:  // diagonal out of triangle 1
 			p1 = grid.points[i][j];
 			p2 = grid.points[i+1][j+1];
-			p = GridPlane(gridPlanes, i, j, 1);
-			vec3.add(p1, vec3.scale(pc.planes[p], 4, [0, 0, 0]), up);
+			planeNum = GridPlane(gridPlanes, i, j, 1);
+			pp = pc.planes[planeNum];
+			vec3.add(p1, vec3.scale(pp.plane, 4, [0, 0, 0]), up);
 			return FindPlane(pc, p1, p2, up);
 	}
 
@@ -755,8 +766,8 @@ function PointOnPlaneSide(pc, p, planeNum) {
 		return SIDE_ON;
 	}
 
-	var plane = pc.planes[planeNum];
-	var d = vec3.dot(p, plane) - plane[3];
+	var pp = pc.planes[planeNum];
+	var d = vec3.dot(p, pp.plane) - pp.plane[3];
 
 	if (d > PLANE_TRI_EPSILON) {
 		return SIDE_FRONT;
@@ -825,7 +836,7 @@ function ValidateFacet(pc, facet) {
 /**
  * AddFacetBevels
  */
-function AddFacetBevels(facet) {
+function AddFacetBevels(pc, facet) {
 	var i, j, k, l;
 	var axis, dir, order;
 	var flipped = [false];  // Lame, but we can't pass primitive by reference
@@ -836,7 +847,7 @@ function AddFacetBevels(facet) {
 	var vec = [0, 0, 0];
 	var vec2 = [0, 0, 0];
 
-	Vector4Copy(planes[facet.surfacePlane].plane, plane);
+	Vector4Copy(pc.planes[facet.surfacePlane].plane, plane);
 
 	var w = BaseWindingForPlane(plane, plane[3]);
 	for (j = 0; j < facet.numBorders; j++) {
@@ -844,12 +855,12 @@ function AddFacetBevels(facet) {
 			continue;
 		}
 
-		Vector4Copy(planes[facet.borderPlanes[j]].plane, plane );
+		Vector4Copy(pc.planes[facet.borderPlanes[j]].plane, plane );
 		if (!facet.borderInward[j]) {
-			vec3.substract([0, 0, 0], plane, plane );
+			vec3.subtract([0, 0, 0], plane, plane);
 			plane[3] = -plane[3];
 		}
-
+		
 		if (!ChopWindingInPlace(w, plane, plane[3], 0.1)) {
 			return;
 		}
@@ -863,8 +874,7 @@ function AddFacetBevels(facet) {
 	order = 0;
 	for (axis = 0; axis < 3; axis++) {
 		for (dir = -1; dir <= 1; dir += 2, order++) {
-			var planes = [0, 0, 0, 0];
-
+			plane[0] = plane[1] = plane[2] = 0;
 			plane[axis] = dir;
 
 			if (dir == 1) {
@@ -874,13 +884,13 @@ function AddFacetBevels(facet) {
 			}
 
 			// If it's the surface plane.
-			if (PlaneEqual(planes[facet.surfacePlane], plane, flipped)) {
+			if (PlaneEqual(pc.planes[facet.surfacePlane], plane, flipped)) {
 				continue;
 			}
 
 			// See if the plane is already present.
 			for (i = 0; i < facet.numBorders; i++) {
-				if (PlaneEqual(planes[facet.borderPlanes[i]], plane, flipped)) {
+				if (PlaneEqual(pc.planes[facet.borderPlanes[i]], plane, flipped)) {
 					break;
 				}
 			}
@@ -889,7 +899,8 @@ function AddFacetBevels(facet) {
 				if (facet.numBorders > 4 + 6 + 16) {
 					log('ERROR: too many bevels');
 				}
-				facet.borderPlanes[facet.numBorders] = FindPlane2(plane, flipped);
+
+				facet.borderPlanes[facet.numBorders] = FindPlane2(pc, plane, flipped);
 				facet.borderNoAdjust[facet.numBorders] = 0;
 				facet.borderInward[facet.numBorders] = flipped[0];
 				facet.numBorders++;
@@ -902,17 +913,15 @@ function AddFacetBevels(facet) {
 	//
 
 	// test the non-axial plane edges
-	for (j = 0 ; j < w.numpoints; j++) {
-		k = (j+1)%w.numpoints;
-		vec3.substract(w.p[j], w.p[k], vec);
+	for (j = 0 ; j < w.p.length; j++) {
+		k = (j+1)%w.p.length;
+		vec3.subtract(w.p[j], w.p[k], vec);
 
 		// if it's a degenerate edge
 		vec3.normalize(vec);
-
 		if (vec3.length(vec) < 0.5) {
 			continue;
 		}
-
 		SnapVector(vec);
 
 		for (k = 0; k < 3; k++) {
@@ -942,24 +951,24 @@ function AddFacetBevels(facet) {
 
 				// If all the points of the facet winding are
 				// behind this plane, it is a proper edge bevel
-				for (l = 0; l < w.numpoints; l++ ) {
+				for (l = 0; l < w.p.length; l++) {
 					var d = vec3.dot(w.p[l], plane) - plane[3];
 					if (d > 0.1) {
 						break;  // point in front
 					}
 				}
-				if (l < w.numpoints) {
+				if (l < w.p.length) {
 					continue;
 				}
 
 				// If it's the surface plane.
-				if (PlaneEqual(planes[facet.surfacePlane], plane, flipped)) {
+				if (PlaneEqual(pc.planes[facet.surfacePlane], plane, flipped)) {
 					continue;
 				}
 
 				// See if the plane is already present.
 				for (i = 0; i < facet.numBorders; i++) {
-					if (PlaneEqual(planes[facet.borderPlanes[i]], plane, flipped)) {
+					if (PlaneEqual(pc.planes[facet.borderPlanes[i]], plane, flipped)) {
 						break;
 					}
 				}
@@ -967,7 +976,7 @@ function AddFacetBevels(facet) {
 					if (facet.numBorders > 4 + 6 + 16) {
 						log('ERROR: too many bevels');
 					}
-					facet.borderPlanes[facet.numBorders] = FindPlane2(plane, flipped);
+					facet.borderPlanes[facet.numBorders] = FindPlane2(pc, plane, flipped);
 
 					for (k = 0; k < facet.numBorders; k++) {
 						if (facet.borderPlanes[facet.numBorders] == facet.borderPlanes[k]) {
@@ -976,12 +985,12 @@ function AddFacetBevels(facet) {
 					}
 
 					facet.borderNoAdjust[facet.numBorders] = 0;
-					facet.borderInward[facet.numBorders] = flipped;
+					facet.borderInward[facet.numBorders] = flipped[0];
 
 					//
 					var w2 = w.clone();
 
-					Vector4Copy(planes[facet.borderPlanes[facet.numBorders]].plane, newplane);
+					Vector4Copy(pc.planes[facet.borderPlanes[facet.numBorders]].plane, newplane);
 					if (!facet.borderInward[facet.numBorders]) {
 						vec3.negate(newplane);
 						newplane[3] = -newplane[3];
@@ -1011,10 +1020,10 @@ function AddFacetBevels(facet) {
  * PlaneEqual
  */
 function PlaneEqual(pp, plane, flipped) {
-	if (Math.abs(p.plane[0] - plane[0]) < NORMAL_EPSILON &&
-		Math.abs(p.plane[1] - plane[1]) < NORMAL_EPSILON &&
-		Math.abs(p.plane[2] - plane[2]) < NORMAL_EPSILON &&
-		Math.abs(p.plane[3] - plane[3]) < DIST_EPSILON) {
+	if (Math.abs(pp.plane[0] - plane[0]) < NORMAL_EPSILON &&
+		Math.abs(pp.plane[1] - plane[1]) < NORMAL_EPSILON &&
+		Math.abs(pp.plane[2] - plane[2]) < NORMAL_EPSILON &&
+		Math.abs(pp.plane[3] - plane[3]) < DIST_EPSILON) {
 		flipped[0] = false;
 		return true;
 	}
@@ -1023,10 +1032,10 @@ function PlaneEqual(pp, plane, flipped) {
 	vec3.negate(plane, invplane);
 	invplane[3] = -plane[3];
 
-	if (Math.abs(p.plane[0] - invplane[0]) < NORMAL_EPSILON &&
-		Math.abs(p.plane[1] - invplane[1]) < NORMAL_EPSILON &&
-		Math.abs(p.plane[2] - invplane[2]) < NORMAL_EPSILON &&
-		Math.abs(p.plane[3] - invplane[3]) < DIST_EPSILON) {
+	if (Math.abs(pp.plane[0] - invplane[0]) < NORMAL_EPSILON &&
+		Math.abs(pp.plane[1] - invplane[1]) < NORMAL_EPSILON &&
+		Math.abs(pp.plane[2] - invplane[2]) < NORMAL_EPSILON &&
+		Math.abs(pp.plane[3] - invplane[3]) < DIST_EPSILON) {
 		flipped[0] = true;
 		return true;
 	}
@@ -1097,6 +1106,8 @@ function TraceThroughPatchCollide(tw, pc) {
 	var startp = [0, 0, 0];
 	var endp = [0, 0, 0];
 
+	debugPatchCollide = pc;
+
 	if (!BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1])) {
 		return;
 	}
@@ -1116,7 +1127,7 @@ function TraceThroughPatchCollide(tw, pc) {
 		hitnum = -1;
 
 		//
-		planes = pc.planes[facet.surfacePlane];
+		pp = pc.planes[facet.surfacePlane];
 		vec3.set(pp.plane, plane);
 		plane[3] = pp.plane[3];
 		if (tw.sphere.use) {
@@ -1200,7 +1211,11 @@ function TraceThroughPatchCollide(tw, pc) {
 					cw.enterFrac = 0;
 				}
 
+				//console.log('foobar', debugPatchCollides.indexOf(pc));
+
 				tw.trace.fraction = cw.enterFrac;
+				// TODO Should trace's plane not always default to null?
+				tw.trace.plane = new Plane();
 				vec3.set(bestplane, tw.trace.plane.normal);
 				tw.trace.plane.dist = bestplane[3];
 			}
@@ -1456,3 +1471,92 @@ function CheckFacetPlane(plane, start, end, cw) {
 // 	}
 // 	return qfalse;
 // }
+
+// TODO Call this once and build a static buffer
+function AddCollisionSurfaces(tessFn) {
+	var plane = [0, 0, 0, 0];
+	var mins = [-15, -15, -28];
+	var maxs = [15, 15, 28];
+	var v1 = [0, 0, 0];
+	var v2 = [0, 0, 0];
+	var debugSize = 2;
+
+	for (var pcnum = 0; pcnum < debugPatchCollides.length; pcnum++) {
+		var pc = debugPatchCollides[pcnum];
+
+		for (var i = 0; i < 1/*pc.facets.length*/; i++) {
+			var facet = pc.facets[i];
+
+			for (var k = 0; k < facet.numBorders + 1; k++) {
+				var planenum, inward;
+				if (k < facet.numBorders) {
+					planenum = facet.borderPlanes[k];
+					inward = facet.borderInward[k];
+				} else {
+					planenum = facet.surfacePlane;
+					inward = false;
+				}
+
+				Vector4Copy(pc.planes[planenum].plane, plane);
+				if (inward) {
+					vec3.subtract([0, 0, 0], plane, plane);
+					plane[3] = -plane[3];
+				}
+				plane[3] += debugSize;
+
+				for (n = 0; n < 3; n++) {
+					if (plane[n] > 0) {
+						v1[n] = maxs[n];
+					} else {
+						v1[n] = mins[n];
+					}
+				}
+				vec3.negate(plane, v2);
+				plane[3] += Math.abs(vec3.dot(v1, v2));
+
+				var w = BaseWindingForPlane(plane, plane[3]);
+
+				for (var j = 0; j < facet.numBorders + 1; j++) {
+					var curplanenum, curinward;
+					if (j < facet.numBorders) {
+						curplanenum = facet.borderPlanes[j];
+						curinward = facet.borderInward[j];
+					} else {
+						curplanenum = facet.surfacePlane;
+						curinward = false;
+					}
+
+					if (curplanenum === planenum) {
+						continue;
+					}
+
+					Vector4Copy(pc.planes[curplanenum].plane, plane);
+					if (!curinward) {
+						vec3.subtract([0, 0, 0], plane, plane);
+						plane[3] = -plane[3];
+					}
+					plane[3] -= debugSize;
+
+					for (var n = 0; n < 3; n++) {
+						if (plane[n] > 0) {
+							v1[n] = maxs[n];
+						} else {
+							v1[n] = mins[n];
+						}
+					}
+					vec3.negate(plane, v2);
+					plane[3] -= Math.abs(vec3.dot(v1, v2));
+
+					if (!ChopWindingInPlace(w, plane, plane[3], 0.1)) {
+						//log('winding chopped away by border planes', j, facet.numBorders + 1);
+						break;
+					}
+				}
+
+				if (j === facet.numBorders + 1) {
+					tessFn(w.p);
+				}
+			}
+		}
+	}
+}

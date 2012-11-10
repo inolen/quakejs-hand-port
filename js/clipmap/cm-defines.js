@@ -62,13 +62,7 @@ var cbrush_t = function () {
  * Polylib
  **********************************************************/
 var winding_t = function () {
-	this.numpoints = 0;
-	this.p = [
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
+	this.p = [];
 };
 
 winding_t.prototype.clone = function (to) {
@@ -76,11 +70,10 @@ winding_t.prototype.clone = function (to) {
 		to = new winding_t();
 	}
 
-	to.numpoints = this.numpoints;
-	vec3.set(this.p[0], to.p[0]);
-	vec3.set(this.p[1], to.p[1]);
-	vec3.set(this.p[2], to.p[2]);
-	vec3.set(this.p[3], to.p[3]);
+	to.p = new Array(this.p.length);
+	for (var i = 0; i < this.p.length; i++) {
+		to.p[i] = vec3.create(this.p[i]);
+	}
 
 	return to;
 };

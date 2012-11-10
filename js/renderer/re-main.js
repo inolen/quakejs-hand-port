@@ -1,5 +1,6 @@
 var sys;
 var com;
+var cl;
 
 var re;
 var backend;
@@ -35,11 +36,12 @@ function log() {
 /**
  * Init
  */
-function Init(sysinterface, cominterface) {
+function Init(sysinterface, cominterface, clinterface) {
 	log('Initializing');
 
 	sys = sysinterface;
 	com = cominterface;
+	cl = clinterface;
 	
 	re      = new RenderLocals();
 	backend = new BackendLocals();
@@ -454,6 +456,7 @@ function RenderView(parms) {
 	SortDrawSurfaces();
 
 	RenderDrawSurfaces();
+	//RenderDebugSurfaces();
 }
 
 /**

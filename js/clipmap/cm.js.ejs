@@ -17,12 +17,13 @@ function (_, glmatrix, ByteBuffer) {
 		<%- include cm-trace.js %>
 
 		return {
-			LoadMap: LoadMap,
-			EntityDefs: function () { return cm.entities; },
-			InlineModel: InlineModel,
-			ModelBounds: ModelBounds,
-			BoxTrace: BoxTrace,
-			TransformedBoxTrace: TransformedBoxTrace
+			LoadMap:              LoadMap,
+			EntityDefs:           function () { return cm.entities; },
+			InlineModel:          InlineModel,
+			ModelBounds:          ModelBounds,
+			BoxTrace:             BoxTrace,
+			TransformedBoxTrace:  TransformedBoxTrace,
+			AddCollisionSurfaces: AddCollisionSurfaces
 		};
 	}
 

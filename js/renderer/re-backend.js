@@ -113,6 +113,45 @@ function RenderDrawSurfaces() {
 	}
 }
 
+function RenderDebugSurfaces() {
+	backend.currentEntity = null;
+	backend.viewParms.or.clone(backend.or);
+
+	gl.enable(gl.CULL_FACE);
+	gl.cullFace(gl.FRONT);
+
+	gl.depthMask(true);
+	gl.depthRange(0, 0); // never occluded
+
+	// Build up new index/vertex buffer.
+	var bindex = backend.debugBuffers.index;
+	var bxyz = backend.debugBuffers.xyz;
+
+	ResetBuffer(bindex);
+	ResetBuffer(bxyz);
+	
+	var tessFn = function (pts) {
+		for (var i = 0; i < pts.length; i++) {
+			var pt = pts[i];
+			WriteBufferElement(bxyz, pt[0], pt[1], pt[2]);
+			WriteBufferElement(bindex, bindex.elementCount);
+		}
+	};
+
+	//cl.AddCollisionSurfaces(tessFn);
+
+	// Render!
+	var shader = re.debugShader;
+	var stage = shader.stages[0];
+	BindBuffer(bindex);
+	SetShaderStage(shader, stage);
+	BindBuffer(bxyz, stage.program.attrib.xyz);
+	gl.drawElements(gl.LINE_LOOP, bindex.elementCount, gl.UNSIGNED_SHORT, 0);
+
+	// Back to default.
+	gl.depthRange(0, 1);
+}
+
 /**
  * BeginSurface
  */

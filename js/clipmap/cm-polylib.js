@@ -45,19 +45,17 @@ function BaseWindingForPlane (normal, dist) {
 	// Project a really big	axis aligned box onto the plane.
 	var w = new winding_t();
 	
-	vec3.subtract(org, vright, w.p[0]);
+	w.p[0] = vec3.subtract(org, vright, [0,0,0]);
 	vec3.add(w.p[0], vup, w.p[0]);
 	
-	vec3.add(org, vright, w.p[1]);
+	w.p[1] = vec3.add(org, vright, [0, 0, 0]);
 	vec3.add(w.p[1], vup, w.p[1]);
 	
-	vec3.add(org, vright, w.p[2]);
+	w.p[2] = vec3.add(org, vright, [0, 0, 0]);
 	vec3.subtract(w.p[2], vup, w.p[2]);
 	
-	vec3.subtract(org, vright, w.p[3]);
+	w.p[3] = vec3.subtract(org, vright, [0, 0, 0]);
 	vec3.subtract(w.p[3], vup, w.p[3]);
-	
-	w.numpoints = 4;
 	
 	return w;
 }
@@ -71,13 +69,15 @@ function WindingBounds (w, mins, maxs) {
 	mins[0] = mins[1] = mins[2] = MAX_MAP_BOUNDS;
 	maxs[0] = maxs[1] = maxs[2] = -MAX_MAP_BOUNDS;
 
-	for (var i = 0; i < w.numpoints; i++) {
+	for (var i = 0; i < w.p.length; i++) {
 		for (var j = 0; j < 3; j++) {
 			v = w.p[i][j];
 
 			if (v < mins[j]) {
 				mins[j] = v;
-			} else if (v > maxs[j]) {
+			}
+
+			if (v > maxs[j]) {
 				maxs[j] = v;
 			}
 		}
@@ -98,7 +98,7 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 	var orig = inout.clone();
 
 	// Determine sides for each point.
-	for (i = 0; i < orig.numpoints; i++) {
+	for (i = 0; i < orig.p.length; i++) {
 		dot = dists[i] = vec3.dot(orig.p[i], normal) - dist;
 
 		if (dot > epsilon) {
@@ -114,28 +114,28 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 	sides[i] = sides[0];
 	dists[i] = dists[0];
 	
-	if (!counts[0]) {
+	if (!counts[SIDE_FRONT]) {
 		return false;
 	}
-	if (!counts[1]) {
+	if (!counts[SIDE_BACK]) {
 		return true;  // inout stays the same
 	}
 
-	var maxpts = inout.numpoints = orig.numpoints + 4;  // cant use counts[0]+2 because
-	                                                    // of fp grouping errors
+	// Reset inout points.
+	var f = new winding_t();
+	var maxpts = orig.p.length + 4;  // cant use counts[0]+2 because
+	                                 // of fp grouping errors
 		
-	for (i = 0; i < orig.numpoints; i++) {
+	for (i = 0; i < orig.p.length; i++) {
 		p1 = orig.p[i];
 		
 		if (sides[i] === SIDE_ON) {
-			vec3.set(p1, inout.p[inout.numpoints]);
-			inout.numpoints++;
+			f.p.push(vec3.create(p1));
 			continue;
 		}
 	
 		if (sides[i] === SIDE_FRONT) {
-			vec3.set(p1, inou.p[inout.numpoints]);
-			inout.numpoints++;
+			f.p.push(vec3.create(p1));
 		}
 
 		if (sides[i+1] === SIDE_ON || sides[i+1] === sides[i]) {
@@ -143,7 +143,7 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 		}
 
 		// Generate a split point.
-		p2 = orig.p[(i+1) % orig.numpoints];
+		p2 = orig.p[(i+1) % orig.p.length];
 		dot = dists[i] / (dists[i]-dists[i+1]);
 
 		for (var j = 0; j < 3; j++) {
@@ -157,17 +157,18 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 			}
 		}
 			
-		vec3.set(mid, inout.p[inout.numpoints]);
-		inout.numpoints++;
+		f.p.push(vec3.create(mid));
 	}
-	
-	if (inout.numpoints > maxpts) {
+
+	if (f.p.length > maxpts) {
 		com.error(Err.DROP, 'ClipWinding: points exceeded estimate');
 	}
 
-	if (inout.numpoints > MAX_POINTS_ON_WINDING) {
+	if (f.p.length > MAX_POINTS_ON_WINDING) {
 		com.error(Err.DROP, 'ClipWinding: MAX_POINTS_ON_WINDING');
 	}
+
+	f.clone(inout);
 
 	return true;
 }
