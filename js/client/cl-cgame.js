@@ -59,7 +59,7 @@ function AdjustTimeDelta() {
 		}
 	} else if (deltaDelta > 100) {
 		// fast adjust, cut the difference in half
-		cl.serverTimeDelta = (cl.serverTimeDelta + newDelta) >> 1;
+		cl.serverTimeDelta = (cl.serverTimeDelta + newDelta) / 2;
 		if (cl_showTimeDelta()) {
 			log('AdjustTimeDelta: <FAST>');
 		}
