@@ -14,8 +14,12 @@ function (_, $, Backbone, templateSrc) {
 		id: 'singleplayer',
 		className: 'menu',
 		model: {
-			defaultImg: null,
-			levels: []
+			previewLevel: 0,
+			levels: [
+				{ name: 'q3dm7' },
+				{ name: 'q3dm17' },
+				{ name: 'q3tourney2' }
+			]
 		},
 		template: _.template(templateSrc),
 		events: {
@@ -25,47 +29,43 @@ function (_, $, Backbone, templateSrc) {
 
 		},
 		initialize: function (opts) {
-			var self = this;
-
 			sys = opts.sys;
 			com = opts.com;
 			ui = opts.ui;
 
-			var levels = [ 'q3dm7', 'q3dm17', 'q3tourney2' ];
-			var done = 0;
+			// Render first.
+			this.render();
+
+			// Then async load levelshots.
+			var self = this;
 
 			var loadLevelshot = function (i) {
-				var levelName = levels[i];
-				var filename = 'levelshots/' + levelName;
+				var $preview = self.$el.find('.preview img');
+				var level = self.model.levels[i];
 
-				ui.FindImage(filename, function (err, img) {
-					if (!self.model.defaultImg) {
-						self.model.defaultImg = img.data;
-					}
+				ui.FindImage('levelshots/' + level.name, function (err, img) {
+					level.url = img.data;
 
-					self.model.levels[i] = {
-						name: levelName,
-						url: img.data
-					};
-
-					if (++done === levels.length) {
-						self.render();
+					// If this is the image for the current level preview,
+					// update the image.
+					if (self.model.previewLevel === i) {
+						$preview.attr('src', level.url);
 					}
 				});
 			};
 
-			for (var i = 0; i < levels.length; i++) {
+			for (var i = 0; i < this.model.levels.length; i++) {
 				loadLevelshot(i);
 			}
 		},
 		levelPreview: function (ev) {
 			var $li = $(ev.target);
-			var $preview = this.$el.find('.preview');
+			var $preview = this.$el.find('.preview img');
 
-			var idx = $li.data('idx');
-			var level = this.model.levels[idx];
+			previewLevel = $li.data('idx');
+			var level = this.model.levels[previewLevel];
 
-			$preview.html($('<img>', { src: level.url }));
+			$preview.attr('src', level.url);
 		},
 		levelSelect: function (ev) {
 			var $li = $(ev.target);

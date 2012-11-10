@@ -208,6 +208,10 @@ function CheckForResend() {
 function UpdateScreen() {
 	switch (clc.state) {
 		case ConnectionState.DISCONNECTED:
+			if (!ui.IsFullscreen()) {
+				ui.SetActiveMenu('ingame');
+			}
+			break;
 		case ConnectionState.CONNECTING:
 		case ConnectionState.CHALLENGING:
 		case ConnectionState.CONNECTED:

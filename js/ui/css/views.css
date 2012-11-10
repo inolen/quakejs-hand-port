@@ -73,9 +73,9 @@
 }
 
 /**
- * Menus
+ * Dialogs
  */
-.menu {
+.dialog {
 	position: relative;
 	width: 40%;
 	margin: 10em auto 0;
@@ -87,7 +87,12 @@
 	overflow: hidden;
 }
 
-.menu .close {
+.dialog.dialog-abscenter {
+	position: absolute;
+	margin: 0;
+}
+
+.dialog .close {
 	position: absolute;
 	width: 1.4em;
 	height: 1.4em;
@@ -98,31 +103,31 @@
 	text-align: center;
 }
 
-.menu .close.hover {
+.dialog .close.hover {
 	color: #bfbfbf;
 }
 
-.menu h1 {
+.dialog h1 {
 	font-size: 1.2em;
 	padding-bottom: .2em;
 	border-bottom: 1px solid #222;
 }
 
-.menu .menu-item {
+.dialog .menu-item {
 	margin-bottom: .5em;
 	padding: .5em;
 	background: #222;
 }
 
-.menu .menu-item.hover {
+.dialog .menu-item.hover {
 	background: #333;
 }
 
-.menu .control-group {
+.dialog .control-group {
 	margin-bottom: .5em;
 }
 
-.menu .control-label {
+.dialog .control-label {
 	float: left;
 	padding: .5em 0;
 	width: 10em;
@@ -130,22 +135,22 @@
 	text-align: right
 }
 
-.menu .control-input {
+.dialog .control-input {
 	margin-left: 11em;
 	padding: .5em;
 	background: #222;
 	border: 1px solid transparent;
 }
 
-.menu .control-input.hover {
+.dialog .control-input.hover {
 	background: #333;
 }
 
-.menu .control-input.focus {
+.dialog .control-input.focus {
 	border: 1px solid #0f0;
 }
 
-.menu .button {
+.dialog .button {
 	float: left;
 	margin-bottom: .5em;
 	padding: .5em;
@@ -156,11 +161,11 @@
 	background-image: linear-gradient(to bottom, #303030, #222);
 }
 
-.menu .button.hover {
+.dialog .button.hover {
 	background: #333;
 }
 
-.menu .form-horizontal .form-actions {
+.dialog .form-horizontal .form-actions {
 	margin-left: 11em;
 }
 

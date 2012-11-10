@@ -72,18 +72,17 @@ var ClientStatic = function () {
 };
 
 var ConnectionState = {
-	UNINITIALIZED: 0,
-	DISCONNECTED:  1,                                      // not talking to a server
-	CONNECTING:    2,                                      // sending request packets to the server
-	CHALLENGING:   3,                                      // sending challenge packets to the server
-	CONNECTED:     4,                                      // netchan_t established, getting gamestate
-	LOADING:       5,                                      // only during cgame initialization, never during main loop
-	PRIMED:        6,                                      // got gamestate, waiting for first frame
-	ACTIVE:        7                                       // game views should be displayed
+	DISCONNECTED:  0,                                      // not talking to a server
+	CONNECTING:    1,                                      // sending request packets to the server
+	CHALLENGING:   2,                                      // sending challenge packets to the server
+	CONNECTED:     3,                                      // netchan_t established, getting gamestate
+	LOADING:       4,                                      // only during cgame initialization, never during main loop
+	PRIMED:        5,                                      // got gamestate, waiting for first frame
+	ACTIVE:        6                                       // game views should be displayed
 };
 
 var ClientConnection = function () {
-	this.state                     = ConnectionState.UNINITIALIZED;
+	this.state                     = ConnectionState.DISCONNECTED;
 	this.clientNum                 = -1;
 	this.lastPacketSentTime        = 0;                    // for retransmits during connection
 	this.lastPacketTime            = 0;                    // for timeouts

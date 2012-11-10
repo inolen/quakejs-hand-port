@@ -44,6 +44,34 @@ function Init() {
 }
 
 /**
+ * IsFullscreen
+ */
+function IsFullscreen() {
+	return !!uil.activeMenu;
+}
+
+/**
+ * SetActiveMenu
+ */
+function SetActiveMenu(name) {
+	$viewportUI.addClass('active');
+	uil.activeMenu = GetView(name);
+	cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
+}
+
+/**
+ * CloseActiveMenu
+ */
+function CloseActiveMenu() {
+	$viewportUI.removeClass('active');
+	uil.activeMenu = null;
+	cl.CaptureInput(null, null);
+
+	ClearHoverElements();
+	ClearFocusedElement();
+}
+
+/**
  * KeyPressEvent
  */
 function KeyPressEvent(keyName) {
@@ -156,27 +184,6 @@ function GetView(name) {
 }
 
 /**
- * SetActiveMenu
- */
-function SetActiveMenu(name) {
-	$viewportUI.addClass('active');
-	uil.activeMenu = GetView(name);
-	cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
-}
-
-/**
- * CloseActiveMenu
- */
-function CloseActiveMenu() {
-	$viewportUI.removeClass('active');
-	uil.activeMenu = null;
-	cl.CaptureInput(null, null);
-
-	ClearHoverElements();
-	ClearFocusedElement();
-}
-
-/**
  * SetHoverElements
  */
 function UpdateHoverElements() {
@@ -278,6 +285,7 @@ function Render() {
 		// most up to date font sizes as it may have not been visible on
 		// the last resize.
 		if (ShowView(view)) {
+			UpdateCenteredDialog(view);
 			UpdateFontSize(view);
 		}
 	}
@@ -328,13 +336,41 @@ function ScaleUI() {
 	uil.vw = $viewportUI.width();
 	uil.vh = $viewportUI.height();
 
-	UpdateAllFontSizes();
+	UpdateCenteredDialogs();
+	UpdateFontSizes();
 }
 
 /**
- * UpdateAllFontSizes
+ * UpdateCenteredDialogs
  */
-function UpdateAllFontSizes() {
+function UpdateCenteredDialogs() {
+	var views = uil.views;
+
+	for (var name in views) {
+		if (!views.hasOwnProperty(name)) {
+			continue;
+		}
+
+		UpdateCenteredDialog(views[name]);
+	}
+}
+
+/**
+ * UpdateCenteredDialog
+ */
+function UpdateCenteredDialog(view) {
+	var $centered = view.$el.find('.dialog-abscenter');
+
+	$centered.css({
+		top: uil.vh / 2 - $centered.outerHeight() / 2,
+		left: uil.vw / 2 - $centered.outerWidth() / 2
+	});
+}
+
+/**
+ * UpdateFontSizes
+ */
+function UpdateFontSizes() {
 	var views = uil.views;
 
 	for (var name in views) {
