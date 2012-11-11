@@ -54,7 +54,7 @@ function KeyDownEvent(time, keyName) {
 		return;
 	}
 
-	if (keyName === 'graveaccent' && clc.state == ConnectionState.ACTIVE) {
+	if (keyName === '`' && clc.state == ConnectionState.ACTIVE) {
 		if (!cls.keyCallback) {
 			ui.PushMenu('ingame');
 		} else {
