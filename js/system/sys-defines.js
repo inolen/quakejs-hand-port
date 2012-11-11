@@ -13,7 +13,6 @@ var KbLocals = {
 			27: 'escape',
 			27: 'esc',
 			32: 'space',
-			32: 'spacebar',
 			33: 'pageup',
 			34: 'pagedown',
 			35: 'end',

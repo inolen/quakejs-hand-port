@@ -94,7 +94,7 @@ function MouseDownEvent(ev) {
 function MouseUpEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
-	com.QueueEvent({ type: com.EventTypes.KEY, pressed: true, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEY, pressed: false, keyName: keyName });
 }
 
 /**
