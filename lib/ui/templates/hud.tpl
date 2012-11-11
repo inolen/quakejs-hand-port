@@ -3,7 +3,7 @@
 </div>
 <div class="count-wrapper">
 	<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>
-	<div><span class="count-label">Vertexes:</span> <span class="count-vertexes">THE FUCK</span></div>
+	<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>
 	<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>
 	<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>
 	<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>
@@ -12,8 +12,9 @@
 </div>
 <div class="weapons-wrapper">
 	<ul class="weapons">
-		<% _.each(weapons, function (weapon, i) { %>
-			<li><img src="<%= weapon.icon.data %>" /></li>
-		<% }); %>
+		<% for (var i = 0; i < weapons.length; i++) { %>
+			<% if (!weapons[i]) continue; %>
+			<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>
+		<% } %>
 	</ul>
 </div>
