@@ -226,7 +226,20 @@
  * Connect view
  */
 #connect .background {
-	background: #0000ff;
+	background: #222;
+}
+
+#connect .background .loading {
+	/* TODO change pixel values to relative values */
+	display: block;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 40%;
+	height: 400px;
+	margin: -200px 0 0 -20%;
+	text-align: center;
+	line-height: 400px;
 }
 
 /**
