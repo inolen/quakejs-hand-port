@@ -76,7 +76,13 @@ function MouseDownEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
 	if (!document.pointerLockElement && ev.button === 0) {
+		// Request the pointer lock.
 		viewportFrame.requestPointerLock();
+
+		// Enforce focus so we can capture keyboard input.
+		viewportFrame.setAttribute('tabindex', '0');
+		viewportFrame.focus();
+		ev.preventDefault();
 	}
 
 	com.QueueEvent({ type: com.EventTypes.KEY, pressed: true, keyName: keyName });
