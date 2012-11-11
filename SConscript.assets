@@ -3,7 +3,7 @@ import os, fnmatch
 env = Environment()
 Import('rglob')
 
-ASSET_DIR = './baseq3/'
+ASSET_DIR = 'public/baseq3/'
 
 #
 # Dxt builder

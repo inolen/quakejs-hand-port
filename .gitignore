@@ -1,6 +1,6 @@
 .scon*
 /node_modules
-/baseq3/*
-!/baseq3/programs
-/demoq3
-/build/tmp
+/public/baseq3/*
+!/public/baseq3/programs
+/public/demoq3
+/bin/tmp

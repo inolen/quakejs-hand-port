@@ -1,7 +1,7 @@
 import os, fnmatch
 
-SRC_DIR = 'js/'
-BUILD_DIR = 'build/'
+SRC_DIR = 'lib/'
+BUILD_DIR = 'bin/'
 BUILD_SRC_DIR = BUILD_DIR + 'tmp/'
 
 VariantDir(BUILD_SRC_DIR, SRC_DIR)
@@ -22,7 +22,7 @@ ExpandIncludes = Builder(
 	src_suffix = '.js.ejs')
 env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
 
-RequireOpt = Builder(action = 'node js/vendor/r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
+RequireOpt = Builder(action = 'node $BASE_DIR/vendor/r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
 env['BUILDERS']['RequireOpt'] = RequireOpt
 
 #

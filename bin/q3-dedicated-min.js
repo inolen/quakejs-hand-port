@@ -15381,9 +15381,9 @@ function Init(sysinterface, cominterface, isdedicated) {
 	RegisterCommands();
 
 	// For dev purposes, simulate command line input.
-	setTimeout(function () {
-		CmdLoadMap('q3dm17');
-	}, 50);
+	// setTimeout(function () {
+	// 	CmdLoadMap('q3dm17');
+	// }, 50);
 }
 
 /**
