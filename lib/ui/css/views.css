@@ -242,6 +242,15 @@
 	right: 1em;
 }
 
+#hud .weapons {
+	position: absolute;
+	bottom: 1em;
+	left: 1em;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
 #hud .count-wrapper {
 	position: absolute;
 	bottom: 1em;
