@@ -22,6 +22,12 @@
 			<div class="up-key control-group">
 				<div class="control-label">Jump:</div><div class="control-input"><%- upKey %></div>
 			</div>
+			<div class="weapprev-key control-group">
+				<div class="control-label">Previous weapon:</div><div class="control-input"><%- weapprevKey %></div>
+			</div>
+			<div class="weapnext-key control-group">
+				<div class="control-label">Next weapon:</div><div class="control-input"><%- weapnextKey %></div>
+			</div>
 		</div>
 
 		<div class="footer">

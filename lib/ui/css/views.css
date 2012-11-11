@@ -114,6 +114,8 @@
 	margin-left: 11em;
 	padding: .5em;
 	background: #222;
+	/* Empty fields */
+	min-height: 1em;
 	border: 1px solid transparent;
 }
 
