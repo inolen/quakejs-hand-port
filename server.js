@@ -12,7 +12,9 @@ function main() {
 			return /json|text|javascript|octet-stream/.test(res.getHeader('Content-Type'));
 		}
 	}));
-	app.use(express.static(__dirname, { maxAge: 86400000 }));
+	app.use(express.static(__dirname + '/public', { maxAge: 86400000 }));
+	app.use('/lib', express.static(__dirname + '/lib'));
+	app.use('/bin', express.static(__dirname + '/bin'));
 
 	// Our build process will pre-process these .ejs views,
 	// but if they don't exist we need to build them at runtime.

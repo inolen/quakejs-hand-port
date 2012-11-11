@@ -2,7 +2,7 @@ var requirejs = require('requirejs');
 
 requirejs.config({
 	nodeRequire: require,
-	baseUrl: 'js',
+	baseUrl: 'lib',
 	paths: {
 		'client/cl':            'stub',
 		'ui/ui':                'stub',
