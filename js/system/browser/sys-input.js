@@ -14,13 +14,16 @@ function InputInit() {
 /**
  * GetKeyNameForKeyCode
  */
-function GetKeyNameForKeyCode(keyCode) {
+function GetKeyNameForKeyCode(keyCode, shifted) {
 	var local = KbLocals['us'];
+	var chr = local['default'][keyCode];
+	var shiftchr = local['shifted'][keyCode];
 
-	for (var key in local) {
-		if (!local.hasOwnProperty(key)) continue;
-		if (local[key] == keyCode) return key;
+	if (shifted && shiftchr) {
+		chr = shiftchr;
 	}
+
+	return chr;
 }
 
 /**
@@ -39,14 +42,17 @@ function KeyDownEvent(ev) {
 		ev.preventDefault();
 	}
 
-	var keyName = GetKeyNameForKeyCode(ev.keyCode);
+	var keyName = GetKeyNameForKeyCode(ev.keyCode, ev.shiftKey);
+	if (keyName === undefined) {
+		return;
+	}
 
 	// Special check for fullscreen.
 	if (ev.altKey && keyName == 'enter') {
 		viewportFrame.requestFullscreen();
 	}
 
-	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEY, pressed: true, keyName: keyName });
 }
 
 /**
@@ -60,7 +66,7 @@ function KeyUpEvent(ev) {
 
 	var keyName = GetKeyNameForKeyCode(ev.keyCode);
 
-	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEY, pressed: false, keyName: keyName });
 }
 
 /**
@@ -73,7 +79,7 @@ function MouseDownEvent(ev) {
 		viewportFrame.requestPointerLock();
 	}
 
-	com.QueueEvent({ type: com.EventTypes.KEYDOWN, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEY, pressed: true, keyName: keyName });
 }
 
 /**
@@ -82,7 +88,7 @@ function MouseDownEvent(ev) {
 function MouseUpEvent(ev) {
 	var keyName = GetKeyNameForMouseButton(ev.button);
 
-	com.QueueEvent({ type: com.EventTypes.KEYUP, keyName: keyName });
+	com.QueueEvent({ type: com.EventTypes.KEY, pressed: true, keyName: keyName });
 }
 
 /**
@@ -103,5 +109,5 @@ function MouseMoveEvent(ev) {
 		lastPageY = ev.pageY;
 	}
 
-	com.QueueEvent({ type: com.EventTypes.MOUSEMOVE, deltaX: deltaX, deltaY: deltaY });
+	com.QueueEvent({ type: com.EventTypes.MOUSE, deltaX: deltaX, deltaY: deltaY });
 }

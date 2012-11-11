@@ -327,9 +327,10 @@ function RenderView(view) {
  * HideView
  */
 function HideView(view) {
-	if (typeof(view.visible) === 'undefined' || view.visible) {
+	var visible = view.el.style.display !== 'none';
+
+	if (visible) {
 		view.$el.hide();
-		view.visible = false;
 		return true;
 	}
 
@@ -340,9 +341,10 @@ function HideView(view) {
  * ShowView
  */
 function ShowView(view) {
-	if (!view.visible) {
+	var visible = view.el.style.display !== 'none';
+
+	if (!visible) {
 		view.$el.show();
-		view.visible = true;
 		return true;
 	}
 

@@ -6,7 +6,7 @@ function ProcessTextInput(str, keyName) {
 		ClearFocusedElement();
 	}
 
-	// A-Z a-z 0-9... this seems like a bad idea.
+	// TODO sys-input should pass a char event as well as a key event.
 	if (keyName.length === 1) {
 		str += keyName;
 	} else if (keyName === 'space') {

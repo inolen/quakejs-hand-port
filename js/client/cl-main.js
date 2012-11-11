@@ -29,11 +29,13 @@ function Init(sysinterface, cominterface) {
 	log('Initializing');
 
 	var exports = {
-		CMD_BACKUP:                  CMD_BACKUP,
+		// used by ui
 		Bind:                        CmdBind,
 		GetKeyNamesForCmd:           GetKeyNamesForCmd,
 		CaptureInput:                CaptureInput,
 		Disconnect:                  Disconnect,
+		// used by cgame
+		CMD_BACKUP:                  CMD_BACKUP,
 		GetGameState:                function () { return cl.gameState; },
 		GetCurrentUserCommandNumber: GetCurrentUserCommandNumber,
 		GetUserCommand:              GetUserCommand,

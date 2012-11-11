@@ -50,7 +50,9 @@ function KeyDownEvent(time, keyName) {
 	var key = GetKey(keyName);
 
 	// Some browsers repeat keydown events, we don't want that.
-	if (key.active) return;
+	if (key.active) {
+		return;
+	}
 
 	if (keyName === 'graveaccent' && clc.state == ConnectionState.ACTIVE) {
 		if (!cls.keyCallback) {

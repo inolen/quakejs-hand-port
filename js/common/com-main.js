@@ -172,13 +172,14 @@ function EventLoop() {
 			case EventTypes.NETSVSOCKETCLOSED:
 				sv.SocketClosed(ev.socket);
 				break;
-			case EventTypes.KEYDOWN:
-				cl.KeyDownEvent(ev.time, ev.keyName);
+			case EventTypes.KEY:
+				if (ev.pressed) {
+					cl.KeyDownEvent(ev.time, ev.keyName);
+				} else {
+					cl.KeyUpEvent(ev.time, ev.keyName);
+				}
 				break;
-			case EventTypes.KEYUP:
-				cl.KeyUpEvent(ev.time, ev.keyName);
-				break;
-			case EventTypes.MOUSEMOVE:
+			case EventTypes.MOUSE:
 				cl.MouseMoveEvent(ev.time, ev.deltaX, ev.deltaY);
 				break;
 		}

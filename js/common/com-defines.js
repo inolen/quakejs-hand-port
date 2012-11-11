@@ -10,9 +10,8 @@ var EventTypes = {
 	NETCLMESSAGE:      0,
 	NETSVMESSAGE:      1,
 	NETSVSOCKETCLOSED: 2,
-	KEYDOWN:           3,
-	KEYUP:             4,
-	MOUSEMOVE:         5
+	KEY:               3,
+	MOUSE:             4
 };
 
 /**********************************************************
