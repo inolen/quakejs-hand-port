@@ -236,13 +236,13 @@
 	display: none;
 }
 
-#hud .fps {
+#hud .fps-wrapper {
 	position: absolute;
 	top: 1em;
 	right: 1em;
 }
 
-#hud .render-counts {
+#hud .count-wrapper {
 	position: absolute;
 	bottom: 1em;
 	right: 1em;

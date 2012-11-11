@@ -1,0 +1,57 @@
+import os, fnmatch
+
+SRC_DIR = 'js/'
+BUILD_DIR = 'build/'
+BUILD_SRC_DIR = BUILD_DIR + 'tmp/'
+
+VariantDir(BUILD_SRC_DIR, SRC_DIR)
+env = Environment()
+Import('rglob')
+
+# Since our SConscript isn't in our source dir, we need to refer
+# to filenames relative to the build dir to take advantageof VariantDir
+def src_to_build(path):
+	return path.replace(SRC_DIR, BUILD_SRC_DIR)
+
+ExpandIncludes = Builder(
+	action = """node -e "\
+		var input = require('fs').readFileSync('$SOURCE', 'utf8');\
+		var output = require('ejs').render(input, { filename: '$SOURCE'});\
+		console.log(output)" > $TARGET""",
+	suffix = '.js',
+	src_suffix = '.js.ejs')
+env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
+
+RequireOpt = Builder(action = 'node js/vendor/r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
+env['BUILDERS']['RequireOpt'] = RequireOpt
+
+#
+# Ejs
+#
+ejs_src = [src_to_build(x) for x in rglob(SRC_DIR, '*.ejs', True, True, True)]
+ejs = [env.ExpandIncludes(x.replace('.ejs', ''), x) for x in ejs_src]
+# HULK SMASH! Make everything in the SRC_DIR a dependency of the ejs target
+all_src = [src_to_build(x) for x in rglob(SRC_DIR, '*', True, True, True)]
+Depends(ejs, all_src)
+
+#
+# Browser
+#
+browser = env.RequireOpt(
+	BUILD_DIR + 'q3-browser-min.js',
+	ejs,
+	BASE_DIR=BUILD_SRC_DIR,
+	R_SCRIPT='browser.build.js',
+	R_NAME='system/browser/sys')
+env.Alias('browser', browser)
+
+#
+# Dedicated
+#
+dedicated = env.RequireOpt(
+	BUILD_DIR + 'q3-dedicated-min.js',
+	ejs,
+	BASE_DIR=BUILD_SRC_DIR,
+	R_SCRIPT='dedicated.build.js',
+	R_NAME='system/dedicated/sys')
+env.Alias('dedicated', dedicated)

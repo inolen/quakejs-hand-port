@@ -2,15 +2,16 @@
  * RegisterCommands
  */
 function RegisterCommands() {
-	com.AddCmd('bind', CmdBind);
-	com.AddCmd('unbind', CmdUnbind);
+	com.AddCmd('bind',      CmdBind);
+	com.AddCmd('unbind',    CmdUnbind);
 	com.AddCmd('unbindall', CmdUnbindAll);
-	com.AddCmd('connect', CmdConnect);
-	com.AddCmd('+forward', function (key) { cls.forwardKey = key; });
-	com.AddCmd('+left', function (key) { cls.leftKey = key; });
-	com.AddCmd('+back', function (key) { cls.backKey = key; });
-	com.AddCmd('+right', function (key) { cls.rightKey = key; });
-	com.AddCmd('+jump', function (key) { cls.upKey = key; });
+	com.AddCmd('connect',   CmdConnect);
+	com.AddCmd('+attack',   function (key) { cls.inButtons[0] = key; });
+	com.AddCmd('+forward',  function (key) { cls.inForward = key; });
+	com.AddCmd('+left',     function (key) { cls.inLeft = key; });
+	com.AddCmd('+back',     function (key) { cls.inBack = key; });
+	com.AddCmd('+right',    function (key) { cls.inRight = key; });
+	com.AddCmd('+jump',     function (key) { cls.inUp = key; });
 }
 
 /**

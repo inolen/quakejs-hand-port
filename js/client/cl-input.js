@@ -69,6 +69,7 @@ function KeyDownEvent(time, keyName) {
 	} else {
 		key.downtime = time;
 		key.active = true;
+		key.wasPressed = true;
 
 		ExecBinding(key);
 	}

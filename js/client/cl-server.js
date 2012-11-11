@@ -42,6 +42,7 @@ function CreateNewCommands() {
 function CreateCommand() {
 	var cmd = new UserCmd();
 
+	CmdButtons(cmd);
 	KeyMove(cmd);
 	MouseMove(cmd);
 
@@ -50,6 +51,28 @@ function CreateCommand() {
 	cmd.serverTime = cl.serverTime;
 
 	return cmd;
+}
+
+/**
+ * CmdButtons
+ */
+function CmdButtons(cmd) {
+	// figure button bits
+	// send a button bit even if the key was pressed and released in
+	// less than a frame
+	for (var i = 0; i < 15 ; i++) {
+		var btn = cls.inButtons[i];
+
+		if (!btn) {
+			continue;
+		}
+
+		if (btn.active || btn.wasPressed ) {
+			cmd.buttons |= 1 << i;
+		}
+
+		btn.wasPressed = false;
+	}
 }
 
 /**
@@ -70,14 +93,15 @@ function KeyMove(cmd) {
 	// 	movespeed = 64;
 	// }
 
-	if (cls.forwardKey) forward += movespeed * GetKeyState(cls.forwardKey);
-	if (cls.backKey) forward -= movespeed * GetKeyState(cls.backKey);
+	if (cls.inForward) forward += movespeed * GetKeyState(cls.inForward);
+	if (cls.inBack) forward -= movespeed * GetKeyState(cls.inBack);
 
-	if (cls.rightKey) side += movespeed * GetKeyState(cls.rightKey);
-	if (cls.leftKey) side -= movespeed * GetKeyState(cls.leftKey);
+	if (cls.inRight) side += movespeed * GetKeyState(cls.inRight);
+	if (cls.inLeft) side -= movespeed * GetKeyState(cls.inLeft);
 
-	if (cls.upKey) { up += movespeed * GetKeyState(cls.upKey); }
-	//if (cls.upKey) up -= movespeed * GetKeyState(cls.upKey);
+	if (cls.inUp) { up += movespeed * GetKeyState(cls.inUp); }
+	// TODO Add crouching.
+	//if (cls.inDown) up -= movespeed * GetKeyState(cls.inDown);
 
 	cmd.forwardmove = ClampChar(forward);
 	cmd.rightmove = ClampChar(side);
@@ -429,6 +453,18 @@ function ParsePacketPlayerstate(msg, snap) {
 	snap.ps.torsoTimer = msg.readInt();
 	snap.ps.torsoAnim = msg.readShort();
 	snap.ps.movementDir = msg.readByte();
+	for (var i = 0; i < MAX_STATS; i++) {
+		snap.ps.stats[i] = msg.readInt();
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		snap.ps.persistant[i] = msg.readInt();
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		snap.ps.powerups[i] = msg.readInt();
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		snap.ps.ammo[i] = msg.readInt();
+	}
 }
 
 /**

@@ -7,21 +7,27 @@ var itemList = [
 		[
 			'models/powerups/armor/shard.md3'
 		],
-		ItemType.ARMOR
+		'icons/iconr_shard',
+		ItemType.ARMOR,
+		0
 	),
 	new GameItemDesc(
 		'item_armor_combat',
 		[
 			'models/powerups/armor/armor_yel.md3'
 		],
-		ItemType.ARMOR
+		'icons/iconr_yellow',
+		ItemType.ARMOR,
+		0
 	),
 	new GameItemDesc(
 		'item_armor_body',
 		[
 			'models/powerups/armor/armor_red.md3'
 		],
-		ItemType.ARMOR
+		'icons/iconr_red',
+		ItemType.ARMOR,
+		0
 	),
 	/**
 	 * HEALTH
@@ -32,7 +38,9 @@ var itemList = [
 			'models/powerups/health/small_cross.md3',
 			'models/powerups/health/small_sphere.md3'
 		],
-		ItemType.HEALTH
+		'icons/iconh_green',
+		ItemType.HEALTH,
+		0
 	),
 	new GameItemDesc(
 		'item_health',
@@ -40,7 +48,9 @@ var itemList = [
 			'models/powerups/health/medium_cross.md3',
 			'models/powerups/health/medium_sphere.md3'
 		],
-		ItemType.HEALTH
+		'icons/iconh_yellow',
+		ItemType.HEALTH,
+		0
 	),
 	new GameItemDesc(
 		'item_health_large',
@@ -48,7 +58,9 @@ var itemList = [
 			'models/powerups/health/large_cross.md3',
 			'models/powerups/health/large_sphere.md3'
 		],
-		ItemType.HEALTH
+		'icons/iconh_red',
+		ItemType.HEALTH,
+		0
 	),
 	new GameItemDesc(
 		'item_health_mega',
@@ -56,7 +68,9 @@ var itemList = [
 			'models/powerups/health/mega_cross.md3',
 			'models/powerups/health/mega_sphere.md3'
 		],
-		ItemType.HEALTH
+		'icons/iconh_mega',
+		ItemType.HEALTH,
+		0
 	),
 	/**
 	 * WEAPONS
@@ -66,49 +80,63 @@ var itemList = [
 		[
 			'models/weapons2/shotgun/shotgun.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_shotgun',
+		ItemType.WEAPON,
+		Weapon.SHOTGUN
 	),
 	new GameItemDesc(
 		'weapon_machinegun',
 		[
 			'models/weapons2/machinegun/machinegun.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_machinegun',
+		ItemType.WEAPON,
+		Weapon.MACHINEGUN
 	),
 	new GameItemDesc(
-		'weapon_grenadelauncher'
+		'weapon_grenadelauncher',
 		[
 			'models/weapons2/grenadel/grenadel.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_grenade',
+		ItemType.WEAPON,
+		Weapon.GRENADE_LAUNCHER
 	),
 	new GameItemDesc(
 		'weapon_rocketlauncher',
 		[
 			'models/weapons2/rocketl/rocketl.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_rocket',
+		ItemType.WEAPON,
+		Weapon.ROCKET_LAUNCHER
 	),
 	new GameItemDesc(
 		'weapon_lightning',
 		[
 			'models/weapons2/lightning/lightning.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_lightning',
+		ItemType.WEAPON,
+		Weapon.LIGHTNING
 	),
 	new GameItemDesc(
 		'weapon_railgun',
 		[
 			'models/weapons2/railgun/railgun.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_railgun',
+		ItemType.WEAPON,
+		Weapon.RAILGUN
 	),
 	new GameItemDesc(
 		'weapon_plasmagun',
 		[
 			'models/weapons2/plasma/plasma.md3'
 		],
-		ItemType.WEAPON
+		'icons/iconw_plasma',
+		ItemType.WEAPON,
+		Weapon.PLASMAGUN
 	),
 	/**
 	 * POWERUPS
@@ -119,6 +147,8 @@ var itemList = [
 			'models/powerups/instant/quad.md3',
 			'models/powerups/instant/quad_ring.md3'
 		],
-		ItemType.POWERUP
+		'icons/quad',
+		ItemType.POWERUP,
+		0
 	)
 ];

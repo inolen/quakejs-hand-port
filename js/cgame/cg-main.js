@@ -104,10 +104,11 @@ function RegisterItemVisuals(itemNum) {
 	for (var i = 0; i < gitem.modelPaths.length; i++) {
 		itemInfo.modelHandles[i] = re.RegisterModel(gitem.modelPaths[i]);
 	}
+	itemInfo.icon[i] = ui.FindImage(gitem.icon);
 
-	/*if ( item->giType == IT_WEAPON ) {
-		CG_RegisterWeapon( item->giTag );
-	}*/
+	// if (item.giType === ItemType.WEAPON) {
+	// 	RegisterWeapon(item.giTag);
+	// }
 }
 
 /**

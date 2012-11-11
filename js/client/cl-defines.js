@@ -64,11 +64,12 @@ var ClientStatic = function () {
 	this.mouseMoveCallback = false;
 
 	this.keys              = {};
-	this.forwardKey        = null;
-	this.leftKey           = null;
-	this.backKey           = null;
-	this.rightKey          = null;
-	this.upKey             = null;
+	this.inButtons         = new Array(15);
+	this.inForward         = null;
+	this.inLeft            = null;
+	this.inBack            = null;
+	this.inRight           = null;
+	this.inUp              = null;
 };
 
 var ConnectionState = {
@@ -126,9 +127,10 @@ var ClientSnapshot = function () {
 };
 
 var KeyState = function () {
-	this.chr      = null;
-	this.active   = false,
-	this.downtime = 0;
-	this.partial  = 0;
-	this.binding  = null;
+	this.chr        = null;
+	this.active     = false;
+	this.wasPressed = false;
+	this.downtime   = 0;
+	this.partial    = 0;
+	this.binding    = null;
 };

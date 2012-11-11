@@ -236,6 +236,18 @@ function SendClientSnapshot(client) {
 	msg.writeInt(frame.ps.torsoTimer);
 	msg.writeShort(frame.ps.torsoAnim);
 	msg.writeByte(frame.ps.movementDir);
+	for (var i = 0; i < MAX_STATS; i++) {
+		msg.writeInt(frame.ps.stats[i]);
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		msg.writeInt(frame.ps.persistant[i]);
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		msg.writeInt(frame.ps.powerups[i]);
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		msg.writeInt(frame.ps.ammo[i]);
+	}
 
 	// Should not write an int, and instead write a bitstream of GENTITYNUM_BITS length.
 	for (var i = 0; i < frame.numEntities; i++) {

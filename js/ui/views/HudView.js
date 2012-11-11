@@ -19,7 +19,8 @@ function (_, $, Backbone, templateSrc) {
 			culledFaces: 0,
 			culledModelOut: 0,
 			culledModelIn: 0,
-			culledModelClip: 0
+			culledModelClip: 0,
+			weapons: [],
 		},
 		fpsEl: null,
 		shadersEl: null,
@@ -34,7 +35,7 @@ function (_, $, Backbone, templateSrc) {
 			this.render();
 		},
 		setFPS: function (fps) {
-			if (!this.fpsEl) this.fpsEl = this.$el.find('.fps-value');
+			if (!this.fpsEl) this.fpsEl = this.$el.find('.fps');
 			this.model.fps = fps;
 			this.fpsEl.text(this.model.fps);
 		},

@@ -9,7 +9,7 @@ requirejs.config({
 		'underscore':           'vendor/underscore',
 		'glmatrix':             'vendor/gl-matrix',
 		'ByteBuffer':           'vendor/byte-buffer',
-		'system/dedicated/sys': '../dist/q3-dedicated-min'
+		'system/dedicated/sys': '../build/q3-dedicated-min'
 	}
 });
 

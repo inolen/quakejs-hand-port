@@ -137,6 +137,10 @@ UserCmd.prototype.clone = function (cmd) {
 /**********************************************************
  * Player state
  **********************************************************/
+var MAX_STATS              = 16;
+var MAX_PERSISTANT         = 16;
+var MAX_POWERUPS           = 16;
+var MAX_WEAPONS            = 16;
 var PS_PMOVEFRAMECOUNTBITS = 6;
 
 var PlayerState = function () {
@@ -163,11 +167,27 @@ var PlayerState = function () {
 	                                                       // of movement to the view angle (axial and diagonals)
 	                                                       // when at rest, the value will remain unchanged
 	                                                       // used to twist the legs during strafing
-
+	this.stats            = new Array(MAX_STATS);
+	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
+	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
+	this.ammo             = new Array(MAX_WEAPONS);
 
 	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
 	this.jumppad_frame    = 0;
 	this.pmove_framecount = 0;
+
+	for (var i = 0; i < MAX_STATS; i++) {
+		this.stats[i] = 0;
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		this.persistant[i] = 0;
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		this.powerups[i] = 0;
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		this.ammo[i] = 0;
+	}
 };
 
 // deep copy

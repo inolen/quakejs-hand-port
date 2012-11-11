@@ -37,7 +37,7 @@ function FinishSpawningItem(ent) {
 	//ent.s.modelindex2 = 0; // zero indicates this isn't a dropped item
 
 	ent.contents = ContentTypes.TRIGGER;
-	//ent.touch = Touch_Item;
+	ent.touch = TouchItem;
 	//ent->use = Use_Item;
 
 	//if (ent.spawnflags & 1) {
@@ -80,4 +80,59 @@ function FinishSpawningItem(ent) {
 	}*/
 
 	sv.LinkEntity(ent);
+}
+
+/**
+ * TouchItem
+ */
+function TouchItem(self, other) {
+	var respawn;
+
+	switch (self.item.giType) {
+		case ItemType.WEAPON:
+			respawn = PickupWeapon(self, other);
+			break;
+	}
+}
+
+/**
+ * PickupWeapon
+ */
+function PickupWeapon(ent, other) {
+	var quantity;
+
+	if (ent.count < 0) {
+		quantity = 0;
+	} else {
+		if (ent.count) {
+			quantity = ent.count;
+		} else {
+			quantity = ent.item.quantity;
+		}
+
+		// // dropped items and teamplay weapons always have full ammo
+		// if ( ! (ent->flags & FL_DROPPED_ITEM) && g_gametype.integer != GT_TEAM ) {
+		// 	// respawning rules
+		// 	// drop the quantity if the already have over the minimum
+		// 	if ( other->client->ps.ammo[ ent->item->giTag ] < quantity ) {
+		// 		quantity = quantity - other->client->ps.ammo[ ent->item->giTag ];
+		// 	} else {
+		// 		quantity = 1;		// only add a single shot
+		// 	}
+		// }
+	}
+
+	// Add the weapon.
+	other.client.ps.stats[Stat.WEAPONS] |= (1 << ent.item.giTag);
+
+	// Add_Ammo( other, ent->item->giTag, quantity );
+
+	// team deathmatch has slow weapon respawns
+	// if ( g_gametype.integer == GT_TEAM ) {
+	// 	return g_weaponTeamRespawn.integer;
+	// }
+
+	// return g_weaponRespawn.integer;
+
+	return 0;
 }

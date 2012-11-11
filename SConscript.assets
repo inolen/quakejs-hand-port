@@ -1,0 +1,44 @@
+import os, fnmatch
+
+env = Environment()
+Import('rglob')
+
+ASSET_DIR = './baseq3/'
+
+#
+# Dxt builder
+#
+ConvToDxt = Builder(
+	action = 'crunch -file $SOURCE -rescalemode nearest -fileformat dds -dxt5 -outsamedir',
+	suffix = '.dds',
+	src_suffix = '.jpg')
+env['BUILDERS']['ConvToDxt'] = ConvToDxt
+
+#
+# Png builder
+#
+ConvToPng = Builder(
+	action = 'convert $SOURCE $TARGET',
+	suffix = '.png',
+	src_suffix = '.jpg')
+env['BUILDERS']['ConvToPng'] = ConvToPng
+
+#
+# Textures
+#
+texture_dirs = ['env', 'gfx', 'models', 'textures']
+texture_src = []
+for dir in texture_dirs:
+	texture_src.extend(rglob(ASSET_DIR + dir, '*.jpg'))
+	texture_src.extend(rglob(ASSET_DIR + dir, '*.tga'))
+env.Alias('textures', [env.ConvToDxt(x) for x in texture_src])
+
+#
+# Images
+#
+image_dirs = ['icons', 'levelshots']
+image_src = []
+for dir in image_dirs:
+	image_src.extend(rglob(ASSET_DIR + dir, '*.jpg'))
+	image_src.extend(rglob(ASSET_DIR + dir, '*.tga'))
+env.Alias('images', [env.ConvToPng(x) for x in image_src])
