@@ -5,6 +5,7 @@ requirejs.config({
 	baseUrl: 'lib',
 	paths: {
 		'client/cl':            'stub',
+		'sound/snd':            'stub',
 		'ui/ui':                'stub',
 		'underscore':           'vendor/underscore',
 		'glmatrix':             'vendor/gl-matrix',
