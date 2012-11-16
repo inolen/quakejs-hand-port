@@ -18,3 +18,9 @@
 		<% } %>
 	</ul>
 </div>
+<div class="armor-wrapper">
+	ARMOR: <span class="armor"><%- armor %></span>
+</div>
+<div class="health-wrapper">
+	HEALTH: <span class="health"><%- health %></span>
+</div>
