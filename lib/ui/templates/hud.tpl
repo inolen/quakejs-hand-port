@@ -19,8 +19,8 @@
 	</ul>
 </div>
 <div class="ammo-wrapper">
-	<% for (var i = 0; i < ammo.length; i++) { %>
-		<% if (typeof ammo[i] !== 'number') { continue; } %>
+	<% for (var i = 0; i < weapons.length; i++) { %>
+		<% if (!weapons[i]) continue; %>
 		<div class="ammo"><%- ammo[i] %></div>
 	<% } %>
 </div>
