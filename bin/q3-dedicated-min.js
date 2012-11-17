@@ -1,6 +1,6 @@
 
 /*global vec3: true, mat4: true */
-define('shared/qmath', [], function () {
+define('common/qmath', [], function () {
 
 var bytedirs = [
 	[-0.525731, 0.000000, 0.850651], [-0.442863, 0.238856, 0.864188], 
@@ -651,7 +651,7 @@ return {
 };
 
 });
-define('shared/sh', ['shared/qmath'], function (qm) {
+define('common/sh', ['common/qmath'], function (qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
@@ -7012,7 +7012,7 @@ else {
 /*global vec3: true, mat4: true */
 
 define('game/bg',
-['glmatrix', 'shared/sh', 'shared/qmath'],
+['glmatrix', 'common/sh', 'common/qmath'],
 function (glmatrix, sh, qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -7571,6 +7571,7 @@ function CanItemBeGrabbed(gametype, ent, ps) {
 			if ( ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2 ) {
 				return false;
 			}
+			
 			return true;
 		}
 		
@@ -9379,7 +9380,7 @@ var itemList = [
 /*global vec3: true, mat4: true */
 
 define('game/gm',
-['underscore', 'glmatrix', 'shared/sh', 'shared/qmath', 'game/bg'],
+['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -11488,7 +11489,7 @@ define("client/cl", function(){});
 /*global vec3: true, mat4: true */
 
 define('clipmap/cm',
-['underscore', 'glmatrix', 'ByteBuffer', 'shared/sh', 'shared/qmath'],
+['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -14875,7 +14876,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 /*global vec3: true, mat4: true */
 
 define('server/sv',
-['underscore', 'ByteBuffer', 'shared/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
+['underscore', 'ByteBuffer', 'common/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
 function (_, ByteBuffer, sh, game, cl, clipmap) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -15473,8 +15474,8 @@ function SpawnServer(mapName) {
 		sv.time += 100;
 		svs.time += 100;*/
 
-		SetConfigstring('systemInfo', com.GetCvarKeyValues(CVF.SYSTEMINFO));
-		SetConfigstring('serverInfo', com.GetCvarKeyValues(CVF.SERVERINFO));
+		SetConfigstring('systemInfo', com.AddCvarKeyValues(CVF.SYSTEMINFO));
+		SetConfigstring('serverInfo', com.AddCvarKeyValues(CVF.SERVERINFO));
 
 		// Any media configstring setting now should issue a warning
 		// and any configstring changes should be reliably transmitted
@@ -16689,10 +16690,10 @@ function LinkEntity(gent) {
 		}
 	}
 	
-	// link it in
+	// Link it in.
 	gent.linked = true;
 	ent.worldSector = node;
-	node.entities[ent.number] = ent;
+	node.entities[gent.s.number] = ent;
 }
 
 /**
@@ -16703,12 +16704,12 @@ function UnlinkEntity(gent) {
 	var node = ent.worldSector;
 
 	if (!node) {
-		return; // not linked in anywhere
+		return;  // not linked in anywhere
 	}
 
-	// unlink
+	// Unlink.
 	gent.linked = false;
-	delete node.entities[ent.number];
+	delete node.entities[gent.s.number];
 	ent.worldSector = null;
 }
 
@@ -16772,7 +16773,7 @@ function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
 /*global vec3: true, mat4: true */
 
 define('common/com',
-['underscore', 'ByteBuffer', 'shared/sh', 'server/sv', 'client/cl'],
+['underscore', 'ByteBuffer', 'common/sh', 'server/sv', 'client/cl'],
 function (_, ByteBuffer, sh, sv, cl) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -16981,16 +16982,25 @@ var Cvar = function (defaultValue, flags) {
  * AddCvar
  */
 function AddCvar(name, defaultValue, flags) {
-	var cvar = new Cvar(defaultValue, flags || 0);
-	cvars[name] = cvar;
+	var cvar = cvars[name];
+
+	if (!cvar) {
+		if (typeof(defaultValue) === 'undefined') {
+			return null;
+		} else {
+			cvar = cvars[name] = new Cvar(defaultValue, flags || 0);
+		}
+	}
+
 	return cvar;
 }
 
 /**
- * FindCvar
+ * GetCvar
  */
-function FindCvar(name) {
-	return cvars[name];
+function GetCvar(name, defaultValue, flags) {
+	var cvar = cvars[name];
+	return cvar;
 }
 
 /**
@@ -17022,9 +17032,9 @@ function SetCvarVal(name, value) {
 }
 
 /**
- * GetCvarKeyValues
+ * AddCvarKeyValues
  */
-function GetCvarKeyValues(flag) {
+function AddCvarKeyValues(flag) {
 	var data = {};
 	
 	for (var name in cvars) {
@@ -17104,7 +17114,7 @@ function Init(sysinterface, isdedicated) {
 		AddCvar:          AddCvar,
 		GetCvarVal:       GetCvarVal,
 		SetCvarVal:       SetCvarVal,
-		GetCvarKeyValues: GetCvarKeyValues,
+		AddCvarKeyValues: AddCvarKeyValues,
 		AddCmd:           AddCmd,
 		GetCmd:           GetCmd,
 		NetchanSetup:     NetchanSetup,
@@ -17274,7 +17284,8 @@ function ExecuteCmdText(text) {
 
 	if ((cmdcb = GetCmd(arg0))) {
 		cmdcb.apply(this, args);
-	} else if ((cvar = FindCvar(arg0))) {
+	} else if ((cvar = GetCvar(arg0))) {
+		console.log('setting cvar', arg0, args[0]);
 		cvar(args[0]);
 	}
 }
@@ -17426,7 +17437,7 @@ function NetchanProcess(netchan, msg) {
 });
 
 define('system/dedicated/sys',
-['shared/sh', 'common/com'],
+['common/sh', 'common/com'],
 function (sh, com) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
