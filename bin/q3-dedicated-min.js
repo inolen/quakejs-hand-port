@@ -1,4 +1,1758 @@
 
+/*global vec3: true, mat4: true */
+define('shared/qmath', [], function () {
+
+var bytedirs = [
+	[-0.525731, 0.000000, 0.850651], [-0.442863, 0.238856, 0.864188], 
+	[-0.295242, 0.000000, 0.955423], [-0.309017, 0.500000, 0.809017], 
+	[-0.162460, 0.262866, 0.951056], [0.000000, 0.000000, 1.000000], 
+	[0.000000, 0.850651, 0.525731], [-0.147621, 0.716567, 0.681718], 
+	[0.147621, 0.716567, 0.681718], [0.000000, 0.525731, 0.850651], 
+	[0.309017, 0.500000, 0.809017], [0.525731, 0.000000, 0.850651], 
+	[0.295242, 0.000000, 0.955423], [0.442863, 0.238856, 0.864188], 
+	[0.162460, 0.262866, 0.951056], [-0.681718, 0.147621, 0.716567], 
+	[-0.809017, 0.309017, 0.500000],[-0.587785, 0.425325, 0.688191], 
+	[-0.850651, 0.525731, 0.000000],[-0.864188, 0.442863, 0.238856], 
+	[-0.716567, 0.681718, 0.147621],[-0.688191, 0.587785, 0.425325], 
+	[-0.500000, 0.809017, 0.309017], [-0.238856, 0.864188, 0.442863], 
+	[-0.425325, 0.688191, 0.587785], [-0.716567, 0.681718, -0.147621], 
+	[-0.500000, 0.809017, -0.309017], [-0.525731, 0.850651, 0.000000], 
+	[0.000000, 0.850651, -0.525731], [-0.238856, 0.864188, -0.442863], 
+	[0.000000, 0.955423, -0.295242], [-0.262866, 0.951056, -0.162460], 
+	[0.000000, 1.000000, 0.000000], [0.000000, 0.955423, 0.295242], 
+	[-0.262866, 0.951056, 0.162460], [0.238856, 0.864188, 0.442863], 
+	[0.262866, 0.951056, 0.162460], [0.500000, 0.809017, 0.309017], 
+	[0.238856, 0.864188, -0.442863],[0.262866, 0.951056, -0.162460], 
+	[0.500000, 0.809017, -0.309017],[0.850651, 0.525731, 0.000000], 
+	[0.716567, 0.681718, 0.147621], [0.716567, 0.681718, -0.147621], 
+	[0.525731, 0.850651, 0.000000], [0.425325, 0.688191, 0.587785], 
+	[0.864188, 0.442863, 0.238856], [0.688191, 0.587785, 0.425325], 
+	[0.809017, 0.309017, 0.500000], [0.681718, 0.147621, 0.716567], 
+	[0.587785, 0.425325, 0.688191], [0.955423, 0.295242, 0.000000], 
+	[1.000000, 0.000000, 0.000000], [0.951056, 0.162460, 0.262866], 
+	[0.850651, -0.525731, 0.000000],[0.955423, -0.295242, 0.000000], 
+	[0.864188, -0.442863, 0.238856], [0.951056, -0.162460, 0.262866], 
+	[0.809017, -0.309017, 0.500000], [0.681718, -0.147621, 0.716567], 
+	[0.850651, 0.000000, 0.525731], [0.864188, 0.442863, -0.238856], 
+	[0.809017, 0.309017, -0.500000], [0.951056, 0.162460, -0.262866], 
+	[0.525731, 0.000000, -0.850651], [0.681718, 0.147621, -0.716567], 
+	[0.681718, -0.147621, -0.716567],[0.850651, 0.000000, -0.525731], 
+	[0.809017, -0.309017, -0.500000], [0.864188, -0.442863, -0.238856], 
+	[0.951056, -0.162460, -0.262866], [0.147621, 0.716567, -0.681718], 
+	[0.309017, 0.500000, -0.809017], [0.425325, 0.688191, -0.587785], 
+	[0.442863, 0.238856, -0.864188], [0.587785, 0.425325, -0.688191], 
+	[0.688191, 0.587785, -0.425325], [-0.147621, 0.716567, -0.681718], 
+	[-0.309017, 0.500000, -0.809017], [0.000000, 0.525731, -0.850651], 
+	[-0.525731, 0.000000, -0.850651], [-0.442863, 0.238856, -0.864188], 
+	[-0.295242, 0.000000, -0.955423], [-0.162460, 0.262866, -0.951056], 
+	[0.000000, 0.000000, -1.000000], [0.295242, 0.000000, -0.955423], 
+	[0.162460, 0.262866, -0.951056], [-0.442863, -0.238856, -0.864188], 
+	[-0.309017, -0.500000, -0.809017], [-0.162460, -0.262866, -0.951056], 
+	[0.000000, -0.850651, -0.525731], [-0.147621, -0.716567, -0.681718], 
+	[0.147621, -0.716567, -0.681718], [0.000000, -0.525731, -0.850651], 
+	[0.309017, -0.500000, -0.809017], [0.442863, -0.238856, -0.864188], 
+	[0.162460, -0.262866, -0.951056], [0.238856, -0.864188, -0.442863], 
+	[0.500000, -0.809017, -0.309017], [0.425325, -0.688191, -0.587785], 
+	[0.716567, -0.681718, -0.147621], [0.688191, -0.587785, -0.425325], 
+	[0.587785, -0.425325, -0.688191], [0.000000, -0.955423, -0.295242], 
+	[0.000000, -1.000000, 0.000000], [0.262866, -0.951056, -0.162460], 
+	[0.000000, -0.850651, 0.525731], [0.000000, -0.955423, 0.295242], 
+	[0.238856, -0.864188, 0.442863], [0.262866, -0.951056, 0.162460], 
+	[0.500000, -0.809017, 0.309017], [0.716567, -0.681718, 0.147621], 
+	[0.525731, -0.850651, 0.000000], [-0.238856, -0.864188, -0.442863], 
+	[-0.500000, -0.809017, -0.309017], [-0.262866, -0.951056, -0.162460], 
+	[-0.850651, -0.525731, 0.000000], [-0.716567, -0.681718, -0.147621], 
+	[-0.716567, -0.681718, 0.147621], [-0.525731, -0.850651, 0.000000], 
+	[-0.500000, -0.809017, 0.309017], [-0.238856, -0.864188, 0.442863], 
+	[-0.262866, -0.951056, 0.162460], [-0.864188, -0.442863, 0.238856], 
+	[-0.809017, -0.309017, 0.500000], [-0.688191, -0.587785, 0.425325], 
+	[-0.681718, -0.147621, 0.716567], [-0.442863, -0.238856, 0.864188], 
+	[-0.587785, -0.425325, 0.688191], [-0.309017, -0.500000, 0.809017], 
+	[-0.147621, -0.716567, 0.681718], [-0.425325, -0.688191, 0.587785], 
+	[-0.162460, -0.262866, 0.951056], [0.442863, -0.238856, 0.864188], 
+	[0.162460, -0.262866, 0.951056], [0.309017, -0.500000, 0.809017], 
+	[0.147621, -0.716567, 0.681718], [0.000000, -0.525731, 0.850651], 
+	[0.425325, -0.688191, 0.587785], [0.587785, -0.425325, 0.688191], 
+	[0.688191, -0.587785, 0.425325], [-0.955423, 0.295242, 0.000000], 
+	[-0.951056, 0.162460, 0.262866], [-1.000000, 0.000000, 0.000000], 
+	[-0.850651, 0.000000, 0.525731], [-0.955423, -0.295242, 0.000000], 
+	[-0.951056, -0.162460, 0.262866], [-0.864188, 0.442863, -0.238856], 
+	[-0.951056, 0.162460, -0.262866], [-0.809017, 0.309017, -0.500000], 
+	[-0.864188, -0.442863, -0.238856], [-0.951056, -0.162460, -0.262866], 
+	[-0.809017, -0.309017, -0.500000], [-0.681718, 0.147621, -0.716567], 
+	[-0.681718, -0.147621, -0.716567], [-0.850651, 0.000000, -0.525731], 
+	[-0.688191, 0.587785, -0.425325], [-0.587785, 0.425325, -0.688191], 
+	[-0.425325, 0.688191, -0.587785], [-0.425325, -0.688191, -0.587785], 
+	[-0.587785, -0.425325, -0.688191], [-0.688191, -0.587785, -0.425325]
+];
+
+function DirToByte(dir) {
+	if (!dir) {
+		return 0;
+	}
+
+	var best = 0;
+	var bestd = 0;
+	var d;
+	for (var i = 0, length = bytedirs.length; i < length; i++) {
+		d = vec3.dot(dir, bytedirs[i]);
+		if (d > bestd) {
+			bestd = d;
+			best = i;
+		}
+	}
+
+	return best;
+}
+
+function ByteToDir(b, dir) {
+	if (b < 0 || b >= bytedirs.length) {
+		vec3.set(dir, [0, 0, 0]);
+		return;
+	}
+	vec3.set(bytedirs[b], dir);
+}
+
+function ClampChar(i) {
+	if (i < -128) {
+		return -128;
+	}
+	if (i > 127) {
+		return 127;
+	}
+	return i;
+}
+
+function crandom() {
+	return 2.0 * (Math.random() - 0.5);
+}
+
+/**
+ * PerpindicularVector
+ */
+function PerpendicularVector(src, dst) {
+	// Find the smallest magnitude axially aligned vector.
+	var i, pos;
+	var minelem = 1;
+	for(var i = 0, pos = 0; i < 3; i++) {
+		if (Math.abs(src[i]) < minelem) {
+			pos = i;
+			minelem = Math.abs(src[i]);
+		}
+	}
+	var tempvec = [0, 0, 0];
+	tempvec[pos] = 1;
+
+	// Project the point onto the plane defined by src.
+	ProjectPointOnPlane(tempvec, src, dst);
+
+	// Normalize the result.
+	// vec3.normalize(dst);
+}
+
+
+/**
+ * Angle consts
+ */
+var PITCH = 0; // up / down
+var YAW   = 1; // left / right
+var ROLL  = 2; // fall over
+
+/**
+ * AngleSubtract
+ *
+ * Always returns a value from -180 to 180
+ */
+function AngleSubtract(a1, a2) {
+	var a = a1 - a2;
+	while (a > 180) {
+		a -= 360;
+	}
+	while (a < -180) {
+		a += 360;
+	}
+	return a;
+}
+
+/**
+ * AnglesSubstract
+ */
+function AnglesSubtract(v1, v2, v3) {
+	v3[0] = AngleSubtract(v1[0], v2[0]);
+	v3[1] = AngleSubtract(v1[1], v2[1]);
+	v3[2] = AngleSubtract(v1[2], v2[2]);
+}
+
+/**
+ * LerpAngle
+ */
+function LerpAngle(from, to, frac) {
+	if (to - from > 180) {
+		to -= 360;
+	}
+	if (to - from < -180) {
+		to += 360;
+	}
+
+	return from + frac * (to - from);
+}
+
+/**
+ * AngleMod
+ */
+function AngleMod(a) {
+	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
+	return a;
+}
+
+/**
+ * AnglesToVectors
+ */
+function AnglesToVectors(angles, forward, right, up) {
+	var angle;
+	var sr, sp, sy, cr, cp, cy;
+
+	angle = angles[YAW] * (Math.PI*2 / 360);
+	sy = Math.sin(angle);
+	cy = Math.cos(angle);
+	angle = angles[PITCH] * (Math.PI*2 / 360);
+	sp = Math.sin(angle);
+	cp = Math.cos(angle);
+	angle = angles[ROLL] * (Math.PI*2 / 360);
+	sr = Math.sin(angle);
+	cr = Math.cos(angle);
+
+	if (forward) {
+		forward[0] = cp*cy;
+		forward[1] = cp*sy;
+		forward[2] = -sp;
+	}
+
+	if (right) {
+		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
+		right[1] = (-1*sr*sp*sy+-1*cr*cy);
+		right[2] = -1*sr*cp;
+	}
+
+	if (up) {
+		up[0] = (cr*sp*cy+-sr*-sy);
+		up[1] = (cr*sp*sy+-sr*cy);
+		up[2] = cr*cp;
+	}
+}
+
+/**
+ * AngleToShort
+ */
+function AngleToShort(x) {
+	return (((x)*65536/360) & 65535);
+};
+
+/**
+ * ShortToAngle
+ */
+function ShortToAngle(x) {
+	return ((x)*(360.0/65536));
+};
+
+/**
+ * AxisClear
+ */
+function AxisClear(axis) {
+	axis[0][0] = 1;
+	axis[0][1] = 0;
+	axis[0][2] = 0;
+	axis[1][0] = 0;
+	axis[1][1] = 1;
+	axis[1][2] = 0;
+	axis[2][0] = 0;
+	axis[2][1] = 0;
+	axis[2][2] = 1;
+}
+
+/**
+ * AnglesToAxis
+ */
+function AnglesToAxis(angles, axis) {
+	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
+	// angle vectors returns "right" instead of "y axis"
+	vec3.negate(axis[1]);
+}
+
+/**
+ * AxisMultiply
+ *
+ * TODO Perhaps the functions using this should change the way they store
+ * there axis, so we can re-use the mat3 lib calls.
+ */
+function AxisMultiply(in1, in2, out) {
+	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
+	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
+	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
+
+	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
+	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
+	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
+
+	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
+	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
+	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
+}
+
+/**
+ * RotatePoint
+ */
+function RotatePoint(point, axis) {
+	var tvec = vec3.create(point);
+	point[0] = vec3.dot(axis[0], tvec);
+	point[1] = vec3.dot(axis[1], tvec);
+	point[2] = vec3.dot(axis[2], tvec);
+}
+
+// /**
+//  * RotateAroundDirection
+//  */
+// function RotateAroundDirection(axis, yaw) {
+// 	// Create an arbitrary axis[1].
+// 	PerpendicularVector(axis[0], axis[1]);
+
+// 	// Rotate it around axis[0] by yaw.
+// 	if (yaw) {
+// 		var temp = vec3.create(axis[1]);
+// 		RotatePointAroundVector(temp, axis[0], yaw, axis[1]);
+// 	}
+
+// 	// Cross to get axis[2].
+// 	vec3.cross(axis[0], axis[1], axis[2]);
+// }
+
+/**
+ * Plane
+ */
+var PLANE_X         = 0;
+var PLANE_Y         = 1;
+var PLANE_Z         = 2;
+var PLANE_NON_AXIAL = 3;
+
+var Plane = function () {
+	this.normal   = vec3.create();
+	this.dist     = 0;
+	this.type     = 0;
+	this.signbits = 0;
+};
+
+Plane.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new Plane();
+	}
+
+	vec3.set(this.normal, to.normal);
+	to.dist = this.dist;
+	to.type = this.type;
+	to.signbits = this.signbits;
+
+	return to;
+};
+
+/**
+ * PlaneTypeForNormal
+ */
+function PlaneTypeForNormal(x) {
+	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
+}
+
+/**
+ * GetPlaneSignbits
+ */
+function GetPlaneSignbits(normal) {
+	var bits = 0;
+
+	for (var i = 0; i < 3; i++) {
+		if (normal[i] < 0) {
+			bits |= 1 << i;
+		}
+	}
+
+	return bits;
+}
+
+/**
+ * BoxOnPlaneSide
+ *
+ * Returns 1, 2, or 1 + 2.
+ */
+function BoxOnPlaneSide(mins, maxs, p) {
+	// fast axial cases
+	if (p.type < PLANE_NON_AXIAL) {
+		if (p.dist <= mins[p.type]) {
+			return 1;
+		} else if (p.dist >= maxs[p.type]) {
+			return 2;
+		}
+		return 3;
+	}
+
+	// general case
+	var dist = [0, 0];
+	
+	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
+		for (var i = 0; i < 3; i++) {
+			var b = (p.signbits >> i) & 1;
+			dist[b] += p.normal[i]*maxs[i];
+			dist[b^1] += p.normal[i]*mins[i];
+		}
+	}
+
+	var sides = 0;
+	if (dist[0] >= p.dist) {
+		sides = 1;
+	}
+	if (dist[1] < p.dist) {
+		sides |= 2;
+	}
+
+	return sides;
+}
+
+/**
+ * ProjectPointOnPlane
+ */
+function ProjectPointOnPlane(p, normal, dest) {
+	var n = vec3.scale(normal, vec3.dot(normal, p), [0, 0, 0]);
+	vec3.subtract(p, n, dest);
+}
+
+/**
+ * RadiusFromBounds
+ */
+function RadiusFromBounds(mins, maxs) {
+	var a, b;
+	var corner = [0, 0, 0];
+
+	for (var i = 0; i < 3; i++) {
+		a = Math.abs(mins[i]);
+		b = Math.abs(maxs[i]);
+		corner[i] = a > b ? a : b;
+	}
+
+	return vec3.length(corner);
+}
+
+/**
+ * ClearBounds
+ */
+function ClearBounds(mins, maxs) {
+	mins[0] = mins[1] = mins[2] = 99999;
+	maxs[0] = maxs[1] = maxs[2] = -99999;
+}
+
+/**
+ * AddPointToBounds
+ */
+function AddPointToBounds(v, mins, maxs) {
+	if (v[0] < mins[0]) {
+		mins[0] = v[0];
+	}
+	if (v[0] > maxs[0]) {
+		maxs[0] = v[0];
+	}
+
+	if (v[1] < mins[1]) {
+		mins[1] = v[1];
+	}
+	if (v[1] > maxs[1]) {
+		maxs[1] = v[1];
+	}
+
+	if (v[2] < mins[2]) {
+		mins[2] = v[2];
+	}
+	if (v[2] > maxs[2]) {
+		maxs[2] = v[2];
+	}
+}
+
+/**
+ * BoundsIntersect
+ */
+function BoundsIntersect(mins, maxs, mins2, maxs2, epsilon) {
+	epsilon = epsilon || 0;
+	
+	if (maxs[0] < mins2[0] - epsilon ||
+		maxs[1] < mins2[1] - epsilon ||
+		maxs[2] < mins2[2] - epsilon ||
+		mins[0] > maxs2[0] + epsilon ||
+		mins[1] > maxs2[1] + epsilon ||
+		mins[2] > maxs2[2] + epsilon) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * BoundsIntersectSphere
+ */
+function BoundsIntersectSphere(mins, maxs, origin, radius) {
+	if (origin[0] - radius > maxs[0] ||
+		origin[0] + radius < mins[0] ||
+		origin[1] - radius > maxs[1] ||
+		origin[1] + radius < mins[1] ||
+		origin[2] - radius > maxs[2] ||
+		origin[2] + radius < mins[2]) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * BoundsIntersectPoint
+ */
+function BoundsIntersectPoint(mins, maxs, origin) {
+	if (origin[0] > maxs[0] ||
+		origin[0] < mins[0] ||
+		origin[1] > maxs[1] ||
+		origin[1] < mins[1] ||
+		origin[2] > maxs[2] ||
+		origin[2] < mins[2]) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * RadixSort
+ *
+ * Sort 32 bit ints into 8 bit buckets.
+ * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
+ */
+var _radixSort_0 = [
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+];
+
+function RadixSort(arr, prop, len) {
+	var cpy = new Array(len);
+	var c4 = [].concat(_radixSort_0); 
+	var c3 = [].concat(_radixSort_0); 
+	var c2 = [].concat(_radixSort_0);
+	var c1 = [].concat(_radixSort_0); 
+	var o4 = 0; var k4;
+	var o3 = 0; var k3;
+	var o2 = 0; var k2;
+	var o1 = 0; var k1;
+	var x;
+	for (x = 0; x < len; x++) {
+		k4 = arr[x][prop] & 0xFF;
+		k3 = (arr[x][prop] >> 8) & 0xFF;
+		k2 = (arr[x][prop] >> 16) & 0xFF;
+		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
+		c4[k4]++;
+		c3[k3]++;
+		c2[k2]++;
+		c1[k1]++;
+	}
+	for (x = 0; x < 256; x++) {
+		k4 = o4 + c4[x];
+		k3 = o3 + c3[x];
+		k2 = o2 + c2[x];
+		k1 = o1 + c1[x];
+		c4[x] = o4;
+		c3[x] = o3;
+		c2[x] = o2;
+		c1[x] = o1;
+		o4 = k4;
+		o3 = k3;
+		o2 = k2;
+		o1 = k1;
+	}
+	for (x = 0; x < len; x++) {
+		k4 = arr[x][prop] & 0xFF;
+		cpy[c4[k4]] = arr[x];
+		c4[k4]++;
+	}
+	for (x = 0; x < len; x++) {
+		k3 = (cpy[x][prop] >> 8) & 0xFF;
+		arr[c3[k3]] = cpy[x];
+		c3[k3]++;
+	}
+	for (x = 0; x < len; x++) {
+		k2 = (arr[x][prop] >> 16) & 0xFF;
+		cpy[c2[k2]] = arr[x];
+		c2[k2]++;
+	}
+	for (x = 0; x < len; x++) {
+		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
+		arr[c1[k1]] = cpy[x];
+		c1[k1]++;
+	}
+
+	return arr;
+}
+
+return {
+	DirToByte:             DirToByte,
+	ByteToDir:             ByteToDir,
+	ClampChar:             ClampChar,
+	crandom:               crandom,
+
+	PerpendicularVector:   PerpendicularVector,
+
+	PITCH:                 PITCH,
+	YAW:                   YAW,
+	ROLL:                  ROLL,
+	AngleSubtract:         AngleSubtract,
+	AnglesSubtract:        AnglesSubtract,
+	LerpAngle:             LerpAngle,
+	AngleMod:              AngleMod,
+	AnglesToVectors:       AnglesToVectors,
+	AngleToShort:          AngleToShort,
+	ShortToAngle:          ShortToAngle,
+
+	AxisClear:             AxisClear,
+	AnglesToAxis:          AnglesToAxis,
+	AxisMultiply:          AxisMultiply,
+	RotatePoint:           RotatePoint,
+
+	PLANE_X:               PLANE_X,
+	PLANE_Y:               PLANE_Y,
+	PLANE_Z:               PLANE_Z,
+	PLANE_NON_AXIAL:       PLANE_NON_AXIAL,
+	Plane:                 Plane,
+	PlaneTypeForNormal:    PlaneTypeForNormal,
+	GetPlaneSignbits:      GetPlaneSignbits,
+	BoxOnPlaneSide:        BoxOnPlaneSide,
+	ProjectPointOnPlane:   ProjectPointOnPlane,
+
+	RadiusFromBounds:      RadiusFromBounds,
+	ClearBounds:           ClearBounds,
+	AddPointToBounds:      AddPointToBounds,
+	BoundsIntersect:       BoundsIntersect,
+	BoundsIntersectSphere: BoundsIntersectSphere,
+	BoundsIntersectPoint:  BoundsIntersectPoint,
+
+	RadixSort:             RadixSort
+};
+
+});
+define('shared/sh', ['shared/qmath'], function (qm) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+	// TODO Move to com
+var Err = {
+	FATAL:      0,                                         // exit the entire game with a popup window
+	DROP:       1,
+	DISCONNECT: 2,                                         // client disconnected from the server
+};
+
+/**
+ * Communicated across the network
+ */
+var NetAdrType = {
+	NAD:      0,
+	LOOPBACK: 1,
+	IP:       2
+};
+
+var NetSrc = {
+	CLIENT : 0,
+	SERVER: 1
+};
+
+var NetAdr = function (type, ip, port) {
+	this.type = type;
+	this.ip   = ip;
+	this.port = port;
+};
+
+var UserCmd = function () {
+	this.serverTime  = 0;
+	this.angles      = [0, 0, 0];
+	this.forwardmove = 0;
+	this.rightmove   = 0;
+	this.upmove      = 0;
+	this.buttons     = 0;
+	this.weapon      = 0;
+};
+
+UserCmd.prototype.clone = function (cmd) {
+	if (typeof(cmd) === 'undefined') {
+		cmd = new UserCmd();
+	}
+
+	cmd.serverTime = this.serverTime;
+	vec3.set(this.angles, cmd.angles);
+	cmd.forwardmove = this.forwardmove;
+	cmd.rightmove = this.rightmove;
+	cmd.upmove = this.upmove;
+	cmd.buttons = this.buttons;
+	cmd.weapon = this.weapon;
+
+	return cmd;
+};
+
+/**
+ * Player state
+ */
+var PlayerState = function () {
+	this.clientNum         = 0;                            // ranges from 0 to MAX_CLIENTS-1
+	this.commandTime       = 0;                            // cmd->serverTime of last executed command
+	this.pm_type           = 0;
+	this.pm_flags          = 0;                            // ducked, jump_held, etc
+	this.origin            = [0, 0, 0];
+	this.velocity          = [0, 0, 0];
+	this.viewangles        = [0, 0, 0];
+	this.delta_angles      = [0, 0, 0];                    // add to command angles to get view direction
+	                                                       // changed by spawns, rotating objects, and teleporters
+	this.speed             = 0;
+	this.gravity           = 0;
+	this.groundEntityNum   = ENTITYNUM_NONE;               // ENTITYNUM_NONE = in air
+	this.bobCycle          = 0;                            // for view bobbing and footstep generation
+
+	this.weapon            = 0;                            // copied to entityState_t->weapon
+	this.weaponState       = 0;
+	this.weaponTime        = 0;
+	this.legsTimer         = 0;                            // don't change low priority animations until this runs out
+	this.legsAnim          = 0;                            // mask off ANIM_TOGGLEBIT
+
+	this.torsoTimer        = 0;                            // don't change low priority animations until this runs out
+	this.torsoAnim         = 0;                            // mask off ANIM_TOGGLEBIT
+
+	this.movementDir       = 0;                            // a number 0 to 7 that represents the relative angle
+	                                                       // of movement to the view angle (axial and diagonals)
+	                                                       // when at rest, the value will remain unchanged
+	                                                       // used to twist the legs during strafing
+	this.stats             = new Array(MAX_STATS);
+	this.persistant        = new Array(MAX_PERSISTANT);    // stats that aren't cleared on death
+	this.powerups          = new Array(MAX_POWERUPS);      // level.time that the powerup runs out
+	this.ammo              = new Array(MAX_WEAPONS);
+
+	this.eFlags            = 0;                            // copied to entityState_t->eFlags
+	this.eventSequence     = 0;                            // pmove generated events
+	this.events            = new Array(MAX_PS_EVENTS);
+	this.eventParms        = new Array(MAX_PS_EVENTS);
+
+	this.externalEvent     = 0;                            // events set on player from another source
+	this.externalEventParm = 0;
+	this.externalEventTime = 0;
+
+	this.jumppad_ent       = 0;                            // jumppad entity hit this frame
+	this.jumppad_frame     = 0;
+	this.pmove_framecount  = 0;
+
+	for (var i = 0; i < MAX_STATS; i++) {
+		this.stats[i] = 0;
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		this.persistant[i] = 0;
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		this.powerups[i] = 0;
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		this.ammo[i] = 0;
+	}
+};
+
+// deep copy
+PlayerState.prototype.clone = function (ps) {
+	if (typeof(ps) === 'undefined') {
+		ps = new PlayerState();
+	}
+
+	ps.clientNum            = this.clientNum;
+	ps.commandTime          = this.commandTime;
+	ps.pm_type              = this.pm_type;
+	ps.pm_flags             = this.pm_flags;
+	vec3.set(this.origin, ps.origin);
+	vec3.set(this.velocity, ps.velocity);
+	vec3.set(this.viewangles, ps.viewangles);
+	vec3.set(this.delta_angles, ps.delta_angles);
+	ps.speed                = this.speed;
+	ps.gravity              = this.gravity;
+	ps.groundEntityNum      = this.groundEntityNum;
+	ps.bobCycle             = this.bobCycle;
+	ps.weapon               = this.weapon;
+	ps.weaponState          = this.weaponState;
+	ps.weaponTime           = this.weaponTime;
+	ps.legsTimer            = this.legsTimer;
+	ps.legsAnim             = this.legsAnim;
+	ps.torsoTimer           = this.torsoTimer;
+	ps.torsoAnim            = this.torsoAnim;
+	ps.movementDir          = this.movementDir;
+	for (var i = 0; i < MAX_STATS; i++) {
+		ps.stats[i] = this.stats[i];
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		ps.persistant[i] = this.persistant[i];
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		ps.powerups[i] = this.powerups[i];
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		ps.ammo[i] = this.ammo[i];
+	}
+	ps.eFlags               = this.eFlags;
+	ps.eventSequence        = this.eventSequence;
+	for (var i = 0; i < MAX_PS_EVENTS; i++) {
+		ps.events[i] = this.events[i];
+		ps.eventParms[i] = this.eventParms[i];
+	}
+	ps.jumppad_ent          = this.jumppad_ent;
+	ps.jumppad_frame        = this.jumppad_frame;
+	ps.pmove_framecount     = this.pmove_framecount;
+
+	return ps;
+};
+
+var TrajectoryType = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var Trajectory = function () {
+	this.trType     = 0;
+	this.trTime     = 0;
+	this.trDuration = 0;
+	this.trBase     = [0, 0, 0];
+	this.trDelta    = [0, 0, 0];
+};
+
+Trajectory.prototype.clone = function (tr) {
+	if (typeof(tr) === 'undefined') {
+		tr = TrajectoryType();
+	}
+
+	tr.trType = this.trType;
+	tr.trTime = this.trTime;
+	tr.trDuration = this.trDuration;
+	vec3.set(this.trBase, tr.trBase);
+	vec3.set(this.trDelta, tr.trDelta);
+
+	return tr;
+};
+
+var Orientation = function () {
+	this.origin      = vec3.create();                      // in world coordinates
+	this.axis        = [                                   // orientation in world
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	// Used by renderer.
+	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
+	this.modelMatrix = mat4.create();
+};
+
+Orientation.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new Orientation();
+	}
+
+	vec3.set(this.origin, to.origin);
+	vec3.set(this.axis[0], to.axis[0]);
+	vec3.set(this.axis[1], to.axis[1]);
+	vec3.set(this.axis[2], to.axis[2]);
+	vec3.set(this.viewOrigin, to.viewOrigin);
+	mat4.set(this.modelMatrix, to.modelMatrix);
+
+	return to;
+};
+
+/**********************************************************
+ * EntityState is the information conveyed from the server
+ * in an update message about entities that the client will
+ * need to render in some way. Different eTypes may use the
+ * information in different ways. The messages are delta
+ * compressed, so it doesn't really matter if the structure
+ * size is fairly large
+ **********************************************************/
+var EntityState = function () {
+	this.reset();
+};
+
+EntityState.prototype.reset = function () {
+	this.number          = 0;                              // entity index
+	this.eType           = 0;                              // entityType_t
+	this.eFlags          = 0;
+	this.pos             = new Trajectory();               // for calculating position
+	this.apos            = new Trajectory();               // for calculating angles
+	this.time            = 0;
+	this.time2           = 0;
+	this.origin          = [0, 0, 0];
+	this.origin2         = [0, 0, 0];
+	this.angles          = [0, 0, 0];
+	this.angles2         = [0, 0, 0];
+	this.otherEntityNum  = 0;                              // shotgun sources, etc
+	this.otherEntityNum2 = 0;                              // shotgun sources, etc
+	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
+	this.constantLight   = 0;                              // r + (g<<8) + (b<<16) + (intensity<<24)
+	this.loopSound       = 0;                              // constantly loop this sound
+	this.modelIndex      = 0;
+	this.modelIndex2     = 0;
+	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
+	this.frame           = 0;
+	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
+	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
+	this.eventParm       = 0;
+	// For players.
+	this.powerups        = 0;                              // bit flags
+	this.weapon          = 0;                              // determines weapon and flash model, etc
+	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
+	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
+	this.generic1        = 0;
+};
+
+// deep copy
+EntityState.prototype.clone = function (es) {
+	if (typeof(es) === 'undefined') {
+		es = new EntityState();
+	}
+
+	es.number            = this.number;
+	es.eType             = this.eType;
+	es.eFlags            = this.eFlags;
+	this.pos.clone(es.pos);
+	this.apos.clone(es.apos);
+	es.time              = this.time;
+	es.time2             = this.time2;
+	vec3.set(this.origin,  es.origin);
+	vec3.set(this.origin2, es.origin2);
+	vec3.set(this.angles,  es.angles);
+	vec3.set(this.angles2, es.angles2);
+	es.otherEntityNum    = this.otherEntityNum;
+	es.otherEntityNum2   = this.otherEntityNum2;
+	es.groundEntityNum   = this.groundEntityNum;
+	es.constantLight     = this.constantLight;
+	es.loopSound         = this.loopSound;
+	es.modelIndex        = this.modelIndex;
+	es.modelindex2       = this.modelIndex2;
+	es.clientNum         = this.clientNum;
+	es.frame             = this.frame;
+	es.solid             = this.solid;
+	es.event             = this.event;
+	es.eventParm         = this.eventParm;
+	es.powerups          = this.powerups;
+	es.weapon            = this.weapon;
+	es.legsAnim          = this.legsAnim;
+	es.torsoAnim         = this.torsoAnim;
+	es.generic1          = this.generic1;
+
+	return es;
+};
+
+/**
+ * BSP Defines
+ */
+var Lumps = {
+	ENTITIES:     0,
+	SHADERS:      1,
+	PLANES:       2,
+	NODES:        3,
+	LEAFS:        4,
+	LEAFSURFACES: 5,
+	LEAFBRUSHES:  6,
+	MODELS:       7,
+	BRUSHES:      8,
+	BRUSHSIDES:   9,
+	DRAWVERTS:    10,
+	DRAWINDEXES:  11,
+	FOGS:         12,
+	SURFACES:     13,
+	LIGHTMAPS:    14,
+	LIGHTGRID:    15,
+	VISIBILITY:   16,
+	NUM_LUMPS:    17
+};
+
+var MapSurfaceType = {
+	BAD:           0,
+	PLANAR:        1,
+	PATCH:         2,
+	TRIANGLE_SOUP: 3,
+	FLARE:         4
+};
+
+var SurfaceFlags = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var lumps_t = function () {
+	this.fileofs  = 0;                           // int32
+	this.filelen = 0;                           // int32
+};
+
+var dheader_t = function () {
+	this.ident    = null;                        // byte * 4 (string)
+	this.version  = 0;                           // int32
+	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
+
+	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
+		this.lumps[i] = new lumps_t();
+	}
+};
+
+var dmodel_t = function () {
+	this.mins         = [0, 0, 0];               // float32 * 3
+	this.maxs         = [0, 0, 0];               // float32 * 3
+	this.firstSurface = 0;                       // int32
+	this.numSurfaces  = 0;                       // int32
+	this.firstBrush   = 0;                       // int32
+	this.numBrushes   = 0;                       // int32
+};
+dmodel_t.size = 40;
+
+var dshader_t = function () {
+	this.shaderName = null;                      // byte * MAX_QPATH (string)
+	this.flags      = 0;                         // int32
+	this.contents   = 0;                         // int32
+};
+dshader_t.size = 72;
+
+var dplane_t = function () {
+	this.normal = [0, 0, 0];                     // float32 * 3
+	this.dist   = 0;                             // float32
+};
+dplane_t.size = 16;
+
+var dnode_t = function () {
+	this.planeNum    = 0;                        // int32
+	this.childrenNum = [0, 0];                   // int32 * 2
+	this.mins        = [0, 0, 0];                // int32 * 3
+	this.maxs        = [0, 0, 0];                // int32 * 3
+};
+dnode_t.size = 36;
+
+var dleaf_t = function () {
+	this.cluster          = 0;                   // int32
+	this.area             = 0;                   // int32
+	this.mins             = [0, 0, 0];           // int32 * 3
+	this.maxs             = [0, 0, 0];           // int32 * 3
+	this.firstLeafSurface = 0;                   // int32
+	this.numLeafSurfaces  = 0;                   // int32
+	this.firstLeafBrush   = 0;                   // int32
+	this.numLeafBrushes   = 0;                   // int32
+};
+dleaf_t.size = 48;
+
+var dbrushside_t = function () {
+	this.planeNum = 0;                           // int32
+	this.shader   = 0;                           // int32
+};
+dbrushside_t.size = 8;
+
+var dbrush_t = function () {
+	this.side     = 0;                           // int32
+	this.numsides = 0;                           // int32
+	this.shader   = 0;                           // int32
+};
+dbrush_t.size = 12;
+
+var dfog_t = function () {
+	this.shader      = null;                     // byte * MAX_QPATH (string)
+	this.brushNum    = 0;                        // int32
+	this.visibleSide = 0;                        // int32
+};
+dfog_t.size = 72;
+
+var drawVert_t = function () {
+	this.pos      = [0, 0, 0];                   // float32 * 3
+	this.texCoord = [0, 0];                      // float32 * 2
+	this.lmCoord  = [0, 0];                      // float32 * 2
+	this.normal   = [0, 0, 0];                   // float32 * 3
+	this.color    = [0, 0, 0, 0];                // uint8 * 4
+};
+drawVert_t.size = 44;
+
+var dsurface_t = function () {
+	this.shaderNum     = 0;                      // int32
+	this.fogNum        = 0;                      // int32
+	this.surfaceType   = 0;                      // int32
+	this.vertex        = 0;                      // int32
+	this.vertCount     = 0;                      // int32
+	this.meshVert      = 0;                      // int32
+	this.meshVertCount = 0;                      // int32
+	this.lightmapNum   = 0;                      // int32
+	this.lmStart       = [0, 0];                 // int32 * 2
+	this.lmSize        = [0, 0];                 // int32 * 2
+	this.lmOrigin      = [0, 0, 0];              // float32 * 3
+	this.lmVecs        = [                       // float32 * 9
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	this.patchWidth    = 0;                      // int32
+	this.patchHeight   = 0;                      // int32
+};
+dsurface_t.size = 104;
+
+function atob64(arr) {
+	var limit = 1 << 16;
+	var length = arr.length;
+	var slice = arr.slice || arr.subarray;
+	var str;
+
+	if (length < limit) {
+		str = String.fromCharCode.apply(String, arr);
+	} else {
+		var chunks = [];
+		var i = 0;
+		while (i < length) {
+			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
+			i += limit;
+		}
+		str = chunks.join('');
+	}
+
+	return btoa(str);
+}
+	//
+// Helper functions to get/set object properties based on a string.
+//
+var FLOAT32 = 0;
+var UINT8   = 1;
+var UINT16  = 2;
+var UINT32  = 3;
+
+function FTA(fieldname) {
+	var m = fieldname.match(/([^\.\[\]]+)/g);
+	return m;
+}
+
+function AGET(obj, path) {
+	var i, len;
+
+	for (i = 0, len = path.length; i < len - 1; i++) {
+		obj = obj[path[i]];
+	}
+	
+	return obj[path[len - 1]];
+}
+
+function ASET(obj, path, val) {
+	var i, len;
+
+	for (i = 0, len = path.length; i < len - 1; i++) {
+		obj = obj[path[i]];
+	}
+
+	obj[path[len - 1]] = val;
+}
+
+function fnread(bits) {
+	switch (bits) {
+		case FLOAT32:
+			return 'readFloat';
+			break;
+		case UINT8:
+			return 'readUnsignedByte';
+			break;
+		case UINT16:
+			return 'readUnsignedShort';
+			break;
+		case UINT32:
+			return 'readUnsignedInt';
+			break;
+		default:
+			throw new Error('fnread: bad bit count ' + bits);
+	}
+}
+
+function fnwrite(bits) {
+	switch (bits) {
+		case FLOAT32:
+			return 'writeFloat';
+			break;
+		case UINT8:
+			return 'writeUnsignedByte';
+			break;
+		case UINT16:
+			return 'writeUnsignedShort';
+			break;
+		case UINT32:
+			return 'writeUnsignedInt';
+			break;
+		default:
+			throw new Error('fnwrite: bad bit count ' + bits);
+	}
+}
+
+/**********************************************************
+ *
+ * Playerstate communication
+ *
+ **********************************************************/
+
+var playerStateFields = [
+	{ path: FTA('commandTime'),       bits: UINT32  },
+	{ path: FTA('origin[0]'),         bits: FLOAT32 },
+	{ path: FTA('origin[1]'),         bits: FLOAT32 },
+	{ path: FTA('bobCycle'),          bits: UINT8   },
+	{ path: FTA('velocity[0]'),       bits: FLOAT32 },
+	{ path: FTA('velocity[1]'),       bits: FLOAT32 },
+	{ path: FTA('viewangles[1]'),     bits: FLOAT32 },
+	{ path: FTA('viewangles[0]'),     bits: FLOAT32 },
+	{ path: FTA('weaponTime'),        bits: UINT16  },
+	{ path: FTA('origin[2]'),         bits: FLOAT32 },
+	{ path: FTA('velocity[2]'),       bits: FLOAT32 },
+	{ path: FTA('legsTimer'),         bits: UINT8   },
+	{ path: FTA('pm_time'),           bits: UINT16  },
+	{ path: FTA('eventSequence'),     bits: UINT16  },
+	{ path: FTA('torsoAnim'),         bits: UINT8   },
+	{ path: FTA('movementDir'),       bits: UINT8   }, /*4*/
+	{ path: FTA('events[0]'),         bits: UINT8   },
+	{ path: FTA('legsAnim'),          bits: UINT8   },
+	{ path: FTA('events[1]'),         bits: UINT8   },
+	{ path: FTA('pm_flags'),          bits: UINT16  },
+	{ path: FTA('groundEntityNum'),   bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('weaponState'),       bits: UINT8   }, /*4*/
+	{ path: FTA('eFlags'),            bits: UINT16  },
+	{ path: FTA('externalEvent'),     bits: UINT16  }, /*10*/
+	{ path: FTA('gravity'),           bits: UINT16  },
+	{ path: FTA('speed'),             bits: UINT16  },
+	{ path: FTA('delta_angles[1]'),   bits: UINT16  },
+	{ path: FTA('externalEventParm'), bits: UINT8   },
+	// { path: FTA('viewheight'),        bits: UINT8   },
+	// { path: FTA('damageEvent'),       bits: UINT8   },
+	// { path: FTA('damageYaw'),         bits: UINT8   },
+	// { path: FTA('damagePitch'),       bits: UINT8   },
+	// { path: FTA('damageCount'),       bits: UINT8   },
+	// { path: FTA('generic1'),          bits: UINT8   },
+	{ path: FTA('pm_type'),           bits: UINT8   },
+	{ path: FTA('delta_angles[0]'),   bits: UINT16  },
+	{ path: FTA('delta_angles[2]'),   bits: UINT16  },
+	{ path: FTA('torsoTimer'),        bits: UINT16  }, /*12*/
+	{ path: FTA('eventParms[0]'),     bits: UINT8   },
+	{ path: FTA('eventParms[1]'),     bits: UINT8   },
+	{ path: FTA('clientNum'),         bits: UINT8   },
+	{ path: FTA('weapon'),            bits: UINT8   }, /*5*/
+	{ path: FTA('viewangles[2]'),     bits: FLOAT32 },
+	// { path: FTA('grapplePoint[0]'),   bits: FLOAT32 },
+	// { path: FTA('grapplePoint[1]'),   bits: FLOAT32 },
+	// { path: FTA('grapplePoint[2]'),   bits: FLOAT32 },
+	{ path: FTA('jumppad_ent'),       bits: UINT16  }, /*GENTITYNUM_BITS*/
+	// { path: FTA('loopSound'),         bits: UINT16  }
+];
+
+var dummyPlayerState = new PlayerState();
+
+/**
+ * WriteDeltaPlayerState
+ */
+function WriteDeltaPlayerState(msg, from, to) {
+	var i, changed;
+	var field, fromF, toF, func;
+
+	if (!from) {
+		from = dummyPlayerState;
+	}
+
+	// Figure out the number of fields that have changed.
+	changed = 0;
+	for (i = 0; i < playerStateFields.length; i++) {
+		field = playerStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+
+		if (fromF !== toF) {
+			changed++;
+		}
+	}
+
+	msg.writeByte(changed);
+
+	// Write out each field that has changed, prefixing 
+	// the changed field with its indexed into the ps
+	// field array.
+	for (i = 0; i < playerStateFields.length; i++) {
+		field = playerStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+		if (fromF === toF) {
+			continue;
+		}
+
+		func = fnwrite(field.bits);
+
+		// TODO Could write out a master bitmask describing
+		// the changed fields.
+		msg.writeByte(i);
+		msg[func](AGET(to, field.path));
+	}
+
+	// Write out the arrays. First we write a bit mask
+	// describing which arrays have changed, followed by
+	// a mask for each array describing which of its 
+	// elements have changed.
+
+	// Sanity check. Increase bitmask send length if changing
+	// these maxes is necessary
+	if (MAX_STATS > 16 || MAX_PERSISTANT > 16 || MAX_POWERUPS > 16 || MAX_WEAPONS > 16) {
+		throw new Error('Array maxes exceed bitmask length');
+	}
+
+	var statsbits      = 0,
+		persistantbits = 0,
+		powerupsbits   = 0,
+		ammobits       = 0;
+
+	for (i = 0; i < MAX_STATS; i++) {
+		if (to.stats[i] !== from.stats[i]) {
+			statsbits |= 1 << i;
+		}
+	}
+	for (i = 0; i < MAX_PERSISTANT; i++) {
+		if (to.persistant[i] !== from.persistant[i]) {
+			persistantbits |= 1 << i;
+		}
+	}
+	for (i = 0; i < MAX_POWERUPS; i++) {
+		if (to.powerups[i] !== from.powerups[i]) {
+			powerupsbits |= 1 << i;
+		}
+	}
+	for (i = 0; i < MAX_WEAPONS; i++) {
+		if (to.ammo[i] !== from.ammo[i]) {
+			ammobits |= 1 << i;
+		}
+	}
+
+	// Write out a byte explaining which arrays changed.
+	var arrbits = (statsbits ? 1 : 0) | (persistantbits ? 2 : 0) | (powerupsbits ? 4 : 0) | (ammobits ? 8 : 0);
+	msg.writeByte(arrbits);
+
+	if (statsbits) {
+		msg.writeShort(statsbits);
+		for (i = 0; i < MAX_STATS; i++) {
+			if (statsbits & (1 << i)) {
+				msg.writeShort(to.stats[i]);
+			}
+		}
+	}
+	if (persistantbits) {
+		msg.writeShort(persistantbits);
+		for (i = 0; i < MAX_PERSISTANT; i++) {
+			if (persistantbits & (1 << i)) {
+				msg.writeShort(to.persistant[i]);
+			}
+		}
+	}
+	if (powerupsbits) {
+		msg.writeShort(powerupsbits);
+		for (i = 0; i < MAX_POWERUPS; i++) {
+			if (powerupsbits & (1 << i)) {
+				msg.writeShort(to.powerups[i]);
+			}
+		}
+	}
+	if (ammobits) {
+		msg.writeShort(ammobits);
+		for (i = 0; i < MAX_WEAPONS; i++) {
+			if (ammobits & (1 << i)) {
+				msg.writeShort(to.ammo[i]);
+			}
+		}
+	}
+}
+
+function ReadDeltaPlayerState(msg, from, to) {
+	var i, changed;
+	var idx, field, fromF, toF, func;
+
+	if (!from) {
+		from = dummyPlayerState;
+	}
+	
+	// Clone the initial state.
+	from.clone(to);
+
+	// Get the number of fields changed.
+	changed = msg.readByte();
+
+	// Read all the changed fields.
+	for (i = 0; i < changed; i++) {
+		idx = msg.readByte();
+		field = playerStateFields[idx];
+		func = fnread(field.bits);
+
+		ASET(to, field.path, msg[func]());
+	}
+
+	var arrbits = msg.readByte();
+
+	if (arrbits & 1) {
+		var statsbits = msg.readShort();
+		for (i = 0; i < MAX_STATS; i++) {
+			if (statsbits & (1 << i)) {
+				to.stats[i] = msg.readShort();
+			}
+		}
+	}
+	if (arrbits & 2) {
+		var persistantbits = msg.readShort();
+		for (i = 0; i < MAX_PERSISTANT; i++) {
+			if (persistantbits & (1 << i)) {
+				to.persistant[i] = msg.readShort();
+			}
+		}
+	}
+
+	if (arrbits & 4) {
+		var powerupsbits = msg.readShort();
+		for (i = 0; i < MAX_POWERUPS; i++) {
+			if (powerupsbits & (1 << i)) {
+				to.powerups[i] = msg.readShort();
+			}
+		}
+	}
+
+	if (arrbits & 8) {
+		var ammobits = msg.readShort();
+		for (i = 0; i < MAX_WEAPONS; i++) {
+			if (ammobits & (1 << i)) {
+				to.ammo[i] = msg.readShort();
+			}
+		}
+	}
+}
+
+/**********************************************************
+ *
+ * Entitystate communication
+ *
+ **********************************************************/
+
+var entityStateFields = [
+	{ path: FTA('pos.trTime'),      bits: UINT32  },
+	{ path: FTA('pos.trBase[0]'),   bits: FLOAT32 },
+	{ path: FTA('pos.trBase[1]'),   bits: FLOAT32 },
+	{ path: FTA('pos.trDelta[0]'),  bits: FLOAT32 },
+	{ path: FTA('pos.trDelta[1]'),  bits: FLOAT32 },
+	{ path: FTA('pos.trBase[2]'),   bits: FLOAT32 },
+	{ path: FTA('apos.trBase[1]'),  bits: FLOAT32 },
+	{ path: FTA('pos.trDelta[2]'),  bits: FLOAT32 },
+	{ path: FTA('apos.trBase[0]'),  bits: FLOAT32 },
+	{ path: FTA('event'),           bits: UINT16  }, /*10*/
+	{ path: FTA('angles2[1]'),      bits: FLOAT32 },
+	{ path: FTA('eType'),           bits: UINT8   },
+	{ path: FTA('torsoAnim'),       bits: UINT8   },
+	{ path: FTA('eventParm'),       bits: UINT8   },
+	{ path: FTA('legsAnim'),        bits: UINT8   },
+	{ path: FTA('groundEntityNum'), bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('pos.trType'),      bits: UINT8   },
+	{ path: FTA('eFlags'),          bits: UINT32  }, /*19*/
+	{ path: FTA('otherEntityNum'),  bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('weapon'),          bits: UINT8   },
+	{ path: FTA('clientNum'),       bits: UINT8   },
+	{ path: FTA('angles[1]'),       bits: FLOAT32 },
+	{ path: FTA('pos.trDuration'),  bits: UINT32  },
+	{ path: FTA('apos.trType'),     bits: UINT8   },
+	{ path: FTA('origin[0]'),       bits: FLOAT32 },
+	{ path: FTA('origin[1]'),       bits: FLOAT32 },
+	{ path: FTA('origin[2]'),       bits: FLOAT32 },
+	{ path: FTA('solid'),           bits: UINT32  }, /*24*/
+	{ path: FTA('powerups'),        bits: UINT16  }, /*MAX_POWERUPS*/
+	{ path: FTA('modelIndex'),      bits: UINT8   },
+	{ path: FTA('otherEntityNum2'), bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('loopSound'),       bits: UINT8   },
+	{ path: FTA('generic1'),        bits: UINT8   },
+	{ path: FTA('origin2[2]'),      bits: FLOAT32 },
+	{ path: FTA('origin2[0]'),      bits: FLOAT32 },
+	{ path: FTA('origin2[1]'),      bits: FLOAT32 },
+	{ path: FTA('modelIndex2'),     bits: UINT8   },
+	{ path: FTA('angles[0]'),       bits: FLOAT32 },
+	{ path: FTA('time'),            bits: UINT32  },
+	{ path: FTA('apos.trTime'),     bits: UINT32  },
+	{ path: FTA('apos.trDuration'), bits: UINT32  },
+	{ path: FTA('apos.trBase[2]'),  bits: FLOAT32 },
+	{ path: FTA('apos.trDelta[0]'), bits: FLOAT32 },
+	{ path: FTA('apos.trDelta[1]'), bits: FLOAT32 },
+	{ path: FTA('apos.trDelta[2]'), bits: FLOAT32 },
+	{ path: FTA('time2'),           bits: UINT32  },
+	{ path: FTA('angles[2]'),       bits: FLOAT32 },
+	{ path: FTA('angles2[0]'),      bits: FLOAT32 },
+	{ path: FTA('angles2[2]'),      bits: FLOAT32 },
+	{ path: FTA('constantLight'),   bits: UINT32  },
+	{ path: FTA('frame'),           bits: UINT16  }
+];
+
+/**
+ * WriteDeltaEntityState
+ *
+ * Writes part of a packetentities message, including the entity number.
+ * Can delta from either a baseline or a previous packet_entity.
+ * If to is NULL, a remove entity update will be sent.
+ * If force is not set, then nothing at all will be generated if the entity is
+ * identical, under the assumption that the in-order delta code will catch it.
+ */
+function WriteDeltaEntityState(msg, from, to, force) {
+	var i, changed;
+	var field, fromF, toF, func;
+
+	// A null to is a delta remove message.
+	if (to === null) {
+		if (from === null) {
+			return;
+		}
+		msg.writeShort(from.number);  /* GENTITYNUM_BITS */
+		msg.writeByte(0 | 1);  // removed | no delta
+		return;
+	}
+
+	// Sanity check.
+	if (to.number < 0 || to.number >= MAX_GENTITIES) {
+		throw new Error('WriteDeltaEntityState: Bad entity number: ', to.number);
+	}
+
+	// Figure out the number of fields that have changed.
+	changed = 0;
+	for (i = 0; i < entityStateFields.length; i++) {
+		field = entityStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+
+		if (fromF !== toF) {
+			changed++;
+		}
+	}
+
+	if (changed === 0) {
+		// Nothing at all changed.
+		if (!force) {
+			return;  // write nothing
+		}
+
+		msg.writeShort(to.number);  /* GENTITYNUM_BITS */
+		msg.writeByte(0);  // not removed | no delta
+		return;
+	}
+
+	msg.writeShort(to.number); /* GENTITYNUM_BITS */
+	msg.writeByte(0 | 2);  // not removed | we have a delta
+	msg.writeByte(changed); // number of fields changed
+
+	// Write out each field that has changed, prefixing 
+	// the changed field with its indexed into the ps
+	// field array.
+	for (i = 0; i < entityStateFields.length; i++) {
+		field = entityStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+		if (fromF === toF) {
+			continue;
+		}
+
+		func = fnwrite(field.bits);
+
+		msg.writeByte(i);
+		msg[func](AGET(to, field.path));
+	}
+}
+
+/**
+ * ReadDeltaEntityState
+ *
+ * The entity number has already been read from the message, which
+ * is how the from state is identified.
+ * 
+ * If the delta removes the entity, entityState.number will be set to MAX_GENTITIES-1.
+ * 
+ * Can go from either a baseline or a previous packet entity.
+ */
+function ReadDeltaEntityState(msg, from, to, number) {
+	var i, changed;
+	var idx, field, fromF, toF, func;
+
+	if (number < 0 || number >= MAX_GENTITIES) {
+		throw new Error('Bad delta entity number: ', number);
+	}
+
+	var opmask = msg.readByte();
+	var remove = opmask & 1;
+	var delta = opmask & 2;
+
+	// Check for a remove
+	if (remove) {
+		to.reset();
+		to.number = MAX_GENTITIES - 1;
+		return;
+	}
+
+	// Clone the initial state.
+	from.clone(to);
+	to.number = number;
+
+	// Check for no delta.
+	if (!delta) {
+		return;
+	}
+
+	// Get the number of fields changed.
+	changed = msg.readByte();
+
+	// Read all the changed fields.
+	for (i = 0; i < changed; i++) {
+		idx = msg.readByte();
+		field = entityStateFields[idx];
+		func = fnread(field.bits);
+
+		ASET(to, field.path, msg[func]());
+	}
+}
+
+
+	return {
+		Err:                   Err,
+
+		PlayerState:           PlayerState,
+		TrajectoryType:        TrajectoryType,
+		Trajectory:            Trajectory,
+		Orientation:           Orientation,
+		EntityState:           EntityState,
+
+		NetAdrType:            NetAdrType,
+		NetSrc:                NetSrc,
+		NetAdr:                NetAdr,
+		UserCmd:               UserCmd,
+
+		Lumps:                 Lumps,
+		MapSurfaceType:        MapSurfaceType,
+		SurfaceFlags:          SurfaceFlags,
+		lumps_t:               lumps_t,
+		dheader_t:             dheader_t,
+		dmodel_t:              dmodel_t,
+		dshader_t:             dshader_t,
+		dplane_t:              dplane_t,
+		dnode_t:               dnode_t,
+		dleaf_t:               dleaf_t,
+		dbrushside_t:          dbrushside_t,
+		dbrush_t:              dbrush_t,
+		dfog_t:                dfog_t,
+		drawVert_t:            drawVert_t,
+		dsurface_t:            dsurface_t,
+
+		atob64:                atob64,
+
+		WriteDeltaPlayerState: WriteDeltaPlayerState,
+		ReadDeltaPlayerState:  ReadDeltaPlayerState,
+		WriteDeltaEntityState: WriteDeltaEntityState,
+		ReadDeltaEntityState:  ReadDeltaEntityState
+	};
+});
+
 //     Underscore.js 1.4.1
 //     http://underscorejs.org
 //     (c) 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
@@ -5258,99 +7012,64 @@ else {
 /*global vec3: true, mat4: true */
 
 define('game/bg',
-['glmatrix'],
-function (glmatrix) {
-	/**********************************************************
- * Stateless functions and data structures
- * included by each module.
- **********************************************************/
+['glmatrix', 'shared/sh', 'shared/qmath'],
+function (glmatrix, sh, qm) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-var Q3W_BASE_FOLDER = 'baseq3';
-var MAX_QPATH = 64;
-
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 32;                           // absolute limit
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
-var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue, flags) {
-	var currentValue = defaultValue;
-	var cvar = function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
-			} else {
-				currentValue = parseFloat(newValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-
-	cvar.flags = flags;
-
-	return cvar;
-};
-
-var CvarFlags = {
+/**
+ * Cvar flags
+ */
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
 	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
 };
 
-/**********************************************************
- * User commands are sent by the client to the server
- * each frame to let the server know its status.
- **********************************************************/
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-// UserCmd button bits, many of which are generated by the client system,
-// so they aren't game/cgame only definitions
-var Buttons = {
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -5368,828 +7087,320 @@ var Buttons = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
+	var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.buttons     = 0;
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
+var PM = {
+	NORMAL:       0,                                       // can accelerate and turn
+	NOCLIP:       1,                                       // noclip movement
+	SPECTATOR:    2,                                       // still run into walls
+	DEAD:         3,                                       // no acceleration or turning, but free falling
+	FREEZE:       4,                                       // stuck in place with no control
+	INTERMISSION: 5                                        // no movement or status bar
 };
 
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.buttons = this.buttons;
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-
-	return cmd;
+var PMF = {
+	DUCKED:         1,
+	JUMP_HELD:      2,
+	BACKWARDS_JUMP: 8,                                     // go into backwards land
+	BACKWARDS_RUN:  16,                                    // coast down to backwards run
+	TIME_LAND:      32,                                    // pm_time is time before rejump
+	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
+	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
+	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
+	USE_ITEM_HELD:  1024,
+	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
+	FOLLOW:         4096,                                  // spectate following another player
+	SCOREBOARD:     8192,                                  // spectate as a scoreboard
+	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
+	ALL_TIMES:      (32|64|256)
 };
 
-/**********************************************************
- * Player state
- **********************************************************/
-var MAX_STATS              = 16;
-var MAX_PERSISTANT         = 16;
-var MAX_POWERUPS           = 16;
-var MAX_WEAPONS            = 16;
-var PS_PMOVEFRAMECOUNTBITS = 6;
-
-var PlayerState = function () {
-	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime      = 0;                             // cmd->serverTime of last executed command
-	this.pm_type          = 0;
-	this.pm_flags         = 0;                             // ducked, jump_held, etc
-	this.origin           = [0, 0, 0];
-	this.velocity         = [0, 0, 0];
-	this.viewangles       = [0, 0, 0];
-	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed            = 0;
-	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
-
-	this.legsTimer        = 0;                             // don't change low priority animations until this runs out
-	this.legsAnim         = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer       = 0;                             // don't change low priority animations until this runs out
-	this.torsoAnim        = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.movementDir      = 0;                             // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats            = new Array(MAX_STATS);
-	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
-	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
-	this.ammo             = new Array(MAX_WEAPONS);
-
-	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
-	this.jumppad_frame    = 0;
-	this.pmove_framecount = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
+// Weapon state.
+var WS = {
+	READY:    0,
+	RAISING:  1,
+	DROPPING: 2,
+	FIRING:   3
 };
 
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-
-	return ps;
+// Item types.
+var IT = {
+	BAD:                0,
+	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
+	AMMO:               2,                                 // EFX: rotate
+	ARMOR:              3,                                 // EFX: rotate + minlight
+	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
+	POWERUP:            5,                                 // instant on, timer based
+	                                                       // EFX: rotate + external ring that rotates
+	HOLDABLE:           6,                                 // single use, holdable item
+	                                                       // EFX: rotate + bob
+	PERSISTANT_POWERUP: 7,
+	TEAM:               8
 };
 
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
 };
 
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
+var MASK = {
+	ALL:         -1,
+	SOLID:       CONTENTS.SOLID,
+	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
+	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
+	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
+	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
+	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
 };
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = new Trajectory();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.groundEntityNum   = this.groundEntityNum;
-	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-
-	return es;
-};
-
-/**********************************************************
- * Angles
- **********************************************************/
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
 
 /**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
+ * Playerstate flags
  */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
+var STAT = {
+	HEALTH:        0,
+	HOLDABLE_ITEM: 1,
+	WEAPONS:       2,
+	ARMOR:         3,
+	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
+	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
+	MAX_HEALTH:    6				// health / armor limit, changable by handicap
 };
 
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
+var WP = {
+	NONE:             0,
+	GAUNTLET:         1,
+	MACHINEGUN:       2,
+	SHOTGUN:          3,
+	GRENADE_LAUNCHER: 4,
+	ROCKET_LAUNCHER:  5,
+	LIGHTNING:        6,
+	RAILGUN:          7,
+	PLASMAGUN:        8,
+	BFG:              9,
+	GRAPPLING_HOOK:   10,
+	NUM_WEAPONS:      11
+};
+
+// PlayerState.persistant[] indexes
+// These fields are the only part of player_state that aren't
+// cleared on respawn.
+// NOTE: may not have more than 16
+var PS = {
+	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
+	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
+	RANK:                 2,                               // player rank or team rank
+	TEAM:                 3,                               // player team
+	SPAWN_COUNT:          4,                               // incremented every respawn
+	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
+	ATTACKER:             6,                               // clientnum of last damage inflicter
+	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
+	KILLED:               8,                               // count of the number of times you died
+	// player awards tracking
+	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
+	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
+	DEFEND_COUNT:         11,                              // defend awards
+	ASSIST_COUNT:         12,                              // assist awards
+	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
+	CAPTURES:             14                               // captures
+};
+
+/**
+ * Entitystate flags
+ */
+// entityState_t->eType
+var ET = {
+	GENERAL:          0,
+	PLAYER:           1,
+	ITEM:             2,
+	MISSILE:          3,
+	MOVER:            4,
+	BEAM:             5,
+	PORTAL:           6,
+	SPEAKER:          7,
+	PUSH_TRIGGER:     8,
+	TELEPORT_TRIGGER: 9,
+	INVISIBLE:        10,
+	GRAPPLE:          11,                                  // grapple hooked on wall
+	TEAM:             12,
+	EVENTS:           13                                   // any of the EV_* events can be added freestanding
+	                                                       // by setting eType to ET_EVENTS + eventNum
+	                                                       // this avoids having to set eFlags and eventNum
+};
+
+// entityState_t->eFlags
+var EF = {
+	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
+	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
+	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
+	PLAYER_EVENT:     0x00000010,
+	BOUNCE:           0x00000010,                          // for missiles
+	BOUNCE_HALF:      0x00000020,                          // for missiles
+	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
+	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
+	FIRING:           0x00000100,                          // for lightning gun
+	KAMIKAZE:         0x00000200,
+	MOVER_STOP:       0x00000400,                          // will push otherwise
+	AWARD_CAP:        0x00000800,                          // draw the capture sprite
+	TALK:             0x00001000,                          // draw a talk balloon
+	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
+	VOTED:            0x00004000,                          // already cast a vote
+	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
+	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
+	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
+	AWARD_DENIED:     0x00040000,                          // denied
+	TEAMVOTED:        0x00080000                           // already cast a team vote
 };
 
 /**********************************************************
- * Axis
+ * 
+ * Entitystate events
+ * 
+ * Entity events are for effects that take place relative
+ * to an existing entities origin. Very network efficient.
  *
- * TODO Perhaps we should be using mat3's instead.
+ * Two bits at the top of the entityState->event field
+ * will be incremented with each change in the event so
+ * that an identical event started twice in a row can
+ * be distinguished. And off the value with ~EV_EVENT_BITS
+ * to retrieve the actual event number.
+ *
  **********************************************************/
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
+var EV_EVENT_BIT1    = 0x00000100;
+var EV_EVENT_BIT2    = 0x00000200;
+var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
+var EVENT_VALID_MSEC = 300;
 
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
+var EV = {
+	NONE:                0,
 
-// TODO Perhaps the functions using this should change the way they store
-// there axis, so we can re-use the mat3 lib calls.
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
+	FOOTSTEP:            1,
+	FOOTSTEP_METAL:      2,
+	FOOTSPLASH:          3,
+	FOOTWADE:            4,
+	SWIM:                5,
 
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
+	STEP_4:              6,
+	STEP_8:              7,
+	STEP_12:             8,
+	STEP_16:             9,
 
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
+	FALL_SHORT:          10,
+	FALL_MEDIUM:         11,
+	FALL_FAR:            12,
 
-function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
+	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
 
-/**********************************************************
- * Planes
- **********************************************************/
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
+	JUMP:                14,
+	WATER_TOUCH:         15,                               // foot touches
+	WATER_LEAVE:         16,                               // foot leaves
+	WATER_UNDER:         17,                               // head touches
+	WATER_CLEAR:         18,                               // head leaves
 
-var Plane = function () {
-	this.normal   = vec3.create();
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
+	ITEM_PICKUP:         29,                               // normal item pickups are predictable
+	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
+
+	NOAMMO:              21,
+	CHANGE_WEAPON:       22,
+	FIRE_WEAPON:         23,
+
+	USE_ITEM0:           24,
+	USE_ITEM1:           25,
+	USE_ITEM2:           26,
+	USE_ITEM3:           27,
+	USE_ITEM4:           28,
+	USE_ITEM5:           29,
+	USE_ITEM6:           30,
+	USE_ITEM7:           31,
+	USE_ITEM8:           32,
+	USE_ITEM9:           33,
+	USE_ITEM10:          34,
+	USE_ITEM11:          35,
+	USE_ITEM12:          36,
+	USE_ITEM13:          37,
+	USE_ITEM14:          38,
+	USE_ITEM15:          39,
+
+	ITEM_RESPAWN:        40,
+	ITEM_POP:            41,
+	PLAYER_TELEPORT_IN:  42,
+	PLAYER_TELEPORT_OUT: 43,
+
+	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
+
+	GENERAL_SOUND:       45,
+	GLOBAL_SOUND:        46,                               // no attenuation
+	GLOBAL_TEAM_SOUND:   47,
+
+	BULLET_HIT_FLESH:    48,
+	BULLET_HIT_WALL:     49,
+
+	MISSILE_HIT:         50,
+	MISSILE_MISS:        51,
+	MISSILE_MISS_METAL:  52,
+	RAILTRAIL:           53,
+	SHOTGUN:             54,
+	BULLET:              55,                               // otherEntity is the shooter
+
+	PAIN:                56,
+	DEATH1:              57,
+	DEATH2:              58,
+	DEATH3:              59,
+	OBITUARY:            60,
+
+	POWERUP_QUAD:        61,
+	POWERUP_BATTLESUIT:  62,
+	POWERUP_REGEN:       63,
+
+	GIB_PLAYER:          64,                               // gib a previously living player
+	SCOREPLUM:           65,                               // score plum
+
+	DEBUG_LINE:          66,
+	STOPLOOPINGSOUND:    67,
+	TAUNT:               68,
+	TAUNT_YES:           69,
+	TAUNT_NO:            70,
+	TAUNT_FOLLOWME:      71,
+	TAUNT_GETFLAG:       72,
+	TAUNT_GUARDBASE:     73,
+	TAUNT_PATROL:        74
 };
 
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-function GetPlaneSignbits(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p.normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-// Returns 1, 2, or 1 + 2.
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**********************************************************
- * Bounds
- **********************************************************/
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] ||
-		maxs[1] < mins2[1] ||
-		maxs[2] < mins2[2] ||
-		mins[0] > maxs2[0] ||
-		mins[1] > maxs2[1] ||
-		mins[2] > maxs2[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************
- * Radix sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- **********************************************************/
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-/**********************************************************
- * Surface flags
- **********************************************************/
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-/**********************************************************
- * Q3 BSP Defines
- **********************************************************/
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-/**********************************************************
- * Misc
- **********************************************************/
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
-	var DEFAULT_GRAVITY = 800;
-var JUMP_VELOCITY = 270;
-var MAX_CLIP_PLANES = 5;
-var MIN_WALK_NORMAL = 0.7;
-var STEPSIZE = 18;
-var OVERCLIP = 1.001;
-var DEFAULT_VIEWHEIGHT = 26;
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-/**********************************************************
+/**
  * Animations
- **********************************************************/
-var Animations = {
+ */
+// Flip the togglebit every time an animation
+// changes so a restart of the same anim can be detected.
+var ANIM_TOGGLEBIT = 128;
+
+var ANIM = {
 	BOTH_DEATH1:         0,
 	BOTH_DEAD1:          1,
 	BOTH_DEATH2:         2,
@@ -6243,163 +7454,41 @@ var Animations = {
 	MAX_TOTALANIMATIONS: 37
 };
 
-var Animation = function () {
-	this.firstFrame  = 0;
-	this.numFrames   = 0;
-	this.loopFrames  = 0;                                  // 0 to numFrames
-	this.frameLerp   = 0;                                  // msec between frames
-	this.initialLerp = 0;                                  // msec to get to first frame
-	this.reversed    = false;                              // true if animation is reversed
-	this.flipflop    = false;                              // true if animation should flipflop back to base
+// Means of death
+var MOD = {
+	UNKNOWN:        0,
+	SHOTGUN:        1,
+	GAUNTLET:       2,
+	MACHINEGUN:     3,
+	GRENADE:        4,
+	GRENADE_SPLASH: 5,
+	ROCKET:         6,
+	ROCKET_SPLASH:  7,
+	PLASMA:         8,
+	PLASMA_SPLASH:  9,
+	RAILGUN:        10,
+	LIGHTNING:      11,
+	BFG:            12,
+	BFG_SPLASH:     13,
+	WATER:          14,
+	SLIME:          15,
+	LAVA:           16,
+	CRUSH:          17,
+	TELEFRAG:       18,
+	FALLING:        19,
+	SUICIDE:        20,
+	TARGET_LASER:   21,
+	TRIGGER_HURT:   22,
+	GRAPPLE:        23
 };
 
-// Flip the togglebit every time an animation
-// changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
-
-/**********************************************************
- * Game item descriptions
- **********************************************************/
-var ItemType = {
-	BAD:                0,
-	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
-	AMMO:               2,                                 // EFX: rotate
-	ARMOR:              3,                                 // EFX: rotate + minlight
-	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
-	POWERUP:            5,                                 // instant on, timer based
-	                                                       // EFX: rotate + external ring that rotates
-	HOLDABLE:           6,                                 // single use, holdable item
-	                                                       // EFX: rotate + bob
-	PERSISTANT_POWERUP: 7,
-	TEAM:               8
-};
-
-var GameItemDesc = function (classname, modelPaths, icon, giType, giTag) {
-	this.classname  = classname;                           // spawning name
-	this.modelPaths = modelPaths;
-	this.icon       = icon;
-	this.giType     = giType;                              // IT_* flags
-	this.giTag      = giTag;
-};
-
-/**********************************************************
- * Entity state related
- **********************************************************/
-// entityState_t->eType
-var EntityType = {
-	GENERAL:          0,
-	PLAYER:           1,
-	ITEM:             2,
-	MISSILE:          3,
-	MOVER:            4,
-	BEAM:             5,
-	PORTAL:           6,
-	SPEAKER:          7,
-	PUSH_TRIGGER:     8,
-	TELEPORT_TRIGGER: 9,
-	INVISIBLE:        10,
-	GRAPPLE:          11,                                  // grapple hooked on wall
-	TEAM:             12,
-	EVENTS:           13                                   // any of the EV_* events can be added freestanding
-	                                                       // by setting eType to ET_EVENTS + eventNum
-	                                                       // this avoids having to set eFlags and eventNum
-};
-
-// entityState_t->eFlags
-var EntityFlags = {
-	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
-	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
-	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
-	PLAYER_EVENT:     0x00000010,
-	BOUNCE:           0x00000010,                          // for missiles
-	BOUNCE_HALF:      0x00000020,                          // for missiles
-	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
-	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
-	FIRING:           0x00000100,                          // for lightning gun
-	KAMIKAZE:         0x00000200,
-	MOVER_STOP:       0x00000400,                          // will push otherwise
-	AWARD_CAP:        0x00000800,                          // draw the capture sprite
-	TALK:             0x00001000,                          // draw a talk balloon
-	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
-	VOTED:            0x00004000,                          // already cast a vote
-	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
-	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
-	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
-	AWARD_DENIED:     0x00040000,                          // denied
-	TEAMVOTED:        0x00080000                           // already cast a team vote
-};
-
-/**********************************************************
- * Pmove related
- **********************************************************/
-var ContentTypes = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
-var ContentMasks = {
-	ALL:         -1,
-	SOLID:       ContentTypes.SOLID,
-	PLAYERSOLID: ContentTypes.SOLID | ContentTypes.PLAYERCLIP | ContentTypes.BODY,
-	DEADSOLID:   ContentTypes.SOLID | ContentTypes.PLAYERCLIP,
-	WATER:       ContentTypes.WATER | ContentTypes.LAVA | ContentTypes.SLIME,
-	OPAQUE:      ContentTypes.SOLID | ContentTypes.SLIME | ContentTypes.LAVA,
-	SHOT:        ContentTypes.SOLID | ContentTypes.BODY | ContentTypes.CORPSE
-};
-
-var PmoveType = {
-	NORMAL:       0,                                       // can accelerate and turn
-	NOCLIP:       1,                                       // noclip movement
-	SPECTATOR:    2,                                       // still run into walls
-	DEAD:         3,                                       // no acceleration or turning, but free falling
-	FREEZE:       4,                                       // stuck in place with no control
-	INTERMISSION: 5                                        // no movement or status bar
-};
-
-var PmoveFlags = {
-	DUCKED:         1,
-	JUMP_HELD:      2,
-	BACKWARDS_JUMP: 8,                                     // go into backwards land
-	BACKWARDS_RUN:  16,                                    // coast down to backwards run
-	TIME_LAND:      32,                                    // pm_time is time before rejump
-	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
-	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
-	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
-	USE_ITEM_HELD:  1024,
-	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
-	FOLLOW:         4096,                                  // spectate following another player
-	SCOREBOARD:     8192,                                  // spectate as a scoreboard
-	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
-	ALL_TIMES:      (32|64|256)
-};
+	var DEFAULT_GRAVITY = 800;
+var JUMP_VELOCITY = 270;
+var MAX_CLIP_PLANES = 5;
+var MIN_WALK_NORMAL = 0.7;
+var STEPSIZE = 18;
+var OVERCLIP = 1.001;
+var DEFAULT_VIEWHEIGHT = 26;
 
 var PmoveInfo = function () {
 	this.ps        = null;
@@ -6420,31 +7509,128 @@ var PmoveInfo = function () {
 	this.trace     = null;
 };
 
-/**********************************************************
- * Playerstate bitfields
- **********************************************************/
-var Stat = {
-	HEALTH:        0,
-	HOLDABLE_ITEM: 1,
-	WEAPONS:       2,
-	ARMOR:         3
+var GameItemDesc = function (classname, pickupSound, models, icon, pickupName, quantity, giType, giTag, precache, sounds) {
+	this.classname   = classname;                           // spawning name
+	this.pickupSound = pickupSound;
+	this.models      = models;
+	this.icon        = icon;
+	this.pickupName  = pickupName;
+	this.quantity    = quantity;
+	this.giType      = giType;                              // IT_* flags
+	this.giTag       = giTag;
+	this.precache    = precache;
+	this.sounds      = sounds;
 };
 
-var Weapon = {
-	NONE:             0,
-	GAUNTLET:         1,
-	MACHINEGUN:       2,
-	SHOTGUN:          3,
-	GRENADE_LAUNCHER: 4,
-	ROCKET_LAUNCHER:  5,
-	LIGHTNING:        6,
-	RAILGUN:          7,
-	PLASMAGUN:        8,
-	BFG:              9,
-	GRAPPLING_HOOK:   10,
-	NUM_WEAPONS:      11
+var Animation = function () {
+	this.firstFrame  = 0;
+	this.numFrames   = 0;
+	this.loopFrames  = 0;                                  // 0 to numFrames
+	this.frameLerp   = 0;                                  // msec between frames
+	this.initialLerp = 0;                                  // msec to get to first frame
+	this.reversed    = false;                              // true if animation is reversed
+	this.flipflop    = false;                              // true if animation should flipflop back to base
 };
+
 	/**
+ * CanItemBeGrabbed
+ *
+ * Returns false if the item should not be picked up.
+ * This needs to be the same for client side prediction and server use.
+ */
+function CanItemBeGrabbed(gametype, ent, ps) {
+	var item;
+	
+// 	if ( ent.modelindex < 1 || ent.modelindex >= bg_numItems ) {
+// 		Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: index out of range" );
+// 	}
+	
+	item = itemList[ent.modelIndex];
+	
+	switch( item.giType ) {
+	case IT.WEAPON:
+		return true;	// weapons are always picked up
+	
+	case IT.AMMO:
+		if ( ps.ammo[ item.giTag ] >= 200 ) {
+			return false;		// can't hold any more
+		}
+		return true;
+	
+	case IT.ARMOR:
+		if (ps.stats[STAT.ARMOR] >= ps.stats[STAT.MAX_HEALTH] * 2) {
+			return false;
+		}
+		
+		return true;
+	
+	case IT.HEALTH:
+		// small and mega healths will go over the max, otherwise
+		// don't pick up if already at max
+		if ( item.quantity == 5 || item.quantity == 100 ) {
+			if ( ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2 ) {
+				return false;
+			}
+			return true;
+		}
+		
+		if ( ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] ) {
+			return false;
+		}
+		return true;
+	
+	case IT.POWERUP:
+		return true;	// powerups are always picked up
+	
+// 	case IT.TEAM: // team items, such as flags
+// 		if( gametype == GT.CTF ) {
+// 			// ent->modelindex2 is non-zero on items if they are dropped
+// 			// we need to know this because we can pick up our dropped flag (and return it)
+// 			// but we can't pick up our flag at base
+// 			if (ps.persistant[PERS_TEAM] == TEAM_RED) {
+// 				if (item.giTag == PW_BLUEFLAG ||
+// 					(item.giTag == PW_REDFLAG && ent.modelindex2) ||
+// 					(item.giTag == PW_REDFLAG && ps.powerups[PW_BLUEFLAG]) )
+// 					return true;
+// 			} else if (ps.persistant[PERS_TEAM] == TEAM_BLUE) {
+// 				if (item.giTag == PW_REDFLAG ||
+// 					(item.giTag == PW_BLUEFLAG && ent.modelindex2) ||
+// 					(item.giTag == PW_BLUEFLAG && ps.powerups[PW_REDFLAG]) )
+// 					return true;
+// 			}
+// 		}
+// 
+// 		return false;
+	
+	case IT.HOLDABLE:
+		// can only hold one item at a time
+		if ( ps.stats[STAT.HOLDABLE_ITEM] ) {
+			return false;
+		}
+		return true;
+	
+// 	case IT.BAD:
+// 		log( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
+	
+	default:
+		break;
+	}
+	
+	return false;
+}
+
+/**
+ * AddPredictableEventToPlayerstate
+ *
+ * Handles the sequence numbers.
+ */
+function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {	
+	ps.events[ps.eventSequence % MAX_PS_EVENTS] = newEvent;
+	ps.eventParms[ps.eventSequence % MAX_PS_EVENTS] = eventParm;
+	ps.eventSequence++;
+}
+
+/**
  * PlayerStateToEntityState
  *
  * This is done after each set of usercmd_t on the server,
@@ -6452,33 +7638,33 @@ var Weapon = {
  */
 function PlayerStateToEntityState(ps, state) {
 	/*if (ps.pm_type === PM_INTERMISSION || ps->pm_type === PM_SPECTATOR) {
-		state.eType = EntityType.INVISIBLE;
+		state.eType = ET.INVISIBLE;
 	} else if ( ps.stats[STAT_HEALTH] <= GIB_HEALTH ) {
-		state.eType = EntityType.INVISIBLE;
+		state.eType = ET.INVISIBLE;
 	} else {
-		state.eType = EntityType.PLAYER;
+		state.eType = ET.PLAYER;
 	}*/
 
 	state.number = ps.clientNum;
-	state.eType = EntityType.PLAYER;
+	state.eType = ET.PLAYER;
 
-	state.pos.trType = TrajectoryType.INTERPOLATE;
+	state.pos.trType = sh.TrajectoryType.INTERPOLATE;
 	vec3.set(ps.origin, state.pos.trBase);
 	vec3.set(ps.velocity, state.pos.trDelta);
 
-	state.apos.trType = TrajectoryType.INTERPOLATE;
+	state.apos.trType = sh.TrajectoryType.INTERPOLATE;
 	vec3.set(ps.viewangles, state.apos.trBase);
 
-	state.angles2[YAW] = ps.movementDir;
+	state.angles2[qm.YAW] = ps.movementDir;
 	state.legsAnim = ps.legsAnim;
 	state.torsoAnim = ps.torsoAnim;
 	state.clientNum = ps.clientNum;                  // ET_PLAYER looks here instead of at number
 	                                             // so corpses can also reference the proper config
 	state.eFlags = ps.eFlags;
 	/*if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		s->eFlags |= EntityFlags.DEAD;
+		s->eFlags |= EF.DEAD;
 	} else {
-		s->eFlags &= ~EntityFlags.DEAD;
+		s->eFlags &= ~EF.DEAD;
 	}*/
 
 	/*if ( ps->externalEvent ) {
@@ -6496,7 +7682,7 @@ function PlayerStateToEntityState(ps, state) {
 		ps->entityEventSequence++;
 	}*/
 
-	//s->weapon = ps->weapon;
+	state.weapon = ps.weapon;
 	state.groundEntityNum = ps.groundEntityNum;
 
 	/*s->powerups = 0;
@@ -6518,23 +7704,23 @@ function EvaluateTrajectory(tr, atTime, result) {
 	var phase;
 
 	switch (tr.trType) {
-		case TrajectoryType.STATIONARY:
-		case TrajectoryType.INTERPOLATE:
+		case sh.TrajectoryType.STATIONARY:
+		case sh.TrajectoryType.INTERPOLATE:
 			vec3.set(tr.trBase, result);
 			break;
 
-		case TrajectoryType.LINEAR:
+		case sh.TrajectoryType.LINEAR:
 			deltaTime = (atTime - tr.trTime) * 0.001;  // milliseconds to seconds
 			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime), result);
 			break;
 
-		case TrajectoryType.SINE:
+		case sh.TrajectoryType.SINE:
 			deltaTime = (atTime - tr.trTime) / tr.trDuration;
 			phase = Math.sin(deltaTime * Math.PI * 2);
 			vec3.add(tr.trBase, phase, tr.trDelta, result);
 			break;
 
-		case TrajectoryType.LINEAR_STOP:
+		case sh.TrajectoryType.LINEAR_STOP:
 			if (atTime > tr.trTime + tr.trDuration) {
 				atTime = tr.trTime + tr.trDuration;
 			}
@@ -6544,13 +7730,13 @@ function EvaluateTrajectory(tr, atTime, result) {
 			}
 			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime), result);
 			break;
-		case TrajectoryType.GRAVITY:
+		case sh.TrajectoryType.GRAVITY:
 			deltaTime = (atTime - tr.trTime) * 0.001;  // milliseconds to seconds
 			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime), result);
 			result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;  // FIXME: local gravity...
 			break;
 		default:
-			com.error(Err.DROP, 'EvaluateTrajectory: unknown trType: ' + tr.trType);
+			com.error(sh.Err.DROP, 'EvaluateTrajectory: unknown trType: ' + tr.trType);
 	}
 }
 
@@ -6558,11 +7744,11 @@ function EvaluateTrajectory(tr, atTime, result) {
  * TouchJumpPad
  */
 function TouchJumpPad(ps, jumppad) {
-	// if we didn't hit this same jumppad the previous frame
+	// If we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger
-	/*if (ps.jumppad_ent !== jumppad.number ) {		
+	/*if (ps.jumppad_ent !== jumppad.number) {		
 		vectoangles( jumppad->origin2, angles);
-		p = fabs( AngleNormalize180( angles[PITCH] ) );
+		p = fabs( AngleNormalize180( angles[qm.PITCH] ) );
 		if( p < 45 ) {
 			effectNum = 0;
 		} else {
@@ -6577,25 +7763,32 @@ function TouchJumpPad(ps, jumppad) {
 	// give the player the velocity from the jumppad
 	vec3.set(jumppad.origin2, ps.velocity);
 }
+
 	var q3movement_stopspeed = 100.0;
 var q3movement_duckScale = 0.25;
 var q3movement_jumpvelocity = 50;
-
 var q3movement_accelerate = 10.0;
 var q3movement_airaccelerate = 1.0;
 var q3movement_flyaccelerate = 8.0;
-
 var q3movement_friction = 6.0;
 var q3movement_flightfriction = 3.0;
-
 var q3movement_playerRadius = 10.0;
 
 // TODO Move these into a PmoveLocals structure?
-var forward = [0, 0, 0], right = [0, 0, 0], up = [0, 0, 0];
+var forward = [0, 0, 0];
+var right = [0, 0, 0];
+var up = [0, 0, 0];
 var groundTrace;
 var groundPlane;
 var walking;
 var msec;
+
+/**
+ * AddEvent
+ */
+function AddEvent(pm, newEvent) {
+	AddPredictableEventToPlayerstate(pm.ps, newEvent, 0);
+}
 
 /**
  * StartTorsoAnim
@@ -6603,7 +7796,7 @@ var msec;
 function StartTorsoAnim(pm, anim) {
 	var ps = pm.ps;
 
-	if (ps.pm_type >= PmoveType.DEAD) {
+	if (ps.pm_type >= PM.DEAD) {
 		return;
 	}
 
@@ -6616,7 +7809,7 @@ function StartTorsoAnim(pm, anim) {
 function StartLegsAnim(pm, anim) {
 	var ps = pm.ps;
 
-	if (ps.pm_type >= PmoveType.DEAD) {
+	if (ps.pm_type >= PM.DEAD) {
 		return;
 	}
 
@@ -6719,9 +7912,9 @@ function Friction(pm, flying) {
 
 	// Apply ground friction.
 	//if (pm.waterlevel <= 1) {
-		if (walking && !(groundTrace.surfaceFlags & SurfaceFlags.SLICK) ) {
+		if (walking && !(groundTrace.surfaceFlags & sh.SurfaceFlags.SLICK) ) {
 			// if getting knocked back, no friction
-			if (!(ps.pm_flags & PmoveFlags.TIME_KNOCKBACK)) {
+			if (!(ps.pm_flags & PMF.TIME_KNOCKBACK)) {
 				var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
 				drop += control * q3movement_friction * pm.frameTime;
 			}
@@ -6810,7 +8003,7 @@ function CheckJump(pm) {
 	}
 
 	// must wait for jump to be released
-	if (ps.pm_flags & PmoveFlags.JUMP_HELD) {
+	if (ps.pm_flags & PMF.JUMP_HELD) {
 		// clear upmove so cmdscale doesn't lower running speed
 		pm.cmd.upmove = 0;
 		return false;
@@ -6818,18 +8011,18 @@ function CheckJump(pm) {
 
 	groundPlane = false; // jumping away
 	walking = false;
-	ps.pm_flags |= PmoveFlags.JUMP_HELD;
+	ps.pm_flags |= PMF.JUMP_HELD;
 
 	ps.groundEntityNum = ENTITYNUM_NONE;
 	ps.velocity[2] = JUMP_VELOCITY;
-	// PM_AddEvent( EV_JUMP );
+	AddEvent(pm, EV.JUMP);
 
 	if (pm.cmd.forwardmove >= 0) {
-		ForceLegsAnim(pm, Animations.LEGS_JUMP);
-		ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
+		ForceLegsAnim(pm, ANIM.LEGS_JUMP);
+		ps.pm_flags &= ~PMF.BACKWARDS_JUMP;
 	} else {
-		ForceLegsAnim(pm, Animations.LEGS_JUMPB);
-		ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
+		ForceLegsAnim(pm, ANIM.LEGS_JUMPB);
+		ps.pm_flags |= PMF.BACKWARDS_JUMP;
 	}
 
 	return true;
@@ -6864,11 +8057,11 @@ function GroundTrace(pm) {
 	if (ps.velocity[2] > 0 && vec3.dot(ps.velocity, trace.plane.normal) > 10 ) {
 		// go into jump animation
 		if (pm.cmd.forwardmove >= 0) {
-			ForceLegsAnim(pm, Animations.LEGS_JUMP);
-			ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
+			ForceLegsAnim(pm, ANIM.LEGS_JUMP);
+			ps.pm_flags &= ~PMF.BACKWARDS_JUMP;
 		} else {
-			ForceLegsAnim(pm, Animations.LEGS_JUMPB);
-			ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
+			ForceLegsAnim(pm, ANIM.LEGS_JUMPB);
+			ps.pm_flags |= PMF.BACKWARDS_JUMP;
 		}
 
 		ps.groundEntityNum = ENTITYNUM_NONE;
@@ -6942,11 +8135,11 @@ function GroundTraceMissed(pm) {
 		var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 		if (trace.fraction === 1.0) {
 			if (pm.cmd.forwardmove >= 0) {
-				ForceLegsAnim(pm, Animations.LEGS_JUMP);
-				ps.pm_flags &= ~PmoveFlags.BACKWARDS_JUMP;
+				ForceLegsAnim(pm, ANIM.LEGS_JUMP);
+				ps.pm_flags &= ~PMF.BACKWARDS_JUMP;
 			} else {
-				ForceLegsAnim(pm, Animations.LEGS_JUMPB);
-				ps.pm_flags |= PmoveFlags.BACKWARDS_JUMP;
+				ForceLegsAnim(pm, ANIM.LEGS_JUMPB);
+				ps.pm_flags |= PMF.BACKWARDS_JUMP;
 			}
 		}
 	}
@@ -7159,21 +8352,19 @@ function StepSlideMove(pm, gravity) {
 		ps.velocity = ClipVelocity(ps.velocity, trace.plane.normal, OVERCLIP);
 	}
 
-	/*// use the step move
-	float	delta;
-
-	delta = ps.origin[2] - start_o[2];
-	if ( delta > 2 ) {
-		if ( delta < 7 ) {
-			PM_AddEvent( EV_STEP_4 );
-		} else if ( delta < 11 ) {
-			PM_AddEvent( EV_STEP_8 );
-		} else if ( delta < 15 ) {
-			PM_AddEvent( EV_STEP_12 );
+	// Use the step move.
+	var delta = ps.origin[2] - start_o[2];
+	if (delta > 2) {
+		if (delta < 7) {
+			AddEvent(pm, EV.STEP_4);
+		} else if (delta < 11) {
+			AddEvent(pm, EV.STEP_8);
+		} else if (delta < 15 ) {
+			AddEvent(pm, EV.STEP_12);
 		} else {
-			PM_AddEvent( EV_STEP_16 );
+			AddEvent(pm, EV.STEP_16);
 		}
-	}*/
+	}
 }
 
 /**
@@ -7290,13 +8481,13 @@ function WalkMove(pm) {
 	// full control, which allows them to be moved a bit.
 	var accelerate = q3movement_accelerate;
 
-	if ((groundTrace.surfaceFlags & SurfaceFlags.SLICK ) || ps.pm_flags & PmoveFlags.TIME_KNOCKBACK) {
+	if ((groundTrace.surfaceFlags & sh.SurfaceFlags.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
 		accelerate = q3movement_airaccelerate;
 	}
 
 	Accelerate(pm, wishdir, wishspeed, accelerate);
 
-	if ((groundTrace.surfaceFlags & SurfaceFlags.SLICK ) || ps.pm_flags & PmoveFlags.TIME_KNOCKBACK) {
+	if ((groundTrace.surfaceFlags & sh.SurfaceFlags.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
 		ps.velocity[2] -= ps.gravity * pm.frameTime;
 	}
 
@@ -7328,7 +8519,7 @@ function UpdateViewAngles(ps, cmd) {
 			temp = temp - 0xFFFF;
 		}
 
-		if (i === PITCH) {
+		if (i === qm.PITCH) {
 			// Don't let the player look up or down more than 90 degrees.
 			if (temp > 16000) {
 				ps.delta_angles[i] = 16000 - cmd.angles[i];
@@ -7339,7 +8530,7 @@ function UpdateViewAngles(ps, cmd) {
 			}
 		}
 
-		ps.viewangles[i] = ShortToAngle(temp);
+		ps.viewangles[i] = qm.ShortToAngle(temp);
 	}
 }
 
@@ -7352,7 +8543,7 @@ function DropTimers(pm) {
 	// Drop misc timing counter.
 	if (ps.pm_time) {
 		if (msec >= ps.pm_time) {
-			ps.pm_flags &= ~PmoveFlags.ALL_TIMES;
+			ps.pm_flags &= ~PMF.ALL_TIMES;
 			ps.pm_time = 0;
 		} else {
 			ps.pm_time -= msec;
@@ -7361,17 +8552,217 @@ function DropTimers(pm) {
 }
 
 /**
+ * UpdateWeapon
+ */
+function UpdateWeapon(pm) {
+	var ps = pm.ps;
+
+	// int		addTime;
+
+	// // don't allow attack until all buttons are up
+	// if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
+	// 	return;
+	// }
+
+	// // ignore if spectator
+	// if ( pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+	// 	return;
+	// }
+
+	// // check for dead player
+	// if ( pm->ps->stats[STAT_HEALTH] <= 0 ) {
+	// 	pm->ps->weapon = WP_NONE;
+	// 	return;
+	// }
+
+	// // check for item using
+	// if ( pm->cmd.buttons & BUTTON_USE_HOLDABLE ) {
+	// 	if ( ! ( pm->ps->pm_flags & PMF_USE_ITEM_HELD ) ) {
+	// 		if ( bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag == HI_MEDKIT
+	// 			&& pm->ps->stats[STAT_HEALTH] >= (pm->ps->stats[STAT_MAX_HEALTH] + 25) ) {
+	// 			// don't use medkit if at max health
+	// 		} else {
+	// 			pm->ps->pm_flags |= PMF_USE_ITEM_HELD;
+	// 			PM_AddEvent( EV_USE_ITEM0 + bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag );
+	// 			pm->ps->stats[STAT_HOLDABLE_ITEM] = 0;
+	// 		}
+	// 		return;
+	// 	}
+	// } else {
+	// 	pm->ps->pm_flags &= ~PMF_USE_ITEM_HELD;
+	// }
+
+	// Make weapon function.
+	if (ps.weaponTime > 0) {
+		ps.weaponTime -= msec;
+	}
+
+	// Check for weapon change.
+	// Can't change if weapon is firing, but can change
+	// again if lowering or raising.
+	if (ps.weaponTime <= 0 || ps.weaponState != WS.FIRING) {
+		if (ps.weapon !== pm.cmd.weapon) {
+			BeginWeaponChange(pm, pm.cmd.weapon);
+		}
+	}
+
+	if (ps.weaponTime > 0) {
+		return;
+	}
+
+	// Change weapon if time.
+	if (ps.weaponState === WS.DROPPING) {
+		FinishWeaponChange(pm);
+		return;
+	}
+
+	if (ps.weaponState === WS.RAISING ) {
+		ps.weaponState = WS.READY;
+		if (ps.weapon === WP.GAUNTLET) {
+			StartTorsoAnim(pm, ANIM.TORSO_STAND2);
+		} else {
+			StartTorsoAnim(pm, ANIM.TORSO_STAND);
+		}
+		return;
+	}
+
+	// Check for fire.
+	if (!(pm.cmd.buttons & BUTTON.ATTACK)) {
+		ps.weaponTime = 0;
+		ps.weaponState = WS.READY;
+		return;
+	}
+	
+	// Start the animation even if out of ammo.
+	// if (ps.weapon === WP.GAUNTLET) {
+	// 	// The guantlet only "fires" when it actually hits something.
+	// 	if (!pm.gauntletHit) {
+	// 		ps.weaponTime = 0;
+	// 		ps.weaponState = WS.READY;
+	// 		return;
+	// 	}
+	// 	StartTorsoAnim(ANIM.TORSO_ATTACK2);
+	// } else {
+		StartTorsoAnim(pm, ANIM.TORSO_ATTACK);
+	// }
+	
+	ps.weaponState = WS.FIRING;
+	
+	// Check for out of ammo.
+	if (!ps.ammo[ps.weapon]) {
+		AddEvent(pm, EV.NOAMMO);
+		ps.weaponTime += 500;
+		return;
+	}
+	
+	// Take an ammo away if not infinite.
+	if (ps.ammo[ps.weapon] !== -1) {
+		ps.ammo[ps.weapon]--;
+	}
+	
+	// Fire weapon.
+	AddEvent(pm, EV.FIRE_WEAPON);
+
+	var addTime = 0;
+
+	switch (ps.weapon) {
+		default:
+		case WP.GAUNTLET:
+			addTime = 400;
+			break;
+		case WP.LIGHTNING:
+			addTime = 50;
+			break;
+		case WP.SHOTGUN:
+			addTime = 1000;
+			break;
+		case WP.MACHINEGUN:
+			addTime = 100;
+			break;
+		case WP.GRENADE_LAUNCHER:
+			addTime = 800;
+			break;
+		case WP.ROCKET_LAUNCHER:
+			addTime = 800;
+			break;
+		case WP.PLASMAGUN:
+			addTime = 100;
+			break;
+		case WP.RAILGUN:
+			addTime = 1500;
+			break;
+		case WP.BFG:
+			addTime = 200;
+			break;
+		case WP.GRAPPLING_HOOK:
+			addTime = 400;
+			break;
+	}
+
+	// if (ps.powerups[PW_HASTE]) {
+	// 	addTime /= 1.3;
+	// }
+
+	ps.weaponTime += addTime;
+}
+
+/**
+ * BeginWeaponChange
+ */
+function BeginWeaponChange(pm, weapon) {
+	var ps = pm.ps;
+
+	if (weapon <= WP.NONE || weapon >= WP.NUM_WEAPONS) {
+		return;
+	}
+
+	if (!(ps.stats[STAT.WEAPONS] & (1 << weapon))) {
+		return;
+	}
+	
+	if (ps.weaponState == WS.DROPPING) {
+		return;
+	}
+
+	AddEvent(pm, EV.CHANGE_WEAPON);
+	ps.weaponState = WS.DROPPING;
+	ps.weaponTime += 200;
+	StartTorsoAnim(pm, ANIM.TORSO_DROP);
+}
+
+/**
+ * FinishWeaponChange
+ */
+function FinishWeaponChange(pm) {
+	var ps = pm.ps;
+	var weapon = pm.cmd.weapon;
+
+	if (weapon < WP.NONE || weapon >= WP.NUM_WEAPONS) {
+		weapon = WP.NONE;
+	}
+	if (!(ps.stats[STAT.WEAPONS] & (1 << weapon))) {
+		weapon = WP.NONE;
+	}
+
+	ps.weapon = weapon;
+	ps.weaponState = WS.RAISING;
+	ps.weaponTime += 250;
+	StartTorsoAnim(pm, ANIM.TORSO_RAISE);
+}
+
+/**
  * TorsoAnimation
  */
 function TorsoAnimation(pm) {
-	// if (ps.weaponstate === WEAPON_READY) {
-	// 	if (ps.weapon == WP_GAUNTLET) {
-	// 		ContinueTorsoAnim(pm, Animations.TORSO_STAND2);
-	// 	} else {
-			ContinueTorsoAnim(pm, Animations.TORSO_STAND);
-	// 	}
-	// 	return;
-	// }
+	var ps = pm.ps;
+
+	if (ps.weaponState === WS.READY) {
+		if (ps.weapon == WP.GAUNTLET) {
+			ContinueTorsoAnim(pm, ANIM.TORSO_STAND2);
+		} else {
+			ContinueTorsoAnim(pm, ANIM.TORSO_STAND);
+		}
+	}
 }
 
 /**
@@ -7386,11 +8777,11 @@ function Footsteps(pm) {
 
 	if (ps.groundEntityNum === ENTITYNUM_NONE) {
 		// if (ps.powerups[PW_INVULNERABILITY]) {
-		// 	ContinueLegsAnim(pm, Animations.LEGS_IDLECR);
+		// 	ContinueLegsAnim(pm, ANIM.LEGS_IDLECR);
 		// }
 		// Airborne leaves position in cycle intact, but doesn't advance.
 		if (pm.waterlevel > 1) {
-			ContinueLegsAnim(pm, Animations.LEGS_SWIM);
+			ContinueLegsAnim(pm, ANIM.LEGS_SWIM);
 		}
 		return;
 	}
@@ -7399,10 +8790,10 @@ function Footsteps(pm) {
 	if (!pm.cmd.forwardmove && !pm.cmd.rightmove) {
 		if (pm.xyspeed < 5) {
 			ps.bobCycle = 0;  // start at beginning of cycle again
-			if (ps.pm_flags & PmoveFlags.DUCKED) {
-				ContinueLegsAnim(pm, Animations.LEGS_IDLECR);
+			if (ps.pm_flags & PMF.DUCKED) {
+				ContinueLegsAnim(pm, ANIM.LEGS_IDLECR);
 			} else {
-				ContinueLegsAnim(pm, Animations.LEGS_IDLE);
+				ContinueLegsAnim(pm, ANIM.LEGS_IDLE);
 			}
 		}
 		return;
@@ -7411,57 +8802,69 @@ function Footsteps(pm) {
 	var footstep = false;
 	var bobmove = 0.0;
 
-	if (ps.pm_flags & PmoveFlags.DUCKED) {
+	if (ps.pm_flags & PMF.DUCKED) {
 		bobmove = 0.5;  // ducked characters bob much faster
-		if (ps.pm_flags & PmoveFlags.BACKWARDS_RUN) {
-			ContinueLegsAnim(pm, Animations.LEGS_BACKCR);
+		if (ps.pm_flags & PMF.BACKWARDS_RUN) {
+			ContinueLegsAnim(pm, ANIM.LEGS_BACKCR);
 		} else {
-			ContinueLegsAnim(pm, Animations.LEGS_WALKCR);
+			ContinueLegsAnim(pm, ANIM.LEGS_WALKCR);
 		}
 		// Ducked characters never play footsteps.
 	} else {
-		if ( !(pm.cmd.buttons & Buttons.WALKING)) {
+		if (!(pm.cmd.buttons & BUTTON.WALKING)) {
 			bobmove = 0.4; // faster speeds bob faster
-			if (ps.pm_flags & PmoveFlags.BACKWARDS_RUN) {
-				ContinueLegsAnim(pm, Animations.LEGS_BACK);
+			if (ps.pm_flags & PMF.BACKWARDS_RUN) {
+				ContinueLegsAnim(pm, ANIM.LEGS_BACK);
 			}
 			else {
-				ContinueLegsAnim(pm, Animations.LEGS_RUN);
+				ContinueLegsAnim(pm, ANIM.LEGS_RUN);
 			}
 			footstep = true;
 		} else {
 			bobmove = 0.3;  // walking bobs slow
-			if (ps.pm_flags & PmoveFlags.BACKWARDS_RUN) {
-				ContinueLegsAnim(pm, Animations.LEGS_BACKWALK);
+			if (ps.pm_flags & PMF.BACKWARDS_RUN) {
+				ContinueLegsAnim(pm, ANIM.LEGS_BACKWALK);
 			} else {
-				ContinueLegsAnim(pm, Animations.LEGS_WALK);
+				ContinueLegsAnim(pm, ANIM.LEGS_WALK);
 			}
 		}
 	}
-
-	// // Check for footstep / splash sounds.
-	// var old = ps.bobCycle;
-	// ps.bobCycle = parseInt(old + bobmove * pml.msec) & 255;
+	
+	// Check for footstep / splash sounds.
+	var old = ps.bobCycle;
+	ps.bobCycle = parseInt(old + bobmove * msec, 10) % 256;
 
 	// // If we just crossed a cycle boundary, play an apropriate footstep event.
-	// if (((old + 64) ^ (ps.bobCycle + 64)) & 128) {
+	if (((old + 64) ^ (ps.bobCycle + 64)) & 128) {
 	// 	if (pm.waterlevel === 0) {
 	// 		// On ground will only play sounds if running
-	// 		if (footstep && !pm.noFootsteps) {
-	// 			PM_AddEvent( PM_FootstepForSurface() );
-	// 		}
+			if (footstep && !pm.noFootsteps) {
+				AddEvent(pm, FootstepForSurface());
+			}
 	// 	} else if (pm.waterlevel === 1) {
 	// 		// splashing
-	// 		PM_AddEvent( EV_FOOTSPLASH );
+//			AddEvent(pm, EntityEvent.FOOTSPLASH);
 	// 	} else if (pm.waterlevel === 2) {
 	// 		// wading / swimming at surface
-	// 		PM_AddEvent( EV_SWIM );
+//			AddEvent(pm, EntityEvent.SWIM);
 	// 	} else if (pm.waterlevel === 3) {
 	// 		// no sound when completely underwater
 	// 	}
-	// }
+	}
 }
 
+/**
+ * FootstepForSurface
+ */
+function FootstepForSurface () {
+	if (groundTrace.surfaceFlags & sh.SurfaceFlags.NOSTEPS) {
+		return 0;
+	}
+	if (groundTrace.surfaceFlags & sh.SurfaceFlags.METALSTEPS) {
+		return EV.FOOTSTEP_METAL;
+	}
+	return EV.FOOTSTEP;
+}
 
 /**
  * SetMovementDir
@@ -7510,30 +8913,50 @@ function PmoveSingle(pm) {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
+	// Make sure walking button is clear if they are running, to avoid
+	// proxy no-footsteps cheats.
+	if (Math.abs(pm.cmd.forwardmove) > 64 || Math.abs(pm.cmd.rightmove) > 64) {
+		pm.cmd.buttons &= ~BUTTON.WALKING;
+	}
+
+	// Set the firing flag for continuous beam weapons.
+	if ( !(ps.pm_flags & PMF.RESPAWNED) && ps.pm_type !== PM.INTERMISSION && ps.pm_type !== PM.NOCLIP
+		&& (pm.cmd.buttons & BUTTON.ATTACK) && ps.ammo[ps.weapon]) {
+		ps.eFlags |= EF.FIRING;
+	} else {
+		ps.eFlags &= ~EF.FIRING;
+	}
+
+	// Clear the respawned flag if attack and use are cleared
+	if (ps.stats[STAT.HEALTH] > 0 && 
+		!(pm.cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE))) {
+		ps.pm_flags &= ~PMF.RESPAWNED;
+	}
+
 	// Determine the time.
 	ps.commandTime = cmd.serverTime;
 	pm.frameTime = msec * 0.001;
 
 	// Update our view angles.
 	UpdateViewAngles(ps, cmd);
-	AnglesToVectors(ps.viewangles, forward, right, up);
+	qm.AnglesToVectors(ps.viewangles, forward, right, up);
 
 	// Make sure walking button is clear if they are running, to avoid
 	// proxy no-footsteps cheats.
 	if (Math.abs(cmd.forwardmove) > 64 || Math.abs(cmd.rightmove) > 64) {
-		cmd.buttons &= ~Buttons.WALKING;
+		cmd.buttons &= ~BUTTON.WALKING;
 	}
 
 	if (pm.cmd.upmove < 10) {
 		// Not holding jump.
-		ps.pm_flags &= ~PmoveFlags.JUMP_HELD;
+		ps.pm_flags &= ~PMF.JUMP_HELD;
 	}
 
 	// Decide if backpedaling animations should be used
 	if (cmd.forwardmove < 0) {
-		ps.pm_flags |= PmoveFlags.BACKWARDS_RUN;
+		ps.pm_flags |= PMF.BACKWARDS_RUN;
 	} else if (pm.cmd.forwardmove > 0 || (cmd.forwardmove === 0 && cmd.rightmove)) {
-		ps.pm_flags &= ~PmoveFlags.BACKWARDS_RUN;
+		ps.pm_flags &= ~PMF.BACKWARDS_RUN;
 	}
 
 	CheckDuck(pm);
@@ -7549,6 +8972,8 @@ function PmoveSingle(pm) {
 
 	GroundTrace(pm);
 
+	// Weapons.
+	UpdateWeapon(pm);
 
 	// Torso animations.
 	TorsoAnimation(pm);
@@ -7566,7 +8991,7 @@ function Pmove(pm) {
 
 	// TODO WHY DOES THIS HAPPEN
 	if (cmd.serverTime < ps.commandTime) {
-		//com.error(Err.DROP, 'Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
+		//com.error(sh.Err.DROP, 'Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
 		return;  // should not happen
 	}
 
@@ -7574,7 +8999,7 @@ function Pmove(pm) {
 		ps.commandTime = cmd.serverTime - 1000;
 	}
 
-	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PS_PMOVEFRAMECOUNTBITS)-1);
+	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PMOVEFRAMECOUNTBITS)-1);
 
 	// Chop the move up if it is too long, to prevent framerate
 	// dependent behavior.
@@ -7589,40 +9014,67 @@ function Pmove(pm) {
 
 		PmoveSingle(pm);
 
-		if (pm.ps.pm_flags & PmoveFlags.JUMP_HELD) {
+		if (pm.ps.pm_flags & PMF.JUMP_HELD) {
 			pm.cmd.upmove = 20;
 		}
 	}
 }
-	var itemList = [
+
+	// typedef struct gitem_s {
+// 	char		*classname;	// spawning name
+// 	char		*pickup_sound;
+// 	char		*world_model[MAX_ITEM_MODELS];
+// 
+// 	char		*icon;
+// 	char		*pickup_name;	// for printing on pickup
+// 
+// 	int			quantity;		// for ammo how much, or duration of powerup
+// 	itemType_t  giType;			// IT_* flags
+// 
+// 	int			giTag;
+// 
+// 	char		*precaches;		// string of all models and images this item will use
+// 	char		*sounds;		// string of all sounds this item will use
+// } gitem_t;
+
+var itemList = [
 	/**
 	 * ARMOR
 	 */
 	new GameItemDesc(
 		'item_armor_shard',
+		"sound/misc/ar1_pkup",
 		[
 			'models/powerups/armor/shard.md3'
 		],
 		'icons/iconr_shard',
-		ItemType.ARMOR,
+		"Armor Shard",
+		5,
+		IT.ARMOR,
 		0
 	),
 	new GameItemDesc(
 		'item_armor_combat',
+		"sound/misc/ar2_pkup",
 		[
 			'models/powerups/armor/armor_yel.md3'
 		],
 		'icons/iconr_yellow',
-		ItemType.ARMOR,
+		"Armor",
+		50,
+		IT.ARMOR,
 		0
 	),
 	new GameItemDesc(
 		'item_armor_body',
+		"sound/misc/ar2_pkup",
 		[
 			'models/powerups/armor/armor_red.md3'
 		],
 		'icons/iconr_red',
-		ItemType.ARMOR,
+		"Heavy Armor",
+		100,
+		IT.ARMOR,
 		0
 	),
 	/**
@@ -7630,232 +9082,361 @@ function Pmove(pm) {
 	 */
 	new GameItemDesc(
 		'item_health_small',
+		"sound/items/s_health",
 		[
 			'models/powerups/health/small_cross.md3',
 			'models/powerups/health/small_sphere.md3'
 		],
 		'icons/iconh_green',
-		ItemType.HEALTH,
+		"5 Health",
+		5,
+		IT.HEALTH,
 		0
 	),
 	new GameItemDesc(
 		'item_health',
+		"sound/items/n_health",
 		[
 			'models/powerups/health/medium_cross.md3',
 			'models/powerups/health/medium_sphere.md3'
 		],
 		'icons/iconh_yellow',
-		ItemType.HEALTH,
+		"25 Health",
+		25,
+		IT.HEALTH,
 		0
 	),
 	new GameItemDesc(
 		'item_health_large',
+		"sound/items/l_health",
 		[
 			'models/powerups/health/large_cross.md3',
 			'models/powerups/health/large_sphere.md3'
 		],
 		'icons/iconh_red',
-		ItemType.HEALTH,
+		"50 Health",
+		50,
+		IT.HEALTH,
 		0
 	),
 	new GameItemDesc(
 		'item_health_mega',
+		"sound/items/m_health",
 		[
 			'models/powerups/health/mega_cross.md3',
 			'models/powerups/health/mega_sphere.md3'
 		],
 		'icons/iconh_mega',
-		ItemType.HEALTH,
+		"Mega Health",
+		100,
+		IT.HEALTH,
 		0
 	),
 	/**
 	 * WEAPONS
 	 */
 	new GameItemDesc(
+		'weapon_gauntlet',
+		"sound/misc/w_pkup",
+		[
+			'models/weapons2/gauntlet/gauntlet.md3'
+		],
+		'icons/iconw_gauntlet',
+		"Gauntlet",
+		0,
+		IT.WEAPON,
+		WP.GAUNTLET
+	),
+	new GameItemDesc(
 		'weapon_shotgun',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/shotgun/shotgun.md3'
 		],
 		'icons/iconw_shotgun',
-		ItemType.WEAPON,
-		Weapon.SHOTGUN
+		"Shotgun",
+		10,
+		IT.WEAPON,
+		WP.SHOTGUN
 	),
 	new GameItemDesc(
 		'weapon_machinegun',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/machinegun/machinegun.md3'
 		],
 		'icons/iconw_machinegun',
-		ItemType.WEAPON,
-		Weapon.MACHINEGUN
+		"Machinegun",
+		40,
+		IT.WEAPON,
+		WP.MACHINEGUN
 	),
 	new GameItemDesc(
 		'weapon_grenadelauncher',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/grenadel/grenadel.md3'
 		],
 		'icons/iconw_grenade',
-		ItemType.WEAPON,
-		Weapon.GRENADE_LAUNCHER
+		"Grenade Launcher",
+		10,
+		IT.WEAPON,
+		WP.GRENADE_LAUNCHER,
+		undefined,
+		[
+			"sound/weapons/grenade/hgrenb1a",
+			"sound/weapons/grenade/hgrenb2a.wav"
+		]
 	),
 	new GameItemDesc(
 		'weapon_rocketlauncher',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/rocketl/rocketl.md3'
 		],
 		'icons/iconw_rocket',
-		ItemType.WEAPON,
-		Weapon.ROCKET_LAUNCHER
+		"Rocket Launcher",
+		10,
+		IT.WEAPON,
+		WP.ROCKET_LAUNCHER
 	),
 	new GameItemDesc(
 		'weapon_lightning',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/lightning/lightning.md3'
 		],
 		'icons/iconw_lightning',
-		ItemType.WEAPON,
-		Weapon.LIGHTNING
+		"Lightning Gun",
+		100,
+		IT.WEAPON,
+		WP.LIGHTNING
 	),
 	new GameItemDesc(
 		'weapon_railgun',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/railgun/railgun.md3'
 		],
 		'icons/iconw_railgun',
-		ItemType.WEAPON,
-		Weapon.RAILGUN
+		"Railgun",
+		10,
+		IT.WEAPON,
+		WP.RAILGUN
 	),
 	new GameItemDesc(
 		'weapon_plasmagun',
+		"sound/misc/w_pkup",
 		[
 			'models/weapons2/plasma/plasma.md3'
 		],
 		'icons/iconw_plasma',
-		ItemType.WEAPON,
-		Weapon.PLASMAGUN
+		"Plasma Gun",
+		50,
+		IT.WEAPON,
+		WP.PLASMAGUN
+	),
+	/**
+	 * AMMO ITEMS
+	 */
+	new GameItemDesc(
+		'ammo_shells',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/shotgunam.md3'
+		],
+		'icons/icona_shotgun',
+		"Shells",
+		10,
+		IT.AMMO,
+		WP.SHOTGUN
+	),
+	new GameItemDesc(
+		'ammo_bullets',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/machinegunam.md3'
+		],
+		'icons/icona_machinegun',
+		"Bullets",
+		50,
+		IT.AMMO,
+		WP.MACHINEGUN
+	),
+	new GameItemDesc(
+		'ammo_grenades',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/grenadeam.md3'
+		],
+		'icons/icona_grenade',
+		"Grenades",
+		5,
+		IT.AMMO,
+		WP.GRENADE_LAUNCHER
+	),
+	new GameItemDesc(
+		'ammo_cells',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/plasmaam.md3'
+		],
+		'icons/icona_plasma',
+		"Cells",
+		30,
+		IT.AMMO,
+		WP.PLASMAGUN
+	),
+	new GameItemDesc(
+		'ammo_lightning',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/lightningam.md3'
+		],
+		'icons/icona_lightning',
+		"Lightning",
+		60,
+		IT.AMMO,
+		WP.LIGHTNING
+	),
+	new GameItemDesc(
+		'ammo_rockets',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/rocketam.md3'
+		],
+		'icons/icona_rocket',
+		"Rockets",
+		5,
+		IT.AMMO,
+		WP.ROCKET_LAUNCHER
+	),
+	new GameItemDesc(
+		'ammo_slugs',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/railgunam.md3'
+		],
+		'icons/icona_railgun',
+		"Slugs",
+		10,
+		IT.AMMO,
+		WP.RAILGUN
+	),
+	new GameItemDesc(
+		'ammo_bfg',
+		"sound/misc/am_pkup",
+		[
+			'models/powerups/ammo/bfgam.md3'
+		],
+		'icons/icona_bfg',
+		"Bfg Ammo",
+		15,
+		IT.AMMO,
+		WP.BFG
 	),
 	/**
 	 * POWERUPS
 	 */
 	new GameItemDesc(
 		'item_quad',
+		"sound/items/quaddamage",
 		[
 			'models/powerups/instant/quad.md3',
 			'models/powerups/instant/quad_ring.md3'
 		],
 		'icons/quad',
-		ItemType.POWERUP,
-		0
+		"Quad Damage",
+		30,
+		IT.POWERUP,
+		0,
+		undefined,
+		[
+			"sound/items/damage2",
+			"sound/items/damage3.wav"
+		]
 	)
 ];
 
 	
 	return {
-		ItemList:                 itemList,
-		Pmove:                    Pmove,
-		UpdateViewAngles:         UpdateViewAngles,
-		PlayerStateToEntityState: PlayerStateToEntityState,
-		EvaluateTrajectory:       EvaluateTrajectory,
-		TouchJumpPad:             TouchJumpPad
+		PmoveInfo:                        PmoveInfo,
+		Animation:                        Animation,
+
+		ItemList:                         itemList,
+		Pmove:                            Pmove,
+		UpdateViewAngles:                 UpdateViewAngles,
+		CanItemBeGrabbed:                 CanItemBeGrabbed,
+		AddPredictableEventToPlayerstate: AddPredictableEventToPlayerstate,
+		AddEvent:                         AddEvent,
+		PlayerStateToEntityState:         PlayerStateToEntityState,
+		EvaluateTrajectory:               EvaluateTrajectory,
+		TouchJumpPad:                     TouchJumpPad
 	};
 });
+
 
 /*global vec3: true, mat4: true */
 
 define('game/gm',
-['underscore', 'glmatrix', 'game/bg'],
-function (_, glmatrix, bg) {
-	/**********************************************************
- * Stateless functions and data structures
- * included by each module.
- **********************************************************/
+['underscore', 'glmatrix', 'shared/sh', 'shared/qmath', 'game/bg'],
+function (_, glmatrix, sh, qm, bg) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-var Q3W_BASE_FOLDER = 'baseq3';
-var MAX_QPATH = 64;
-
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 32;                           // absolute limit
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
-var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue, flags) {
-	var currentValue = defaultValue;
-	var cvar = function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
-			} else {
-				currentValue = parseFloat(newValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-
-	cvar.flags = flags;
-
-	return cvar;
-};
-
-var CvarFlags = {
+/**
+ * Cvar flags
+ */
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
 	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
 };
 
-/**********************************************************
- * User commands are sent by the client to the server
- * each frame to let the server know its status.
- **********************************************************/
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-// UserCmd button bits, many of which are generated by the client system,
-// so they aren't game/cgame only definitions
-var Buttons = {
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -7873,828 +9454,320 @@ var Buttons = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
+	var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.buttons     = 0;
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
+var PM = {
+	NORMAL:       0,                                       // can accelerate and turn
+	NOCLIP:       1,                                       // noclip movement
+	SPECTATOR:    2,                                       // still run into walls
+	DEAD:         3,                                       // no acceleration or turning, but free falling
+	FREEZE:       4,                                       // stuck in place with no control
+	INTERMISSION: 5                                        // no movement or status bar
 };
 
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.buttons = this.buttons;
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-
-	return cmd;
+var PMF = {
+	DUCKED:         1,
+	JUMP_HELD:      2,
+	BACKWARDS_JUMP: 8,                                     // go into backwards land
+	BACKWARDS_RUN:  16,                                    // coast down to backwards run
+	TIME_LAND:      32,                                    // pm_time is time before rejump
+	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
+	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
+	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
+	USE_ITEM_HELD:  1024,
+	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
+	FOLLOW:         4096,                                  // spectate following another player
+	SCOREBOARD:     8192,                                  // spectate as a scoreboard
+	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
+	ALL_TIMES:      (32|64|256)
 };
 
-/**********************************************************
- * Player state
- **********************************************************/
-var MAX_STATS              = 16;
-var MAX_PERSISTANT         = 16;
-var MAX_POWERUPS           = 16;
-var MAX_WEAPONS            = 16;
-var PS_PMOVEFRAMECOUNTBITS = 6;
-
-var PlayerState = function () {
-	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime      = 0;                             // cmd->serverTime of last executed command
-	this.pm_type          = 0;
-	this.pm_flags         = 0;                             // ducked, jump_held, etc
-	this.origin           = [0, 0, 0];
-	this.velocity         = [0, 0, 0];
-	this.viewangles       = [0, 0, 0];
-	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed            = 0;
-	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
-
-	this.legsTimer        = 0;                             // don't change low priority animations until this runs out
-	this.legsAnim         = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer       = 0;                             // don't change low priority animations until this runs out
-	this.torsoAnim        = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.movementDir      = 0;                             // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats            = new Array(MAX_STATS);
-	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
-	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
-	this.ammo             = new Array(MAX_WEAPONS);
-
-	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
-	this.jumppad_frame    = 0;
-	this.pmove_framecount = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
+// Weapon state.
+var WS = {
+	READY:    0,
+	RAISING:  1,
+	DROPPING: 2,
+	FIRING:   3
 };
 
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-
-	return ps;
+// Item types.
+var IT = {
+	BAD:                0,
+	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
+	AMMO:               2,                                 // EFX: rotate
+	ARMOR:              3,                                 // EFX: rotate + minlight
+	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
+	POWERUP:            5,                                 // instant on, timer based
+	                                                       // EFX: rotate + external ring that rotates
+	HOLDABLE:           6,                                 // single use, holdable item
+	                                                       // EFX: rotate + bob
+	PERSISTANT_POWERUP: 7,
+	TEAM:               8
 };
 
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
 };
 
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
+var MASK = {
+	ALL:         -1,
+	SOLID:       CONTENTS.SOLID,
+	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
+	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
+	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
+	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
+	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
 };
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = new Trajectory();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.groundEntityNum   = this.groundEntityNum;
-	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-
-	return es;
-};
-
-/**********************************************************
- * Angles
- **********************************************************/
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
 
 /**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
+ * Playerstate flags
  */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
+var STAT = {
+	HEALTH:        0,
+	HOLDABLE_ITEM: 1,
+	WEAPONS:       2,
+	ARMOR:         3,
+	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
+	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
+	MAX_HEALTH:    6				// health / armor limit, changable by handicap
 };
 
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
+var WP = {
+	NONE:             0,
+	GAUNTLET:         1,
+	MACHINEGUN:       2,
+	SHOTGUN:          3,
+	GRENADE_LAUNCHER: 4,
+	ROCKET_LAUNCHER:  5,
+	LIGHTNING:        6,
+	RAILGUN:          7,
+	PLASMAGUN:        8,
+	BFG:              9,
+	GRAPPLING_HOOK:   10,
+	NUM_WEAPONS:      11
+};
+
+// PlayerState.persistant[] indexes
+// These fields are the only part of player_state that aren't
+// cleared on respawn.
+// NOTE: may not have more than 16
+var PS = {
+	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
+	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
+	RANK:                 2,                               // player rank or team rank
+	TEAM:                 3,                               // player team
+	SPAWN_COUNT:          4,                               // incremented every respawn
+	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
+	ATTACKER:             6,                               // clientnum of last damage inflicter
+	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
+	KILLED:               8,                               // count of the number of times you died
+	// player awards tracking
+	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
+	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
+	DEFEND_COUNT:         11,                              // defend awards
+	ASSIST_COUNT:         12,                              // assist awards
+	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
+	CAPTURES:             14                               // captures
+};
+
+/**
+ * Entitystate flags
+ */
+// entityState_t->eType
+var ET = {
+	GENERAL:          0,
+	PLAYER:           1,
+	ITEM:             2,
+	MISSILE:          3,
+	MOVER:            4,
+	BEAM:             5,
+	PORTAL:           6,
+	SPEAKER:          7,
+	PUSH_TRIGGER:     8,
+	TELEPORT_TRIGGER: 9,
+	INVISIBLE:        10,
+	GRAPPLE:          11,                                  // grapple hooked on wall
+	TEAM:             12,
+	EVENTS:           13                                   // any of the EV_* events can be added freestanding
+	                                                       // by setting eType to ET_EVENTS + eventNum
+	                                                       // this avoids having to set eFlags and eventNum
+};
+
+// entityState_t->eFlags
+var EF = {
+	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
+	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
+	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
+	PLAYER_EVENT:     0x00000010,
+	BOUNCE:           0x00000010,                          // for missiles
+	BOUNCE_HALF:      0x00000020,                          // for missiles
+	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
+	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
+	FIRING:           0x00000100,                          // for lightning gun
+	KAMIKAZE:         0x00000200,
+	MOVER_STOP:       0x00000400,                          // will push otherwise
+	AWARD_CAP:        0x00000800,                          // draw the capture sprite
+	TALK:             0x00001000,                          // draw a talk balloon
+	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
+	VOTED:            0x00004000,                          // already cast a vote
+	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
+	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
+	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
+	AWARD_DENIED:     0x00040000,                          // denied
+	TEAMVOTED:        0x00080000                           // already cast a team vote
 };
 
 /**********************************************************
- * Axis
+ * 
+ * Entitystate events
+ * 
+ * Entity events are for effects that take place relative
+ * to an existing entities origin. Very network efficient.
  *
- * TODO Perhaps we should be using mat3's instead.
+ * Two bits at the top of the entityState->event field
+ * will be incremented with each change in the event so
+ * that an identical event started twice in a row can
+ * be distinguished. And off the value with ~EV_EVENT_BITS
+ * to retrieve the actual event number.
+ *
  **********************************************************/
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
+var EV_EVENT_BIT1    = 0x00000100;
+var EV_EVENT_BIT2    = 0x00000200;
+var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
+var EVENT_VALID_MSEC = 300;
 
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
+var EV = {
+	NONE:                0,
 
-// TODO Perhaps the functions using this should change the way they store
-// there axis, so we can re-use the mat3 lib calls.
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
+	FOOTSTEP:            1,
+	FOOTSTEP_METAL:      2,
+	FOOTSPLASH:          3,
+	FOOTWADE:            4,
+	SWIM:                5,
 
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
+	STEP_4:              6,
+	STEP_8:              7,
+	STEP_12:             8,
+	STEP_16:             9,
 
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
+	FALL_SHORT:          10,
+	FALL_MEDIUM:         11,
+	FALL_FAR:            12,
 
-function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
+	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
 
-/**********************************************************
- * Planes
- **********************************************************/
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
+	JUMP:                14,
+	WATER_TOUCH:         15,                               // foot touches
+	WATER_LEAVE:         16,                               // foot leaves
+	WATER_UNDER:         17,                               // head touches
+	WATER_CLEAR:         18,                               // head leaves
 
-var Plane = function () {
-	this.normal   = vec3.create();
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
+	ITEM_PICKUP:         29,                               // normal item pickups are predictable
+	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
+
+	NOAMMO:              21,
+	CHANGE_WEAPON:       22,
+	FIRE_WEAPON:         23,
+
+	USE_ITEM0:           24,
+	USE_ITEM1:           25,
+	USE_ITEM2:           26,
+	USE_ITEM3:           27,
+	USE_ITEM4:           28,
+	USE_ITEM5:           29,
+	USE_ITEM6:           30,
+	USE_ITEM7:           31,
+	USE_ITEM8:           32,
+	USE_ITEM9:           33,
+	USE_ITEM10:          34,
+	USE_ITEM11:          35,
+	USE_ITEM12:          36,
+	USE_ITEM13:          37,
+	USE_ITEM14:          38,
+	USE_ITEM15:          39,
+
+	ITEM_RESPAWN:        40,
+	ITEM_POP:            41,
+	PLAYER_TELEPORT_IN:  42,
+	PLAYER_TELEPORT_OUT: 43,
+
+	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
+
+	GENERAL_SOUND:       45,
+	GLOBAL_SOUND:        46,                               // no attenuation
+	GLOBAL_TEAM_SOUND:   47,
+
+	BULLET_HIT_FLESH:    48,
+	BULLET_HIT_WALL:     49,
+
+	MISSILE_HIT:         50,
+	MISSILE_MISS:        51,
+	MISSILE_MISS_METAL:  52,
+	RAILTRAIL:           53,
+	SHOTGUN:             54,
+	BULLET:              55,                               // otherEntity is the shooter
+
+	PAIN:                56,
+	DEATH1:              57,
+	DEATH2:              58,
+	DEATH3:              59,
+	OBITUARY:            60,
+
+	POWERUP_QUAD:        61,
+	POWERUP_BATTLESUIT:  62,
+	POWERUP_REGEN:       63,
+
+	GIB_PLAYER:          64,                               // gib a previously living player
+	SCOREPLUM:           65,                               // score plum
+
+	DEBUG_LINE:          66,
+	STOPLOOPINGSOUND:    67,
+	TAUNT:               68,
+	TAUNT_YES:           69,
+	TAUNT_NO:            70,
+	TAUNT_FOLLOWME:      71,
+	TAUNT_GETFLAG:       72,
+	TAUNT_GUARDBASE:     73,
+	TAUNT_PATROL:        74
 };
 
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-function GetPlaneSignbits(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p.normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-// Returns 1, 2, or 1 + 2.
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**********************************************************
- * Bounds
- **********************************************************/
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] ||
-		maxs[1] < mins2[1] ||
-		maxs[2] < mins2[2] ||
-		mins[0] > maxs2[0] ||
-		mins[1] > maxs2[1] ||
-		mins[2] > maxs2[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************
- * Radix sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- **********************************************************/
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-/**********************************************************
- * Surface flags
- **********************************************************/
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-/**********************************************************
- * Q3 BSP Defines
- **********************************************************/
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-/**********************************************************
- * Misc
- **********************************************************/
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
-	var DEFAULT_GRAVITY = 800;
-var JUMP_VELOCITY = 270;
-var MAX_CLIP_PLANES = 5;
-var MIN_WALK_NORMAL = 0.7;
-var STEPSIZE = 18;
-var OVERCLIP = 1.001;
-var DEFAULT_VIEWHEIGHT = 26;
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-/**********************************************************
+/**
  * Animations
- **********************************************************/
-var Animations = {
+ */
+// Flip the togglebit every time an animation
+// changes so a restart of the same anim can be detected.
+var ANIM_TOGGLEBIT = 128;
+
+var ANIM = {
 	BOTH_DEATH1:         0,
 	BOTH_DEAD1:          1,
 	BOTH_DEATH2:         2,
@@ -8748,215 +9821,49 @@ var Animations = {
 	MAX_TOTALANIMATIONS: 37
 };
 
-var Animation = function () {
-	this.firstFrame  = 0;
-	this.numFrames   = 0;
-	this.loopFrames  = 0;                                  // 0 to numFrames
-	this.frameLerp   = 0;                                  // msec between frames
-	this.initialLerp = 0;                                  // msec to get to first frame
-	this.reversed    = false;                              // true if animation is reversed
-	this.flipflop    = false;                              // true if animation should flipflop back to base
+// Means of death
+var MOD = {
+	UNKNOWN:        0,
+	SHOTGUN:        1,
+	GAUNTLET:       2,
+	MACHINEGUN:     3,
+	GRENADE:        4,
+	GRENADE_SPLASH: 5,
+	ROCKET:         6,
+	ROCKET_SPLASH:  7,
+	PLASMA:         8,
+	PLASMA_SPLASH:  9,
+	RAILGUN:        10,
+	LIGHTNING:      11,
+	BFG:            12,
+	BFG_SPLASH:     13,
+	WATER:          14,
+	SLIME:          15,
+	LAVA:           16,
+	CRUSH:          17,
+	TELEFRAG:       18,
+	FALLING:        19,
+	SUICIDE:        20,
+	TARGET_LASER:   21,
+	TRIGGER_HURT:   22,
+	GRAPPLE:        23
 };
 
-// Flip the togglebit every time an animation
-// changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
 
-/**********************************************************
- * Game item descriptions
- **********************************************************/
-var ItemType = {
-	BAD:                0,
-	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
-	AMMO:               2,                                 // EFX: rotate
-	ARMOR:              3,                                 // EFX: rotate + minlight
-	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
-	POWERUP:            5,                                 // instant on, timer based
-	                                                       // EFX: rotate + external ring that rotates
-	HOLDABLE:           6,                                 // single use, holdable item
-	                                                       // EFX: rotate + bob
-	PERSISTANT_POWERUP: 7,
-	TEAM:               8
-};
-
-var GameItemDesc = function (classname, modelPaths, icon, giType, giTag) {
-	this.classname  = classname;                           // spawning name
-	this.modelPaths = modelPaths;
-	this.icon       = icon;
-	this.giType     = giType;                              // IT_* flags
-	this.giTag      = giTag;
-};
-
-/**********************************************************
- * Entity state related
- **********************************************************/
-// entityState_t->eType
-var EntityType = {
-	GENERAL:          0,
-	PLAYER:           1,
-	ITEM:             2,
-	MISSILE:          3,
-	MOVER:            4,
-	BEAM:             5,
-	PORTAL:           6,
-	SPEAKER:          7,
-	PUSH_TRIGGER:     8,
-	TELEPORT_TRIGGER: 9,
-	INVISIBLE:        10,
-	GRAPPLE:          11,                                  // grapple hooked on wall
-	TEAM:             12,
-	EVENTS:           13                                   // any of the EV_* events can be added freestanding
-	                                                       // by setting eType to ET_EVENTS + eventNum
-	                                                       // this avoids having to set eFlags and eventNum
-};
-
-// entityState_t->eFlags
-var EntityFlags = {
-	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
-	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
-	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
-	PLAYER_EVENT:     0x00000010,
-	BOUNCE:           0x00000010,                          // for missiles
-	BOUNCE_HALF:      0x00000020,                          // for missiles
-	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
-	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
-	FIRING:           0x00000100,                          // for lightning gun
-	KAMIKAZE:         0x00000200,
-	MOVER_STOP:       0x00000400,                          // will push otherwise
-	AWARD_CAP:        0x00000800,                          // draw the capture sprite
-	TALK:             0x00001000,                          // draw a talk balloon
-	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
-	VOTED:            0x00004000,                          // already cast a vote
-	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
-	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
-	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
-	AWARD_DENIED:     0x00040000,                          // denied
-	TEAMVOTED:        0x00080000                           // already cast a team vote
-};
-
-/**********************************************************
- * Pmove related
- **********************************************************/
-var ContentTypes = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
-var ContentMasks = {
-	ALL:         -1,
-	SOLID:       ContentTypes.SOLID,
-	PLAYERSOLID: ContentTypes.SOLID | ContentTypes.PLAYERCLIP | ContentTypes.BODY,
-	DEADSOLID:   ContentTypes.SOLID | ContentTypes.PLAYERCLIP,
-	WATER:       ContentTypes.WATER | ContentTypes.LAVA | ContentTypes.SLIME,
-	OPAQUE:      ContentTypes.SOLID | ContentTypes.SLIME | ContentTypes.LAVA,
-	SHOT:        ContentTypes.SOLID | ContentTypes.BODY | ContentTypes.CORPSE
-};
-
-var PmoveType = {
-	NORMAL:       0,                                       // can accelerate and turn
-	NOCLIP:       1,                                       // noclip movement
-	SPECTATOR:    2,                                       // still run into walls
-	DEAD:         3,                                       // no acceleration or turning, but free falling
-	FREEZE:       4,                                       // stuck in place with no control
-	INTERMISSION: 5                                        // no movement or status bar
-};
-
-var PmoveFlags = {
-	DUCKED:         1,
-	JUMP_HELD:      2,
-	BACKWARDS_JUMP: 8,                                     // go into backwards land
-	BACKWARDS_RUN:  16,                                    // coast down to backwards run
-	TIME_LAND:      32,                                    // pm_time is time before rejump
-	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
-	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
-	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
-	USE_ITEM_HELD:  1024,
-	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
-	FOLLOW:         4096,                                  // spectate following another player
-	SCOREBOARD:     8192,                                  // spectate as a scoreboard
-	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
-	ALL_TIMES:      (32|64|256)
-};
-
-var PmoveInfo = function () {
-	this.ps        = null;
-	this.cmd       = null;
-	this.frameTime = 0;
-	this.mins      = [0, 0, 0];
-	this.maxs      = [0, 0, 0];
-	//this.tracemask = 0;                                    // collide against these surfaces
-	//this.framecount = 0;
-
-	// results (out)
-	//this.numtouch = 0;
-	//this.touchents = null; //[MAXTOUCH];
-	this.xyspeed   = 0;
-
-	// callbacks to test the world
-	// these will be different functions during game and cgame
-	this.trace     = null;
-};
-
-/**********************************************************
- * Playerstate bitfields
- **********************************************************/
-var Stat = {
-	HEALTH:        0,
-	HOLDABLE_ITEM: 1,
-	WEAPONS:       2,
-	ARMOR:         3
-};
-
-var Weapon = {
-	NONE:             0,
-	GAUNTLET:         1,
-	MACHINEGUN:       2,
-	SHOTGUN:          3,
-	GRENADE_LAUNCHER: 4,
-	ROCKET_LAUNCHER:  5,
-	LIGHTNING:        6,
-	RAILGUN:          7,
-	PLASMAGUN:        8,
-	BFG:              9,
-	GRAPPLING_HOOK:   10,
-	NUM_WEAPONS:      11
-};
-	var FRAMETIME = 100; // msec
+	function Game(com, sv) {
+		var FRAMETIME = 100; // msec
 
 var LevelLocals = function () {
 	this.framenum     = 0;
 	this.previousTime = 0;
 	this.time         = 0;
+	this.startTime    = 0;
 	this.clients      = new Array(MAX_CLIENTS);
 	this.gentities    = new Array(MAX_GENTITIES);
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		this.gentities[i] = new GameEntity();
+	}
 };
 
 // The server does not know how to interpret most of the values
@@ -8974,10 +9881,14 @@ var ServerFlags = {
 };
 
 var GameEntity = function () {
+	this.reset();
+};
+
+GameEntity.prototype.reset = function () {
 	/**
 	 * Shared by the engine and game.
 	 */
-	this.s             = new EntityState();
+	this.s             = new sh.EntityState();
 	this.linked        = false;
 	// SVF_NOCLIENT, SVF_BROADCAST, etc.
 	this.svFlags       = 0;
@@ -8987,7 +9898,7 @@ var GameEntity = function () {
 	this.bmodel        = false;
 	this.mins          = [0, 0, 0];
 	this.maxs          = [0, 0, 0];
-	// ContentTypes.TRIGGER, ContentTypes.SOLID, ContentTypes.BODY (non-solid ent should be 0)
+	// CONTENTS.TRIGGER, CONTENTS.SOLID, CONTENTS.BODY (non-solid ent should be 0)
 	this.contents      = 0;
 	// Derived from mins/maxs and origin + rotation.
 	this.absmin        = [0, 0, 0];
@@ -9003,35 +9914,49 @@ var GameEntity = function () {
 	/**
 	 * Game only
 	 */
-	this.classname     = 'noclass';
-	this.spawnflags    = 0;
-	this.model         = null;
-	this.model2        = null;
-	this.target        = null;
-	this.targetname    = null;
-	this.nextthink     = 0;
-	this.timestamp     = 0;                                // body queue sinking, etc
-};
+	this.inuse          = false;
+	this.freetime       = 0;                               // level.time when the object was freed
+	this.classname      = 'noclass';
+	this.spawnflags     = 0;
+	this.eventTime      = 0;                               // events will be cleared EVENT_VALID_MSEC after set
+	this.freeAfterEvent = false;
+	this.model          = null;
+	this.model2         = null;
+	this.target         = null;
+	this.targetname     = null;
+	this.nextthink      = 0;
+	this.timestamp      = 0;                               // body queue sinking, etc
+}
 
 // This structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'.
 var GameClient = function () {
-	this.ps   = new PlayerState();
-	this.pers = new GameClientPersistant();
+	this.ps        = new sh.PlayerState();
+	this.pers      = new GameClientPersistant();
+	this.oldOrigin = [0, 0, 0];
 };
 
 // Client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
 var GameClientPersistant = function () {
-	this.cmd     = new UserCmd();
+	this.cmd     = new sh.UserCmd();
 	this.netname = null;
 };
-	var com;
-var sv;
+		var level;
 
-var level;
-
-var g_gravity;
+var g_speed,
+	g_gravity,
+	g_knockback,
+	g_quadfactor,
+	g_weaponRespawn,
+	g_weaponTeamRespawn,
+	g_forcerespawn,
+	g_inactivity,
+	g_debugMove,
+	g_debugDamage,
+	g_debugAlloc,
+	g_motd,
+	g_blood;
 
 /**
  * log
@@ -9046,22 +9971,33 @@ function log() {
  * error
  */
 function error(str) {
-	com.error(Err.DROP, str);
+	com.error(sh.Err.DROP, str);
 }
 
 /**
  * Init
  */
-function Init(cominterface, svinterface) {
+function Init(levelTime) {
 	log('Initializing');
-	
-	com = cominterface;
-	sv = svinterface;
 
 	level = new LevelLocals();
-
-	g_gravity = com.AddCvar('g_gravity', 800);
-
+	level.time = levelTime;
+	level.startTime = levelTime;
+	
+	g_speed             = com.AddCvar("g_speed", 320);
+	g_gravity           = com.AddCvar("g_gravity", 800);
+	g_knockback         = com.AddCvar("g_knockback", 1000);
+	g_quadfactor        = com.AddCvar("g_quadfactor", 3);
+	g_weaponRespawn     = com.AddCvar("g_weaponrespawn", 5);
+	g_weaponTeamRespawn = com.AddCvar("g_weaponTeamRespawn", 30);
+	g_forcerespawn      = com.AddCvar("g_forcerespawn", 20);
+	g_inactivity        = com.AddCvar("g_inactivity", 0);
+	g_debugMove         = com.AddCvar("g_debugMove", 0);
+	g_debugDamage       = com.AddCvar("g_debugDamage", 0);
+	g_debugAlloc        = com.AddCvar("g_debugAlloc", 0);
+	g_motd              = com.AddCvar("g_motd", "");
+	g_blood             = com.AddCvar("com_blood", 1);
+	
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);
 
@@ -9083,10 +10019,35 @@ function Frame(levelTime) {
 	level.previousTime = level.time;
 	level.time = levelTime;
 
-	for (var i = 0; i < level.gentities.length; i++) {
+	for (var i = 0; i < MAX_GENTITIES; i++) {
 		var ent = level.gentities[i];
+		if (!ent.inuse) {
+			continue;
+		}
 
-		if (!ent) {
+		// Clear events that are too old.
+		if (level.time - ent.eventTime > EVENT_VALID_MSEC) {
+			if (ent.s.event) {
+				ent.s.event = 0;  // &= EV_EVENT_BITS;
+				if (ent.client) {
+					ent.client.ps.externalEvent = 0;
+				}
+			}
+			
+			if (ent.freeAfterEvent) {
+				// tempEntities or dropped items completely go away after their event.
+				FreeEntity(ent);
+				continue;
+			}
+			// else if (ent->unlinkAfterEvent) {
+			// 	// items that will respawn will hide themselves after their pickup event
+			// 	ent->unlinkAfterEvent = qfalse;
+			// 	trap_UnlinkEntity( ent );
+			// }
+		}
+
+		// Temporary entities don't think.
+		if (ent.freeAfterEvent) {
 			continue;
 		}
 		
@@ -9098,7 +10059,8 @@ function Frame(levelTime) {
 		EntityThink(ent);
 	}
 }
-	/**
+
+		/**
  * TouchTriggers
  *
  * Find all trigger entities that ent's current position touches.
@@ -9129,7 +10091,7 @@ function TouchTriggers(ent) {
 			continue;
 		}
 
-		if (!(hit.contents & ContentTypes.TRIGGER)) {
+		if (!(hit.contents & CONTENTS.TRIGGER)) {
 			continue;
 		}
 
@@ -9146,7 +10108,7 @@ function TouchTriggers(ent) {
 		ps.jumppad_ent = 0;
 	}
 }
-	var playerMins = [-15, -15, -24];
+		var playerMins = [-15, -15, -24];
 var playerMaxs = [15, 15, 32];
 
 /**
@@ -9236,13 +10198,14 @@ function ClientBegin(clientNum) {
 function ClientThink(clientNum) {
 	var client = level.clients[clientNum];
 	var ent = level.gentities[clientNum];
+	var oldEventSequence = client.ps.eventSequence;
 
 	// Grab the latest command.
-	sv.GetUserCommand(clientNum, ent.client.pers.cmd);
+	sv.GetUserCmd(clientNum, ent.client.pers.cmd);
 
 	var cmd = ent.client.pers.cmd;
 
-	// sanity check the command time to prevent speedup cheating
+	// Sanity check the command time to prevent speedup cheating.
 	if (cmd.serverTime > level.time + 200) {
 		cmd.serverTime = level.time + 200;
 	}
@@ -9251,12 +10214,16 @@ function ClientThink(clientNum) {
 	}
 
 	client.ps.gravity = g_gravity();
-	client.ps.speed = 320;
+	client.ps.speed = g_speed();
 
-	var pm = new PmoveInfo();
+	// Copy off position before pmove.
+	vec3.set(client.ps.origin, client.oldOrigin);
+
+	// Setup for pmove.
+	var pm = new bg.PmoveInfo();
 	pm.ps = client.ps;
 	pm.cmd = cmd;
-	pm.tracemask = ContentMasks.PLAYERSOLID;
+	pm.tracemask = MASK.PLAYERSOLID;
 	pm.trace = sv.Trace;
 	pm.client = false;
 	bg.Pmove(pm);
@@ -9269,6 +10236,9 @@ function ClientThink(clientNum) {
 	vec3.set(pm.mins, ent.mins);
 	vec3.set(pm.maxs, ent.maxs);
 
+	// Execute client events.
+	ClientEvents(ent, oldEventSequence);
+
 	// Link entity now, after any personal teleporters have been used.
 	sv.LinkEntity(ent);
 
@@ -9276,6 +10246,84 @@ function ClientThink(clientNum) {
 
 	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
 	vec3.set(ent.client.ps.origin, ent.currentOrigin);
+}
+
+/**
+ * ClientEvents
+ *
+ * Events will be passed on to the clients for presentation,
+ * but any server game effects are handled here.
+ */
+function ClientEvents(ent, oldEventSequence) {
+	var client = ent.client;
+
+	if (oldEventSequence < client.ps.eventSequence - MAX_PS_EVENTS) {
+		oldEventSequence = client.ps.eventSequence - MAX_PS_EVENTS;
+	}
+	for (var i = oldEventSequence; i < client.ps.eventSequence; i++) {
+		var event = client.ps.events[i % MAX_PS_EVENTS];
+
+		switch (event) {
+			// case EV_FALL_MEDIUM:
+			// case EV_FALL_FAR:
+			// 	if ( ent->s.eType != ET_PLAYER ) {
+			// 		break;		// not in the player model
+			// 	}
+			// 	if ( g_dmflags.integer & DF_NO_FALLING ) {
+			// 		break;
+			// 	}
+			// 	if ( event == EV_FALL_FAR ) {
+			// 		damage = 10;
+			// 	} else {
+			// 		damage = 5;
+			// 	}
+			// 	ent->pain_debounce_time = level.time + 200;	// no normal pain sound
+			// 	G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
+			// 	break;
+
+			case EV.FIRE_WEAPON:
+				FireWeapon(ent);
+				break;
+
+			// case EV_USE_ITEM1:  // teleporter
+			// 	// Drop flags in CTF.
+			// 	item = NULL;
+			// 	j = 0;
+
+			// 	if ( ent->client->ps.powerups[ PW_REDFLAG ] ) {
+			// 		item = BG_FindItemForPowerup( PW_REDFLAG );
+			// 		j = PW_REDFLAG;
+			// 	} else if ( ent->client->ps.powerups[ PW_BLUEFLAG ] ) {
+			// 		item = BG_FindItemForPowerup( PW_BLUEFLAG );
+			// 		j = PW_BLUEFLAG;
+			// 	} else if ( ent->client->ps.powerups[ PW_NEUTRALFLAG ] ) {
+			// 		item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
+			// 		j = PW_NEUTRALFLAG;
+			// 	}
+
+			// 	if ( item ) {
+			// 		drop = Drop_Item( ent, item, 0 );
+			// 		// Decide how many seconds it has left.
+			// 		drop->count = ( ent->client->ps.powerups[ j ] - level.time ) / 1000;
+			// 		if ( drop->count < 1 ) {
+			// 			drop->count = 1;
+			// 		}
+
+			// 		ent->client->ps.powerups[ j ] = 0;
+			// 	}
+
+			// 	SelectSpawnPoint( ent->client->ps.origin, origin, angles, qfalse );
+			// 	TeleportPlayer( ent, origin, angles );
+			// 	break;
+
+			// case EV_USE_ITEM2:  // medkit
+			// 	ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] + 25;
+			// 	break;
+
+			default:
+				break;
+		}
+	}
 }
 
 /**
@@ -9294,7 +10342,7 @@ function ClientSpawn(ent) {
 	var ps = ent.client.ps;
 
 	ent.classname = 'player';
-	ent.contents = ContentTypes.BODY;
+	ent.contents = CONTENTS.BODY;
 	ent.s.groundEntityNum = ENTITYNUM_NONE;
 	vec3.set(playerMins, ent.mins);
 	vec3.set(playerMaxs, ent.maxs);
@@ -9307,12 +10355,42 @@ function ClientSpawn(ent) {
 	vec3.set(spawnorigin, ps.origin);
 	vec3.set(ps.velocity, [0, 0, 0]);
 
-	sv.GetUserCommand(client.ps.clientNum, ent.client.pers.cmd);
+	sv.GetUserCmd(client.ps.clientNum, ent.client.pers.cmd);
 	SetClientViewAngle(ent, spawnpoint.s.angles);
-
+	
+	// set max health
+// 	client.pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
+// 	if ( client.pers.maxHealth < 1 || client.pers.maxHealth > 100 ) {
+		client.pers.maxHealth = 100;
+// 	}
+	// clear entity values
+	client.ps.stats[STAT.MAX_HEALTH] = client.pers.maxHealth;
+// 	client.ps.eFlags = flags;
+	
 	// Set default animations.
-	ps.torsoAnim = Animations.TORSO_STAND;
-	ps.legsAnim = Animations.LEGS_IDLE;
+	ps.torsoAnim = ANIM.TORSO_STAND;
+	ps.legsAnim = ANIM.LEGS_IDLE;
+
+	// Set default weapons
+	client.ps.weapon = WP.MACHINEGUN;
+	client.ps.stats[STAT.WEAPONS] = (1 << WP.MACHINEGUN);
+	client.ps.ammo[WP.MACHINEGUN] = 100;
+	client.ps.stats[STAT.WEAPONS] |= (1 << WP.GAUNTLET);
+	client.ps.ammo[WP.GAUNTLET] = -1;
+	
+	// health will count down towards max_health
+	ent.health = client.ps.stats[STAT.HEALTH] = client.ps.stats[STAT.MAX_HEALTH] + 25;
+	
+	// Run a client frame to drop exactly to the floor,
+	// initialize weapon, animations and other things.
+	client.ps.commandTime = level.time - 100;
+	client.pers.cmd.serverTime = level.time;
+	ClientThink(client.ps.clientNum);
+	// // run the presend to set anything else
+	//ClientEndFrame( ent );
+
+	// Clear entity state values.
+	bg.PlayerStateToEntityState(client.ps, ent.s);
 }
 
 /**
@@ -9352,7 +10430,7 @@ function ClientDisconnect(clientNum) {
 function SetClientViewAngle(ent, angles) {
 	// Set the delta angle.
 	for (var i = 0; i < 3; i++) {
-		var cmdAngle = AngleToShort(angles[i]);
+		var cmdAngle = qm.AngleToShort(angles[i]);
 		ent.client.ps.delta_angles[i] = cmdAngle - ent.client.pers.cmd.angles[i];
 	}
 	vec3.set(angles, ent.s.angles);
@@ -9387,7 +10465,8 @@ function SelectRandomDeathmatchSpawnPoint() {
 	var spawnpoints = FindEntity('classname', 'info_player_deathmatch');
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }
-	var entityEvents = {};
+
+		var entityEvents = {};
 
 // Maps entity definition values to entity values.
 var keyMap = {
@@ -9400,12 +10479,24 @@ var keyMap = {
  */
 function SpawnEntity() {
 	for (var i = MAX_CLIENTS; i < MAX_GENTITIES; i++) {
-		if (level.gentities[i]) {
+		var ent = level.gentities[i];
+
+		if (ent.inuse) {
 			continue;
 		}
 
-		var ent = level.gentities[i] = new GameEntity();
+		// We don't immediately re-use freed entities, it can cause confusion
+		// in the client snapshots. However, the first couple seconds of
+		// server time can involve a lot of freeing and allocating, so relax
+		// the replacement policy
+		if (ent.freetime > level.startTime + 2000 && level.time - ent.freetime < 1000) {
+			continue;
+		}
+
+		ent.reset();
 		ent.s.number = i;
+		ent.inuse = true;
+
 		return ent;
 	}
 
@@ -9417,8 +10508,36 @@ function SpawnEntity() {
  */
 function FreeEntity(ent) {
 	sv.UnlinkEntity(ent); // unlink from world
-	delete level.gentities[ent.s.number];
+
+	ent.classname = 'freed';
+	ent.freetime = level.time;
+	ent.inuse = false;
 }
+
+/**
+ * TempEntity
+ *
+ * Spawns an event entity that will be auto-removed.
+ * The origin will be snapped to save net bandwidth, so care
+ * must be taken if the origin is right on a surface (snap towards start vector first).
+ */
+function TempEntity(origin, event) {
+	var e = SpawnEntity();
+	e.s.eType = ET.EVENTS + event;
+
+	e.classname = 'tempEntity';
+	e.eventTime = level.time;
+	e.freeAfterEvent = true;
+
+	// vec3.set(origin, snapped);
+	// SnapVector(snapped);  // save network bandwidth
+	SetOrigin(e, origin);
+
+	sv.LinkEntity(e);
+
+	return e;
+}
+
 
 /**
  * FindEntity
@@ -9428,8 +10547,7 @@ function FindEntity(key, value) {
 
 	for (var i = 0; i < level.gentities.length; i++) {
 		var ent = level.gentities[i];
-
-		if (!ent) {
+		if (!ent.inuse) {
 			continue;
 		}
 
@@ -9449,7 +10567,7 @@ function FindEntity(key, value) {
  */
 function SetOrigin(ent, origin) {
 	vec3.set(origin, ent.s.pos.trBase);
-	ent.s.pos.trType = TrajectoryType.STATIONARY;
+	ent.s.pos.trType = sh.TrajectoryType.STATIONARY;
 	ent.s.pos.trTime = 0;
 	ent.s.pos.trDuration = 0;
 	vec3.set([0, 0, 0], ent.s.pos.trDelta);
@@ -9564,7 +10682,16 @@ function SpawnAllEntitiesFromDefs() {
 		SpawnEntityFromDef(def);
 	}
 }
-	/**
+		var RESPAWN = {
+	ARMOR      : 25,
+	HEALTH     : 35,
+	AMMO       : 40,
+	HOLDABLE   : 60,
+	MEGAHEALTH : parseInt(35 / 120, 10),
+	POWERUP    : 120
+};
+
+/**
  * SpawnItem
  *
  * Sets the clipping size and plants the object on the floor.
@@ -9577,10 +10704,10 @@ function SpawnItem(ent, item) {
 	// spawns until the third frame so they can ride trains.
 	ent.nextthink = level.time + FRAMETIME * 2;
 	ent.think = FinishSpawningItem;
-
+	
 	//ent.physicsBounce = 0.50;		// items are bouncy
-
-	/*if (item->giType == IT_POWERUP ) {
+	
+	/*if (item.giType == IT_POWERUP ) {
 		G_SoundIndex( "sound/items/poweruprespawn.wav" );
 		G_SpawnFloat( "noglobalsound", "0", &ent->speed);
 	}*/
@@ -9598,11 +10725,11 @@ function FinishSpawningItem(ent) {
 	vec3.set([-ITEM_RADIUS, -ITEM_RADIUS, -ITEM_RADIUS], ent.mins);
 	vec3.set([ITEM_RADIUS, ITEM_RADIUS, ITEM_RADIUS], ent.maxs);
 
-	ent.s.eType = EntityType.ITEM;
+	ent.s.eType = ET.ITEM;
 	ent.s.modelIndex = itemIndex;
 	//ent.s.modelindex2 = 0; // zero indicates this isn't a dropped item
 
-	ent.contents = ContentTypes.TRIGGER;
+	ent.contents = CONTENTS.TRIGGER;
 	ent.touch = TouchItem;
 	//ent->use = Use_Item;
 
@@ -9649,16 +10776,196 @@ function FinishSpawningItem(ent) {
 }
 
 /**
+ * RespawnItem
+ */
+function RespawnItem(self) {
+// 	// randomly select from teamed entities
+// 	if (self.team) {
+// 		gentity_t	*master;
+// 		int	count;
+// 		int choice;
+// 
+// 		if ( !ent->teammaster ) {
+// 			G_Error( "RespawnItem: bad teammaster");
+// 		}
+// 		master = ent->teammaster;
+// 
+// 		for (count = 0, ent = master; ent; ent = ent->teamchain, count++)
+// 			;
+// 
+// 		choice = rand() % count;
+// 
+// 		for (count = 0, ent = master; count < choice; ent = ent->teamchain, count++)
+// 			;
+// 	}
+	
+	self.contents = CONTENTS.TRIGGER;
+	self.s.eFlags &= ~EF.NODRAW;
+	self.svFlags &= ~ServerFlags.NOCLIENT;
+	sv.LinkEntity(self);
+
+// 	if ( self.item.giType == IT.POWERUP ) {
+// 		// play powerup spawn sound to all clients
+// 		var tent;
+// 
+// 		// if the powerup respawn sound should Not be global
+// 		if (self.speed) {
+// 			tent = G_TempEntity( ent->s.pos.trBase, EV_GENERAL_SOUND );
+// 		}
+// 		else {
+// 			tent = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_SOUND );
+// 		}
+// 		tent.s.eventParm = G_SoundIndex( "sound/items/poweruprespawn.wav" );
+// 		tent.svFlags |= ServerFlags.BROADCAST;
+// 	}
+// 
+// 	if ( self.item.giType == IT.HOLDABLE && self.item.giTag == HI_KAMIKAZE ) {
+// 		// play powerup spawn sound to all clients
+// 		gentity_t	*te;
+// 
+// 		// if the powerup respawn sound should Not be global
+// 		if (self.speed) {
+// 			te = G_TempEntity( ent->s.pos.trBase, EV_GENERAL_SOUND );
+// 		}
+// 		else {
+// 			te = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_SOUND );
+// 		}
+// 		te->s.eventParm = G_SoundIndex( "sound/items/kamikazerespawn.wav" );
+// 		te->r.svFlags |= SVF_BROADCAST;
+// 	}
+// 
+// play the normal respawn sound only to nearby clients
+// 	G_AddEvent( ent, EV_ITEM_RESPAWN, 0 );
+// 
+	self.nextthink = 0;
+}
+
+/**
  * TouchItem
  */
 function TouchItem(self, other) {
-	var respawn;
+	var respawn,
+		predict;
+	
+	if (!other.client) { return; }
+//	if (!other.health || other.health < 1) { return; } // dead people can't pickup
+	
+	// the same pickup rules are used for client side and server side
+	if ( !bg.CanItemBeGrabbed(/*g_gametype()*/ null, self.s, other.client.ps) ) {
+		return;
+	}
 
+// 	G_LogPrintf( "Item: %i %s\n", other->s.number, ent->item->classname );
+// 
+// 	predict = other.client.pers['predictItemPickup'];
+	
+	// call the item-specific pickup function
 	switch (self.item.giType) {
-		case ItemType.WEAPON:
+		case IT.WEAPON:
 			respawn = PickupWeapon(self, other);
 			break;
+		case IT.AMMO:
+			respawn = Pickup_Ammo(self, other);
+			break;
+		case IT.ARMOR:
+			respawn = Pickup_Armor(self, other);
+			break;
+		case IT.HEALTH:
+			respawn = Pickup_Health(self, other);
+			break;
+		case IT.POWERUP:
+			respawn = Pickup_Powerup(self, other);
+			predict = false;
+			break;
+		case IT.TEAM:
+			respawn = Pickup_Team(self, other);
+			break;
+		case IT.HOLDABLE:
+			respawn = Pickup_Holdable(self, other);
+			break;
+		default:
+			return;
 	}
+	
+	if (!respawn) { return; }
+	
+// 	// play the normal pickup sound
+// 	if (predict) {
+		bg.AddPredictableEventToPlayerstate(other.client.ps, EV.ITEM_PICKUP, self.s.modelIndex);
+// 	} else {
+// 		G_AddEvent( other, EV.ITEM_PICKUP, self.s.modelindex );
+// 	}
+// 
+// 	// powerup pickups are global broadcasts
+// 	if ( self.item->giType == IT.POWERUP || self.item->giType == IT.TEAM) {
+// 		// if we want the global sound to play
+// 		if (!self.speed) {
+// 			gentity_t	*te;
+// 
+// 			te = G_TempEntity( self.s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
+// 			te->s.eventParm = self.s.modelindex;
+// 			te->r.svFlags |= SVF_BROADCAST;
+// 		} else {
+// 			gentity_t	*te;
+// 
+// 			te = G_TempEntity( self.s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
+// 			te->s.eventParm = self.s.modelindex;
+// 			// only send this temp entity to a single client
+// 			te->r.svFlags |= SVF_SINGLECLIENT;
+// 			te->r.singleClient = other->s.number;
+// 		}
+// 	}
+// 
+// 	// fire item targets
+// 	G_UseTargets (ent, other);
+
+	// wait of -1 will not respawn
+	if ( self.wait == -1 ) {
+		self.svFlags |= ServerFlags.NOCLIENT;
+		self.s.eFlags |= EF.NODRAW;
+		self.contents = 0;
+		self.unlinkAfterEvent = true;
+		return;
+	}
+	
+	// non zero wait overrides respawn time
+	if ( self.wait ) {
+		respawn = self.wait;
+	}
+	
+	// random can be used to vary the respawn time
+	if ( self.random ) {
+		respawn += Math.random() * self.random;
+		if ( respawn < 1 ) {
+			respawn = 1;
+		}
+	}
+	
+// 	// dropped items will not respawn
+// 	if ( self.flags & FL_DROPPED_ITEM ) {
+// 		self.freeAfterEvent = true;
+// 	}
+	
+	// picked up items still stay around, they just don't
+	// draw anything.  This allows respawnable items
+	// to be placed on movers.
+	self.svFlags |= ServerFlags.NOCLIENT;
+	self.s.eFlags |= EF.NODRAW;
+	self.contents = 0;
+	
+	// ZOID
+	// A negative respawn times means to never respawn this item (but don't 
+	// delete it).  This is used by items that are respawned by third party 
+	// events such as ctf flags
+	if ( respawn <= 0 ) {
+		self.nextthink = 0;
+		self.think = 0;
+	} else {
+		self.nextthink = level.time + (respawn * 1000);
+		self.think = RespawnItem;
+	}
+	
+	sv.LinkEntity(self);
 }
 
 /**
@@ -9666,9 +10973,9 @@ function TouchItem(self, other) {
  */
 function PickupWeapon(ent, other) {
 	var quantity;
-
+	
 	if (ent.count < 0) {
-		quantity = 0;
+		quantity = 0; // None for you, sir!
 	} else {
 		if (ent.count) {
 			quantity = ent.count;
@@ -9687,22 +10994,130 @@ function PickupWeapon(ent, other) {
 		// 	}
 		// }
 	}
-
+	
 	// Add the weapon.
-	other.client.ps.stats[Stat.WEAPONS] |= (1 << ent.item.giTag);
-
-	// Add_Ammo( other, ent->item->giTag, quantity );
-
+	other.client.ps.stats[STAT.WEAPONS] |= (1 << ent.item.giTag);
+	
+	Add_Ammo(other, ent.item.giTag, quantity);
+	
 	// team deathmatch has slow weapon respawns
 	// if ( g_gametype.integer == GT_TEAM ) {
 	// 	return g_weaponTeamRespawn.integer;
 	// }
-
-	// return g_weaponRespawn.integer;
-
-	return 0;
+	
+	return g_weaponRespawn();
 }
-	/**
+
+/**
+ * Pickup_Ammo
+ */
+function Pickup_Ammo (ent, other) {
+	var quantity;
+	
+	if (ent.count) {
+		quantity = ent.count;
+	} else {
+		quantity = ent.item.quantity;
+	}
+	
+	Add_Ammo(other, ent.item.giTag, quantity);
+	
+	return RESPAWN.AMMO;
+}
+
+/**
+ * Add_Ammo
+ */
+function Add_Ammo (ent, weapon, count) {
+	
+	ent.client.ps.ammo[weapon] += count;
+	
+	if (ent.client.ps.ammo[weapon] > 200) {
+		ent.client.ps.ammo[weapon] = 200;
+	}
+}
+
+/**
+ * Pickup_Armor
+ */
+function Pickup_Armor(ent, other) {
+	
+	other.client.ps.stats[STAT.ARMOR] += ent.item.quantity;
+	
+	if (other.client.ps.stats[STAT.ARMOR] > other.client.ps.stats[STAT.MAX_HEALTH] * 2) {
+		other.client.ps.stats[STAT.ARMOR] = other.client.ps.stats[STAT.MAX_HEALTH] * 2;
+	}
+	
+	return RESPAWN.ARMOR;
+}
+
+/**
+ * Pickup_Health
+ */
+function Pickup_Health(ent, other) {
+	var max,
+		quantity;
+	
+	// small and mega healths will go over the max
+	if (ent.item.quantity != 5 && ent.item.quantity != 100) {
+		max = other.client.ps.stats[STAT.MAX_HEALTH];
+	} else {
+		max = other.client.ps.stats[STAT.MAX_HEALTH] * 2;
+	}
+	
+	if (ent.count) {
+		quantity = ent.count;
+	} else {
+		quantity = ent.item.quantity;
+	}
+	
+	other.health += quantity;
+	
+	if (other.health > max) {
+		other.health = max;
+	}
+	
+	other.client.ps.stats[STAT.HEALTH] = other.health;
+	
+	if (ent.item.quantity == 100) {		// mega health respawns slow
+		return RESPAWN.MEGAHEALTH;
+	}
+	
+	return RESPAWN.HEALTH;
+}
+
+/**
+ * Pickup_Powerup
+ */
+function Pickup_Powerup(ent, other) {
+	var quantity,
+		i,
+		client;
+	
+	if (other.client.ps.powerups[ent.item.giTag]) {
+		// round timing to seconds to make multiple powerup timers
+		// count in sync
+		other.client.ps.powerups[ent.item.giTag] = level.time - ( level.time % 1000 );
+	}
+	
+	if (ent.count) {
+		quantity = ent.count;
+	} else {
+		quantity = ent.item.quantity;
+	}
+	
+	other.client.ps.powerups[ent.item.giTag] += quantity * 1000;
+	
+	return RESPAWN.POWERUP;
+}
+
+/**
+ * TODO : Stub functions for now
+ */
+function Pickup_Team(ent, other) { return 0; }
+function Pickup_Holdable(ent, other) { return RESPAWN.HOLDABLE; }
+
+		/**
  * TeleportPlayer
  */
 function TeleportPlayer(player, origin, angles) {
@@ -9726,17 +11141,17 @@ function TeleportPlayer(player, origin, angles) {
 
 	if (!noAngles) {
 		// spit the player out
-		AnglesToVectors(angles, player.client.ps.velocity, null, null);
+		qm.AnglesToVectors(angles, player.client.ps.velocity, null, null);
 		vec3.scale(player.client.ps.velocity, 400);
 		player.client.ps.pm_time = 160;  // hold time
-		player.client.ps.pm_flags |= PmoveFlags.TIME_KNOCKBACK;
+		player.client.ps.pm_flags |= PMF.TIME_KNOCKBACK;
 
 		// set angles
 		SetClientViewAngle(player, angles);
 	}
 
 	// toggle the teleport bit so the client knows to not lerp
-	player.client.ps.eFlags ^= EntityFlags.TELEPORT_BIT;
+	player.client.ps.eFlags ^= EF.TELEPORT_BIT;
 	// kill anything at the destination
 	/*if ( player->client->sess.sessionTeam != TEAM_SPECTATOR ) {
 		G_KillBox (player);
@@ -9752,7 +11167,7 @@ function TeleportPlayer(player, origin, angles) {
 		sv.LinkEntity(player);
 	//}
 }
-	/**
+		/**
  * AimAtTarget
  */
 function AimAtTarget(self) {
@@ -9785,26 +11200,159 @@ function AimAtTarget(self) {
 
 	self.s.origin2[2] = time * gravity;
 }
-	entityEvents['info_notnull'] = {
+		var MACHINEGUN_SPREAD      = 200;
+var MACHINEGUN_DAMAGE      = 7;
+var MACHINEGUN_TEAM_DAMAGE = 5; // wimpier MG in teamplay
+
+/**
+ * FireWeapon
+ */
+function FireWeapon(ent) {
+	var client = ent.client;
+
+	// if (client.ps.powerups[PW_QUAD] ) {
+	// 	s_quadFactor = g_quadfactor.value;
+	// } else {
+	// 	s_quadFactor = 1;
+	// }
+
+	// // Track shots taken for accuracy tracking. Grapple is not a weapon and gauntet is just not tracked.
+	// if (ent.s.weapon !== WP.GRAPPLING_HOOK && ent.s.weapon !== WP.GAUNTLET) {
+	// 	client.accuracy_shots++;
+	// }
+
+	// Set aiming directions.
+	// TODO Stop passing these around as mutable args everywhere
+	var forward = [0, 0, 0];
+	var right = [0, 0, 0];
+	var up = [0, 0, 0];
+	var muzzle = [0, 0, 0];
+	qm.AnglesToVectors(client.ps.viewangles, forward, right, up);
+	CalcMuzzlePointOrigin(ent, client.oldOrigin, forward, right, up, muzzle);
+
+	// Fire the specific weapon.
+	switch (ent.s.weapon) {
+		// case WP_GAUNTLET:
+		// 	Weapon_Gauntlet( ent );
+		// 	break;
+		// case WP_LIGHTNING:
+		// 	Weapon_LightningFire( ent );
+		// 	break;
+		// case WP_SHOTGUN:
+		// 	weapon_supershotgun_fire( ent );
+		// 	break;
+		case WP.MACHINEGUN:
+			// if (g_gametype.integer !== GT_TEAM) {
+				BulletFire(ent, muzzle, forward, right, up, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
+			// } else {
+			// 	Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
+			// }
+			break;
+		// case WP_GRENADE_LAUNCHER:
+		// 	weapon_grenadelauncher_fire( ent );
+		// 	break;
+		// case WP_ROCKET_LAUNCHER:
+		// 	Weapon_RocketLauncher_Fire( ent );
+		// 	break;
+		// case WP_PLASMAGUN:
+		// 	Weapon_Plasmagun_Fire( ent );
+		// 	break;
+		// case WP_RAILGUN:
+		// 	weapon_railgun_fire( ent );
+		// 	break;
+		// case WP_BFG:
+		// 	BFG_Fire( ent );
+		// 	break;
+		// case WP_GRAPPLING_HOOK:
+		// 	Weapon_GrapplingHook_Fire( ent );
+		// 	break;
+		default:
+			break;
+	}
+}
+
+/**
+ * CalcMuzzlePointOrigin
+ * 
+ * Set muzzle location relative to pivoting eye.
+ */
+function CalcMuzzlePointOrigin (ent, origin, forward, right, up, muzzlePoint) {
+	vec3.set(ent.s.pos.trBase, muzzlePoint);
+	muzzlePoint[2] += ent.client.ps.viewheight;
+	vec3.add(muzzlePoint, vec3.scale(forward, 14, [0, 0, 0]));
+	// Snap to integer coordinates for more efficient network bandwidth usage.
+	// SnapVector(muzzlePoint);
+}
+
+/**
+ * BulletFire
+ */
+function BulletFire(ent, muzzle, forward, right, up, spread, damage, mod) {
+	// damage *= s_quadFactor;
+
+	var r = Math.random() * Math.PI * 2;
+	var u = Math.sin(r) * qm.crandom() * spread * 16;
+	r = Math.cos(r) * qm.crandom() * spread * 16;
+
+	var end = vec3.add(muzzle, vec3.scale(forward, 8192*16, [0, 0, 0]), [0, 0, 0]);
+	vec3.add(end, vec3.scale(right, r, [0, 0, 0]));
+	vec3.add(end, vec3.scale(up, u, [0, 0, 0]));
+
+	var passent = ent.s.number;
+	
+	// for (var i = 0; i < 10; i++) {
+		var tr = sv.Trace(muzzle, end, null, null, passent, MASK.SHOT);
+
+		if (tr.surfaceFlags & sh.SurfaceFlags.NOIMPACT) {
+			return;
+		}
+
+		var traceEnt = level.gentities[tr.entityNum];
+
+		// Snap the endpos to integers, but nudged towards the line.
+		// SnapVectorTowards(tr.endpos, muzzle);
+
+		// Send bullet impact.
+		// if (traceEnt->takedamage && traceEnt->client) {
+		// 	tent = G_TempEntity(tr.endpos, EV_BULLET_HIT_FLESH);
+		// 	tent.s.eventParm = traceEnt.s.number;
+		// 	// if (LogAccuracyHit(traceEnt, ent)) {
+		// 	// 	client.accuracy_hits++;
+		// 	// }
+		// } else {
+			var tent = TempEntity(tr.endPos, EV.BULLET_HIT_WALL);
+			tent.s.eventParm = qm.DirToByte(tr.plane.normal);
+		// }
+		// tent.s.otherEntityNum = ent.s.number;
+
+		// if (traceEnt.takedamage) {
+		// 	G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, mod);
+		// }
+
+		// break;
+	// }
+}
+
+		entityEvents['info_notnull'] = {
 	spawn: function (self) {
 		SetOrigin(self, self.s.origin);
 	}
 };
-	entityEvents['info_player_deathmatch'] = {
+		entityEvents['info_player_deathmatch'] = {
 	spawn: function (self) {
 	}
 };
-	entityEvents['misc_teleporter_dest'] = {
-	spawn: function (self) {
-		SetOrigin(self, self.s.origin);
-	}
-};
-	entityEvents['target_position'] = {
+		entityEvents['misc_teleporter_dest'] = {
 	spawn: function (self) {
 		SetOrigin(self, self.s.origin);
 	}
 };
-	entityEvents['target_push'] = {
+		entityEvents['target_position'] = {
+	spawn: function (self) {
+		SetOrigin(self, self.s.origin);
+	}
+};
+		entityEvents['target_push'] = {
 	spawn: function (self) {
 		if (!self.speed) {
 			self.speed = 1000;
@@ -9827,12 +11375,12 @@ function AimAtTarget(self) {
 		// }
 	}
 };
-	entityEvents['trigger_hurt'] = {
+		entityEvents['trigger_hurt'] = {
 	spawn: function (self) {
 		sv.SetBrushModel(self, self.model);
 
-		self.s.eType = EntityType.PUSH_TRIGGER;
-		self.contents = ContentTypes.TRIGGER;
+		self.s.eType = ET.PUSH_TRIGGER;
+		self.contents = CONTENTS.TRIGGER;
 
 		if (self.damage) {
 			self.damage = 5;
@@ -9856,12 +11404,12 @@ function AimAtTarget(self) {
 		ClientSpawn(other);
 	}
 };
-	entityEvents['trigger_push'] = {
+		entityEvents['trigger_push'] = {
 	spawn: function (self) {
 		sv.SetBrushModel(self, self.model);
 
-		self.s.eType = EntityType.PUSH_TRIGGER;
-		self.contents = ContentTypes.TRIGGER;
+		self.s.eType = ET.PUSH_TRIGGER;
+		self.contents = CONTENTS.TRIGGER;
 		self.nextthink = level.time + FRAMETIME;
 		
 		sv.LinkEntity(self);
@@ -9879,12 +11427,12 @@ function AimAtTarget(self) {
 		bg.TouchJumpPad(other.client.ps, self.s);
 	}
 };
-	entityEvents['trigger_teleport'] = {
+		entityEvents['trigger_teleport'] = {
 	spawn: function (self) {
 		sv.SetBrushModel(self, self.model);
 
-		self.s.eType = EntityType.TELEPORT_TRIGGER;
-		self.contents = ContentTypes.TRIGGER;
+		self.s.eType = ET.TELEPORT_TRIGGER;
+		self.contents = CONTENTS.TRIGGER;
 		
 		sv.LinkEntity(self);
 	},
@@ -9894,7 +11442,7 @@ function AimAtTarget(self) {
 			return;
 		}
 
-		if (other.client.ps.pm_type === PmoveType.DEAD) {
+		if (other.client.ps.pm_type === PM.DEAD) {
 			return;
 		}
 
@@ -9909,15 +11457,22 @@ function AimAtTarget(self) {
 	}
 };
 
+		return {
+			Init:                 Init,
+			Shutdown:             Shutdown,
+			Frame:                Frame,
+			ClientConnect:        ClientConnect,
+			ClientBegin:          ClientBegin,
+			ClientThink:          ClientThink,
+			ClientDisconnect:     ClientDisconnect,
+			GetClientPlayerstate: GetClientPlayerstate
+		};
+	}
+
 	return {
-		Init:                 Init,
-		Shutdown:             Shutdown,
-		Frame:                Frame,
-		ClientConnect:        ClientConnect,
-		ClientBegin:          ClientBegin,
-		ClientThink:          ClientThink,
-		ClientDisconnect:     ClientDisconnect,
-		GetClientPlayerstate: GetClientPlayerstate
+		CreateInstance: function (com, sv) {
+			return new Game(com, sv);
+		}
 	};
 });
 
@@ -9933,99 +11488,64 @@ define("client/cl", function(){});
 /*global vec3: true, mat4: true */
 
 define('clipmap/cm',
-['underscore', 'glmatrix', 'ByteBuffer'],
-function (_, glmatrix, ByteBuffer) {
-	/**********************************************************
- * Stateless functions and data structures
- * included by each module.
- **********************************************************/
+['underscore', 'glmatrix', 'ByteBuffer', 'shared/sh', 'shared/qmath'],
+function (_, glmatrix, ByteBuffer, sh, qm) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-var Q3W_BASE_FOLDER = 'baseq3';
-var MAX_QPATH = 64;
-
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 32;                           // absolute limit
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
-var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue, flags) {
-	var currentValue = defaultValue;
-	var cvar = function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
-			} else {
-				currentValue = parseFloat(newValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-
-	cvar.flags = flags;
-
-	return cvar;
-};
-
-var CvarFlags = {
+/**
+ * Cvar flags
+ */
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
 	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
 };
 
-/**********************************************************
- * User commands are sent by the client to the server
- * each frame to let the server know its status.
- **********************************************************/
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-// UserCmd button bits, many of which are generated by the client system,
-// so they aren't game/cgame only definitions
-var Buttons = {
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -10044,818 +11564,9 @@ var Buttons = {
 	ANY:          2048                                     // any key whatsoever
 };
 
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.buttons     = 0;
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
-};
-
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.buttons = this.buttons;
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-
-	return cmd;
-};
-
-/**********************************************************
- * Player state
- **********************************************************/
-var MAX_STATS              = 16;
-var MAX_PERSISTANT         = 16;
-var MAX_POWERUPS           = 16;
-var MAX_WEAPONS            = 16;
-var PS_PMOVEFRAMECOUNTBITS = 6;
-
-var PlayerState = function () {
-	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime      = 0;                             // cmd->serverTime of last executed command
-	this.pm_type          = 0;
-	this.pm_flags         = 0;                             // ducked, jump_held, etc
-	this.origin           = [0, 0, 0];
-	this.velocity         = [0, 0, 0];
-	this.viewangles       = [0, 0, 0];
-	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed            = 0;
-	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
-
-	this.legsTimer        = 0;                             // don't change low priority animations until this runs out
-	this.legsAnim         = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer       = 0;                             // don't change low priority animations until this runs out
-	this.torsoAnim        = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.movementDir      = 0;                             // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats            = new Array(MAX_STATS);
-	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
-	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
-	this.ammo             = new Array(MAX_WEAPONS);
-
-	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
-	this.jumppad_frame    = 0;
-	this.pmove_framecount = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
-};
-
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-
-	return ps;
-};
-
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
-};
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = new Trajectory();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.groundEntityNum   = this.groundEntityNum;
-	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-
-	return es;
-};
-
-/**********************************************************
- * Angles
- **********************************************************/
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
-
-/**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
- */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
-};
-
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
-};
-
-/**********************************************************
- * Axis
- *
- * TODO Perhaps we should be using mat3's instead.
- **********************************************************/
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
-
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
-
-// TODO Perhaps the functions using this should change the way they store
-// there axis, so we can re-use the mat3 lib calls.
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
-
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
-
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
-
-function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
-
-/**********************************************************
- * Planes
- **********************************************************/
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
-
-var Plane = function () {
-	this.normal   = vec3.create();
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
-};
-
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-function GetPlaneSignbits(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p.normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-// Returns 1, 2, or 1 + 2.
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**********************************************************
- * Bounds
- **********************************************************/
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] ||
-		maxs[1] < mins2[1] ||
-		maxs[2] < mins2[2] ||
-		mins[0] > maxs2[0] ||
-		mins[1] > maxs2[1] ||
-		mins[2] > maxs2[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************
- * Radix sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- **********************************************************/
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-/**********************************************************
- * Surface flags
- **********************************************************/
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-/**********************************************************
- * Q3 BSP Defines
- **********************************************************/
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-/**********************************************************
- * Misc
- **********************************************************/
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
-
 	// We don't want everyone who requires us to 
 	// have the same version of clipmap.
-	function ClipMap(com) {
+	function ClipMap(imp) {
 		var MAX_SUBMODELS        = 256;
 var BOX_MODEL_HANDLE     = 255;
 var CAPSULE_MODEL_HANDLE = 254;
@@ -11113,16 +11824,16 @@ function LoadMap(mapName, callback) {
 
 	cm = new ClipMapLocals();
 
-	com.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
+	imp.sys_ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
 		if (err) throw err;
 		
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
 
 		// Parse the header.
-		var header = new dheader_t();
+		var header = new sh.dheader_t();
 		header.ident = bb.readASCIIString(4);
 		header.version = bb.readInt();
-		for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
+		for (var i = 0; i < sh.Lumps.NUM_LUMPS; i++) {
 			header.lumps[i].fileofs = bb.readInt();
 			header.lumps[i].filelen = bb.readInt();
 		}
@@ -11131,17 +11842,17 @@ function LoadMap(mapName, callback) {
 			return;
 		}
 
-		LoadShaders(data, header.lumps[Lumps.SHADERS]);
-		LoadLeafs(data, header.lumps[Lumps.LEAFS]);
-		LoadLeafBrushes(data, header.lumps[Lumps.LEAFBRUSHES]);
-		LoadLeafSurfaces(data, header.lumps[Lumps.LEAFSURFACES]);
-		LoadPlanes(data, header.lumps[Lumps.PLANES]);
-		LoadBrushSides(data, header.lumps[Lumps.BRUSHSIDES]);
-		LoadBrushes(data, header.lumps[Lumps.BRUSHES]);
-		LoadSubmodels(data, header.lumps[Lumps.MODELS]);
-		LoadNodes(data, header.lumps[Lumps.NODES]);
-		LoadEntities(data, header.lumps[Lumps.ENTITIES]);
-		LoadPatches(data, header.lumps[Lumps.SURFACES], header.lumps[Lumps.DRAWVERTS]);
+		LoadShaders(data, header.lumps[sh.Lumps.SHADERS]);
+		LoadLeafs(data, header.lumps[sh.Lumps.LEAFS]);
+		LoadLeafBrushes(data, header.lumps[sh.Lumps.LEAFBRUSHES]);
+		LoadLeafSurfaces(data, header.lumps[sh.Lumps.LEAFSURFACES]);
+		LoadPlanes(data, header.lumps[sh.Lumps.PLANES]);
+		LoadBrushSides(data, header.lumps[sh.Lumps.BRUSHSIDES]);
+		LoadBrushes(data, header.lumps[sh.Lumps.BRUSHES]);
+		LoadSubmodels(data, header.lumps[sh.Lumps.MODELS]);
+		LoadNodes(data, header.lumps[sh.Lumps.NODES]);
+		LoadEntities(data, header.lumps[sh.Lumps.ENTITIES]);
+		LoadPatches(data, header.lumps[sh.Lumps.SURFACES], header.lumps[sh.Lumps.DRAWVERTS]);
 
 		if (callback) {
 			callback();
@@ -11156,10 +11867,10 @@ function LoadShaders(buffer, shaderLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = shaderLump.fileofs;
 
-	var shaders = cm.shaders = new Array(shaderLump.filelen / dshader_t.size);
+	var shaders = cm.shaders = new Array(shaderLump.filelen / sh.dshader_t.size);
 
 	for (var i = 0; i < shaders.length; i++) {
-		var shader = shaders[i] = new dshader_t();
+		var shader = shaders[i] = new sh.dshader_t();
 
 		shader.shaderName = bb.readASCIIString(MAX_QPATH);
 		shader.flags = bb.readInt();
@@ -11174,7 +11885,7 @@ function LoadLeafs(buffer, leafLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = leafLump.fileofs;
 
-	var leafs = cm.leafs = new Array(leafLump.filelen / dleaf_t.size);
+	var leafs = cm.leafs = new Array(leafLump.filelen / sh.dleaf_t.size);
 
 	for (var i = 0; i < leafs.length; i++) {
 		var leaf = leafs[i] = new cleaf_t();
@@ -11226,15 +11937,15 @@ function LoadPlanes(buffer, planeLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = planeLump.fileofs;
 
-	var planes = cm.planes = new Array(planeLump.filelen / dplane_t.size);
+	var planes = cm.planes = new Array(planeLump.filelen / sh.dplane_t.size);
 
 	for (var i = 0; i < planes.length; i++) {
-		var plane = planes[i] = new Plane();
+		var plane = planes[i] = new qm.Plane();
 
 		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
 		plane.dist = bb.readFloat();
-		plane.signbits = GetPlaneSignbits(plane);
-		plane.type = PlaneTypeForNormal(plane.normal);
+		plane.signbits = qm.GetPlaneSignbits(plane.normal);
+		plane.type = qm.PlaneTypeForNormal(plane.normal);
 	}
 }
 
@@ -11247,7 +11958,7 @@ function LoadBrushSides(buffer, brushSideLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = brushSideLump.fileofs;
 
-	var brushSides = cm.brushSides = new Array(brushSideLump.filelen / dbrushside_t.size);
+	var brushSides = cm.brushSides = new Array(brushSideLump.filelen / sh.dbrushside_t.size);
 
 	for (var i = 0; i < brushSides.length; i++) {
 		var side = brushSides[i] = new cbrushside_t();
@@ -11271,7 +11982,7 @@ function LoadBrushes(buffer, brushLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = brushLump.fileofs;
 
-	var brushes = cm.brushes = new Array(brushLump.filelen / dbrush_t.size);
+	var brushes = cm.brushes = new Array(brushLump.filelen / sh.dbrush_t.size);
 
 	for (var i = 0; i < brushes.length; i++) {
 		var brush = brushes[i] = new cbrush_t();
@@ -11295,7 +12006,7 @@ function LoadSubmodels(buffer, modelLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = modelLump.fileofs;
 
-	var models = cm.models = new Array(modelLump.filelen / dmodel_t.size);
+	var models = cm.models = new Array(modelLump.filelen / sh.dmodel_t.size);
 
 	for (var i = 0; i < models.length; i++) {
 		var model = models[i] = new cmodel_t();
@@ -11336,7 +12047,7 @@ function LoadNodes(buffer, nodeLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = nodeLump.fileofs;
 
-	var nodes = cm.nodes = new Array(nodeLump.filelen / dnode_t.size);
+	var nodes = cm.nodes = new Array(nodeLump.filelen / sh.dnode_t.size);
 
 	for (var i = 0; i < nodes.length; i++) {
 		var node = nodes[i] = new cnode_t();
@@ -11405,7 +12116,7 @@ function LoadEntities(buffer, entityLump) {
 function LoadPatches(buffer, surfsLump, vertsLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 
-	var count = surfsLump.filelen / dsurface_t.size;
+	var count = surfsLump.filelen / sh.dsurface_t.size;
 	cm.surfaces = new Array(count);
 
 	// Scan through all the surfaces, but only load patches,
@@ -11414,7 +12125,7 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
 	var width;
 	var height;
 	var c;
-	var dface = new dsurface_t();
+	var dface = new sh.dsurface_t();
 	var points = new Array(MAX_PATCH_VERTS);
 	for (var i = 0; i < MAX_PATCH_VERTS; i++) {
 		points[i] = [0, 0, 0];
@@ -11445,7 +12156,7 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
 		dface.patchWidth = bb.readInt();
 		dface.patchHeight = bb.readInt();
 
-		if (dface.surfaceType !== MapSurfaceType.PATCH) {
+		if (dface.surfaceType !== sh.MapSurfaceType.PATCH) {
 			continue;  // ignore other surfaces
 		}
 
@@ -11460,11 +12171,11 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
 		c = width * height;
 
 		if (c > MAX_PATCH_VERTS) {
-			com.error(Err.DROP, 'ParseMesh: MAX_PATCH_VERTS');
+			com.error(sh.Err.DROP, 'ParseMesh: MAX_PATCH_VERTS');
 		}
 
 		for (var j = 0; j < c ; j++) {
-			bb.index = vertsLump.fileofs + (dface.vertex + j) * drawVert_t.size;
+			bb.index = vertsLump.fileofs + (dface.vertex + j) * sh.drawVert_t.size;
 
 			points[j][0] = bb.readFloat();
 			points[j][1] = bb.readFloat();
@@ -11484,7 +12195,7 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
  */
 function ClipHandleToModel(handle) {
 	if (handle < 0) {
-		com.error(Err.DROP, 'ClipHandleToModel: bad handle ' + handle);
+		com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + handle);
 	}
 	if (handle < cm.models.length) {
 		return cm.models[handle];
@@ -11493,7 +12204,7 @@ function ClipHandleToModel(handle) {
 		return &box_model;
 	}*/
 	
-	com.error(Err.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
+	com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 
 /**
@@ -11501,7 +12212,7 @@ function ClipHandleToModel(handle) {
  */
 function InlineModel(num) {
 	if (num < 0 || num >= cm.models.length) {
-		com.error(Err.DROP, 'GetInlineModel: bad number');
+		com.error(sh.Err.DROP, 'GetInlineModel: bad number');
 	}
 
 	return num;
@@ -11528,7 +12239,7 @@ function InlineModel(num) {
 // 	box_brush = cm.brushes[cm.numBrushes];
 // 	box_brush.numsides = 6;
 // 	box_brush.sides = cm.brushsides + cm.numBrushSides;
-// 	box_brush.contents = ContentTypes.BODY;
+// 	box_brush.contents = CONTENTS.BODY;
 
 // 	box_model.leaf.numLeafBrushes = 1;
 // 	box_model.leaf.firstLeafBrush = cm.numLeafBrushes;
@@ -11555,7 +12266,7 @@ function InlineModel(num) {
 // 		vec3.set([0, 0, 0], p.normal);
 // 		p.normal[i>>1] = -1;
 
-// 		p.signbits = GetPlaneSignbits(p);
+// 		p.signbits = qm.GetPlaneSignbits(p);
 // 	}	
 // }
 
@@ -11635,18 +12346,6 @@ function Vector4Copy(a, b) {
 	b[3] = a[3];
 }
 
-function GetPlaneSignbits2(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
 /**
  * PlaneFromPoints
  *
@@ -11689,15 +12388,15 @@ function PlaneFromPoints(plane, a, b, c) {
  */
 function GeneratePatchCollide(width, height, points) {
 	if (width <= 2 || height <= 2 || !points) {
-		com.error(Err.DROP, 'GeneratePatchFacets: bad parameters');
+		com.error(sh.Err.DROP, 'GeneratePatchFacets: bad parameters');
 	}
 
 	if (!(width & 1) || !(height & 1)) {
-		com.error(Err.DROP, 'GeneratePatchFacets: even sizes are invalid for quadratic meshes');
+		com.error(sh.Err.DROP, 'GeneratePatchFacets: even sizes are invalid for quadratic meshes');
 	}
 
 	if (width > MAX_GRID_SIZE || height > MAX_GRID_SIZE) {
-		com.error(Err.DROP, 'GeneratePatchFacets: source is > MAX_GRID_SIZE');
+		com.error(sh.Err.DROP, 'GeneratePatchFacets: source is > MAX_GRID_SIZE');
 	}
 
 	// Build a grid.
@@ -11728,11 +12427,11 @@ function GeneratePatchCollide(width, height, points) {
 	// collided against.
 	var pc = new pcollide_t();
 
-	ClearBounds(pc.bounds[0], pc.bounds[1]);
+	qm.ClearBounds(pc.bounds[0], pc.bounds[1]);
 
 	for (var i = 0; i < grid.width; i++) {
 		for (var j = 0; j < grid.height; j++) {
-			AddPointToBounds(grid.points[i][j], pc.bounds[0], pc.bounds[1]);
+			qm.AddPointToBounds(grid.points[i][j], pc.bounds[0], pc.bounds[1]);
 		}
 	}
 
@@ -12089,7 +12788,7 @@ function PatchCollideFromGrid(grid, pc) {
 			}
 
 			if (pc.facets.length >= MAX_FACETS) {
-				com.error(Err.DROP, 'MAX_FACETS');
+				com.error(sh.Err.DROP, 'MAX_FACETS');
 			}
 
 			var facet = new pfacet_t();
@@ -12135,7 +12834,7 @@ function PatchCollideFromGrid(grid, pc) {
 				}
 
 				if (pc.facets.length >= MAX_FACETS) {
-					com.error(Err.DROP, 'MAX_FACETS');
+					com.error(sh.Err.DROP, 'MAX_FACETS');
 				}
 
 				facet = facet = new pfacet_t();
@@ -12203,7 +12902,7 @@ function FindPlane(pc, p1, p2, p3) {
 
 	// Add a new plane.
 	if (pc.planes.length >= MAX_PATCH_PLANES) {
-		com.error(Err.DROP, 'MAX_PATCH_PLANES');
+		com.error(sh.Err.DROP, 'MAX_PATCH_PLANES');
 	}
 
 	// TODO Convert to using Plane struct?
@@ -12211,7 +12910,7 @@ function FindPlane(pc, p1, p2, p3) {
 
 	var pp = new pplane_t();
 	Vector4Copy(plane, pp.plane);
-	pp.signbits = GetPlaneSignbits2(plane);
+	pp.signbits = qm.GetPlaneSignbits(plane);
 	pc.planes.push(pp);
 
 	return index;
@@ -12276,7 +12975,7 @@ function EdgePlaneNum(pc, grid, gridPlanes, i, j, k) {
 			return FindPlane(pc, p1, p2, up);
 	}
 
-	com.error(Err.DROP, 'EdgePlaneNum: bad k');
+	com.error(sh.Err.DROP, 'EdgePlaneNum: bad k');
 	return -1;
 }
 
@@ -12327,7 +13026,7 @@ function SetBorderInward(pc, facet, grid, gridPlanes, i, j, which) {
 			numPoints = 3;
 			break;
 		default:
-			com.error(Err.FATAL, 'SetBorderInward: bad parameter');
+			com.error(sh.Err.FATAL, 'SetBorderInward: bad parameter');
 			numPoints = 0;
 			break;
 	}
@@ -12677,14 +13376,14 @@ function FindPlane2(pc, plane, flipped) {
 
 	// Add a new plane
 	if (pc.planes.length === MAX_PATCH_PLANES) {
-		com.error(Err.DROP, 'MAX_PATCH_PLANES');
+		com.error(sh.Err.DROP, 'MAX_PATCH_PLANES');
 	}
 
 	var index = pc.planes.length;
 
 	var pp = new pplane_t();
 	Vector4Copy(plane, pp.plane);
-	pp.signbits = GetPlaneSignbits2(plane);
+	pp.signbits = qm.GetPlaneSignbits(plane);
 	pc.planes.push(pp);
 
 	flipped[0] = false;
@@ -12711,7 +13410,7 @@ function TraceThroughPatchCollide(tw, pc) {
 
 	debugPatchCollide = pc;
 
-	if (!BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1])) {
+	if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1])) {
 		return;
 	}
 
@@ -12818,7 +13517,7 @@ function TraceThroughPatchCollide(tw, pc) {
 
 				tw.trace.fraction = cw.enterFrac;
 				// TODO Should trace's plane not always default to null?
-				tw.trace.plane = new Plane();
+				tw.trace.plane = new qm.Plane();
 				vec3.set(bestplane, tw.trace.plane.normal);
 				tw.trace.plane.dist = bestplane[3];
 			}
@@ -13166,7 +13865,7 @@ function EmitCollisionSurfaces(tessFn) {
 		/**
  * BaseWindingForPlane
  */
-function BaseWindingForPlane (normal, dist) {
+function BaseWindingForPlane(normal, dist) {
 	// Find the major axis.
 	var max = -MAX_MAP_BOUNDS;
 	var v;
@@ -13180,7 +13879,7 @@ function BaseWindingForPlane (normal, dist) {
 	}
 
 	if (x === -1) {
-		com.error(Err.DROP, 'BaseWindingForPlane: no axis found');
+		com.error(sh.Err.DROP, 'BaseWindingForPlane: no axis found');
 	}
 		
 	var vup = [0, 0, 0];
@@ -13228,7 +13927,7 @@ function BaseWindingForPlane (normal, dist) {
 /**
  * WindingBounds
  */
-function WindingBounds (w, mins, maxs) {
+function WindingBounds(w, mins, maxs) {
 	var v;
 
 	mins[0] = mins[1] = mins[2] = MAX_MAP_BOUNDS;
@@ -13326,11 +14025,11 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 	}
 
 	if (f.p.length > maxpts) {
-		com.error(Err.DROP, 'ClipWinding: points exceeded estimate');
+		com.error(sh.Err.DROP, 'ClipWinding: points exceeded estimate');
 	}
 
 	if (f.p.length > MAX_POINTS_ON_WINDING) {
-		com.error(Err.DROP, 'ClipWinding: MAX_POINTS_ON_WINDING');
+		com.error(sh.Err.DROP, 'ClipWinding: MAX_POINTS_ON_WINDING');
 	}
 
 	f.clone(inout);
@@ -13359,7 +14058,7 @@ function BoxLeafnums_r(ll, mins, maxs, nodenum) {
 		}
 	
 		var node = cm.nodes[nodenum];
-		var s = BoxOnPlaneSide(mins, maxs, cm.planes[node.planeNum]);
+		var s = qm.BoxOnPlaneSide(mins, maxs, cm.planes[node.planeNum]);
 
 		if (s === 1) {
 			nodenum = node.childrenNum[0];
@@ -13371,22 +14070,6 @@ function BoxLeafnums_r(ll, mins, maxs, nodenum) {
 			nodenum = node.childrenNum[1];
 		}
 	}
-}
-
-/**
- * BoundsIntersect
- */
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] - SURFACE_CLIP_EPSILON ||
-		maxs[1] < mins2[1] - SURFACE_CLIP_EPSILON ||
-		maxs[2] < mins2[2] - SURFACE_CLIP_EPSILON ||
-		mins[0] > maxs2[0] + SURFACE_CLIP_EPSILON ||
-		mins[1] > maxs2[1] + SURFACE_CLIP_EPSILON ||
-		mins[2] > maxs2[2] + SURFACE_CLIP_EPSILON) {
-		return false;
-	}
-
-	return true;
 }
 		/**
  * TransposeMatrix
@@ -13690,7 +14373,7 @@ function TraceThroughLeaf(tw, leaf) {
 			continue;
 		}
 
-		if (!BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1])) {
+		if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1])) {
 			continue;
 		}
 
@@ -14055,7 +14738,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	// If fraction == 1.0, we never hit anything, and thus the plane is not valid.
 	// Otherwise, the normal on the plane should have unit length.
 	if (!tw.trace.allSolid && tw.trace.fraction !== 1.0 && vec3.squaredLength(tw.trace.plane.normal) <= 0.9999) {
-		com.error(Err.DROP, 'Invalid trace result');
+		com.error(sh.Err.DROP, 'Invalid trace result');
 	}
 
 	return trace;
@@ -14140,9 +14823,9 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		//		 the bounding box or the bmodel because that would make all the brush
 		//		 bevels invalid.
 		//		 However this is correct for capsules since a capsule itself is rotated too.
-		AnglesToAxis(angles, matrix);
-		RotatePoint(start_l, matrix);
-		RotatePoint(end_l, matrix);
+		qm.AnglesToAxis(angles, matrix);
+		qm.RotatePoint(start_l, matrix);
+		qm.RotatePoint(end_l, matrix);
 		// rotated sphere offset for capsule
 		sphere.offset[0] = matrix[0][ 2 ] * t;
 		sphere.offset[1] = -matrix[1][ 2 ] * t;
@@ -14159,7 +14842,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 	if (rotated && trace.fraction !== 1.0) {
 		// rotation of bmodel collision plane
 		TransposeMatrix(matrix, transpose);
-		RotatePoint(trace.plane.normal, transpose);
+		qm.RotatePoint(trace.plane.normal, transpose);
 	}
 
 	// Re-calculate the end position of the trace because the trace.endPos
@@ -14183,8 +14866,8 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 	}
 
 	return {
-		CreateInstance: function (com) {
-			return new ClipMap(com);
+		CreateInstance: function (imp) {
+			return new ClipMap(imp);
 		}
 	};
 });
@@ -14192,99 +14875,64 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 /*global vec3: true, mat4: true */
 
 define('server/sv',
-['underscore', 'ByteBuffer', 'game/gm', 'client/cl', 'clipmap/cm'],
-function (_, ByteBuffer, gm, cl, clipmap) {
-	/**********************************************************
- * Stateless functions and data structures
- * included by each module.
- **********************************************************/
+['underscore', 'ByteBuffer', 'shared/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
+function (_, ByteBuffer, sh, game, cl, clipmap) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-var Q3W_BASE_FOLDER = 'baseq3';
-var MAX_QPATH = 64;
-
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 32;                           // absolute limit
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
-var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue, flags) {
-	var currentValue = defaultValue;
-	var cvar = function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
-			} else {
-				currentValue = parseFloat(newValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-
-	cvar.flags = flags;
-
-	return cvar;
-};
-
-var CvarFlags = {
+/**
+ * Cvar flags
+ */
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
 	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
 };
 
-/**********************************************************
- * User commands are sent by the client to the server
- * each frame to let the server know its status.
- **********************************************************/
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-// UserCmd button bits, many of which are generated by the client system,
-// so they aren't game/cgame only definitions
-var Buttons = {
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -14302,849 +14950,29 @@ var Buttons = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.buttons     = 0;
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
-};
-
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.buttons = this.buttons;
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-
-	return cmd;
-};
-
-/**********************************************************
- * Player state
- **********************************************************/
-var MAX_STATS              = 16;
-var MAX_PERSISTANT         = 16;
-var MAX_POWERUPS           = 16;
-var MAX_WEAPONS            = 16;
-var PS_PMOVEFRAMECOUNTBITS = 6;
-
-var PlayerState = function () {
-	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime      = 0;                             // cmd->serverTime of last executed command
-	this.pm_type          = 0;
-	this.pm_flags         = 0;                             // ducked, jump_held, etc
-	this.origin           = [0, 0, 0];
-	this.velocity         = [0, 0, 0];
-	this.viewangles       = [0, 0, 0];
-	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed            = 0;
-	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
-
-	this.legsTimer        = 0;                             // don't change low priority animations until this runs out
-	this.legsAnim         = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer       = 0;                             // don't change low priority animations until this runs out
-	this.torsoAnim        = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.movementDir      = 0;                             // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats            = new Array(MAX_STATS);
-	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
-	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
-	this.ammo             = new Array(MAX_WEAPONS);
-
-	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
-	this.jumppad_frame    = 0;
-	this.pmove_framecount = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
-};
-
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-
-	return ps;
-};
-
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
-};
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = new Trajectory();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.groundEntityNum   = this.groundEntityNum;
-	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-
-	return es;
-};
-
-/**********************************************************
- * Angles
- **********************************************************/
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
+	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
+ * System events
  */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
+var SE = {
+	CLMSG:       0,
+	SVMSG:       1,
+	SVSOCKCLOSE: 2,
+	KEY:         3,
+	MOUSE:       4
 };
 
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
-};
-
-/**********************************************************
- * Axis
- *
- * TODO Perhaps we should be using mat3's instead.
- **********************************************************/
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
-
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
-
-// TODO Perhaps the functions using this should change the way they store
-// there axis, so we can re-use the mat3 lib calls.
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
-
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
-
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
-
-function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
-
-/**********************************************************
- * Planes
- **********************************************************/
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
-
-var Plane = function () {
-	this.normal   = vec3.create();
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
-};
-
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-function GetPlaneSignbits(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p.normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-// Returns 1, 2, or 1 + 2.
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**********************************************************
- * Bounds
- **********************************************************/
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] ||
-		maxs[1] < mins2[1] ||
-		maxs[2] < mins2[2] ||
-		mins[0] > maxs2[0] ||
-		mins[1] > maxs2[1] ||
-		mins[2] > maxs2[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************
- * Radix sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- **********************************************************/
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-/**********************************************************
- * Surface flags
- **********************************************************/
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-/**********************************************************
- * Q3 BSP Defines
- **********************************************************/
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-/**********************************************************
- * Misc
- **********************************************************/
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
-	/**********************************************************
- * Definitions common between client and server, but not
- * game or render modules.
- **********************************************************/
-
-var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
-
-// Event types for the main message pump.
-var EventTypes = {
-	NETCLMESSAGE:      0,
-	NETSVMESSAGE:      1,
-	NETSVSOCKETCLOSED: 2,
-	KEY:               3,
-	MOUSE:             4
-};
-
-/**********************************************************
+/**
  * Networking
- **********************************************************/
+ */
 var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
                                                  // server for delta comrpession and ping estimation
 var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
 var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
-var NetChan = function () {
-	this.src              = 0;
-	this.remoteAddress    = null;
-	this.socket           = null;
-	this.incomingSequence = 0;
-	this.outgoingSequence = 0;
-};
-
-var ClientMessage = {
+var CLM = {
 	nop:           0,
 	move:          1,                            // [[UserCmd]
 	moveNoDelta:   2,                            // [[UserCmd]
@@ -15152,7 +14980,7 @@ var ClientMessage = {
 	EOF:           4
 };
 
-var ServerMessage = {
+var SVM = {
 	gamestate:      0,
 	configstring:   1,                           // [short] [string] only in gamestate messages
 	baseline:       2,                           // only in gamestate messages
@@ -15166,8 +14994,13 @@ var LevelLocals = function () {
 	this.framenum     = 0;
 	this.previousTime = 0;
 	this.time         = 0;
+	this.startTime    = 0;
 	this.clients      = new Array(MAX_CLIENTS);
 	this.gentities    = new Array(MAX_GENTITIES);
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		this.gentities[i] = new GameEntity();
+	}
 };
 
 // The server does not know how to interpret most of the values
@@ -15185,10 +15018,14 @@ var ServerFlags = {
 };
 
 var GameEntity = function () {
+	this.reset();
+};
+
+GameEntity.prototype.reset = function () {
 	/**
 	 * Shared by the engine and game.
 	 */
-	this.s             = new EntityState();
+	this.s             = new sh.EntityState();
 	this.linked        = false;
 	// SVF_NOCLIENT, SVF_BROADCAST, etc.
 	this.svFlags       = 0;
@@ -15198,7 +15035,7 @@ var GameEntity = function () {
 	this.bmodel        = false;
 	this.mins          = [0, 0, 0];
 	this.maxs          = [0, 0, 0];
-	// ContentTypes.TRIGGER, ContentTypes.SOLID, ContentTypes.BODY (non-solid ent should be 0)
+	// CONTENTS.TRIGGER, CONTENTS.SOLID, CONTENTS.BODY (non-solid ent should be 0)
 	this.contents      = 0;
 	// Derived from mins/maxs and origin + rotation.
 	this.absmin        = [0, 0, 0];
@@ -15214,27 +15051,32 @@ var GameEntity = function () {
 	/**
 	 * Game only
 	 */
-	this.classname     = 'noclass';
-	this.spawnflags    = 0;
-	this.model         = null;
-	this.model2        = null;
-	this.target        = null;
-	this.targetname    = null;
-	this.nextthink     = 0;
-	this.timestamp     = 0;                                // body queue sinking, etc
-};
+	this.inuse          = false;
+	this.freetime       = 0;                               // level.time when the object was freed
+	this.classname      = 'noclass';
+	this.spawnflags     = 0;
+	this.eventTime      = 0;                               // events will be cleared EVENT_VALID_MSEC after set
+	this.freeAfterEvent = false;
+	this.model          = null;
+	this.model2         = null;
+	this.target         = null;
+	this.targetname     = null;
+	this.nextthink      = 0;
+	this.timestamp      = 0;                               // body queue sinking, etc
+}
 
 // This structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'.
 var GameClient = function () {
-	this.ps   = new PlayerState();
-	this.pers = new GameClientPersistant();
+	this.ps        = new sh.PlayerState();
+	this.pers      = new GameClientPersistant();
+	this.oldOrigin = [0, 0, 0];
 };
 
 // Client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
 var GameClientPersistant = function () {
-	this.cmd     = new UserCmd();
+	this.cmd     = new sh.UserCmd();
 	this.netname = null;
 };
 	var MAX_SNAPSHOT_ENTITIES = MAX_CLIENTS * PACKET_BACKUP * 64;
@@ -15254,7 +15096,7 @@ var ServerStatic = function () {
 	}
 
 	for (var i = 0; i < MAX_SNAPSHOT_ENTITIES; i++) {
-		this.snapshotEntities[i] = new EntityState();
+		this.snapshotEntities[i] = new sh.EntityState();
 	}
 };
 
@@ -15276,16 +15118,19 @@ var ServerLocals = function () {
 	this.svEntities      = new Array(MAX_GENTITIES);
 	this.gameEntities    = null;
 	this.gameClients     = null;
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		this.svEntities[i] = new ServerEntity();
+	}
 };
 
-var ServerEntity = function (number) {
+var ServerEntity = function () {
 	this.worldSector     = null;
-	this.baseline        = new EntityState();
-	this.number          = number;
+	this.baseline        = new sh.EntityState();
 	this.snapshotCounter = 0;
 };
 
-var ClientState = {
+var CS = {
 	FREE:      0,                                          // can be reused for a new connection
 	ZOMBIE:    1,                                          // client has been disconnected, but don't reuse
 	                                                       // connection for a couple seconds
@@ -15295,7 +15140,7 @@ var ClientState = {
 };
 
 var ServerClient = function () {
-	this.state                   = ClientState.FREE;
+	this.state                   = CS.FREE;
 	this.userinfo                = {};
 
 	this.messageAcknowledge      = 0;
@@ -15306,7 +15151,7 @@ var ServerClient = function () {
 
 	this.gamestateMessageNum     = -1;
 
-	this.lastUserCmd             = new UserCmd();
+	this.lastUserCmd             = new sh.UserCmd();
 	this.lastMessageNum          = 0;                      // for delta compression
 	this.lastClientCommand       = 0;                      // reliable client message sequence
 	this.lastClientCommandString = null;
@@ -15323,14 +15168,14 @@ var ServerClient = function () {
 	this.csUpdated               = {};
 	
 	for (var i = 0; i < PACKET_BACKUP; i++) {
-		this.frames[i] = new PlayerState();
+		this.frames[i] = new ClientSnapshot();
 	}
 };
 
 var ClientSnapshot = function () {
-	this.ps          = new PlayerState();
+	this.ps          = new sh.PlayerState();
 	this.numEntities = 0;
-	this.firstEntity  = 0;                                 // index into the circular sv_packet_entities[]
+	this.firstEntity = 0;                                  // index into the circular sv_packet_entities[]
 	                                                       // the entities MUST be in increasing state number
 	                                                       // order, otherwise the delta compression will fail
 };
@@ -15360,19 +15205,33 @@ function log() {
 /**
  * Init
  */
-function Init(sysinterface, cominterface, isdedicated) {
+function Init(sys_, com_, isdedicated) {
 	log('Initializing');
 	
-	sys = sysinterface;
-	com = cominterface;
+	sys = sys_;
+	com = com_;
 	dedicated = isdedicated;
 
 	sv = new ServerLocals();
 	svs = new ServerStatic();
-	cm = clipmap.CreateInstance(sys);
+	cm = clipmap.CreateInstance(ClipmapExports());
+	var exports = {
+		LocateGameData:    LocateGameData,
+		GetUserCmd:    GetUserCmd,
+		GetConfigstring:   GetConfigstring,
+		SetConfigstring:   SetConfigstring,
+		GetUserinfo:       GetUserinfo,
+		SetBrushModel:     SetBrushModel,
+		LinkEntity:        LinkEntity,
+		UnlinkEntity:      UnlinkEntity,
+		FindEntitiesInBox: FindEntitiesInBox,
+		GetEntityDefs:     cm.EntityDefs,
+		Trace:             Trace
+	};
+	gm = game.CreateInstance(com, exports);
 	
-	sv_serverid   = com.AddCvar('sv_serverid',   0,       CvarFlags.SYSTEMINFO);
-	sv_mapname    = com.AddCvar('sv_mapname',    'nomap', CvarFlags.SERVERINFO);
+	sv_serverid   = com.AddCvar('sv_serverid',   0,       CVF.SYSTEMINFO);
+	sv_mapname    = com.AddCvar('sv_mapname',    'nomap', CVF.SERVERINFO);
 	// TODO We need to run clientthink outside of our main Frame() think loop.
 	sv_fps        = com.AddCvar('sv_fps',        20);   // time rate for running non-clients
 	sv_timeout    = com.AddCvar('sv_timeout',    200);  // seconds without any message
@@ -15381,9 +15240,18 @@ function Init(sysinterface, cominterface, isdedicated) {
 	RegisterCommands();
 
 	// For dev purposes, simulate command line input.
-	// setTimeout(function () {
-	// 	CmdLoadMap('q3dm17');
-	// }, 50);
+	setTimeout(function () {
+		CmdLoadMap('q3tourney2');
+	}, 50);
+}
+
+/**
+ * ClipmapExports
+ */
+function ClipmapExports() {
+	return {
+		sys_ReadFile: sys.ReadFile
+	};
 }
 
 /**
@@ -15460,15 +15328,15 @@ function CheckTimeouts() {
 			client.lastPacketTime = svs.time;
 		}
 
-		if (client.state === ClientState.ZOMBIE && client.lastPacketTime < zombiepoint) {
+		if (client.state === CS.ZOMBIE && client.lastPacketTime < zombiepoint) {
 			log('Going from CS_ZOMBIE to CS_FREE for client', i);
-			client.state = ClientState.FREE;  // can now be reused
+			client.state = CS.FREE;  // can now be reused
 			continue;
 		}
 
-		if (client.state >= ClientState.CONNECTED && client.lastPacketTime < droppoint) {
+		if (client.state >= CS.CONNECTED && client.lastPacketTime < droppoint) {
 			DropClient(client, 'timed out'); 
-			client.state = ClientState.FREE;  // don't bother with zombie state
+			client.state = CS.FREE;  // don't bother with zombie state
 		}
 	}
 }
@@ -15492,7 +15360,7 @@ function PacketEvent(socket, buffer) {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
-		if (client.state === ClientState.FREE) {
+		if (client.state === CS.FREE) {
 			continue;
 		}
 
@@ -15537,11 +15405,11 @@ function SpawnServer(mapName) {
 		cl.MapLoading();
 
 		// Make sure all the client stuff is unloaded.
+		cl.ShutdownSubsystems();
 		cl.ShutdownCGame();
-		cl.ShutdownRenderer();
 
-		// Restart renderer.
-		cl.InitRenderer();
+		// Restart renderer and sound systems.
+		cl.InitSubsystems();
 	}
 
 	// Toggle the server bit so clients can detect that a server has changed.
@@ -15566,33 +15434,22 @@ function SpawnServer(mapName) {
 		sv.state = ServerState.LOADING;
 
 		// Initialize the game.
-		var exports = {
-			LocateGameData:    LocateGameData,
-			GetUserCommand:    GetUserCommand,
-			GetConfigstring:   GetConfigstring,
-			SetConfigstring:   SetConfigstring,
-			GetUserinfo:       GetUserinfo,
-			SetBrushModel:     SetBrushModel,
-			LinkEntity:        LinkEntity,
-			UnlinkEntity:      UnlinkEntity,
-			FindEntitiesInBox: FindEntitiesInBox,
-			GetEntityDefs:     cm.EntityDefs,
-			Trace:             Trace
-		};
-		gm.Init(com, exports);
+		gm.Init(sv.time);
 
-		/*// Run a few frames to allow everything to settle.
+		// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {
 			gm.Frame(sv.time);
 			sv.time += 100;
 			svs.time += 100;
-		}*/
+		}
+
+		CreateBaselines();
 
 		// Send the new gamestate to all connected clients.
 		for (var i = 0; i < MAX_CLIENTS; i++) {
 			var client = svs.clients[i];
 
-			if (!client || client.state < ClientState.CONNECTED) {
+			if (!client || client.state < CS.CONNECTED) {
 				continue;
 			}
 			
@@ -15608,7 +15465,7 @@ function SpawnServer(mapName) {
 
 			// When we get the next packet from a connected client,
 			// the new gamestate will be sent.
-			client.state = ClientState.CONNECTED;
+			client.state = CS.CONNECTED;
 		}	
 
 		/*// Run another frame to allow things to look at all the players.
@@ -15616,8 +15473,8 @@ function SpawnServer(mapName) {
 		sv.time += 100;
 		svs.time += 100;*/
 
-		SetConfigstring('systemInfo', com.GetCvarKeyValues(CvarFlags.SYSTEMINFO));
-		SetConfigstring('serverInfo', com.GetCvarKeyValues(CvarFlags.SERVERINFO));
+		SetConfigstring('systemInfo', com.GetCvarKeyValues(CVF.SYSTEMINFO));
+		SetConfigstring('serverInfo', com.GetCvarKeyValues(CVF.SERVERINFO));
 
 		// Any media configstring setting now should issue a warning
 		// and any configstring changes should be reliably transmitted
@@ -15626,6 +15483,26 @@ function SpawnServer(mapName) {
 
 		svs.initialized = true;
 	});
+}
+
+/**
+ * CreateBaselines
+ * 
+ * Entity baselines are used to compress non-delta messages
+ * to the clients -- only the fields that differ from the
+ * baseline will be transmitted.
+ */
+function CreateBaselines() {
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		var svent = sv.svEntities[i];
+		var gent = GentityForSvEntity(svent);
+		if (!gent.linked) {
+			continue;
+		}
+
+		// Take current state as baseline.
+		gent.s.clone(sv.svEntities[i].baseline);
+	}
 }
 
 /**
@@ -15653,8 +15530,8 @@ function SetConfigstring(key, val) {
 		for (var i = 0; i < MAX_CLIENTS; i++) {
 			var client = svs.clients[i];
 
-			if (client.state < ClientState.ACTIVE) {
-				if (client.state === ClientState.PRIMED) {
+			if (client.state < CS.ACTIVE) {
+				if (client.state === CS.PRIMED) {
 					client.csUpdated[key] = true;
 				}
 				continue;
@@ -15678,8 +15555,8 @@ function SendConfigstring(client, key) {
 /**
  * UpdateConfigstrings
  * 
- * Called when a client goes from ClientState.PRIMED to ClientState.ACTIVE. Updates all
- * Configstring indexes that have changed while the client was in ClientState.PRIMED.
+ * Called when a client goes from CS.PRIMED to CS.ACTIVE. Updates all
+ * Configstring indexes that have changed while the client was in CS.PRIMED.
  */
 function UpdateConfigstrings(client) {
 	for (var key in sv.configstrings) {
@@ -15687,7 +15564,7 @@ function UpdateConfigstrings(client) {
 			continue;
 		}
 
-		// If the CS hasn't changed since we went to ClientState.PRIMED, ignore.
+		// If the CS hasn't changed since we went to CS.PRIMED, ignore.
 		if (!client.csUpdated[key]) {
 			continue;
 		}
@@ -15702,7 +15579,7 @@ function UpdateConfigstrings(client) {
  */
 function GetUserinfo(clientNum) {
 	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		com.error(Err.DROP, 'GetUserinfo: bad index ' + clientNum);
+		com.error(sh.Err.DROP, 'GetUserinfo: bad index ' + clientNum);
 	}
 
 	return svs.clients[clientNum].userinfo;
@@ -15715,7 +15592,7 @@ function SocketClosed(socket) {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
-		if (client.state === ClientState.FREE) {
+		if (client.state === CS.FREE) {
 			continue;
 		}
 
@@ -15739,7 +15616,7 @@ function AcceptClient(socket, infostr) {
 	// Find a slot for the client.
 	var clientNum;
 	for (var i = 0; i < MAX_CLIENTS; i++) {
-		if (svs.clients[i].state === ClientState.FREE) {
+		if (svs.clients[i].state === CS.FREE) {
 			clientNum = i;
 			break;
 		}
@@ -15753,7 +15630,7 @@ function AcceptClient(socket, infostr) {
 	// Create the client.
 	var newcl = svs.clients[clientNum];
 
-	newcl.netchan = com.NetchanSetup(NetSrc.SERVER, socket);
+	newcl.netchan = com.NetchanSetup(sh.NetSrc.SERVER, socket);
 	newcl.userinfo = JSON.parse(infostr);
 
 	// Give the game a chance to reject this connection or modify the userinfo.
@@ -15769,7 +15646,7 @@ function AcceptClient(socket, infostr) {
 
 	log('Going from CS_FREE to CS_CONNECTED for ', clientNum);
 
-	newcl.state = ClientState.CONNECTED;
+	newcl.state = CS.CONNECTED;
 	newcl.lastSnapshotTime = svs.time;
 	newcl.lastPacketTime = svs.time;
 
@@ -15789,7 +15666,7 @@ function AcceptClient(socket, infostr) {
  * or unwillingly.
  */
 function DropClient(client, reason) {
-	if (client.state === ClientState.ZOMBIE) {
+	if (client.state === CS.ZOMBIE) {
 		return;  // already dropped
 	}
 
@@ -15820,7 +15697,7 @@ function DropClient(client, reason) {
 	//SV_SetUserinfo( drop - svs.clients, "" );
 	
 	//Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
-	client.state = ClientState.ZOMBIE;           // become free in a few seconds
+	client.state = CS.ZOMBIE;           // become free in a few seconds
 }
 
 /**
@@ -15829,7 +15706,7 @@ function DropClient(client, reason) {
 function ClientEnterWorld(client) {
 	var clientNum = svs.clients.indexOf(client);
 
-	client.state = ClientState.ACTIVE;
+	client.state = CS.ACTIVE;
 
 	// Resend all configstrings using the cs commands since these are
 	// no longer sent when the client is CS_PRIMED.
@@ -15845,8 +15722,13 @@ function ClientEnterWorld(client) {
  * UserMove
  */
 function UserMove(client, msg, delta) {
-	var cmd = new UserCmd();
+	if (delta) {
+		client.deltaMessage = client.messageAcknowledge;
+	} else {
+		client.deltaMessage = -1;
+	}
 
+	var cmd = new sh.UserCmd();
 	cmd.serverTime = msg.readInt();
 	cmd.angles[0] = msg.readUnsignedShort();
 	cmd.angles[1] = msg.readUnsignedShort();
@@ -15854,15 +15736,18 @@ function UserMove(client, msg, delta) {
 	cmd.forwardmove = msg.readByte();
 	cmd.rightmove = msg.readByte();
 	cmd.upmove = msg.readByte();
+	cmd.buttons = msg.readByte();
+	cmd.weapon = msg.readByte();
 
 	// If this is the first usercmd we have received
 	// this gamestate, put the client into the world.
-	if (client.state === ClientState.PRIMED) {
+	if (client.state === CS.PRIMED) {
 		ClientEnterWorld(client);
 		// now moves can be processed normaly
 	}
 
-	if (client.state !== ClientState.ACTIVE) {
+	if (client.state !== CS.ACTIVE) {
+		client.deltaMessage = -1;
 		return; // shouldn't happen
 	}
 
@@ -15884,7 +15769,7 @@ function ClientThink(client, cmd) {
  * SendClientGameState
  */
 function SendClientGameState(client) {
-	client.state = ClientState.PRIMED;
+	client.state = CS.PRIMED;
 	// When we receive the first packet from the client, we will
 	// notice that it is from a different serverid and that the
 	// gamestate message was not just sent, forcing a retransmit.
@@ -15894,7 +15779,7 @@ function SendClientGameState(client) {
 
 	msg.writeInt(client.lastClientCommand);
 
-	msg.writeByte(ServerMessage.gamestate);
+	msg.writeByte(SVM.gamestate);
 
 	// Write the configstrings.
 	for (var key in sv.configstrings) {
@@ -15904,12 +15789,23 @@ function SendClientGameState(client) {
 
 		var cs = sv.configstrings[key];
 
-		msg.writeByte(ServerMessage.configstring);
+		msg.writeByte(SVM.configstring);
 		msg.writeCString(key);
 		msg.writeCString(JSON.stringify(cs));
 	}
 
-	msg.writeByte(ServerMessage.EOF);
+	// Write the baselines.
+	var nullstate = new sh.EntityState();
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		var base = sv.svEntities[i].baseline;
+		if (!base.number) {
+			continue;
+		}
+		msg.writeByte(SVM.baseline);
+		sh.WriteDeltaEntityState(msg, nullstate, base, true);
+	}
+
+	msg.writeByte(SVM.EOF);
 
 	msg.writeInt(GetClientNum(client));
 
@@ -16021,29 +15917,29 @@ function ExecuteClientMessage(client, msg) {
 	while (true) {
 		type = msg.readUnsignedByte();
 
-		if (type === ClientMessage.EOF) {
+		if (type === CLM.EOF) {
 			break;
 		}
 
-		if (type !== ClientMessage.clientCommand) {
+		if (type !== CLM.clientCommand) {
 			break;
 		}
 
 		if (!ClientCommand(client, msg)) {
-			return;	// we couldn't execute it because of the flood protection
+			return;  // we couldn't execute it because of the flood protection
 		}
 
-		if (client.state === ClientState.ZOMBIE) {
-			return;	// disconnect command
+		if (client.state === CS.ZOMBIE) {
+			return;  // disconnect command
 		}
 	}
 
 	// Read the usercmd_t.
 	switch (type) {
-		case ClientMessage.move:
+		case CLM.move:
 			UserMove(client, msg, true);
 			break;
-		case ClientMessage.moveNoDelta:
+		case CLM.moveNoDelta:
 			UserMove(client, msg, false);
 			break;
 	}
@@ -16131,29 +16027,23 @@ function SvEntityForGentity(gent) {
 	var num = gent.s.number;
 
 	if (!gent || num < 0 || num >= MAX_GENTITIES) {
-		com.error(Err.DROP, 'SvEntityForSharedEntity: bad game entity');
+		com.error(sh.Err.DROP, 'SvEntityForSharedEntity: bad game entity');
 	}
 
-	var ent = sv.svEntities[num];
-
-	if (!ent) {
-		ent = sv.svEntities[num] = new ServerEntity(num);
-	}
-
-	return ent;
+	return sv.svEntities[num];
 }
 
 /**
  * GentityForSvEntity
  */
 function GentityForSvEntity(ent) {
-	var num = ent.number;
+	var num = sv.svEntities.indexOf(ent);
 
 	if (!ent || num < 0 || num >= MAX_GENTITIES) {
-		com.error(Err.DROP, 'SharedEntityForSvEntity: bad sv entity');
+		com.error(sh.Err.DROP, 'SharedEntityForSvEntity: bad sv entity');
 	}
 
-	return sv.gameEntities[num];
+	return GentityForNum(num);
 }
 
 /**
@@ -16165,11 +16055,11 @@ function LocateGameData(gameEntities, gameClients) {
 }
 
 /**
- * GetUserCommand
+ * GetUserCmd
  */
-function GetUserCommand(clientNum, cmd) {
+function GetUserCmd(clientNum, cmd) {
 	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		com.error(Err.DROP, 'GetUsercmd: bad clientNum: ' + clientNum);
+		com.error(sh.Err.DROP, 'GetUsercmd: bad clientNum: ' + clientNum);
 	}
 
 	svs.clients[clientNum].lastUserCmd.clone(cmd);
@@ -16180,11 +16070,11 @@ function GetUserCommand(clientNum, cmd) {
  */
 function SetBrushModel(gent, name) {
 	if (!name) {
-		com.error(Err.DROP, 'SV: SetBrushModel: null');
+		com.error(sh.Err.DROP, 'SV: SetBrushModel: null');
 	}
 
 	if (name.charAt(0) !== '*') {
-		com.error(Err.DROP, 'SV: SetBrushModel: ' + name + 'isn\'t a brush model');
+		com.error(sh.Err.DROP, 'SV: SetBrushModel: ' + name + 'isn\'t a brush model');
 	}
 
 	gent.s.modelindex = parseInt(name.substr(1), 10);
@@ -16204,7 +16094,7 @@ function SetBrushModel(gent, name) {
  */
 function BuildClientSnapshot(client, msg) {
 	var clent = client.gentity;
-	if (!clent || client.state === ClientState.ZOMBIE) {
+	if (!clent || client.state === CS.ZOMBIE) {
 		return false; // Client hasn't entered world yet.
 	}
 
@@ -16213,7 +16103,10 @@ function BuildClientSnapshot(client, msg) {
 
 	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
 	var clientNum = GetClientNum(client);
-	frame.ps = gm.GetClientPlayerstate(clientNum);
+	var ps = gm.GetClientPlayerstate(clientNum);
+
+	// Copy the current PlayerState off.
+	ps.clone(frame.ps);
 
 	// Never send client's own entity, because it can
 	// be regenerated from the playerstate.
@@ -16262,23 +16155,23 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 		}
 
 		if (ent.s.number !== i) {
-			com.error(Err.DROP, 'Entity number does not match.. WTF');
+			com.error(sh.Err.DROP, 'Entity number does not match.. WTF');
 			/*log('FIXING ENT->S.NUMBER!!!');
 			ent.s.number = e;*/
 		}
 
-		// entities can be flagged to explicitly not be sent to the client
+		// Entities can be flagged to explicitly not be sent to the client.
 		if (ent.svFlags & ServerFlags.NOCLIENT) {
 			continue;
 		}
 
-		// entities can be flagged to be sent to only one client
+		// Entities can be flagged to be sent to only one client.
 		if (ent.svFlags & ServerFlags.SINGLECLIENT) {
 			if (ent.singleClient != frame.ps.clientNum) {
 				continue;
 			}
 		}
-		// entities can be flagged to be sent to everyone but one client
+		// Entities can be flagged to be sent to everyone but one client.
 		if (ent.svFlags & ServerFlags.NOTSINGLECLIENT) {
 			if (ent.singleClient === frame.ps.clientNum) {
 				continue;
@@ -16287,73 +16180,73 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 
 		var svEnt = SvEntityForGentity(ent);
 
-		// don't double add an entity through portals
+		// Don't double add an entity through portals.
 		if (svEnt.snapshotCounter === sv.snapshotCounter) {
 			continue;
 		}
 
-		// broadcast entities are always sent
-		if (ent.svFlags & ServerFlags.BROADCAST ) {
+		// Broadcast entities are always sent.
+		if (ent.svFlags & ServerFlags.BROADCAST) {
 			AddEntToSnapshot(svEnt, ent, eNums);
 			continue;
 		}
 
-		/*// ignore if not touching a PV leaf
-		// check area
-		if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
-			// doors can legally straddle two areas, so
-			// we may need to check another one
-			if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
-				continue;		// blocked by a door
-			}
-		}
+		// // Ignore if not touching a PV leaf.
+		// // Check area.
+		// if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
+		// 	// doors can legally straddle two areas, so
+		// 	// we may need to check another one
+		// 	if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
+		// 		continue;		// blocked by a door
+		// 	}
+		// }
 
-		bitvector = clientpvs;
+		// bitvector = clientpvs;
 
-		// check individual leafs
-		if ( !svEnt->numClusters ) {
-			continue;
-		}
-		l = 0;
-		for ( i=0 ; i < svEnt->numClusters ; i++ ) {
-			l = svEnt->clusternums[i];
-			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-				break;
-			}
-		}
+		// // Check individual leafs.
+		// if ( !svEnt->numClusters ) {
+		// 	continue;
+		// }
+		// l = 0;
+		// for ( i=0 ; i < svEnt->numClusters ; i++ ) {
+		// 	l = svEnt->clusternums[i];
+		// 	if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+		// 		break;
+		// 	}
+		// }
 
-		// if we haven't found it to be visible,
-		// check overflow clusters that coudln't be stored
-		if ( i == svEnt->numClusters ) {
-			if ( svEnt->lastCluster ) {
-				for ( ; l <= svEnt->lastCluster ; l++ ) {
-					if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-						break;
-					}
-				}
-				if ( l == svEnt->lastCluster ) {
-					continue;	// not visible
-				}
-			} else {
-				continue;
-			}
-		}*/
+		// // If we haven't found it to be visible,
+		// // check overflow clusters that coudln't be stored.
+		// if ( i == svEnt->numClusters ) {
+		// 	if ( svEnt->lastCluster ) {
+		// 		for ( ; l <= svEnt->lastCluster ; l++ ) {
+		// 			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+		// 				break;
+		// 			}
+		// 		}
+		// 		if ( l == svEnt->lastCluster ) {
+		// 			continue;	// not visible
+		// 		}
+		// 	} else {
+		// 		continue;
+		// 	}
+		// }
 
-		// add it
+		// Add it.
 		AddEntToSnapshot(svEnt, ent, eNums);
 
-		// if it's a portal entity, add everything visible from its camera position
-		/*if (ent.r.svFlags & SVF_PORTAL) {
-			if (ent.s.generic1) {
-				var dir = vec3.subtract(ent.s.origin, origin, [0, 0, 0]);
+		// // If it's a portal entity, add everything visible from its camera position.
+		// if (ent.r.svFlags & SVF_PORTAL) {
+		// 	if (ent.s.generic1) {
+		// 		var dir = vec3.subtract(ent.s.origin, origin, [0, 0, 0]);
 
-				if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1) {
-					continue;
-				}
-			}
+		// 		if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1) {
+		// 			continue;
+		// 		}
+		// 	}
 			
-			AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
-		}*/
+		// 	AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
+		// }
 	}
 }
 
@@ -16379,12 +16272,39 @@ function SendClientSnapshot(client) {
 		return;
 	}
 
+	// This is the snapshot we are creating.
 	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
+	var oldframe = null;
+	var lastframe = 0;
+
+	// Try to use a previous frame as the source for delta compressing the snapshot.
+	if (client.deltaMessage <= 0 || client.state !== CS.ACTIVE) {
+		// Client is asking for a retransmit.
+		oldframe = null;
+		lastframe = 0;
+	} else if (client.netchan.outgoingSequence - client.deltaMessage >= (PACKET_BACKUP - 3)) {
+		// Client hasn't gotten a good message through in a long time.
+		log(client.name, ': Delta request from out of date packet.');
+		oldframe = null;
+		lastframe = 0;
+	} else {
+		// We have a valid snapshot to delta from
+		oldframe = client.frames[client.deltaMessage % PACKET_BACKUP];
+		lastframe = client.netchan.outgoingSequence - client.deltaMessage;
+
+		// The snapshot's entities may still have rolled off the buffer, though.
+		if (oldframe.firstEntity <= svs.nextSnapshotEntities - svs.numSnapshotEntities) {
+			log(client.name, ': Delta request from out of date entities.');
+			oldframe = null;
+			lastframe = 0;
+		}
+	}
+
 	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
 
 	msg.writeInt(client.lastClientCommand);
 
-	msg.writeUnsignedByte(ServerMessage.snapshot);
+	msg.writeUnsignedByte(SVM.snapshot);
 
 	// Send over the current server time so the client can drift
 	// its view of time to try to match.
@@ -16400,104 +16320,83 @@ function SendClientSnapshot(client) {
 	}
 	msg.writeInt(serverTime);
 
+	// What we're delta'ing from.
+	msg.writeByte(lastframe);
+
 	var snapFlags = svs.snapFlagServerBit;
-	if (client.state !== ClientState.ACTIVE) {
+	if (client.state !== CS.ACTIVE) {
 		snapFlags |= SNAPFLAG_NOT_ACTIVE;
 	}
 	msg.writeInt(snapFlags);
 
-	// Write out playerstate
-	msg.writeInt(frame.ps.clientNum);
-	msg.writeInt(frame.ps.commandTime);
-	msg.writeInt(frame.ps.pm_type);
-	msg.writeInt(frame.ps.pm_flags);
-	msg.writeInt(frame.ps.pm_time);
-	msg.writeInt(frame.ps.gravity);
-	msg.writeInt(frame.ps.speed);
-	msg.writeFloat(frame.ps.origin[0]);
-	msg.writeFloat(frame.ps.origin[1]);
-	msg.writeFloat(frame.ps.origin[2]);
-	msg.writeFloat(frame.ps.velocity[0]);
-	msg.writeFloat(frame.ps.velocity[1]);
-	msg.writeFloat(frame.ps.velocity[2]);
-	msg.writeFloat(frame.ps.viewangles[0]);
-	msg.writeFloat(frame.ps.viewangles[1]);
-	msg.writeFloat(frame.ps.viewangles[2]);
-	msg.writeShort(frame.ps.delta_angles[0]);
-	msg.writeShort(frame.ps.delta_angles[1]);
-	msg.writeShort(frame.ps.delta_angles[2]);
-	msg.writeInt(frame.ps.speed);
-	msg.writeInt(frame.ps.gravity);
-	msg.writeInt(frame.ps.groundEntityNum);
-	msg.writeInt(frame.ps.legsTimer);
-	msg.writeShort(frame.ps.legsAnim);
-	msg.writeInt(frame.ps.torsoTimer);
-	msg.writeShort(frame.ps.torsoAnim);
-	msg.writeByte(frame.ps.movementDir);
-	for (var i = 0; i < MAX_STATS; i++) {
-		msg.writeInt(frame.ps.stats[i]);
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		msg.writeInt(frame.ps.persistant[i]);
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		msg.writeInt(frame.ps.powerups[i]);
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		msg.writeInt(frame.ps.ammo[i]);
-	}
+	// Delta encode the playerstate.
+	sh.WriteDeltaPlayerState(msg, oldframe ? oldframe.ps : null, frame.ps);
 
-	// Should not write an int, and instead write a bitstream of GENTITYNUM_BITS length.
-	for (var i = 0; i < frame.numEntities; i++) {
-		var state = svs.snapshotEntities[(frame.firstEntity+i) % MAX_SNAPSHOT_ENTITIES];
-
-		msg.writeInt(state.number);
-		msg.writeInt(state.eType);
-		msg.writeInt(state.eFlags);
-
-		msg.writeInt(state.pos.trType);
-		msg.writeInt(state.pos.trTime);
-		msg.writeInt(state.pos.trDuration);
-		msg.writeFloat(state.pos.trBase[0]);
-		msg.writeFloat(state.pos.trBase[1]);
-		msg.writeFloat(state.pos.trBase[2]);
-		msg.writeFloat(state.pos.trDelta[0]);
-		msg.writeFloat(state.pos.trDelta[1]);
-		msg.writeFloat(state.pos.trDelta[2]);
-
-		msg.writeInt(state.apos.trType);
-		msg.writeInt(state.apos.trTime);
-		msg.writeInt(state.apos.trDuration);
-		msg.writeFloat(state.apos.trBase[0]);
-		msg.writeFloat(state.apos.trBase[1]);
-		msg.writeFloat(state.apos.trBase[2]);
-		msg.writeFloat(state.apos.trDelta[0]);
-		msg.writeFloat(state.apos.trDelta[1]);
-		msg.writeFloat(state.apos.trDelta[2]);
-
-		msg.writeFloat(state.origin[0]);
-		msg.writeFloat(state.origin[1]);
-		msg.writeFloat(state.origin[2]);
-		/*msg.writeFloat(state.origin2[0]);
-		msg.writeFloat(state.origin2[1]);
-		msg.writeFloat(state.origin2[2]);
-		msg.writeFloat(state.angles[0]);
-		msg.writeFloat(state.angles[1]);
-		msg.writeFloat(state.angles[2]);
-		msg.writeFloat(state.angles2[0]);
-		msg.writeFloat(state.angles2[1]);
-		msg.writeFloat(state.angles2[2]);*/
-		msg.writeInt(state.groundEntityNum);
-		msg.writeInt(state.modelIndex);
-		msg.writeInt(state.modelIndex2);
-		msg.writeInt(state.solid);
-		msg.writeShort(state.legsAnim);
-		msg.writeShort(state.torsoAnim);
-	}
-
-	msg.writeUnsignedInt(MAX_GENTITIES-1);
+	// Delta encode the entities.
+	WriteSnapshotEntities(msg, oldframe, frame);
 
 	com.NetchanSend(client.netchan, msg.buffer, msg.index);
+}
+
+/**
+ * WriteSnapshotEntities
+ */
+var dummyEntityState = new sh.EntityState();
+function WriteSnapshotEntities(msg, from, to) {
+	var oldent, newent;
+	var oldindex, newindex;
+	var oldnum, newnum;
+	var fromNumEntities
+
+	// Generate the delta update.
+	fromNumEntities = !from ? 0 : from.numEntities;
+
+	oldent = null;
+	newent = null;
+	oldindex = 0;
+	newindex = 0;
+
+	while (newindex < to.numEntities /*|| oldindex < fromNumEntities*/) {
+		if (newindex >= to.numEntities) {
+			newnum = 9999;
+		} else {
+			newent = svs.snapshotEntities[(to.firstEntity + newindex) % MAX_SNAPSHOT_ENTITIES];
+			newnum = newent.number;
+		}
+
+		if (oldindex >= fromNumEntities) {
+			oldnum = 9999;
+		} else {
+			oldent = svs.snapshotEntities[(from.firstEntity + oldindex) % MAX_SNAPSHOT_ENTITIES];
+			oldnum = oldent.number;
+		}
+
+		if (newnum === oldnum) {
+			// Delta update from old position.
+			// Because the force parm is false, this will not result
+			// in any bytes being emited if the entity has not changed at all.
+			sh.WriteDeltaEntityState(msg, oldent, newent, false);
+			oldindex++;
+			newindex++;
+			continue;
+		}
+		
+		if (newnum < oldnum) {
+			// This is a new entity, send it from the baseline.
+			sh.WriteDeltaEntityState(msg, sv.svEntities[newnum].baseline, newent, true);
+			newindex++;
+			continue;
+		}
+
+		if (newnum > oldnum) {
+			// The old entity isn't present in the new message.
+			sh.WriteDeltaEntityState(msg, oldent, null, true);
+			oldindex++;
+			continue;
+		}
+	}
+
+	msg.writeShort(MAX_GENTITIES-1);
 }
 
 /**
@@ -16648,22 +16547,6 @@ function FindEntitiesInBox(mins, maxs) {
 }
 
 /**
- * RadiusFromBounds
- */
-// TODO move to com-math
-function RadiusFromBounds(mins, maxs) {
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		var a = Math.abs( mins[i] );
-		var b = Math.abs( maxs[i] );
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-/**
  * LinkEntity
  */
 function LinkEntity(gent) {
@@ -16676,7 +16559,7 @@ function LinkEntity(gent) {
 	// encode the size into the entityState_t for client prediction
 	/*if (gent.bmodel) {
 		gent.s.solid = SOLID_BMODEL; // a solid_box will never create this value
-	} else if (gent.contents & (ContentTypes.SOLID | ContentTypes.BODY)) {
+	} else if (gent.contents & (CONTENTS.SOLID | CONTENTS.BODY)) {
 		// assume that x/y are equal and symetric
 		var i = gEnt.maxs[0];
 		if (i < 1) {
@@ -16712,7 +16595,7 @@ function LinkEntity(gent) {
 
 	// set the abs box
 	/*if (gent.bmodel && (angles[0] || angles[1] || angles[2])) {
-		var max = RadiusFromBounds(gent.mins, gent.maxs);
+		var max = qm.RadiusFromBounds(gent.mins, gent.maxs);
 		for (var i = 0; i < 3; i++) {
 			gent.absmin[i] = origin[i] - max;
 			gent.absmax[i] = origin[i] + max;
@@ -16836,10 +16719,10 @@ function UnlinkEntity(gent) {
  * passEntityNum and entities owned by passEntityNum are explicitly not checked.
  */
 function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
-	if (typeof(mins) === 'undefined') {
+	if (!mins) {
 		mins = [0, 0, 0];
 	}
-	if (typeof(maxs) === 'undefined') {
+	if (!maxs) {
 		maxs = [0, 0, 0];
 	}
 
@@ -16889,99 +16772,64 @@ function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
 /*global vec3: true, mat4: true */
 
 define('common/com',
-['underscore', 'ByteBuffer', 'server/sv', 'client/cl'],
-function (_, ByteBuffer, sv, cl) {
-	/**********************************************************
- * Stateless functions and data structures
- * included by each module.
- **********************************************************/
+['underscore', 'ByteBuffer', 'shared/sh', 'server/sv', 'client/cl'],
+function (_, ByteBuffer, sh, sv, cl) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-var Q3W_BASE_FOLDER = 'baseq3';
-var MAX_QPATH = 64;
-
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 32;                           // absolute limit
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
-var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue, flags) {
-	var currentValue = defaultValue;
-	var cvar = function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
-			} else {
-				currentValue = parseFloat(newValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-
-	cvar.flags = flags;
-
-	return cvar;
-};
-
-var CvarFlags = {
+/**
+ * Cvar flags
+ */
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
 	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
 };
 
-/**********************************************************
- * User commands are sent by the client to the server
- * each frame to let the server know its status.
- **********************************************************/
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-// UserCmd button bits, many of which are generated by the client system,
-// so they aren't game/cgame only definitions
-var Buttons = {
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -16999,849 +16847,29 @@ var Buttons = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.buttons     = 0;
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
-};
-
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.buttons = this.buttons;
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-
-	return cmd;
-};
-
-/**********************************************************
- * Player state
- **********************************************************/
-var MAX_STATS              = 16;
-var MAX_PERSISTANT         = 16;
-var MAX_POWERUPS           = 16;
-var MAX_WEAPONS            = 16;
-var PS_PMOVEFRAMECOUNTBITS = 6;
-
-var PlayerState = function () {
-	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime      = 0;                             // cmd->serverTime of last executed command
-	this.pm_type          = 0;
-	this.pm_flags         = 0;                             // ducked, jump_held, etc
-	this.origin           = [0, 0, 0];
-	this.velocity         = [0, 0, 0];
-	this.viewangles       = [0, 0, 0];
-	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed            = 0;
-	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
-
-	this.legsTimer        = 0;                             // don't change low priority animations until this runs out
-	this.legsAnim         = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer       = 0;                             // don't change low priority animations until this runs out
-	this.torsoAnim        = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.movementDir      = 0;                             // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats            = new Array(MAX_STATS);
-	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
-	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
-	this.ammo             = new Array(MAX_WEAPONS);
-
-	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
-	this.jumppad_frame    = 0;
-	this.pmove_framecount = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
-};
-
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-
-	return ps;
-};
-
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
-};
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = new Trajectory();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.groundEntityNum   = this.groundEntityNum;
-	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-
-	return es;
-};
-
-/**********************************************************
- * Angles
- **********************************************************/
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
+	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
+ * System events
  */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
+var SE = {
+	CLMSG:       0,
+	SVMSG:       1,
+	SVSOCKCLOSE: 2,
+	KEY:         3,
+	MOUSE:       4
 };
 
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
-};
-
-/**********************************************************
- * Axis
- *
- * TODO Perhaps we should be using mat3's instead.
- **********************************************************/
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
-
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
-
-// TODO Perhaps the functions using this should change the way they store
-// there axis, so we can re-use the mat3 lib calls.
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
-
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
-
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
-
-function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
-
-/**********************************************************
- * Planes
- **********************************************************/
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
-
-var Plane = function () {
-	this.normal   = vec3.create();
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
-};
-
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-function GetPlaneSignbits(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p.normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-// Returns 1, 2, or 1 + 2.
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**********************************************************
- * Bounds
- **********************************************************/
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] ||
-		maxs[1] < mins2[1] ||
-		maxs[2] < mins2[2] ||
-		mins[0] > maxs2[0] ||
-		mins[1] > maxs2[1] ||
-		mins[2] > maxs2[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************
- * Radix sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- **********************************************************/
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-/**********************************************************
- * Surface flags
- **********************************************************/
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-/**********************************************************
- * Q3 BSP Defines
- **********************************************************/
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-/**********************************************************
- * Misc
- **********************************************************/
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
-	/**********************************************************
- * Definitions common between client and server, but not
- * game or render modules.
- **********************************************************/
-
-var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
-
-// Event types for the main message pump.
-var EventTypes = {
-	NETCLMESSAGE:      0,
-	NETSVMESSAGE:      1,
-	NETSVSOCKETCLOSED: 2,
-	KEY:               3,
-	MOUSE:             4
-};
-
-/**********************************************************
+/**
  * Networking
- **********************************************************/
+ */
 var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
                                                  // server for delta comrpession and ping estimation
 var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
 var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
-var NetChan = function () {
-	this.src              = 0;
-	this.remoteAddress    = null;
-	this.socket           = null;
-	this.incomingSequence = 0;
-	this.outgoingSequence = 0;
-};
-
-var ClientMessage = {
+var CLM = {
 	nop:           0,
 	move:          1,                            // [[UserCmd]
 	moveNoDelta:   2,                            // [[UserCmd]
@@ -17849,13 +16877,28 @@ var ClientMessage = {
 	EOF:           4
 };
 
-var ServerMessage = {
+var SVM = {
 	gamestate:      0,
 	configstring:   1,                           // [short] [string] only in gamestate messages
 	baseline:       2,                           // only in gamestate messages
 	serverCommand:  3,                           // [string] to be executed by client game module
 	snapshot:       4,
 	EOF:            5
+};
+	/**********************************************************
+ * Definitions common between client and server, but not
+ * game or render modules.
+ **********************************************************/
+
+/**
+ * Networking
+ */
+var NetChan = function () {
+	this.src              = 0;
+	this.remoteAddress    = null;
+	this.socket           = null;
+	this.incomingSequence = 0;
+	this.outgoingSequence = 0;
 };
 	var commands = {};
 
@@ -17902,6 +16945,37 @@ function CmdExec(filename) {
 	});
 }
 	var cvars = {};
+
+/**
+ * Cvar
+ */
+var Cvar = function (defaultValue, flags) {
+	var currentValue = defaultValue;
+	var cvar = function (newValue) {
+		if (arguments.length) {
+			var oldValue = currentValue;
+
+			// Convert the new value to the same type
+			// as the default value.
+			if (typeof(defaultValue) === 'string') {
+				currentValue = newValue.toString();
+			} else if (defaultValue % 1 === 0) {
+				currentValue = parseInt(newValue, 10);
+			} else {
+				currentValue = parseFloat(newValue);
+			}
+
+			cvar.modified = true;
+		} else {
+			return currentValue;
+		}
+	};
+
+	cvar.flags = flags;
+	cvar.modified = false;
+
+	return cvar;
+};
 
 /**
  * AddCvar
@@ -17981,7 +17055,7 @@ function WriteCvars(str) {
 
 		var cvar = cvars[name];
 
-		if (!(cvar.flags & CvarFlags.ARCHIVE)) {
+		if (!(cvar.flags & CVF.ARCHIVE)) {
 			continue;
 		}
 
@@ -18001,7 +17075,7 @@ var lastFrameTime;
  * error
  */
 function error(level, str) {
-	// if (level === Err.DROP) {
+	// if (level === sh.Err.DROP) {
 	// 	console.error('Server crashed: ' + str);
 	// 	sv.Shutdown();
 	// 	cl.Disconnect();
@@ -18155,23 +17229,23 @@ function EventLoop() {
 
 	while (ev) {
 		switch (ev.type) {
-			case EventTypes.NETCLMESSAGE:
+			case SE.CLMSG:
 				cl.PacketEvent(ev.buffer);
 				break;
-			case EventTypes.NETSVMESSAGE:
+			case SE.SVMSG:
 				sv.PacketEvent(ev.socket, ev.buffer);
 				break;
-			case EventTypes.NETSVSOCKETCLOSED:
+			case SE.NETSVSOCKCLOSE:
 				sv.SocketClosed(ev.socket);
 				break;
-			case EventTypes.KEY:
+			case SE.KEY:
 				if (ev.pressed) {
 					cl.KeyDownEvent(ev.time, ev.keyName);
 				} else {
 					cl.KeyUpEvent(ev.time, ev.keyName);
 				}
 				break;
-			case EventTypes.MOUSE:
+			case SE.MOUSE:
 				cl.MouseMoveEvent(ev.time, ev.deltaX, ev.deltaY);
 				break;
 		}
@@ -18241,18 +17315,18 @@ function NetchanSetup(src, addrOrSocket) {
 	var socket;
 
 	// TODO Stop including defines files, they break instanceof comparisons.
-	//if (addrOrSocket instanceof NetAdr) {
+	//if (addrOrSocket instanceof sh.NetAdr) {
 	if (addrOrSocket.type !== undefined) {
 		addr = addrOrSocket;
 
-		if (addr.type === NetAdrType.LOOPBACK) {
+		if (addr.type === sh.NetAdrType.LOOPBACK) {
 			socket = { remoteAddress: addr };
 		} else {
 			socket = sys.NetConnectToServer(addr);
 		}
 	} else {
 		socket = addrOrSocket;
-		// TODO Parse this into a NetAdr.
+		// TODO Parse this into a sh.NetAdr.
 		addr = socket.remoteAddress;
 	}
 
@@ -18267,9 +17341,9 @@ function NetchanSetup(src, addrOrSocket) {
  * NetchanDestroy
  */
 function NetchanDestroy(netchan) {
-	if (netchan.addr.type === NetAdrType.LOOPBACK) {
+	if (netchan.addr.type === sh.NetAdrType.LOOPBACK) {
 		// Trigger a fake disconnect event for loopback sockets.
-		QueueEvent({ type: EventTypes.NETSVCLOSED, socket: netchan.socket });
+		QueueEvent({ type: SE.SVSOCKCLOSE, socket: netchan.socket });
 	} else {
 		sys.NetClose(netchan.socket);
 	}
@@ -18287,7 +17361,7 @@ function NetchanSendLoopPacket(netchan, buffer, length) {
 	q.msgs[q.send++ % MAX_LOOPBACK] = buffer;
 
 	QueueEvent({
-		type: netchan.src === NetSrc.CLIENT ? EventTypes.NETSVMESSAGE : EventTypes.NETCLMESSAGE,
+		type: netchan.src === sh.NetSrc.CLIENT ? SE.SVMSG : SE.CLMSG,
 		socket: netchan.socket,
 		addr: netchan.addr,
 		buffer: buffer,
@@ -18309,7 +17383,7 @@ function NetchanSend(netchan, buffer, length) {
 		msg.writeUnsignedByte(view[i]);
 	}
 
-	if (netchan.addr.type === NetAdrType.LOOPBACK) {
+	if (netchan.addr.type === sh.NetAdrType.LOOPBACK) {
 		NetchanSendLoopPacket(netchan, msg.buffer, msg.index);
 		return;
 	}
@@ -18325,7 +17399,7 @@ function NetchanPrint(netchan, str) {
 	msg.writeInt(-1);
 	msg.writeCString(str);
 
-	if (netchan.addr.type === NetAdrType.LOOPBACK) {
+	if (netchan.addr.type === sh.NetAdrType.LOOPBACK) {
 		NetchanSendLoopPacket(netchan, msg.buffer, msg.index);
 		return;
 	}
@@ -18343,7 +17417,6 @@ function NetchanProcess(netchan, msg) {
 }
 
 	return {
-		EventTypes:     EventTypes,
 		Init:           Init,
 		Frame:          Frame,
 		ExecuteCmdText: ExecuteCmdText,
@@ -18353,99 +17426,64 @@ function NetchanProcess(netchan, msg) {
 });
 
 define('system/dedicated/sys',
-['common/com'],
-function (com) {
-	/**********************************************************
- * Stateless functions and data structures
- * included by each module.
- **********************************************************/
+['shared/sh', 'common/com'],
+function (sh, com) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-var Q3W_BASE_FOLDER = 'baseq3';
-var MAX_QPATH = 64;
-
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**********************************************************
- * Communicated across the network
- **********************************************************/
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-var MAX_CLIENTS            = 32;                           // absolute limit
-var MAX_GENTITIES          = 1024;
-
-var ENTITYNUM_NONE         = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD        = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL   = MAX_GENTITIES-2;
-
-var MAX_MODELS             = 256;                          // these are sent over the net as 8 bits
-var MAX_SOUNDS             = 256;                          // so they cannot be blindly increased
-
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-/**********************************************************
- * Cvars
- **********************************************************/
-var Cvar = function (defaultValue, flags) {
-	var currentValue = defaultValue;
-	var cvar = function (newValue) {
-		if (arguments.length) {
-			var oldValue = currentValue;
-
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
-			} else {
-				currentValue = parseFloat(newValue);
-			}
-		} else {
-			return currentValue;
-		}
-	};
-
-	cvar.flags = flags;
-
-	return cvar;
-};
-
-var CvarFlags = {
+/**
+ * Cvar flags
+ */
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
 	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
 };
 
-/**********************************************************
- * User commands are sent by the client to the server
- * each frame to let the server know its status.
- **********************************************************/
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-// UserCmd button bits, many of which are generated by the client system,
-// so they aren't game/cgame only definitions
-var Buttons = {
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                          // absolute limit
+var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -18463,815 +17501,44 @@ var Buttons = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.buttons     = 0;
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
-};
-
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.buttons = this.buttons;
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-
-	return cmd;
-};
-
-/**********************************************************
- * Player state
- **********************************************************/
-var MAX_STATS              = 16;
-var MAX_PERSISTANT         = 16;
-var MAX_POWERUPS           = 16;
-var MAX_WEAPONS            = 16;
-var PS_PMOVEFRAMECOUNTBITS = 6;
-
-var PlayerState = function () {
-	this.clientNum        = 0;                             // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime      = 0;                             // cmd->serverTime of last executed command
-	this.pm_type          = 0;
-	this.pm_flags         = 0;                             // ducked, jump_held, etc
-	this.origin           = [0, 0, 0];
-	this.velocity         = [0, 0, 0];
-	this.viewangles       = [0, 0, 0];
-	this.delta_angles     = [0, 0, 0];                     // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed            = 0;
-	this.gravity          = 0;
-	this.groundEntityNum  = ENTITYNUM_NONE;                // ENTITYNUM_NONE = in air
-
-	this.legsTimer        = 0;                             // don't change low priority animations until this runs out
-	this.legsAnim         = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer       = 0;                             // don't change low priority animations until this runs out
-	this.torsoAnim        = 0;                             // mask off ANIM_TOGGLEBIT
-
-	this.movementDir      = 0;                             // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats            = new Array(MAX_STATS);
-	this.persistant       = new Array(MAX_PERSISTANT);     // stats that aren't cleared on death
-	this.powerups         = new Array(MAX_POWERUPS);       // level.time that the powerup runs out
-	this.ammo             = new Array(MAX_WEAPONS);
-
-	this.jumppad_ent      = 0;                             // jumppad entity hit this frame
-	this.jumppad_frame    = 0;
-	this.pmove_framecount = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
-};
-
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-
-	return ps;
-};
-
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
-};
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = new Trajectory();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.groundEntityNum   = this.groundEntityNum;
-	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-
-	return es;
-};
-
-/**********************************************************
- * Angles
- **********************************************************/
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
+	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
+ * System events
  */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-function AngleMod(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-var AngleToShort = function (x) {
-	return (((x)*65536/360) & 65535);
+var SE = {
+	CLMSG:       0,
+	SVMSG:       1,
+	SVSOCKCLOSE: 2,
+	KEY:         3,
+	MOUSE:       4
 };
 
-var ShortToAngle = function (x) {
-	return ((x)*(360.0/65536));
+/**
+ * Networking
+ */
+var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
+                                                 // server for delta comrpession and ping estimation
+var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
+var MAX_MSGLEN            = 16384;
+
+var CLM = {
+	nop:           0,
+	move:          1,                            // [[UserCmd]
+	moveNoDelta:   2,                            // [[UserCmd]
+	clientCommand: 3,                            // [string] message
+	EOF:           4
 };
 
-/**********************************************************
- * Axis
- *
- * TODO Perhaps we should be using mat3's instead.
- **********************************************************/
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
-
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
-
-// TODO Perhaps the functions using this should change the way they store
-// there axis, so we can re-use the mat3 lib calls.
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
-
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
-
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
-
-function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
-
-/**********************************************************
- * Planes
- **********************************************************/
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
-
-var Plane = function () {
-	this.normal   = vec3.create();
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
+var SVM = {
+	gamestate:      0,
+	configstring:   1,                           // [short] [string] only in gamestate messages
+	baseline:       2,                           // only in gamestate messages
+	serverCommand:  3,                           // [string] to be executed by client game module
+	snapshot:       4,
+	EOF:            5
 };
-
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-function GetPlaneSignbits(p) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (p.normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-// Returns 1, 2, or 1 + 2.
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**********************************************************
- * Bounds
- **********************************************************/
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-function BoundsIntersect(mins, maxs, mins2, maxs2) {
-	if (maxs[0] < mins2[0] ||
-		maxs[1] < mins2[1] ||
-		maxs[2] < mins2[2] ||
-		mins[0] > maxs2[0] ||
-		mins[1] > maxs2[1] ||
-		mins[2] > maxs2[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**********************************************************
- * Radix sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- **********************************************************/
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-/**********************************************************
- * Surface flags
- **********************************************************/
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-/**********************************************************
- * Q3 BSP Defines
- **********************************************************/
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-/**********************************************************
- * Misc
- **********************************************************/
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
 	var KbLocals = {
 	'us': {
 		'default': {
@@ -19414,7 +17681,7 @@ function ReadFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 
 	if (binary) {
-		fs.readFile(Q3W_BASE_FOLDER + '/' + path, function (err, data) {
+		fs.readFile('public/' + BASE_FOLDER + '/' + path, function (err, data) {
 			if (err) return callback(err);
 
 			// Marshal the NodeBuffer into a new ArrayBuffer.
@@ -19430,7 +17697,7 @@ function ReadFile(path, encoding, callback) {
 		return;
 	}
 
-	fs.readFile(Q3W_BASE_FOLDER + '/' + path, 'utf8', function (err, data) {
+	fs.readFile('public/' + BASE_FOLDER + '/' + path, 'utf8', function (err, data) {
 		if (err) throw err;
 		callback(null, data);
 	});
@@ -19456,7 +17723,7 @@ function NetCreateServer() {
 		var connection = request.accept('q3js', request.origin);
 		log((new Date()) + ' Connection accepted.');
 
-		com.QueueEvent({ type: com.EventTypes.NETSVCONNECT, socket: connection });
+		com.QueueEvent({ type: SE.NETSVCONNECT, socket: connection });
 
 		connection.on('message', function (message) {
 			// TODO Clean this up. It'd be nice if we found a Node WebSocket library
@@ -19470,14 +17737,14 @@ function NetCreateServer() {
 			}
 
 			com.QueueEvent({
-				type: com.EventTypes.NETSVMESSAGE,
+				type: SE.SVMSG,
 				socket: connection,
 				buffer: ab
 			});
 		});
 
 		connection.on('close', function(reasonCode, description) {
-			com.QueueEvent({ type: com.EventTypes.NETSVSOCKETCLOSED, socket: connection });
+			com.QueueEvent({ type: SE.NETSVSOCKCLOSE, socket: connection });
 		});
 	});
 }
