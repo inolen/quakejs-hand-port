@@ -18,6 +18,12 @@
 		<% } %>
 	</ul>
 </div>
+<div class="ammo-wrapper">
+	<% for (var i = 0; i < ammo.length; i++) { %>
+		<% if (typeof ammo[i] !== 'number') { continue; } %>
+		<div class="ammo"><%- ammo[i] %></div>
+	<% } %>
+</div>
 <div class="armor-wrapper">
 	Armor: <span class="armor"><%- armor %></span>
 </div>

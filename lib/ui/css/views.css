@@ -249,6 +249,7 @@
  */
 #hud {
 	display: none;
+	padding: 1em;
 }
 
 #hud .fps-wrapper {
@@ -267,11 +268,30 @@
 }
 
 #hud .weapons li {
+	display: block;
 	border: 1px solid transparent;
 }
 
 #hud .weapons li.selected {
 	border: 1px solid #A6E22E;
+}
+
+#hud .weapons li img {
+	display: block;
+}
+
+#hud .ammo-wrapper {
+	position: absolute;
+	bottom: 1em;
+	left: 2em;
+	margin: 0;
+	padding: 0 0 0 34px;
+	list-style: none;
+}
+
+#hud .ammo-wrapper .ammo {
+	height: 34px;
+	line-height: 34px;
 }
 
 #hud .count-wrapper {
