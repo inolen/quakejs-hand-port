@@ -1,6 +1,6 @@
 
 /*global vec3: true, mat4: true */
-define('shared/qmath', [], function () {
+define('common/qmath', [], function () {
 
 var bytedirs = [
 	[-0.525731, 0.000000, 0.850651], [-0.442863, 0.238856, 0.864188], 
@@ -651,7 +651,7 @@ return {
 };
 
 });
-define('shared/sh', ['shared/qmath'], function (qm) {
+define('common/sh', ['common/qmath'], function (qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
@@ -7012,7 +7012,7 @@ else {
 /*global vec3: true, mat4: true */
 
 define('game/bg',
-['glmatrix', 'shared/sh', 'shared/qmath'],
+['glmatrix', 'common/sh', 'common/qmath'],
 function (glmatrix, sh, qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -7571,6 +7571,7 @@ function CanItemBeGrabbed(gametype, ent, ps) {
 			if ( ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2 ) {
 				return false;
 			}
+			
 			return true;
 		}
 		
@@ -9379,7 +9380,7 @@ var itemList = [
 /*global vec3: true, mat4: true */
 
 define('game/gm',
-['underscore', 'glmatrix', 'shared/sh', 'shared/qmath', 'game/bg'],
+['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -11479,7 +11480,7 @@ function BulletFire(ent, muzzle, forward, right, up, spread, damage, mod) {
 /*global vec3: true, mat4: true */
 
 define('cgame/cg',
-['underscore', 'glmatrix', 'shared/sh', 'shared/qmath', 'game/bg'],
+['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -12065,6 +12066,10 @@ var ClientGameStatic = function () {
 	// locally derived information from gamestate
 	this.clientinfo           = new Array(MAX_CLIENTS);
 	this.media                = {};
+
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		this.clientinfo[i] = new ClientInfo();
+	}
 };
 
 /**
@@ -12238,6 +12243,10 @@ LocalEntity.prototype.reset = function () {
  *
  **********************************************************/
 var ClientInfo = function () {
+	this.reset();
+};
+
+ClientInfo.prototype.reset = function () {
 	this.infoValid     = false;
 	this.name          = null;
 
@@ -12432,8 +12441,9 @@ function Frame(serverTime) {
 	// All Draw* calls just prep the cg_hud viewmodel,
 	// which is finally rendered with imp.ui_Render() in cl-main.
 	DrawRenderCounts();
-	DrawArmor();
 	DrawHealth();
+	DrawArmor();
+	DrawAmmo();
 	DrawWeaponSelect();
 	imp.ui_RenderView(cg_hud);
 
@@ -12595,20 +12605,25 @@ function DrawRenderCounts() {
 var currentWeaponInfo = [];
 function DrawWeaponSelect() {
 	var bits = cg.snap.ps.stats[STAT.WEAPONS];
-	var currentAmmo = [];
 	
 	for (var i = 1; i < MAX_WEAPONS; i++) {
 		if (!(bits & (1 << i))) {
 			currentWeaponInfo[i] = null;
 			continue;
 		}
-		
+
 		currentWeaponInfo[i] = cg.weaponInfo[i];
-		currentAmmo[i] = cg.snap.ps.ammo[i];
 	}
-	
+
 	cg_hud.setWeapons(currentWeaponInfo, cg.weaponSelect);
-	cg_hud.setAmmo(currentAmmo);
+}
+
+/**
+ * DrawAmmo
+ */
+function DrawAmmo() {
+	
+	cg_hud.setAmmo(cg.snap.ps.ammo);
 }
 
 /**
@@ -12973,13 +12988,11 @@ function CheckEvents(cent) {
 	AddEntityEvent(cent, cent.lerpOrigin);
 }
 
-/*
-================
-CG_ItemPickup
-
-A new item was picked up this frame
-================
-*/
+/**
+ * ItemPickup
+ *
+ * A new item was picked up this frame
+ */
 function ItemPickup( itemNum ) {
 	cg.itemPickup = itemNum;
 	cg.itemPickupTime = cg.time;
@@ -12992,7 +13005,6 @@ function ItemPickup( itemNum ) {
 			cg.weaponSelect = bg.ItemList[itemNum].giTag;
 		}
 	}
-
 }
 
 /**
@@ -13719,7 +13731,7 @@ TextTokenizer.prototype.prev = function() {
  * NewClientInfo
  */
 function NewClientInfo(clientNum) {
-	var ci = cgs.clientinfo[clientNum] = new ClientInfo();
+	var ci = cgs.clientinfo[clientNum];
 	var cs = ConfigString('player' + clientNum);
 
 	if (!cs) {
@@ -16230,7 +16242,7 @@ function MissileHitWall(weapon, clientNum, origin, dir, soundType) {
 /*global vec3: true, mat4: true */
 
 define('clipmap/cm',
-['underscore', 'glmatrix', 'ByteBuffer', 'shared/sh', 'shared/qmath'],
+['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -19617,7 +19629,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 /*global vec3: true, mat4: true */
 
 define('renderer/re',
-['underscore', 'glmatrix', 'ByteBuffer', 'shared/sh', 'shared/qmath'],
+['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -36682,7 +36694,7 @@ function (_, $, Backbone, templateSrc) {
 	return HudView;
 });
 
-define('text!ui/templates/hud.tpl',[],function () { return '<div class="fps-wrapper">\n\t<span class="fps"><%- fps %></span> FPS\n</div>\n<div class="count-wrapper">\n\t<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>\n\t<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>\n\t<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>\n\t<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>\n\t<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>\n\t<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>\n\t<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div>\n</div>\n<div class="weapons-wrapper">\n\t<ul class="weapons">\n\t\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t\t<% if (!weapons[i]) continue; %>\n\t\t\t<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>\n\t\t<% } %>\n\t</ul>\n</div>\n<div class="ammo-wrapper">\n\t<% for (var i = 0; i < ammo.length; i++) { %>\n\t\t<% if (typeof ammo[i] !== \'number\') { continue; } %>\n\t\t<div class="ammo"><%- ammo[i] %></div>\n\t<% } %>\n</div>\n<div class="armor-wrapper">\n\tArmor: <span class="armor"><%- armor %></span>\n</div>\n<div class="health-wrapper">\n\tHealth: <span class="health"><%- health %></span>\n</div>\n';});
+define('text!ui/templates/hud.tpl',[],function () { return '<div class="fps-wrapper">\n\t<span class="fps"><%- fps %></span> FPS\n</div>\n<div class="count-wrapper">\n\t<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>\n\t<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>\n\t<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>\n\t<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>\n\t<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>\n\t<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>\n\t<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div>\n</div>\n<div class="weapons-wrapper">\n\t<ul class="weapons">\n\t\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t\t<% if (!weapons[i]) continue; %>\n\t\t\t<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>\n\t\t<% } %>\n\t</ul>\n</div>\n<div class="ammo-wrapper">\n\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t<% if (!weapons[i]) continue; %>\n\t\t<div class="ammo"><%- ammo[i] %></div>\n\t<% } %>\n</div>\n<div class="armor-wrapper">\n\tArmor: <span class="armor"><%- armor %></span>\n</div>\n<div class="health-wrapper">\n\tHealth: <span class="health"><%- health %></span>\n</div>\n';});
 
 define('ui/views/HudView',
 [
@@ -36722,8 +36734,7 @@ function (_, $, Backbone, templateSrc) {
 		culledModelOutEl: null,
 		culledModelInEl: null,
 		culledModelClipEl: null,
-		weaponsEl: null,
-		ammoEl: null,
+		ammoEls: null,
 		armorEl: null,
 		healthEl: null,
 		initialize: function (opts) {
@@ -36782,12 +36793,7 @@ function (_, $, Backbone, templateSrc) {
 		setAmmo: function (ammo) {
 			var render = false;
 			
-			for (var i = 0; i < this.model.weapons.length; i++) {
-				if (!this.model.weapons[i]) { continue; }
-				
-				if (!ammo[i]) {
-					ammo[i] = 0;
-				}
+			for (var i = 0; i < ammo.length; i++) {
 				
 				if (this.model.ammo[i] !== ammo[i]) {
 					this.model.ammo[i] = ammo[i];
@@ -36796,7 +36802,14 @@ function (_, $, Backbone, templateSrc) {
 			}
 			
 			if (render) {
-				this.render();
+				var hud_i = 0;
+				
+				for (var i = 0; i < this.model.weapons.length; i++) {
+					if (!this.model.weapons[i]) { continue; }
+					
+					this.ammoEls.eq(hud_i).text(ammo[i]);
+					hud_i++;
+				}
 			}
 		},
 		setArmor: function (armor) {
@@ -36822,6 +36835,7 @@ function (_, $, Backbone, templateSrc) {
 			this.culledModelOutEl = this.$el.find('.count-culled-model-out');
 			this.culledModelInEl = this.$el.find('.count-culled-model-in');
 			this.culledModelClipEl = this.$el.find('.count-culled-model-clip');
+			this.ammoEls = this.$el.find('.ammo');
 			this.armorEl = this.$el.find('.armor');
 			this.healthEl = this.$el.find('.health');
 			
@@ -37251,7 +37265,7 @@ define('ui/ui',
 	'underscore',
 	'jquery',
 	'backbone',
-	'shared/sh',
+	'common/sh',
 	'text!ui/css/views.css',
 	'ui/views/ConnectView',
 	'ui/views/HudView',
@@ -37474,28 +37488,38 @@ function GetView(name) {
  * RegisterView
  */
 function RegisterView(name) {
-	var exports = {
-		sys_ReadFile:         imp.sys_ReadFile,
-		
-		com_GetCvarVal:       imp.com_GetCvarVal,
-		
-		cl_Bind:              imp.cl_CmdBind,
-		cl_UnbindAll:         imp.cl_CmdUnbindAll,
-		cl_GetKeyNamesForCmd: imp.cl_GetKeyNamesForCmd,
-		cl_CaptureInput:      imp.cl_CaptureInput,
-		cl_Disconnect:        imp.cl_Disconnect,
-
-		ui_GetImageByHandle:  GetImageByHandle,
-		ui_PushMenu:          PushMenu,
-		ui_PopMenu:           PopMenu,
-		ui_PopAllMenus:       PopAllMenus
-	};
-
-	var view = uil.views[name] = new map[name](exports);
+	var view = uil.views[name] = new map[name](GetViewExports());
 	$viewportUI.append(view.$el);
 	HideView(view);
 
 	return view;
+}
+
+/**
+ * GetViewExports
+ */
+function GetViewExports() {
+	return {
+		sys_ReadFile:           imp.sys_ReadFile,
+		
+		com_GetCvarVal:         imp.com_GetCvarVal,
+		com_SetCvarVal:         imp.com_SetCvarVal,
+		com_LoadConfig:         imp.com_LoadConfig,
+		com_SaveConfig:         imp.com_SaveConfig,
+		
+		cl_Bind:                imp.cl_Bind,
+		cl_UnbindAll:           imp.cl_UnbindAll,
+		cl_GetKeyNamesForCmd:   imp.cl_GetKeyNamesForCmd,
+		cl_CaptureInput:        imp.cl_CaptureInput,
+		cl_Disconnect:          imp.cl_Disconnect,
+
+		ui_GetImageByHandle:    GetImageByHandle,
+		ui_PushMenu:            PushMenu,
+		ui_PopMenu:             PopMenu,
+		ui_PopAllMenus:         PopAllMenus,
+		ui_ProcessTextInput:    ProcessTextInput,
+		ui_ProcessKeyBindInput: ProcessKeyBindInput
+	};
 }
 
 /**
@@ -37897,7 +37921,7 @@ function ProcessKeyBindInput(keyName) {
 /*global vec3: true, mat4: true */
 
 define('client/cl',
-['underscore', 'glmatrix', 'ByteBuffer', 'shared/sh', 'shared/qmath', 'cgame/cg', 'clipmap/cm', 'renderer/re', 'sound/snd', 'ui/ui'],
+['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath', 'cgame/cg', 'clipmap/cm', 'renderer/re', 'sound/snd', 'ui/ui'],
 function (_, glmatrix, ByteBuffer, sh, qm, cgame, clipmap, renderer, sound, uinterface) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -38249,11 +38273,15 @@ function UIExports() {
 		sys_GetUIContext:     sys.GetUIContext,
 
 		com_GetCvarVal:       com.GetCvarVal,
+		com_SetCvarVal:       com.SetCvarVal,
+		com_LoadConfig:       com.LoadConfig,
+		com_SaveConfig:       com.SaveConfig,
 
 		cl_Bind:              CmdBind,
 		cl_UnbindAll:         CmdUnbindAll,
 		cl_GetKeyNamesForCmd: GetKeyNamesForCmd,
 		cl_CaptureInput:      CaptureInput,
+		cl_Disconnect:        Disconnect,
 
 		snd_StartSound:       snd.StartSound
 	};
@@ -38400,7 +38428,7 @@ function CheckUserinfo() {
 	// Send a reliable userinfo update if needed.
 	/*if (cvar_modifiedFlags & CVF.USERINFO) {
 		cvar_modifiedFlags &= ~CVAR_USERINFO;
-		AddReliableCommand('userinfo ' + JSON.stringify(com.GetCvarKeyValues(CVF.USERINFO));
+		AddReliableCommand('userinfo ' + JSON.stringify(com.AddCvarKeyValues(CVF.USERINFO));
 	}*/
 }
 
@@ -38444,7 +38472,7 @@ function CheckForResend() {
 			// Info_SetValueForKey(info, "protocol", va("%i", com_protocol->integer));
 			// Info_SetValueForKey( info, "qport", va("%i", port ) );
 			// Info_SetValueForKey( info, "challenge", va("%i", clc.challenge ) );
-			var str = 'connect ' + JSON.stringify(com.GetCvarKeyValues(CVF.USERINFO));
+			var str = 'connect ' + JSON.stringify(com.AddCvarKeyValues(CVF.USERINFO));
 			com.NetchanPrint(clc.netchan, str);
 			// The most current userinfo has been sent, so watch for any
 			// newer changes to userinfo variables.
@@ -39677,7 +39705,7 @@ function DeltaEntity(msg, newframe, newnum, oldstate, unchanged) {
 /*global vec3: true, mat4: true */
 
 define('server/sv',
-['underscore', 'ByteBuffer', 'shared/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
+['underscore', 'ByteBuffer', 'common/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
 function (_, ByteBuffer, sh, game, cl, clipmap) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -40275,8 +40303,8 @@ function SpawnServer(mapName) {
 		sv.time += 100;
 		svs.time += 100;*/
 
-		SetConfigstring('systemInfo', com.GetCvarKeyValues(CVF.SYSTEMINFO));
-		SetConfigstring('serverInfo', com.GetCvarKeyValues(CVF.SERVERINFO));
+		SetConfigstring('systemInfo', com.AddCvarKeyValues(CVF.SYSTEMINFO));
+		SetConfigstring('serverInfo', com.AddCvarKeyValues(CVF.SERVERINFO));
 
 		// Any media configstring setting now should issue a warning
 		// and any configstring changes should be reliably transmitted
@@ -41491,10 +41519,10 @@ function LinkEntity(gent) {
 		}
 	}
 	
-	// link it in
+	// Link it in.
 	gent.linked = true;
 	ent.worldSector = node;
-	node.entities[ent.number] = ent;
+	node.entities[gent.s.number] = ent;
 }
 
 /**
@@ -41505,12 +41533,12 @@ function UnlinkEntity(gent) {
 	var node = ent.worldSector;
 
 	if (!node) {
-		return; // not linked in anywhere
+		return;  // not linked in anywhere
 	}
 
-	// unlink
+	// Unlink.
 	gent.linked = false;
-	delete node.entities[ent.number];
+	delete node.entities[gent.s.number];
 	ent.worldSector = null;
 }
 
@@ -41574,7 +41602,7 @@ function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
 /*global vec3: true, mat4: true */
 
 define('common/com',
-['underscore', 'ByteBuffer', 'shared/sh', 'server/sv', 'client/cl'],
+['underscore', 'ByteBuffer', 'common/sh', 'server/sv', 'client/cl'],
 function (_, ByteBuffer, sh, sv, cl) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
@@ -41783,16 +41811,25 @@ var Cvar = function (defaultValue, flags) {
  * AddCvar
  */
 function AddCvar(name, defaultValue, flags) {
-	var cvar = new Cvar(defaultValue, flags || 0);
-	cvars[name] = cvar;
+	var cvar = cvars[name];
+
+	if (!cvar) {
+		if (typeof(defaultValue) === 'undefined') {
+			return null;
+		} else {
+			cvar = cvars[name] = new Cvar(defaultValue, flags || 0);
+		}
+	}
+
 	return cvar;
 }
 
 /**
- * FindCvar
+ * GetCvar
  */
-function FindCvar(name) {
-	return cvars[name];
+function GetCvar(name, defaultValue, flags) {
+	var cvar = cvars[name];
+	return cvar;
 }
 
 /**
@@ -41824,9 +41861,9 @@ function SetCvarVal(name, value) {
 }
 
 /**
- * GetCvarKeyValues
+ * AddCvarKeyValues
  */
-function GetCvarKeyValues(flag) {
+function AddCvarKeyValues(flag) {
 	var data = {};
 	
 	for (var name in cvars) {
@@ -41906,7 +41943,7 @@ function Init(sysinterface, isdedicated) {
 		AddCvar:          AddCvar,
 		GetCvarVal:       GetCvarVal,
 		SetCvarVal:       SetCvarVal,
-		GetCvarKeyValues: GetCvarKeyValues,
+		AddCvarKeyValues: AddCvarKeyValues,
 		AddCmd:           AddCmd,
 		GetCmd:           GetCmd,
 		NetchanSetup:     NetchanSetup,
@@ -42076,7 +42113,8 @@ function ExecuteCmdText(text) {
 
 	if ((cmdcb = GetCmd(arg0))) {
 		cmdcb.apply(this, args);
-	} else if ((cvar = FindCvar(arg0))) {
+	} else if ((cvar = GetCvar(arg0))) {
+		console.log('setting cvar', arg0, args[0]);
 		cvar(args[0]);
 	}
 }
@@ -42228,7 +42266,7 @@ function NetchanProcess(netchan, msg) {
 });
 
 define('system/browser/sys',
-['shared/sh', 'common/com'],
+['common/sh', 'common/com'],
 function (sh, com) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
