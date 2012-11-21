@@ -2,6 +2,8 @@
 /*global vec3: true, mat4: true */
 define('common/qmath', [], function () {
 
+var vec3_origin = [0, 0, 0];
+
 var bytedirs = [
 	[-0.525731, 0.000000, 0.850651], [-0.442863, 0.238856, 0.864188], 
 	[-0.295242, 0.000000, 0.955423], [-0.309017, 0.500000, 0.809017], 
@@ -303,7 +305,7 @@ function AxisMultiply(in1, in2, out) {
  * RotatePoint
  */
 function RotatePoint(point, axis) {
-	var tvec = vec3.create(point);
+	var tvec = vec3.set(point, [0, 0, 0]);
 	point[0] = vec3.dot(axis[0], tvec);
 	point[1] = vec3.dot(axis[1], tvec);
 	point[2] = vec3.dot(axis[2], tvec);
@@ -335,7 +337,7 @@ var PLANE_Z         = 2;
 var PLANE_NON_AXIAL = 3;
 
 var Plane = function () {
-	this.normal   = vec3.create();
+	this.normal   = [0, 0, 0];
 	this.dist     = 0;
 	this.type     = 0;
 	this.signbits = 0;
@@ -607,6 +609,8 @@ function RadixSort(arr, prop, len) {
 }
 
 return {
+	vec3_origin:           vec3_origin,
+	
 	DirToByte:             DirToByte,
 	ByteToDir:             ByteToDir,
 	ClampChar:             ClampChar,
@@ -655,6 +659,9 @@ define('common/sh', ['common/qmath'], function (qm) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
@@ -725,6 +732,70 @@ var BUTTON = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
 	// TODO Move to com
 var Err = {
 	FATAL:      0,                                         // exit the entire game with a popup window
@@ -782,50 +853,51 @@ UserCmd.prototype.clone = function (cmd) {
  * Player state
  */
 var PlayerState = function () {
-	this.clientNum         = 0;                            // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime       = 0;                            // cmd->serverTime of last executed command
-	this.pm_type           = 0;
-	this.pm_flags          = 0;                            // ducked, jump_held, etc
-	this.origin            = [0, 0, 0];
-	this.velocity          = [0, 0, 0];
-	this.viewangles        = [0, 0, 0];
-	this.delta_angles      = [0, 0, 0];                    // add to command angles to get view direction
+	this.clientNum           = 0;                          // ranges from 0 to MAX_CLIENTS-1
+	this.commandTime         = 0;                          // cmd->serverTime of last executed command
+	this.pm_type             = 0;
+	this.pm_flags            = 0;                          // ducked, jump_held, etc
+	this.origin              = [0, 0, 0];
+	this.velocity            = [0, 0, 0];
+	this.viewangles          = [0, 0, 0];
+	this.delta_angles        = [0, 0, 0];                  // add to command angles to get view direction
 	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed             = 0;
-	this.gravity           = 0;
-	this.groundEntityNum   = ENTITYNUM_NONE;               // ENTITYNUM_NONE = in air
-	this.bobCycle          = 0;                            // for view bobbing and footstep generation
+	this.speed               = 0;
+	this.gravity             = 0;
+	this.groundEntityNum     = ENTITYNUM_NONE;             // ENTITYNUM_NONE = in air
+	this.bobCycle            = 0;                          // for view bobbing and footstep generation
 
-	this.weapon            = 0;                            // copied to entityState_t->weapon
-	this.weaponState       = 0;
-	this.weaponTime        = 0;
-	this.legsTimer         = 0;                            // don't change low priority animations until this runs out
-	this.legsAnim          = 0;                            // mask off ANIM_TOGGLEBIT
+	this.weapon              = 0;                          // copied to entityState_t->weapon
+	this.weaponState         = 0;
+	this.weaponTime          = 0;
+	this.legsTimer           = 0;                          // don't change low priority animations until this runs out
+	this.legsAnim            = 0;                          // mask off ANIM_TOGGLEBIT
 
-	this.torsoTimer        = 0;                            // don't change low priority animations until this runs out
-	this.torsoAnim         = 0;                            // mask off ANIM_TOGGLEBIT
+	this.torsoTimer          = 0;                          // don't change low priority animations until this runs out
+	this.torsoAnim           = 0;                          // mask off ANIM_TOGGLEBIT
 
-	this.movementDir       = 0;                            // a number 0 to 7 that represents the relative angle
+	this.movementDir         = 0;                          // a number 0 to 7 that represents the relative angle
 	                                                       // of movement to the view angle (axial and diagonals)
 	                                                       // when at rest, the value will remain unchanged
 	                                                       // used to twist the legs during strafing
-	this.stats             = new Array(MAX_STATS);
-	this.persistant        = new Array(MAX_PERSISTANT);    // stats that aren't cleared on death
-	this.powerups          = new Array(MAX_POWERUPS);      // level.time that the powerup runs out
-	this.ammo              = new Array(MAX_WEAPONS);
+	this.stats               = new Array(MAX_STATS);
+	this.persistant          = new Array(MAX_PERSISTANT);  // stats that aren't cleared on death
+	this.powerups            = new Array(MAX_POWERUPS);    // level.time that the powerup runs out
+	this.ammo                = new Array(MAX_WEAPONS);
 
-	this.eFlags            = 0;                            // copied to entityState_t->eFlags
-	this.eventSequence     = 0;                            // pmove generated events
-	this.events            = new Array(MAX_PS_EVENTS);
-	this.eventParms        = new Array(MAX_PS_EVENTS);
+	this.eFlags              = 0;                          // copied to entityState_t->eFlags
+	this.eventSequence       = 0;                          // pmove generated events
+	this.events              = new Array(MAX_PS_EVENTS);
+	this.eventParms          = new Array(MAX_PS_EVENTS);
 
-	this.externalEvent     = 0;                            // events set on player from another source
-	this.externalEventParm = 0;
-	this.externalEventTime = 0;
+	this.externalEvent       = 0;                          // events set on player from another source
+	this.externalEventParm   = 0;
+	this.externalEventTime   = 0;
 
-	this.jumppad_ent       = 0;                            // jumppad entity hit this frame
-	this.jumppad_frame     = 0;
-	this.pmove_framecount  = 0;
+	this.jumppad_ent         = 0;                          // jumppad entity hit this frame
+	this.jumppad_frame       = 0;
+	this.pmove_framecount    = 0;
+	this.entityEventSequence = 0;
 
 	for (var i = 0; i < MAX_STATS; i++) {
 		this.stats[i] = 0;
@@ -892,15 +964,6 @@ PlayerState.prototype.clone = function (ps) {
 	return ps;
 };
 
-var TrajectoryType = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
 var Trajectory = function () {
 	this.trType     = 0;
 	this.trTime     = 0;
@@ -924,14 +987,14 @@ Trajectory.prototype.clone = function (tr) {
 };
 
 var Orientation = function () {
-	this.origin      = vec3.create();                      // in world coordinates
+	this.origin      = [0, 0, 0];                          // in world coordinates
 	this.axis        = [                                   // orientation in world
 		[0, 0, 0],
 		[0, 0, 0],
 		[0, 0, 0]
 	];
 	// Used by renderer.
-	this.viewOrigin  = vec3.create();                      // viewParms->or.origin in local coordinates
+	this.viewOrigin  = [0, 0, 0];                          // viewParms->or.origin in local coordinates
 	this.modelMatrix = mat4.create();
 };
 
@@ -1017,7 +1080,7 @@ EntityState.prototype.clone = function (es) {
 	es.constantLight     = this.constantLight;
 	es.loopSound         = this.loopSound;
 	es.modelIndex        = this.modelIndex;
-	es.modelindex2       = this.modelIndex2;
+	es.modelIndex2       = this.modelIndex2;
 	es.clientNum         = this.clientNum;
 	es.frame             = this.frame;
 	es.solid             = this.solid;
@@ -1062,28 +1125,6 @@ var MapSurfaceType = {
 	PATCH:         2,
 	TRIANGLE_SOUP: 3,
 	FLARE:         4
-};
-
-var SurfaceFlags = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
 };
 
 var lumps_t = function () {
@@ -1718,7 +1759,6 @@ function ReadDeltaEntityState(msg, from, to, number) {
 		Err:                   Err,
 
 		PlayerState:           PlayerState,
-		TrajectoryType:        TrajectoryType,
 		Trajectory:            Trajectory,
 		Orientation:           Orientation,
 		EntityState:           EntityState,
@@ -1730,7 +1770,6 @@ function ReadDeltaEntityState(msg, from, to, number) {
 
 		Lumps:                 Lumps,
 		MapSurfaceType:        MapSurfaceType,
-		SurfaceFlags:          SurfaceFlags,
 		lumps_t:               lumps_t,
 		dheader_t:             dheader_t,
 		dmodel_t:              dmodel_t,
@@ -7018,6 +7057,9 @@ function (glmatrix, sh, qm) {
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
 
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
 /**
  * Cvar flags
  */
@@ -7087,7 +7129,79 @@ var BUTTON = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
-	var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+	var GIB_HEALTH = -40;
+var ARMOR_PROTECTION = 0.66;
+
+var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var MINS_Z = -24;
+var DEFAULT_VIEWHEIGHT = 26;
+var CROUCH_VIEWHEIGHT = 12;
+var DEAD_VIEWHEIGHT = -16;
 
 var PM = {
 	NORMAL:       0,                                       // can accelerate and turn
@@ -7138,39 +7252,6 @@ var IT = {
 	TEAM:               8
 };
 
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
 var MASK = {
 	ALL:         -1,
 	SOLID:       CONTENTS.SOLID,
@@ -7209,11 +7290,26 @@ var WP = {
 	NUM_WEAPONS:      11
 };
 
+// NOTE: may not have more than 16
+var PW = {
+	NONE:         0,
+	QUAD:         1,
+	BATTLESUIT:   2,
+	HASTE:        3,
+	INVIS:        4,
+	REGEN:        5,
+	FLIGHT:       6,
+	REDFLAG:      7,
+	BLUEFLAG:     8,
+	NEUTRALFLAG:  9,
+	NUM_POWERUPS: 10
+};
+
 // PlayerState.persistant[] indexes
 // These fields are the only part of player_state that aren't
 // cleared on respawn.
 // NOTE: may not have more than 16
-var PS = {
+var PERS = {
 	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
 	RANK:                 2,                               // player rank or team rank
@@ -7483,6 +7579,7 @@ var MOD = {
 };
 
 	var DEFAULT_GRAVITY = 800;
+
 var JUMP_VELOCITY = 270;
 var MAX_CLIP_PLANES = 5;
 var MIN_WALK_NORMAL = 0.7;
@@ -7539,82 +7636,80 @@ var Animation = function () {
  * This needs to be the same for client side prediction and server use.
  */
 function CanItemBeGrabbed(gametype, ent, ps) {
-	var item;
+	// TODO Why is this crashing
+	// if (ent.modelIndex < 1 || ent.modelIndex >= itemList.length) {
+	// 	throw new Error('CanItemBeGrabbed: index out of range'); /* ERR_DROPPED */
+	// }
 	
-// 	if ( ent.modelindex < 1 || ent.modelindex >= bg_numItems ) {
-// 		Com_Error( ERR_DROP, "BG_CanItemBeGrabbed: index out of range" );
-// 	}
+	var item = itemList[ent.modelIndex];
 	
-	item = itemList[ent.modelIndex];
-	
-	switch( item.giType ) {
-	case IT.WEAPON:
-		return true;	// weapons are always picked up
-	
-	case IT.AMMO:
-		if ( ps.ammo[ item.giTag ] >= 200 ) {
-			return false;		// can't hold any more
-		}
-		return true;
-	
-	case IT.ARMOR:
-		if (ps.stats[STAT.ARMOR] >= ps.stats[STAT.MAX_HEALTH] * 2) {
-			return false;
-		}
+	switch (item.giType) {
+		case IT.WEAPON:
+			return true;	// weapons are always picked up
 		
-		return true;
-	
-	case IT.HEALTH:
-		// small and mega healths will go over the max, otherwise
-		// don't pick up if already at max
-		if ( item.quantity == 5 || item.quantity == 100 ) {
-			if ( ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2 ) {
+		case IT.AMMO:
+			if (ps.ammo[ item.giTag ] >= 200) {
+				return false;		// can't hold any more
+			}
+			return true;
+		
+		case IT.ARMOR:
+			if (ps.stats[STAT.ARMOR] >= ps.stats[STAT.MAX_HEALTH] * 2) {
 				return false;
 			}
 			
 			return true;
-		}
 		
-		if ( ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] ) {
-			return false;
-		}
-		return true;
-	
-	case IT.POWERUP:
-		return true;	// powerups are always picked up
-	
-// 	case IT.TEAM: // team items, such as flags
-// 		if( gametype == GT.CTF ) {
-// 			// ent->modelindex2 is non-zero on items if they are dropped
-// 			// we need to know this because we can pick up our dropped flag (and return it)
-// 			// but we can't pick up our flag at base
-// 			if (ps.persistant[PERS_TEAM] == TEAM_RED) {
-// 				if (item.giTag == PW_BLUEFLAG ||
-// 					(item.giTag == PW_REDFLAG && ent.modelindex2) ||
-// 					(item.giTag == PW_REDFLAG && ps.powerups[PW_BLUEFLAG]) )
-// 					return true;
-// 			} else if (ps.persistant[PERS_TEAM] == TEAM_BLUE) {
-// 				if (item.giTag == PW_REDFLAG ||
-// 					(item.giTag == PW_BLUEFLAG && ent.modelindex2) ||
-// 					(item.giTag == PW_BLUEFLAG && ps.powerups[PW_REDFLAG]) )
-// 					return true;
-// 			}
-// 		}
-// 
-// 		return false;
-	
-	case IT.HOLDABLE:
-		// can only hold one item at a time
-		if ( ps.stats[STAT.HOLDABLE_ITEM] ) {
-			return false;
-		}
-		return true;
-	
-// 	case IT.BAD:
-// 		log( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
-	
-	default:
-		break;
+		case IT.HEALTH:
+			// Small and mega healths will go over the max, otherwise
+			// don't pick up if already at max.
+			if (item.quantity == 5 || item.quantity == 100) {
+				if (ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2) {
+					return false;
+				}
+				
+				return true;
+			}			
+			if (ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH]) {
+				return false;
+			}
+			return true;
+		
+		case IT.POWERUP:
+			return true;	// powerups are always picked up
+		
+	// 	case IT.TEAM: // team items, such as flags
+	// 		if( gametype == GT.CTF ) {
+	// 			// ent.modelIndex2 is non-zero on items if they are dropped
+	// 			// we need to know this because we can pick up our dropped flag (and return it)
+	// 			// but we can't pick up our flag at base
+	// 			if (ps.persistant[PERS_TEAM] == TEAM_RED) {
+	// 				if (item.giTag == PW_BLUEFLAG ||
+	// 					(item.giTag == PW_REDFLAG && ent.modelIndex2) ||
+	// 					(item.giTag == PW_REDFLAG && ps.powerups[PW_BLUEFLAG]) )
+	// 					return true;
+	// 			} else if (ps.persistant[PERS_TEAM] == TEAM_BLUE) {
+	// 				if (item.giTag == PW_REDFLAG ||
+	// 					(item.giTag == PW_BLUEFLAG && ent.modelIndex2) ||
+	// 					(item.giTag == PW_BLUEFLAG && ps.powerups[PW_REDFLAG]) )
+	// 					return true;
+	// 			}
+	// 		}
+	// 
+	// 		return false;
+		
+		case IT.HOLDABLE:
+			// Can only hold one item at a time
+			if (ps.stats[STAT.HOLDABLE_ITEM]) {
+				return false;
+			}
+			return true;
+		
+	// 	case IT.BAD:
+	// 		log( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
+		
+		default:
+			break;
 	}
 	
 	return false;
@@ -7625,7 +7720,7 @@ function CanItemBeGrabbed(gametype, ent, ps) {
  *
  * Handles the sequence numbers.
  */
-function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {	
+function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {
 	ps.events[ps.eventSequence % MAX_PS_EVENTS] = newEvent;
 	ps.eventParms[ps.eventSequence % MAX_PS_EVENTS] = eventParm;
 	ps.eventSequence++;
@@ -7637,64 +7732,62 @@ function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {
  * This is done after each set of usercmd_t on the server,
  * and after local prediction on the client
  */
-function PlayerStateToEntityState(ps, state) {
-	/*if (ps.pm_type === PM_INTERMISSION || ps->pm_type === PM_SPECTATOR) {
-		state.eType = ET.INVISIBLE;
+function PlayerStateToEntityState(ps, es) {
+	/*if (ps.pm_type === PM_INTERMISSION || ps.pm_type === PM_SPECTATOR) {
+		es.eType = ET.INVISIBLE;
 	} else if ( ps.stats[STAT_HEALTH] <= GIB_HEALTH ) {
-		state.eType = ET.INVISIBLE;
+		es.eType = ET.INVISIBLE;
 	} else {
-		state.eType = ET.PLAYER;
+		es.eType = ET.PLAYER;
 	}*/
 
-	state.number = ps.clientNum;
-	state.eType = ET.PLAYER;
+	es.number = ps.clientNum;
+	es.eType = ET.PLAYER;
 
-	state.pos.trType = sh.TrajectoryType.INTERPOLATE;
-	vec3.set(ps.origin, state.pos.trBase);
-	vec3.set(ps.velocity, state.pos.trDelta);
+	es.pos.trType = TR.INTERPOLATE;
+	vec3.set(ps.origin, es.pos.trBase);
+	vec3.set(ps.velocity, es.pos.trDelta);
 
-	state.apos.trType = sh.TrajectoryType.INTERPOLATE;
-	vec3.set(ps.viewangles, state.apos.trBase);
+	es.apos.trType = TR.INTERPOLATE;
+	vec3.set(ps.viewangles, es.apos.trBase);
 
-	state.angles2[qm.YAW] = ps.movementDir;
-	state.legsAnim = ps.legsAnim;
-	state.torsoAnim = ps.torsoAnim;
-	state.clientNum = ps.clientNum;                  // ET_PLAYER looks here instead of at number
+	es.angles2[qm.YAW] = ps.movementDir;
+	es.legsAnim = ps.legsAnim;
+	es.torsoAnim = ps.torsoAnim;
+	es.clientNum = ps.clientNum;                  // ET_PLAYER looks here instead of at number
 	                                             // so corpses can also reference the proper config
-	state.eFlags = ps.eFlags;
-	/*if ( ps->stats[STAT_HEALTH] <= 0 ) {
-		s->eFlags |= EF.DEAD;
+	es.eFlags = ps.eFlags;
+	if (ps.stats[STAT.HEALTH] <= 0) {
+		es.eFlags |= EF.DEAD;
 	} else {
-		s->eFlags &= ~EF.DEAD;
-	}*/
+		es.eFlags &= ~EF.DEAD;
+	}
 
-	/*if ( ps->externalEvent ) {
-		s->event = ps->externalEvent;
-		s->eventParm = ps->externalEventParm;
-	} else if ( ps->entityEventSequence < ps->eventSequence ) {
-		int		seq;
-
-		if ( ps->entityEventSequence < ps->eventSequence - MAX_PS_EVENTS) {
-			ps->entityEventSequence = ps->eventSequence - MAX_PS_EVENTS;
+	if (ps.externalEvent) {
+		es.event = ps.externalEvent;
+		es.eventParm = ps.externalEventParm;
+	} else if (ps.entityEventSequence < ps.eventSequence) {
+		if (ps.entityEventSequence < ps.eventSequence - MAX_PS_EVENTS) {
+			ps.entityEventSequence = ps.eventSequence - MAX_PS_EVENTS;
 		}
-		seq = ps->entityEventSequence & (MAX_PS_EVENTS-1);
-		s->event = ps->events[ seq ] | ( ( ps->entityEventSequence & 3 ) << 8 );
-		s->eventParm = ps->eventParms[ seq ];
-		ps->entityEventSequence++;
-	}*/
+		var seq = ps.entityEventSequence % MAX_PS_EVENTS;
+		es.event = ps.events[seq] | ((ps.entityEventSequence & 3) << 8);
+		es.eventParm = ps.eventParms[seq];
+		ps.entityEventSequence++;
+	}
 
-	state.weapon = ps.weapon;
-	state.groundEntityNum = ps.groundEntityNum;
+	es.weapon = ps.weapon;
+	es.groundEntityNum = ps.groundEntityNum;
 
-	/*s->powerups = 0;
-	for ( i = 0 ; i < MAX_POWERUPS ; i++ ) {
-		if ( ps->powerups[ i ] ) {
-			s->powerups |= 1 << i;
+	es.powerups = 0;
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		if (ps.powerups[i]) {
+			es.powerups |= 1 << i;
 		}
 	}
 
-	s->loopSound = ps->loopSound;
-	s->generic1 = ps->generic1;*/
+	es.loopSound = ps.loopSound;
+	es.generic1 = ps.generic1;
 }
 
 /**
@@ -7705,23 +7798,23 @@ function EvaluateTrajectory(tr, atTime, result) {
 	var phase;
 
 	switch (tr.trType) {
-		case sh.TrajectoryType.STATIONARY:
-		case sh.TrajectoryType.INTERPOLATE:
+		case TR.STATIONARY:
+		case TR.INTERPOLATE:
 			vec3.set(tr.trBase, result);
 			break;
 
-		case sh.TrajectoryType.LINEAR:
+		case TR.LINEAR:
 			deltaTime = (atTime - tr.trTime) * 0.001;  // milliseconds to seconds
-			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime), result);
+			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime, [0, 0, 0]), result);
 			break;
 
-		case sh.TrajectoryType.SINE:
+		case TR.SINE:
 			deltaTime = (atTime - tr.trTime) / tr.trDuration;
 			phase = Math.sin(deltaTime * Math.PI * 2);
-			vec3.add(tr.trBase, phase, tr.trDelta, result);
+			vec3.add(tr.trBase, vec3.scale(tr.trDelta, phase, [0, 0, 0]), result);
 			break;
 
-		case sh.TrajectoryType.LINEAR_STOP:
+		case TR.LINEAR_STOP:
 			if (atTime > tr.trTime + tr.trDuration) {
 				atTime = tr.trTime + tr.trDuration;
 			}
@@ -7729,15 +7822,57 @@ function EvaluateTrajectory(tr, atTime, result) {
 			if (deltaTime < 0) {
 				deltaTime = 0;
 			}
-			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime), result);
+			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime, [0, 0, 0]), result);
 			break;
-		case sh.TrajectoryType.GRAVITY:
+		case TR.GRAVITY:
 			deltaTime = (atTime - tr.trTime) * 0.001;  // milliseconds to seconds
-			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime), result);
+			vec3.add(tr.trBase, vec3.scale(tr.trDelta, deltaTime, [0, 0, 0]), result);
 			result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;  // FIXME: local gravity...
 			break;
 		default:
 			com.error(sh.Err.DROP, 'EvaluateTrajectory: unknown trType: ' + tr.trType);
+			break;
+	}
+}
+
+/**
+ * EvaluateTrajectoryDelta
+ * 
+ * For determining velocity at a given time
+ */
+function EvaluateTrajectoryDelta(tr, atTime, result) {
+	var deltaTime;
+	var phase;
+
+	switch (tr.trType) {
+		case TR.STATIONARY:
+		case TR.INTERPOLATE:
+			result[0] = result[1] = result[2] = 0;
+			break;
+		case TR.LINEAR:
+			vec3.set(tr.trDelta, result);
+			break;
+		case TR.SINE:
+			deltaTime = (atTime - tr.trTime) / tr.trDuration;
+			phase = Math.cos(deltaTime * Math.PI * 2);  // derivative of sin = cos
+			phase *= 0.5;
+			vec3.scale(tr.trDelta, phase, result);
+			break;
+		case TR.LINEAR_STOP:
+			if (atTime > tr.trTime + tr.trDuration) {
+				result[0] = result[1] = result[2] = 0;
+				return;
+			}
+			vec3.set(tr.trDelta, result);
+			break;
+		case TR.GRAVITY:
+			deltaTime = (atTime - tr.trTime) * 0.001;  // milliseconds to seconds
+			vec3.set(tr.trDelta, result);
+			result[2] -= DEFAULT_GRAVITY * deltaTime;  // FIXME: local gravity...
+			break;
+		default:
+			com.error(sh.Err.DROP, 'EvaluateTrajectoryDelta: unknown trType: ' + tr.trType);
+			break;
 	}
 }
 
@@ -7748,7 +7883,7 @@ function TouchJumpPad(ps, jumppad) {
 	// If we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger
 	/*if (ps.jumppad_ent !== jumppad.number) {		
-		vectoangles( jumppad->origin2, angles);
+		vectoangles( jumppad.origin2, angles);
 		p = fabs( AngleNormalize180( angles[qm.PITCH] ) );
 		if( p < 45 ) {
 			effectNum = 0;
@@ -7785,84 +7920,157 @@ var walking;
 var msec;
 
 /**
- * AddEvent
+ * Pmove
  */
-function AddEvent(pm, newEvent) {
-	AddPredictableEventToPlayerstate(pm.ps, newEvent, 0);
+function Pmove(pm) {
+	var ps = pm.ps;
+	var cmd = pm.cmd;
+
+	// TODO WHY DOES THIS HAPPEN
+	if (cmd.serverTime < ps.commandTime) {
+		//com.error(sh.Err.DROP, 'Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
+		return;  // should not happen
+	}
+
+	if (cmd.serverTime > ps.commandTime + 1000) {
+		ps.commandTime = cmd.serverTime - 1000;
+	}
+
+	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PMOVEFRAMECOUNTBITS)-1);
+
+	// Chop the move up if it is too long, to prevent framerate
+	// dependent behavior.
+	while (ps.commandTime != cmd.serverTime) {
+		msec = cmd.serverTime - ps.commandTime;
+
+		if (msec < 1) {
+			msec = 1;
+		} else if (msec > 66) {
+			msec = 66;
+		}
+
+		PmoveSingle(pm);
+
+		if (pm.ps.pm_flags & PMF.JUMP_HELD) {
+			pm.cmd.upmove = 20;
+		}
+	}
 }
 
 /**
- * StartTorsoAnim
+ * PmoveSingle
  */
-function StartTorsoAnim(pm, anim) {
+function PmoveSingle(pm) {
 	var ps = pm.ps;
+	var cmd = pm.cmd;
+
+	// Make sure walking button is clear if they are running, to avoid
+	// proxy no-footsteps cheats.
+	if (Math.abs(pm.cmd.forwardmove) > 64 || Math.abs(pm.cmd.rightmove) > 64) {
+		pm.cmd.buttons &= ~BUTTON.WALKING;
+	}
+
+	// Set the firing flag for continuous beam weapons.
+	if ( !(ps.pm_flags & PMF.RESPAWNED) && ps.pm_type !== PM.INTERMISSION && ps.pm_type !== PM.NOCLIP
+		&& (pm.cmd.buttons & BUTTON.ATTACK) && ps.ammo[ps.weapon]) {
+		ps.eFlags |= EF.FIRING;
+	} else {
+		ps.eFlags &= ~EF.FIRING;
+	}
+
+	// Clear the respawned flag if attack and use are cleared
+	if (ps.stats[STAT.HEALTH] > 0 && 
+		!(pm.cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE))) {
+		ps.pm_flags &= ~PMF.RESPAWNED;
+	}
+
+	// Determine the time.
+	ps.commandTime = cmd.serverTime;
+	pm.frameTime = msec * 0.001;
+
+	// Update our view angles.
+	UpdateViewAngles(ps, cmd);
+	qm.AnglesToVectors(ps.viewangles, forward, right, up);
+
+	// Make sure walking button is clear if they are running, to avoid
+	// proxy no-footsteps cheats.
+	if (Math.abs(cmd.forwardmove) > 64 || Math.abs(cmd.rightmove) > 64) {
+		cmd.buttons &= ~BUTTON.WALKING;
+	}
+
+	if (pm.cmd.upmove < 10) {
+		// Not holding jump.
+		ps.pm_flags &= ~PMF.JUMP_HELD;
+	}
+
+	// Decide if backpedaling animations should be used
+	if (cmd.forwardmove < 0) {
+		ps.pm_flags |= PMF.BACKWARDS_RUN;
+	} else if (pm.cmd.forwardmove > 0 || (cmd.forwardmove === 0 && cmd.rightmove)) {
+		ps.pm_flags &= ~PMF.BACKWARDS_RUN;
+	}
 
 	if (ps.pm_type >= PM.DEAD) {
-		return;
+		cmd.forwardmove = 0;
+		cmd.rightmove = 0;
+		cmd.upmove = 0;
 	}
 
-	ps.torsoAnim = ((ps.torsoAnim & ANIM_TOGGLEBIT) ^ ANIM_TOGGLEBIT ) | anim;
-}
+	// if ( pm->ps->pm_type == PM_SPECTATOR ) {
+	// 	PM_CheckDuck ();
+	// 	PM_FlyMove ();
+	// 	PM_DropTimers ();
+	// 	return;
+	// }
 
-/**
- * StartLegsAnim
- */
-function StartLegsAnim(pm, anim) {
-	var ps = pm.ps;
+	// if ( pm->ps->pm_type == PM_NOCLIP ) {
+	// 	PM_NoclipMove ();
+	// 	PM_DropTimers ();
+	// 	return;
+	// }
 
-	if (ps.pm_type >= PM.DEAD) {
-		return;
+	// if (pm->ps->pm_type == PM_FREEZE) {
+	// 	return;		// no movement at all
+	// }
+
+	// if ( pm->ps->pm_type == PM_INTERMISSION || pm->ps->pm_type == PM_SPINTERMISSION) {
+	// 	return;		// no movement at all
+	// }
+
+	// // set watertype, and waterlevel
+	// PM_SetWaterLevel();
+	// pml.previous_waterlevel = pmove->waterlevel;
+
+	// Set mins, maxs and viewheight.
+	CheckDuck(pm);
+
+	// Set ground entity.
+	GroundTrace(pm);
+
+	if (ps.pm_type === PM.DEAD) {
+		DeadMove(pm);
 	}
 
-	if (ps.legsTimer > 0) {
-		return;  // a high priority animation is running
+	// Kill animation timers.
+	DropTimers(pm);
+
+	//FlyMove(pm);
+	if (walking) {
+		WalkMove(pm);
+	} else {
+		AirMove(pm);
 	}
 
-	ps.legsAnim = ((ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
-}
+	GroundTrace(pm);
 
-/**
- * ContinueLegsAnim
- */
-function ContinueLegsAnim(pm, anim) {
-	var ps = pm.ps;
+	// Weapons.
+	UpdateWeapon(pm);
 
-	if ((ps.legsAnim & ~ANIM_TOGGLEBIT) === anim) {
-		return;
-	}
+	// Torso animations.
+	TorsoAnimation(pm);
 
-	if (ps.legsTimer > 0) {
-		return;  // a high priority animation is running
-	}
-
-	StartLegsAnim(pm, anim);
-}
-
-/**
- * ContinueTorsoAnim
- */
-function ContinueTorsoAnim(pm, anim) {
-	var ps = pm.ps;
-
-	if ((ps.torsoAnim & ~ANIM_TOGGLEBIT) === anim) {
-		return;
-	}
-
-	if (ps.torsoTimer > 0) {
-		return;  // a high priority animation is running
-	}
-
-	StartTorsoAnim(pm, anim);
-}
-
-/**
- * ForceLegsAnim
- */
-function ForceLegsAnim(pm, anim) {
-	var ps = pm.ps;
-	
-	ps.legsTimer = 0;
-	StartLegsAnim(pm, anim);
+	// Footstep events / legs animations.
+	Footsteps(pm);
 }
 
 /**
@@ -7891,105 +8099,47 @@ function CmdScale(cmd, speed) {
 }
 
 /**
- * Friction
- */
-function Friction(pm, flying) {
-	var ps = pm.ps;
-
-	var vec = vec3.create(ps.velocity);
-	if (walking) {
-		vec[2] = 0;	// ignore slope movement
-	}
-
-	var speed = vec3.length(vec);
-	if (speed < 1) {
-		ps.velocity[0] = 0;
-		ps.velocity[1] = 0; // allow sinking underwater
-		// FIXME: still have z friction underwater?
-		return;
-	}
-
-	var drop = 0;
-
-	// Apply ground friction.
-	//if (pm.waterlevel <= 1) {
-		if (walking && !(groundTrace.surfaceFlags & sh.SurfaceFlags.SLICK) ) {
-			// if getting knocked back, no friction
-			if (!(ps.pm_flags & PMF.TIME_KNOCKBACK)) {
-				var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
-				drop += control * q3movement_friction * pm.frameTime;
-			}
-		}
-	//}
-
-	// Apply water friction even if just wading.
-	/*if (pm.waterlevel) {
-		drop += speed*pm_waterfriction*pm.waterlevel*pml.frametime;
-	}*/
-
-	if (flying) {
-		drop += speed * q3movement_flightfriction * pm.frameTime;
-	}
-
-	var newspeed = speed - drop;
-	if (newspeed < 0) {
-		newspeed = 0;
-	}
-	newspeed /= speed;
-
-	vec3.scale(ps.velocity, newspeed);
-}
-
-/**
- * ClipVelocity
- */
-function ClipVelocity(vel, normal, overbounce) {
-	var backoff = vec3.dot(vel, normal);
-
-	if ( backoff < 0 ) {
-		backoff *= overbounce;
-	} else {
-		backoff /= overbounce;
-	}
-
-	var change = vec3.scale(normal, backoff, [0,0,0]);
-	return vec3.subtract(vel, change, [0, 0, 0]);
-}
-
-/**
- * Accelerate
- */
-function Accelerate(pm, wishdir, wishspeed, accel) {
-	var ps = pm.ps;
-	var currentspeed = vec3.dot(ps.velocity, wishdir);
-	var addspeed = wishspeed - currentspeed;
-
-	if (addspeed <= 0) {
-		return;
-	}
-
-	var accelspeed = accel * pm.frameTime * wishspeed;
-
-	if (accelspeed > addspeed) {
-		accelspeed = addspeed;
-	}
-
-	vec3.add(ps.velocity, vec3.scale(wishdir, accelspeed, [0,0,0]));
-}
-
-/**
  * CheckDuck
  */
 function CheckDuck(pm) {
+	var ps = pm.ps;
+
 	pm.mins[0] = -15;
 	pm.mins[1] = -15;
-	pm.mins[2] = -24;
 
 	pm.maxs[0] = 15;
 	pm.maxs[1] = 15;
-	pm.maxs[2] = 32;
 
-	pm.ps.viewheight = DEFAULT_VIEWHEIGHT;
+	pm.mins[2] = MINS_Z;
+
+	if (pm.pm_type === PM.DEAD) {
+		pm.maxs[2] = -8;
+		ps.viewheight = DEAD_VIEWHEIGHT;
+		return;
+	}
+
+	if (pm.cmd.upmove < 0) {
+		// duck
+		ps.pm_flags |= PMF.DUCKED;
+	} else {
+		// stand up if possible
+		if (ps.pm_flags & PMF.DUCKED) {
+			// Try to stand up.
+			pm.maxs[2] = 32;
+			var trace = pm.trace(ps.origin, ps.origin, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+			if (!trace.allSolid) {
+				ps.pm_flags &= ~PMF.DUCKED;
+			}
+		}
+	}
+
+	if (ps.pm_flags & PMF.DUCKED) {
+		pm.maxs[2] = 16;
+		ps.viewheight = CROUCH_VIEWHEIGHT;
+	} else {
+		pm.maxs[2] = 32;
+		ps.viewheight = DEFAULT_VIEWHEIGHT;
+	}
 }
 
 /**
@@ -8130,7 +8280,7 @@ function GroundTraceMissed(pm) {
 	if (ps.groundEntityNum !== ENTITYNUM_NONE) {
 		// If they aren't in a jumping animation and the ground is a ways away, force into it.
 		// If we didn't do the trace, the player would be backflipping down staircases.
-		var point = vec3.create(ps.origin);
+		var point = vec3.set(ps.origin, [0, 0, 0]);
 		point[2] -= 64;
 
 		var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
@@ -8151,222 +8301,27 @@ function GroundTraceMissed(pm) {
 }
 
 /**
- * SlideMove
+ * DeadMove
  */
-function SlideMove(pm, gravity) {
-	var ps = pm.ps;
-	var endVelocity = [0,0,0];
-	var time_left = pm.frameTime;
-	var planes = [];
-	var numbumps = 4;
-	var end = [0, 0, 0];
-
-	if (gravity) {
-		vec3.set(ps.velocity, endVelocity);
-		endVelocity[2] -= ps.gravity * time_left;
-		ps.velocity[2] = (ps.velocity[2] + endVelocity[2]) * 0.5;
-
-		if (groundPlane) {
-			// slide along the ground plane
-			ps.velocity = ClipVelocity(ps.velocity, groundTrace.plane.normal, OVERCLIP);
-		}
-	}
-
-	// Never turn against the ground plane.
-	if (groundPlane) {
-		planes.push(vec3.set(groundTrace.plane.normal, [0,0,0]));
-	}
-
-	// Never turn against original velocity.
-	planes.push(vec3.normalize(ps.velocity, [0,0,0]));
-
-	for (var bumpcount = 0; bumpcount < numbumps; bumpcount++) {
-		// calculate position we are trying to move to
-		vec3.add(ps.origin, vec3.scale(ps.velocity, time_left, [0,0,0]), end);
-
-		// see if we can make it there
-		var trace = pm.trace(ps.origin, end, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
-
-		if (trace.allSolid) {
-			// entity is completely trapped in another solid
-			ps.velocity[2] = 0; // don't build up falling damage, but allow sideways acceleration
-			return false;
-		}
-
-		if (trace.fraction > 0) {
-			// actually covered some distance
-			vec3.set(trace.endPos, ps.origin);
-		}
-
-		if (trace.fraction === 1) {
-			 break; // moved the entire distance
-		}
-
-		// save entity for contact
-		//PM_AddTouchEnt( trace.entityNum );
-
-		time_left -= time_left * trace.fraction;
-
-		if (planes.length >= MAX_CLIP_PLANES) {
-			// this shouldn't really happen
-			ps.velocity = [0, 0, 0];
-			return false;
-		}
-
-		//
-		// if this is the same plane we hit before, nudge velocity
-		// out along it, which fixes some epsilon issues with
-		// non-axial planes
-		//
-		for (var i = 0; i < planes.length; i++) {
-			if (vec3.dot(trace.plane.normal, planes[i]) > 0.99) {
-				vec3.add(ps.velocity, trace.plane.normal);
-				break;
-			}
-		}
-		if (i < planes.length) {
-			continue;
-		}
-		planes.push(vec3.set(trace.plane.normal, [0,0,0]));
-
-		//
-		// modify velocity so it parallels all of the clip planes
-		//
-
-		// find a plane that it enters
-		for(var i = 0; i < planes.length; ++i) {
-			var into = vec3.dot(ps.velocity, planes[i]);
-			if (into >= 0.1) {
-				continue; // move doesn't interact with the plane
-			}
-
-			// slide along the plane
-			var clipVelocity = ClipVelocity(ps.velocity, planes[i], OVERCLIP);
-			var endClipVelocity = ClipVelocity(endVelocity, planes[i], OVERCLIP);
-
-			// see if there is a second plane that the new move enters
-			for (var j = 0; j < planes.length; j++) {
-				if (j == i) {
-					continue;
-				}
-				if (vec3.dot(clipVelocity, planes[j]) >= 0.1 ) {
-					continue; // move doesn't interact with the plane
-				}
-
-				// try clipping the move to the plane
-				clipVelocity = ClipVelocity(clipVelocity, planes[j], OVERCLIP);
-				endClipVelocity = ClipVelocity(endClipVelocity, planes[j], OVERCLIP);
-
-				// see if it goes back into the first clip plane
-				if (vec3.dot(clipVelocity, planes[i]) >= 0) {
-					continue;
-				}
-
-				// slide the original velocity along the crease
-				var dir = vec3.cross(planes[i], planes[j], [0,0,0]);
-				vec3.normalize(dir);
-				var d = vec3.dot(dir, ps.velocity);
-				vec3.scale(dir, d, clipVelocity);
-
-				vec3.cross(planes[i], planes[j], dir);
-				vec3.normalize(dir);
-				d = vec3.dot(dir, endVelocity);
-				vec3.scale(dir, d, endClipVelocity);
-
-				// see if there is a third plane the the new move enters
-				for (var k = 0; k < planes.length; k++) {
-					if ( k == i || k == j ) {
-						continue;
-					}
-					if (vec3.dot(clipVelocity, planes[k]) >= 0.1) {
-						continue; // move doesn't interact with the plane
-					}
-
-					// stop dead at a tripple plane interaction
-					ps.velocity = [0, 0, 0];
-					return false;
-				}
-			}
-
-			// if we have fixed all interactions, try another move
-			vec3.set(clipVelocity, ps.velocity);
-			vec3.set(endClipVelocity, endVelocity);
-			break;
-		}
-	}
-
-	if (gravity) {
-		vec3.set(endVelocity, ps.velocity);
-	}
-
-	return bumpcount === 0;
-}
-
-/**
- * StepSlideMove
- */
-function StepSlideMove(pm, gravity) {
-	var ps = pm.ps;
-
-	// Make sure these are stored BEFORE the initial SlideMove.
-	var start_o = vec3.create(ps.origin);
-	var start_v = vec3.create(ps.velocity);
-
-	// we got exactly where we wanted to go first try
-	if (SlideMove(pm, gravity)) {
-		return;
-	}
-	
-	var down = vec3.create(start_o);
-	down[2] -= STEPSIZE;
-	var trace = pm.trace(start_o, down, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
-	var up = [0, 0, 1];
-
-	// never step up when you still have up velocity
-	if (ps.velocity[2] > 0 && (trace.fraction === 1.0 || vec3.dot(trace.plane.normal, up) < 0.7)) {
+function DeadMove(pm) {
+	if (!walking) {
 		return;
 	}
 
-	vec3.set(start_o, up);
-	up[2] += STEPSIZE;
+	var ps = pm.ps;
 
-	// test the player position if they were a stepheight higher
-	trace = pm.trace(start_o, up, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
-	if (trace.allSolid) {
-		return; // can't step up
-	}
-
-	var stepSize = trace.endPos[2] - start_o[2];
-	// try slidemove from this position
-	vec3.set(trace.endPos, ps.origin);
-	vec3.set(start_v, ps.velocity);
-	SlideMove(pm, gravity);
-
-	// push down the final amount
-	vec3.set(ps.origin, down);
-	down[2] -= stepSize;
-	trace = pm.trace(ps.origin, down, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
-	if (!trace.allSolid) {
-		vec3.set(trace.endPos, ps.origin);
-	}
-	if (trace.fraction < 1.0) {
-		ps.velocity = ClipVelocity(ps.velocity, trace.plane.normal, OVERCLIP);
-	}
-
-	// Use the step move.
-	var delta = ps.origin[2] - start_o[2];
-	if (delta > 2) {
-		if (delta < 7) {
-			AddEvent(pm, EV.STEP_4);
-		} else if (delta < 11) {
-			AddEvent(pm, EV.STEP_8);
-		} else if (delta < 15 ) {
-			AddEvent(pm, EV.STEP_12);
-		} else {
-			AddEvent(pm, EV.STEP_16);
-		}
+	// Extra friction.
+	var forward = vec3.length(ps.velocity);
+	forward -= 20;
+	if (forward <= 0) {
+		ps.velocity[0] = ps.velocity[1] = ps.velocity[2] = 0;
+	} else {
+		vec3.normalize(ps.velocity);
+		vec3.scale(ps.velocity, forward);
 	}
 }
+
+
 
 /**
  * FlyMove
@@ -8415,9 +8370,8 @@ function AirMove(pm) {
 		wishvel[i] = forward[i]*cmd.forwardmove + right[i]*cmd.rightmove;
 	}
 	wishvel[2] = 0;
-	var wishspeed = vec3.length(wishvel);
+	var wishspeed = vec3.length(wishvel) * scale;
 	var wishdir = vec3.normalize(wishvel, [0, 0, 0]);
-	wishspeed *= scale;
 
 	// Not on ground, so little effect on velocity.
 	Accelerate(pm, wishdir, wishspeed, q3movement_airaccelerate);
@@ -8482,26 +8436,26 @@ function WalkMove(pm) {
 	// full control, which allows them to be moved a bit.
 	var accelerate = q3movement_accelerate;
 
-	if ((groundTrace.surfaceFlags & sh.SurfaceFlags.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
+	if ((groundTrace.surfaceFlags & SURF.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
 		accelerate = q3movement_airaccelerate;
 	}
 
 	Accelerate(pm, wishdir, wishspeed, accelerate);
 
-	if ((groundTrace.surfaceFlags & sh.SurfaceFlags.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
+	if ((groundTrace.surfaceFlags & SURF.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
 		ps.velocity[2] -= ps.gravity * pm.frameTime;
 	}
 
 	var vel = vec3.length(ps.velocity);
 
-	// slide along the ground plane
+	// Slide along the ground plane.
 	ps.velocity = ClipVelocity(ps.velocity, groundTrace.plane.normal, OVERCLIP);
 
-	// don't decrease velocity when going up or down a slope
+	// Don't decrease velocity when going up or down a slope.
 	vec3.normalize(ps.velocity);
 	vec3.scale(ps.velocity, vel);
 
-	// don't do anything if standing still
+	// Don't do anything if standing still.
 	if (!ps.velocity[0] && !ps.velocity[1]) {
 		return;
 	}
@@ -8510,9 +8464,360 @@ function WalkMove(pm) {
 }
 
 /**
+ * SetMovementDir
+ * 
+ * Determine the rotation of the legs relative
+ * to the facing dir
+ */
+function SetMovementDir(pm) {
+	var ps = pm.ps;
+
+	if (pm.cmd.forwardmove || pm.cmd.rightmove) {
+		if (pm.cmd.rightmove === 0 && pm.cmd.forwardmove > 0) {
+			ps.movementDir = 0;
+		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove > 0) {
+			ps.movementDir = 1;
+		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove === 0) {
+			ps.movementDir = 2;
+		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove < 0) {
+			ps.movementDir = 3;
+		} else if (pm.cmd.rightmove === 0 && pm.cmd.forwardmove < 0) {
+			ps.movementDir = 4;
+		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove < 0) {
+			ps.movementDir = 5;
+		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove === 0) {
+			ps.movementDir = 6;
+		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove > 0) {
+			ps.movementDir = 7;
+		}
+	} else {
+		// If they aren't actively going directly sideways,
+		// change the animation to the diagonal so they
+		// don't stop too crooked.
+		if (ps.movementDir === 2) {
+			ps.movementDir = 1;
+		} else if (ps.movementDir === 6) {
+			ps.movementDir = 7;
+		} 
+	}
+}
+
+/**
+ * Friction
+ */
+function Friction(pm, flying) {
+	var ps = pm.ps;
+
+	var vec = vec3.set(ps.velocity, [0, 0, 0]);
+	if (walking) {
+		vec[2] = 0;	// ignore slope movement
+	}
+
+	var speed = vec3.length(vec);
+	if (speed < 1) {
+		ps.velocity[0] = 0;
+		ps.velocity[1] = 0; // allow sinking underwater
+		// FIXME: still have z friction underwater?
+		return;
+	}
+
+	var drop = 0;
+
+	// Apply ground friction.
+	//if (pm.waterlevel <= 1) {
+		if (walking && !(groundTrace.surfaceFlags & SURF.SLICK) ) {
+			// if getting knocked back, no friction
+			if (!(ps.pm_flags & PMF.TIME_KNOCKBACK)) {
+				var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
+				drop += control * q3movement_friction * pm.frameTime;
+			}
+		}
+	//}
+
+	// Apply water friction even if just wading.
+	/*if (pm.waterlevel) {
+		drop += speed*pm_waterfriction*pm.waterlevel*pml.frametime;
+	}*/
+
+	if (flying) {
+		drop += speed * q3movement_flightfriction * pm.frameTime;
+	}
+
+	var newspeed = speed - drop;
+	if (newspeed < 0) {
+		newspeed = 0;
+	}
+	newspeed /= speed;
+
+	vec3.scale(ps.velocity, newspeed);
+}
+
+/**
+ * Accelerate
+ */
+function Accelerate(pm, wishdir, wishspeed, accel) {
+	var ps = pm.ps;
+	var currentspeed = vec3.dot(ps.velocity, wishdir);
+	var addspeed = wishspeed - currentspeed;
+
+	if (addspeed <= 0) {
+		return;
+	}
+
+	var accelspeed = accel * pm.frameTime * wishspeed;
+
+	if (accelspeed > addspeed) {
+		accelspeed = addspeed;
+	}
+
+	vec3.add(ps.velocity, vec3.scale(wishdir, accelspeed, [0, 0, 0]));
+}
+
+/**
+ * ClipVelocity
+ */
+function ClipVelocity(vel, normal, overbounce) {
+	var backoff = vec3.dot(vel, normal);
+
+	if (backoff < 0) {
+		backoff *= overbounce;
+	} else {
+		backoff /= overbounce;
+	}
+
+	var change = vec3.scale(normal, backoff, [0, 0, 0]);
+	return vec3.subtract(vel, change, [0, 0, 0]);
+}
+
+/**
+ * SlideMove
+ */
+function SlideMove(pm, gravity) {
+	var ps = pm.ps;
+	var endVelocity = [0, 0, 0];
+	var time_left = pm.frameTime;
+	var planes = [];
+	var numbumps = 4;
+	var end = [0, 0, 0];
+
+	if (gravity) {
+		vec3.set(ps.velocity, endVelocity);
+		endVelocity[2] -= ps.gravity * time_left;
+		ps.velocity[2] = (ps.velocity[2] + endVelocity[2]) * 0.5;
+
+		if (groundPlane) {
+			// slide along the ground plane
+			ps.velocity = ClipVelocity(ps.velocity, groundTrace.plane.normal, OVERCLIP);
+		}
+	}
+
+	// Never turn against the ground plane.
+	if (groundPlane) {
+		planes.push(vec3.set(groundTrace.plane.normal, [0, 0, 0]));
+	}
+
+	// Never turn against original velocity.
+	planes.push(vec3.normalize(ps.velocity, [0, 0, 0]));
+
+	for (var bumpcount = 0; bumpcount < numbumps; bumpcount++) {
+		// Calculate position we are trying to move to.
+		vec3.add(ps.origin, vec3.scale(ps.velocity, time_left, [0, 0, 0]), end);
+
+		// See if we can make it there.
+		var trace = pm.trace(ps.origin, end, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+
+		if (trace.allSolid) {
+			// Entity is completely trapped in another solid.
+			ps.velocity[2] = 0; // don't build up falling damage, but allow sideways acceleration
+			return false;
+		}
+
+		if (trace.fraction > 0) {
+			// Actually covered some distance.
+			vec3.set(trace.endPos, ps.origin);
+		}
+
+		if (trace.fraction === 1) {
+			 break;  // moved the entire distance
+		}
+
+		// Save entity for contact.
+		//PM_AddTouchEnt( trace.entityNum );
+
+		time_left -= time_left * trace.fraction;
+
+		if (planes.length >= MAX_CLIP_PLANES) {
+			// this shouldn't really happen
+			ps.velocity = [0, 0, 0];
+			return false;
+		}
+
+		//
+		// If this is the same plane we hit before, nudge velocity
+		// out along it, which fixes some epsilon issues with
+		// non-axial planes.
+		//
+		for (var i = 0; i < planes.length; i++) {
+			if (vec3.dot(trace.plane.normal, planes[i]) > 0.99) {
+				vec3.add(ps.velocity, trace.plane.normal);
+				break;
+			}
+		}
+		if (i < planes.length) {
+			continue;
+		}
+		planes.push(vec3.set(trace.plane.normal, [0, 0, 0]));
+
+		//
+		// Modify velocity so it parallels all of the clip planes.
+		//
+
+		// Find a plane that it enters.
+		for(var i = 0; i < planes.length; ++i) {
+			var into = vec3.dot(ps.velocity, planes[i]);
+			if (into >= 0.1) {
+				continue;  // move doesn't interact with the plane
+			}
+
+			// Slide along the plane.
+			var clipVelocity = ClipVelocity(ps.velocity, planes[i], OVERCLIP);
+			var endClipVelocity = ClipVelocity(endVelocity, planes[i], OVERCLIP);
+
+			// See if there is a second plane that the new move enters.
+			for (var j = 0; j < planes.length; j++) {
+				if (j === i) {
+					continue;
+				}
+				if (vec3.dot(clipVelocity, planes[j]) >= 0.1) {
+					continue;  // move doesn't interact with the plane
+				}
+
+				// Try clipping the move to the plane.
+				clipVelocity = ClipVelocity(clipVelocity, planes[j], OVERCLIP);
+				endClipVelocity = ClipVelocity(endClipVelocity, planes[j], OVERCLIP);
+
+				// See if it goes back into the first clip plane.
+				if (vec3.dot(clipVelocity, planes[i]) >= 0) {
+					continue;
+				}
+
+				// Slide the original velocity along the crease.
+				var dir = vec3.cross(planes[i], planes[j], [0, 0, 0]);
+				vec3.normalize(dir);
+				var d = vec3.dot(dir, ps.velocity);
+				vec3.scale(dir, d, clipVelocity);
+
+				vec3.cross(planes[i], planes[j], dir);
+				vec3.normalize(dir);
+				d = vec3.dot(dir, endVelocity);
+				vec3.scale(dir, d, endClipVelocity);
+
+				// See if there is a third plane the the new move enters.
+				for (var k = 0; k < planes.length; k++) {
+					if ( k == i || k == j ) {
+						continue;
+					}
+					if (vec3.dot(clipVelocity, planes[k]) >= 0.1) {
+						continue;  // move doesn't interact with the plane
+					}
+					// Stop dead at a tripple plane interaction.
+					ps.velocity = [0, 0, 0];
+					return false;
+				}
+			}
+
+			// If we have fixed all interactions, try another move.
+			vec3.set(clipVelocity, ps.velocity);
+			vec3.set(endClipVelocity, endVelocity);
+			break;
+		}
+	}
+
+	if (gravity) {
+		vec3.set(endVelocity, ps.velocity);
+	}
+
+	return bumpcount === 0;
+}
+
+/**
+ * StepSlideMove
+ */
+function StepSlideMove(pm, gravity) {
+	var ps = pm.ps;
+
+	// Make sure these are stored BEFORE the initial SlideMove.
+	var start_o = vec3.set(ps.origin, [0, 0, 0]);
+	var start_v = vec3.set(ps.velocity, [0, 0, 0]);
+
+	// We got exactly where we wanted to go first try.
+	if (SlideMove(pm, gravity)) {
+		return;
+	}
+	
+	// Never step up when you still have up velocity.
+	var up = [0, 0, 1];
+	var down = vec3.set(start_o, [0, 0, 0]);
+	down[2] -= STEPSIZE;
+
+	var trace = pm.trace(start_o, down, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+	if (ps.velocity[2] > 0 && (trace.fraction === 1.0 || vec3.dot(trace.plane.normal, up) < 0.7)) {
+		return;
+	}
+
+	// Test the player position if they were a stepheight higher.
+	vec3.set(start_o, up);
+	up[2] += STEPSIZE;
+
+	trace = pm.trace(start_o, up, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+	if (trace.allSolid) {
+		return;  // can't step up
+	}
+
+	// Try slidemove from this position.
+	vec3.set(trace.endPos, ps.origin);
+	vec3.set(start_v, ps.velocity);
+	SlideMove(pm, gravity);
+
+	// Push down the final amount.
+	var stepSize = trace.endPos[2] - start_o[2];
+	vec3.set(ps.origin, down);
+	down[2] -= stepSize;
+	trace = pm.trace(ps.origin, down, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
+	if (!trace.allSolid) {
+		vec3.set(trace.endPos, ps.origin);
+	}
+	if (trace.fraction < 1.0) {
+		ps.velocity = ClipVelocity(ps.velocity, trace.plane.normal, OVERCLIP);
+	}
+
+	// Use the step move.
+	var delta = ps.origin[2] - start_o[2];
+	if (delta > 2) {
+		if (delta < 7) {
+			AddEvent(pm, EV.STEP_4);
+		} else if (delta < 11) {
+			AddEvent(pm, EV.STEP_8);
+		} else if (delta < 15 ) {
+			AddEvent(pm, EV.STEP_12);
+		} else {
+			AddEvent(pm, EV.STEP_16);
+		}
+	}
+}
+
+/**
  * UpdateViewAngles
  */
 function UpdateViewAngles(ps, cmd) {
+	if (ps.pm_type === PM.INTERMISSION || ps.pm_type === PM.SPINTERMISSION) {
+		return;  // no view changes at all
+	}
+
+	if (ps.pm_type !== PM.SPECTATOR && ps.stats[STAT.HEALTH] <= 0) {
+		return;  // no view changes at all
+	}
+
 	for (var i = 0; i < 3; i++) {
 		// Circularly clamp uint16 to in16.
 		var temp = (cmd.angles[i] + ps.delta_angles[i]) & 0xFFFF;
@@ -8560,37 +8865,37 @@ function UpdateWeapon(pm) {
 
 	// int		addTime;
 
-	// // don't allow attack until all buttons are up
-	// if ( pm->ps->pm_flags & PMF_RESPAWNED ) {
-	// 	return;
-	// }
+	// Don't allow attack until all buttons are up
+	if (ps.pm_flags & PMF.RESPAWNED) {
+		return;
+	}
 
 	// // ignore if spectator
 	// if ( pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
 	// 	return;
 	// }
 
-	// // check for dead player
-	// if ( pm->ps->stats[STAT_HEALTH] <= 0 ) {
-	// 	pm->ps->weapon = WP_NONE;
-	// 	return;
-	// }
+	// Check for dead player.
+	if (ps.pm_type === PM.DEAD) {
+		ps.weapon = WP.NONE;
+		return;
+	}
 
 	// // check for item using
 	// if ( pm->cmd.buttons & BUTTON_USE_HOLDABLE ) {
-	// 	if ( ! ( pm->ps->pm_flags & PMF_USE_ITEM_HELD ) ) {
+	// 	if ( ! ( pm->ps->pm_flags & PMF.USE_ITEM_HELD ) ) {
 	// 		if ( bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag == HI_MEDKIT
 	// 			&& pm->ps->stats[STAT_HEALTH] >= (pm->ps->stats[STAT_MAX_HEALTH] + 25) ) {
 	// 			// don't use medkit if at max health
 	// 		} else {
-	// 			pm->ps->pm_flags |= PMF_USE_ITEM_HELD;
+	// 			pm->ps->pm_flags |= PMF.USE_ITEM_HELD;
 	// 			PM_AddEvent( EV_USE_ITEM0 + bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag );
 	// 			pm->ps->stats[STAT_HOLDABLE_ITEM] = 0;
 	// 		}
 	// 		return;
 	// 	}
 	// } else {
-	// 	pm->ps->pm_flags &= ~PMF_USE_ITEM_HELD;
+	// 	pm->ps->pm_flags &= ~PMF.USE_ITEM_HELD;
 	// }
 
 	// Make weapon function.
@@ -8858,169 +9163,95 @@ function Footsteps(pm) {
  * FootstepForSurface
  */
 function FootstepForSurface () {
-	if (groundTrace.surfaceFlags & sh.SurfaceFlags.NOSTEPS) {
+	if (groundTrace.surfaceFlags & SURF.NOSTEPS) {
 		return 0;
 	}
-	if (groundTrace.surfaceFlags & sh.SurfaceFlags.METALSTEPS) {
+	if (groundTrace.surfaceFlags & SURF.METALSTEPS) {
 		return EV.FOOTSTEP_METAL;
 	}
 	return EV.FOOTSTEP;
 }
 
 /**
- * SetMovementDir
- * 
- * Determine the rotation of the legs relative
- * to the facing dir
+ * AddEvent
  */
-function SetMovementDir(pm) {
-	var ps = pm.ps;
-
-	if (pm.cmd.forwardmove || pm.cmd.rightmove) {
-		if (pm.cmd.rightmove === 0 && pm.cmd.forwardmove > 0) {
-			ps.movementDir = 0;
-		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove > 0) {
-			ps.movementDir = 1;
-		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove === 0) {
-			ps.movementDir = 2;
-		} else if (pm.cmd.rightmove < 0 && pm.cmd.forwardmove < 0) {
-			ps.movementDir = 3;
-		} else if (pm.cmd.rightmove === 0 && pm.cmd.forwardmove < 0) {
-			ps.movementDir = 4;
-		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove < 0) {
-			ps.movementDir = 5;
-		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove === 0) {
-			ps.movementDir = 6;
-		} else if (pm.cmd.rightmove > 0 && pm.cmd.forwardmove > 0) {
-			ps.movementDir = 7;
-		}
-	} else {
-		// If they aren't actively going directly sideways,
-		// change the animation to the diagonal so they
-		// don't stop too crooked.
-		if (ps.movementDir === 2) {
-			ps.movementDir = 1;
-		} else if (ps.movementDir === 6) {
-			ps.movementDir = 7;
-		} 
-	}
-}
-
-
-/**
- * PmoveSingle
- */
-function PmoveSingle(pm) {
-	var ps = pm.ps;
-	var cmd = pm.cmd;
-
-	// Make sure walking button is clear if they are running, to avoid
-	// proxy no-footsteps cheats.
-	if (Math.abs(pm.cmd.forwardmove) > 64 || Math.abs(pm.cmd.rightmove) > 64) {
-		pm.cmd.buttons &= ~BUTTON.WALKING;
-	}
-
-	// Set the firing flag for continuous beam weapons.
-	if ( !(ps.pm_flags & PMF.RESPAWNED) && ps.pm_type !== PM.INTERMISSION && ps.pm_type !== PM.NOCLIP
-		&& (pm.cmd.buttons & BUTTON.ATTACK) && ps.ammo[ps.weapon]) {
-		ps.eFlags |= EF.FIRING;
-	} else {
-		ps.eFlags &= ~EF.FIRING;
-	}
-
-	// Clear the respawned flag if attack and use are cleared
-	if (ps.stats[STAT.HEALTH] > 0 && 
-		!(pm.cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE))) {
-		ps.pm_flags &= ~PMF.RESPAWNED;
-	}
-
-	// Determine the time.
-	ps.commandTime = cmd.serverTime;
-	pm.frameTime = msec * 0.001;
-
-	// Update our view angles.
-	UpdateViewAngles(ps, cmd);
-	qm.AnglesToVectors(ps.viewangles, forward, right, up);
-
-	// Make sure walking button is clear if they are running, to avoid
-	// proxy no-footsteps cheats.
-	if (Math.abs(cmd.forwardmove) > 64 || Math.abs(cmd.rightmove) > 64) {
-		cmd.buttons &= ~BUTTON.WALKING;
-	}
-
-	if (pm.cmd.upmove < 10) {
-		// Not holding jump.
-		ps.pm_flags &= ~PMF.JUMP_HELD;
-	}
-
-	// Decide if backpedaling animations should be used
-	if (cmd.forwardmove < 0) {
-		ps.pm_flags |= PMF.BACKWARDS_RUN;
-	} else if (pm.cmd.forwardmove > 0 || (cmd.forwardmove === 0 && cmd.rightmove)) {
-		ps.pm_flags &= ~PMF.BACKWARDS_RUN;
-	}
-
-	CheckDuck(pm);
-	GroundTrace(pm);
-	DropTimers(pm);
-
-	//FlyMove(pm);
-	if (walking) {
-		WalkMove(pm);
-	} else {
-		AirMove(pm);
-	}
-
-	GroundTrace(pm);
-
-	// Weapons.
-	UpdateWeapon(pm);
-
-	// Torso animations.
-	TorsoAnimation(pm);
-
-	// Footstep events / legs animations.
-	Footsteps(pm);
+function AddEvent(pm, newEvent) {
+	AddPredictableEventToPlayerstate(pm.ps, newEvent, 0);
 }
 
 /**
- * Pmove
+ * StartTorsoAnim
  */
-function Pmove(pm) {
+function StartTorsoAnim(pm, anim) {
 	var ps = pm.ps;
-	var cmd = pm.cmd;
 
-	// TODO WHY DOES THIS HAPPEN
-	if (cmd.serverTime < ps.commandTime) {
-		//com.error(sh.Err.DROP, 'Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
-		return;  // should not happen
+	if (ps.pm_type >= PM.DEAD) {
+		return;
 	}
 
-	if (cmd.serverTime > ps.commandTime + 1000) {
-		ps.commandTime = cmd.serverTime - 1000;
-	}
-
-	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PMOVEFRAMECOUNTBITS)-1);
-
-	// Chop the move up if it is too long, to prevent framerate
-	// dependent behavior.
-	while (ps.commandTime != cmd.serverTime) {
-		msec = cmd.serverTime - ps.commandTime;
-
-		if (msec < 1) {
-			msec = 1;
-		} else if (msec > 66) {
-			msec = 66;
-		}
-
-		PmoveSingle(pm);
-
-		if (pm.ps.pm_flags & PMF.JUMP_HELD) {
-			pm.cmd.upmove = 20;
-		}
-	}
+	ps.torsoAnim = ((ps.torsoAnim & ANIM_TOGGLEBIT) ^ ANIM_TOGGLEBIT ) | anim;
 }
 
+/**
+ * StartLegsAnim
+ */
+function StartLegsAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if (ps.pm_type >= PM.DEAD) {
+		return;
+	}
+
+	if (ps.legsTimer > 0) {
+		return;  // a high priority animation is running
+	}
+
+	ps.legsAnim = ((ps.legsAnim & ANIM_TOGGLEBIT ) ^ ANIM_TOGGLEBIT ) | anim;
+}
+
+/**
+ * ContinueLegsAnim
+ */
+function ContinueLegsAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if ((ps.legsAnim & ~ANIM_TOGGLEBIT) === anim) {
+		return;
+	}
+
+	if (ps.legsTimer > 0) {
+		return;  // a high priority animation is running
+	}
+
+	StartLegsAnim(pm, anim);
+}
+
+/**
+ * ContinueTorsoAnim
+ */
+function ContinueTorsoAnim(pm, anim) {
+	var ps = pm.ps;
+
+	if ((ps.torsoAnim & ~ANIM_TOGGLEBIT) === anim) {
+		return;
+	}
+
+	if (ps.torsoTimer > 0) {
+		return;  // a high priority animation is running
+	}
+
+	StartTorsoAnim(pm, anim);
+}
+
+/**
+ * ForceLegsAnim
+ */
+function ForceLegsAnim(pm, anim) {
+	var ps = pm.ps;
+	
+	ps.legsTimer = 0;
+	StartLegsAnim(pm, anim);
+}
 	// typedef struct gitem_s {
 // 	char		*classname;	// spawning name
 // 	char		*pickup_sound;
@@ -9369,9 +9600,9 @@ var itemList = [
 		UpdateViewAngles:                 UpdateViewAngles,
 		CanItemBeGrabbed:                 CanItemBeGrabbed,
 		AddPredictableEventToPlayerstate: AddPredictableEventToPlayerstate,
-		AddEvent:                         AddEvent,
 		PlayerStateToEntityState:         PlayerStateToEntityState,
 		EvaluateTrajectory:               EvaluateTrajectory,
+		EvaluateTrajectoryDelta:          EvaluateTrajectoryDelta,
 		TouchJumpPad:                     TouchJumpPad
 	};
 });
@@ -9385,6 +9616,9 @@ function (_, glmatrix, sh, qm, bg) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
@@ -9455,7 +9689,79 @@ var BUTTON = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
-	var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+	var GIB_HEALTH = -40;
+var ARMOR_PROTECTION = 0.66;
+
+var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var MINS_Z = -24;
+var DEFAULT_VIEWHEIGHT = 26;
+var CROUCH_VIEWHEIGHT = 12;
+var DEAD_VIEWHEIGHT = -16;
 
 var PM = {
 	NORMAL:       0,                                       // can accelerate and turn
@@ -9506,39 +9812,6 @@ var IT = {
 	TEAM:               8
 };
 
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
 var MASK = {
 	ALL:         -1,
 	SOLID:       CONTENTS.SOLID,
@@ -9577,11 +9850,26 @@ var WP = {
 	NUM_WEAPONS:      11
 };
 
+// NOTE: may not have more than 16
+var PW = {
+	NONE:         0,
+	QUAD:         1,
+	BATTLESUIT:   2,
+	HASTE:        3,
+	INVIS:        4,
+	REGEN:        5,
+	FLIGHT:       6,
+	REDFLAG:      7,
+	BLUEFLAG:     8,
+	NEUTRALFLAG:  9,
+	NUM_POWERUPS: 10
+};
+
 // PlayerState.persistant[] indexes
 // These fields are the only part of player_state that aren't
 // cleared on respawn.
 // NOTE: may not have more than 16
-var PS = {
+var PERS = {
 	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
 	RANK:                 2,                               // player rank or team rank
@@ -9853,6 +10141,27 @@ var MOD = {
 
 	function Game(com, sv) {
 		var FRAMETIME = 100; // msec
+var CARNAGE_REWARD_TIME = 3000;
+var REWARD_SPRITE_TIME = 2000;
+
+var DAMAGE = {
+	RADIUS:        0x00000001,                             // damage was indirect
+	NO_ARMOR:      0x00000002,                             // armour does not protect from this damage
+	NO_KNOCKBACK:  0x00000004,                             // do not affect velocity, just view angles
+	NO_PROTECTION: 0x00000008                              // armor, shields, invulnerability, and godmode have no effect
+};
+
+// GameEntity flags
+var GFL = {
+	GODMODE:       0x00000010,
+	NOTARGET:      0x00000020,
+	TEAMSLAVE:     0x00000400,                             // not the first on the team
+	NO_KNOCKBACK:  0x00000800,
+	DROPPED_ITEM:  0x00001000,
+	NO_BOTS:       0x00002000,                             // spawn point not for bot use
+	NO_HUMANS:     0x00004000,                             // spawn point just for bots
+	FORCE_GESTURE: 0x00008000                              // force gesture on client
+};
 
 var LevelLocals = function () {
 	this.framenum     = 0;
@@ -9870,7 +10179,7 @@ var LevelLocals = function () {
 // The server does not know how to interpret most of the values
 // in entityStates (level eType), so the game must explicitly flag
 // special server behaviors.
-var ServerFlags = {
+var SVF = {
 	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
 	BOT:                0x00000002,                        // set if the entity is a bot
 	BROADCAST:          0x00000008,                        // send to all connected clients
@@ -9886,9 +10195,9 @@ var GameEntity = function () {
 };
 
 GameEntity.prototype.reset = function () {
-	/**
-	 * Shared by the engine and game.
-	 */
+	//
+	// Shared by game and server.
+	//
 	this.s             = new sh.EntityState();
 	this.linked        = false;
 	// SVF_NOCLIENT, SVF_BROADCAST, etc.
@@ -9911,30 +10220,109 @@ GameEntity.prototype.reset = function () {
 	this.currentOrigin = [0, 0, 0];
 	this.currentAngles = [0, 0, 0];
 	this.client        = null;
+	// When a trace call is made and passEntityNum != ENTITYNUM_NONE,
+	// an ent will be excluded from testing if:
+	// ent.s.number == passEntityNum                   (don't interact with self)
+	// ent.ownerNum == passEntityNum                   (don't interact with your own missiles)
+	// entity[ent.ownerNum].ownerNum == passEntityNum  (don't interact with other missiles from owner)
+	this.ownerNum      = ENTITYNUM_NONE;
 
-	/**
-	 * Game only
-	 */
-	this.inuse          = false;
-	this.freetime       = 0;                               // level.time when the object was freed
-	this.classname      = 'noclass';
-	this.spawnflags     = 0;
-	this.eventTime      = 0;                               // events will be cleared EVENT_VALID_MSEC after set
-	this.freeAfterEvent = false;
-	this.model          = null;
-	this.model2         = null;
-	this.target         = null;
-	this.targetname     = null;
-	this.nextthink      = 0;
-	this.timestamp      = 0;                               // body queue sinking, etc
+	//
+	// Game only
+	//
+	this.parent              = null;
+	this.inuse               = false;
+	this.classname           = 'noclass';
+	this.spawnflags          = 0;
+
+	this.freeTime            = 0;                          // level.time when the object was freed
+	this.eventTime           = 0;                          // events will be cleared EVENT_VALID_MSEC after set
+	this.freeAfterEvent      = false;
+	this.unlinkAfterEvent    = false;
+
+	this.model               = null;
+	this.model2              = null;
+	this.physicsObject       = false;                      // if true, it can be pushed by movers and fall off edges
+	                                                       // all game items are physicsObjects
+	this.physicsBounce       = 0;                          // 1.0 = continuous bounce, 0.0 = no bounce
+	this.clipmask            = 0;                          // brushes with this content value will be collided against
+	                                                       // when moving. items and corpses do not collide against
+	                                                       // players, for instance
+	// movers
+	this.moverState          = 0;
+	this.soundPos1           = 0;
+	this.sound1to2           = 0;
+	this.sound2to1           = 0;
+	this.soundPos2           = 0;
+	this.soundLoop           = 0;
+	this.nextTrain           = null;
+	this.prevTrain           = null;
+	this.pos1                = [0, 0, 0];
+	this.pos2                = [0, 0, 0];
+
+	this.target              = null;
+	this.targetName          = null;
+	this.team                = null;
+	this.targetShaderName    = null;
+	this.targetShaderNewName = null;
+	this.targetEnt           = null;
+
+	this.nextthink           = 0;
+	this.think               = null;
+
+	this.timestamp           = 0;                          // body queue sinking, etc
+
+	this.health              = 0;
+	this.takeDamage          = false;
+
+	this.damage              = 0;
+	this.splashDamage        = 0;                          // quad will increase this without increasing radius
+	this.splashRadius        = 0;
+	this.methodOfDeath       = 0;
+	this.splashMethodOfDeath = 0;
+
+	this.count               = 0;                          // items
+
+	this.chain               = null;
+	this.enemy               = null;
+	this.activator           = null;
+	this.teamchain           = null; // next entity in team
+	this.teammaster          = null; // master of the team
+
 }
 
 // This structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'.
 var GameClient = function () {
-	this.ps        = new sh.PlayerState();
-	this.pers      = new GameClientPersistant();
-	this.oldOrigin = [0, 0, 0];
+	this.ps                = new sh.PlayerState();
+	this.pers              = new GameClientPersistant();
+
+	this.noclip            = false;
+
+	this.oldOrigin         = [0, 0, 0];
+
+	// Sum up damage over an entire frame, so
+	// shotgun blasts give a single big kick.
+	this.damage_armor      = 0;                            // damage absorbed by armor
+	this.damage_blood      = 0;                            // damage taken out of health
+	this.damage_knockback  = 0;                            // impact damage
+	this.damage_from       = [0, 0, 0];                    // origin for vector calculation
+	this.damage_fromWorld  = false;                        // if true, don't use the damage_from vector
+
+	// Awards
+	this.impressive_count  = 0;                            // for "impressive" reward sound
+	this.accuracy_shots    = 0;                            // total number of shots
+	this.accuracy_hits     = 0;                            // total number of hits
+
+	// Taunts
+	this.lastkilled_client = 0;                            // last client that this client killed
+	this.lasthurt_mod      = 0;                            // type of damage the client did
+
+	// Timers
+	this.respawnTime       = 0;                            // can respawn when time > this, force after g_forcerespwan
+	this.inactivityTime    = 0;                            // kick players when time > this
+	this.inactivityWarning = 0;                            // true if the five second warning has been given
+	this.rewardTime        = 0;                            // clear the EF.AWARD_IMPRESSIVE, etc when time > this
 };
 
 // Client data that stays across multiple respawns, but is cleared
@@ -9985,19 +10373,19 @@ function Init(levelTime) {
 	level.time = levelTime;
 	level.startTime = levelTime;
 	
-	g_speed             = com.AddCvar("g_speed", 320);
-	g_gravity           = com.AddCvar("g_gravity", 800);
-	g_knockback         = com.AddCvar("g_knockback", 1000);
-	g_quadfactor        = com.AddCvar("g_quadfactor", 3);
-	g_weaponRespawn     = com.AddCvar("g_weaponrespawn", 5);
-	g_weaponTeamRespawn = com.AddCvar("g_weaponTeamRespawn", 30);
-	g_forcerespawn      = com.AddCvar("g_forcerespawn", 20);
-	g_inactivity        = com.AddCvar("g_inactivity", 0);
-	g_debugMove         = com.AddCvar("g_debugMove", 0);
-	g_debugDamage       = com.AddCvar("g_debugDamage", 0);
-	g_debugAlloc        = com.AddCvar("g_debugAlloc", 0);
-	g_motd              = com.AddCvar("g_motd", "");
-	g_blood             = com.AddCvar("com_blood", 1);
+	g_speed             = com.AddCvar('g_speed',             320);
+	g_gravity           = com.AddCvar('g_gravity',           800);
+	g_knockback         = com.AddCvar('g_knockback',         1000);
+	g_quadfactor        = com.AddCvar('g_quadfactor',        3);
+	g_weaponRespawn     = com.AddCvar('g_weaponrespawn',     5);
+	g_weaponTeamRespawn = com.AddCvar('g_weaponTeamRespawn', 30);
+	g_forcerespawn      = com.AddCvar('g_forcerespawn',      20);
+	g_inactivity        = com.AddCvar('g_inactivity',        0);
+	g_debugMove         = com.AddCvar('g_debugMove',         0);
+	g_debugDamage       = com.AddCvar('g_debugDamage',       0);
+	g_debugAlloc        = com.AddCvar('g_debugAlloc',        0);
+	g_motd              = com.AddCvar('g_motd',              "");
+	g_blood             = com.AddCvar('g_blood',             1);
 	
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);
@@ -10056,6 +10444,11 @@ function Frame(levelTime) {
 			ClientThink(ent.client.number);
 			continue;
 		}*/
+
+		if (ent.s.eType == ET.MISSILE) {
+			MissileThink(ent);
+			continue;
+		}
 
 		EntityThink(ent);
 	}
@@ -10214,6 +10607,20 @@ function ClientThink(clientNum) {
 		cmd.serverTime = level.time - 1000;
 	}
 
+	// Clear the rewards if time.
+	if ( level.time > client.rewardTime ) {
+		client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP);
+	}
+
+	// Set pmove type.
+	if (client.noclip) {
+		client.ps.pm_type = PM.NOCLIP;
+	} else if (client.ps.stats[STAT.HEALTH] <= 0) {
+		client.ps.pm_type = PM.DEAD;
+	} else {
+		client.ps.pm_type = PM.NORMAL;
+	}
+
 	client.ps.gravity = g_gravity();
 	client.ps.speed = g_speed();
 
@@ -10247,6 +10654,25 @@ function ClientThink(clientNum) {
 
 	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
 	vec3.set(ent.client.ps.origin, ent.currentOrigin);
+
+	// Check for respawning.
+	if (client.ps.pm_type === PM.DEAD) {
+		// Wait for the attack button to be pressed.
+		if (level.time > client.respawnTime) {
+			// forcerespawn is to prevent users from waiting out powerups
+			if (g_forcerespawn() > 0 && 
+				(level.time - client.respawnTime ) > g_forcerespawn() * 1000) {
+				ClientRespawn(ent);
+				return;
+			}
+		
+			// Pressing attack or use is the normal respawn method
+			if (cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
+				ClientRespawn(ent);
+			}
+		}
+		return;
+	}
 }
 
 /**
@@ -10344,20 +10770,31 @@ function ClientSpawn(ent) {
 
 	ent.classname = 'player';
 	ent.contents = CONTENTS.BODY;
+	ent.takeDamage = true;
+	ent.die = Player_Die;
 	ent.s.groundEntityNum = ENTITYNUM_NONE;
 	vec3.set(playerMins, ent.mins);
 	vec3.set(playerMaxs, ent.maxs);
 
 	var spawnpoint = SelectRandomDeathmatchSpawnPoint();
-	var spawnorigin = vec3.create(spawnpoint.s.origin);
+	var spawnorigin = vec3.set(spawnpoint.s.origin, [0, 0, 0]);
 	spawnorigin[2] += 9;
 
 	SetOrigin(ent, spawnorigin);
 	vec3.set(spawnorigin, ps.origin);
 	vec3.set(ps.velocity, [0, 0, 0]);
 
+	// The respawned flag will be cleared after the attack and jump keys come up.
+	client.ps.pm_flags |= PMF.RESPAWNED;
+
 	sv.GetUserCmd(client.ps.clientNum, ent.client.pers.cmd);
 	SetClientViewAngle(ent, spawnpoint.s.angles);
+
+	// Don't allow full run speed for a bit.
+	client.ps.pm_flags |= PMF.TIME_KNOCKBACK;
+	client.ps.pm_time = 100;
+
+	client.respawnTime = level.time;
 	
 	// set max health
 // 	client.pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
@@ -10379,7 +10816,7 @@ function ClientSpawn(ent) {
 	client.ps.stats[STAT.WEAPONS] |= (1 << WP.GAUNTLET);
 	client.ps.ammo[WP.GAUNTLET] = -1;
 	
-	// health will count down towards max_health
+	// Health will count down towards max_health
 	ent.health = client.ps.stats[STAT.HEALTH] = client.ps.stats[STAT.MAX_HEALTH] + 25;
 	
 	// Run a client frame to drop exactly to the floor,
@@ -10392,6 +10829,14 @@ function ClientSpawn(ent) {
 
 	// Clear entity state values.
 	bg.PlayerStateToEntityState(client.ps, ent.s);
+}
+
+/**
+ * ClientRespawn
+ */
+function ClientRespawn(ent) {
+	// CopyToBodyQue(ent);
+	ClientSpawn(ent);
 }
 
 /**
@@ -10413,7 +10858,7 @@ function ClientDisconnect(clientNum) {
 	log('ClientDisconnect: ' + clientNum);
 
 	sv.UnlinkEntity (ent);
-	ent.s.modelindex = 0;
+	ent.s.modelIndex = 0;
 	ent.classname = 'disconnected';
 	/*ent.client.pers.connected = CON_DISCONNECTED;
 	ent.client.ps.persistant[PERS_TEAM] = TEAM_FREE;
@@ -10467,12 +10912,651 @@ function SelectRandomDeathmatchSpawnPoint() {
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }
 
+		/**
+ * Damage
+ *
+ * Apply damage to an entity.
+ * inflictor, attacker, dir, and point can be NULL for environmental damage.
+ *
+ * @param {GameEntity} targ      Entity that is being damaged
+ * @param {GameEntity} inflictor Entity that is causing the damage
+ * @param {GameEntity} attacker  Entity that caused the inflictor to damage targ
+ * @param {vec3}       dir       Direction of the attack for knockback
+ * @param {vec3}       point     Point at which the damage is being inflicted, used for headshots
+ * @param {int}        damage    Amount of damage being inflicted
+ * @param {int}        dflags    Flags used to control how Damage works
+ *                               DAMAGE.RADIUS:        damage was indirect (from a nearby explosion)
+ *                               DAMAGE.NO_ARMOR:      armor does not protect from this damage
+ *                               DAMAGE.NO_KNOCKBACK:  do not affect velocity, just view angles
+ *                               DAMAGE.NO_PROTECTION: kills godmode, armor, everything
+ * @param {MOD}         mod      Method of death.
+ */
+function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
+	if (!targ.takeDamage) {
+		return;
+	}
+
+	// // The intermission has already been qualified for, so don't
+	// // allow any extra scoring.
+	// if (level.intermissionQueued) {
+	// 	return;
+	// }
+
+	if (!inflictor) {
+		inflictor = level.gentities[ENTITYNUM_WORLD];
+	}
+
+	if (!attacker) {
+		attacker = level.gentities[ENTITYNUM_WORLD];
+	}
+
+	// // Shootable doors / buttons don't actually have any health.
+	// if (targ.s.eType == ET.MOVER) {
+	// 	if (targ.use && targ.moverState == MOVER_POS1) {
+	// 		targ.use( targ, inflictor, attacker );
+	// 	}
+	// 	return;
+	// }
+
+	// // Reduce damage by the attacker's handicap value
+	// // unless they are rocket jumping.
+	// if (attacker.client && attacker !== targ) {
+	// 	max = attacker.client.ps.stats[STAT_MAX_HEALTH];
+	// 	damage = damage * max / 100;
+	// }
+
+	var client = targ.client;
+	if (client && client.noclip) {
+		return;
+	}
+
+	if (!dir) {
+		dflags |= DAMAGE.NO_KNOCKBACK;
+	} else {
+		vec3.normalize(dir);
+	}
+
+	var knockback = damage;
+	if (knockback > 200) {
+		knockback = 200;
+	}
+	if (targ.flags & GFL.NO_KNOCKBACK) {
+		knockback = 0;
+	}
+	if (dflags & DAMAGE.NO_KNOCKBACK) {
+		knockback = 0;
+	}
+
+	// Figure momentum add, even if the damage won't be taken.
+	if (knockback && targ.client) {
+		var mass = 200;
+		var kvel = vec3.scale(dir, g_knockback() * knockback / mass, [0, 0, 0]);
+		vec3.add(targ.client.ps.velocity, kvel);
+
+		// Set the timer so that the other client can't cancel
+		// out the movement immediately.
+		if (!targ.client.ps.pm_time) {
+			var t = knockback * 2;
+			if (t < 50) {
+				t = 50;
+			} else if (t > 200) {
+				t = 200;
+			}
+
+			targ.client.ps.pm_time = t;
+			targ.client.ps.pm_flags |= PMF.TIME_KNOCKBACK;
+		}
+	}
+
+	// // Check for completely getting out of the damage.
+	// if (!(dflags & DAMAGE.NO_PROTECTION)) {
+	// 	// If TF_NO_FRIENDLY_FIRE is set, don't do damage to the target.
+	// 	// If the attacker was on the same team.
+	// 	if (targ !== attacker && OnSameTeam(targ, attacker)) {
+	// 		if (!g_friendlyFire()) {
+	// 			return;
+	// 		}
+	// 	}
+
+	// 	// Check for godmode.
+	// 	if (targ.flags & GFL.GODMODE) {
+	// 		return;
+	// 	}
+	// }
+
+	// // Battlesuit protects from all radius damage (but takes knockback)
+	// // and protects 50% against all damage.
+	// if (client && client.ps.powerups[PW_BATTLESUIT]) {
+	// 	AddEvent(targ, EV.POWERUP_BATTLESUIT, 0);
+	// 	if ((dflags & DAMAGE.RADIUS) || (mod === MOD.FALLING)) {
+	// 		return;
+	// 	}
+	// 	damage *= 0.5;
+	// }
+
+	// // Add to the attacker's hit counter (if the target isn't a general entity like a prox mine).
+	// if (attacker.client && client &&
+	// 	targ !== attacker && targ.health > 0 &&
+	// 	targ.s.eType != ET.MISSILE &&
+	// 	targ.s.eType != ET.GENERAL) {
+	// 	if (OnSameTeam( targ, attacker)) {
+	// 		attacker.client.ps.persistant[PERS.HITS]--;
+	// 	} else {
+	// 		attacker.client.ps.persistant[PERS.HITS]++;
+	// 	}
+	// 	attacker.client.ps.persistant[PERS.ATTACKEE_ARMOR] = (targ.health<<8)|(client.ps.stats[STAT.ARMOR]);
+	// }
+
+	// Always give half damage if hurting self.
+	// Calculated after knockback, so rocket jumping works.
+	if (targ === attacker) {
+		damage *= 0.5;
+	}
+	if (damage < 1) {
+		damage = 1;
+	}
+
+	var take = damage;
+	// Save some from armor.
+	// asave = CheckArmor(targ, take, dflags);
+	// take -= asave;
+
+	if (g_debugDamage.integer) {
+		log(level.time, ', client', targ.s.number, ', health', targ.health, ', damage', take, ', armor', asave);
+	}
+
+	// Add to the damage inflicted on a player this frame.
+	// The total will be turned into screen blends and view angle kicks
+	// at the end of the frame.
+	// if (client) {
+	// 	if (attacker) {
+	// 		client.ps.persistant[PERS.ATTACKER] = attacker.s.number;
+	// 	} else {
+	// 		client.ps.persistant[PERS.ATTACKER] = ENTITYNUM_WORLD;
+	// 	}
+	// 	client.damage_armor += asave;
+	// 	client.damage_blood += take;
+	// 	client.damage_knockback += knockback;
+	// 	if (dir) {
+	// 		vec3.set(dir, client.damage_from)
+	// 		client.damage_fromWorld = false;
+	// 	} else {
+	// 		vec3.set(targ.currentOrigin, client.damage_from);
+	// 		client.damage_fromWorld = true;
+	// 	}
+	// }
+
+	// See if it's the player hurting the emeny flag carrier.
+	// if (g_gametype.integer === GT_CTF) {
+	// 	Team_CheckHurtCarrier(targ, attacker);
+	// }
+
+	// if (targ.client) {
+	// 	// set the last client who damaged the target
+	// 	targ.client.lasthurt_client = attacker.s.number;
+	// 	targ.client.lasthurt_mod = mod;
+	// }
+
+	// Do the damage.
+	if (take) {
+		targ.health = targ.health - take;
+
+		// TODO Is this necessary? We do this in EndClientFrame
+		if (targ.client) {
+			targ.client.ps.stats[STAT.HEALTH] = targ.health;
+		}
+			
+		if (targ.health <= 0) {
+			if (client) {
+				targ.flags |= GFL.NO_KNOCKBACK;
+			}
+
+			if (targ.health < -999) {
+				targ.health = -999;
+			}
+
+			targ.enemy = attacker;
+			targ.die(targ, inflictor, attacker, take, mod);
+			return;
+		}
+		// } else if (targ.pain) {
+		// 	targ.pain (targ, attacker, take);
+		// }
+	}
+
+}
+
+/**
+ * RadiusDamage
+ */
+function RadiusDamage(origin, attacker, damage, radius, ignore, mod) {
+	var v = [0, 0, 0];
+	var mins = [0, 0, 0];
+	var maxs = [0, 0, 0];
+	var hitClient = false;
+
+	if (radius < 1) {
+		radius = 1;
+	}
+
+	for (var i = 0; i < 3; i++) {
+		mins[i] = origin[i] - radius;
+		maxs[i] = origin[i] + radius;
+	}
+
+	var entityNums = sv.FindEntitiesInBox(mins, maxs);
+
+	for (var e = 0; e < entityNums.length; e++) {
+		var ent = level.gentities[entityNums[e]];
+
+		if (ent === ignore) {
+			continue;
+		}
+
+		if (!ent.takeDamage) {
+			continue;
+		}
+
+		// Find the distance from the edge of the bounding box.
+		for (var i = 0; i < 3; i++) {
+			if (origin[i] < ent.absmin[i]) {
+				v[i] = ent.absmin[i] - origin[i];
+			} else if (origin[i] > ent.absmax[i]) {
+				v[i] = origin[i] - ent.absmax[i];
+			} else {
+				v[i] = 0;
+			}
+		}
+
+		var dist = vec3.length(v);
+		if (dist >= radius) {
+			continue;
+		}
+
+		points = damage * (1.0 - dist / radius);
+
+		if (CanDamage (ent, origin)) {
+			if (LogAccuracyHit(ent, attacker)) {
+				hitClient = true;
+			}
+
+			var dir = vec3.subtract(ent.currentOrigin, origin, [0, 0, 0]);
+			// Push the center of mass higher than the origin so players
+			// get knocked into the air more.
+			dir[2] += 24;
+			
+			Damage(ent, null, attacker, dir, origin, points, DAMAGE.RADIUS, mod);
+		}
+	}
+
+	return hitClient;
+}
+
+
+/**
+ * CanDamage
+ *
+ * Returns true if the inflictor can directly damage the target. Used for
+ * explosions and melee attacks.
+ */
+function CanDamage(targ, origin) {
+	// Use the midpoint of the bounds instead of the origin, because
+	// bmodels may have their origin is 0,0,0
+	var midpoint = vec3.add(targ.absmin, targ.absmax, [0, 0, 0]);
+	vec3.scale(midpoint, 0.5);
+
+	var dest = vec3.set(midpoint, [0, 0, 0]);
+	var tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	if (tr.fraction === 1.0 || tr.entityNum === targ.s.number) {
+		return true;
+	}
+
+	// This should probably check in the plane of projection, 
+	// rather than in world coordinate, and also include Z.
+	vec3.set(midpoint, dest);
+	dest[0] += 15.0;
+	dest[1] += 15.0;
+	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	if (tr.fraction === 1.0) {
+		return true;
+	}
+
+	vec3.set(midpoint, dest);
+	dest[0] += 15.0;
+	dest[1] -= 15.0;
+	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	if (tr.fraction === 1.0) {
+		return true;
+	}
+
+	vec3.set(midpoint, dest);
+	dest[0] -= 15.0;
+	dest[1] += 15.0;
+	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	if (tr.fraction === 1.0) {
+		return true;
+	}
+
+	vec3.set(midpoint, dest);
+	dest[0] -= 15.0;
+	dest[1] -= 15.0;
+	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	if (tr.fraction === 1.0) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Player_Die
+ */
+var deathAnim = 0;
+function Player_Die(self, inflictor, attacker, damage, meansOfDeath) {
+	if (self.client.ps.pm_type === PM.DEAD) {
+		return;
+	}
+
+	// if (level.intermissiontime) {
+	// 	return;
+	// }
+
+	// // Check for an almost capture.
+	// CheckAlmostCapture(self, attacker);
+
+	// // Check for a player that almost brought in cubes.
+	// CheckAlmostScored(self, attacker);
+
+	// if (self.client && self.client.hook) {
+	// 	Weapon_HookFree(self.client.hook);
+	// }
+
+	self.client.ps.pm_type = PM.DEAD;
+
+	var killer;
+	if (attacker) {
+		killer = attacker.s.number;
+		if (attacker.client) {
+			killerName = attacker.client.pers.netname;
+		} else {
+			killerName = "<non-client>";
+		}
+	}
+	if (killer === undefined || killer < 0 || killer >= MAX_CLIENTS) {
+		killer = ENTITYNUM_WORLD;
+		killerName = "<world>";
+	}
+
+	log('Kill:', killer, self.s.number, meansOfDeath, ',', killerName, 'killed', self.client.pers.netname);
+
+	// Broadcast the death event to everyone
+	var ent = TempEntity(self.currentOrigin, EV.OBITUARY);
+	ent.s.eventParm = meansOfDeath;
+	ent.s.otherEntityNum = self.s.number;
+	ent.s.otherEntityNum2 = killer;
+	ent.svFlags = SVF.BROADCAST;  // send to everyone
+
+	self.enemy = attacker;
+
+	self.client.ps.persistant[PERS.KILLED]++;
+
+	if (attacker && attacker.client) {
+		attacker.client.lastkilled_client = self.s.number;
+
+		// if (attacker == self || OnSameTeam(self, attacker)) {
+		// 	AddScore(attacker, self.currentOrigin, -1);
+		// } else {
+		// 	AddScore(attacker, self.currentOrigin, 1);
+
+			if (meansOfDeath === MOD.GAUNTLET) {
+				// Play humiliation on player.
+				attacker.client.ps.persistant[PERS.GAUNTLET_FRAG_COUNT]++;
+
+				// Add the sprite over the player's head
+				attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+				attacker.client.ps.eFlags |= EF.AWARD_GAUNTLET;
+				attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+
+				// Also play humiliation on target.
+				self.client.ps.persistant[PERS.PLAYEREVENTS] ^= PLAYEREVENT_GAUNTLETREWARD;
+			}
+
+			// check for two kills in a short amount of time
+			// if this is close enough to the last kill, give a reward sound
+			if ( level.time - attacker.client.lastKillTime < CARNAGE_REWARD_TIME ) {
+				// play excellent on player
+				attacker.client.ps.persistant[PERS.EXCELLENT_COUNT]++;
+
+				// add the sprite over the player's head
+				attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+				attacker.client.ps.eFlags |= EF.AWARD_EXCELLENT;
+				attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+			}
+			attacker.client.lastKillTime = level.time;
+		// }
+	} else {
+		// AddScore(self, self.currentOrigin, -1);
+	}
+
+	// // Add team bonuses
+	// Team_FragBonuses(self, inflictor, attacker);
+
+	// If I committed suicide, the flag does not fall, it returns.
+	// if (meansOfDeath === MOD.SUICIDE) {
+	// 	if ( self.client.ps.powerups[PW_NEUTRALFLAG] ) {		// only happens in One Flag CTF
+	// 		Team_ReturnFlag( TEAM_FREE );
+	// 		self.client.ps.powerups[PW_NEUTRALFLAG] = 0;
+	// 	}
+	// 	else if ( self.client.ps.powerups[PW_REDFLAG] ) {		// only happens in standard CTF
+	// 		Team_ReturnFlag( TEAM_RED );
+	// 		self.client.ps.powerups[PW_REDFLAG] = 0;
+	// 	}
+	// 	else if ( self.client.ps.powerups[PW_BLUEFLAG] ) {	// only happens in standard CTF
+	// 		Team_ReturnFlag( TEAM_BLUE );
+	// 		self.client.ps.powerups[PW_BLUEFLAG] = 0;
+	// 	}
+	// }
+
+	// TossClientItems(self);
+
+	// Cmd_Score_f(self);  // show scores
+
+	// // Send updated scores to any clients that are following this one,
+	// // or they would get stale scoreboards.
+	// for ( i = 0 ; i < level.maxclients ; i++ ) {
+	// 	gclient_t	*client;
+
+	// 	client = &level.clients[i];
+	// 	if ( client.pers.connected != CON_CONNECTED ) {
+	// 		continue;
+	// 	}
+	// 	if ( client.sess.sessionTeam != TEAM_SPECTATOR ) {
+	// 		continue;
+	// 	}
+	// 	if ( client.sess.spectatorClient == self.s.number ) {
+	// 		Cmd_Score_f( g_entities + i );
+	// 	}
+	// }
+
+	self.takeDamage = true;  // can still be gibbed
+
+	self.s.weapon = WP.NONE;
+	self.s.powerups = 0;
+	self.contents = CONTENTS.CORPSE;
+
+	self.s.angles[0] = 0;
+	self.s.angles[2] = 0;
+	LookAtKiller(self, inflictor, attacker);
+	vec3.set(self.s.angles, self.client.ps.viewangles);
+
+	self.s.loopSound = 0;
+	self.maxs[2] = -8;
+
+	// Don't allow respawn until the death anim is done
+	// g_forcerespawn may force spawning at some later time.
+	self.client.respawnTime = level.time + 1700;
+
+	// Remove powerups.
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		self.client.ps.powerups[i] = 0;
+	}
+
+	// // Never gib in a nodrop.
+	// var contents = trap_PointContents( self.r.currentOrigin, -1 );
+
+	// if ( (self.health <= GIB_HEALTH && !(contents & CONTENTS_NODROP) && g_blood.integer) || meansOfDeath == MOD_SUICIDE) {
+	// 	// gib death
+	// 	GibEntity( self, killer );
+	// } else {
+		// Normal death
+		var anim;
+
+		switch (deathAnim) {
+			case 0:
+				anim = ANIM.BOTH_DEATH1;
+				break;
+			case 1:
+				anim = ANIM.BOTH_DEATH2;
+				break;
+			case 2:
+			default:
+				anim = ANIM.BOTH_DEATH3;
+				break;
+		}
+
+		// For the no-blood option, we need to prevent the health
+		// from going to gib level.
+		if (self.health <= GIB_HEALTH) {
+			self.health = GIB_HEALTH+1;
+		}
+
+		self.client.ps.legsAnim = ((self.client.ps.legsAnim & ANIM_TOGGLEBIT) ^ ANIM_TOGGLEBIT) | anim;
+		self.client.ps.torsoAnim =  ((self.client.ps.torsoAnim & ANIM_TOGGLEBIT) ^ ANIM_TOGGLEBIT ) | anim;
+
+		AddEvent(self, EV.DEATH1 + i, killer);
+
+		// The body can still be gibbed.
+		// self.die = body_die;
+
+		// globally cycle through the different death animations
+		deathAnim = (deathAnim + 1) % 3;
+	// }
+
+	sv.LinkEntity(self);
+}
+
+/**
+ * LookAtKiller
+ */
+function LookAtKiller(self, inflictor, attacker) {
+	var dir = [0, 0, 0];
+
+	if (attacker && attacker !== self) {
+		vec3.subtract(attacker.s.pos.trBase, self.s.pos.trBase, dir);
+	} else if (inflictor && inflictor !== self) {
+		vec3.subtract(inflictor.s.pos.trBase, self.s.pos.trBase, dir);
+	} else {
+		self.client.ps.stats[STAT.DEAD_YAW] = self.s.angles[qm.YAW];
+		return;
+	}
+
+	self.client.ps.stats[STAT.DEAD_YAW] = VecToYaw(dir);
+}
+
+/**
+ * VecToYaw
+ */
+function VecToYaw(vec) {
+	var yaw;
+	
+	if (vec[qm.YAW] === 0 && vec[qm.PITCH] === 0) {
+		yaw = 0;
+	} else {
+		if (vec[qm.PITCH]) {
+			yaw = (Math.atan2(vec[qm.YAW], vec[qm.PITCH]) * 180 / Math.PI);
+		} else if (vec[qm.YAW] > 0) {
+			yaw = 90;
+		} else {
+			yaw = 270;
+		}
+		if (yaw < 0) {
+			yaw += 360;
+		}
+	}
+
+	return yaw;
+}
+
+/**
+ * LogAccuracyHit
+ */
+function LogAccuracyHit(target, attacker) {
+	if (!target.takeDamage) {
+		return false;
+	}
+
+	if (target === attacker) {
+		return false;
+	}
+
+	if (!target.client) {
+		return false;
+	}
+
+	if (!attacker.client) {
+		return false;
+	}
+
+	if (target.client.ps.stats[STAT.HEALTH] <= 0) {
+		return false;
+	}
+
+	// if (OnSameTeam(target, attacker)) {
+	// 	return false;
+	// }
+
+	return true;
+}
+
+/**
+ * CheckArmor
+ */
+function CheckArmor(ent, damage, dflags) {
+	if (!damage) {
+		return 0;
+	}
+
+	if (dflags & DAMAGE.NO_ARMOR) {
+		return 0;
+	}
+
+	var client = ent.client;
+	if (!client) {
+		return 0;
+	}
+
+	var count = client.ps.stats[STAT.ARMOR];
+	var save = Math.ceil(damage * ARMOR_PROTECTION);
+	if (save >= count) {
+		save = count;
+	}
+
+	if (!save) {
+		return 0;
+	}
+
+	client.ps.stats[STAT.ARMOR] -= save;
+
+	return save;
+}
+
 		var entityEvents = {};
 
 // Maps entity definition values to entity values.
 var keyMap = {
-	'origin': ['s.origin', 'currentOrigin'],
-	'angles': ['s.angles']
+	'origin':     ['s.origin', 'currentOrigin'],
+	'angles':     ['s.angles'],
+	'targetname': ['targetName']
 };
 
 /**
@@ -10490,7 +11574,7 @@ function SpawnEntity() {
 		// in the client snapshots. However, the first couple seconds of
 		// server time can involve a lot of freeing and allocating, so relax
 		// the replacement policy
-		if (ent.freetime > level.startTime + 2000 && level.time - ent.freetime < 1000) {
+		if (ent.freeTime > level.startTime + 2000 && level.time - ent.freeTime < 1000) {
 			continue;
 		}
 
@@ -10511,7 +11595,7 @@ function FreeEntity(ent) {
 	sv.UnlinkEntity(ent); // unlink from world
 
 	ent.classname = 'freed';
-	ent.freetime = level.time;
+	ent.freeTime = level.time;
 	ent.inuse = false;
 }
 
@@ -10561,22 +11645,6 @@ function FindEntity(key, value) {
 }
 
 /**
- * SetOrigin
- * 
- * Set the entities current origin as well as the entity's
- * associated trajectory information to make it stationary.
- */
-function SetOrigin(ent, origin) {
-	vec3.set(origin, ent.s.pos.trBase);
-	ent.s.pos.trType = sh.TrajectoryType.STATIONARY;
-	ent.s.pos.trTime = 0;
-	ent.s.pos.trDuration = 0;
-	vec3.set([0, 0, 0], ent.s.pos.trDelta);
-
-	vec3.set(origin, ent.currentOrigin);
-}
-
-/**
  * EntityThink
  */
 function EntityThink(ent) {
@@ -10605,7 +11673,7 @@ function EntityPickTarget(targetName) {
 		error('EntityPickTarget called with NULL targetname');
 	}
 
-	var choices = FindEntity('targetname', targetName);
+	var choices = FindEntity('targetName', targetName);
 
 	if (!choices.length) {
 		error('EntityPickTarget: target ' + targetName + ' not found');
@@ -10683,6 +11751,66 @@ function SpawnAllEntitiesFromDefs() {
 		SpawnEntityFromDef(def);
 	}
 }
+
+/**
+ * SetOrigin
+ * 
+ * Set the entities current origin as well as the entity's
+ * associated trajectory information to make it stationary.
+ */
+function SetOrigin(ent, origin) {
+	vec3.set(origin, ent.s.pos.trBase);
+	ent.s.pos.trType = TR.STATIONARY;
+	ent.s.pos.trTime = 0;
+	ent.s.pos.trDuration = 0;
+	vec3.set([0, 0, 0], ent.s.pos.trDelta);
+
+	vec3.set(origin, ent.currentOrigin);
+}
+
+/**
+ * AddPredictableEvent
+ *
+ * Use for non-pmove events that would also be predicted on the
+ * client side: jumppads and item pickups
+ * Adds an event + parm and twiddles the event counter
+ */
+function AddPredictableEvent(ent, event, eventParm) {
+	if (!ent.client) {
+		return;
+	}
+
+	bg.AddPredictableEventToPlayerstate(ent.client.ps, event, eventParm);
+}
+
+/**
+ * AddEvent
+ *
+ * Adds an event+parm and twiddles the event counter
+ */
+function AddEvent(ent, event, eventParm) {
+	var bits;
+
+	if (!event) {
+		log('AddEvent: zero event added for entity', ent.s.number);
+		return;
+	}
+
+	// Clients need to add the event in PlayerState instead of EntityState.
+	if (ent.client) {
+		bits = ent.client.ps.externalEvent & EV_EVENT_BITS;
+		bits = (bits + EV_EVENT_BIT1) & EV_EVENT_BITS;
+		ent.client.ps.externalEvent = event | bits;
+		ent.client.ps.externalEventParm = eventParm;
+		ent.client.ps.externalEventTime = level.time;
+	} else {
+		bits = ent.s.event & EV_EVENT_BITS;
+		bits = (bits + EV_EVENT_BIT1) & EV_EVENT_BITS;
+		ent.s.event = event | bits;
+		ent.s.eventParm = eventParm;
+	}
+	ent.eventTime = level.time;
+}
 		var RESPAWN = {
 	ARMOR      : 25,
 	HEALTH     : 35,
@@ -10728,7 +11856,7 @@ function FinishSpawningItem(ent) {
 
 	ent.s.eType = ET.ITEM;
 	ent.s.modelIndex = itemIndex;
-	//ent.s.modelindex2 = 0; // zero indicates this isn't a dropped item
+	//ent.s.modelIndex2 = 0; // zero indicates this isn't a dropped item
 
 	ent.contents = CONTENTS.TRIGGER;
 	ent.touch = TouchItem;
@@ -10741,7 +11869,7 @@ function FinishSpawningItem(ent) {
 		// drop to floor
 		/*var dest = vec3.create([ent.s.origin[0], ent.s.origin[1], ent.s.origin[2] - 4096]);
 
-		trap_Trace( &tr, ent->s.origin, ent->r.mins, ent->r.maxs, dest, ent->s.number, MASK_SOLID );
+		trap_Trace( &tr, ent->s.origin, ent->r.mins, ent->r.maxs, dest, ent->s.number, MASK.SOLID );
 		if ( tr.startsolid ) {
 			G_Printf ("FinishSpawningItem: %s startsolid at %s\n", ent->classname, vtos(ent->s.origin));
 			G_FreeEntity( ent );
@@ -10755,7 +11883,7 @@ function FinishSpawningItem(ent) {
 	//}
 
 	/*// team slaves and targeted items aren't present at start
-	if ( ( ent->flags & FL_TEAMSLAVE ) || ent->targetname ) {
+	if ( ( ent->flags & FL_TEAMSLAVE ) || ent->targetName ) {
 		ent->s.eFlags |= EF_NODRAW;
 		ent->r.contents = 0;
 		return;
@@ -10802,7 +11930,7 @@ function RespawnItem(self) {
 	
 	self.contents = CONTENTS.TRIGGER;
 	self.s.eFlags &= ~EF.NODRAW;
-	self.svFlags &= ~ServerFlags.NOCLIENT;
+	self.svFlags &= ~SVF.NOCLIENT;
 	sv.LinkEntity(self);
 
 // 	if ( self.item.giType == IT.POWERUP ) {
@@ -10817,7 +11945,7 @@ function RespawnItem(self) {
 // 			tent = G_TempEntity( ent->s.pos.trBase, EV_GLOBAL_SOUND );
 // 		}
 // 		tent.s.eventParm = G_SoundIndex( "sound/items/poweruprespawn.wav" );
-// 		tent.svFlags |= ServerFlags.BROADCAST;
+// 		tent.svFlags |= SVF.BROADCAST;
 // 	}
 // 
 // 	if ( self.item.giType == IT.HOLDABLE && self.item.giTag == HI_KAMIKAZE ) {
@@ -10851,8 +11979,8 @@ function TouchItem(self, other) {
 	if (!other.client) { return; }
 //	if (!other.health || other.health < 1) { return; } // dead people can't pickup
 	
-	// the same pickup rules are used for client side and server side
-	if ( !bg.CanItemBeGrabbed(/*g_gametype()*/ null, self.s, other.client.ps) ) {
+	// The same pickup rules are used for client side and server side.
+	if (!bg.CanItemBeGrabbed(/*g_gametype()*/ null, self.s, other.client.ps)) {
 		return;
 	}
 
@@ -10866,23 +11994,23 @@ function TouchItem(self, other) {
 			respawn = PickupWeapon(self, other);
 			break;
 		case IT.AMMO:
-			respawn = Pickup_Ammo(self, other);
+			respawn = PickupAmmo(self, other);
 			break;
 		case IT.ARMOR:
-			respawn = Pickup_Armor(self, other);
+			respawn = PickupArmor(self, other);
 			break;
 		case IT.HEALTH:
-			respawn = Pickup_Health(self, other);
+			respawn = PickupHealth(self, other);
 			break;
 		case IT.POWERUP:
-			respawn = Pickup_Powerup(self, other);
+			respawn = PickupPowerup(self, other);
 			predict = false;
 			break;
 		case IT.TEAM:
-			respawn = Pickup_Team(self, other);
+			respawn = PickupTeam(self, other);
 			break;
 		case IT.HOLDABLE:
-			respawn = Pickup_Holdable(self, other);
+			respawn = PickupHoldable(self, other);
 			break;
 		default:
 			return;
@@ -10894,7 +12022,7 @@ function TouchItem(self, other) {
 // 	if (predict) {
 		bg.AddPredictableEventToPlayerstate(other.client.ps, EV.ITEM_PICKUP, self.s.modelIndex);
 // 	} else {
-// 		G_AddEvent( other, EV.ITEM_PICKUP, self.s.modelindex );
+// 		G_AddEvent( other, EV.ITEM_PICKUP, self.s.modelIndex );
 // 	}
 // 
 // 	// powerup pickups are global broadcasts
@@ -10904,13 +12032,13 @@ function TouchItem(self, other) {
 // 			gentity_t	*te;
 // 
 // 			te = G_TempEntity( self.s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
-// 			te->s.eventParm = self.s.modelindex;
+// 			te->s.eventParm = self.s.modelIndex;
 // 			te->r.svFlags |= SVF_BROADCAST;
 // 		} else {
 // 			gentity_t	*te;
 // 
 // 			te = G_TempEntity( self.s.pos.trBase, EV_GLOBAL_ITEM_PICKUP );
-// 			te->s.eventParm = self.s.modelindex;
+// 			te->s.eventParm = self.s.modelIndex;
 // 			// only send this temp entity to a single client
 // 			te->r.svFlags |= SVF_SINGLECLIENT;
 // 			te->r.singleClient = other->s.number;
@@ -10920,45 +12048,44 @@ function TouchItem(self, other) {
 // 	// fire item targets
 // 	G_UseTargets (ent, other);
 
-	// wait of -1 will not respawn
-	if ( self.wait == -1 ) {
-		self.svFlags |= ServerFlags.NOCLIENT;
+	// Wait of -1 will not respawn.
+	if (self.wait === -1) {
+		self.svFlags |= SVF.NOCLIENT;
 		self.s.eFlags |= EF.NODRAW;
 		self.contents = 0;
 		self.unlinkAfterEvent = true;
 		return;
 	}
 	
-	// non zero wait overrides respawn time
-	if ( self.wait ) {
+	// Non-zero wait overrides respawn time.
+	if (self.wait) {
 		respawn = self.wait;
 	}
 	
-	// random can be used to vary the respawn time
-	if ( self.random ) {
+	// Random can be used to vary the respawn time.
+	if (self.random) {
 		respawn += Math.random() * self.random;
-		if ( respawn < 1 ) {
+		if (respawn < 1) {
 			respawn = 1;
 		}
 	}
 	
-// 	// dropped items will not respawn
+// 	// Dropped items will not respawn.
 // 	if ( self.flags & FL_DROPPED_ITEM ) {
 // 		self.freeAfterEvent = true;
 // 	}
 	
-	// picked up items still stay around, they just don't
+	// Picked up items still stay around, they just don't
 	// draw anything.  This allows respawnable items
 	// to be placed on movers.
-	self.svFlags |= ServerFlags.NOCLIENT;
+	self.svFlags |= SVF.NOCLIENT;
 	self.s.eFlags |= EF.NODRAW;
 	self.contents = 0;
 	
-	// ZOID
 	// A negative respawn times means to never respawn this item (but don't 
 	// delete it).  This is used by items that are respawned by third party 
 	// events such as ctf flags
-	if ( respawn <= 0 ) {
+	if (respawn <= 0) {
 		self.nextthink = 0;
 		self.think = 0;
 	} else {
@@ -10999,7 +12126,7 @@ function PickupWeapon(ent, other) {
 	// Add the weapon.
 	other.client.ps.stats[STAT.WEAPONS] |= (1 << ent.item.giTag);
 	
-	Add_Ammo(other, ent.item.giTag, quantity);
+	AddAmmo(other, ent.item.giTag, quantity);
 	
 	// team deathmatch has slow weapon respawns
 	// if ( g_gametype.integer == GT_TEAM ) {
@@ -11010,9 +12137,9 @@ function PickupWeapon(ent, other) {
 }
 
 /**
- * Pickup_Ammo
+ * PickupAmmo
  */
-function Pickup_Ammo (ent, other) {
+function PickupAmmo(ent, other) {
 	var quantity;
 	
 	if (ent.count) {
@@ -11021,16 +12148,15 @@ function Pickup_Ammo (ent, other) {
 		quantity = ent.item.quantity;
 	}
 	
-	Add_Ammo(other, ent.item.giTag, quantity);
+	AddAmmo(other, ent.item.giTag, quantity);
 	
 	return RESPAWN.AMMO;
 }
 
 /**
- * Add_Ammo
+ * AddAmmo
  */
-function Add_Ammo (ent, weapon, count) {
-	
+function AddAmmo(ent, weapon, count) {
 	ent.client.ps.ammo[weapon] += count;
 	
 	if (ent.client.ps.ammo[weapon] > 200) {
@@ -11039,10 +12165,9 @@ function Add_Ammo (ent, weapon, count) {
 }
 
 /**
- * Pickup_Armor
+ * PickupArmor
  */
-function Pickup_Armor(ent, other) {
-	
+function PickupArmor(ent, other) {	
 	other.client.ps.stats[STAT.ARMOR] += ent.item.quantity;
 	
 	if (other.client.ps.stats[STAT.ARMOR] > other.client.ps.stats[STAT.MAX_HEALTH] * 2) {
@@ -11053,9 +12178,9 @@ function Pickup_Armor(ent, other) {
 }
 
 /**
- * Pickup_Health
+ * PickupHealth
  */
-function Pickup_Health(ent, other) {
+function PickupHealth(ent, other) {
 	var max,
 		quantity;
 	
@@ -11088,9 +12213,9 @@ function Pickup_Health(ent, other) {
 }
 
 /**
- * Pickup_Powerup
+ * PickupPowerup
  */
-function Pickup_Powerup(ent, other) {
+function PickupPowerup(ent, other) {
 	var quantity,
 		i,
 		client;
@@ -11115,8 +12240,8 @@ function Pickup_Powerup(ent, other) {
 /**
  * TODO : Stub functions for now
  */
-function Pickup_Team(ent, other) { return 0; }
-function Pickup_Holdable(ent, other) { return RESPAWN.HOLDABLE; }
+function PickupTeam(ent, other) { return 0; }
+function PickupHoldable(ent, other) { return RESPAWN.HOLDABLE; }
 
 		/**
  * TeleportPlayer
@@ -11168,6 +12293,221 @@ function TeleportPlayer(player, origin, angles) {
 		sv.LinkEntity(player);
 	//}
 }
+		var MISSILE_PRESTEP_TIME = 50;
+
+/**
+ * MissileThink
+ */
+function MissileThink(ent) {
+	// Get current position.
+	var origin = [0, 0, 0];
+	bg.EvaluateTrajectory(ent.s.pos, level.time, origin);
+
+	// Trace a line from the previous position to the current position.
+	var tr = sv.Trace(ent.currentOrigin, origin, ent.mins, ent.maxs, ent.ownerNum, ent.clipmask);
+	if (tr.startSolid || tr.allSolid) {
+		// Make sure the tr.entityNum is set to the entity we're stuck in.
+		tr = sv.Trace(ent.currentOrigin, ent.currentOrigin, ent.mins, ent.maxs, ent.ownerNum, ent.clipmask);
+		tr.fraction = 0;
+	} else {
+		vec3.set(tr.endPos, ent.currentOrigin);
+	}
+
+	sv.LinkEntity(ent);
+
+	if (tr.fraction !== 1) {
+		// Never explode or bounce on sky.
+		if (tr.surfaceFlags & SURF.NOIMPACT) {
+			// // If grapple, reset owner.
+			// if (ent.parent && ent.parent.client && ent.parent.client.hook == ent) {
+			// 	ent.parent.client.hook = NULL;
+			// }
+			FreeEntity(ent);
+			return;
+		}
+		
+		MissileImpact(ent, tr);
+
+		if (ent.s.eType !== ET.MISSILE) {
+			return;  // exploded
+		}
+	}
+
+	// Check think function after bouncing.
+	EntityThink(ent);
+}
+
+/**
+ * MissileImpact
+ */
+function MissileImpact(ent, trace) {
+	var other = level.gentities[trace.entityNum];
+	var hitClient = false;
+
+	// Check for bounce.
+	// if (!other.takeDamage &&
+	// 	(ent.s.eFlags & (EF.BOUNCE | EF.BOUNCE_HALF))) {
+	// 	BounceMissile(ent, trace);
+	// 	AddEvent(ent, EV.GRENADE_BOUNCE, 0);
+	// 	return;
+	// }
+
+	// Impact damage.
+	if (other.takeDamage) {
+		// FIXME: wrong damage direction?
+		if (ent.damage) {
+			var velocity = [0, 0, 0];
+
+			if (LogAccuracyHit(other, level.gentities[ent.ownerNum])) {
+				level.gentities[ent.ownerNum].client.accuracy_hits++;
+				hitClient = true;
+			}
+
+			bg.EvaluateTrajectoryDelta(ent.s.pos, level.time, velocity);
+			if (vec3.length(velocity) === 0) {
+				velocity[2] = 1;  // stepped on a grenade
+			}
+			
+			Damage(other, ent, level.gentities[ent.ownerNum], velocity,
+				ent.s.origin, ent.damage, 0, ent.methodOfDeath);
+		}
+	}
+
+	// if (!strcmp(ent.classname, "hook")) {
+	// 	gentity_t *nent;
+	// 	vec3_t v;
+
+	// 	nent = G_Spawn();
+	// 	if ( other.takeDamage && other.client ) {
+
+	// 		G_AddEvent( nent, EV_MISSILE_HIT, DirToByte( trace.plane.normal ) );
+	// 		nent.s.otherEntityNum = other.s.number;
+
+	// 		ent.enemy = other;
+
+	// 		v[0] = other.currentOrigin[0] + (other.mins[0] + other.maxs[0]) * 0.5;
+	// 		v[1] = other.currentOrigin[1] + (other.mins[1] + other.maxs[1]) * 0.5;
+	// 		v[2] = other.currentOrigin[2] + (other.mins[2] + other.maxs[2]) * 0.5;
+
+	// 		SnapVectorTowards( v, ent.s.pos.trBase );	// save net bandwidth
+	// 	} else {
+	// 		VectorCopy(trace.endpos, v);
+	// 		G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace.plane.normal ) );
+	// 		ent.enemy = NULL;
+	// 	}
+
+	// 	SnapVectorTowards( v, ent.s.pos.trBase );	// save net bandwidth
+
+	// 	nent.freeAfterEvent = qtrue;
+	// 	// change over to a normal entity right at the point of impact
+	// 	nent.s.eType = ET_GENERAL;
+	// 	ent.s.eType = ET_GRAPPLE;
+
+	// 	G_SetOrigin( ent, v );
+	// 	G_SetOrigin( nent, v );
+
+	// 	ent.think = Weapon_HookThink;
+	// 	ent.nextthink = level.time + FRAMETIME;
+
+	// 	ent.parent.client.ps.pm_flags |= PMF_GRAPPLE_PULL;
+	// 	VectorCopy( ent.currentOrigin, ent.parent.client.ps.grapplePoint);
+
+	// 	trap_LinkEntity( ent );
+	// 	trap_LinkEntity( nent );
+
+	// 	return;
+	// }
+
+	// Is it cheaper in bandwidth to just remove this ent and create a new
+	// one, rather than changing the missile into the explosion?
+	if (other.takeDamage && other.client) {
+		AddEvent(ent, EV.MISSILE_HIT, qm.DirToByte(trace.plane.normal));
+		ent.s.otherEntityNum = other.s.number;
+	} else if (trace.surfaceFlags & SURF.METALSTEPS) {
+		AddEvent(ent, EV.MISSILE_MISS_METAL, qm.DirToByte(trace.plane.normal));
+	} else {
+		AddEvent(ent, EV.MISSILE_MISS, qm.DirToByte(trace.plane.normal));
+	}
+
+	ent.freeAfterEvent = true;
+
+	// Change over to a normal entity right at the point of impact
+	ent.s.eType = ET.GENERAL;
+
+	// SnapVectorTowards(trace.endpos, ent.s.pos.trBase );  // save net bandwidth
+
+	SetOrigin(ent, trace.endPos);
+
+	// Splash damage (doesn't apply to person directly hit).
+	if (ent.splashDamage) {
+		if (RadiusDamage(trace.endPos, ent.parent, ent.splashDamage, ent.splashRadius, other, ent.splashMethodOfDeath)) {
+			if (!hitClient) {
+				level.gentities[ent.ownerNum].client.accuracy_hits++;
+			}
+		}
+	}
+
+	sv.LinkEntity(ent);
+}
+
+/**
+ * ExplodeMissile
+ *
+ * Explode a missile without an impact
+ */
+function ExplodeMissile(ent) {
+	var origin = [0, 0, 0];
+	// We don't have a valid direction, so just point straight up.
+	var dir = [0, 0, 1];
+
+	bg.EvaluateTrajectory(ent.s.pos, level.time, origin);
+	// SnapVector(origin);
+	SetOrigin(ent, origin);
+
+	ent.s.eType = ET.GENERAL;
+	ent.freeAfterEvent = true;
+	AddEvent(ent, EV.MISSILE_MISS, DirToByte(dir));
+
+	// Splash damage
+	// if (ent.splashDamage) {
+	// 	if (G_RadiusDamage( ent.currentOrigin, ent.parent, ent.splashDamage, ent.splashRadius, ent, ent.splashMethodOfDeath ) ) {
+	// 		g_entities[ent.ownerNum].client.accuracy_hits++;
+	// 	}
+	// }
+
+	sv.LinkEntity(ent);
+}
+
+/**
+ * FireRocket
+ */
+function FireRocket(self, start, dir) {
+	var rocket = SpawnEntity();
+	rocket.classname = 'rocket';
+	rocket.nextthink = level.time + 15000;
+	rocket.think = ExplodeMissile;
+	rocket.s.eType = ET.MISSILE;
+	rocket.svFlags = SVF.USE_CURRENT_ORIGIN;
+	rocket.s.weapon = WP.ROCKET_LAUNCHER;
+	rocket.ownerNum = self.s.number;
+	rocket.parent = self;
+	rocket.damage = 100;
+	rocket.splashDamage = 100;
+	rocket.splashRadius = 120;
+	rocket.methodOfDeath = MOD.ROCKET;
+	rocket.splashMethodOfDeath = MOD.ROCKET_SPLASH;
+	rocket.clipmask = MASK.SHOT;
+
+	rocket.s.pos.trType = TR.LINEAR;
+	rocket.s.pos.trTime = level.time - MISSILE_PRESTEP_TIME;  // move a bit on the very first frame
+	vec3.set(start, rocket.s.pos.trBase);
+	vec3.normalize(dir);
+	vec3.scale(dir, 900, rocket.s.pos.trDelta);
+	// SnapVector( rocket.s.pos.trDelta );  // save net bandwidth
+	vec3.set(start, rocket.currentOrigin);
+
+	return rocket;
+}
 		/**
  * AimAtTarget
  */
@@ -11205,6 +12545,11 @@ function AimAtTarget(self) {
 var MACHINEGUN_DAMAGE      = 7;
 var MACHINEGUN_TEAM_DAMAGE = 5; // wimpier MG in teamplay
 
+var forward = [0, 0, 0];
+var right   = [0, 0, 0];
+var up      = [0, 0, 0];
+var muzzle  = [0, 0, 0];
+
 /**
  * FireWeapon
  */
@@ -11223,11 +12568,6 @@ function FireWeapon(ent) {
 	// }
 
 	// Set aiming directions.
-	// TODO Stop passing these around as mutable args everywhere
-	var forward = [0, 0, 0];
-	var right = [0, 0, 0];
-	var up = [0, 0, 0];
-	var muzzle = [0, 0, 0];
 	qm.AnglesToVectors(client.ps.viewangles, forward, right, up);
 	CalcMuzzlePointOrigin(ent, client.oldOrigin, forward, right, up, muzzle);
 
@@ -11244,7 +12584,7 @@ function FireWeapon(ent) {
 		// 	break;
 		case WP.MACHINEGUN:
 			// if (g_gametype.integer !== GT_TEAM) {
-				BulletFire(ent, muzzle, forward, right, up, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
+				BulletFire(ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
 			// } else {
 			// 	Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
 			// }
@@ -11252,9 +12592,9 @@ function FireWeapon(ent) {
 		// case WP_GRENADE_LAUNCHER:
 		// 	weapon_grenadelauncher_fire( ent );
 		// 	break;
-		// case WP_ROCKET_LAUNCHER:
-		// 	Weapon_RocketLauncher_Fire( ent );
-		// 	break;
+		case WP.ROCKET_LAUNCHER:
+			RocketLauncherFire(ent);
+			break;
 		// case WP_PLASMAGUN:
 		// 	Weapon_Plasmagun_Fire( ent );
 		// 	break;
@@ -11288,7 +12628,7 @@ function CalcMuzzlePointOrigin (ent, origin, forward, right, up, muzzlePoint) {
 /**
  * BulletFire
  */
-function BulletFire(ent, muzzle, forward, right, up, spread, damage, mod) {
+function BulletFire(ent, spread, damage, mod) {
 	// damage *= s_quadFactor;
 
 	var r = Math.random() * Math.PI * 2;
@@ -11304,7 +12644,7 @@ function BulletFire(ent, muzzle, forward, right, up, spread, damage, mod) {
 	// for (var i = 0; i < 10; i++) {
 		var tr = sv.Trace(muzzle, end, null, null, passent, MASK.SHOT);
 
-		if (tr.surfaceFlags & sh.SurfaceFlags.NOIMPACT) {
+		if (tr.surfaceFlags & SURF.NOIMPACT) {
 			return;
 		}
 
@@ -11314,7 +12654,7 @@ function BulletFire(ent, muzzle, forward, right, up, spread, damage, mod) {
 		// SnapVectorTowards(tr.endpos, muzzle);
 
 		// Send bullet impact.
-		// if (traceEnt->takedamage && traceEnt->client) {
+		// if (traceEnt->takeDamage && traceEnt->client) {
 		// 	tent = G_TempEntity(tr.endpos, EV_BULLET_HIT_FLESH);
 		// 	tent.s.eventParm = traceEnt.s.number;
 		// 	// if (LogAccuracyHit(traceEnt, ent)) {
@@ -11326,12 +12666,21 @@ function BulletFire(ent, muzzle, forward, right, up, spread, damage, mod) {
 		// }
 		// tent.s.otherEntityNum = ent.s.number;
 
-		// if (traceEnt.takedamage) {
+		// if (traceEnt.takeDamage) {
 		// 	G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, mod);
 		// }
 
 		// break;
 	// }
+}
+
+/**
+ * RocketLauncherFire*
+ */
+function RocketLauncherFire(ent) {
+	var m = FireRocket(ent, muzzle, forward);
+	// m.damage *= s_quadFactor;
+	// m.splashDamage *= s_quadFactor;
 }
 
 		entityEvents['info_notnull'] = {
@@ -11495,6 +12844,9 @@ function (_, glmatrix, ByteBuffer, sh, qm) {
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
 
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
 /**
  * Cvar flags
  */
@@ -11565,6 +12917,70 @@ var BUTTON = {
 	ANY:          2048                                     // any key whatsoever
 };
 
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
 	// We don't want everyone who requires us to 
 	// have the same version of clipmap.
 	function ClipMap(imp) {
@@ -11572,13 +12988,14 @@ var BUTTON = {
 var BOX_MODEL_HANDLE     = 255;
 var CAPSULE_MODEL_HANDLE = 254;
 
-// keep 1/8 unit away to keep the position valid before network snapping
-// and to avoid various numeric issues
+// Keep 1/8 unit away to keep the position valid before network snapping
+// and to avoid various numeric issues.
 var SURFACE_CLIP_EPSILON = 0.125;
 
 var ClipMapLocals = function () {
 	this.shaders      = null;
 	this.brushes      = null;
+	this.brushSides   = null;
 	this.models       = null;
 	this.leafs        = null;
 	this.leafBrushes  = null;
@@ -11601,7 +13018,7 @@ var cnode_t = function () {
 var cmodel_t = function () {
 	this.mins = [0, 0, 0];
 	this.maxs = [0, 0, 0];
-	this.leaf = null;                                      // submodels don't reference the main tree
+	this.leaf = new cleaf_t();                             // submodels don't reference the main tree
 };
 
 var cleaf_t = function () {
@@ -11623,8 +13040,8 @@ var cbrush_t = function () {
 	this.shaderNum  = 0;                                    // the shader that determined the contents
 	this.contents   = 0;
 	this.bounds     = [[0, 0, 0], [0, 0, 0]];
-	this.numsides   = 0;
-	this.sides      = null;
+	this.firstSide  = 0;
+	this.numSides   = 0;
 	this.checkcount = 0;                                   // to avoid repeated testings
 };
 
@@ -11642,7 +13059,7 @@ winding_t.prototype.clone = function (to) {
 
 	to.p = new Array(this.p.length);
 	for (var i = 0; i < this.p.length; i++) {
-		to.p[i] = vec3.create(this.p[i]);
+		to.p[i] = vec3.set(this.p[i], [0, 0, 0]);
 	}
 
 	return to;
@@ -11654,8 +13071,6 @@ var SIDE_FRONT = 0;
 var SIDE_BACK  = 1;
 var SIDE_ON    = 2;
 var SIDE_CROSS = 3;
-
-var CLIP_EPSILON = 0.1;
 
 var MAX_MAP_BOUNDS = 65535;
 
@@ -11735,7 +13150,7 @@ var TraceResults = function () {
 	this.startSolid = false;                               // if true, the initial point was in a solid area
 	this.fraction   = 1.0;                                 // time completed, 1.0 = didn't hit anything
 	this.endPos     = [0, 0, 0];                           // final position
-	this.plane      = null;                                // surface normal at impact, transformed to world space
+	this.plane      = new qm.Plane();                      // surface normal at impact, transformed to world space
 };
 
 TraceResults.prototype.clone = function (to) {
@@ -11816,6 +13231,13 @@ function log() {
 }
 		var cm;
 
+// To allow boxes to be treated as brush models, we allocate
+// some extra indexes along with those needed by the map
+var BOX_BRUSHES = 1;
+var BOX_SIDES   = 6;
+var BOX_LEAFS   = 2;
+var BOX_PLANES  = 12;
+
 /**
  * LoadMap
  */
@@ -11855,6 +13277,8 @@ function LoadMap(mapName, callback) {
 		LoadEntities(data, header.lumps[sh.Lumps.ENTITIES]);
 		LoadPatches(data, header.lumps[sh.Lumps.SURFACES], header.lumps[sh.Lumps.DRAWVERTS]);
 
+		InitBoxHull();
+
 		if (callback) {
 			callback();
 		}
@@ -11886,9 +13310,10 @@ function LoadLeafs(buffer, leafLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = leafLump.fileofs;
 
-	var leafs = cm.leafs = new Array(leafLump.filelen / sh.dleaf_t.size);
+	var numLeafs = leafLump.filelen / sh.dleaf_t.size;
+	var leafs = cm.leafs = new Array(numLeafs + BOX_LEAFS);
 
-	for (var i = 0; i < leafs.length; i++) {
+	for (var i = 0; i < numLeafs; i++) {
 		var leaf = leafs[i] = new cleaf_t();
 
 		leaf.cluster = bb.readInt();
@@ -11911,7 +13336,8 @@ function LoadLeafBrushes(buffer, leafBrushLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = leafBrushLump.fileofs;
 
-	var leafBrushes = cm.leafBrushes = new Array(leafBrushLump.filelen / 4);
+	var numLeafBrushes = leafBrushLump.filelen / 4;
+	var leafBrushes = cm.leafBrushes = new Array(numLeafBrushes + BOX_BRUSHES);
 
 	for (var i = 0; i < leafBrushes.length; i++) {
 		leafBrushes[i] = bb.readInt();
@@ -11938,9 +13364,10 @@ function LoadPlanes(buffer, planeLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = planeLump.fileofs;
 
-	var planes = cm.planes = new Array(planeLump.filelen / sh.dplane_t.size);
+	var numPlanes = planeLump.filelen / sh.dplane_t.size;
+	var planes = cm.planes = new Array(numPlanes + BOX_PLANES);
 
-	for (var i = 0; i < planes.length; i++) {
+	for (var i = 0; i < numPlanes; i++) {
 		var plane = planes[i] = new qm.Plane();
 
 		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
@@ -11959,9 +13386,10 @@ function LoadBrushSides(buffer, brushSideLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = brushSideLump.fileofs;
 
-	var brushSides = cm.brushSides = new Array(brushSideLump.filelen / sh.dbrushside_t.size);
+	var numBrushSides = brushSideLump.filelen / sh.dbrushside_t.size;
+	var brushSides = cm.brushSides = new Array(numBrushSides + BOX_SIDES);
 
-	for (var i = 0; i < brushSides.length; i++) {
+	for (var i = 0; i < numBrushSides; i++) {
 		var side = brushSides[i] = new cbrushside_t();
 
 		var planeNum = bb.readInt();
@@ -11983,18 +13411,26 @@ function LoadBrushes(buffer, brushLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = brushLump.fileofs;
 
-	var brushes = cm.brushes = new Array(brushLump.filelen / sh.dbrush_t.size);
+	var numBrushes = brushLump.filelen / sh.dbrush_t.size;
+	var brushes = cm.brushes = new Array(numBrushes + BOX_BRUSHES);
 
-	for (var i = 0; i < brushes.length; i++) {
+	for (var i = 0; i < numBrushes; i++) {
 		var brush = brushes[i] = new cbrush_t();
 
-		brush.side = bb.readInt();
-		brush.numsides = bb.readInt();
+		brush.firstSide = bb.readInt();
+		brush.numSides = bb.readInt();
 		brush.shaderNum = bb.readInt();
-		brush.sides = brushSides.slice(brush.side, brush.side + brush.numsides);
 		brush.bounds = [
-			[-brush.sides[0].plane.dist, -brush.sides[2].plane.dist, -brush.sides[4].plane.dist],
-			[brush.sides[1].plane.dist, brush.sides[3].plane.dist, brush.sides[5].plane.dist]
+			[
+				-cm.brushSides[brush.firstSide + 0].plane.dist,
+				-cm.brushSides[brush.firstSide + 2].plane.dist,
+				-cm.brushSides[brush.firstSide + 4].plane.dist
+			],
+			[
+				cm.brushSides[brush.firstSide + 1].plane.dist,
+				cm.brushSides[brush.firstSide + 3].plane.dist,
+				cm.brushSides[brush.firstSide + 5].plane.dist
+			]
 		];
 		brush.contents = shaders[brush.shaderNum].contents;
 	}
@@ -12025,20 +13461,20 @@ function LoadSubmodels(buffer, modelLump) {
 			continue;	// world model doesn't need other info
 		}
 
-		// make a "leaf" just to hold the model's brushes and surfaces
-		/*out->leaf.numLeafBrushes = LittleLong( in->numBrushes );
-		indexes = Hunk_Alloc( out->leaf.numLeafBrushes * 4, h_high );
-		out->leaf.firstLeafBrush = indexes - cm.leafbrushes;
-		for ( j = 0 ; j < out->leaf.numLeafBrushes ; j++ ) {
-			indexes[j] = LittleLong( in->firstBrush ) + j;
-		}
+		// // Make a "leaf" just to hold the model's brushes and surfaces.
+		// out->leaf.numLeafBrushes = LittleLong( in->numBrushes );
+		// indexes = Hunk_Alloc( out->leaf.numLeafBrushes * 4, h_high );
+		// out->leaf.firstLeafBrush = indexes - cm.leafbrushes;
+		// for ( j = 0 ; j < out->leaf.numLeafBrushes ; j++ ) {
+		// 	indexes[j] = LittleLong( in->firstBrush ) + j;
+		// }
 
-		out->leaf.numLeafSurfaces = LittleLong( in->numSurfaces );
-		indexes = Hunk_Alloc( out->leaf.numLeafSurfaces * 4, h_high );
-		out->leaf.firstLeafSurface = indexes - cm.leafsurfaces;
-		for ( j = 0 ; j < out->leaf.numLeafSurfaces ; j++ ) {
-			indexes[j] = LittleLong( in->firstSurface ) + j;
-		}*/
+		// out->leaf.numLeafSurfaces = LittleLong( in->numSurfaces );
+		// indexes = Hunk_Alloc( out->leaf.numLeafSurfaces * 4, h_high );
+		// out->leaf.firstLeafSurface = indexes - cm.leafsurfaces;
+		// for ( j = 0 ; j < out->leaf.numLeafSurfaces ; j++ ) {
+		// 	indexes[j] = LittleLong( in->firstSurface ) + j;
+		// }
 	}
 }
 
@@ -12192,20 +13628,52 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
 }
 
 /**
- * ClipHandleToModel
+ * InitBoxHull
+ * 
+ * Set up the planes and nodes so that the six floats of a bounding box
+ * can just be stored out and get a proper clipping hull structure.
  */
-function ClipHandleToModel(handle) {
-	if (handle < 0) {
-		com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + handle);
+var box_planes = null;
+var box_brush = null;
+var box_model = null;
+
+function InitBoxHull() {
+	box_planes = new Array(BOX_PLANES);
+	for (var i = 0; i < BOX_PLANES; i++) {
+		box_planes[i] = cm.planes[cm.planes.length - BOX_PLANES + i] = new qm.Plane();
 	}
-	if (handle < cm.models.length) {
-		return cm.models[handle];
+
+	box_brush = cm.brushes[cm.brushes.length - BOX_BRUSHES] = new cbrush_t();
+	box_brush.firstSide = cm.brushSides.length - BOX_SIDES;
+	box_brush.numSides = BOX_SIDES;
+	box_brush.contents = CONTENTS.BODY;
+
+	box_model = new cmodel_t();
+	box_model.leaf.numLeafBrushes = 1;
+	box_model.leaf.firstLeafBrush = cm.leafBrushes.length - BOX_BRUSHES;
+	cm.leafBrushes[box_model.leaf.firstLeafBrush] = cm.brushes.length - BOX_BRUSHES;
+
+	for (var i = 0; i < 6; i++) {
+		var side = i & 1;
+
+		// Brush sides.
+		var s = cm.brushSides[box_brush.firstSide + i] = new sh.dbrushside_t();
+		s.plane = box_planes[i * 2 + side];
+		s.surfaceFlags = 0;
+
+		// Planes.
+		var p = box_planes[i * 2];
+		p.type = i >> 1;
+		p.normal[0] = p.normal[1] = p.normal[2] = 0;
+		p.normal[i >> 1] = 1;
+		p.signbits = 0;
+
+		p = box_planes[i * 2 + 1];
+		p.type = 3 + (i >> 1);
+		p.normal[0] = p.normal[1] = p.normal[2] = 0;
+		p.normal[i >> 1] = -1;
+		p.signbits = qm.GetPlaneSignbits(p.normal);
 	}
-	/*if ( handle == BOX_MODEL_HANDLE ) {
-		return &box_model;
-	}*/
-	
-	com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 
 /**
@@ -12219,99 +13687,64 @@ function InlineModel(num) {
 	return num;
 }
 
-// /**
-//  * InitBoxHull
-//  * 
-//  * Set up the planes and nodes so that the six floats of a bounding box
-//  * can just be stored out and get a proper clipping hull structure.
-//  */
-// cmodel_t	box_model;
-// cplane_t	*box_planes;
-// cbrush_t	*box_brush;
+/**
+ * TempBoxModel
+ *
+ * To keep everything totally uniform, bounding boxes are turned into small
+ * BSP trees instead of being compared directly.
+ * Capsules are handled differently though.
+ */
+function TempBoxModel(mins, maxs, capsule) {
+	vec3.set(mins, box_model.mins);
+	vec3.set(maxs, box_model.maxs);
 
-// function InitBoxHull() {
-// 	int			i;
-// 	int			side;
-// 	cplane_t	*p;
-// 	cbrushside_t	*s;
+	if (capsule) {
+		return CAPSULE_MODEL_HANDLE;
+	}
 
-// 	box_planes = cm.planes[cm.numPlanes];
+	box_planes[0].dist = maxs[0];
+	box_planes[1].dist = -maxs[0];
+	box_planes[2].dist = mins[0];
+	box_planes[3].dist = -mins[0];
+	box_planes[4].dist = maxs[1];
+	box_planes[5].dist = -maxs[1];
+	box_planes[6].dist = mins[1];
+	box_planes[7].dist = -mins[1];
+	box_planes[8].dist = maxs[2];
+	box_planes[9].dist = -maxs[2];
+	box_planes[10].dist = mins[2];
+	box_planes[11].dist = -mins[2];
 
-// 	box_brush = cm.brushes[cm.numBrushes];
-// 	box_brush.numsides = 6;
-// 	box_brush.sides = cm.brushsides + cm.numBrushSides;
-// 	box_brush.contents = CONTENTS.BODY;
+	vec3.set(mins, box_brush.bounds[0]);
+	vec3.set(maxs, box_brush.bounds[1]);
 
-// 	box_model.leaf.numLeafBrushes = 1;
-// 	box_model.leaf.firstLeafBrush = cm.numLeafBrushes;
-// 	cm.leafbrushes[cm.numLeafBrushes] = cm.numBrushes;
-
-// 	for (var i = 0; i < 6; i++) {
-// 		side = i&1;
-
-// 		// brush sides
-// 		var s = cm.brushsides[cm.numBrushSides+i];
-// 		s.plane = 	cm.planes + (cm.numPlanes+i*2+side);
-// 		s.surfaceFlags = 0;
-
-// 		// planes
-// 		var p = box_planes[i*2];
-// 		p.type = i>>1;
-// 		p.signbits = 0;
-// 		vec3.set([0, 0, 0], p.normal);
-// 		p.normal[i>>1] = 1;
-
-// 		p = box_planes[i*2+1];
-// 		p.type = 3 + (i>>1);
-// 		p.signbits = 0;
-// 		vec3.set([0, 0, 0], p.normal);
-// 		p.normal[i>>1] = -1;
-
-// 		p.signbits = qm.GetPlaneSignbits(p);
-// 	}	
-// }
-
-// /**
-//  * TempBoxModel
-//  *
-//  * To keep everything totally uniform, bounding boxes are turned into small
-//  * BSP trees instead of being compared directly.
-//  * Capsules are handled differently though.
-//  */
-// function TempBoxModel(mins, maxs, capsule) {
-// 	vec3.set(mins, box_model.mins);
-// 	vec3.set(maxs, box_model.maxs);
-
-// 	if (capsule) {
-// 		return CAPSULE_MODEL_HANDLE;
-// 	}
-
-// 	box_planes[0].dist = maxs[0];
-// 	box_planes[1].dist = -maxs[0];
-// 	box_planes[2].dist = mins[0];
-// 	box_planes[3].dist = -mins[0];
-// 	box_planes[4].dist = maxs[1];
-// 	box_planes[5].dist = -maxs[1];
-// 	box_planes[6].dist = mins[1];
-// 	box_planes[7].dist = -mins[1];
-// 	box_planes[8].dist = maxs[2];
-// 	box_planes[9].dist = -maxs[2];
-// 	box_planes[10].dist = mins[2];
-// 	box_planes[11].dist = -mins[2];
-
-// 	vec3.set(mins, box_brush.bounds[0]);
-// 	vec3.set(maxs, box_brush.bounds[1]);
-
-// 	return BOX_MODEL_HANDLE;
-// }
+	return BOX_MODEL_HANDLE;
+}
 
 /**
  * ModelBounds
  */
 function ModelBounds(model, mins, maxs) {
-	var cmod = ClipHandleToModel( model );
+	var cmod = ClipHandleToModel(model);
 	vec3.set(cmod.mins, mins);
 	vec3.set(cmod.maxs, maxs);
+}
+
+/**
+ * ClipHandleToModel
+ */
+function ClipHandleToModel(handle) {
+	if (handle < 0) {
+		com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + handle);
+	}
+	if (handle < cm.models.length) {
+		return cm.models[handle];
+	}
+	if (handle === BOX_MODEL_HANDLE) {
+		return box_model;
+	}
+	
+	com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 		// int	c_totalPatchBlocks;
 // int	c_totalPatchSurfaces;
@@ -12363,7 +13796,6 @@ function PlaneFromPoints(plane, a, b, c) {
 	vec3.normalize(plane);
 
 	if (vec3.length(plane) === 0) {
-		//console.log('PlaneFromPoints', 'degenerate tri');
 		return false;
 	}
 
@@ -12438,7 +13870,7 @@ function GeneratePatchCollide(width, height, points) {
 
 	//c_totalPatchBlocks += (grid.width - 1) * (grid.height - 1);
 
-	// generate a bsp tree for the surface
+	// Generate a bsp tree for the surface.
 	PatchCollideFromGrid(grid, pc);
 
 	// Expand by one unit for epsilon purposes.
@@ -13215,12 +14647,12 @@ function AddFacetBevels(pc, facet) {
 	// Add the edge bevels.
 	//
 
-	// test the non-axial plane edges
-	for (j = 0 ; j < w.p.length; j++) {
+	// Test the non-axial plane edges.
+	for (j = 0; j < w.p.length; j++) {
 		k = (j+1)%w.p.length;
 		vec3.subtract(w.p[j], w.p[k], vec);
 
-		// if it's a degenerate edge
+		// If it's a degenerate edge.
 		vec3.normalize(vec);
 		if (vec3.length(vec) < 0.5) {
 			continue;
@@ -13375,7 +14807,7 @@ function FindPlane2(pc, plane, flipped) {
 		}
 	}
 
-	// Add a new plane
+	// Add a new plane.
 	if (pc.planes.length === MAX_PATCH_PLANES) {
 		com.error(sh.Err.DROP, 'MAX_PATCH_PLANES');
 	}
@@ -13409,16 +14841,14 @@ function TraceThroughPatchCollide(tw, pc) {
 	var startp = [0, 0, 0];
 	var endp = [0, 0, 0];
 
-	debugPatchCollide = pc;
-
-	if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1])) {
+	if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1], SURFACE_CLIP_EPSILON)) {
 		return;
 	}
 
-	// if (tw.isPoint) {
-	// 	CM_TracePointThroughPatchCollide( tw, pc );
-	// 	return;
-	// }
+	if (tw.isPoint) {
+		TracePointThroughPatchCollide(tw, pc);
+		return;
+	}
 
 	for (var i = 0; i < pc.facets.length; i++) {
 		var facet = pc.facets[i];
@@ -13437,7 +14867,7 @@ function TraceThroughPatchCollide(tw, pc) {
 			// Adjust the plane distance apropriately for radius.
 			plane[3] += tw.sphere.radius;
 
-			// find the closest point on the capsule to the plane
+			// Find the closest point on the capsule to the plane.
 			t = vec3.dot(plane, tw.sphere.offset);
 			if (t > 0) {
 				vec3.subtract(tw.start, tw.sphere.offset, startp);
@@ -13471,10 +14901,10 @@ function TraceThroughPatchCollide(tw, pc) {
 			}
 
 			if (tw.sphere.use) {
-				// adjust the plane distance apropriately for radius
+				// Adjust the plane distance apropriately for radius.
 				plane[3] += tw.sphere.radius;
 
-				// find the closest point on the capsule to the plane
+				// Find the closest point on the capsule to the plane.
 				t = vec3.dot(plane, tw.sphere.offset);
 				if (t > 0) {
 					vec3.subtract(tw.start, tw.sphere.offset, startp);
@@ -13514,11 +14944,7 @@ function TraceThroughPatchCollide(tw, pc) {
 					cw.enterFrac = 0;
 				}
 
-				//console.log('foobar', debugPatchCollides.indexOf(pc));
-
 				tw.trace.fraction = cw.enterFrac;
-				// TODO Should trace's plane not always default to null?
-				tw.trace.plane = new qm.Plane();
 				vec3.set(bestplane, tw.trace.plane.normal);
 				tw.trace.plane.dist = bestplane[3];
 			}
@@ -13526,107 +14952,94 @@ function TraceThroughPatchCollide(tw, pc) {
 	}
 }
 
-// /*
-// ====================
-// CM_TracePointThroughPatchCollide
+/**
+ * TracePointThroughPatchCollide
+ *
+ * Special case for point traces because the patch collide "brushes" have no volume
+ */
+function TracePointThroughPatchCollide(tw, pc) {
+	var i, j, k;
+	var frontFacing = new Array(MAX_PATCH_PLANES);
+	var intersection = new Array(MAX_PATCH_PLANES);
+	var intersect;
+	var offset;
+	var d1, d2;
 
-//   special case for point traces because the patch collide "brushes" have no volume
-// ====================
-// */
-// void CM_TracePointThroughPatchCollide( traceWork_t *tw, const struct patchCollide_s *pc ) {
-// 	qboolean	frontFacing[MAX_PATCH_PLANES];
-// 	float		intersection[MAX_PATCH_PLANES];
-// 	float		intersect;
-// 	const patchPlane_t	*planes;
-// 	const facet_t	*facet;
-// 	int			i, j, k;
-// 	float		offset;
-// 	float		d1, d2;
-// #ifndef BSPC
-// 	static cvar_t *cv;
-// #endif //BSPC
+	if (!tw.isPoint ) {
+		return;
+	}
 
-// #ifndef BSPC
-// 	if ( !cm_playerCurveClip->integer || !tw->isPoint ) {
-// 		return;
-// 	}
-// #endif
+	// Determine the trace's relationship to all planes.
+	for (i = 0; i < pc.planes.length; i++) {
+		var pp = pc.planes[i];
 
-// 	// determine the trace's relationship to all planes
-// 	planes = pc->planes;
-// 	for ( i = 0 ; i < pc->numPlanes ; i++, planes++ ) {
-// 		offset = DotProduct( tw->offsets[ planes->signbits ], planes->plane );
-// 		d1 = DotProduct( tw->start, planes->plane ) - planes->plane[3] + offset;
-// 		d2 = DotProduct( tw->end, planes->plane ) - planes->plane[3] + offset;
-// 		if ( d1 <= 0 ) {
-// 			frontFacing[i] = qfalse;
-// 		} else {
-// 			frontFacing[i] = qtrue;
-// 		}
-// 		if ( d1 == d2 ) {
-// 			intersection[i] = 99999;
-// 		} else {
-// 			intersection[i] = d1 / ( d1 - d2 );
-// 			if ( intersection[i] <= 0 ) {
-// 				intersection[i] = 99999;
-// 			}
-// 		}
-// 	}
+		offset = vec3.dot(tw.offsets[pp.signbits], pp.plane);
+		d1 = vec3.dot(tw.start, pp.plane) - pp.plane[3] + offset;
+		d2 = vec3.dot(tw.end, pp.plane) - pp.plane[3] + offset;
 
+		if (d1 <= 0) {
+			frontFacing[i] = false;
+		} else {
+			frontFacing[i] = true;
+		}
+		if (d1 === d2) {
+			intersection[i] = 99999;
+		} else {
+			intersection[i] = d1 / (d1 - d2);
+			if (intersection[i] <= 0) {
+				intersection[i] = 99999;
+			}
+		}
+	}
 
-// 	// see if any of the surface planes are intersected
-// 	facet = pc->facets;
-// 	for ( i = 0 ; i < pc->numFacets ; i++, facet++ ) {
-// 		if ( !frontFacing[facet->surfacePlane] ) {
-// 			continue;
-// 		}
-// 		intersect = intersection[facet->surfacePlane];
-// 		if ( intersect < 0 ) {
-// 			continue;		// surface is behind the starting point
-// 		}
-// 		if ( intersect > tw->trace.fraction ) {
-// 			continue;		// already hit something closer
-// 		}
-// 		for ( j = 0 ; j < facet->numBorders ; j++ ) {
-// 			k = facet->borderPlanes[j];
-// 			if ( frontFacing[k] ^ facet->borderInward[j] ) {
-// 				if ( intersection[k] > intersect ) {
-// 					break;
-// 				}
-// 			} else {
-// 				if ( intersection[k] < intersect ) {
-// 					break;
-// 				}
-// 			}
-// 		}
-// 		if ( j == facet->numBorders ) {
-// 			// we hit this facet
-// #ifndef BSPC
-// 			if (!cv) {
-// 				cv = Cvar_Get( "r_debugSurfaceUpdate", "1", 0 );
-// 			}
-// 			if (cv->integer) {
-// 				debugPatchCollide = pc;
-// 				debugFacet = facet;
-// 			}
-// #endif //BSPC
-// 			planes = &pc->planes[facet->surfacePlane];
+	// See if any of the surface planes are intersected.
+	for (i = 0; i < pc.facets.length; i++) {
+		var facet = pc.facets[i];
 
-// 			// calculate intersection with a slight pushoff
-// 			offset = DotProduct( tw->offsets[ planes->signbits ], planes->plane );
-// 			d1 = DotProduct( tw->start, planes->plane ) - planes->plane[3] + offset;
-// 			d2 = DotProduct( tw->end, planes->plane ) - planes->plane[3] + offset;
-// 			tw->trace.fraction = ( d1 - SURFACE_CLIP_EPSILON ) / ( d1 - d2 );
+		if (!frontFacing[facet.surfacePlane]) {
+			continue;
+		}
 
-// 			if ( tw->trace.fraction < 0 ) {
-// 				tw->trace.fraction = 0;
-// 			}
+		intersect = intersection[facet.surfacePlane];
 
-// 			VectorCopy( planes->plane,  tw->trace.plane.normal );
-// 			tw->trace.plane.dist = planes->plane[3];
-// 		}
-// 	}
-// }
+		if (intersect < 0) {
+			continue;  // surface is behind the starting point
+		}
+		if (intersect > tw.trace.fraction) {
+			continue;  // already hit something closer
+		}
+
+		for (j = 0; j < facet.numBorders; j++) {
+			k = facet.borderPlanes[j];
+			if (frontFacing[k] ^ facet.borderInward[j]) {
+				if (intersection[k] > intersect) {
+					break;
+				}
+			} else {
+				if (intersection[k] < intersect) {
+					break;
+				}
+			}
+		}
+		if (j === facet.numBorders) {
+			// We hit this facet
+			var pp = pc.planes[facet.surfacePlane];
+
+			// Calculate intersection with a slight pushoff.
+			offset = vec3.dot(tw.offsets[pp.signbits], pp.plane);
+			d1 = vec3.dot(tw.start, pp.plane) - pp.plane[3] + offset;
+			d2 = vec3.dot(tw.end, pp.plane) - pp.plane[3] + offset;
+			tw.trace.fraction = (d1 - SURFACE_CLIP_EPSILON) / (d1 - d2);
+
+			if (tw.trace.fraction < 0) {
+				tw.trace.fraction = 0;
+			}
+
+			vec3.set(pp.plane, tw.trace.plane.normal);
+			tw.trace.plane.dist = pp.plane[3];
+		}
+	}
+}
 
 /**
  * CheckFacetPlane
@@ -13656,7 +15069,7 @@ function CheckFacetPlane(plane, start, end, cw) {
 
 	// Crosses face.
 	if (d1 > d2) {  // enter
-		f = (d1-SURFACE_CLIP_EPSILON) / (d1-d2);
+		f = (d1 - SURFACE_CLIP_EPSILON) / (d1 - d2);
 		if (f < 0) {
 			f = 0;
 		}
@@ -13666,7 +15079,7 @@ function CheckFacetPlane(plane, start, end, cw) {
 			cw.hit = true;
 		}
 	} else {  // leave
-		f = (d1+SURFACE_CLIP_EPSILON) / (d1-d2);
+		f = (d1 + SURFACE_CLIP_EPSILON) / (d1 - d2);
 		if (f > 1) {
 			f = 1;
 		}
@@ -13700,79 +15113,79 @@ function CheckFacetPlane(plane, start, end, cw) {
 // 	float plane[4];
 // 	vec3_t startp;
 
-// 	if (tw->isPoint) {
-// 		return qfalse;
+// 	if (tw.isPoint) {
+// 		return false;
 // 	}
 // 	//
-// 	facet = pc->facets;
-// 	for ( i = 0 ; i < pc->numFacets ; i++, facet++ ) {
-// 		planes = &pc->planes[ facet->surfacePlane ];
-// 		VectorCopy(planes->plane, plane);
-// 		plane[3] = planes->plane[3];
-// 		if ( tw->sphere.use ) {
+// 	facet = pc.facets;
+// 	for ( i = 0 ; i < pc.numFacets ; i++, facet++ ) {
+// 		planes = &pc.planes[ facet.surfacePlane ];
+// 		VectorCopy(planes.plane, plane);
+// 		plane[3] = planes.plane[3];
+// 		if ( tw.sphere.use ) {
 // 			// adjust the plane distance apropriately for radius
-// 			plane[3] += tw->sphere.radius;
+// 			plane[3] += tw.sphere.radius;
 
 // 			// find the closest point on the capsule to the plane
-// 			t = DotProduct( plane, tw->sphere.offset );
+// 			t = DotProduct( plane, tw.sphere.offset );
 // 			if ( t > 0 ) {
-// 				VectorSubtract( tw->start, tw->sphere.offset, startp );
+// 				VectorSubtract( tw.start, tw.sphere.offset, startp );
 // 			}
 // 			else {
-// 				VectorAdd( tw->start, tw->sphere.offset, startp );
+// 				VectorAdd( tw.start, tw.sphere.offset, startp );
 // 			}
 // 		}
 // 		else {
-// 			offset = DotProduct( tw->offsets[ planes->signbits ], plane);
+// 			offset = DotProduct( tw.offsets[ planes.signbits ], plane);
 // 			plane[3] -= offset;
-// 			VectorCopy( tw->start, startp );
+// 			VectorCopy( tw.start, startp );
 // 		}
 
 // 		if ( DotProduct( plane, startp ) - plane[3] > 0.0f ) {
 // 			continue;
 // 		}
 
-// 		for ( j = 0; j < facet->numBorders; j++ ) {
-// 			planes = &pc->planes[ facet->borderPlanes[j] ];
-// 			if (facet->borderInward[j]) {
-// 				VectorNegate(planes->plane, plane);
-// 				plane[3] = -planes->plane[3];
+// 		for ( j = 0; j < facet.numBorders; j++ ) {
+// 			planes = &pc.planes[ facet.borderPlanes[j] ];
+// 			if (facet.borderInward[j]) {
+// 				VectorNegate(planes.plane, plane);
+// 				plane[3] = -planes.plane[3];
 // 			}
 // 			else {
-// 				VectorCopy(planes->plane, plane);
-// 				plane[3] = planes->plane[3];
+// 				VectorCopy(planes.plane, plane);
+// 				plane[3] = planes.plane[3];
 // 			}
-// 			if ( tw->sphere.use ) {
+// 			if ( tw.sphere.use ) {
 // 				// adjust the plane distance apropriately for radius
-// 				plane[3] += tw->sphere.radius;
+// 				plane[3] += tw.sphere.radius;
 
 // 				// find the closest point on the capsule to the plane
-// 				t = DotProduct( plane, tw->sphere.offset );
+// 				t = DotProduct( plane, tw.sphere.offset );
 // 				if ( t > 0.0f ) {
-// 					VectorSubtract( tw->start, tw->sphere.offset, startp );
+// 					VectorSubtract( tw.start, tw.sphere.offset, startp );
 // 				}
 // 				else {
-// 					VectorAdd( tw->start, tw->sphere.offset, startp );
+// 					VectorAdd( tw.start, tw.sphere.offset, startp );
 // 				}
 // 			}
 // 			else {
 // 				// NOTE: this works even though the plane might be flipped because the bbox is centered
-// 				offset = DotProduct( tw->offsets[ planes->signbits ], plane);
+// 				offset = DotProduct( tw.offsets[ planes.signbits ], plane);
 // 				plane[3] += fabs(offset);
-// 				VectorCopy( tw->start, startp );
+// 				VectorCopy( tw.start, startp );
 // 			}
 
 // 			if ( DotProduct( plane, startp ) - plane[3] > 0.0f ) {
 // 				break;
 // 			}
 // 		}
-// 		if (j < facet->numBorders) {
+// 		if (j < facet.numBorders) {
 // 			continue;
 // 		}
 // 		// inside this patch facet
-// 		return qtrue;
+// 		return true;
 // 	}
-// 	return qfalse;
+// 	return false;
 // }
 
 function EmitCollisionSurfaces(tessFn) {
@@ -13910,7 +15323,7 @@ function BaseWindingForPlane(normal, dist) {
 	// Project a really big	axis aligned box onto the plane.
 	var w = new winding_t();
 	
-	w.p[0] = vec3.subtract(org, vright, [0,0,0]);
+	w.p[0] = vec3.subtract(org, vright, [0, 0, 0]);
 	vec3.add(w.p[0], vup, w.p[0]);
 	
 	w.p[1] = vec3.add(org, vright, [0, 0, 0]);
@@ -13995,12 +15408,12 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 		p1 = orig.p[i];
 		
 		if (sides[i] === SIDE_ON) {
-			f.p.push(vec3.create(p1));
+			f.p.push(vec3.set(p1, [0, 0, 0]));
 			continue;
 		}
 	
 		if (sides[i] === SIDE_FRONT) {
-			f.p.push(vec3.create(p1));
+			f.p.push(vec3.set(p1, [0, 0, 0]));
 		}
 
 		if (sides[i+1] === SIDE_ON || sides[i+1] === sides[i]) {
@@ -14022,7 +15435,7 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 			}
 		}
 			
-		f.p.push(vec3.create(mid));
+		f.p.push(vec3.set(mid, [0, 0, 0]));
 	}
 
 	if (f.p.length > maxpts) {
@@ -14093,7 +15506,7 @@ function TransposeMatrix(matrix, transpose) {
  * TestBoxInBrush
  */
 function TestBoxInBrush(tw, brush) {
-	if (!brush.numsides) {
+	if (!brush.numSides) {
 		return;
 	}
 
@@ -14110,8 +15523,8 @@ function TestBoxInBrush(tw, brush) {
 	if (tw.sphere.use) {
 		// The first six planes are the axial planes, so we only
 		// need to test the remainder.
-		for (var i = 6; i < brush.numsides; i++) {
-			var side = brush.sides[i];
+		for (var i = 6; i < brush.numSides; i++) {
+			var side = cm.brushSides[brush.firstSide + i];
 			var plane = side.plane;
 
 			// Adjust the plane distance apropriately for radius.
@@ -14134,8 +15547,8 @@ function TestBoxInBrush(tw, brush) {
 	} else {
 		// The first six planes are the axial planes, so we only
 		// need to test the remainder.
-		for (var i = 6; i < brush.numsides; i++) {
-			var side = brush.sides[i];
+		for (var i = 6; i < brush.numSides; i++) {
+			var side = cm.brushSides[brush.firstSide + i];
 			var plane = side.plane;
 
 			// adjust the plane distance apropriately for mins/maxs
@@ -14162,13 +15575,13 @@ function TestInLeaf(tw, leaf) {
 	var brushes = cm.brushes;
 	var leafBrushes = cm.leafBrushes;
 
-	// test box position against all brushes in the leaf
+	// Test box position against all brushes in the leaf.
 	for (var k = 0; k < leaf.numLeafBrushes; k++) {
 		var brushnum = leafBrushes[leaf.firstLeafBrush+k];
 		var b = brushes[brushnum];
 
 		if (b.checkcount === cm.checkcount) {
-			continue; // already checked this brush in another leaf
+			continue;  // already checked this brush in another leaf
 		}
 		b.checkcount = cm.checkcount;
 
@@ -14228,7 +15641,7 @@ function PositionTest(tw) {
 	BoxLeafnums_r(leaflist, mins, maxs, 0);
 	cm.checkcount++;
 
-	// test the contents of the leafs
+	// Test the contents of the leafs.
 	for (var i = 0; i < leaflist.count; i++) {
 		TestInLeaf(tw, leafs[leaflist.list[i]]);
 
@@ -14265,13 +15678,13 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 	}
 
 	//
-	// find the point distances to the seperating plane
-	// and the offset for the size of the box
+	// Find the point distances to the seperating plane
+	// and the offset for the size of the box.
 	//
 	var node = nodes[num];
 	var plane = planes[node.planeNum];
 
-	// adjust the plane distance apropriately for mins/maxs
+	// Adjust the plane distance apropriately for mins/maxs.
 	var t1, t2, offset;
 
 	if (plane.type < 3) {
@@ -14284,12 +15697,12 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 		if (tw.isPoint) {
 			offset = 0;
 		} else {
-			// this is silly
+			// This is silly.
 			offset = 2048;
 		}
 	}
 
-	// see which sides we need to consider
+	// See which sides we need to consider.
 	if (t1 >= offset + 1 && t2 >= offset + 1) {
 		TraceThroughTree(tw, node.childrenNum[0], p1f, p2f, p1, p2);
 		return;
@@ -14299,26 +15712,26 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 		return;
 	}
 
-	// put the crosspoint SURFACE_CLIP_EPSILON pixels on the near side
+	// Put the crosspoint SURFACE_CLIP_EPSILON pixels on the near side.
 	var idist, side, frac, frac2;
 
 	if (t1 < t2) {
 		idist = 1.0/(t1-t2);
 		side = 1;
-		frac2 = (t1 + offset + SURFACE_CLIP_EPSILON)*idist;
-		frac = (t1 - offset + SURFACE_CLIP_EPSILON)*idist;
+		frac2 = (t1 + offset + SURFACE_CLIP_EPSILON) * idist;
+		frac = (t1 - offset + SURFACE_CLIP_EPSILON) * idist;
 	} else if (t1 > t2) {
 		idist = 1.0/(t1-t2);
 		side = 0;
-		frac2 = (t1 - offset - SURFACE_CLIP_EPSILON)*idist;
-		frac = (t1 + offset + SURFACE_CLIP_EPSILON)*idist;
+		frac2 = (t1 - offset - SURFACE_CLIP_EPSILON) * idist;
+		frac = (t1 + offset + SURFACE_CLIP_EPSILON) * idist;
 	} else {
 		side = 0;
 		frac = 1;
 		frac2 = 0;
 	}
 
-	// move up to the node
+	// Move up to the node.
 	var mid = [0, 0, 0], midf;
 
 	if (frac < 0) {
@@ -14334,7 +15747,7 @@ function TraceThroughTree(tw, num, p1f, p2f, p1, p2) {
 
 	TraceThroughTree(tw, node.childrenNum[side], p1f, midf, p1, mid);
 
-	// go past the node
+	// Go past the node.
 	if (frac2 < 0) {
 		frac2 = 0;
 	}
@@ -14374,7 +15787,7 @@ function TraceThroughLeaf(tw, leaf) {
 			continue;
 		}
 
-		if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1])) {
+		if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1], SURFACE_CLIP_EPSILON)) {
 			continue;
 		}
 
@@ -14386,7 +15799,7 @@ function TraceThroughLeaf(tw, leaf) {
 	}
 
 	// Trace line against all patches in the leaf.
-	for (i = 0 ; i < leaf.numLeafSurfaces; i++) {
+	for (i = 0; i < leaf.numLeafSurfaces; i++) {
 		var patch = cm.surfaces[cm.leafSurfaces[leaf.firstLeafSurface + i]];
 
 		if (!patch) {
@@ -14403,6 +15816,7 @@ function TraceThroughLeaf(tw, leaf) {
 		}
 
 		TraceThroughPatch(tw, patch);
+
 		if (!tw.trace.fraction) {
 			return;
 		}
@@ -14422,7 +15836,7 @@ function TraceThroughBrush(tw, brush) {
 	var enterFrac = -1.0;
 	var leaveFrac = 1.0;
 
-	if (!brush.numsides) {
+	if (!brush.numSides) {
 		return;
 	}
 
@@ -14430,8 +15844,8 @@ function TraceThroughBrush(tw, brush) {
 		// Compare the trace against all planes of the brush.
 		// Find the latest time the trace crosses a plane towards the interior
 		// and the earliest time the trace crosses a plane towards the exterior.
-		for (var i = 0; i < brush.numsides; i++) {
-			var side = brush.sides[i];
+		for (var i = 0; i < brush.numSides; i++) {
+			var side = cm.brushSides[brush.firstSide + i];
 			var plane = side.plane;
 
 			// Adjust the plane distance apropriately for radius.
@@ -14495,8 +15909,8 @@ function TraceThroughBrush(tw, brush) {
 		// Compare the trace against all planes of the brush.
 		// Find the latest time the trace crosses a plane towards the interior
 		// and the earliest time the trace crosses a plane towards the exterior.
-		for (var i = 0; i < brush.numsides; i++) {
-			var side = brush.sides[i];
+		for (var i = 0; i < brush.numSides; i++) {
+			var side = cm.brushSides[brush.firstSide + i];
 			var plane = side.plane;
 
 			// Adjust the plane distance apropriately for mins/maxs.
@@ -14523,7 +15937,7 @@ function TraceThroughBrush(tw, brush) {
 
 			// Crosses face.
 			if (d1 > d2) {  // enter
-				var f = (d1-SURFACE_CLIP_EPSILON) / (d1-d2);
+				var f = (d1 - SURFACE_CLIP_EPSILON) / (d1 - d2);
 				if (f < 0) {
 					f = 0;
 				}
@@ -14533,7 +15947,7 @@ function TraceThroughBrush(tw, brush) {
 					leadside = side;
 				}
 			} else {  // leave
-				var f = (d1+SURFACE_CLIP_EPSILON) / (d1-d2);
+				var f = (d1 + SURFACE_CLIP_EPSILON) / (d1 - d2);
 				if (f > 1) {
 					f = 1;
 				}
@@ -14564,8 +15978,7 @@ function TraceThroughBrush(tw, brush) {
 				enterFrac = 0;
 			}
 			tw.trace.fraction = enterFrac;
-			tw.trace.plane = clipplane;
-			// TODO
+			clipplane.clone(tw.trace.plane);
 			//tw.trace.surfaceFlags = leadside.surfaceFlags;
 			tw.trace.contents = brush.contents;
 		}
@@ -14598,7 +16011,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	}
 	cm.checkcount++; // for multi-check avoidance
 
-	// Set basic parms
+	// Set basic parms.
 	tw.contents = brushmask;
 
 	// adjust so that mins and maxs are always symetric, which
@@ -14659,7 +16072,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	tw.offsets[7][2] = tw.size[1][2];
 
 	//
-	// calculate bounds
+	// Calculate bounds.
 	//
 	if (tw.sphere.use) {
 		for (var i = 0; i < 3; i++) {
@@ -14686,8 +16099,10 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	//
 	// Check for position test special case.
 	//
+	var cmod = model ? ClipHandleToModel(model) : null;
+
 	if (start[0] == end[0] && start[1] == end[1] && start[2] == end[2]) {
-		// if (model) {
+		if (model) {
 		// 	if (model == CAPSULE_MODEL_HANDLE) {
 		// 		if (tw.sphere.use) {
 		// 			TestCapsuleInCapsule(tw, model);
@@ -14696,11 +16111,11 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 		// 			TestBoundingBoxInCapsule(tw, model);
 		// 		}
 		// 	} else {
-		// 		TestInLeaf(tw, cmod.leaf);
+				TestInLeaf(tw, cmod.leaf);
 		// 	}
-		// } else {
+		} else {
 			PositionTest(tw);
-		// }
+		}
 	} else {
 		//
 		// Check for point special case.
@@ -14715,7 +16130,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 			tw.extents[2] = tw.size[1][2];
 		}
 
-		// if (model) {
+		if (model) {
 		// 	if (model === CAPSULE_MODEL_HANDLE) {
 		// 		if (tw.sphere.use) {
 		// 			TraceCapsuleThroughCapsule(tw, model);
@@ -14723,14 +16138,14 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 		// 			TraceBoundingBoxThroughCapsule(tw, model);
 		// 		}
 		// 	} else {
-		// 		TraceThroughLeaf(tw, cmod.leaf);
+				TraceThroughLeaf(tw, cmod.leaf);
 		// 	}
-		// } else {
+		} else {
 			TraceThroughTree(tw, 0, 0, 1, tw.start, tw.end);
-		// }
+		}
 	}
 
-	// generate endpos from the original, unmodified start/end
+	// Generate endpos from the original, unmodified start/end.
 	for (var i = 0; i < 3; i++) {
 		tw.trace.endPos[i] = start[i] + tw.trace.fraction * (end[i] - start[i]);
 	}
@@ -14751,7 +16166,6 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 function BoxTrace(start, end, mins, maxs, model, brushmask, capsule ) {
 	return Trace(start, end, mins, maxs, model, [0, 0, 0], brushmask, capsule, null);
 }
-
 
 /**
  * TransformedBoxTrace
@@ -14859,6 +16273,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 			LoadMap:               LoadMap,
 			EntityDefs:            function () { return cm.entities; },
 			InlineModel:           InlineModel,
+			TempBoxModel:          TempBoxModel,
 			ModelBounds:           ModelBounds,
 			BoxTrace:              BoxTrace,
 			TransformedBoxTrace:   TransformedBoxTrace,
@@ -14881,6 +16296,9 @@ function (_, ByteBuffer, sh, game, cl, clipmap) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
@@ -14951,6 +16369,70 @@ var BUTTON = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -14974,7 +16456,7 @@ var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
-	nop:           0,
+	bad:           0,
 	move:          1,                            // [[UserCmd]
 	moveNoDelta:   2,                            // [[UserCmd]
 	clientCommand: 3,                            // [string] message
@@ -14982,14 +16464,36 @@ var CLM = {
 };
 
 var SVM = {
-	gamestate:      0,
-	configstring:   1,                           // [short] [string] only in gamestate messages
-	baseline:       2,                           // only in gamestate messages
-	serverCommand:  3,                           // [string] to be executed by client game module
-	snapshot:       4,
-	EOF:            5
+	bad:            0,
+	gamestate:      1,
+	configstring:   2,                           // [short] [string] only in gamestate messages
+	baseline:       3,                           // only in gamestate messages
+	serverCommand:  4,                           // [string] to be executed by client game module
+	snapshot:       5,
+	EOF:            6
 };
 	var FRAMETIME = 100; // msec
+var CARNAGE_REWARD_TIME = 3000;
+var REWARD_SPRITE_TIME = 2000;
+
+var DAMAGE = {
+	RADIUS:        0x00000001,                             // damage was indirect
+	NO_ARMOR:      0x00000002,                             // armour does not protect from this damage
+	NO_KNOCKBACK:  0x00000004,                             // do not affect velocity, just view angles
+	NO_PROTECTION: 0x00000008                              // armor, shields, invulnerability, and godmode have no effect
+};
+
+// GameEntity flags
+var GFL = {
+	GODMODE:       0x00000010,
+	NOTARGET:      0x00000020,
+	TEAMSLAVE:     0x00000400,                             // not the first on the team
+	NO_KNOCKBACK:  0x00000800,
+	DROPPED_ITEM:  0x00001000,
+	NO_BOTS:       0x00002000,                             // spawn point not for bot use
+	NO_HUMANS:     0x00004000,                             // spawn point just for bots
+	FORCE_GESTURE: 0x00008000                              // force gesture on client
+};
 
 var LevelLocals = function () {
 	this.framenum     = 0;
@@ -15007,7 +16511,7 @@ var LevelLocals = function () {
 // The server does not know how to interpret most of the values
 // in entityStates (level eType), so the game must explicitly flag
 // special server behaviors.
-var ServerFlags = {
+var SVF = {
 	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
 	BOT:                0x00000002,                        // set if the entity is a bot
 	BROADCAST:          0x00000008,                        // send to all connected clients
@@ -15023,9 +16527,9 @@ var GameEntity = function () {
 };
 
 GameEntity.prototype.reset = function () {
-	/**
-	 * Shared by the engine and game.
-	 */
+	//
+	// Shared by game and server.
+	//
 	this.s             = new sh.EntityState();
 	this.linked        = false;
 	// SVF_NOCLIENT, SVF_BROADCAST, etc.
@@ -15048,30 +16552,109 @@ GameEntity.prototype.reset = function () {
 	this.currentOrigin = [0, 0, 0];
 	this.currentAngles = [0, 0, 0];
 	this.client        = null;
+	// When a trace call is made and passEntityNum != ENTITYNUM_NONE,
+	// an ent will be excluded from testing if:
+	// ent.s.number == passEntityNum                   (don't interact with self)
+	// ent.ownerNum == passEntityNum                   (don't interact with your own missiles)
+	// entity[ent.ownerNum].ownerNum == passEntityNum  (don't interact with other missiles from owner)
+	this.ownerNum      = ENTITYNUM_NONE;
 
-	/**
-	 * Game only
-	 */
-	this.inuse          = false;
-	this.freetime       = 0;                               // level.time when the object was freed
-	this.classname      = 'noclass';
-	this.spawnflags     = 0;
-	this.eventTime      = 0;                               // events will be cleared EVENT_VALID_MSEC after set
-	this.freeAfterEvent = false;
-	this.model          = null;
-	this.model2         = null;
-	this.target         = null;
-	this.targetname     = null;
-	this.nextthink      = 0;
-	this.timestamp      = 0;                               // body queue sinking, etc
+	//
+	// Game only
+	//
+	this.parent              = null;
+	this.inuse               = false;
+	this.classname           = 'noclass';
+	this.spawnflags          = 0;
+
+	this.freeTime            = 0;                          // level.time when the object was freed
+	this.eventTime           = 0;                          // events will be cleared EVENT_VALID_MSEC after set
+	this.freeAfterEvent      = false;
+	this.unlinkAfterEvent    = false;
+
+	this.model               = null;
+	this.model2              = null;
+	this.physicsObject       = false;                      // if true, it can be pushed by movers and fall off edges
+	                                                       // all game items are physicsObjects
+	this.physicsBounce       = 0;                          // 1.0 = continuous bounce, 0.0 = no bounce
+	this.clipmask            = 0;                          // brushes with this content value will be collided against
+	                                                       // when moving. items and corpses do not collide against
+	                                                       // players, for instance
+	// movers
+	this.moverState          = 0;
+	this.soundPos1           = 0;
+	this.sound1to2           = 0;
+	this.sound2to1           = 0;
+	this.soundPos2           = 0;
+	this.soundLoop           = 0;
+	this.nextTrain           = null;
+	this.prevTrain           = null;
+	this.pos1                = [0, 0, 0];
+	this.pos2                = [0, 0, 0];
+
+	this.target              = null;
+	this.targetName          = null;
+	this.team                = null;
+	this.targetShaderName    = null;
+	this.targetShaderNewName = null;
+	this.targetEnt           = null;
+
+	this.nextthink           = 0;
+	this.think               = null;
+
+	this.timestamp           = 0;                          // body queue sinking, etc
+
+	this.health              = 0;
+	this.takeDamage          = false;
+
+	this.damage              = 0;
+	this.splashDamage        = 0;                          // quad will increase this without increasing radius
+	this.splashRadius        = 0;
+	this.methodOfDeath       = 0;
+	this.splashMethodOfDeath = 0;
+
+	this.count               = 0;                          // items
+
+	this.chain               = null;
+	this.enemy               = null;
+	this.activator           = null;
+	this.teamchain           = null; // next entity in team
+	this.teammaster          = null; // master of the team
+
 }
 
 // This structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'.
 var GameClient = function () {
-	this.ps        = new sh.PlayerState();
-	this.pers      = new GameClientPersistant();
-	this.oldOrigin = [0, 0, 0];
+	this.ps                = new sh.PlayerState();
+	this.pers              = new GameClientPersistant();
+
+	this.noclip            = false;
+
+	this.oldOrigin         = [0, 0, 0];
+
+	// Sum up damage over an entire frame, so
+	// shotgun blasts give a single big kick.
+	this.damage_armor      = 0;                            // damage absorbed by armor
+	this.damage_blood      = 0;                            // damage taken out of health
+	this.damage_knockback  = 0;                            // impact damage
+	this.damage_from       = [0, 0, 0];                    // origin for vector calculation
+	this.damage_fromWorld  = false;                        // if true, don't use the damage_from vector
+
+	// Awards
+	this.impressive_count  = 0;                            // for "impressive" reward sound
+	this.accuracy_shots    = 0;                            // total number of shots
+	this.accuracy_hits     = 0;                            // total number of hits
+
+	// Taunts
+	this.lastkilled_client = 0;                            // last client that this client killed
+	this.lasthurt_mod      = 0;                            // type of damage the client did
+
+	// Timers
+	this.respawnTime       = 0;                            // can respawn when time > this, force after g_forcerespwan
+	this.inactivityTime    = 0;                            // kick players when time > this
+	this.inactivityWarning = 0;                            // true if the five second warning has been given
+	this.rewardTime        = 0;                            // clear the EF.AWARD_IMPRESSIVE, etc when time > this
 };
 
 // Client data that stays across multiple respawns, but is cleared
@@ -15141,6 +16724,10 @@ var CS = {
 };
 
 var ServerClient = function () {
+	this.reset();
+};
+
+ServerClient.prototype.reset = function () {
 	this.state                   = CS.FREE;
 	this.userinfo                = {};
 
@@ -15148,7 +16735,6 @@ var ServerClient = function () {
 	this.reliableCommands        = new Array(MAX_RELIABLE_COMMANDS);
 	this.reliableSequence        = 0;                      // last added reliable message, not necesarily sent or acknowledged yet
 	this.reliableAcknowledge     = 0;                      // last acknowledged reliable message
-	this.reliableSent            = 0;                      // last sent reliable message, not necesarily acknowledged yet
 
 	this.gamestateMessageNum     = -1;
 
@@ -15188,11 +16774,11 @@ var sv;
 var svs;
 var cm;
 
-var sv_serverid;
-var sv_mapname;
-var sv_fps;
-var sv_timeout;
-var sv_zombietime;
+var sv_serverid,
+	sv_mapname,
+	sv_fps,
+	sv_timeout,
+	sv_zombietime;
 
 /**
  * log
@@ -15213,23 +16799,10 @@ function Init(sys_, com_, isdedicated) {
 	com = com_;
 	dedicated = isdedicated;
 
-	sv = new ServerLocals();
+	sv  = new ServerLocals();
 	svs = new ServerStatic();
-	cm = clipmap.CreateInstance(ClipmapExports());
-	var exports = {
-		LocateGameData:    LocateGameData,
-		GetUserCmd:    GetUserCmd,
-		GetConfigstring:   GetConfigstring,
-		SetConfigstring:   SetConfigstring,
-		GetUserinfo:       GetUserinfo,
-		SetBrushModel:     SetBrushModel,
-		LinkEntity:        LinkEntity,
-		UnlinkEntity:      UnlinkEntity,
-		FindEntitiesInBox: FindEntitiesInBox,
-		GetEntityDefs:     cm.EntityDefs,
-		Trace:             Trace
-	};
-	gm = game.CreateInstance(com, exports);
+	cm  = clipmap.CreateInstance(ClipmapExports());
+	gm  = game.CreateInstance(com, GameExports());
 	
 	sv_serverid   = com.AddCvar('sv_serverid',   0,       CVF.SYSTEMINFO);
 	sv_mapname    = com.AddCvar('sv_mapname',    'nomap', CVF.SERVERINFO);
@@ -15244,6 +16817,25 @@ function Init(sys_, com_, isdedicated) {
 	setTimeout(function () {
 		CmdLoadMap('q3tourney2');
 	}, 50);
+}
+
+/**
+ * GameExports
+ */
+function GameExports() {
+	return {
+		LocateGameData:    LocateGameData,
+		GetUserCmd:        GetUserCmd,
+		GetConfigstring:   GetConfigstring,
+		SetConfigstring:   SetConfigstring,
+		GetUserinfo:       GetUserinfo,
+		SetBrushModel:     SetBrushModel,
+		LinkEntity:        LinkEntity,
+		UnlinkEntity:      UnlinkEntity,
+		FindEntitiesInBox: FindEntitiesInBox,
+		GetEntityDefs:     cm.EntityDefs,
+		Trace:             Trace
+	};
 }
 
 /**
@@ -15319,8 +16911,7 @@ function CheckTimeouts() {
 
 	for (var i = 0; i < MAX_CLIENTS; i++) {
 		var client = svs.clients[i];
-
-		if (!client) {
+		if (client.state === CS.FREE) {
 			continue;
 		}
 
@@ -15474,8 +17065,8 @@ function SpawnServer(mapName) {
 		sv.time += 100;
 		svs.time += 100;*/
 
-		SetConfigstring('systemInfo', com.AddCvarKeyValues(CVF.SYSTEMINFO));
-		SetConfigstring('serverInfo', com.AddCvarKeyValues(CVF.SERVERINFO));
+		SetConfigstring('systemInfo', com.GetCvarValues(CVF.SYSTEMINFO));
+		SetConfigstring('serverInfo', com.GetCvarValues(CVF.SERVERINFO));
 
 		// Any media configstring setting now should issue a warning
 		// and any configstring changes should be reliably transmitted
@@ -15527,7 +17118,7 @@ function SetConfigstring(key, val) {
 
 	// Send it to all the clients if we aren't spawning a new server.
 	if (sv.state === ServerState.GAME || sv.restarting) {
-		// Send the data to all relevent clients
+		// Send the data to all relevent clients.
 		for (var i = 0; i < MAX_CLIENTS; i++) {
 			var client = svs.clients[i];
 
@@ -15550,7 +17141,7 @@ function SetConfigstring(key, val) {
  * given client.
  */
 function SendConfigstring(client, key) {
-	//SendServerCommand(client, 'cs ' + key + ' ' + JSON.stringify(sv.configstrings[key]) + '\n');
+	SendServerCommand(client, 'cs', { k: key, v: sv.configstrings[key] });
 }
 
 /**
@@ -15586,6 +17177,69 @@ function GetUserinfo(clientNum) {
 	return svs.clients[clientNum].userinfo;
 }
 
+/**********************************************************
+ *
+ * Event messages
+ *
+ **********************************************************/
+
+/**
+ * SendServerCommand
+ * 
+ * Sends a reliable command string to be interpreted by 
+ * the client game module: "cp", "print", "chat", etc
+ * A NULL client will broadcast to all clients
+ */
+function SendServerCommand(client, type, msg) {
+	if (client !== null) {
+		AddServerCommand(client, type, msg);
+		return;
+	}
+
+	// // Hack to echo broadcast prints to console.
+	// if ( com_dedicated->integer && !strncmp( (char *)message, "print", 5) ) {
+	// 	Com_Printf ("broadcast: %s\n", SV_ExpandNewlines((char *)message) );
+	// }
+
+	// Send the data to all relevent clients.
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		AddServerCommand(client, type, msg);
+	}
+}
+
+/**
+ * AddServerCommand
+ *  
+ * The given command will be transmitted to the client, and is guaranteed to
+ * not have future snapshot_t executed before it is executed.
+ */
+function AddServerCommand(client, type, msg) {
+	// Do not send commands until the gamestate has been sent.
+	if (client.state < CS.PRIMED) {
+		return;
+	}
+
+	client.reliableSequence++;
+
+	var cmd = { type: type, value: msg };
+
+	// If we would be losing an old command that hasn't been acknowledged,
+	// we must drop the connection.
+	// We check == instead of >= so a broadcast print added by SV_DropClient()
+	// doesn't cause a recursive drop client.
+	if (client.reliableSequence - client.reliableAcknowledge === MAX_RELIABLE_COMMANDS + 1 ) {
+		log('----- pending server commands -----');
+		for (var i = client.reliableAcknowledge + 1; i <= client.reliableSequence; i++) {
+			log('cmd', i, client.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
+		}
+		log('cmd', i, cmd);
+		DropClient(client, 'Server command overflow');
+		return;
+	}
+
+	// Copy the command off.
+	client.reliableCommands[client.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
+}
 	/**
  * SocketClosed
  */
@@ -15630,6 +17284,7 @@ function AcceptClient(socket, infostr) {
 
 	// Create the client.
 	var newcl = svs.clients[clientNum];
+	newcl.reset();
 
 	newcl.netchan = com.NetchanSetup(sh.NetSrc.SERVER, socket);
 	newcl.userinfo = JSON.parse(infostr);
@@ -15781,6 +17436,7 @@ function SendClientGameState(client) {
 	msg.writeInt(client.lastClientCommand);
 
 	msg.writeByte(SVM.gamestate);
+	msg.writeInt(client.reliableSequence);
 
 	// Write the configstrings.
 	for (var key in sv.configstrings) {
@@ -15788,11 +17444,8 @@ function SendClientGameState(client) {
 			continue;
 		}
 
-		var cs = sv.configstrings[key];
-
 		msg.writeByte(SVM.configstring);
-		msg.writeCString(key);
-		msg.writeCString(JSON.stringify(cs));
+		msg.writeCString(JSON.stringify({ k: key, v: sv.configstrings[key] }));
 	}
 
 	// Write the baselines.
@@ -15846,7 +17499,6 @@ function UserinfoChanged(client) {
 function GetClientNum(client) {
 	return svs.clients.indexOf(client);
 }
-
 
 /** 
  * UpdateUserinfo
@@ -16078,9 +17730,9 @@ function SetBrushModel(gent, name) {
 		com.error(sh.Err.DROP, 'SV: SetBrushModel: ' + name + 'isn\'t a brush model');
 	}
 
-	gent.s.modelindex = parseInt(name.substr(1), 10);
+	gent.s.modelIndex = parseInt(name.substr(1), 10);
 
-	var h = cm.InlineModel(gent.s.modelindex);
+	var h = cm.InlineModel(gent.s.modelIndex);
 	cm.ModelBounds(h, gent.mins, gent.maxs);
 	gent.bmodel = true;
 
@@ -16122,7 +17774,7 @@ function BuildClientSnapshot(client, msg) {
 	frame.firstEntity = svs.nextSnapshotEntities;
 
 	// Copy the entity states out.
-	for (var i = 0 ; i < entityNumbers.length; i++) {
+	for (var i = 0; i < entityNumbers.length; i++) {
 		var ent = GentityForNum(entityNumbers[i]);
 		var state = svs.snapshotEntities[svs.nextSnapshotEntities % MAX_SNAPSHOT_ENTITIES];
 
@@ -16162,18 +17814,18 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 		}
 
 		// Entities can be flagged to explicitly not be sent to the client.
-		if (ent.svFlags & ServerFlags.NOCLIENT) {
+		if (ent.svFlags & SVF.NOCLIENT) {
 			continue;
 		}
 
 		// Entities can be flagged to be sent to only one client.
-		if (ent.svFlags & ServerFlags.SINGLECLIENT) {
+		if (ent.svFlags & SVF.SINGLECLIENT) {
 			if (ent.singleClient != frame.ps.clientNum) {
 				continue;
 			}
 		}
 		// Entities can be flagged to be sent to everyone but one client.
-		if (ent.svFlags & ServerFlags.NOTSINGLECLIENT) {
+		if (ent.svFlags & SVF.NOTSINGLECLIENT) {
 			if (ent.singleClient === frame.ps.clientNum) {
 				continue;
 			}
@@ -16187,7 +17839,7 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 		}
 
 		// Broadcast entities are always sent.
-		if (ent.svFlags & ServerFlags.BROADCAST) {
+		if (ent.svFlags & SVF.BROADCAST) {
 			AddEntToSnapshot(svEnt, ent, eNums);
 			continue;
 		}
@@ -16269,10 +17921,45 @@ function AddEntToSnapshot(svEnt, gEnt, eNums) {
  * SendClientSnapshot
  */
 function SendClientSnapshot(client) {
+	// Build the snapshot.
 	if (!BuildClientSnapshot(client)) {
 		return;
 	}
 
+	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
+
+	msg.writeInt(client.lastClientCommand);
+
+	// Send any reliable server commands.
+	UpdateServerCommandsToClient(client, msg);
+
+	// Send over all the relevant player and entity states.
+	WriteSnapshotToClient(client, msg);
+
+	com.NetchanSend(client.netchan, msg.buffer, msg.index);
+}
+
+/**
+ * UpdateServerCommandsToClient
+ *
+ * (re)send all server commands the client hasn't acknowledged yet.
+ */
+function UpdateServerCommandsToClient(client, msg) {
+	// Write any unacknowledged serverCommands.
+	for (var i = client.reliableAcknowledge + 1; i <= client.reliableSequence; i++) {
+		var cmd = client.reliableCommands[i % MAX_RELIABLE_COMMANDS];
+		
+		msg.writeByte(SVM.serverCommand);
+		msg.writeInt(i);
+		msg.writeCString(cmd.type);
+		msg.writeCString(JSON.stringify(cmd.value));
+	}
+}
+
+/**
+ * WriteSnapshotToClient
+ */
+function WriteSnapshotToClient(client, msg) {
 	// This is the snapshot we are creating.
 	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
 	var oldframe = null;
@@ -16300,11 +17987,7 @@ function SendClientSnapshot(client) {
 			lastframe = 0;
 		}
 	}
-
-	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
-
-	msg.writeInt(client.lastClientCommand);
-
+	
 	msg.writeUnsignedByte(SVM.snapshot);
 
 	// Send over the current server time so the client can drift
@@ -16335,14 +18018,11 @@ function SendClientSnapshot(client) {
 
 	// Delta encode the entities.
 	WriteSnapshotEntities(msg, oldframe, frame);
-
-	com.NetchanSend(client.netchan, msg.buffer, msg.index);
 }
 
 /**
  * WriteSnapshotEntities
  */
-var dummyEntityState = new sh.EntityState();
 function WriteSnapshotEntities(msg, from, to) {
 	var oldent, newent;
 	var oldindex, newindex;
@@ -16357,7 +18037,7 @@ function WriteSnapshotEntities(msg, from, to) {
 	oldindex = 0;
 	newindex = 0;
 
-	while (newindex < to.numEntities /*|| oldindex < fromNumEntities*/) {
+	while (newindex < to.numEntities || oldindex < fromNumEntities) {
 		if (newindex >= to.numEntities) {
 			newnum = 9999;
 		} else {
@@ -16445,7 +18125,7 @@ var WorldSector = function () {
 /**
  * CmdSectorList
  */
-function CmdSectorList() {	
+function CmdSectorList() {
 	for (var i = 0; i < worldSectors.length; i++) {
 		var node = worldSectors[i];
 		log('sector ' + i + ': ' + _.keys(node.entities).length + ' entities');
@@ -16488,10 +18168,10 @@ function CreateWorldSector(depth, mins, maxs) {
 		node.axis = 1;
 	}
 
-	var mins1 = vec3.create(mins);
-	var mins2 = vec3.create(mins);
-	var maxs1 = vec3.create(maxs);
-	var maxs2 = vec3.create(maxs);
+	var mins1 = vec3.set(mins, [0, 0, 0]);
+	var mins2 = vec3.set(mins, [0, 0, 0]);
+	var maxs1 = vec3.set(maxs, [0, 0, 0]);
+	var maxs2 = vec3.set(maxs, [0, 0, 0]);
 
 	node.dist = 0.5 * (maxs[node.axis] + mins[node.axis]);
 	maxs1[node.axis] = mins2[node.axis] = node.dist;
@@ -16503,73 +18183,28 @@ function CreateWorldSector(depth, mins, maxs) {
 }
 
 /**
- * FindEntitiesInBox
- */
-function FindEntitiesInBox(mins, maxs) {
-	var entityNums = [];
-
-	var FindEntitiesInBox_r = function (node) {
-		for (var num in node.entities) {
-			if (!node.entities.hasOwnProperty(num)) {
-				continue;
-			}
-
-			var ent = node.entities[num];
-			var gent = GentityForSvEntity(ent);
-			
-			if (gent.absmin[0] > maxs[0] ||
-				gent.absmin[1] > maxs[1] ||
-				gent.absmin[2] > maxs[2] ||
-				gent.absmax[0] < mins[0] ||
-				gent.absmax[1] < mins[1] ||
-				gent.absmax[2] < mins[2]) {
-				continue;
-			}
-
-			entityNums.push(gent.s.number);
-		}
-		
-		if (node.axis == -1) {
-			return; // terminal node
-		}
-
-		// recurse down both sides
-		if (maxs[node.axis] > node.dist) {
-			FindEntitiesInBox_r(node.children[0]);
-		}
-		if (mins[node.axis] < node.dist ) {
-			FindEntitiesInBox_r(node.children[1]);
-		}
-	};
-
-	FindEntitiesInBox_r(worldSectors[0]);
-
-	return entityNums;
-}
-
-/**
  * LinkEntity
  */
 function LinkEntity(gent) {
 	var ent = SvEntityForGentity(gent);
 
 	if (ent.worldSector) {
-		UnlinkEntity(gent); // unlink from old position
+		UnlinkEntity(gent);  // unlink from old position
 	}
 
-	// encode the size into the entityState_t for client prediction
-	/*if (gent.bmodel) {
+	// Encode the size into the entityState for client prediction.
+	if (gent.bmodel) {
 		gent.s.solid = SOLID_BMODEL; // a solid_box will never create this value
 	} else if (gent.contents & (CONTENTS.SOLID | CONTENTS.BODY)) {
-		// assume that x/y are equal and symetric
-		var i = gEnt.maxs[0];
+		// Assume that x/y are equal and symetric.
+		var i = gent.maxs[0];
 		if (i < 1) {
 			i = 1;
 		} else if (i > 255) {
 			i = 255;
 		}
 
-		// z is not symetric
+		// z is not symetric.
 		var j = (-gent.mins[2]);
 		if (j < 1) {
 			j = 1;
@@ -16577,7 +18212,7 @@ function LinkEntity(gent) {
 			j = 255;
 		}
 
-		// and z maxs can be negative...
+		// And z maxs can be negative...
 		var k = (gent.maxs[2] + 32);
 		if (k < 1) {
 			k = 1;
@@ -16588,27 +18223,27 @@ function LinkEntity(gent) {
 		gent.s.solid = (k << 16) | (j << 8) | i;
 	} else {
 		gent.s.solid = 0;
-	}*/
+	}
 
-	// get the position
+	// Get the position.
 	var origin = gent.currentOrigin;
 	var angles = gent.currentAngles;
 
-	// set the abs box
-	/*if (gent.bmodel && (angles[0] || angles[1] || angles[2])) {
+	// Set the abs box.
+	if (gent.bmodel && (angles[0] || angles[1] || angles[2])) {
 		var max = qm.RadiusFromBounds(gent.mins, gent.maxs);
 		for (var i = 0; i < 3; i++) {
 			gent.absmin[i] = origin[i] - max;
 			gent.absmax[i] = origin[i] + max;
 		}
-	} else {*/
-		// normal
+	} else {
+		// Normal
 		vec3.add(origin, gent.mins, gent.absmin);
 		vec3.add(origin, gent.maxs, gent.absmax);
-	//}
+	}
 
-	// because movement is clipped an epsilon away from an actual edge,
-	// we must fully check even when bounding boxes don't quite touch
+	// Because movement is clipped an epsilon away from an actual edge,
+	// we must fully check even when bounding boxes don't quite touch.
 	gent.absmin[0] -= 1;
 	gent.absmin[1] -= 1;
 	gent.absmin[2] -= 1;
@@ -16623,7 +18258,7 @@ function LinkEntity(gent) {
 	ent.areanum2 = -1;
 
 	// get all leafs, including solids
-	num_leafs = CM_BoxLeafnums( gEnt->r.absmin, gEnt->r.absmax,
+	num_leafs = CM_BoxLeafnums( gent.r.absmin, gent.r.absmax,
 		leafs, MAX_TOTAL_ENT_LEAFS, &lastLeaf );
 
 	// if none of the leafs were inside the map, the
@@ -16671,7 +18306,7 @@ function LinkEntity(gent) {
 		ent.lastCluster = CM_LeafCluster( lastLeaf );
 	}*/
 
-	// find the first world sector node that the ent's box crosses
+	// Find the first world sector node that the ent's box crosses.
 	var node = worldSectors[0];
 
 	while (1) {
@@ -16713,6 +18348,80 @@ function UnlinkEntity(gent) {
 	ent.worldSector = null;
 }
 
+/**********************************************************
+ *
+ * Area query
+ *
+ * Fills in a list of all entities who's absmin / absmax
+ * intersects the given bounds. This does NOT mean that
+ * they actually touch in the case of bmodels.
+ *
+ **********************************************************/
+
+/**
+ * FindEntitiesInBox
+ */
+function FindEntitiesInBox(mins, maxs) {
+	var entityNums = [];
+
+	var FindEntitiesInBox_r = function (node) {
+		for (var num in node.entities) {
+			if (!node.entities.hasOwnProperty(num)) {
+				continue;
+			}
+
+			var ent = node.entities[num];
+			var gent = GentityForSvEntity(ent);
+			
+			if (gent.absmin[0] > maxs[0] ||
+				gent.absmin[1] > maxs[1] ||
+				gent.absmin[2] > maxs[2] ||
+				gent.absmax[0] < mins[0] ||
+				gent.absmax[1] < mins[1] ||
+				gent.absmax[2] < mins[2]) {
+				continue;
+			}
+
+			entityNums.push(gent.s.number);
+		}
+		
+		if (node.axis == -1) {
+			return; // terminal node
+		}
+
+		// Recurse down both sides.
+		if (maxs[node.axis] > node.dist) {
+			FindEntitiesInBox_r(node.children[0]);
+		}
+		if (mins[node.axis] < node.dist ) {
+			FindEntitiesInBox_r(node.children[1]);
+		}
+	};
+
+	FindEntitiesInBox_r(worldSectors[0]);
+
+	return entityNums;
+}
+
+/**********************************************************
+ *
+ * Trace through the world and entities
+ *
+ **********************************************************/
+var moveclip = function () {
+	this.boxmins       = [0, 0, 0];                        // enclose the test object along entire move
+	this.boxmaxs       = [0, 0, 0];
+	this.mins          = [0, 0, 0];
+	this.maxs          = [0, 0, 0];
+	this.start         = [0, 0, 0];
+	this.end           = [0, 0, 0];
+	this.trace         = null;
+	this.passEntityNum = 0;
+	this.contentmask   = 0;
+	this.capsule       = 0;
+};
+var clip = new moveclip();
+
 /**
  * Trace
  *
@@ -16727,40 +18436,136 @@ function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
 		maxs = [0, 0, 0];
 	}
 
-	// Clip to world
-	var trace = cm.BoxTrace(start, end, mins, maxs, 0, contentmask, capsule);
-	trace.entityNum = trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
-	if (trace.fraction === 0) {
-		return trace;  // blocked immediately by the world
+	// Clip to world.
+	clip.trace = cm.BoxTrace(start, end, mins, maxs, 0, contentmask, capsule);
+	clip.trace.entityNum = clip.trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+	if (clip.trace.fraction === 0) {
+		return clip.trace;  // blocked immediately by the world
 	}
 
-	// clip.contentmask = contentmask;
-	// clip.start = start;
-	// vec3.set(end, clip.end);
-	// clip.mins = mins;
-	// clip.maxs = maxs;
-	// clip.passEntityNum = passEntityNum;
-	// clip.capsule = capsule;
+	clip.contentmask = contentmask;
+	vec3.set(start, clip.start);
+	vec3.set(end, clip.end);
+	vec3.set(mins, clip.mins);
+	vec3.set(maxs, clip.maxs);
+	clip.passEntityNum = passEntityNum;
+	clip.capsule = capsule;
 
-	// // Create the bounding box of the entire move.
-	// // We can limit it to the part of the move not
-	// // already clipped off by the world, which can be
-	// // a significant savings for line of sight and shot traces.
-	// for (var i = 0; i < 3; i++) {
-	// 	if (end[i] > start[i]) {
-	// 		clip.boxmins[i] = clip.start[i] + clip.mins[i] - 1;
-	// 		clip.boxmaxs[i] = clip.end[i] + clip.maxs[i] + 1;
-	// 	} else {
-	// 		clip.boxmins[i] = clip.end[i] + clip.mins[i] - 1;
-	// 		clip.boxmaxs[i] = clip.start[i] + clip.maxs[i] + 1;
-	// 	}
+	// Create the bounding box of the entire move.
+	// We can limit it to the part of the move not
+	// already clipped off by the world, which can be
+	// a significant savings for line of sight and shot traces.
+	for (var i = 0; i < 3; i++) {
+		if (end[i] > start[i]) {
+			clip.boxmins[i] = clip.start[i] + clip.mins[i] - 1;
+			clip.boxmaxs[i] = clip.end[i] + clip.maxs[i] + 1;
+		} else {
+			clip.boxmins[i] = clip.end[i] + clip.mins[i] - 1;
+			clip.boxmaxs[i] = clip.start[i] + clip.maxs[i] + 1;
+		}
+	}
+
+	// Clip to other solid entities.
+	ClipMoveToEntities(clip);
+
+	return clip.trace;
+}
+
+/**
+ * ClipMoveToEntities
+ */
+function ClipMoveToEntities(clip) {
+	var origin = [0, 0, 0];
+	var angles = [0, 0, 0];
+	var passOwnerNum = -1;
+
+	var touchlist = FindEntitiesInBox(clip.boxmins, clip.boxmaxs);
+
+	if (clip.passEntityNum !== ENTITYNUM_NONE) {
+		passOwnerNum = (GentityForNum(clip.passEntityNum)).ownerNum;
+		if (passOwnerNum === ENTITYNUM_NONE) {
+			passOwnerNum = -1;
+		}
+	}
+
+	for (var i = 0; i < touchlist.length; i++) {
+		if (clip.trace.allSolid) {
+			return;
+		}
+
+		var touch = GentityForNum(touchlist[i]);
+
+		// See if we should ignore this entity.
+		if (clip.passEntityNum !== ENTITYNUM_NONE) {
+			if (touchlist[i] === clip.passEntityNum) {
+				continue;  // don't clip against the pass entity
+			}
+			if (touch.ownerNum === clip.passEntityNum) {
+				continue;  // don't clip against own missiles
+			}
+			if (touch.ownerNum === passOwnerNum) {
+				continue;  // don't clip against other missiles from our owner
+			}
+		}
+
+		// If it doesn't have any brushes of a type we
+		// are looking for, ignore it.
+		if (!(clip.contentmask & touch.contents)) {
+			continue;
+		}
+
+		// Might intersect, so do an exact clip.
+		var clipHandle = ClipHandleForEntity(touch);
+
+		vec3.set(touch.currentOrigin, origin);
+		vec3.set(touch.currentAngles, angles);
+		if (!touch.bmodel) {
+			angles[0] = angles[1] = angles[2] = 0;  // boxes don't rotate
+		}
+
+		var trace = cm.TransformedBoxTrace(clip.start, clip.end, clip.mins, clip.maxs,
+			clipHandle, clip.contentmask, origin, angles, clip.capsule);
+
+		if (trace.allSolid) {
+			clip.trace.allSolid = true;
+			trace.entityNum = touch.s.number;
+		} else if (trace.startSolid) {
+			clip.trace.startSolid = true;
+			trace.entityNum = touch.s.number;
+		}
+
+		if (trace.fraction < clip.trace.fraction) {
+			// Make sure we keep a startSolid from a previous trace.
+			var oldStart = clip.trace.startSolid;
+
+			trace.entityNum = touch.s.number;
+			clip.trace = trace;
+			clip.trace.startSolid |= oldStart;
+		}
+	}
+}
+
+/**
+ * ClipHandleForEntity
+ *
+ * Returns a headnode that can be used for testing or clipping to a
+ * given entity. If the entity is a bsp model, the headnode will
+ * be returned, otherwise a custom box tree will be constructed.
+ */
+function ClipHandleForEntity(ent) {
+	if (ent.bmodel ) {
+		// Explicit hulls in the BSP model.
+		return cm.InlineModel(ent.s.modelIndex);
+	}
+	// if (ent.svFlags & SVF.CAPSULE) {
+	// 	// Create a temp capsule from bounding box sizes.
+	// 	return cm.TempBoxModel(ent.mins, ent.maxs, true);
 	// }
 
-	// // clip to other solid entities
-	// SV_ClipMoveToEntities ( &clip );
-
-	return trace;
+	// Create a temp tree from bounding box sizes.
+	return cm.TempBoxModel(ent.mins, ent.maxs, false);
 }
+
 
 	return {
 		Init:             Init,
@@ -16778,6 +18583,9 @@ function (_, ByteBuffer, sh, sv, cl) {
 	var BASE_FOLDER = 'baseq3';
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
@@ -16848,6 +18656,70 @@ var BUTTON = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -16871,7 +18743,7 @@ var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
-	nop:           0,
+	bad:           0,
 	move:          1,                            // [[UserCmd]
 	moveNoDelta:   2,                            // [[UserCmd]
 	clientCommand: 3,                            // [string] message
@@ -16879,12 +18751,13 @@ var CLM = {
 };
 
 var SVM = {
-	gamestate:      0,
-	configstring:   1,                           // [short] [string] only in gamestate messages
-	baseline:       2,                           // only in gamestate messages
-	serverCommand:  3,                           // [string] to be executed by client game module
-	snapshot:       4,
-	EOF:            5
+	bad:            0,
+	gamestate:      1,
+	configstring:   2,                           // [short] [string] only in gamestate messages
+	baseline:       3,                           // only in gamestate messages
+	serverCommand:  4,                           // [string] to be executed by client game module
+	snapshot:       5,
+	EOF:            6
 };
 	/**********************************************************
  * Definitions common between client and server, but not
@@ -16906,8 +18779,10 @@ var NetChan = function () {
 /**
  * InitCmd
  */
-function RegisterCommands() {
+function InitCmd() {
 	AddCmd('exec', CmdExec);
+	AddCmd('+debugtest', function () { window.debugtest = true; });
+	AddCmd('-debugtest', function () { window.debugtest = false; });
 }
 
 /**
@@ -16928,6 +18803,11 @@ function GetCmd(cmd) {
  * CmdExec
  */
 function CmdExec(filename) {
+	if (!filename) {
+		console.log('Enter a filename to execeute.')
+		return;
+	}
+
 	sys.ReadFile(filename, 'utf8', function (err, data) {
 		if (err) {
 			console.warn('Failed to execute \'' + filename + '\'');
@@ -16946,6 +18826,7 @@ function CmdExec(filename) {
 	});
 }
 	var cvars = {};
+var cvar_modifiedFlags = 0;
 
 /**
  * Cvar
@@ -16956,15 +18837,19 @@ var Cvar = function (defaultValue, flags) {
 		if (arguments.length) {
 			var oldValue = currentValue;
 
-			// Convert the new value to the same type
-			// as the default value.
-			if (typeof(defaultValue) === 'string') {
-				currentValue = newValue.toString();
-			} else if (defaultValue % 1 === 0) {
-				currentValue = parseInt(newValue, 10);
+			// If newValue looks like a number, convert it.
+			// This is quite the hack, see:
+			// http://stackoverflow.com/questions/175739/is-there-a-built-in-way-in-javascript-to-check-if-a-string-is-a-valid-number
+			if (!isNaN(newValue)) {
+				// At this point, newValue could be '12.345' or 12.345.
+				// Using +newValue will automatically convert either into
+				// their proper numerical type.
+				currentValue = +newValue;
 			} else {
-				currentValue = parseFloat(newValue);
+				currentValue = newValue;
 			}
+
+			cvar_modifiedFlags |= cvar.flags;
 
 			cvar.modified = true;
 		} else {
@@ -16972,6 +18857,7 @@ var Cvar = function (defaultValue, flags) {
 		}
 	};
 
+	cvar.defaultValue = defaultValue;
 	cvar.flags = flags;
 	cvar.modified = false;
 
@@ -16979,28 +18865,82 @@ var Cvar = function (defaultValue, flags) {
 };
 
 /**
+ * InitCvar
+ */
+function InitCvar() {
+	AddCmd('set', CmdSet);
+	AddCmd('unset', CmdUnset);
+}
+
+/**
+ * CmdSet
+ */
+function CmdSet(name, value) {
+	var cvar = AddCvar(name);
+	cvar(value);
+}
+
+/**
+ * CmdUnset
+ */
+function CmdUnset(name, value) {
+	var cvar = AddCvar(name);
+	cvar(cvar.defaultValue);
+}
+
+/**
+ * CmdCvar
+ *
+ * Not a registered command, but called by ExecuteCmdText.
+ */
+function CmdCvar(name, value) {
+	var cvar = FindCvar(name);
+
+	if (!cvar) {
+		return;
+	}
+
+	// If a value wasn't specified, print out info.
+	if (typeof(value) === 'undefined') {
+		PrintCvar(name);
+		return;
+	}
+
+	// Otherwise, set the value.
+	CmdSet(name, value);
+}
+
+/**
  * AddCvar
  */
 function AddCvar(name, defaultValue, flags) {
 	var cvar = cvars[name];
 
-	if (!cvar) {
-		if (typeof(defaultValue) === 'undefined') {
-			return null;
-		} else {
-			cvar = cvars[name] = new Cvar(defaultValue, flags || 0);
+	if (cvar) {
+		// If the user already created a cvar, update its default value and OR
+		// the new flags.
+		if (typeof(defaultValue) !== 'undefined') {
+			cvar.defaultValue = defaultValue;
 		}
+
+		if (typeof(flags) !== 'undefined') {
+			cvar.flags |= flags;
+		}
+
+		return cvar;
 	}
+
+	// Register the new cvar.
+	cvar = cvars[name] = new Cvar(defaultValue || 0, flags || 0);
 
 	return cvar;
 }
 
 /**
- * GetCvar
+ * FindCvar
  */
-function GetCvar(name, defaultValue, flags) {
-	var cvar = cvars[name];
-	return cvar;
+function FindCvar(name) {
+	return cvars[name];
 }
 
 /**
@@ -17032,9 +18972,19 @@ function SetCvarVal(name, value) {
 }
 
 /**
- * AddCvarKeyValues
+ * PrintCvar
+ *
+ * Prints the value, default, and latched string of the given variable.
  */
-function AddCvarKeyValues(flag) {
+function PrintCvar(name) {
+	var cvar = FindCvar(name);
+	log(name, 'is:', cvar(), ', default:', cvar.defaultValue);
+}
+
+/**
+ * GetCvarValues
+ */
+function GetCvarValues(flag) {
 	var data = {};
 	
 	for (var name in cvars) {
@@ -17069,7 +19019,7 @@ function WriteCvars(str) {
 			continue;
 		}
 
-		str += name + ' ' + cvar() + '\n';
+		str += 'set ' + name + ' ' + cvar() + '\n';
 	}
 
 	return str;
@@ -17080,6 +19030,16 @@ var dedicated = false;
 var events;
 var frameTime;
 var lastFrameTime;
+var initialized = false;
+
+/**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'COM:');
+	Function.apply.call(console.log, console, args);
+}
 
 /**
  * error
@@ -17103,9 +19063,29 @@ function Init(sysinterface, isdedicated) {
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
-	RegisterCommands();
+	InitCvar();
+	InitCmd();
 	
-	var exports = {
+	sv.Init(sys, GetExports(), dedicated);
+
+	if (!dedicated) {
+		cl.Init(sys, GetExports());
+	}
+
+	LoadConfig();
+
+	// If any archived cvars are modified after this, we will trigger a
+	// writing of the config file.
+	cvar_modifiedFlags &= ~CVF.ARCHIVE;
+
+	initialized = true;
+}
+
+/**
+ * GetExports
+ */
+function GetExports() {
+	return {
 		error:            error,
 		frameTime:        function() { return frameTime; },
 		ExecuteCmdText:   ExecuteCmdText,
@@ -17114,7 +19094,7 @@ function Init(sysinterface, isdedicated) {
 		AddCvar:          AddCvar,
 		GetCvarVal:       GetCvarVal,
 		SetCvarVal:       SetCvarVal,
-		AddCvarKeyValues: AddCvarKeyValues,
+		GetCvarValues: GetCvarValues,
 		AddCmd:           AddCmd,
 		GetCmd:           GetCmd,
 		NetchanSetup:     NetchanSetup,
@@ -17123,14 +19103,6 @@ function Init(sysinterface, isdedicated) {
 		NetchanPrint:     NetchanPrint,
 		NetchanProcess:   NetchanProcess
 	};
-
-	sv.Init(sys, exports, dedicated);
-
-	if (!dedicated) {
-		cl.Init(sys, exports);
-	}
-
-	LoadConfig();
 }
 
 /**
@@ -17142,10 +19114,10 @@ function Frame() {
 
 	var msec = frameTime - lastFrameTime;
 
+	CheckSaveConfig();
 	EventLoop();
 
 	sv.Frame(msec);
-
 	if (!dedicated) {
 		cl.Frame(msec);
 	}
@@ -17284,11 +19256,29 @@ function ExecuteCmdText(text) {
 
 	if ((cmdcb = GetCmd(arg0))) {
 		cmdcb.apply(this, args);
-	} else if ((cvar = GetCvar(arg0))) {
-		console.log('setting cvar', arg0, args[0]);
-		cvar(args[0]);
+	} else if ((cvar = FindCvar(arg0))) {
+		CmdCvar.apply(this, split);
 	}
 }
+
+/**
+ * CheckSaveConfig
+ */
+function CheckSaveConfig() {
+	// Don't save anything until we're fully initialized.
+	if (!initialized) {
+		return;
+	}
+
+	// Only save if we've modified an archive cvar.
+	if (!(cvar_modifiedFlags & CVF.ARCHIVE)) {
+		return;
+	}
+
+	cvar_modifiedFlags &= ~CVF.ARCHIVE;
+
+	SaveConfig();
+} 
 
 /**
  * LoadConfig
@@ -17301,12 +19291,15 @@ function LoadConfig() {
  * SaveConfig
  */
 function SaveConfig(callback) {
-	var cfg = 'unbindall\n';
+	var filename = 'default.cfg';
 
+	var cfg = 'unbindall\n';
 	cfg = cl.WriteBindings(cfg);
 	cfg = WriteCvars(cfg);
 
-	sys.WriteFile('default.cfg', cfg, 'utf8', callback);
+	console.log('Saving config to', filename);
+
+	sys.WriteFile(filename, cfg, 'utf8', callback);
 }
 	var MAX_PACKETLEN = 1400;
 var MAX_LOOPBACK  = 16;
@@ -17443,6 +19436,9 @@ function (sh, com) {
 var MAX_QPATH   = 64;
 var CMD_BACKUP  = 64;
 
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
 /**
  * Cvar flags
  */
@@ -17512,6 +19508,70 @@ var BUTTON = {
 	FOLLOWME:     1024,
 	ANY:          2048                                     // any key whatsoever
 };
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -17535,7 +19595,7 @@ var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
-	nop:           0,
+	bad:           0,
 	move:          1,                            // [[UserCmd]
 	moveNoDelta:   2,                            // [[UserCmd]
 	clientCommand: 3,                            // [string] message
@@ -17543,12 +19603,13 @@ var CLM = {
 };
 
 var SVM = {
-	gamestate:      0,
-	configstring:   1,                           // [short] [string] only in gamestate messages
-	baseline:       2,                           // only in gamestate messages
-	serverCommand:  3,                           // [string] to be executed by client game module
-	snapshot:       4,
-	EOF:            5
+	bad:            0,
+	gamestate:      1,
+	configstring:   2,                           // [short] [string] only in gamestate messages
+	baseline:       3,                           // only in gamestate messages
+	serverCommand:  4,                           // [string] to be executed by client game module
+	snapshot:       5,
+	EOF:            6
 };
 	var KbLocals = {
 	'us': {
