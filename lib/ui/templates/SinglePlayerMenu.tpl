@@ -1,5 +1,5 @@
 <div class="background fullscreen">
-	<div class="dialog dialog-abscenter">
+	<div class="dialog abscenter">
 		<h1>Choose a level</h1>
 		<div class="level-select-wrapper">
 			<div class="preview">

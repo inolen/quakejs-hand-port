@@ -1,5 +1,5 @@
 <div class="background fullscreen">
-	<div class="dialog dialog-abscenter">
+	<div class="dialog abscenter">
 		<div class="form-horizontal">
 			<h1>Connect to a server</h1>
 			<div class="address control-group">

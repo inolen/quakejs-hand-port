@@ -62,11 +62,6 @@
 	overflow: hidden;
 }
 
-.dialog.dialog-abscenter {
-	position: absolute;
-	margin: 0;
-}
-
 .dialog .close {
 	position: absolute;
 	width: 1.4em;
@@ -112,18 +107,24 @@
 
 .dialog .control-input {
 	margin-left: 11em;
-	padding: .5em;
-	background: #222;
 	/* Empty fields */
 	min-height: 1em;
+}
+
+.dialog .control-input.input-text,
+.dialog .control-input.input-key {
+	padding: .5em;
+	background: #222;
 	border: 1px solid transparent;
 }
 
-.dialog .control-input.hover {
+.dialog .control-input.input-text.hover,
+.dialog .control-input.input-key.hover {
 	background: #333;
 }
 
-.dialog .control-input.focus {
+.dialog .control-input.input-text.focus,
+.dialog .control-input.input-key.focus {
 	border: 1px solid #0f0;
 }
 
@@ -145,6 +146,57 @@
 	background: #333;
 }
 
+/**
+ * Tabs
+ */
+.nav-tabs {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.nav-tabs li {
+	display: inline-block;
+	padding: 0.33em 0.5em;
+}
+
+.nav-tabs li a {
+	color: #fff;
+	text-decoration: none;
+}
+
+.nav-tabs li.active {
+	color: #fff;
+	background-color: #222;
+}
+
+.tab-pane {
+	display: none;
+}
+
+.tab-pane.active {
+	display: block;
+}
+
+/**
+ * Ranges
+ */
+.input-range {
+	position: relative;
+	background: #0000ff;
+	height: 1em;
+}
+
+.input-range .input-range-slider {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background: #00ff00;
+	width: 1em;
+	height: 1em;
+	content: '';
+}
+
 /**********************************************************
  *
  * Specialized
@@ -155,7 +207,7 @@
  * Main menu
  */
 #main .background {
-	background: #00ff00;
+	background: rgba(0, 0, 0, 0.3);
 }
 
 #main .menu-item {
@@ -170,7 +222,7 @@
  * Singleplayer menu
  */
 #singleplayer .background {
-	background: #00ff00;
+	background: rgba(0, 0, 0, 0.3);
 }
 
 #singleplayer .level-select-wrapper {
@@ -199,21 +251,29 @@
  * Multiplayer menu
  */
 #multiplayer .background {
-	background: #00ff00;
+	background: rgba(0, 0, 0, 0.3);
 }
 
 /**
  * Settings menu
  */
 #settings .background {
-	background: #00ff00;
+	background: rgba(0, 0, 0, 0.3);
+}
+
+#settings .nav-tabs {
+	margin: 0.67em 0;
+}
+
+#settings .tab-pane {
+	min-height: 12em;
 }
 
 /**
  * Ingame menu
  */
 #ingame .background {
-	background: #ff00
+	background: rgba(0, 0, 0, 0.3);
 }
 
 #ingame .menu-item {
