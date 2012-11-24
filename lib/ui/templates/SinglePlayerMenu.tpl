@@ -3,11 +3,13 @@
 		<h1>Choose a level</h1>
 		<div class="level-select-wrapper">
 			<div class="preview">
-				<img src="<%= levels[previewLevel].url %>" />
+			<% _.each(levels, function (level, i) { %>
+				<div class="preview-image" data-himage="<%- level.himage %>" <% if (i === 0) { %>style="display: block;"<% } %>></div>
+			<% }); %>
 			</div>
 			<ul class="levels">
 			<% _.each(levels, function (level, i) { %>
-				<li data-idx="<%- i %>" class="menu-item"><%- level.name %></li>
+				<li class="menu-item"><%- level.name %></li>
 			<% }); %>
 			</ul>
 		</div>

@@ -14,15 +14,12 @@
 	<ul class="weapons">
 		<% for (var i = 0; i < weapons.length; i++) { %>
 			<% if (!weapons[i]) continue; %>
-			<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>
+			<li<% if (i === weaponSelect) { %> class="selected"<% } %>>
+				<span class="icon" data-himage="<%= weapons[i].weaponIcon %>"></span>
+				<span class="ammo"><%- ammo[i] %></span>
+			</li>
 		<% } %>
 	</ul>
-</div>
-<div class="ammo-wrapper">
-	<% for (var i = 0; i < weapons.length; i++) { %>
-		<% if (!weapons[i]) continue; %>
-		<div class="ammo"><%- ammo[i] %></div>
-	<% } %>
 </div>
 <div class="armor-wrapper">
 	Armor: <span class="armor"><%- armor %></span>
