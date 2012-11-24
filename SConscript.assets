@@ -35,7 +35,7 @@ env.Alias('audio', [env.ConvToOGG(x) for x in audio_src])
 #
 # Textures
 #
-texture_dirs = ['env', 'gfx', 'models', 'textures']
+texture_dirs = ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'models', 'textures']
 texture_src = []
 for dir in texture_dirs:
 	texture_src.extend(rglob(ASSET_DIR + dir, '*.jpg'))
@@ -45,7 +45,7 @@ env.Alias('textures', [env.ConvToDXT(x) for x in texture_src])
 #
 # Images
 #
-image_dirs = ['icons', 'levelshots']
+image_dirs = ['gfx/2d', 'icons', 'levelshots']
 image_src = []
 for dir in image_dirs:
 	image_src.extend(rglob(ASSET_DIR + dir, '*.jpg'))
