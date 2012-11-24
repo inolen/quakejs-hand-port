@@ -656,7 +656,7 @@ return {
 
 });
 define('common/sh', ['common/qmath'], function (qm) {
-	var root = global || window;
+	var root = typeof(global) !== 'undefined' ? global : window;
 
 root.BASE_FOLDER = 'baseq3';
 root.MAX_QPATH   = 64;
@@ -7058,6 +7058,9 @@ function (glmatrix, sh, qm) {
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
+
 var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
 var MINS_Z = -24;
@@ -9477,6 +9480,9 @@ define('game/gm',
 function (_, glmatrix, sh, qm, bg) {
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
+
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
 
 var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
@@ -12295,15 +12301,15 @@ function FireWeapon(ent) {
 
 	// Fire the specific weapon.
 	switch (ent.s.weapon) {
-		// case WP_GAUNTLET:
+		// case WP.GAUNTLET:
 		// 	Weapon_Gauntlet( ent );
 		// 	break;
-		// case WP_LIGHTNING:
+		// case WP.LIGHTNING:
 		// 	Weapon_LightningFire( ent );
 		// 	break;
-		// case WP_SHOTGUN:
-		// 	weapon_supershotgun_fire( ent );
-		// 	break;
+		case WP.SHOTGUN:
+			weapon_supershotgun_fire(ent);
+			break;
 		case WP.MACHINEGUN:
 			// if (g_gametype.integer !== GT_TEAM) {
 				BulletFire(ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
@@ -12311,27 +12317,111 @@ function FireWeapon(ent) {
 			// 	Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
 			// }
 			break;
-		// case WP_GRENADE_LAUNCHER:
+		// case WP.GRENADE_LAUNCHER:
 		// 	weapon_grenadelauncher_fire( ent );
 		// 	break;
 		case WP.ROCKET_LAUNCHER:
 			RocketLauncherFire(ent);
 			break;
-		// case WP_PLASMAGUN:
+		// case WP.PLASMAGUN:
 		// 	Weapon_Plasmagun_Fire( ent );
 		// 	break;
-		// case WP_RAILGUN:
+		// case WP.RAILGUN:
 		// 	weapon_railgun_fire( ent );
 		// 	break;
-		// case WP_BFG:
+		// case WP.BFG:
 		// 	BFG_Fire( ent );
 		// 	break;
-		// case WP_GRAPPLING_HOOK:
+		// case WP.GRAPPLING_HOOK:
 		// 	Weapon_GrapplingHook_Fire( ent );
 		// 	break;
 		default:
 			break;
 	}
+}
+
+/*
+======================================================================
+
+SHOTGUN
+
+======================================================================
+*/
+
+// DEFAULT_SHOTGUN_SPREAD and DEFAULT_SHOTGUN_COUNT	are in bg_public.h, because
+// client predicts same spreads
+var DEFAULT_SHOTGUN_DAMAGE = 10;
+
+function ShotgunPellet(start, end, ent ) {
+	var tr;
+	var damage, i, passent;
+	var traceEnt;
+	var tr_start, tr_end;
+	
+// 	passent = ent.s.number;
+// 	VectorCopy( start, tr_start );
+// 	VectorCopy( end, tr_end );
+// 	for (i = 0; i < 10; i++) {
+// 		trap_Trace (&tr, tr_start, null, null, tr_end, passent, MASK_SHOT);
+// 		traceEnt = &g_entities[ tr.entityNum ];
+// 		
+// 		// send bullet impact
+// 		if (  tr.surfaceFlags & SURF_NOIMPACT ) {
+// 			return false;
+// 		}
+// 		
+// 		if ( traceEnt.takedamage) {
+// 			damage = DEFAULT_SHOTGUN_DAMAGE * s_quadFactor;
+// 			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, MOD.SHOTGUN);
+// 				if( LogAccuracyHit( traceEnt, ent ) ) {
+// 					return true;
+// 				}
+// 		}
+// 		return false;
+// 	}
+	return false;
+}
+
+// this should match CG_ShotgunPattern
+function ShotgunPattern(origin, origin2, seed, ent) {
+	var i;
+	var r, u;
+	var end;
+	var forward, right, up;
+	var hitClient = false;
+	
+	// derive the right and up vectors from the forward vector, because
+	// the client won't have any other information
+// 	VectorNormalize2( origin2, forward );
+// 	PerpendicularVector( right, forward );
+// 	CrossProduct( forward, right, up );
+// 	
+// 	// generate the "random" spread pattern
+// 	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
+// 		r = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+// 		u = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+// 		VectorMA(origin, 8192 * 16, forward, end);
+// 		VectorMA(end, r, right, end);
+// 		VectorMA(end, u, up, end);
+// 		if( ShotgunPellet( origin, end, ent ) && !hitClient ) {
+// 			hitClient = true;
+// 			ent.client.accuracy_hits++;
+// 		}
+// 	}
+}
+
+
+function weapon_supershotgun_fire (ent) {
+	var tent;
+	
+	// send shotgun blast
+	tent = TempEntity( muzzle, EV.SHOTGUN );
+	vec3.scale( forward, 4096, tent.s.origin2 );
+	sv.SnapVector( tent.s.origin2 );
+	tent.s.eventParm = Math.floor(Math.random() * 65536) & 255;		// seed for spread pattern
+	tent.s.otherEntityNum = ent.s.number;
+	
+// 	ShotgunPattern( tent.s.pos.trBase, tent.s.origin2, tent.s.eventParm, ent );
 }
 
 /**
@@ -15858,7 +15948,8 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 			ModelBounds:           ModelBounds,
 			BoxTrace:              BoxTrace,
 			TransformedBoxTrace:   TransformedBoxTrace,
-			EmitCollisionSurfaces: EmitCollisionSurfaces
+			EmitCollisionSurfaces: EmitCollisionSurfaces,
+			SnapVector:            SnapVector
 		};
 	}
 
@@ -15868,6 +15959,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		}
 	};
 });
+
 
 /*global vec3: true, mat4: true */
 
@@ -16275,6 +16367,7 @@ function GameExports() {
 		UnlinkEntity:      UnlinkEntity,
 		FindEntitiesInBox: FindEntitiesInBox,
 		GetEntityDefs:     cm.EntityDefs,
+		SnapVector:        cm.SnapVector,
 		Trace:             Trace
 	};
 }
@@ -16681,6 +16774,7 @@ function AddServerCommand(client, type, msg) {
 	// Copy the command off.
 	client.reliableCommands[client.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
 }
+
 	/**
  * SocketClosed
  */

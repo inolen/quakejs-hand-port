@@ -656,7 +656,7 @@ return {
 
 });
 define('common/sh', ['common/qmath'], function (qm) {
-	var root = global || window;
+	var root = typeof(global) !== 'undefined' ? global : window;
 
 root.BASE_FOLDER = 'baseq3';
 root.MAX_QPATH   = 64;
@@ -7058,6 +7058,9 @@ function (glmatrix, sh, qm) {
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
+
 var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
 var MINS_Z = -24;
@@ -9477,6 +9480,9 @@ define('game/gm',
 function (_, glmatrix, sh, qm, bg) {
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
+
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
 
 var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
@@ -12295,15 +12301,15 @@ function FireWeapon(ent) {
 
 	// Fire the specific weapon.
 	switch (ent.s.weapon) {
-		// case WP_GAUNTLET:
+		// case WP.GAUNTLET:
 		// 	Weapon_Gauntlet( ent );
 		// 	break;
-		// case WP_LIGHTNING:
+		// case WP.LIGHTNING:
 		// 	Weapon_LightningFire( ent );
 		// 	break;
-		// case WP_SHOTGUN:
-		// 	weapon_supershotgun_fire( ent );
-		// 	break;
+		case WP.SHOTGUN:
+			weapon_supershotgun_fire(ent);
+			break;
 		case WP.MACHINEGUN:
 			// if (g_gametype.integer !== GT_TEAM) {
 				BulletFire(ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
@@ -12311,27 +12317,111 @@ function FireWeapon(ent) {
 			// 	Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );
 			// }
 			break;
-		// case WP_GRENADE_LAUNCHER:
+		// case WP.GRENADE_LAUNCHER:
 		// 	weapon_grenadelauncher_fire( ent );
 		// 	break;
 		case WP.ROCKET_LAUNCHER:
 			RocketLauncherFire(ent);
 			break;
-		// case WP_PLASMAGUN:
+		// case WP.PLASMAGUN:
 		// 	Weapon_Plasmagun_Fire( ent );
 		// 	break;
-		// case WP_RAILGUN:
+		// case WP.RAILGUN:
 		// 	weapon_railgun_fire( ent );
 		// 	break;
-		// case WP_BFG:
+		// case WP.BFG:
 		// 	BFG_Fire( ent );
 		// 	break;
-		// case WP_GRAPPLING_HOOK:
+		// case WP.GRAPPLING_HOOK:
 		// 	Weapon_GrapplingHook_Fire( ent );
 		// 	break;
 		default:
 			break;
 	}
+}
+
+/*
+======================================================================
+
+SHOTGUN
+
+======================================================================
+*/
+
+// DEFAULT_SHOTGUN_SPREAD and DEFAULT_SHOTGUN_COUNT	are in bg_public.h, because
+// client predicts same spreads
+var DEFAULT_SHOTGUN_DAMAGE = 10;
+
+function ShotgunPellet(start, end, ent ) {
+	var tr;
+	var damage, i, passent;
+	var traceEnt;
+	var tr_start, tr_end;
+	
+// 	passent = ent.s.number;
+// 	VectorCopy( start, tr_start );
+// 	VectorCopy( end, tr_end );
+// 	for (i = 0; i < 10; i++) {
+// 		trap_Trace (&tr, tr_start, null, null, tr_end, passent, MASK_SHOT);
+// 		traceEnt = &g_entities[ tr.entityNum ];
+// 		
+// 		// send bullet impact
+// 		if (  tr.surfaceFlags & SURF_NOIMPACT ) {
+// 			return false;
+// 		}
+// 		
+// 		if ( traceEnt.takedamage) {
+// 			damage = DEFAULT_SHOTGUN_DAMAGE * s_quadFactor;
+// 			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, MOD.SHOTGUN);
+// 				if( LogAccuracyHit( traceEnt, ent ) ) {
+// 					return true;
+// 				}
+// 		}
+// 		return false;
+// 	}
+	return false;
+}
+
+// this should match CG_ShotgunPattern
+function ShotgunPattern(origin, origin2, seed, ent) {
+	var i;
+	var r, u;
+	var end;
+	var forward, right, up;
+	var hitClient = false;
+	
+	// derive the right and up vectors from the forward vector, because
+	// the client won't have any other information
+// 	VectorNormalize2( origin2, forward );
+// 	PerpendicularVector( right, forward );
+// 	CrossProduct( forward, right, up );
+// 	
+// 	// generate the "random" spread pattern
+// 	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
+// 		r = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+// 		u = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+// 		VectorMA(origin, 8192 * 16, forward, end);
+// 		VectorMA(end, r, right, end);
+// 		VectorMA(end, u, up, end);
+// 		if( ShotgunPellet( origin, end, ent ) && !hitClient ) {
+// 			hitClient = true;
+// 			ent.client.accuracy_hits++;
+// 		}
+// 	}
+}
+
+
+function weapon_supershotgun_fire (ent) {
+	var tent;
+	
+	// send shotgun blast
+	tent = TempEntity( muzzle, EV.SHOTGUN );
+	vec3.scale( forward, 4096, tent.s.origin2 );
+	sv.SnapVector( tent.s.origin2 );
+	tent.s.eventParm = Math.floor(Math.random() * 65536) & 255;		// seed for spread pattern
+	tent.s.otherEntityNum = ent.s.number;
+	
+// 	ShotgunPattern( tent.s.pos.trBase, tent.s.origin2, tent.s.eventParm, ent );
 }
 
 /**
@@ -12555,6 +12645,9 @@ define('cgame/cg',
 function (_, glmatrix, sh, qm, bg) {
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
+
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
 
 var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
@@ -14206,9 +14299,7 @@ function AddEntityEvent(cent, position) {
 		case EV.FIRE_WEAPON:
 			FireWeapon(cent);
 			break;
-			
-
-
+		
 		//
 		// missile impacts
 		//
@@ -14234,6 +14325,11 @@ function AddEntityEvent(cent, position) {
 		case EV.BULLET_HIT_WALL:
 			qm.ByteToDir(es.eventParm, dir);
 			BulletHit(es.pos.trBase, es.otherEntityNum, dir, false, ENTITYNUM_WORLD);
+			break;
+		
+		case EV.SHOTGUN:
+			log('EV.SHOTGUN');
+			ShotgunFire(es);
 			break;
 	}
 }
@@ -17431,13 +17527,13 @@ function MissileHitWall(weapon, clientNum, origin, dir, soundType) {
 		// 	radius = 32;
 		// 	isSprite = qtrue;
 		// 	break;
-		// case WP_SHOTGUN:
-		// 	mod = cgs.media.bulletFlashModel;
-		// 	shader = cgs.media.bulletExplosionShader;
+		case WP.SHOTGUN:
+			mod = cgs.media.bulletFlashModel;
+			shader = cgs.media.bulletExplosionShader;
 		// 	mark = cgs.media.bulletMarkShader;
-		// 	sfx = 0;
-		// 	radius = 4;
-		// 	break;
+			sfx = 0;
+			radius = 4;
+			break;
 		case WP.MACHINEGUN:
 			mod = cgs.media.bulletFlashModel;
 			shader = cgs.media.bulletExplosionShader;
@@ -17528,7 +17624,7 @@ function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 	// 	if ( CG_CalcMuzzlePoint( sourceEntityNum, start ) ) {
 	// 		sourceContentType = CG_PointContents( start, 0 );
 	// 		destContentType = CG_PointContents( end, 0 );
-
+	
 	// 		// do a complete bubble trail if necessary
 	// 		if ( ( sourceContentType == destContentType ) && ( sourceContentType & CONTENTS_WATER ) ) {
 	// 			CG_BubbleTrail( start, end, 32 );
@@ -17543,14 +17639,14 @@ function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 	// 			trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
 	// 			CG_BubbleTrail( trace.endPos, end, 32 );
 	// 		}
-
+	
 	// 		// draw a tracer
 	// 		if ( random() < cg_tracerChance.value ) {
 	// 			CG_Tracer( start, end );
 	// 		}
 	// 	}
 	// }
-
+	
 	// Impact splash and mark.
 	if (flesh) {
 	// 	CG_Bleed( end, fleshEntityNum );
@@ -17558,6 +17654,125 @@ function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 		MissileHitWall(WP.MACHINEGUN, 0, end, normal, IMPACTSOUND.DEFAULT);
 	}
 }
+
+/*
+============================================================================
+
+SHOTGUN TRACING
+
+============================================================================
+*/
+
+/*
+================
+CG_ShotgunPellet
+================
+*/
+function ShotgunPellet(start, end, skipNum) {
+	var tr;
+	var sourceContentType, destContentType;
+	
+	
+// 	CG_Trace( tr, start, NULL, NULL, end, skipNum, MASK_SHOT );
+// 
+// 	sourceContentType = CG_PointContents( start, 0 );
+// 	destContentType = CG_PointContents( tr.endpos, 0 );
+// 
+// 	// FIXME: should probably move this cruft into CG_BubbleTrail
+// 	if ( sourceContentType == destContentType ) {
+// 		if ( sourceContentType & CONTENTS_WATER ) {
+// 			CG_BubbleTrail( start, tr.endpos, 32 );
+// 		}
+// 	} else if ( sourceContentType & CONTENTS_WATER ) {
+// 		trace_t trace;
+// 		
+// 		trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
+// 		CG_BubbleTrail( start, trace.endpos, 32 );
+// 	} else if ( destContentType & CONTENTS_WATER ) {
+// 		trace_t trace;
+// 		
+// 		trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
+// 		CG_BubbleTrail( tr.endpos, trace.endpos, 32 );
+// 	}
+// 
+// 	if (  tr.surfaceFlags & SURF_NOIMPACT ) {
+// 		return;
+// 	}
+// 
+// 	if ( cg_entities[tr.entityNum].currentState.eType == ET_PLAYER ) {
+// 		MissileHitPlayer( WP.SHOTGUN, tr.endpos, tr.plane.normal, tr.entityNum );
+// 	} else {
+// 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
+// 			// SURF_NOIMPACT will not make a flame puff or a mark
+// 			return;
+// 		}
+// 		if ( tr.surfaceFlags & SURF_METALSTEPS ) {
+// 			MissileHitWall( WP.SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND.METAL );
+// 		} else {
+// 			MissileHitWall(WP.SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND.DEFAULT);
+// 		}
+// 	}
+}
+
+/*
+================
+CG_ShotgunPattern
+
+Perform the same traces the server did to locate the
+hit splashes
+================
+*/
+function ShotgunPattern(origin, origin2, seed, otherEntNum) {
+	var i;
+	var r, u;
+	var end     = [0, 0, 0];
+	var forward = [0, 0, 0],
+		right   = [0, 0, 0],
+		up      = [0, 0, 0];
+	
+	// derive the right and up vectors from the forward vector, because
+	// the client won't have any other information
+	vec3.normalize(origin2, forward);
+	qm.PerpendicularVector(right, forward);
+	vec3.cross(forward, right, up);
+	
+	// generate the "random" spread pattern
+	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
+		r = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+		u = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+		vec3.add(origin, vec3.scale(forward, 8192 * 16, [0, 0, 0]), end);
+		vec3.add(end, vec3.scale(right, r, [0, 0, 0]));
+		vec3.add(end, vec3.scale(up, u, [0, 0, 0]));
+		
+		ShotgunPellet(origin, end, otherEntNum);
+	}
+}
+
+/*
+==============
+CG_ShotgunFire
+==============
+*/
+function ShotgunFire(es) {
+	var v = [0, 0, 0];
+	var contents;
+	
+	vec3.subtract( es.origin2, es.pos.trBase, v );
+	vec3.normalize( v );
+	vec3.scale( v, 32, v );
+	vec3.add( es.pos.trBase, v, v );
+	
+	var up = [0, 0, 0];
+// 
+// 	contents = CG_PointContents( es->pos.trBase, 0 );
+// 	if ( !( contents & CONTENTS_WATER ) ) {
+		vec3.set( up, [0, 0, 8] );
+// 		SmokePuff( v, up, 32, 1, 1, 1, 0.33f, 900, cg.time, 0, LEF_PUFF_DONT_SCALE, cgs.media.shotgunSmokePuffShader );
+// 	}
+// 	
+	ShotgunPattern(es.pos.trBase, es.origin2, es.eventParm, es.otherEntityNum);
+}
+
 
 		return {
 			Init: Init,
@@ -20875,7 +21090,8 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 			ModelBounds:           ModelBounds,
 			BoxTrace:              BoxTrace,
 			TransformedBoxTrace:   TransformedBoxTrace,
-			EmitCollisionSurfaces: EmitCollisionSurfaces
+			EmitCollisionSurfaces: EmitCollisionSurfaces,
+			SnapVector:            SnapVector
 		};
 	}
 
@@ -20885,6 +21101,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		}
 	};
 });
+
 
 /*global vec3: true, mat4: true */
 
@@ -39045,7 +39262,7 @@ function (
 	ConnectView, HudView, ScoreboardView,
 	IngameMenu, MainMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu
 ) {
-	var root = global || window;
+	var root = typeof(global) !== 'undefined' ? global : window;
 
 /**
  * Simulated event structures.
@@ -41873,6 +42090,7 @@ function GameExports() {
 		UnlinkEntity:      UnlinkEntity,
 		FindEntitiesInBox: FindEntitiesInBox,
 		GetEntityDefs:     cm.EntityDefs,
+		SnapVector:        cm.SnapVector,
 		Trace:             Trace
 	};
 }
@@ -42279,6 +42497,7 @@ function AddServerCommand(client, type, msg) {
 	// Copy the command off.
 	client.reliableCommands[client.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
 }
+
 	/**
  * SocketClosed
  */
