@@ -656,17 +656,19 @@ return {
 
 });
 define('common/sh', ['common/qmath'], function (qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+	var root = global || window;
+
+root.BASE_FOLDER = 'baseq3';
+root.MAX_QPATH   = 64;
+root.CMD_BACKUP  = 64;
 
 // If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
+root.SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
  */
-var CVF = {
+root.CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
@@ -676,45 +678,45 @@ var CVF = {
 /**
  * Renderer (should be moved)
  */
-var MAX_DRAWSURFS  = 0x10000;
+root.MAX_DRAWSURFS  = 0x10000;
 
 /**
  * Snapshot flags
  */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+root.SNAPFLAG_RATE_DELAYED   = 1;
+root.SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+root.SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
 
 /**
  * MAX_* defines used to pre-alloc many structures
  */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+root.GENTITYNUM_BITS         = 10;
+root.MAX_CLIENTS             = 32;                       // absolute limit
+root.MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+root.MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+root.MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
 
 /**
  * Faux entity numbers
  */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+root.ENTITYNUM_NONE          = MAX_GENTITIES-1;
+root.ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+root.ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
 
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+root.MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
 	                                                       // then BUTTON_WALKING should be set
 
 /**
  * Playerstate
  */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
+root.MAX_STATS               = 16;
+root.MAX_PERSISTANT          = 16;
+root.MAX_POWERUPS            = 16;
+root.MAX_WEAPONS             = 16;
+root.MAX_PS_EVENTS           = 2;
+root.PMOVEFRAMECOUNTBITS     = 6;
 
-var BUTTON = {
+root.BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -733,7 +735,7 @@ var BUTTON = {
 	ANY:          2048                                     // any key whatsoever
 };
 
-var TR = {
+root.TR = {
 	STATIONARY:  0,
 	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
 	LINEAR:      2,
@@ -742,7 +744,7 @@ var TR = {
 	GRAVITY:     5
 };
 
-var SURF = {
+root.SURF = {
 	NODAMAGE:    0x1,                            // never give falling damage
 	SLICK:       0x2,                            // effects game physics
 	SKY:         0x4,                            // lighting from environment map
@@ -764,7 +766,7 @@ var SURF = {
 	DUST:        0x40000                         // leave a dust trail when walking on this surface
 };
 
-var CONTENTS = {
+root.CONTENTS = {
 	SOLID:         1,                                      // an eye is never valid in a solid
 	LAVA:          8,
 	SLIME:         16,
@@ -7053,146 +7055,6 @@ else {
 define('game/bg',
 ['glmatrix', 'common/sh', 'common/qmath'],
 function (glmatrix, sh, qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
@@ -9613,146 +9475,6 @@ var itemList = [
 define('game/gm',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
@@ -11058,8 +10780,8 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 
 	var take = damage;
 	// Save some from armor.
-	// asave = CheckArmor(targ, take, dflags);
-	// take -= asave;
+	asave = CheckArmor(targ, take, dflags);
+	take -= asave;
 
 	if (g_debugDamage.integer) {
 		log(level.time, ', client', targ.s.number, ', health', targ.health, ', damage', take, ', armor', asave);
@@ -11068,34 +10790,34 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	// Add to the damage inflicted on a player this frame.
 	// The total will be turned into screen blends and view angle kicks
 	// at the end of the frame.
-	// if (client) {
-	// 	if (attacker) {
-	// 		client.ps.persistant[PERS.ATTACKER] = attacker.s.number;
-	// 	} else {
-	// 		client.ps.persistant[PERS.ATTACKER] = ENTITYNUM_WORLD;
-	// 	}
-	// 	client.damage_armor += asave;
-	// 	client.damage_blood += take;
-	// 	client.damage_knockback += knockback;
-	// 	if (dir) {
-	// 		vec3.set(dir, client.damage_from)
-	// 		client.damage_fromWorld = false;
-	// 	} else {
-	// 		vec3.set(targ.currentOrigin, client.damage_from);
-	// 		client.damage_fromWorld = true;
-	// 	}
-	// }
+	if (client) {
+		if (attacker) {
+			client.ps.persistant[PERS.ATTACKER] = attacker.s.number;
+		} else {
+			client.ps.persistant[PERS.ATTACKER] = ENTITYNUM_WORLD;
+		}
+		client.damage_armor += asave;
+		client.damage_blood += take;
+		client.damage_knockback += knockback;
+		if (dir) {
+			vec3.set(dir, client.damage_from)
+			client.damage_fromWorld = false;
+		} else {
+			vec3.set(targ.currentOrigin, client.damage_from);
+			client.damage_fromWorld = true;
+		}
+	}
 
 	// See if it's the player hurting the emeny flag carrier.
 	// if (g_gametype.integer === GT_CTF) {
 	// 	Team_CheckHurtCarrier(targ, attacker);
 	// }
 
-	// if (targ.client) {
-	// 	// set the last client who damaged the target
-	// 	targ.client.lasthurt_client = attacker.s.number;
-	// 	targ.client.lasthurt_mod = mod;
-	// }
+	if (targ.client) {
+		// set the last client who damaged the target
+		targ.client.lasthurt_client = attacker.s.number;
+		targ.client.lasthurt_mod = mod;
+	}
 
 	// Do the damage.
 	if (take) {
@@ -12391,7 +12113,7 @@ function MissileImpact(ent, trace) {
 
 	// 		SnapVectorTowards( v, ent.s.pos.trBase );	// save net bandwidth
 	// 	} else {
-	// 		VectorCopy(trace.endpos, v);
+	// 		VectorCopy(trace.endPos, v);
 	// 		G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace.plane.normal ) );
 	// 		ent.enemy = NULL;
 	// 	}
@@ -12434,7 +12156,7 @@ function MissileImpact(ent, trace) {
 	// Change over to a normal entity right at the point of impact
 	ent.s.eType = ET.GENERAL;
 
-	// SnapVectorTowards(trace.endpos, ent.s.pos.trBase );  // save net bandwidth
+	// SnapVectorTowards(trace.endPos, ent.s.pos.trBase );  // save net bandwidth
 
 	SetOrigin(ent, trace.endPos);
 
@@ -12641,7 +12363,7 @@ function BulletFire(ent, spread, damage, mod) {
 
 	var passent = ent.s.number;
 	
-	// for (var i = 0; i < 10; i++) {
+	for (var i = 0; i < 10; i++) {
 		var tr = sv.Trace(muzzle, end, null, null, passent, MASK.SHOT);
 
 		if (tr.surfaceFlags & SURF.NOIMPACT) {
@@ -12651,27 +12373,27 @@ function BulletFire(ent, spread, damage, mod) {
 		var traceEnt = level.gentities[tr.entityNum];
 
 		// Snap the endpos to integers, but nudged towards the line.
-		// SnapVectorTowards(tr.endpos, muzzle);
+		// SnapVectorTowards(tr.endPos, muzzle);
 
 		// Send bullet impact.
-		// if (traceEnt->takeDamage && traceEnt->client) {
-		// 	tent = G_TempEntity(tr.endpos, EV_BULLET_HIT_FLESH);
-		// 	tent.s.eventParm = traceEnt.s.number;
-		// 	// if (LogAccuracyHit(traceEnt, ent)) {
-		// 	// 	client.accuracy_hits++;
-		// 	// }
-		// } else {
+		if (traceEnt.takeDamage && traceEnt.client) {
+			tent = TempEntity(tr.endPos, EV.BULLET_HIT_FLESH);
+			tent.s.eventParm = traceEnt.s.number;
+			if (LogAccuracyHit(traceEnt, ent)) {
+				ent.client.accuracy_hits++;
+			}
+		} else {
 			var tent = TempEntity(tr.endPos, EV.BULLET_HIT_WALL);
 			tent.s.eventParm = qm.DirToByte(tr.plane.normal);
-		// }
-		// tent.s.otherEntityNum = ent.s.number;
+		}
+		tent.s.otherEntityNum = ent.s.number;
 
-		// if (traceEnt.takeDamage) {
-		// 	G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, mod);
-		// }
+		if (traceEnt.takeDamage) {
+			Damage(traceEnt, ent, ent, forward, tr.endPos, damage, 0, mod);
+		}
 
-		// break;
-	// }
+		break;
+	}
 }
 
 /**
@@ -12840,147 +12562,6 @@ define("client/cl", function(){});
 define('clipmap/cm',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
 	// We don't want everyone who requires us to 
 	// have the same version of clipmap.
 	function ClipMap(imp) {
@@ -16293,146 +15874,6 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 define('server/sv',
 ['underscore', 'ByteBuffer', 'common/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
 function (_, ByteBuffer, sh, game, cl, clipmap) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -16985,7 +16426,7 @@ function ConnectionlessPacket(socket, msg) {
  * SpawnServer
  */
 function SpawnServer(mapName) {
-	log('Spawning new server for', mapName, 'at', com.frameTime());
+	log('Spawning new server for', mapName, 'at', com.frameTime);
 
 	svs.initialized = false;
 	
@@ -17015,7 +16456,7 @@ function SpawnServer(mapName) {
 	cm.LoadMap(mapName, function () {
 		sv_mapname(mapName);
 		// serverid should be different each time.
-		sv_serverid(com.frameTime());
+		sv_serverid(com.frameTime);
 
 		// Clear physics interaction links.
 		ClearWorld();
@@ -18580,146 +18021,6 @@ function ClipHandleForEntity(ent) {
 define('common/com',
 ['underscore', 'ByteBuffer', 'common/sh', 'server/sv', 'client/cl'],
 function (_, ByteBuffer, sh, sv, cl) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -18821,12 +18122,12 @@ function CmdExec(filename) {
 		var lines = data.split(/\r\n|\r|\n/);
 
 		for (var i = 0; i < lines.length; i++) {
-			ExecuteCmdText(lines[i]);
+			ExecuteBuffer(lines[i]);
 		}
 	});
 }
 	var cvars = {};
-var cvar_modifiedFlags = 0;
+var cvarModifiedFlags = 0;
 
 /**
  * Cvar
@@ -18849,7 +18150,7 @@ var Cvar = function (defaultValue, flags) {
 				currentValue = newValue;
 			}
 
-			cvar_modifiedFlags |= cvar.flags;
+			cvarModifiedFlags |= cvar.flags;
 
 			cvar.modified = true;
 		} else {
@@ -18891,7 +18192,7 @@ function CmdUnset(name, value) {
 /**
  * CmdCvar
  *
- * Not a registered command, but called by ExecuteCmdText.
+ * Not a registered command, but called by ExecuteBuffer.
  */
 function CmdCvar(name, value) {
 	var cvar = FindCvar(name);
@@ -19076,7 +18377,7 @@ function Init(sysinterface, isdedicated) {
 
 	// If any archived cvars are modified after this, we will trigger a
 	// writing of the config file.
-	cvar_modifiedFlags &= ~CVF.ARCHIVE;
+	cvarModifiedFlags &= ~CVF.ARCHIVE;
 
 	initialized = true;
 }
@@ -19085,24 +18386,34 @@ function Init(sysinterface, isdedicated) {
  * GetExports
  */
 function GetExports() {
-	return {
-		error:            error,
-		frameTime:        function() { return frameTime; },
-		ExecuteCmdText:   ExecuteCmdText,
-		LoadConfig:       LoadConfig,
-		SaveConfig:       SaveConfig,
-		AddCvar:          AddCvar,
-		GetCvarVal:       GetCvarVal,
-		SetCvarVal:       SetCvarVal,
-		GetCvarValues: GetCvarValues,
-		AddCmd:           AddCmd,
-		GetCmd:           GetCmd,
-		NetchanSetup:     NetchanSetup,
-		NetchanDestroy:   NetchanDestroy,
-		NetchanSend:      NetchanSend,
-		NetchanPrint:     NetchanPrint,
-		NetchanProcess:   NetchanProcess
+	var exports = {
+		error:             error,
+		ExecuteBuffer:     ExecuteBuffer,
+		LoadConfig:        LoadConfig,
+		SaveConfig:        SaveConfig,
+		AddCvar:           AddCvar,
+		GetCvarVal:        GetCvarVal,
+		SetCvarVal:        SetCvarVal,
+		GetCvarValues:     GetCvarValues,
+		AddCmd:            AddCmd,
+		GetCmd:            GetCmd,
+		NetchanSetup:      NetchanSetup,
+		NetchanDestroy:    NetchanDestroy,
+		NetchanSend:       NetchanSend,
+		NetchanPrint:      NetchanPrint,
+		NetchanProcess:    NetchanProcess
 	};
+
+	Object.defineProperty(exports, 'frameTime', {
+		get: function () { return frameTime; }
+	});
+
+	Object.defineProperty(exports, 'cvarModifiedFlags', {
+		get: function () { return cvarModifiedFlags; },
+		set: function (val) { cvarModifiedFlags = val; }
+	});
+
+	return exports;
 }
 
 /**
@@ -19245,19 +18556,28 @@ function QueueEvent(ev) {
 }
 
 /**
- * ExecuteCmdText
+ * ExecuteBuffer
  */
-function ExecuteCmdText(text) {
-	var split = text.split(' ');
-	var arg0 = split[0];
-	var args = split.slice(1);
-	var cmdcb;
-	var cvar;
+// This regex will split space delimited strings,
+// honoring quotation mark groups.
+var argsRegex = /([^"\s]+)|"([^"]+)"/g;
+function ExecuteBuffer(buffer) {
+	var args = [];
+	var m;
+	while (m = argsRegex.exec(buffer)) {
+		args.push(m[1] || m[2]);
+	}
 
-	if ((cmdcb = GetCmd(arg0))) {
-		cmdcb.apply(this, args);
-	} else if ((cvar = FindCvar(arg0))) {
-		CmdCvar.apply(this, split);
+	var cmdcb = GetCmd(args[0]);
+	if (cmdcb) {
+		cmdcb.apply(this, args.slice(1));
+		return;
+	}
+
+	var cvar = FindCvar(args[0]);
+	if (cvar) {
+		CmdCvar.apply(this, args);
+		return;
 	}
 }
 
@@ -19271,11 +18591,11 @@ function CheckSaveConfig() {
 	}
 
 	// Only save if we've modified an archive cvar.
-	if (!(cvar_modifiedFlags & CVF.ARCHIVE)) {
+	if (!(cvarModifiedFlags & CVF.ARCHIVE)) {
 		return;
 	}
 
-	cvar_modifiedFlags &= ~CVF.ARCHIVE;
+	cvarModifiedFlags &= ~CVF.ARCHIVE;
 
 	SaveConfig();
 } 
@@ -19284,7 +18604,7 @@ function CheckSaveConfig() {
  * LoadConfig
  */
 function LoadConfig() {
-	ExecuteCmdText('exec default.cfg');
+	ExecuteBuffer('exec default.cfg');
 }
 
 /**
@@ -19423,7 +18743,7 @@ function NetchanProcess(netchan, msg) {
 	return {
 		Init:           Init,
 		Frame:          Frame,
-		ExecuteCmdText: ExecuteCmdText,
+		ExecuteBuffer: ExecuteBuffer,
 		QueueEvent:     QueueEvent,
 		NetchanSetup:   NetchanSetup
 	};
@@ -19432,146 +18752,6 @@ function NetchanProcess(netchan, msg) {
 define('system/dedicated/sys',
 ['common/sh', 'common/com'],
 function (sh, com) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**

@@ -656,17 +656,19 @@ return {
 
 });
 define('common/sh', ['common/qmath'], function (qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+	var root = global || window;
+
+root.BASE_FOLDER = 'baseq3';
+root.MAX_QPATH   = 64;
+root.CMD_BACKUP  = 64;
 
 // If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
+root.SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
  */
-var CVF = {
+root.CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
@@ -676,45 +678,45 @@ var CVF = {
 /**
  * Renderer (should be moved)
  */
-var MAX_DRAWSURFS  = 0x10000;
+root.MAX_DRAWSURFS  = 0x10000;
 
 /**
  * Snapshot flags
  */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
+root.SNAPFLAG_RATE_DELAYED   = 1;
+root.SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+root.SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
 
 /**
  * MAX_* defines used to pre-alloc many structures
  */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
+root.GENTITYNUM_BITS         = 10;
+root.MAX_CLIENTS             = 32;                       // absolute limit
+root.MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+root.MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+root.MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
 
 /**
  * Faux entity numbers
  */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+root.ENTITYNUM_NONE          = MAX_GENTITIES-1;
+root.ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+root.ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
 
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
+root.MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
 	                                                       // then BUTTON_WALKING should be set
 
 /**
  * Playerstate
  */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
+root.MAX_STATS               = 16;
+root.MAX_PERSISTANT          = 16;
+root.MAX_POWERUPS            = 16;
+root.MAX_WEAPONS             = 16;
+root.MAX_PS_EVENTS           = 2;
+root.PMOVEFRAMECOUNTBITS     = 6;
 
-var BUTTON = {
+root.BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -733,7 +735,7 @@ var BUTTON = {
 	ANY:          2048                                     // any key whatsoever
 };
 
-var TR = {
+root.TR = {
 	STATIONARY:  0,
 	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
 	LINEAR:      2,
@@ -742,7 +744,7 @@ var TR = {
 	GRAVITY:     5
 };
 
-var SURF = {
+root.SURF = {
 	NODAMAGE:    0x1,                            // never give falling damage
 	SLICK:       0x2,                            // effects game physics
 	SKY:         0x4,                            // lighting from environment map
@@ -764,7 +766,7 @@ var SURF = {
 	DUST:        0x40000                         // leave a dust trail when walking on this surface
 };
 
-var CONTENTS = {
+root.CONTENTS = {
 	SOLID:         1,                                      // an eye is never valid in a solid
 	LAVA:          8,
 	SLIME:         16,
@@ -7053,146 +7055,6 @@ else {
 define('game/bg',
 ['glmatrix', 'common/sh', 'common/qmath'],
 function (glmatrix, sh, qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
@@ -9613,146 +9475,6 @@ var itemList = [
 define('game/gm',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
@@ -11058,8 +10780,8 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 
 	var take = damage;
 	// Save some from armor.
-	// asave = CheckArmor(targ, take, dflags);
-	// take -= asave;
+	asave = CheckArmor(targ, take, dflags);
+	take -= asave;
 
 	if (g_debugDamage.integer) {
 		log(level.time, ', client', targ.s.number, ', health', targ.health, ', damage', take, ', armor', asave);
@@ -11068,34 +10790,34 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	// Add to the damage inflicted on a player this frame.
 	// The total will be turned into screen blends and view angle kicks
 	// at the end of the frame.
-	// if (client) {
-	// 	if (attacker) {
-	// 		client.ps.persistant[PERS.ATTACKER] = attacker.s.number;
-	// 	} else {
-	// 		client.ps.persistant[PERS.ATTACKER] = ENTITYNUM_WORLD;
-	// 	}
-	// 	client.damage_armor += asave;
-	// 	client.damage_blood += take;
-	// 	client.damage_knockback += knockback;
-	// 	if (dir) {
-	// 		vec3.set(dir, client.damage_from)
-	// 		client.damage_fromWorld = false;
-	// 	} else {
-	// 		vec3.set(targ.currentOrigin, client.damage_from);
-	// 		client.damage_fromWorld = true;
-	// 	}
-	// }
+	if (client) {
+		if (attacker) {
+			client.ps.persistant[PERS.ATTACKER] = attacker.s.number;
+		} else {
+			client.ps.persistant[PERS.ATTACKER] = ENTITYNUM_WORLD;
+		}
+		client.damage_armor += asave;
+		client.damage_blood += take;
+		client.damage_knockback += knockback;
+		if (dir) {
+			vec3.set(dir, client.damage_from)
+			client.damage_fromWorld = false;
+		} else {
+			vec3.set(targ.currentOrigin, client.damage_from);
+			client.damage_fromWorld = true;
+		}
+	}
 
 	// See if it's the player hurting the emeny flag carrier.
 	// if (g_gametype.integer === GT_CTF) {
 	// 	Team_CheckHurtCarrier(targ, attacker);
 	// }
 
-	// if (targ.client) {
-	// 	// set the last client who damaged the target
-	// 	targ.client.lasthurt_client = attacker.s.number;
-	// 	targ.client.lasthurt_mod = mod;
-	// }
+	if (targ.client) {
+		// set the last client who damaged the target
+		targ.client.lasthurt_client = attacker.s.number;
+		targ.client.lasthurt_mod = mod;
+	}
 
 	// Do the damage.
 	if (take) {
@@ -12391,7 +12113,7 @@ function MissileImpact(ent, trace) {
 
 	// 		SnapVectorTowards( v, ent.s.pos.trBase );	// save net bandwidth
 	// 	} else {
-	// 		VectorCopy(trace.endpos, v);
+	// 		VectorCopy(trace.endPos, v);
 	// 		G_AddEvent( nent, EV_MISSILE_MISS, DirToByte( trace.plane.normal ) );
 	// 		ent.enemy = NULL;
 	// 	}
@@ -12434,7 +12156,7 @@ function MissileImpact(ent, trace) {
 	// Change over to a normal entity right at the point of impact
 	ent.s.eType = ET.GENERAL;
 
-	// SnapVectorTowards(trace.endpos, ent.s.pos.trBase );  // save net bandwidth
+	// SnapVectorTowards(trace.endPos, ent.s.pos.trBase );  // save net bandwidth
 
 	SetOrigin(ent, trace.endPos);
 
@@ -12641,7 +12363,7 @@ function BulletFire(ent, spread, damage, mod) {
 
 	var passent = ent.s.number;
 	
-	// for (var i = 0; i < 10; i++) {
+	for (var i = 0; i < 10; i++) {
 		var tr = sv.Trace(muzzle, end, null, null, passent, MASK.SHOT);
 
 		if (tr.surfaceFlags & SURF.NOIMPACT) {
@@ -12651,27 +12373,27 @@ function BulletFire(ent, spread, damage, mod) {
 		var traceEnt = level.gentities[tr.entityNum];
 
 		// Snap the endpos to integers, but nudged towards the line.
-		// SnapVectorTowards(tr.endpos, muzzle);
+		// SnapVectorTowards(tr.endPos, muzzle);
 
 		// Send bullet impact.
-		// if (traceEnt->takeDamage && traceEnt->client) {
-		// 	tent = G_TempEntity(tr.endpos, EV_BULLET_HIT_FLESH);
-		// 	tent.s.eventParm = traceEnt.s.number;
-		// 	// if (LogAccuracyHit(traceEnt, ent)) {
-		// 	// 	client.accuracy_hits++;
-		// 	// }
-		// } else {
+		if (traceEnt.takeDamage && traceEnt.client) {
+			tent = TempEntity(tr.endPos, EV.BULLET_HIT_FLESH);
+			tent.s.eventParm = traceEnt.s.number;
+			if (LogAccuracyHit(traceEnt, ent)) {
+				ent.client.accuracy_hits++;
+			}
+		} else {
 			var tent = TempEntity(tr.endPos, EV.BULLET_HIT_WALL);
 			tent.s.eventParm = qm.DirToByte(tr.plane.normal);
-		// }
-		// tent.s.otherEntityNum = ent.s.number;
+		}
+		tent.s.otherEntityNum = ent.s.number;
 
-		// if (traceEnt.takeDamage) {
-		// 	G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, mod);
-		// }
+		if (traceEnt.takeDamage) {
+			Damage(traceEnt, ent, ent, forward, tr.endPos, damage, 0, mod);
+		}
 
-		// break;
-	// }
+		break;
+	}
 }
 
 /**
@@ -12831,146 +12553,6 @@ function RocketLauncherFire(ent) {
 define('cgame/cg',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var GIB_HEALTH = -40;
 var ARMOR_PROTECTION = 0.66;
 
@@ -14640,14 +14222,18 @@ function AddEntityEvent(cent, position) {
 			MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.DEFAULT);
 			break;
 
-		// case EV.MISSILE_MISS_METAL:
-		// 	ByteToDir(es.eventParm, dir);
-		// 	MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.METAL);
-		// 	break;
+		case EV.MISSILE_MISS_METAL:
+			qm.ByteToDir(es.eventParm, dir);
+			MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.METAL);
+			break;
+
+		case EV.BULLET_HIT_FLESH:
+			BulletHit(es.pos.trBase, es.otherEntityNum, dir, true, es.eventParm);
+			break;
 
 		case EV.BULLET_HIT_WALL:
 			qm.ByteToDir(es.eventParm, dir);
-			AddBullet(es.pos.trBase, es.otherEntityNum, dir, false, ENTITYNUM_WORLD);
+			BulletHit(es.pos.trBase, es.otherEntityNum, dir, false, ENTITYNUM_WORLD);
 			break;
 	}
 }
@@ -14957,7 +14543,7 @@ function AddLocalEntities() {
 // 	// if it is in a nodrop zone, remove it
 // 	// this keeps gibs from waiting at the bottom of pits of death
 // 	// and floating levels
-// 	if ( CG_PointContents( trace.endpos, 0 ) & CONTENTS_NODROP ) {
+// 	if ( CG_PointContents( trace.endPos, 0 ) & CONTENTS_NODROP ) {
 // 		CG_FreeLocalEntity( le );
 // 		return;
 // 	}
@@ -17258,6 +16844,9 @@ function RegisterWeapon(gitem) {
 			weaponInfo.flashSound[1] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf2b');
 			weaponInfo.flashSound[2] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf3b');
 			weaponInfo.flashSound[3] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf4b');
+			cgs.media.sfx_ric1 = imp.snd_RegisterSound('sound/weapons/machinegun/ric1');
+			cgs.media.sfx_ric2 = imp.snd_RegisterSound('sound/weapons/machinegun/ric2');
+			cgs.media.sfx_ric3 = imp.snd_RegisterSound('sound/weapons/machinegun/ric3');
 			// weaponInfo.ejectBrassFunc = CG_MachineGunEjectBrass;
 			cgs.media.bulletExplosionShader = imp.re_RegisterShader('bulletExplosion');
 			break;
@@ -17853,20 +17442,20 @@ function MissileHitWall(weapon, clientNum, origin, dir, soundType) {
 			mod = cgs.media.bulletFlashModel;
 			shader = cgs.media.bulletExplosionShader;
 			// mark = cgs.media.bulletMarkShader;
-			// r = parseInt(Math.random()*100, 10) % 4;
-			// if (r === 0) {
-			// 	sfx = cgs.media.sfx_ric1;
-			// } else if ( r == 1 ) {
-			// 	sfx = cgs.media.sfx_ric2;
-			// } else {
-			// 	sfx = cgs.media.sfx_ric3;
-			// }
+			r = Math.floor(Math.random() * 3);
+			if (r === 0) {
+				sfx = cgs.media.sfx_ric1;
+			} else if (r == 1) {
+				sfx = cgs.media.sfx_ric2;
+			} else {
+				sfx = cgs.media.sfx_ric3;
+			}
 			// radius = 8;
 			break;
 	}
 
 	if (sfx) {
-		imp.snd_StartSound(origin, ENTITYNUM_WORLD, sfx);
+		imp.snd_StartSound(origin, -1/*ENTITYNUM_WORLD*/, sfx);
 	}
 
 	//
@@ -17932,7 +17521,7 @@ function MissileHitPlayer(weapon, origin, dir, entityNum) {
  *
  * Renders bullet effects.
  */
-function AddBullet(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
+function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 	// // If the shooter is currently valid, calc a source point and possibly
 	// // do trail effects.
 	// if ( sourceEntityNum >= 0 && cg_tracerChance.value > 0 ) {
@@ -17947,12 +17536,12 @@ function AddBullet(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 	// 		// bubble trail from water into air
 	// 		else if ( ( sourceContentType & CONTENTS_WATER ) ) {
 	// 			trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
-	// 			CG_BubbleTrail( start, trace.endpos, 32 );
+	// 			CG_BubbleTrail( start, trace.endPos, 32 );
 	// 		}
 	// 		// bubble trail from air into water
 	// 		else if ( ( destContentType & CONTENTS_WATER ) ) {
 	// 			trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
-	// 			CG_BubbleTrail( trace.endpos, end, 32 );
+	// 			CG_BubbleTrail( trace.endPos, end, 32 );
 	// 		}
 
 	// 		// draw a tracer
@@ -17963,11 +17552,11 @@ function AddBullet(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 	// }
 
 	// Impact splash and mark.
-	// if (flesh) {
+	if (flesh) {
 	// 	CG_Bleed( end, fleshEntityNum );
-	// } else {
+	} else {
 		MissileHitWall(WP.MACHINEGUN, 0, end, normal, IMPACTSOUND.DEFAULT);
-	// }
+	}
 }
 
 		return {
@@ -17990,147 +17579,6 @@ function AddBullet(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 define('clipmap/cm',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
 	// We don't want everyone who requires us to 
 	// have the same version of clipmap.
 	function ClipMap(imp) {
@@ -21443,147 +20891,6 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 define('renderer/re',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
 	function Renderer(imp) {
 		var RT = {
 	MODEL:               0,
@@ -21969,9 +21276,7 @@ var RenderBuffer = function () {
 Object.defineProperty(RenderBuffer.prototype, 'elementCount', {
 	get: function() {
 		return this.offset / this.elementSize;
-	},
-	enumerable: true,
-	configurable: true
+	}
 });
 
 /**********************************************************
@@ -27184,152 +26489,19 @@ define('sound/snd',
 ['underscore'],
 function (_) {	
 	function Sound(imp) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 		var SoundLocals = function () {
-	this.ctx          = null;
-	this.volume_main  = null;
-	this.volume_music = null;
-	this.volume_sfx   = null;
-	this.sounds       = [];
+	this.ctx            = null;
+	this.volume_main    = null;
+	this.volume_music   = null;
+	this.volume_sfx     = null;
+	this.sounds         = [];
+	this.sources        = [];
+	this.entities       = new Array(MAX_GENTITIES);
+	this.localEntityNum = 0;
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		this.entities[i] = new SoundEntity();
+	}
 }
 
 var Sound = function () {
@@ -27337,6 +26509,22 @@ var Sound = function () {
 	this.buffer    = null;
 	this.loading   = false;
 	this.callbacks = [];
+};
+
+var SoundSource = function () {
+	this.entityNum = -1;                                    // owning entity, -1 if none
+	this.bufsrc    = null;
+	this.panner    = null;
+
+	// this.local     = false;
+	// this.active    = false;
+	// this.playing   = false;
+	// this.looping   = false;
+	this.tracking  = false;
+};
+
+var SoundEntity = function () {
+	this.origin = [0, 0, 0];
 };
 		var snd;
 
@@ -27449,6 +26637,32 @@ function Frame() {
 		snd.volume_music.gain.value = s_musicVolume();
 		s_musicVolume.modified = false;
 	}
+
+	UpdateSources();
+}
+
+/**
+ * UpdateSources
+ */
+function UpdateSources() {
+	for (var i = 0; i < snd.sources.length; i++) {
+		var source = snd.sources[i];
+		var bufsrc = source.bufsrc;
+
+		// Remove source if it's done playing.
+		if (bufsrc.playbackState === bufsrc.FINISHED_STATE) {
+			snd.sources.splice(i, 1);
+			i--;
+			continue;
+		}
+
+		// Otherwise, if the source is supposed to be tracking an entity,
+		// update its position.
+		if (source.tracking) {
+			var entity = snd.entities[source.entityNum];
+			source.panner.setPosition(entity.origin[0], entity.origin[1], entity.origin[2]);
+		}
+	}
 }
 
 /**
@@ -27526,64 +26740,86 @@ function CreateDefaultSound() {
 /**
  * StartSound
  */
-// TODO: add in "delay" parameter?
-// TODO: are we using the entity number for anything? remove it?
-function StartSound(origin, entity_number, hSound) {
+function StartSound(origin, entityNum, hSound) {
 	if (!snd) {
 		return;
 	}
+
+	if (origin && entityNum >= 0) {
+		throw new Error('Must specify either an origin or an entityNum, not both.');
+	}
 	
+	if (entityNum === snd.localEntityNum) {
+		StartLocalSound(hSound);
+		return;
+	}
+
 	var sound = GetSoundByHandle(hSound);
-	
-	// Early out if there is no sound for this handle, or it failed to load.
-	if (!sound || (!sound.buffer && !sound.loading)) {
+	// Early out if there is no sound for this handle.
+	if (!sound || !sound.buffer) {
 		return;  // fail silently
 	}
 	
-	// If the sound is still loading, push this call to a queue to execute
-	// it is done.
-	if (sound.loading) {
-		sound.callbacks.push(_.bind(StartSound, this, origin, entity_number, hSound));
-		return;
-	}
-	
-	// Create an object with a source, volume control, and panner.
-	//
-	// NOTE: "source.noteOn()" cannot be called multiple times with the same source,
-	//       so we have to create a new source every time.
-	var source = snd.ctx.createBufferSource();
-	
-	if (!origin) {		
-		source.connect(snd.volume_sfx);
-	} else {
-		var panner = snd.ctx.createPanner();
+	var hSource = snd.sources.length;
+	var source = snd.sources[hSource] = new SoundSource();
+	source.entityNum = entityNum;
 
-		panner.connect(snd.volume_sfx);
+	// Setup the system sound source object.
+	var bufsrc = source.bufsrc = snd.ctx.createBufferSource();
+	bufsrc.buffer = sound.buffer;
+
+	// Set up a position panner.
+	var panner = source.panner = snd.ctx.createPanner();
+
+	panner.connect(snd.volume_sfx);
+	panner.panningModel = panner.EQUALPOWER;
+	panner.distanceModel = panner.LINEAR_DISTANCE;
+	panner.refDistance = s_graceDistance();
+	panner.maxDistance = s_maxDistance();
+	// AP - This appears to be broke, setting this makes sounds always the same volume.
+	// panner.rolloffFactor = s_rolloff();
+
+	// If an origin was passed, set that once, otherwise set the source up
+	// to track the entity's position each frame.
+	if (origin) {
 		panner.setPosition(origin[0], origin[1], origin[2]);
-		panner.panningModel = panner.EQUALPOWER;
-		panner.distanceModel = panner.LINEAR_DISTANCE;
-		panner.refDistance = s_graceDistance();
-		panner.maxDistance = s_maxDistance();
-		// AP - This appears to be broke, setting this makes sounds always the same volume.
-		// panner.rolloffFactor = s_rolloff();
+	} else {
+		source.tracking = true;
 
-		source.connect(panner);
+		var entity = snd.entities[entityNum];
+		panner.setPosition(entity.origin[0], entity.origin[1], entity.origin[2]);
 	}
 
-	// Set the buffer from cache.
-	source.buffer = sound.buffer;
+	bufsrc.connect(panner);
 
 	// Play the sound immediately.
-	source.noteOn(snd.ctx.currentTime);
+	bufsrc.noteOn(snd.ctx.currentTime);
 }
 
 /**
  * StartLocalSound
  */
-function StartLocalSound(sfx, channelNum) {
+function StartLocalSound(hSound) {
 	if (!snd) {
 		return;
 	}
+
+	var sound = GetSoundByHandle(hSound);
+	// Early out if there is no sound for this handle, or it failed to load.
+	if (!sound || !sound.buffer) {
+		return;  // fail silently
+	}
+	
+	var hSource = snd.sources.length;
+	var source = snd.sources[hSource] = new SoundSource();
+
+	// Setup the system sound source object.
+	var bufsrc = source.bufsrc = snd.ctx.createBufferSource();
+	bufsrc.buffer = sound.buffer;
+	bufsrc.connect(snd.volume_sfx);
+
+	// Play the sound immediately.
+	bufsrc.noteOn(snd.ctx.currentTime);
 }
 
 /**
@@ -27595,7 +26831,6 @@ function StartBackgroundTrack(hSound, loop) {
 	}
 	
 	var sound = GetSoundByHandle(hSound);
-
 	// Early out if there is no sound for this handle, or it failed to load.
 	if (!sound || (!sound.buffer && !sound.loading)) {
 		return;  // fail silently
@@ -27608,20 +26843,18 @@ function StartBackgroundTrack(hSound, loop) {
 		return;
 	}
 
-	// Create an object with a sound source.
-	var source = snd.ctx.createBufferSource();
+	var source = new SoundSource();
+
+	// Setup the system sound source object.
+	var bufsrc = source.bufsrc = snd.ctx.createBufferSource();
+	bufsrc.buffer = sound.buffer;
+	bufsrc.loop = loop;
 
 	// Connect the sound source to the overall music volume.
-	source.connect(snd.volume_music);
-
-	// Set whether it loops or not.
-	source.loop = loop;
-
-	// Set the buffer.
-	source.buffer = sound.buffer;
+	bufsrc.connect(snd.volume_music);
 
 	// Play the sound immediately.
-	source.noteOn(0);
+	bufsrc.noteOn(0);
 }
 
 /**
@@ -27641,6 +26874,8 @@ function Respatialize(entityNum, origin, axis) {
 		return;
 	}
 
+	snd.localEntityNum = entityNum;
+
 	snd.ctx.listener.setPosition(origin[0], origin[1], origin[2]);
 	snd.ctx.listener.setOrientation(axis[0][0], axis[0][1], axis[0][2], axis[2][0], axis[2][1], axis[2][2]);
 }
@@ -27653,6 +26888,11 @@ function UpdateEntityPosition(entityNum, origin) {
 		return;
 	}
 
+	if (entityNum < 0 || entityNum > MAX_GENTITIES) {
+		throw new Error('UpdateEntityPosition: bad entitynum', entityNum);
+	}
+
+	vec3.set(origin, snd.entities[entityNum].origin);
 }
 
 		return {
@@ -38864,16 +38104,18 @@ define('text',['module'], function (module) {
     return text;
 });
 
-define('text!ui/css/views.css',[],function () { return '/**\n * Main\n */\n@font-face {\n\tfont-family: \'SourceCodeProSemibold\';\n\tsrc: url(\'data:application/x-font-ttf;base64,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\') format(\'truetype\');\n\tfont-weight: normal;\n\tfont-style: normal;\n}\n\n#viewport-ui {\n\tfont-family: \'SourceCodeProSemibold\', sans-serif;\n\t/**\n\t * Don\'t let people accidently highlight text.\n\t */\n\t-webkit-touch-callout: none;\n\t-webkit-user-select: none;\n\t-khtml-user-select: none;\n\t-moz-user-select: none;\n\t-ms-user-select: none;\n\tuser-select: none;\n\n}\n\n#viewport-ui .pointer {\n\tdisplay: none;\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 1em;\n\theight: 1em;\n\tbackground: #f00;\n\tz-index: 1;\n\t/* Don\'t let elementFromPoint() return the actual pointer */\n\tpointer-events: none;\n}\n\n#viewport-ui.active .pointer {\n\tdisplay: inline-block;\n}\n\n.fullscreen {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n}\n\n/**\n * Dialogs\n */\n.dialog {\n\tposition: relative;\n\twidth: 40%;\n\tmargin: 10em auto 0;\n\tpadding: 1.2em 1.6em;\n\tbackground: #111;\n\tcolor: #bfbfbf;\n\tborder-radius: 1em;\n\tword-break: break-all;\n\toverflow: hidden;\n}\n\n.dialog.dialog-abscenter {\n\tposition: absolute;\n\tmargin: 0;\n}\n\n.dialog .close {\n\tposition: absolute;\n\twidth: 1.4em;\n\theight: 1.4em;\n\ttop: 0;\n\tright: 0;\n\tfont-size: 1.4em;\n\tcolor: #999999;\n\ttext-align: center;\n}\n\n.dialog .close.hover {\n\tcolor: #bfbfbf;\n}\n\n.dialog h1 {\n\tfont-size: 1.2em;\n\tpadding-bottom: .2em;\n\tborder-bottom: 1px solid #222;\n}\n\n.dialog .menu-item {\n\tmargin-bottom: .5em;\n\tpadding: .5em;\n\tbackground: #222;\n}\n\n.dialog .menu-item.hover {\n\tbackground: #333;\n}\n\n.dialog .control-group {\n\tmargin-bottom: .5em;\n}\n\n.dialog .control-label {\n\tfloat: left;\n\tpadding: .5em 0;\n\twidth: 10em;\n\tcolor: #A6E22E;\n\ttext-align: right\n}\n\n.dialog .control-input {\n\tmargin-left: 11em;\n\tpadding: .5em;\n\tbackground: #222;\n\t/* Empty fields */\n\tmin-height: 1em;\n\tborder: 1px solid transparent;\n}\n\n.dialog .control-input.hover {\n\tbackground: #333;\n}\n\n.dialog .control-input.focus {\n\tborder: 1px solid #0f0;\n}\n\n.dialog .form-horizontal .form-actions {\n\tmargin-left: 11em;\n}\n\n.dialog .button {\n\tdisplay: inline-block;\n\tpadding: .5em;\n\tbackground-color: #222;\n\tbackground-image: -moz-linear-gradient(top, #333, #222);\n\tbackground-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));\n\tbackground-image: -webkit-linear-gradient(top, #333, #222);\n\tbackground-image: linear-gradient(to bottom, #303030, #222);\n}\n\n.dialog .button.hover {\n\tbackground: #333;\n}\n\n/**********************************************************\n *\n * Specialized\n *\n **********************************************************/\n\n/**\n * Main menu\n */\n#main .background {\n\tbackground: #00ff00;\n}\n\n#main .menu-item {\n\ttext-align: center;\n}\n\n#main .settings.menu-item {\n\tmargin-bottom: 0;\n}\n\n/**\n * Singleplayer menu\n */\n#singleplayer .background {\n\tbackground: #00ff00;\n}\n\n#singleplayer .level-select-wrapper {\n\toverflow: hidden;\n}\n\n#singleplayer .levels {\n\tlist-style: none;\n\tmargin: 0 11em 0 0;\n\tpadding: 0;\n}\n\n#singleplayer .preview {\n\tfloat: right;\n\twidth: 10em;\n\theight: 10em;\n}\n\n#singleplayer .preview img {\n\tdisplay: block;\n\twidth: 100%;\n\theight: 100%;\n}\n\n/**\n * Multiplayer menu\n */\n#multiplayer .background {\n\tbackground: #00ff00;\n}\n\n/**\n * Settings menu\n */\n#settings .background {\n\tbackground: #00ff00;\n}\n\n/**\n * Ingame menu\n */\n#ingame .background {\n\tbackground: #ff00\n}\n\n#ingame .menu-item {\n\ttext-align: center;\n}\n\n#ingame .exit-game.menu-item {\n\tmargin-bottom: 0;\n}\n\n/**\n * Connect view\n */\n#connect .background {\n\tbackground: #222;\n}\n\n#connect .background .loading {\n\t/* TODO change pixel values to relative values */\n\tdisplay: block;\n\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\twidth: 40%;\n\theight: 400px;\n\tmargin: -200px 0 0 -20%;\n\ttext-align: center;\n\tline-height: 400px;\n}\n\n/**\n * Hud view\n */\n#hud {\n\tdisplay: none;\n\tpadding: 1em;\n}\n\n#hud .fps-wrapper {\n\tposition: absolute;\n\ttop: 1em;\n\tright: 1em;\n}\n\n#hud .weapons {\n\tposition: absolute;\n\tbottom: 1em;\n\tleft: 1em;\n\tmargin: 0;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n#hud .weapons li {\n\tdisplay: block;\n\tborder: 1px solid transparent;\n}\n\n#hud .weapons li.selected {\n\tborder: 1px solid #A6E22E;\n}\n\n#hud .weapons li img {\n\tdisplay: block;\n}\n\n#hud .ammo-wrapper {\n\tposition: absolute;\n\tbottom: 1em;\n\tleft: 2em;\n\tmargin: 0;\n\tpadding: 0 0 0 34px;\n\tlist-style: none;\n}\n\n#hud .ammo-wrapper .ammo {\n\theight: 34px;\n\tline-height: 34px;\n}\n\n#hud .count-wrapper {\n\tposition: absolute;\n\tbottom: 1em;\n\tright: 1em;\n}\n\n#hud .count-label {\n\tdisplay: inline-block;\n\twidth: 10em;\n\ttext-align: right;\n}\n\n/**\n * Scoreboard view\n */\n#scoreboard {\n\tposition: absolute;\n\ttop: 25%;\n\tleft: 25%;\n\twidth: 50%;\n\theight: 50%;\n}\n';});
+define('text!ui/css/views.css',[],function () { return '/**\n * Main\n */\n@font-face {\n\tfont-family: \'SourceCodeProSemibold\';\n\tsrc: url(\'data:application/x-font-ttf;base64,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\') format(\'truetype\');\n\tfont-weight: normal;\n\tfont-style: normal;\n}\n\n#viewport-ui {\n\tfont-family: \'SourceCodeProSemibold\', sans-serif;\n\t/**\n\t * Don\'t let people accidently highlight text.\n\t */\n\t-webkit-touch-callout: none;\n\t-webkit-user-select: none;\n\t-khtml-user-select: none;\n\t-moz-user-select: none;\n\t-ms-user-select: none;\n\tuser-select: none;\n}\n\n#viewport-ui .pointer {\n\tdisplay: none;\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 13px;\n\theight: 20px;\n\tbackground-image: url(\'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAUCAYAAABWMrcvAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZpJREFUeNqUk79LAnEUwN9FgXh4wUGIg7g46XCI4NLgcERi0NzQXyBRc/9AU4uDBNFgY4QQgi1phIqKUy2OTimBnYFy/s7Xe0eKmuJ18Pny5b37vO+77/e+gIjnhECAWXjQiat/Sf1+v1mv12mO16alTqejBYNBLJVKLN4SG2ul0WikuVwulCQJy+Uyi3fE1lrJ7XbTDFCWZczlciw+EBZTEsMrZjIZFh8J0ZTEiKI4EXmQTEmMzWbDdDrNYnZRXCkxVqsVU6kUi8/EtimJEQQB4/E4i3lCZmkTVjyqqoLX64VWqwV0hhAKhXbtdnuWUgdzkqIo0G63oVqtAm0GRKNRDj8RnwS/KxHHMBwONafTiX6/H3VdN1qZtJZIJLityz+7R5W1SCSCjUbjmwI3VOQjEAgYks/nw16v16W4MieNx+OvwWDAFc9+gxfJZHK6WiwW49z94tVoEiczwR3iPRwOG5LD4cBarcaiOisdLvlVTguFgiF5PB6sVCqTs5pKy7DQ+b0Vi0XsdvmT8IXYWycxR8Qrsb+Y+xFgABTcmOagLuC4AAAAAElFTkSuQmCC\');\n\n\tz-index: 1;\n\t/* Don\'t let elementFromPoint() return the actual pointer */\n\tpointer-events: none;\n}\n\n#viewport-ui.active .pointer {\n\tdisplay: inline-block;\n}\n\n.fullscreen {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n}\n\n/**\n * Dialogs\n */\n.dialog {\n\tposition: relative;\n\twidth: 40%;\n\tmargin: 10em auto 0;\n\tpadding: 1.2em 1.6em;\n\tbackground: #111;\n\tcolor: #bfbfbf;\n\tborder-radius: 1em;\n\tword-break: break-all;\n\toverflow: hidden;\n}\n\n.dialog .close {\n\tposition: absolute;\n\twidth: 1.4em;\n\theight: 1.4em;\n\ttop: 0;\n\tright: 0;\n\tfont-size: 1.4em;\n\tcolor: #999999;\n\ttext-align: center;\n}\n\n.dialog .close.hover {\n\tcolor: #bfbfbf;\n}\n\n.dialog h1 {\n\tfont-size: 1.2em;\n\tpadding-bottom: .2em;\n\tborder-bottom: 1px solid #222;\n}\n\n.dialog .menu-item {\n\tmargin-bottom: .5em;\n\tpadding: .5em;\n\tbackground: #222;\n}\n\n.dialog .menu-item.hover {\n\tbackground: #333;\n}\n\n.dialog .control-group {\n\tmargin-bottom: .5em;\n}\n\n.dialog .control-label {\n\tfloat: left;\n\tpadding: .5em 0;\n\twidth: 10em;\n\tcolor: #a6e22e;\n\ttext-align: right\n}\n\n.dialog .control-input {\n\tmargin-left: 11em;\n\t/* Empty fields */\n\tmin-height: 1em;\n}\n\n.dialog .control-input.input-text,\n.dialog .control-input.input-key {\n\tpadding: .5em;\n\tbackground: #222;\n\tborder: 1px solid transparent;\n}\n\n.dialog .control-input.input-text.hover,\n.dialog .control-input.input-key.hover {\n\tbackground: #333;\n}\n\n.dialog .control-input.input-text.focus,\n.dialog .control-input.input-key.focus {\n\tborder: 1px solid #0f0;\n}\n\n.dialog .form-horizontal .form-actions {\n\tmargin-left: 11em;\n}\n\n.dialog .button {\n\tdisplay: inline-block;\n\tpadding: .5em;\n\tbackground-color: #222;\n\tbackground-image: -moz-linear-gradient(top, #333, #222);\n\tbackground-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));\n\tbackground-image: -webkit-linear-gradient(top, #333, #222);\n\tbackground-image: linear-gradient(to bottom, #303030, #222);\n}\n\n.dialog .button.hover {\n\tbackground: #333;\n}\n\n/**\n * Tabs\n */\n.nav-tabs {\n\tlist-style: none;\n\tmargin: 0;\n\tpadding: 0;\n}\n\n.nav-tabs li {\n\tdisplay: inline-block;\n\tpadding: 0.33em 0.5em;\n}\n\n.nav-tabs li a {\n\tcolor: #fff;\n\ttext-decoration: none;\n}\n\n.nav-tabs li.active {\n\tcolor: #fff;\n\tbackground-color: #222;\n}\n\n.tab-pane {\n\tdisplay: none;\n}\n\n.tab-pane.active {\n\tdisplay: block;\n}\n\n/**\n * Ranges\n */\n.input-range {\n\tposition: relative;\n\theight: 1em;\n}\n\n.input-range .input-range-track {\n\tposition: absolute;\n\ttop: 50%;\n\tleft: 0;\n\twidth: 100%;\n\theight: 1px;\n\tbackground: #222;\n}\n\n.input-range .input-range-slider {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\tbackground: #a6e22e;\n\twidth: 1em;\n\theight: 1em;\n\tcontent: \'\';\n}\n\n/**********************************************************\n *\n * Specialized\n *\n **********************************************************/\n\n/**\n * Main menu\n */\n#main .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#main .menu-item {\n\ttext-align: center;\n}\n\n#main .settings.menu-item {\n\tmargin-bottom: 0;\n}\n\n/**\n * Singleplayer menu\n */\n#singleplayer .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#singleplayer .level-select-wrapper {\n\toverflow: hidden;\n}\n\n#singleplayer .levels {\n\tlist-style: none;\n\tmargin: 0 11em 0 0;\n\tpadding: 0;\n}\n\n#singleplayer .preview {\n\tfloat: right;\n\twidth: 10em;\n\theight: 10em;\n}\n\n#singleplayer .preview img {\n\tdisplay: block;\n\twidth: 100%;\n\theight: 100%;\n}\n\n/**\n * Multiplayer menu\n */\n#multiplayer .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n/**\n * Settings menu\n */\n#settings .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#settings .nav-tabs {\n\tmargin: 0.67em 0;\n}\n\n#settings .tab-pane {\n\tmin-height: 12em;\n}\n\n/**\n * Ingame menu\n */\n#ingame .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#ingame .menu-item {\n\ttext-align: center;\n}\n\n#ingame .exit-game.menu-item {\n\tmargin-bottom: 0;\n}\n\n/**\n * Connect view\n */\n#connect .background {\n\tbackground: #222;\n}\n\n#connect .background .loading {\n\t/* TODO change pixel values to relative values */\n\tdisplay: block;\n\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\twidth: 40%;\n\theight: 400px;\n\tmargin: -200px 0 0 -20%;\n\ttext-align: center;\n\tline-height: 400px;\n}\n\n/**\n * Hud view\n */\n#hud {\n\tdisplay: none;\n\tpadding: 1em;\n}\n\n#hud .fps-wrapper {\n\tposition: absolute;\n\ttop: 1em;\n\tright: 1em;\n}\n\n#hud .weapons {\n\tposition: absolute;\n\tbottom: 1em;\n\tleft: 1em;\n\tmargin: 0;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n#hud .weapons li {\n\tdisplay: block;\n\tborder: 1px solid transparent;\n}\n\n#hud .weapons li.selected {\n\tborder: 1px solid #A6E22E;\n}\n\n#hud .weapons li img {\n\tdisplay: block;\n}\n\n#hud .ammo-wrapper {\n\tposition: absolute;\n\tbottom: 1em;\n\tleft: 2em;\n\tmargin: 0;\n\tpadding: 0 0 0 34px;\n\tlist-style: none;\n}\n\n#hud .ammo-wrapper .ammo {\n\theight: 34px;\n\tline-height: 34px;\n}\n\n#hud .count-wrapper {\n\tposition: absolute;\n\tbottom: 1em;\n\tright: 1em;\n}\n\n#hud .count-label {\n\tdisplay: inline-block;\n\twidth: 10em;\n\ttext-align: right;\n}\n\n/**\n * Scoreboard view\n */\n#scoreboard {\n\tposition: absolute;\n\ttop: 25%;\n\tleft: 25%;\n\twidth: 50%;\n\theight: 50%;\n}\n';});
 
-define('text!ui/templates/connect.tpl',[],function () { return '<div class="background fullscreen">\n\t<span class="loading"><%- loading %></span>\n</div>';});
+define('text!ui/css/normalize.css',[],function () { return '/*! normalize.css v1.0.1 | MIT License | git.io/normalize */\n\n/* ==========================================================================\n   HTML5 display definitions\n   ========================================================================== */\n\n/*\n * Corrects `block` display not defined in IE 6/7/8/9 and Firefox 3.\n */\n\narticle,\naside,\ndetails,\nfigcaption,\nfigure,\nfooter,\nheader,\nhgroup,\nnav,\nsection,\nsummary {\n    display: block;\n}\n\n/*\n * Corrects `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.\n */\n\naudio,\ncanvas,\nvideo {\n    display: inline-block;\n    *display: inline;\n    *zoom: 1;\n}\n\n/*\n * Prevents modern browsers from displaying `audio` without controls.\n * Remove excess height in iOS 5 devices.\n */\n\naudio:not([controls]) {\n    display: none;\n    height: 0;\n}\n\n/*\n * Addresses styling for `hidden` attribute not present in IE 7/8/9, Firefox 3,\n * and Safari 4.\n * Known issue: no IE 6 support.\n */\n\n[hidden] {\n    display: none;\n}\n\n/* ==========================================================================\n   Base\n   ========================================================================== */\n\n/*\n * 1. Corrects text resizing oddly in IE 6/7 when body `font-size` is set using\n *    `em` units.\n * 2. Prevents iOS text size adjust after orientation change, without disabling\n *    user zoom.\n */\n\nhtml {\n    font-size: 100%; /* 1 */\n    -webkit-text-size-adjust: 100%; /* 2 */\n    -ms-text-size-adjust: 100%; /* 2 */\n}\n\n/*\n * Addresses `font-family` inconsistency between `textarea` and other form\n * elements.\n */\n\nhtml,\nbutton,\ninput,\nselect,\ntextarea {\n    font-family: sans-serif;\n}\n\n/*\n * Addresses margins handled incorrectly in IE 6/7.\n */\n\nbody {\n    margin: 0;\n}\n\n/* ==========================================================================\n   Links\n   ========================================================================== */\n\n/*\n * Addresses `outline` inconsistency between Chrome and other browsers.\n */\n\na:focus {\n    outline: thin dotted;\n}\n\n/*\n * Improves readability when focused and also mouse hovered in all browsers.\n */\n\na:active,\na:hover {\n    outline: 0;\n}\n\n/* ==========================================================================\n   Typography\n   ========================================================================== */\n\n/*\n * Addresses font sizes and margins set differently in IE 6/7.\n * Addresses font sizes within `section` and `article` in Firefox 4+, Safari 5,\n * and Chrome.\n */\n\nh1 {\n    font-size: 2em;\n    margin: 0.67em 0;\n}\n\nh2 {\n    font-size: 1.5em;\n    margin: 0.83em 0;\n}\n\nh3 {\n    font-size: 1.17em;\n    margin: 1em 0;\n}\n\nh4 {\n    font-size: 1em;\n    margin: 1.33em 0;\n}\n\nh5 {\n    font-size: 0.83em;\n    margin: 1.67em 0;\n}\n\nh6 {\n    font-size: 0.75em;\n    margin: 2.33em 0;\n}\n\n/*\n * Addresses styling not present in IE 7/8/9, Safari 5, and Chrome.\n */\n\nabbr[title] {\n    border-bottom: 1px dotted;\n}\n\n/*\n * Addresses style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.\n */\n\nb,\nstrong {\n    font-weight: bold;\n}\n\nblockquote {\n    margin: 1em 40px;\n}\n\n/*\n * Addresses styling not present in Safari 5 and Chrome.\n */\n\ndfn {\n    font-style: italic;\n}\n\n/*\n * Addresses styling not present in IE 6/7/8/9.\n */\n\nmark {\n    background: #ff0;\n    color: #000;\n}\n\n/*\n * Addresses margins set differently in IE 6/7.\n */\n\np,\npre {\n    margin: 1em 0;\n}\n\n/*\n * Corrects font family set oddly in IE 6, Safari 4/5, and Chrome.\n */\n\ncode,\nkbd,\npre,\nsamp {\n    font-family: monospace, serif;\n    _font-family: \'courier new\', monospace;\n    font-size: 1em;\n}\n\n/*\n * Improves readability of pre-formatted text in all browsers.\n */\n\npre {\n    white-space: pre;\n    white-space: pre-wrap;\n    word-wrap: break-word;\n}\n\n/*\n * Addresses CSS quotes not supported in IE 6/7.\n */\n\nq {\n    quotes: none;\n}\n\n/*\n * Addresses `quotes` property not supported in Safari 4.\n */\n\nq:before,\nq:after {\n    content: \'\';\n    content: none;\n}\n\n/*\n * Addresses inconsistent and variable font size in all browsers.\n */\n\nsmall {\n    font-size: 80%;\n}\n\n/*\n * Prevents `sub` and `sup` affecting `line-height` in all browsers.\n */\n\nsub,\nsup {\n    font-size: 75%;\n    line-height: 0;\n    position: relative;\n    vertical-align: baseline;\n}\n\nsup {\n    top: -0.5em;\n}\n\nsub {\n    bottom: -0.25em;\n}\n\n/* ==========================================================================\n   Lists\n   ========================================================================== */\n\n/*\n * Addresses margins set differently in IE 6/7.\n */\n\ndl,\nmenu,\nol,\nul {\n    margin: 1em 0;\n}\n\ndd {\n    margin: 0 0 0 40px;\n}\n\n/*\n * Addresses paddings set differently in IE 6/7.\n */\n\nmenu,\nol,\nul {\n    padding: 0 0 0 40px;\n}\n\n/*\n * Corrects list images handled incorrectly in IE 7.\n */\n\nnav ul,\nnav ol {\n    list-style: none;\n    list-style-image: none;\n}\n\n/* ==========================================================================\n   Embedded content\n   ========================================================================== */\n\n/*\n * 1. Removes border when inside `a` element in IE 6/7/8/9 and Firefox 3.\n * 2. Improves image quality when scaled in IE 7.\n */\n\nimg {\n    border: 0; /* 1 */\n    -ms-interpolation-mode: bicubic; /* 2 */\n}\n\n/*\n * Corrects overflow displayed oddly in IE 9.\n */\n\nsvg:not(:root) {\n    overflow: hidden;\n}\n\n/* ==========================================================================\n   Figures\n   ========================================================================== */\n\n/*\n * Addresses margin not present in IE 6/7/8/9, Safari 5, and Opera 11.\n */\n\nfigure {\n    margin: 0;\n}\n\n/* ==========================================================================\n   Forms\n   ========================================================================== */\n\n/*\n * Corrects margin displayed oddly in IE 6/7.\n */\n\nform {\n    margin: 0;\n}\n\n/*\n * Define consistent border, margin, and padding.\n */\n\nfieldset {\n    border: 1px solid #c0c0c0;\n    margin: 0 2px;\n    padding: 0.35em 0.625em 0.75em;\n}\n\n/*\n * 1. Corrects color not being inherited in IE 6/7/8/9.\n * 2. Corrects text not wrapping in Firefox 3.\n * 3. Corrects alignment displayed oddly in IE 6/7.\n */\n\nlegend {\n    border: 0; /* 1 */\n    padding: 0;\n    white-space: normal; /* 2 */\n    *margin-left: -7px; /* 3 */\n}\n\n/*\n * 1. Corrects font size not being inherited in all browsers.\n * 2. Addresses margins set differently in IE 6/7, Firefox 3+, Safari 5,\n *    and Chrome.\n * 3. Improves appearance and consistency in all browsers.\n */\n\nbutton,\ninput,\nselect,\ntextarea {\n    font-size: 100%; /* 1 */\n    margin: 0; /* 2 */\n    vertical-align: baseline; /* 3 */\n    *vertical-align: middle; /* 3 */\n}\n\n/*\n * Addresses Firefox 3+ setting `line-height` on `input` using `!important` in\n * the UA stylesheet.\n */\n\nbutton,\ninput {\n    line-height: normal;\n}\n\n/*\n * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`\n *    and `video` controls.\n * 2. Corrects inability to style clickable `input` types in iOS.\n * 3. Improves usability and consistency of cursor style between image-type\n *    `input` and others.\n * 4. Removes inner spacing in IE 7 without affecting normal text inputs.\n *    Known issue: inner spacing remains in IE 6.\n */\n\nbutton,\nhtml input[type="button"], /* 1 */\ninput[type="reset"],\ninput[type="submit"] {\n    -webkit-appearance: button; /* 2 */\n    cursor: pointer; /* 3 */\n    *overflow: visible;  /* 4 */\n}\n\n/*\n * Re-set default cursor for disabled elements.\n */\n\nbutton[disabled],\ninput[disabled] {\n    cursor: default;\n}\n\n/*\n * 1. Addresses box sizing set to content-box in IE 8/9.\n * 2. Removes excess padding in IE 8/9.\n * 3. Removes excess padding in IE 7.\n *    Known issue: excess padding remains in IE 6.\n */\n\ninput[type="checkbox"],\ninput[type="radio"] {\n    box-sizing: border-box; /* 1 */\n    padding: 0; /* 2 */\n    *height: 13px; /* 3 */\n    *width: 13px; /* 3 */\n}\n\n/*\n * 1. Addresses `appearance` set to `searchfield` in Safari 5 and Chrome.\n * 2. Addresses `box-sizing` set to `border-box` in Safari 5 and Chrome\n *    (include `-moz` to future-proof).\n */\n\ninput[type="search"] {\n    -webkit-appearance: textfield; /* 1 */\n    -moz-box-sizing: content-box;\n    -webkit-box-sizing: content-box; /* 2 */\n    box-sizing: content-box;\n}\n\n/*\n * Removes inner padding and search cancel button in Safari 5 and Chrome\n * on OS X.\n */\n\ninput[type="search"]::-webkit-search-cancel-button,\ninput[type="search"]::-webkit-search-decoration {\n    -webkit-appearance: none;\n}\n\n/*\n * Removes inner padding and border in Firefox 3+.\n */\n\nbutton::-moz-focus-inner,\ninput::-moz-focus-inner {\n    border: 0;\n    padding: 0;\n}\n\n/*\n * 1. Removes default vertical scrollbar in IE 6/7/8/9.\n * 2. Improves readability and alignment in all browsers.\n */\n\ntextarea {\n    overflow: auto; /* 1 */\n    vertical-align: top; /* 2 */\n}\n\n/* ==========================================================================\n   Tables\n   ========================================================================== */\n\n/*\n * Remove most spacing between table cells.\n */\n\ntable {\n    border-collapse: collapse;\n    border-spacing: 0;\n}\n';});
+
+define('text!ui/templates/ConnectView.tpl',[],function () { return '<div class="background fullscreen">\n\t<span class="loading"><%- loading %></span>\n</div>';});
 
 define('ui/views/ConnectView',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/connect.tpl'
+	'text!ui/templates/ConnectView.tpl'
 ],
 function (_, $, Backbone, templateSrc) {
 	var ui;
@@ -38903,14 +38145,14 @@ function (_, $, Backbone, templateSrc) {
 	return HudView;
 });
 
-define('text!ui/templates/hud.tpl',[],function () { return '<div class="fps-wrapper">\n\t<span class="fps"><%- fps %></span> FPS\n</div>\n<div class="count-wrapper">\n\t<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>\n\t<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>\n\t<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>\n\t<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>\n\t<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>\n\t<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>\n\t<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div>\n</div>\n<div class="weapons-wrapper">\n\t<ul class="weapons">\n\t\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t\t<% if (!weapons[i]) continue; %>\n\t\t\t<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>\n\t\t<% } %>\n\t</ul>\n</div>\n<div class="ammo-wrapper">\n\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t<% if (!weapons[i]) continue; %>\n\t\t<div class="ammo"><%- ammo[i] %></div>\n\t<% } %>\n</div>\n<div class="armor-wrapper">\n\tArmor: <span class="armor"><%- armor %></span>\n</div>\n<div class="health-wrapper">\n\tHealth: <span class="health"><%- health %></span>\n</div>\n';});
+define('text!ui/templates/HudView.tpl',[],function () { return '<div class="fps-wrapper">\n\t<span class="fps"><%- fps %></span> FPS\n</div>\n<div class="count-wrapper">\n\t<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>\n\t<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>\n\t<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>\n\t<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>\n\t<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>\n\t<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>\n\t<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div>\n</div>\n<div class="weapons-wrapper">\n\t<ul class="weapons">\n\t\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t\t<% if (!weapons[i]) continue; %>\n\t\t\t<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>\n\t\t<% } %>\n\t</ul>\n</div>\n<div class="ammo-wrapper">\n\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t<% if (!weapons[i]) continue; %>\n\t\t<div class="ammo"><%- ammo[i] %></div>\n\t<% } %>\n</div>\n<div class="armor-wrapper">\n\tArmor: <span class="armor"><%- armor %></span>\n</div>\n<div class="health-wrapper">\n\tHealth: <span class="health"><%- health %></span>\n</div>\n';});
 
 define('ui/views/HudView',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/hud.tpl'
+	'text!ui/templates/HudView.tpl'
 ],
 function (_, $, Backbone, templateSrc) {
 	var imp;
@@ -39055,14 +38297,14 @@ function (_, $, Backbone, templateSrc) {
 	return HudView;
 });
 
-define('text!ui/templates/scoreboard.tpl',[],function () { return '<table>\n\t<thead>\n\t\t<tr>\n\t\t\t<th>Name</th>\n\t\t</tr>\n\t</thead>\n\t<tbody>\n\t<% _.each(players, function (player) { %>\n\t\t<tr>\n\t\t\t<td><%- player.name %></td>\n\t\t</tr>\n\t<% }); %>\n</table>';});
+define('text!ui/templates/ScoreboardView.tpl',[],function () { return '<table>\n\t<thead>\n\t\t<tr>\n\t\t\t<th>Name</th>\n\t\t</tr>\n\t</thead>\n\t<tbody>\n\t<% _.each(players, function (player) { %>\n\t\t<tr>\n\t\t\t<td><%- player.name %></td>\n\t\t</tr>\n\t<% }); %>\n</table>';});
 
 define('ui/views/ScoreboardView',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/scoreboard.tpl'
+	'text!ui/templates/ScoreboardView.tpl'
 ],
 function (_, $, Backbone, templateSrc) {
 	var ui;
@@ -39093,14 +38335,14 @@ function (_, $, Backbone, templateSrc) {
 
 	return ScoreboardView;
 });
-define('text!ui/templates/ingame.tpl',[],function () { return '<div class="background fullscreen">\n<div class="dialog dialog-abscenter">\n\t<div class="close">×</div>\n\t<div class="menu-item settings">Settings</div>\n\t<div class="menu-item exit-game">Exit game</div>\n</div>\n</div>';});
+define('text!ui/templates/IngameMenu.tpl',[],function () { return '<div class="background fullscreen">\n<div class="dialog abscenter">\n\t<div class="close">×</div>\n\t<div class="menu-item settings">Settings</div>\n\t<div class="menu-item exit-game">Exit game</div>\n</div>\n</div>';});
 
 define('ui/views/IngameMenu',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/ingame.tpl' 
+	'text!ui/templates/IngameMenu.tpl' 
 ],
 function (_, $, Backbone, templateSrc) {
 	var imp;
@@ -39110,9 +38352,9 @@ function (_, $, Backbone, templateSrc) {
 		model: {},
 		template: _.template(templateSrc),
 		events: {
-			'click .settings':  'openSettingsMenu',
-			'click .exit-game': 'exitGame',
-			'click .close':     'closeMenu'
+			'qk_click .settings':  'openSettingsMenu',
+			'qk_click .exit-game': 'exitGame',
+			'qk_click .close':     'closeMenu'
 		},
 		initialize: function (opts) {
 			imp = opts;
@@ -39135,14 +38377,14 @@ function (_, $, Backbone, templateSrc) {
 
 	return IngameMenu;
 });
-define('text!ui/templates/main.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog dialog-abscenter">\n\t\t<div class="singleplayer menu-item">Single player game</div>\n\t\t<div class="multiplayer menu-item">Multi player game</div>\n\t\t<div class="settings menu-item">Settings</div>\n\t</div>\n</div>';});
+define('text!ui/templates/MainMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<div class="singleplayer menu-item">Single player game</div>\n\t\t<div class="multiplayer menu-item">Multi player game</div>\n\t\t<div class="settings menu-item">Settings</div>\n\t</div>\n</div>';});
 
 define('ui/views/MainMenu',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/main.tpl' 
+	'text!ui/templates/MainMenu.tpl' 
 ],
 function (_, $, Backbone, templateSrc) {
 	var ui;
@@ -39152,9 +38394,9 @@ function (_, $, Backbone, templateSrc) {
 		model: {},
 		template: _.template(templateSrc),
 		events: {
-			'click .singleplayer': 'openSinglePlayerMenu',
-			'click .multiplayer': 'openMultiPlayerMenu',
-			'click .settings': 'openSettingsMenu'
+			'qk_click .singleplayer': 'openSinglePlayerMenu',
+			'qk_click .multiplayer': 'openMultiPlayerMenu',
+			'qk_click .settings': 'openSettingsMenu'
 		},
 		initialize: function (opts) {
 			ui = opts.ui;
@@ -39179,14 +38421,14 @@ function (_, $, Backbone, templateSrc) {
 
 	return IngameMenu;
 });
-define('text!ui/templates/singleplayer.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog dialog-abscenter">\n\t\t<h1>Choose a level</h1>\n\t\t<div class="level-select-wrapper">\n\t\t\t<div class="preview">\n\t\t\t\t<img src="<%= levels[previewLevel].url %>" />\n\t\t\t</div>\n\t\t\t<ul class="levels">\n\t\t\t<% _.each(levels, function (level, i) { %>\n\t\t\t\t<li data-idx="<%- i %>" class="menu-item"><%- level.name %></li>\n\t\t\t<% }); %>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
+define('text!ui/templates/SinglePlayerMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<h1>Choose a level</h1>\n\t\t<div class="level-select-wrapper">\n\t\t\t<div class="preview">\n\t\t\t\t<img src="<%= levels[previewLevel].url %>" />\n\t\t\t</div>\n\t\t\t<ul class="levels">\n\t\t\t<% _.each(levels, function (level, i) { %>\n\t\t\t\t<li data-idx="<%- i %>" class="menu-item"><%- level.name %></li>\n\t\t\t<% }); %>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
 
 define('ui/views/SinglePlayerMenu',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/singleplayer.tpl'
+	'text!ui/templates/SinglePlayerMenu.tpl'
 ],
 function (_, $, Backbone, templateSrc) {
 	var imp;
@@ -39203,9 +38445,9 @@ function (_, $, Backbone, templateSrc) {
 		},
 		template: _.template(templateSrc),
 		events: {
-			'mouseenter .levels li': 'levelPreview',
-			'click .levels li':      'levelSelect',
-			'click .back' :          'goBack'
+			'qk_mouseenter .levels li': 'levelPreview',
+			'qk_click .levels li':      'levelSelect',
+			'qk_click .back' :          'goBack'
 		},
 		initialize: function (opts) {
 			imp = opts;
@@ -39250,7 +38492,7 @@ function (_, $, Backbone, templateSrc) {
 			var idx = $li.data('idx');
 			var level = this.model.levels[idx];
 
-			imp.com_ExecuteCmdText('map ' + level.name);
+			imp.com_ExecuteBuffer('map ' + level.name);
 		},
 		render: function () {
 			this.$el.html(this.template(this.model));
@@ -39263,16 +38505,94 @@ function (_, $, Backbone, templateSrc) {
 
 	return SinglePlayerMenu;
 });
-define('text!ui/templates/multiplayer.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog dialog-abscenter">\n\t\t<div class="form-horizontal">\n\t\t\t<h1>Connect to a server</h1>\n\t\t\t<div class="address control-group">\n\t\t\t\t<div class="control-label">Address:</div><div class="control-input"><%- address %></div>\n\t\t\t</div>\n\t\t\t<div class="form-actions">\n\t\t\t\t<div class="connect button">Connect</div>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
+define('ui/components/TextInput', ['jquery'], function ($) {
+
+var TextInput = function (element) {
+	var self = this;
+
+	this.$el = $(element);
+	this.tempValue = '';
+
+	this.$el.bind('qk_focus', function (ev) {
+		self.onFocus(ev);
+	});
+
+	this.$el.bind('qk_keypress', function (ev) {
+		self.onKeyPress(ev);
+	});
+};
+
+TextInput.prototype.val = function (newValue) {
+	if (arguments.length) {
+		this._value = newValue;
+
+		// Update the element text.
+		this.$el.text(this._value);
+
+		// Trigger changed event.
+		this.$el.trigger(new QkChangeEvent(this._value));
+	} else {
+		return this._value;
+	}
+};
+
+TextInput.prototype.onFocus = function (ev) {
+	this.tempValue = this.val();
+	if (this.tempValue === undefined) {
+		this.tempValue = '';
+	}
+};
+
+TextInput.prototype.onKeyPress = function (ev) {
+	var keyName = ev.keyName;
+
+	if (keyName === 'enter') {
+		// Update the actual value.
+		this.val(this.tempValue);
+
+		// Trigger a blur to clear focus.
+		this.$el.trigger(new QkBlurEvent());
+		return;
+	}
+
+	if (keyName.length === 1) {
+		this.tempValue += keyName;
+	} else if (keyName === 'space') {
+		this.tempValue += ' ';
+	} else if (keyName === 'backspace') {
+		this.tempValue = this.tempValue.slice(0, -1);
+	}
+
+	// Update element text.
+	this.$el.text(this.tempValue);
+};
+
+// Export jQuery plugin.
+$.fn.textInput = function (option) {
+	return this.each(function () {
+		var $this = $(this),
+			data = $this.data('textInput');
+		
+		if (!data) {
+			$this.data('textInput', (data = new TextInput(this)));
+		};
+	});
+};
+
+return TextInput;
+
+});
+define('text!ui/templates/MultiPlayerMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<div class="form-horizontal">\n\t\t\t<h1>Connect to a server</h1>\n\t\t\t<div class="address control-group">\n\t\t\t\t<div class="control-label">Address:</div><div class="control-input"><%- address %></div>\n\t\t\t</div>\n\t\t\t<div class="form-actions">\n\t\t\t\t<div class="connect button">Connect</div>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
 
 define('ui/views/MultiPlayerMenu',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/multiplayer.tpl'
+	'ui/components/TextInput',
+	'text!ui/templates/MultiPlayerMenu.tpl'
 ],
-function (_, $, Backbone, templateSrc) {
+function (_, $, Backbone, TexInput, templateSrc) {
 	var imp;
 
 	var MultiPlayerMenu = Backbone.View.extend({
@@ -39281,27 +38601,30 @@ function (_, $, Backbone, templateSrc) {
 		model: {
 			address: '192.168.0.102:9001'
 		},
-		addressEl: null,
+		$address: null,
 		events: {
-			'keypress .address': 'updateAddress',
-			'click .connect':    'connect',
-			'click .back':       'goBack'
+			'qk_keypress .address': 'updateAddress',
+			'qk_click .connect':    'connect',
+			'qk_click .back':       'goBack'
 		},
 		initialize: function (opts) {
 			imp = opts;
 			this.render();
 		},
-		updateAddress: function (ev, keyName) {
-			var str = imp.ui_ProcessTextInput(this.addressEl.text(), keyName);
-			this.addressEl.text(str);
+		updateAddress: function (ev) {
+			var str = ev.value;
+			this.$address.text(str);
 		},
 		connect: function () {
-			var address = this.addressEl.text();
-			imp.com_ExecuteCmdText('connect ' + address);
+			var address = this.$address.text();
+			imp.com_ExecuteBuffer('connect ' + address);
 		},
 		render: function () {
 			this.$el.html(this.template(this.model));
-			this.addressEl = this.$el.find('.address .control-input');
+			this.$address = this.$el.find('.address .control-input');
+
+			this.$address.textInput();
+
 			return this;
 		},
 		goBack: function () {
@@ -39311,157 +38634,383 @@ function (_, $, Backbone, templateSrc) {
 
 	return MultiPlayerMenu;
 });
-define('text!ui/templates/settings.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog dialog-abscenter">\n\t\t<div class="form-horizontal">\n\t\t\t<h1>Settings</h1>\n\t\t\t<div class="name control-group">\n\t\t\t\t<div class="control-label">Name:</div><div class="control-input"><%- name %></div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<h1>Controls</h1>\n\t\t\t<div class="forward-key control-group">\n\t\t\t\t<div class="control-label">Move forward:</div><div class="control-input"><%- forwardKey %></div>\n\t\t\t</div>\n\t\t\t<div class="left-key control-group">\n\t\t\t\t<div class="control-label">Move left:</div><div class="control-input"><%- leftKey %></div>\n\t\t\t</div>\n\t\t\t<div class="back-key control-group">\n\t\t\t\t<div class="control-label">Move back:</div><div class="control-input"><%- backKey %></div>\n\t\t\t</div>\n\t\t\t<div class="right-key control-group">\n\t\t\t\t<div class="control-label">Move right:</div><div class="control-input"><%- rightKey %></div>\n\t\t\t</div>\n\t\t\t<div class="up-key control-group">\n\t\t\t\t<div class="control-label">Jump:</div><div class="control-input"><%- upKey %></div>\n\t\t\t</div>\n\t\t\t<div class="attack-key control-group">\n\t\t\t\t<div class="control-label">Attack:</div><div class="control-input"><%- attackKey %></div>\n\t\t\t</div>\n\t\t\t<div class="weapnext-key control-group">\n\t\t\t\t<div class="control-label">Next weapon:</div><div class="control-input"><%- weapnextKey %></div>\n\t\t\t</div>\n\t\t\t<div class="weapprev-key control-group">\n\t\t\t\t<div class="control-label">Previous weapon:</div><div class="control-input"><%- weapprevKey %></div>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
+define('ui/components/KeyInput', ['jquery'], function ($) {
+
+var KeyInput = function (element) {
+	var self = this;
+
+	this.$el = $(element);
+
+	this.$el.bind('qk_keypress', function (ev) {
+		self.onKeyPress(ev);
+	});
+};
+
+KeyInput.prototype.val = function (newValue) {
+	if (arguments.length) {
+		this._value = newValue;
+		this.$el.text(this._value);
+
+		// Trigger changed event.
+		this.$el.trigger(new QkChangeEvent(this._value));
+	} else {
+		return this._value;
+	}
+};
+
+KeyInput.prototype.onKeyPress = function (ev) {
+	// Update the actual value.
+	if (ev.keyName === 'backspace') {
+		this.val('');
+	} else {
+		this.val(ev.keyName);
+	}
+
+	// Trigger a blur to clear focus.
+	this.$el.trigger(new QkBlurEvent());
+};
+
+// Export jQuery plugin.
+$.fn.keyInput = function (option) {
+	return this.each(function () {
+		var $this = $(this),
+			data = $this.data('keyInput');
+
+		if (!data) {
+			$this.data('keyInput', (data = new KeyInput(this)));
+		};
+	});
+};
+
+return KeyInput;
+
+});
+define('ui/components/RangeInput', ['jquery'], function ($) {
+
+var RangeInput = function (element) {
+	var self = this;
+
+	var $track = $('<div class="input-range-track" />');
+	var $slider = $('<div class="input-range-slider" />');
+
+	this.$el = $(element);
+	this.$slider = $slider;
+	this.refreshCount = 0;
+
+	this.$el.append($track);
+	this.$el.append($slider);
+	this._refreshSlider();
+
+	this.$el.bind('qk_click', function (ev) {
+		self.onClick(ev);
+	});
+};
+
+RangeInput.prototype.val = function (newValue) {
+	if (arguments.length) {
+		this.$el.data('value', newValue);
+		this._refreshSlider();
+
+		// Trigger changed event.
+		this.$el.trigger(new QkChangeEvent(newValue));
+	} else {
+		return this.$el.data('value');
+	}
+};
+
+RangeInput.prototype.min = function () {
+	if (arguments.length) {
+		this.$el.data('min', newValue);
+		this._refreshSlider();
+	} else {
+		return this.$el.data('min') || 0;
+	}
+};
+
+RangeInput.prototype.max = function (newValue) {
+	if (arguments.length) {
+		this.$el.data('max', newValue);
+		this._refreshSlider();
+	} else {
+		return this.$el.data('max') || 100;
+	}
+};
+
+RangeInput.prototype.onClick = function (ev) {
+	var left = this.$el.offset().left;
+	var width = this.$el.width();
+	var scale = (ev.x - left) / width;
+
+	this.val(scale * (this.max - this.min));
+};
+
+RangeInput.prototype._refreshSlider = function () {	
+	var left = this.$el.offset().left;
+	var right = left + this.$el.width();
+
+	// AP - This is really lame, but the DOM doesn't provide us a 'show'
+	// event. Often we're initialized the same frame as the container,
+	// in which case it will take a frame before jQuery returns us a valid
+	// offset.
+	if (!left && !right && this.refreshCount++ < 10) {
+		var self = this;
+		setTimeout(function () { self._refreshSlider(); }, 1);
+		return;
+	}
+
+	var scale = this.val() / (this.max() - this.min());
+
+	// Update the slider position.
+	this.$slider.css({
+		left: scale * (right - left)
+	});
+};
+
+// Export jQuery plugin.
+$.fn.rangeInput = function (option) {
+	return this.each(function () {
+		var $this = $(this),
+			data = $this.data('rangeInput');
+		
+		if (!data) {
+			$this.data('rangeInput', (data = new RangeInput(this)));
+		};
+	});
+};
+
+return RangeInput;
+
+});
+define('ui/components/Tab', ['jquery'], function ($) {
+
+var Tab = function (element) {
+	this.element = $(element);
+};
+
+Tab.prototype.show = function () {
+	var $this = this.element,
+		$ul = $this.closest('ul'),
+		selector = $this.attr('data-target'),
+		previous,
+		$target,
+		e;
+
+	if (!selector) {
+		selector = $this.attr('href')
+		selector = selector && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+	}
+
+	if ($this.parent('li').hasClass('active')) {
+		return;
+	}
+
+	previous = $ul.find('.active:last a')[0];
+
+	$target = $(selector);
+
+	this.activate($this.parent('li'), $ul);
+	this.activate($target, $target.parent(), function () {
+		$this.trigger({
+			type: 'qk_shown',
+			relatedTarget: previous
+		});
+	});
+};
+
+Tab.prototype.activate = function (element, container, callback) {
+	var $active = container.find('> .active'),
+		transition = callback
+				&& $.support.transition
+				&& $active.hasClass('fade');
+
+	function next() {
+		$active
+			.removeClass('active')
+			.find('> .dropdown-menu > .active')
+			.removeClass('active');
+
+		element.addClass('active');
+
+		if (transition) {
+			element[0].offsetWidth // reflow for transition
+			element.addClass('in');
+		} else {
+			element.removeClass('fade');
+		}
+
+		if ( element.parent('.dropdown-menu') ) {
+			element.closest('li.dropdown').addClass('active');
+		}
+
+		callback && callback();
+	}
+
+	transition ?
+		$active.one($.support.transition.end, next) :
+		next();
+
+	$active.removeClass('in');
+};
+
+// Export jQuery plugin.
+$.fn.tab = function (option) {
+	return this.each(function () {
+		var $this = $(this),
+			data = $this.data('tab');
+		
+		if (!data) {
+			$this.data('tab', (data = new Tab(this)));
+		}
+
+		if (typeof option === 'string') {
+			data[option]();
+		}
+	});
+};
+
+return Tab;
+
+});
+define('text!ui/templates/SettingsMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<div class="form-horizontal">\n\t\t\t<h1>Settings</h1>\n\t\t\t<div class="name control-group">\n\t\t\t\t<div class="control-label">Name:</div><div name="name" class="control-input input-text"><%- name %></div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<h1>Controls</h1>\n\t\t\t<ul class="nav-tabs">\n\t\t\t\t<li class="active"><a href="#look" data-toggle="tab">Look</a></li>\n\t\t\t\t<li><a href="#move" data-toggle="tab">Move</a></li>\n\t\t\t\t<li><a href="#shoot" data-toggle="tab">Shoot</a></li>\n\t\t\t</ul>\n\t\t\t<div class="tab-content">\n\t\t\t\t<div class="tab-pane active" id="look">\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Sensitivity:</div><div name="sensitivity" class="control-input input-range" data-min="0" data-max="10" data-value="<%- sensitivity %>"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="tab-pane" id="move">\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move forward:</div><div name="forwardKey" class="control-input input-key"><%- forwardKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move left:</div><div name="leftKey" class="control-input input-key"><%- leftKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move back:</div><div name="backKey" class="control-input input-key"><%- backKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move right:</div><div name="rightKey" class="control-input input-key"><%- rightKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Jump:</div><div name="upKey" class="control-input input-key"><%- upKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="tab-pane" id="shoot">\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Attack:</div><div name="attackKey" class="control-input input-key"><%- attackKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Next weapon:</div><div name="weapnextKey" class="control-input input-key"><%- weapnextKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Previous weapon:</div><div name="weapprevKey" class="control-input input-key"><%- weapprevKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Gauntlet:</div><div name="weapon1Key" class="control-input input-key"><%- weapon1Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Machinegun:</div><div name="weapon2Key" class="control-input input-key"><%- weapon2Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Shotgun:</div><div name="weapon3Key" class="control-input input-key"><%- weapon3Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Grenade launcher:</div><div name="weapon4Key" class="control-input input-key"><%- weapon4Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Rocket launcher:</div><div name="weapon5Key" class="control-input input-key"><%- weapon5Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Lightning gun:</div><div name="weapon6Key" class="control-input input-key"><%- weapon6Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Railgun:</div><div name="weapon7Key" class="control-input input-key"><%- weapon7Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Plasma gun:</div><div name="weapon8Key" class="control-input input-key"><%- weapon8Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">BFG:</div><div name="weapon9Key" class="control-input input-key"><%- weapon9Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
 
 define('ui/views/SettingsMenu',
 [
 	'underscore',
 	'jquery',
 	'backbone',
-	'text!ui/templates/settings.tpl' 
+	'ui/components/KeyInput',
+	'ui/components/RangeInput',
+	'ui/components/TextInput',
+	'ui/components/Tab',
+	'text!ui/templates/SettingsMenu.tpl' 
 ],
-function (_, $, Backbone, templateSrc) {
+function (_, $, Backbone, KeyInput, RangeInput, TextInput, Tab, templateSrc) {
 	var imp;
 
 	var SettingsMenu = Backbone.View.extend({
 		id: 'settings',
 		template: _.template(templateSrc),
-		model: {},
-		modelCvars: [
-			'name'
-		],
-		// TODO store all of this in a big data structure, there is way too much C&P in here.
-		modelKeys: {
-			'+forward': 'forwardKey',
-			'+left':    'leftKey',
-			'+back':    'backKey',
-			'+right':   'rightKey',
-			'+jump':    'upKey',
-			'+attack':  'attackKey',
-			'weapnext': 'weapnextKey',
-			'weapprev': 'weapprevKey'
+		model: new Backbone.Model(),
+		cvars: {
+			'name':        'name',
+			'sensitivity': 'cl_sensitivity'
+		},
+		cmds: {
+			'forwardKey':  '+forward',
+			'leftKey':     '+left',
+			'backKey':     '+back',
+			'rightKey':    '+right',
+			'upKey':       '+jump',
+			'attackKey':   '+attack',
+			'weapnextKey': 'weapnext',
+			'weapprevKey': 'weapprev',
+			'weapon1Key':  'weapon 1',
+			'weapon2Key':  'weapon 2',
+			'weapon3Key':  'weapon 3',
+			'weapon4Key':  'weapon 4',
+			'weapon5Key':  'weapon 5',
+			'weapon6Key':  'weapon 6',
+			'weapon7Key':  'weapon 7',
+			'weapon8Key':  'weapon 8',
+			'weapon9Key':  'weapon 9'
 		},
 		events: {
-			'keypress .name':         'updateName',
-			'keypress .forward-key':  'updateForwardKey',
-			'keypress .left-key':     'updateLeftKey',
-			'keypress .back-key':     'updateBackKey',
-			'keypress .right-key':    'updateRightKey',
-			'keypress .up-key':       'updateUpKey',
-			'keypress .right-key':    'updateRightKey',
-			'keypress .attack-key':   'updateAttackKey',
-			'keypress .weapnext-key': 'updateWeapnextKey',
-			'keypress .weapprev-key': 'updateWeapprevKey',
-			'blur .control-input':    'saveConfig',
-			'click .back' :           'goBack'
+			'qk_click .back': 'goBack'
 		},
-		nameEl: null,
-		forwardKeyEl: null,
-		leftKeyEl: null,
-		backKeyEl: null,
-		rightKeyEl: null,
-		upKeyEl: null,
-		weapprevKeyEl: null,
-		weapnextKeyEl: null,
 		initialize: function (opts) {
 			imp = opts;
 
-			for (var i = 0; i < this.modelCvars.length; i++) {
-				var cvar = this.modelCvars[i];
-				this.model[cvar] = imp.com_GetCvarVal(cvar);
-			}
-
-			for (var key in this.modelKeys) {
-				if (!this.modelKeys.hasOwnProperty(key)) {
+			// Add cvar / cmd input change events.
+			for (var name in this.cvars) {
+				if (!this.cvars.hasOwnProperty(name)) {
 					continue;
 				}
-				var mval = this.modelKeys[key];
-				var keys = imp.cl_GetKeyNamesForCmd(key);
-				this.model[mval] = keys.length ? keys[0] : '';
+
+				var evt = 'qk_change [name="' + name + '"]';
+				this.events[evt] = 'formChanged';
 			}
+
+			for (var name in this.cmds) {
+				if (!this.cmds.hasOwnProperty(name)) {
+					continue;
+				}
+
+				var evt = 'qk_change [name="' + name + '"]';
+				this.events[evt] = 'formChanged';
+			}
+
+			this.loadConfigToModel();
 
 			this.render();
 		},
-		updateName: function (ev, keyName) {
-			this.model.name = imp.ui_ProcessTextInput(this.model.name, keyName);
-			this.nameEl.text(this.model.name);
-		},
-		updateForwardKey: function (ev, keyName) {
-			this.model.forwardKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.forwardKeyEl.text(this.model.forwardKey);
-		},
-		updateLeftKey: function (ev, keyName) {
-			this.model.leftKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.leftKeyEl.text(this.model.leftKey);
-		},
-		updateBackKey: function (ev, keyName) {
-			this.model.backKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.backKeyEl.text(this.model.backKey);
-		},
-		updateRightKey: function (ev, keyName) {
-			this.model.rightKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.rightKeyEl.text(this.model.rightKey);
-		},
-		updateUpKey: function (ev, keyName) {
-			this.model.upKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.upKeyEl.text(this.model.upKey);
-		},
-		updateAttackKey: function (ev, keyName) {
-			this.model.attackKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.attackKeyEl.text(this.model.attackKey);
-		},
-		updateWeapnextKey: function (ev, keyName) {
-			this.model.weapnextKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.weapnextKeyEl.text(this.model.weapnextKey);
-		},
-		updateWeapprevKey: function (ev, keyName) {
-			this.model.weapprevKey = imp.ui_ProcessKeyBindInput(keyName);
-			this.weapprevKeyEl.text(this.model.weapprevKey);
-		},
-		saveConfig: function () {
-			for (var i = 0; i < this.modelCvars.length; i++) {
-				var cvar = this.modelCvars[i];
-				imp.com_SetCvarVal(cvar, this.model[cvar]);
-			}
+		formChanged: function (ev) {
+			var name = $(ev.target).attr('name'),
+				value = ev.value;
 
-			// Unbind all old keys before we save.
-			imp.cl_UnbindAll();
+			this.model.set(name, value);
 
-			for (var key in this.modelKeys) {
-				if (!this.modelKeys.hasOwnProperty(key)) {
+			// Update all of our cvars / binds.
+			for (var name in this.cvars) {
+				if (!this.cvars.hasOwnProperty(name)) {
 					continue;
 				}
 
-				// Bind any new keys that have a value.
-				var mval = this.modelKeys[key];
-				if (mval !== '') {
-					imp.cl_Bind(this.model[mval], key);
-				}
+				var cvar = this.cvars[name];
+				var value = this.model.get(name);
+
+				imp.com_SetCvarVal(cvar, value);
 			}
 
-			imp.com_SaveConfig(function (err) {
-				if (err) {
-					throw new Error('Error saving configuration');
+			for (var name in this.cmds) {
+				if (!this.cmds.hasOwnProperty(name)) {
+					continue;
 				}
 
-				imp.com_LoadConfig();
-			});
+				// Bind any keys that have a value.
+				var cmd = this.cmds[name];
+				var key = this.model.get(name);
+
+				if (key !== '') {
+					imp.cl_Bind(key, cmd);
+				}
+			}
+		},
+		loadConfigToModel: function () {
+			var data = {};
+
+			for (var name in this.cvars) {
+				if (!this.cvars.hasOwnProperty(name)) {
+					continue;
+				}
+
+				var cvar = this.cvars[name];
+				data[name] = imp.com_GetCvarVal(cvar);
+			}
+
+			for (var name in this.cmds) {
+				if (!this.cmds.hasOwnProperty(name)) {
+					continue;
+				}
+
+				var cmd = this.cmds[name];
+				var keys = imp.cl_GetKeyNamesForCmd(cmd);
+				data[name] = keys.length ? keys[0] : '';
+			}
+
+			this.model.set(data);
 		},
 		goBack: function () {
 			imp.ui_PopMenu();
 		},
 		render: function () {
-			this.$el.html(this.template(this.model));
+			this.$el.html(this.template(this.model.toJSON()));
 
-			this.nameEl        = this.$el.find('.name .control-input');
-			this.forwardKeyEl  = this.$el.find('.forward-key .control-input');
-			this.leftKeyEl     = this.$el.find('.left-key .control-input');
-			this.backKeyEl     = this.$el.find('.back-key .control-input');
-			this.rightKeyEl    = this.$el.find('.right-key .control-input');
-			this.upKeyEl       = this.$el.find('.up-key .control-input');
-			this.attackKeyEl   = this.$el.find('.attack-key .control-input');
-			this.weapnextKeyEl = this.$el.find('.weapnext-key .control-input');
-			this.weapprevKeyEl = this.$el.find('.weapprev-key .control-input');
+			this.$el.on('qk_click', '[data-toggle="tab"]', function () {
+				$(this).tab('show');
+			});
+			this.$el.find('.input-range').rangeInput();
+			this.$el.find('.input-key').keyInput();
+			this.$el.find('.input-text').textInput();
 
 			return this;
 		}
@@ -39476,6 +39025,7 @@ define('ui/ui',
 	'backbone',
 	'common/sh',
 	'text!ui/css/views.css',
+	'text!ui/css/normalize.css',
 	'ui/views/ConnectView',
 	'ui/views/HudView',
 	'ui/views/ScoreboardView',
@@ -39491,150 +39041,40 @@ function (
 	Backbone,
 	sh,
 	viewsCss,
+	normalizeCss,
 	ConnectView, HudView, ScoreboardView,
 	IngameMenu, MainMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu
 ) {
+	var root = global || window;
+
+/**
+ * Simulated event structures.
+ */
+root.QkClickEvent = function (x, y) {
+	this.type = 'qk_click';
+	this.x = x;
+	this.y = y;
+};
+
+root.QkKeyPressEvent = function (keyName) {
+	this.type = 'qk_keypress';
+	this.keyName = keyName;
+};
+
+root.QkChangeEvent = function (value) {
+	this.type = 'qk_change';
+	this.value = value;
+};
+
+root.QkFocusEvent = function () {
+	this.type = 'qk_focus';
+};
+
+root.QkBlurEvent = function () {
+	this.type = 'qk_blur';
+};
+
 	function UserInterface(imp) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 		var UILocals = function () {
 	this.frameCount    = 0;
 	this.views         = {};
@@ -39653,7 +39093,6 @@ var UIImage = function () {
 };
 		var uil;
 var $viewportUI;
-var $ptr;
 
 var map = {
 	'connect':      ConnectView,
@@ -39681,27 +39120,129 @@ function log() {
 function Init() {
 	uil = new UILocals();
 
-	document.addEventListener('fullscreenchange', ScaleUI);
-	window.addEventListener('resize', ScaleUI);
+	document.addEventListener('fullscreenchange', ScaleElements);
+	window.addEventListener('resize', ScaleElements);
 
 	//
 	var context = imp.sys_GetUIContext();
 	$viewportUI = $(context);
-	ScaleUI();
+	ScaleElements();
 
 	// Embed our CSS.
-	var $style = $('<style>', { 'type': 'text/css'}).append(viewsCss);
-	$style.appendTo('head');
+	var css = [viewsCss, normalizeCss];
 
-	// Create pointer element.
-	$ptr = $('<span>', { 'class': 'pointer' });
-	$viewportUI.append($ptr);
+	for (var i = 0; i < css.length; i++) {
+		var $style = $('<style>', { 'type': 'text/css'}).append(css[i]);
+		$style.appendTo('head');
+	}
+
+	// 
+	InitMenus();
+	InitViews();
 }
 
 /**
  * Shutdown
  */
 function Shutdown() {
+}
+
+/**
+ * Render
+ *
+ * Show/hide/update all views.
+ */
+function Render() {
+	var views = uil.views;
+
+	// Add active menu to view render list.
+	var activeMenu = PeekMenu();
+	if (activeMenu) {
+		RenderView(activeMenu);
+	}
+
+	// Render any other views the client has requested.
+	for (var name in views) {
+		if (!views.hasOwnProperty(name)) {
+			continue;
+		}
+
+		var view = views[name];
+
+		// Hide the view if it's not active this frame.
+		if (view.visFrame !== uil.frameCount) {
+			HideView(view);
+			continue;
+		}
+
+		ShowView(view);
+	}
+
+	uil.frameCount++;
+}
+		/**
+ * GetImageByHandle
+ */
+function GetImageByHandle(hImage) {
+	// // Out of range gets the default model.
+	// if (index >= uil.images.length) {
+	// 	return null;
+	// }
+
+	return uil.images[hImage];
+}
+
+/**
+ * RegisterImage
+ */
+function RegisterImage(name, callback) {
+	var img;
+
+	// Currently we're only going to support PNG images.
+	name = name.replace(/\.[^\/.]+$/, '');
+	name += '.png';
+
+	for (var i = 0; i < uil.images.length; i++) {
+		if (uil.images[i].name === name) {
+			return uil.images[i];
+		}
+	}
+
+	var img = new UIImage();
+
+	// Default image data.
+	img.data = 'data:image/png;base64,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';
+
+	imp.sys_ReadFile(name, 'binary', function (err, data) {
+		if (err) {
+			log('Failed to load image \'' + name + '\'');
+		} else {
+			img.data = 'data:image/png;base64,' + sh.atob64(new Uint8Array(data));
+		}
+
+		if (callback) {
+			callback(err, img);
+		}
+	});
+
+	var hImage = uil.images.length;
+	uil.images.push(img);
+	return hImage;
+}
+		var $ptr;
+
+/**
+ * InitMenus
+ */
+function InitMenus() {	
+	// Create pointer element.
+	$ptr = $('<span>', { 'class': 'pointer' });
+	$viewportUI.append($ptr);
+
+	// Any blur event that's bubbled up should cause a focus clear.
+	$viewportUI.on('qk_blur', function () {
+		ClearFocusedElement(false);
+	});
 }
 
 /**
@@ -39730,7 +39271,7 @@ function PopMenu() {
 	uil.activeMenus.pop();
 	
 	ClearHoverElements();
-	ClearFocusedElement();
+	ClearFocusedElement(true);
 
 	if (!uil.activeMenus.length) {
 		$viewportUI.removeClass('active');
@@ -39747,71 +39288,40 @@ function PopAllMenus() {
 	}
 }
 
-/**
- * GetView
- */
-function GetView(name) {
-	var view = uil.views[name];
-
-	if (!view) {
-		view = RegisterView(name);
-	}
-
-	return view;
-}
-
-/**
- * RegisterView
- */
-function RegisterView(name) {
-	var view = uil.views[name] = new map[name](GetViewExports());
-	$viewportUI.append(view.$el);
-	HideView(view);
-
-	return view;
-}
-
-/**
- * GetViewExports
- */
-function GetViewExports() {
-	return {
-		sys_ReadFile:           imp.sys_ReadFile,
-		
-		com_GetCvarVal:         imp.com_GetCvarVal,
-		com_SetCvarVal:         imp.com_SetCvarVal,
-		com_LoadConfig:         imp.com_LoadConfig,
-		com_SaveConfig:         imp.com_SaveConfig,
-		
-		cl_Bind:                imp.cl_Bind,
-		cl_UnbindAll:           imp.cl_UnbindAll,
-		cl_GetKeyNamesForCmd:   imp.cl_GetKeyNamesForCmd,
-		cl_CaptureInput:        imp.cl_CaptureInput,
-		cl_Disconnect:          imp.cl_Disconnect,
-
-		ui_GetImageByHandle:    GetImageByHandle,
-		ui_PushMenu:            PushMenu,
-		ui_PopMenu:             PopMenu,
-		ui_PopAllMenus:         PopAllMenus,
-		ui_ProcessTextInput:    ProcessTextInput,
-		ui_ProcessKeyBindInput: ProcessKeyBindInput
-	};
-}
+/**********************************************************
+ *
+ * Input handling
+ *
+ * We don't rely on the browser for input events, we instead
+ * trap input from the client, and somewhat emulate browser
+ * input events because well, it works and to makes writing
+ * views more familiar.
+ *
+ **********************************************************/
 
 /**
  * KeyPressEvent
  */
 function KeyPressEvent(keyName) {
-	// If we aren't already focused on this element, click it
-	// and swallow the key event.
-	if (keyName === 'mouse0' && UpdateFocusedElement()) {
-		$(uil.focusEl).trigger('click');
-		return;
+	var focusedThisFrame = false;
+
+	if (keyName === 'mouse0') {
+		focusedThisFrame = UpdateFocusedElement();
 	}
 
-	// Forward key press events to our focused element.
 	if (uil.focusEl) {
-		$(uil.focusEl).trigger('keypress', [ keyName ]);
+		// Simulate click events for mouse0.
+		if (keyName === 'mouse0') {
+			var offset = $ptr.offset();
+			$(uil.focusEl).trigger(new QkClickEvent(offset.left, offset.top));
+		}
+
+		// Forward key press events to our focused element if it
+		// wasn't just focused (we don't want to send bad mouse0
+		// keypress events)
+		if (!focusedThisFrame) {
+			$(uil.focusEl).trigger(new QkKeyPressEvent(keyName));
+		}
 	}
 }
 
@@ -39873,7 +39383,7 @@ function GetAllElementsAtPoint(view, x, y) {
 }
 
 /**
- * SetHoverElements
+ * UpdateHoverElements
  */
 function UpdateHoverElements() {
 	var activeMenu = PeekMenu();
@@ -39886,7 +39396,7 @@ function UpdateHoverElements() {
 
 			if (!els || els.indexOf(oldel) === -1) {
 				$(oldel).removeClass('hover');
-				$(oldel).trigger('mouseleave');
+				$(oldel).trigger('qk_mouseleave');
 			}
 		}
 	}
@@ -39898,7 +39408,7 @@ function UpdateHoverElements() {
 
 			if (!uil.hoverEls || uil.hoverEls.indexOf(newel) === -1) {
 				$(newel).addClass('hover');
-				$(newel).trigger('mouseenter');
+				$(newel).trigger('qk_mouseenter');
 			}
 		}
 	}
@@ -39918,7 +39428,7 @@ function ClearHoverElements() {
 }
 
 /**
- * SetFocusedElement
+ * UpdateFocusedElement
  */
 function UpdateFocusedElement() {
 	var el = uil.hoverEls && uil.hoverEls.length > 0 ?
@@ -39930,59 +39440,91 @@ function UpdateFocusedElement() {
 		return false;
 	}
 
-	ClearFocusedElement();
+	ClearFocusedElement(true);
 
 	uil.focusEl = el;
 	$(el).addClass('focus');
+	$(el).trigger(new QkFocusEvent());
 	return true;
 }
 
 /**
- * ClearHoveredElement
+ * ClearFocusedElement
  */
-function ClearFocusedElement() {
-	$(uil.focusEl).trigger('blur');
+function ClearFocusedElement(triggerBlur) {
+	if (triggerBlur) {
+		$(uil.focusEl).trigger(new QkBlurEvent());
+	}
+
 	$(uil.focusEl).removeClass('focus');
 	uil.focusEl = null;
 }
+		/**
+ * InitViews
+ */
+function InitViews() {
+	// Update centered elements when tabs are toggled.
+	$viewportUI.on('qk_shown', '.view', function () {
+		var $view = $(this);
+		UpdateCenteredElements($view);
+	});
+
+}
 
 /**
- * Render
- *
- * Show/hide/update all views.
+ * GetView
  */
-function Render() {
-	var views = uil.views;
+function GetView(name) {
+	var view = uil.views[name];
 
-	// Add active menu to render list.
-	var activeMenu = PeekMenu();
-	if (activeMenu) {
-		RenderView(activeMenu);
+	if (!view) {
+		view = RegisterView(name);
 	}
 
-	for (var name in views) {
-		if (!views.hasOwnProperty(name)) {
-			continue;
-		}
+	return view;
+}
 
-		var view = views[name];
+/**
+ * RegisterView
+ */
+function RegisterView(name) {
+	var view = uil.views[name] = new map[name](GetViewExports());
 
-		// Hide the view if it's not active this frame.
-		if (view.visFrame !== uil.frameCount) {
-			HideView(view);
-			continue;
-		}
+	// Add view class to all views.
+	view.$el.addClass('view');
 
-		// If the view was successfully shown, let's make sure it has the
-		// most up to date font sizes as it may have not been visible on
-		// the last resize.
-		if (ShowView(view)) {
-			UpdateCenteredDialog(view);
-			UpdateFontSize(view);
-		}
-	}
+	// Append view to container.
+	$viewportUI.append(view.$el);
+	
+	// Hide by default.
+	HideView(view);
 
-	uil.frameCount++;
+	return view;
+}
+
+/**
+ * GetViewExports
+ */
+function GetViewExports() {
+	return {
+		sys_ReadFile:           imp.sys_ReadFile,
+		
+		com_GetCvarVal:         imp.com_GetCvarVal,
+		com_SetCvarVal:         imp.com_SetCvarVal,
+		com_LoadConfig:         imp.com_LoadConfig,
+		com_SaveConfig:         imp.com_SaveConfig,
+		
+		cl_Bind:                imp.cl_Bind,
+		cl_UnbindAll:           imp.cl_UnbindAll,
+		cl_GetKeyNamesForCmd:   imp.cl_GetKeyNamesForCmd,
+		cl_CaptureInput:        imp.cl_CaptureInput,
+		cl_Disconnect:          imp.cl_Disconnect,
+
+		ui_GetImageByHandle:    GetImageByHandle,
+		ui_PushMenu:            PushMenu,
+		ui_PopMenu:             PopMenu,
+		ui_PopAllMenus:         PopAllMenus
+	};
 }
 
 /**
@@ -39990,25 +39532,11 @@ function Render() {
  */
 function RenderView(view) {
 	if (view instanceof String) {
-		view = RegisterView
+		view = RegisterView(view);
 	}
 
 	// Update visFrame so the main render can show active views.
 	view.visFrame = uil.frameCount;
-}
-
-/**
- * HideView
- */
-function HideView(view) {
-	var visible = view.el.style.display !== 'none';
-
-	if (visible) {
-		view.$el.hide();
-		return true;
-	}
-
-	return false;
 }
 
 /**
@@ -40019,29 +39547,34 @@ function ShowView(view) {
 
 	if (!visible) {
 		view.$el.show();
-		return true;
-	}
 
-	return false;
+		// Let's make sure the view has the most up to date font sizes
+		// as it may have not been visible on the last resize.
+		UpdateCenteredElements(view.$el);
+		UpdateFontSizes(view.$el);
+	}
 }
 
 /**
- * ScaleUI
+ * HideView
+ */
+function HideView(view) {
+	var visible = view.el.style.display !== 'none';
+
+	if (visible) {
+		view.$el.hide();
+	}
+}
+
+/**
+ * ScaleElements
  * 
  * Update cached viewport sizes as well as font-sizes for all views.
  */
-function ScaleUI() {
+function ScaleElements() {
 	uil.vw = $viewportUI.width();
 	uil.vh = $viewportUI.height();
 
-	UpdateCenteredDialogs();
-	UpdateFontSizes();
-}
-
-/**
- * UpdateCenteredDialogs
- */
-function UpdateCenteredDialogs() {
 	var views = uil.views;
 
 	for (var name in views) {
@@ -40049,35 +39582,23 @@ function UpdateCenteredDialogs() {
 			continue;
 		}
 
-		UpdateCenteredDialog(views[name]);
+		UpdateCenteredElements(views[name].$el);
+		UpdateFontSizes(views[name].$el);
 	}
 }
 
 /**
- * UpdateCenteredDialog
+ * UpdateCenteredElements
  */
-function UpdateCenteredDialog(view) {
-	var $centered = view.$el.find('.dialog-abscenter');
+function UpdateCenteredElements($el) {
+	var $centered = $el.find('.abscenter');
 
 	$centered.css({
+		position: 'absolute',
+		margin: 0,
 		top: uil.vh / 2 - $centered.outerHeight() / 2,
 		left: uil.vw / 2 - $centered.outerWidth() / 2
 	});
-}
-
-/**
- * UpdateFontSizes
- */
-function UpdateFontSizes() {
-	var views = uil.views;
-
-	for (var name in views) {
-		if (!views.hasOwnProperty(name)) {
-			continue;
-		}
-
-		UpdateFontSize(views[name]);
-	}
 }
 
 /**
@@ -40086,91 +39607,8 @@ function UpdateFontSizes() {
  * Update base font-size of view to be 1/100th of the viewport size.
  * This allows all of our text elements to scale properly with the window.
  */
-function UpdateFontSize(view) {
-	view.$el.css('font-size', (uil.vw / 100) + 'px');
-}
-		/**
- * GetImageByHandle
- */
-function GetImageByHandle(hImage) {
-	// // Out of range gets the default model.
-	// if (index >= uil.images.length) {
-	// 	return null;
-	// }
-
-	return uil.images[hImage];
-}
-
-/**
- * RegisterImage
- */
-function RegisterImage(name, callback) {
-	var img;
-
-	// Currently we're only going to support PNG images.
-	name = name.replace(/\.[^\/.]+$/, '');
-	name += '.png';
-
-	for (var i = 0; i < uil.images.length; i++) {
-		if (uil.images[i].name === name) {
-			return uil.images[i];
-		}
-	}
-
-	var img = new UIImage();
-
-	// Default image data.
-	img.data = 'data:image/png;base64,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';
-
-	imp.sys_ReadFile(name, 'binary', function (err, data) {
-		if (err) {
-			log('Failed to load image \'' + name + '\'');
-		} else {
-			img.data = 'data:image/png;base64,' + sh.atob64(new Uint8Array(data));
-		}
-
-		if (callback) {
-			callback(err, img);
-		}
-	});
-
-	var hImage = uil.images.length;
-	uil.images.push(img);
-	return hImage;
-}
-		/**
- * ProcessTextInput
- */
-function ProcessTextInput(str, keyName) {
-	if (keyName === 'enter') {
-		// Wait a frame to blur.
-		setTimeout(_.bind(ClearFocusedElement, this));
-	}
-
-	// TODO sys-input should pass a char event as well as a key event.
-	if (keyName.length === 1) {
-		str += keyName;
-	} else if (keyName === 'space') {
-		str += ' ';
-	} else if (keyName === 'backspace') {
-		str = str.slice(0, -1);
-	}
-
-	return str;
-}
-
-/**
- * ProcessKeyBindInput
- */
-function ProcessKeyBindInput(keyName) {
-	// Wait a frame to blur.
-	setTimeout(_.bind(ClearFocusedElement, this));
-	
-	if (keyName === 'backspace') {
-		return '';
-	} else {
-		return keyName;
-	}
+function UpdateFontSizes($el) {
+	$el.css('font-size', (uil.vw / 100) + 'px');
 }
 
 		return {
@@ -40199,146 +39637,6 @@ function ProcessKeyBindInput(keyName) {
 define('client/cl',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath', 'cgame/cg', 'clipmap/cm', 'renderer/re', 'sound/snd', 'ui/ui'],
 function (_, glmatrix, ByteBuffer, sh, qm, cgame, clipmap, renderer, sound, uinterface) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -40452,6 +39750,7 @@ var ClientStatic = function () {
 	this.mouseMoveCallback = false;
 
 	this.keys              = {};
+	this.lastKey           = null;
 	this.inButtons         = new Array(15);
 	this.inForward         = null;
 	this.inLeft            = null;
@@ -40773,10 +40072,10 @@ function CheckUserinfo() {
 	}
 
 	// Send a reliable userinfo update if needed.
-	/*if (cvar_modifiedFlags & CVF.USERINFO) {
-		cvar_modifiedFlags &= ~CVAR_USERINFO;
-		AddReliableCommand('userinfo ' + JSON.stringify(com.GetCvarValues(CVF.USERINFO));
-	}*/
+	// if (com.cvarModifiedFlags & CVF.USERINFO) {
+	// 	com.cvarModifiedFlags &= ~CVF.USERINFO;
+	// 	AddReliableCommand('userinfo ' + JSON.stringify(com.GetCvarValues(CVF.USERINFO)));
+	// }
 }
 
 /**
@@ -40823,7 +40122,7 @@ function CheckForResend() {
 			com.NetchanPrint(clc.netchan, str);
 			// The most current userinfo has been sent, so watch for any
 			// newer changes to userinfo variables.
-			//cvar_modifiedFlags &= ~CVAR_USERINFO;
+			// com.cvarModifiedFlags &= ~CVF.USERINFO;
 			break;
 
 		default:
@@ -41304,12 +40603,12 @@ function RegisterCommands() {
 	com.AddCmd('unbind',    CmdUnbind);
 	com.AddCmd('unbindall', CmdUnbindAll);
 	com.AddCmd('connect',   CmdConnect);
-	com.AddCmd('+attack',   function (key) { cls.inButtons[0] = key; });
-	com.AddCmd('+forward',  function (key) { cls.inForward = key; });
-	com.AddCmd('+left',     function (key) { cls.inLeft = key; });
-	com.AddCmd('+back',     function (key) { cls.inBack = key; });
-	com.AddCmd('+right',    function (key) { cls.inRight = key; });
-	com.AddCmd('+jump',     function (key) { cls.inUp = key; });
+	com.AddCmd('+attack',   function () { cls.inButtons[0] = cls.lastKey; });
+	com.AddCmd('+forward',  function () { cls.inForward    = cls.lastKey; });
+	com.AddCmd('+left',     function () { cls.inLeft       = cls.lastKey; });
+	com.AddCmd('+back',     function () { cls.inBack       = cls.lastKey; });
+	com.AddCmd('+right',    function () { cls.inRight      = cls.lastKey; });
+	com.AddCmd('+jump',     function () { cls.inUp         = cls.lastKey; });
 }
 
 /**
@@ -41325,6 +40624,15 @@ function RegisterDefaultBinds() {
 	CmdBind('tab',        '+scores');
 	CmdBind('mwheelup',   'weapnext');
 	CmdBind('mwheeldown', 'weapprev');
+	CmdBind('1',          'weappon 1');
+	CmdBind('2',          'weappon 2');
+	CmdBind('3',          'weappon 3');
+	CmdBind('4',          'weappon 4');
+	CmdBind('5',          'weappon 5');
+	CmdBind('6',          'weappon 6');
+	CmdBind('7',          'weappon 7');
+	CmdBind('8',          'weappon 8');
+	CmdBind('9',          'weappon 9');
 }
 
 /**
@@ -41333,6 +40641,10 @@ function RegisterDefaultBinds() {
 function CmdBind(keyName, cmd) {
 	var key = GetKey(keyName);
 	key.binding = cmd;
+
+	// Consider this like modifying an archived cvar, so the
+	// file write will be triggered at the next oportunity.
+	com.cvarModifiedFlags |= CVF.ARCHIVE;
 }
 
 /**
@@ -41426,7 +40738,7 @@ function GetKey(keyName) {
 /**
  * GetKeyNamesForCmd
  */
-function GetKeyNamesForCmd(cmdName) {
+function GetKeyNamesForCmd(cmd) {
 	var keys = [];
 	
 	for (var keyName in cls.keys) {
@@ -41435,7 +40747,7 @@ function GetKeyNamesForCmd(cmdName) {
 		}
 
 		var key = cls.keys[keyName];
-		if (key.binding === cmdName) {
+		if (key.binding === cmd) {
 			keys.push(keyName);
 		}
 	}
@@ -41453,6 +40765,9 @@ function KeyDownEvent(time, keyName) {
 	if (key.active) {
 		return;
 	}
+
+	// Store the last key off (used by movement key handlers).
+	cls.lastKey = key;
 
 	if (keyName === '`' && clc.state == CA.ACTIVE) {
 		if (!cls.keyCallback) {
@@ -41513,10 +40828,10 @@ function GetKeyState(key) {
 	key.partial = 0;
 
 	if (key.active) {
-		msec += com.frameTime() - key.downtime;
+		msec += com.frameTime - key.downtime;
 	}
 
-	key.downtime = com.frameTime();
+	key.downtime = com.frameTime;
 
 	var val = msec / cls.frameDelta;
 	if (val < 0) val = 0;
@@ -41528,25 +40843,22 @@ function GetKeyState(key) {
  * ExecBinding
  */
 function ExecBinding(key, pressed) {
-	var cmdToExec = key.binding;
+	var binding = key.binding;
 
-	if (!cmdToExec) {
+	if (!binding) {
 		return;
 	}
 
 	if (!pressed) {
-		if (cmdToExec.charAt(0) === '+') {
-			cmdToExec = '-' + cmdToExec.substr(1);
+		if (binding.charAt(0) === '+') {
+			binding = '-' + binding.substr(1);
 		} else {
 			// Don't execute non +/- cmds on KeyUp.
 			return;
 		}
 	}
 
-	var callback = com.GetCmd(cmdToExec);
-	if (callback) {
-		callback.call(this, key);
-	}
+	com.ExecuteBuffer(binding);
 }
 
 /**
@@ -41561,7 +40873,7 @@ function WriteBindings(str) {
 		var key = GetKey(keyName);
 
 		if (key.binding) {
-			str += 'bind ' + keyName + ' ' + key.binding + '\n';
+			str += 'bind ' + keyName + ' \"' + key.binding + '\"\n';
 		}
 	}
 
@@ -42160,146 +41472,6 @@ function DeltaEntity(msg, newframe, newnum, oldstate, unchanged) {
 define('server/sv',
 ['underscore', 'ByteBuffer', 'common/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
 function (_, ByteBuffer, sh, game, cl, clipmap) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -42852,7 +42024,7 @@ function ConnectionlessPacket(socket, msg) {
  * SpawnServer
  */
 function SpawnServer(mapName) {
-	log('Spawning new server for', mapName, 'at', com.frameTime());
+	log('Spawning new server for', mapName, 'at', com.frameTime);
 
 	svs.initialized = false;
 	
@@ -42882,7 +42054,7 @@ function SpawnServer(mapName) {
 	cm.LoadMap(mapName, function () {
 		sv_mapname(mapName);
 		// serverid should be different each time.
-		sv_serverid(com.frameTime());
+		sv_serverid(com.frameTime);
 
 		// Clear physics interaction links.
 		ClearWorld();
@@ -44447,146 +43619,6 @@ function ClipHandleForEntity(ent) {
 define('common/com',
 ['underscore', 'ByteBuffer', 'common/sh', 'server/sv', 'client/cl'],
 function (_, ByteBuffer, sh, sv, cl) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -44688,12 +43720,12 @@ function CmdExec(filename) {
 		var lines = data.split(/\r\n|\r|\n/);
 
 		for (var i = 0; i < lines.length; i++) {
-			ExecuteCmdText(lines[i]);
+			ExecuteBuffer(lines[i]);
 		}
 	});
 }
 	var cvars = {};
-var cvar_modifiedFlags = 0;
+var cvarModifiedFlags = 0;
 
 /**
  * Cvar
@@ -44716,7 +43748,7 @@ var Cvar = function (defaultValue, flags) {
 				currentValue = newValue;
 			}
 
-			cvar_modifiedFlags |= cvar.flags;
+			cvarModifiedFlags |= cvar.flags;
 
 			cvar.modified = true;
 		} else {
@@ -44758,7 +43790,7 @@ function CmdUnset(name, value) {
 /**
  * CmdCvar
  *
- * Not a registered command, but called by ExecuteCmdText.
+ * Not a registered command, but called by ExecuteBuffer.
  */
 function CmdCvar(name, value) {
 	var cvar = FindCvar(name);
@@ -44943,7 +43975,7 @@ function Init(sysinterface, isdedicated) {
 
 	// If any archived cvars are modified after this, we will trigger a
 	// writing of the config file.
-	cvar_modifiedFlags &= ~CVF.ARCHIVE;
+	cvarModifiedFlags &= ~CVF.ARCHIVE;
 
 	initialized = true;
 }
@@ -44952,24 +43984,34 @@ function Init(sysinterface, isdedicated) {
  * GetExports
  */
 function GetExports() {
-	return {
-		error:            error,
-		frameTime:        function() { return frameTime; },
-		ExecuteCmdText:   ExecuteCmdText,
-		LoadConfig:       LoadConfig,
-		SaveConfig:       SaveConfig,
-		AddCvar:          AddCvar,
-		GetCvarVal:       GetCvarVal,
-		SetCvarVal:       SetCvarVal,
-		GetCvarValues: GetCvarValues,
-		AddCmd:           AddCmd,
-		GetCmd:           GetCmd,
-		NetchanSetup:     NetchanSetup,
-		NetchanDestroy:   NetchanDestroy,
-		NetchanSend:      NetchanSend,
-		NetchanPrint:     NetchanPrint,
-		NetchanProcess:   NetchanProcess
+	var exports = {
+		error:             error,
+		ExecuteBuffer:     ExecuteBuffer,
+		LoadConfig:        LoadConfig,
+		SaveConfig:        SaveConfig,
+		AddCvar:           AddCvar,
+		GetCvarVal:        GetCvarVal,
+		SetCvarVal:        SetCvarVal,
+		GetCvarValues:     GetCvarValues,
+		AddCmd:            AddCmd,
+		GetCmd:            GetCmd,
+		NetchanSetup:      NetchanSetup,
+		NetchanDestroy:    NetchanDestroy,
+		NetchanSend:       NetchanSend,
+		NetchanPrint:      NetchanPrint,
+		NetchanProcess:    NetchanProcess
 	};
+
+	Object.defineProperty(exports, 'frameTime', {
+		get: function () { return frameTime; }
+	});
+
+	Object.defineProperty(exports, 'cvarModifiedFlags', {
+		get: function () { return cvarModifiedFlags; },
+		set: function (val) { cvarModifiedFlags = val; }
+	});
+
+	return exports;
 }
 
 /**
@@ -45112,19 +44154,28 @@ function QueueEvent(ev) {
 }
 
 /**
- * ExecuteCmdText
+ * ExecuteBuffer
  */
-function ExecuteCmdText(text) {
-	var split = text.split(' ');
-	var arg0 = split[0];
-	var args = split.slice(1);
-	var cmdcb;
-	var cvar;
+// This regex will split space delimited strings,
+// honoring quotation mark groups.
+var argsRegex = /([^"\s]+)|"([^"]+)"/g;
+function ExecuteBuffer(buffer) {
+	var args = [];
+	var m;
+	while (m = argsRegex.exec(buffer)) {
+		args.push(m[1] || m[2]);
+	}
 
-	if ((cmdcb = GetCmd(arg0))) {
-		cmdcb.apply(this, args);
-	} else if ((cvar = FindCvar(arg0))) {
-		CmdCvar.apply(this, split);
+	var cmdcb = GetCmd(args[0]);
+	if (cmdcb) {
+		cmdcb.apply(this, args.slice(1));
+		return;
+	}
+
+	var cvar = FindCvar(args[0]);
+	if (cvar) {
+		CmdCvar.apply(this, args);
+		return;
 	}
 }
 
@@ -45138,11 +44189,11 @@ function CheckSaveConfig() {
 	}
 
 	// Only save if we've modified an archive cvar.
-	if (!(cvar_modifiedFlags & CVF.ARCHIVE)) {
+	if (!(cvarModifiedFlags & CVF.ARCHIVE)) {
 		return;
 	}
 
-	cvar_modifiedFlags &= ~CVF.ARCHIVE;
+	cvarModifiedFlags &= ~CVF.ARCHIVE;
 
 	SaveConfig();
 } 
@@ -45151,7 +44202,7 @@ function CheckSaveConfig() {
  * LoadConfig
  */
 function LoadConfig() {
-	ExecuteCmdText('exec default.cfg');
+	ExecuteBuffer('exec default.cfg');
 }
 
 /**
@@ -45290,7 +44341,7 @@ function NetchanProcess(netchan, msg) {
 	return {
 		Init:           Init,
 		Frame:          Frame,
-		ExecuteCmdText: ExecuteCmdText,
+		ExecuteBuffer: ExecuteBuffer,
 		QueueEvent:     QueueEvent,
 		NetchanSetup:   NetchanSetup
 	};
@@ -45299,146 +44350,6 @@ function NetchanProcess(netchan, msg) {
 define('system/browser/sys',
 ['common/sh', 'common/com'],
 function (sh, com) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                           // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                        // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
 	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
 
 /**
@@ -45595,7 +44506,7 @@ function Init() {
 
 	// Provide the user a way to interface with the client.
 	window.$ = function (str) {
-		com.ExecuteCmdText(str);
+		com.ExecuteBuffer(str);
 	};
 
 	function onRequestedFrame(timestamp) {
