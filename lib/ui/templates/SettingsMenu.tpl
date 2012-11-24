@@ -15,7 +15,7 @@
 			<div class="tab-content">
 				<div class="tab-pane active" id="look">
 					<div class="control-group">
-						<div class="control-label">Sensitivity:</div><div name="sensitivity" class="control-input input-range" data-min="0" data-max="10"></div>
+						<div class="control-label">Sensitivity:</div><div name="sensitivity" class="control-input input-range" data-min="0" data-max="10" data-value="<%- sensitivity %>"></div>
 					</div>
 				</div>
 				<div class="tab-pane" id="move">

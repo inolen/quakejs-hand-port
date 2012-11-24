@@ -19,7 +19,6 @@
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
-
 }
 
 #viewport-ui .pointer {
@@ -102,7 +101,7 @@
 	float: left;
 	padding: .5em 0;
 	width: 10em;
-	color: #A6E22E;
+	color: #a6e22e;
 	text-align: right
 }
 
@@ -184,15 +183,23 @@
  */
 .input-range {
 	position: relative;
-	background: #0000ff;
 	height: 1em;
+}
+
+.input-range .input-range-track {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 100%;
+	height: 1px;
+	background: #222;
 }
 
 .input-range .input-range-slider {
 	position: absolute;
 	top: 0;
 	left: 0;
-	background: #00ff00;
+	background: #a6e22e;
 	width: 1em;
 	height: 1em;
 	content: '';
