@@ -14,23 +14,19 @@ def src_to_build(path):
 	return path.replace(SRC_DIR, BUILD_SRC_DIR)
 
 ExpandIncludes = Builder(
-	action = """node -e "\
-		var input = require('fs').readFileSync('$SOURCE', 'utf8');\
-		var output = require('ejs').render(input, { filename: '$SOURCE'});\
-		console.log(output)" > $TARGET""",
+	action = "node server.js --processScript $SOURCE > $TARGET",
 	suffix = '.js',
 	src_suffix = '.js.ejs')
 env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
 
-RequireOpt = Builder(action = 'node $BASE_DIR/vendor/r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
+RequireOpt = Builder(action = 'node r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
 env['BUILDERS']['RequireOpt'] = RequireOpt
 
 #
 # Ejs
 #
-ejs_src = [src_to_build(x) for x in rglob(SRC_DIR, '*.ejs', True, True, True)]
+all_js = [src_to_build(x) for x in rglob(SRC_DIR, '*.js', True, True, True)]
 ejs = [env.ExpandIncludes(x.replace('.ejs', ''), x) for x in ejs_src]
-# HULK SMASH! Make everything in the SRC_DIR a dependency of the ejs target
 all_src = [src_to_build(x) for x in rglob(SRC_DIR, '*', True, True, True)]
 Depends(ejs, all_src)
 
@@ -39,7 +35,7 @@ Depends(ejs, all_src)
 #
 browser = env.RequireOpt(
 	BUILD_DIR + 'q3-browser-min.js',
-	ejs,
+	all_js,
 	BASE_DIR=BUILD_SRC_DIR,
 	R_SCRIPT='browser.build.js',
 	R_NAME='system/browser/sys')
@@ -50,7 +46,7 @@ env.Alias('browser', browser)
 #
 dedicated = env.RequireOpt(
 	BUILD_DIR + 'q3-dedicated-min.js',
-	ejs,
+	all_js,
 	BASE_DIR=BUILD_SRC_DIR,
 	R_SCRIPT='dedicated.build.js',
 	R_NAME='system/dedicated/sys')
