@@ -5,8 +5,12 @@ var express = require('express'),
 function main() {
 	var app = express();
 	var server = http.createServer(app);
+	var ejs = require('ejs');
 
-	app.engine('ejs', require('ejs').__express);
+	ejs.open = '{{';
+	ejs.close = '}}';
+
+	app.engine('ejs', ejs.__express);
 	app.use(express.compress({
 		filter: function(req, res){
 			return /json|text|javascript|octet-stream/.test(res.getHeader('Content-Type'));
