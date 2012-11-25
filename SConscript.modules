@@ -1,41 +1,34 @@
 import os, fnmatch
 
+env = Environment()
+Import('rglob')
+
 SRC_DIR = 'lib/'
 BUILD_DIR = 'bin/'
 BUILD_SRC_DIR = BUILD_DIR + 'tmp/'
 
-VariantDir(BUILD_SRC_DIR, SRC_DIR)
-env = Environment()
-Import('rglob')
-
-# Since our SConscript isn't in our source dir, we need to refer
-# to filenames relative to the build dir to take advantageof VariantDir
 def src_to_build(path):
 	return path.replace(SRC_DIR, BUILD_SRC_DIR)
 
-ExpandIncludes = Builder(
-	action = "node server.js --processScript $SOURCE > $TARGET",
-	suffix = '.js',
-	src_suffix = '.js.ejs')
+ExpandIncludes = Builder(action = "node server.js --processScript $SOURCE > $TARGET")
 env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
 
 RequireOpt = Builder(action = 'node r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
 env['BUILDERS']['RequireOpt'] = RequireOpt
 
 #
-# Ejs
+# Preprocess JS
 #
-all_js = [src_to_build(x) for x in rglob(SRC_DIR, '*.js', True, True, True)]
-ejs = [env.ExpandIncludes(x.replace('.ejs', ''), x) for x in ejs_src]
-all_src = [src_to_build(x) for x in rglob(SRC_DIR, '*', True, True, True)]
-Depends(ejs, all_src)
+all_js = rglob(SRC_DIR, '*.js', True, True, True)
+processed_js = [env.ExpandIncludes(src_to_build(x), x) for x in all_js]
+env.AlwaysBuild(processed_js)
 
 #
 # Browser
 #
 browser = env.RequireOpt(
 	BUILD_DIR + 'q3-browser-min.js',
-	all_js,
+	processed_js,
 	BASE_DIR=BUILD_SRC_DIR,
 	R_SCRIPT='browser.build.js',
 	R_NAME='system/browser/sys')
@@ -46,7 +39,7 @@ env.Alias('browser', browser)
 #
 dedicated = env.RequireOpt(
 	BUILD_DIR + 'q3-dedicated-min.js',
-	all_js,
+	processed_js,
 	BASE_DIR=BUILD_SRC_DIR,
 	R_SCRIPT='dedicated.build.js',
 	R_NAME='system/dedicated/sys')

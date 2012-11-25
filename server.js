@@ -25,7 +25,7 @@ function processScript(scriptname) {
 		if ((open.charAt(0) === "'" && close.charAt(close.length-1) === "'") || 
 			(open.charAt(0) === '"' && close.charAt(close.length-1) === '"')) {
 			// If so, replace newlines and escape quotation marks.
-			contents.replace(/[\r\n]+/g, '').replace(/'/g, "\\'");
+			contents = contents.replace(/[\r\n]+/g, '').replace(/'/g, "\\'");
 			contents = "'" + contents + "'";
 		}
 

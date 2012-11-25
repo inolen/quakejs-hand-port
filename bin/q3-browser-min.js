@@ -655,6 +655,7 @@ return {
 };
 
 });
+
 define('common/sh', ['common/qmath'], function (qm) {
 	var root = typeof(global) !== 'undefined' ? global : window;
 
@@ -2993,6 +2994,7 @@ function ReadDeltaEntityState(msg, from, to, number) {
 
 }).call(this);
 
+
 /**
  * ByteBuffer v0.0.1
  * Copyright (c) 2012 Tim Kurvers <http://moonsphere.net>
@@ -3593,6 +3595,7 @@ else {
 }
 
 }(this));
+
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations for WebGL
  * @author Brandon Jones
@@ -7050,25 +7053,28 @@ else {
     };
 }));
 
+
 /*global vec3: true, mat4: true */
 
 define('game/bg',
 ['glmatrix', 'common/sh', 'common/qmath'],
 function (glmatrix, sh, qm) {
-	var GIB_HEALTH = -40;
-var ARMOR_PROTECTION = 0.66;
+	var root = typeof(global) !== 'undefined' ? global : window;
 
-var DEFAULT_SHOTGUN_SPREAD = 700;
-var DEFAULT_SHOTGUN_COUNT = 11;
+root.GIB_HEALTH = -40;
+root.ARMOR_PROTECTION = 0.66;
 
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+root.DEFAULT_SHOTGUN_SPREAD = 700;
+root.DEFAULT_SHOTGUN_COUNT = 11;
 
-var MINS_Z = -24;
-var DEFAULT_VIEWHEIGHT = 26;
-var CROUCH_VIEWHEIGHT = 12;
-var DEAD_VIEWHEIGHT = -16;
+root.ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
 
-var PM = {
+root.MINS_Z = -24;
+root.DEFAULT_VIEWHEIGHT = 26;
+root.CROUCH_VIEWHEIGHT = 12;
+root.DEAD_VIEWHEIGHT = -16;
+
+root.PM = {
 	NORMAL:       0,                                       // can accelerate and turn
 	NOCLIP:       1,                                       // noclip movement
 	SPECTATOR:    2,                                       // still run into walls
@@ -7077,7 +7083,7 @@ var PM = {
 	INTERMISSION: 5                                        // no movement or status bar
 };
 
-var PMF = {
+root.PMF = {
 	DUCKED:         1,
 	JUMP_HELD:      2,
 	BACKWARDS_JUMP: 8,                                     // go into backwards land
@@ -7095,7 +7101,7 @@ var PMF = {
 };
 
 // Weapon state.
-var WS = {
+root.WS = {
 	READY:    0,
 	RAISING:  1,
 	DROPPING: 2,
@@ -7103,7 +7109,7 @@ var WS = {
 };
 
 // Item types.
-var IT = {
+root.IT = {
 	BAD:                0,
 	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
 	AMMO:               2,                                 // EFX: rotate
@@ -7117,7 +7123,7 @@ var IT = {
 	TEAM:               8
 };
 
-var MASK = {
+root.MASK = {
 	ALL:         -1,
 	SOLID:       CONTENTS.SOLID,
 	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
@@ -7130,7 +7136,7 @@ var MASK = {
 /**
  * Playerstate flags
  */
-var STAT = {
+root.STAT = {
 	HEALTH:        0,
 	HOLDABLE_ITEM: 1,
 	WEAPONS:       2,
@@ -7140,7 +7146,7 @@ var STAT = {
 	MAX_HEALTH:    6				// health / armor limit, changable by handicap
 };
 
-var WP = {
+root.WP = {
 	NONE:             0,
 	GAUNTLET:         1,
 	MACHINEGUN:       2,
@@ -7156,7 +7162,7 @@ var WP = {
 };
 
 // NOTE: may not have more than 16
-var PW = {
+root.PW = {
 	NONE:         0,
 	QUAD:         1,
 	BATTLESUIT:   2,
@@ -7174,7 +7180,7 @@ var PW = {
 // These fields are the only part of player_state that aren't
 // cleared on respawn.
 // NOTE: may not have more than 16
-var PERS = {
+root.PERS = {
 	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
 	RANK:                 2,                               // player rank or team rank
@@ -7197,7 +7203,7 @@ var PERS = {
  * Entitystate flags
  */
 // entityState_t->eType
-var ET = {
+root.ET = {
 	GENERAL:          0,
 	PLAYER:           1,
 	ITEM:             2,
@@ -7217,7 +7223,7 @@ var ET = {
 };
 
 // entityState_t->eFlags
-var EF = {
+root.EF = {
 	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
 	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
 	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
@@ -7254,12 +7260,12 @@ var EF = {
  * to retrieve the actual event number.
  *
  **********************************************************/
-var EV_EVENT_BIT1    = 0x00000100;
-var EV_EVENT_BIT2    = 0x00000200;
-var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
-var EVENT_VALID_MSEC = 300;
+root.EV_EVENT_BIT1    = 0x00000100;
+root.EV_EVENT_BIT2    = 0x00000200;
+root.EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
+root.EVENT_VALID_MSEC = 300;
 
-var EV = {
+root.EV = {
 	NONE:                0,
 
 	FOOTSTEP:            1,
@@ -7359,9 +7365,9 @@ var EV = {
  */
 // Flip the togglebit every time an animation
 // changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
+root.ANIM_TOGGLEBIT = 128;
 
-var ANIM = {
+root.ANIM = {
 	BOTH_DEATH1:         0,
 	BOTH_DEAD1:          1,
 	BOTH_DEATH2:         2,
@@ -7416,7 +7422,7 @@ var ANIM = {
 };
 
 // Means of death
-var MOD = {
+root.MOD = {
 	UNKNOWN:        0,
 	SHOTGUN:        1,
 	GAUNTLET:       2,
@@ -9478,395 +9484,6 @@ var itemList = [
 define('game/gm',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
-	var GIB_HEALTH = -40;
-var ARMOR_PROTECTION = 0.66;
-
-var DEFAULT_SHOTGUN_SPREAD = 700;
-var DEFAULT_SHOTGUN_COUNT = 11;
-
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-var MINS_Z = -24;
-var DEFAULT_VIEWHEIGHT = 26;
-var CROUCH_VIEWHEIGHT = 12;
-var DEAD_VIEWHEIGHT = -16;
-
-var PM = {
-	NORMAL:       0,                                       // can accelerate and turn
-	NOCLIP:       1,                                       // noclip movement
-	SPECTATOR:    2,                                       // still run into walls
-	DEAD:         3,                                       // no acceleration or turning, but free falling
-	FREEZE:       4,                                       // stuck in place with no control
-	INTERMISSION: 5                                        // no movement or status bar
-};
-
-var PMF = {
-	DUCKED:         1,
-	JUMP_HELD:      2,
-	BACKWARDS_JUMP: 8,                                     // go into backwards land
-	BACKWARDS_RUN:  16,                                    // coast down to backwards run
-	TIME_LAND:      32,                                    // pm_time is time before rejump
-	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
-	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
-	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
-	USE_ITEM_HELD:  1024,
-	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
-	FOLLOW:         4096,                                  // spectate following another player
-	SCOREBOARD:     8192,                                  // spectate as a scoreboard
-	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
-	ALL_TIMES:      (32|64|256)
-};
-
-// Weapon state.
-var WS = {
-	READY:    0,
-	RAISING:  1,
-	DROPPING: 2,
-	FIRING:   3
-};
-
-// Item types.
-var IT = {
-	BAD:                0,
-	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
-	AMMO:               2,                                 // EFX: rotate
-	ARMOR:              3,                                 // EFX: rotate + minlight
-	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
-	POWERUP:            5,                                 // instant on, timer based
-	                                                       // EFX: rotate + external ring that rotates
-	HOLDABLE:           6,                                 // single use, holdable item
-	                                                       // EFX: rotate + bob
-	PERSISTANT_POWERUP: 7,
-	TEAM:               8
-};
-
-var MASK = {
-	ALL:         -1,
-	SOLID:       CONTENTS.SOLID,
-	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
-	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
-	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
-	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
-	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
-};
-
-/**
- * Playerstate flags
- */
-var STAT = {
-	HEALTH:        0,
-	HOLDABLE_ITEM: 1,
-	WEAPONS:       2,
-	ARMOR:         3,
-	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
-	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	MAX_HEALTH:    6				// health / armor limit, changable by handicap
-};
-
-var WP = {
-	NONE:             0,
-	GAUNTLET:         1,
-	MACHINEGUN:       2,
-	SHOTGUN:          3,
-	GRENADE_LAUNCHER: 4,
-	ROCKET_LAUNCHER:  5,
-	LIGHTNING:        6,
-	RAILGUN:          7,
-	PLASMAGUN:        8,
-	BFG:              9,
-	GRAPPLING_HOOK:   10,
-	NUM_WEAPONS:      11
-};
-
-// NOTE: may not have more than 16
-var PW = {
-	NONE:         0,
-	QUAD:         1,
-	BATTLESUIT:   2,
-	HASTE:        3,
-	INVIS:        4,
-	REGEN:        5,
-	FLIGHT:       6,
-	REDFLAG:      7,
-	BLUEFLAG:     8,
-	NEUTRALFLAG:  9,
-	NUM_POWERUPS: 10
-};
-
-// PlayerState.persistant[] indexes
-// These fields are the only part of player_state that aren't
-// cleared on respawn.
-// NOTE: may not have more than 16
-var PERS = {
-	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
-	RANK:                 2,                               // player rank or team rank
-	TEAM:                 3,                               // player team
-	SPAWN_COUNT:          4,                               // incremented every respawn
-	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
-	ATTACKER:             6,                               // clientnum of last damage inflicter
-	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
-	KILLED:               8,                               // count of the number of times you died
-	// player awards tracking
-	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
-	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
-	DEFEND_COUNT:         11,                              // defend awards
-	ASSIST_COUNT:         12,                              // assist awards
-	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
-	CAPTURES:             14                               // captures
-};
-
-/**
- * Entitystate flags
- */
-// entityState_t->eType
-var ET = {
-	GENERAL:          0,
-	PLAYER:           1,
-	ITEM:             2,
-	MISSILE:          3,
-	MOVER:            4,
-	BEAM:             5,
-	PORTAL:           6,
-	SPEAKER:          7,
-	PUSH_TRIGGER:     8,
-	TELEPORT_TRIGGER: 9,
-	INVISIBLE:        10,
-	GRAPPLE:          11,                                  // grapple hooked on wall
-	TEAM:             12,
-	EVENTS:           13                                   // any of the EV_* events can be added freestanding
-	                                                       // by setting eType to ET_EVENTS + eventNum
-	                                                       // this avoids having to set eFlags and eventNum
-};
-
-// entityState_t->eFlags
-var EF = {
-	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
-	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
-	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
-	PLAYER_EVENT:     0x00000010,
-	BOUNCE:           0x00000010,                          // for missiles
-	BOUNCE_HALF:      0x00000020,                          // for missiles
-	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
-	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
-	FIRING:           0x00000100,                          // for lightning gun
-	KAMIKAZE:         0x00000200,
-	MOVER_STOP:       0x00000400,                          // will push otherwise
-	AWARD_CAP:        0x00000800,                          // draw the capture sprite
-	TALK:             0x00001000,                          // draw a talk balloon
-	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
-	VOTED:            0x00004000,                          // already cast a vote
-	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
-	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
-	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
-	AWARD_DENIED:     0x00040000,                          // denied
-	TEAMVOTED:        0x00080000                           // already cast a team vote
-};
-
-/**********************************************************
- * 
- * Entitystate events
- * 
- * Entity events are for effects that take place relative
- * to an existing entities origin. Very network efficient.
- *
- * Two bits at the top of the entityState->event field
- * will be incremented with each change in the event so
- * that an identical event started twice in a row can
- * be distinguished. And off the value with ~EV_EVENT_BITS
- * to retrieve the actual event number.
- *
- **********************************************************/
-var EV_EVENT_BIT1    = 0x00000100;
-var EV_EVENT_BIT2    = 0x00000200;
-var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
-var EVENT_VALID_MSEC = 300;
-
-var EV = {
-	NONE:                0,
-
-	FOOTSTEP:            1,
-	FOOTSTEP_METAL:      2,
-	FOOTSPLASH:          3,
-	FOOTWADE:            4,
-	SWIM:                5,
-
-	STEP_4:              6,
-	STEP_8:              7,
-	STEP_12:             8,
-	STEP_16:             9,
-
-	FALL_SHORT:          10,
-	FALL_MEDIUM:         11,
-	FALL_FAR:            12,
-
-	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
-
-	JUMP:                14,
-	WATER_TOUCH:         15,                               // foot touches
-	WATER_LEAVE:         16,                               // foot leaves
-	WATER_UNDER:         17,                               // head touches
-	WATER_CLEAR:         18,                               // head leaves
-
-	ITEM_PICKUP:         29,                               // normal item pickups are predictable
-	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
-
-	NOAMMO:              21,
-	CHANGE_WEAPON:       22,
-	FIRE_WEAPON:         23,
-
-	USE_ITEM0:           24,
-	USE_ITEM1:           25,
-	USE_ITEM2:           26,
-	USE_ITEM3:           27,
-	USE_ITEM4:           28,
-	USE_ITEM5:           29,
-	USE_ITEM6:           30,
-	USE_ITEM7:           31,
-	USE_ITEM8:           32,
-	USE_ITEM9:           33,
-	USE_ITEM10:          34,
-	USE_ITEM11:          35,
-	USE_ITEM12:          36,
-	USE_ITEM13:          37,
-	USE_ITEM14:          38,
-	USE_ITEM15:          39,
-
-	ITEM_RESPAWN:        40,
-	ITEM_POP:            41,
-	PLAYER_TELEPORT_IN:  42,
-	PLAYER_TELEPORT_OUT: 43,
-
-	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
-
-	GENERAL_SOUND:       45,
-	GLOBAL_SOUND:        46,                               // no attenuation
-	GLOBAL_TEAM_SOUND:   47,
-
-	BULLET_HIT_FLESH:    48,
-	BULLET_HIT_WALL:     49,
-
-	MISSILE_HIT:         50,
-	MISSILE_MISS:        51,
-	MISSILE_MISS_METAL:  52,
-	RAILTRAIL:           53,
-	SHOTGUN:             54,
-	BULLET:              55,                               // otherEntity is the shooter
-
-	PAIN:                56,
-	DEATH1:              57,
-	DEATH2:              58,
-	DEATH3:              59,
-	OBITUARY:            60,
-
-	POWERUP_QUAD:        61,
-	POWERUP_BATTLESUIT:  62,
-	POWERUP_REGEN:       63,
-
-	GIB_PLAYER:          64,                               // gib a previously living player
-	SCOREPLUM:           65,                               // score plum
-
-	DEBUG_LINE:          66,
-	STOPLOOPINGSOUND:    67,
-	TAUNT:               68,
-	TAUNT_YES:           69,
-	TAUNT_NO:            70,
-	TAUNT_FOLLOWME:      71,
-	TAUNT_GETFLAG:       72,
-	TAUNT_GUARDBASE:     73,
-	TAUNT_PATROL:        74
-};
-
-/**
- * Animations
- */
-// Flip the togglebit every time an animation
-// changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
-
-var ANIM = {
-	BOTH_DEATH1:         0,
-	BOTH_DEAD1:          1,
-	BOTH_DEATH2:         2,
-	BOTH_DEAD2:          3,
-	BOTH_DEATH3:         4,
-	BOTH_DEAD3:          5,
-
-	TORSO_GESTURE:       6,
-
-	TORSO_ATTACK:        7,
-	TORSO_ATTACK2:       8,
-
-	TORSO_DROP:          9,
-	TORSO_RAISE:         10,
-
-	TORSO_STAND:         11,
-	TORSO_STAND2:        12,
-
-	LEGS_WALKCR:         13,
-	LEGS_WALK:           14,
-	LEGS_RUN:            15,
-	LEGS_BACK:           16,
-	LEGS_SWIM:           17,
-
-	LEGS_JUMP:           18,
-	LEGS_LAND:           19,
-
-	LEGS_JUMPB:          20,
-	LEGS_LANDB:          21,
-
-	LEGS_IDLE:           22,
-	LEGS_IDLECR:         23,
-
-	LEGS_TURN:           24,
-
-	TORSO_GETFLAG:       25,
-	TORSO_GUARDBASE:     26,
-	TORSO_PATROL:        27,
-	TORSO_FOLLOWME:      28,
-	TORSO_AFFIRMATIVE:   29,
-	TORSO_NEGATIVE:      30,
-
-	MAX:                 31,
-
-	LEGS_BACKCR:         32,
-	LEGS_BACKWALK:       33,
-	FLAG_RUN:            34,
-	FLAG_STAND:          35,
-	FLAG_STAND2RUN:      36,
-
-	MAX_TOTALANIMATIONS: 37
-};
-
-// Means of death
-var MOD = {
-	UNKNOWN:        0,
-	SHOTGUN:        1,
-	GAUNTLET:       2,
-	MACHINEGUN:     3,
-	GRENADE:        4,
-	GRENADE_SPLASH: 5,
-	ROCKET:         6,
-	ROCKET_SPLASH:  7,
-	PLASMA:         8,
-	PLASMA_SPLASH:  9,
-	RAILGUN:        10,
-	LIGHTNING:      11,
-	BFG:            12,
-	BFG_SPLASH:     13,
-	WATER:          14,
-	SLIME:          15,
-	LAVA:           16,
-	CRUSH:          17,
-	TELEFRAG:       18,
-	FALLING:        19,
-	SUICIDE:        20,
-	TARGET_LASER:   21,
-	TRIGGER_HURT:   22,
-	GRAPPLE:        23
-};
-
-
 	function Game(com, sv) {
 		var FRAMETIME = 100; // msec
 var CARNAGE_REWARD_TIME = 3000;
@@ -12642,421 +12259,7 @@ function RocketLauncherFire(ent) {
 
 define('cgame/cg',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
-function (_, glmatrix, sh, qm, bg) {
-	var GIB_HEALTH = -40;
-var ARMOR_PROTECTION = 0.66;
-
-var DEFAULT_SHOTGUN_SPREAD = 700;
-var DEFAULT_SHOTGUN_COUNT = 11;
-
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-var MINS_Z = -24;
-var DEFAULT_VIEWHEIGHT = 26;
-var CROUCH_VIEWHEIGHT = 12;
-var DEAD_VIEWHEIGHT = -16;
-
-var PM = {
-	NORMAL:       0,                                       // can accelerate and turn
-	NOCLIP:       1,                                       // noclip movement
-	SPECTATOR:    2,                                       // still run into walls
-	DEAD:         3,                                       // no acceleration or turning, but free falling
-	FREEZE:       4,                                       // stuck in place with no control
-	INTERMISSION: 5                                        // no movement or status bar
-};
-
-var PMF = {
-	DUCKED:         1,
-	JUMP_HELD:      2,
-	BACKWARDS_JUMP: 8,                                     // go into backwards land
-	BACKWARDS_RUN:  16,                                    // coast down to backwards run
-	TIME_LAND:      32,                                    // pm_time is time before rejump
-	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
-	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
-	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
-	USE_ITEM_HELD:  1024,
-	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
-	FOLLOW:         4096,                                  // spectate following another player
-	SCOREBOARD:     8192,                                  // spectate as a scoreboard
-	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
-	ALL_TIMES:      (32|64|256)
-};
-
-// Weapon state.
-var WS = {
-	READY:    0,
-	RAISING:  1,
-	DROPPING: 2,
-	FIRING:   3
-};
-
-// Item types.
-var IT = {
-	BAD:                0,
-	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
-	AMMO:               2,                                 // EFX: rotate
-	ARMOR:              3,                                 // EFX: rotate + minlight
-	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
-	POWERUP:            5,                                 // instant on, timer based
-	                                                       // EFX: rotate + external ring that rotates
-	HOLDABLE:           6,                                 // single use, holdable item
-	                                                       // EFX: rotate + bob
-	PERSISTANT_POWERUP: 7,
-	TEAM:               8
-};
-
-var MASK = {
-	ALL:         -1,
-	SOLID:       CONTENTS.SOLID,
-	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
-	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
-	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
-	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
-	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
-};
-
-/**
- * Playerstate flags
- */
-var STAT = {
-	HEALTH:        0,
-	HOLDABLE_ITEM: 1,
-	WEAPONS:       2,
-	ARMOR:         3,
-	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
-	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	MAX_HEALTH:    6				// health / armor limit, changable by handicap
-};
-
-var WP = {
-	NONE:             0,
-	GAUNTLET:         1,
-	MACHINEGUN:       2,
-	SHOTGUN:          3,
-	GRENADE_LAUNCHER: 4,
-	ROCKET_LAUNCHER:  5,
-	LIGHTNING:        6,
-	RAILGUN:          7,
-	PLASMAGUN:        8,
-	BFG:              9,
-	GRAPPLING_HOOK:   10,
-	NUM_WEAPONS:      11
-};
-
-// NOTE: may not have more than 16
-var PW = {
-	NONE:         0,
-	QUAD:         1,
-	BATTLESUIT:   2,
-	HASTE:        3,
-	INVIS:        4,
-	REGEN:        5,
-	FLIGHT:       6,
-	REDFLAG:      7,
-	BLUEFLAG:     8,
-	NEUTRALFLAG:  9,
-	NUM_POWERUPS: 10
-};
-
-// PlayerState.persistant[] indexes
-// These fields are the only part of player_state that aren't
-// cleared on respawn.
-// NOTE: may not have more than 16
-var PERS = {
-	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
-	RANK:                 2,                               // player rank or team rank
-	TEAM:                 3,                               // player team
-	SPAWN_COUNT:          4,                               // incremented every respawn
-	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
-	ATTACKER:             6,                               // clientnum of last damage inflicter
-	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
-	KILLED:               8,                               // count of the number of times you died
-	// player awards tracking
-	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
-	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
-	DEFEND_COUNT:         11,                              // defend awards
-	ASSIST_COUNT:         12,                              // assist awards
-	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
-	CAPTURES:             14                               // captures
-};
-
-/**
- * Entitystate flags
- */
-// entityState_t->eType
-var ET = {
-	GENERAL:          0,
-	PLAYER:           1,
-	ITEM:             2,
-	MISSILE:          3,
-	MOVER:            4,
-	BEAM:             5,
-	PORTAL:           6,
-	SPEAKER:          7,
-	PUSH_TRIGGER:     8,
-	TELEPORT_TRIGGER: 9,
-	INVISIBLE:        10,
-	GRAPPLE:          11,                                  // grapple hooked on wall
-	TEAM:             12,
-	EVENTS:           13                                   // any of the EV_* events can be added freestanding
-	                                                       // by setting eType to ET_EVENTS + eventNum
-	                                                       // this avoids having to set eFlags and eventNum
-};
-
-// entityState_t->eFlags
-var EF = {
-	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
-	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
-	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
-	PLAYER_EVENT:     0x00000010,
-	BOUNCE:           0x00000010,                          // for missiles
-	BOUNCE_HALF:      0x00000020,                          // for missiles
-	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
-	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
-	FIRING:           0x00000100,                          // for lightning gun
-	KAMIKAZE:         0x00000200,
-	MOVER_STOP:       0x00000400,                          // will push otherwise
-	AWARD_CAP:        0x00000800,                          // draw the capture sprite
-	TALK:             0x00001000,                          // draw a talk balloon
-	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
-	VOTED:            0x00004000,                          // already cast a vote
-	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
-	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
-	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
-	AWARD_DENIED:     0x00040000,                          // denied
-	TEAMVOTED:        0x00080000                           // already cast a team vote
-};
-
-/**********************************************************
- * 
- * Entitystate events
- * 
- * Entity events are for effects that take place relative
- * to an existing entities origin. Very network efficient.
- *
- * Two bits at the top of the entityState->event field
- * will be incremented with each change in the event so
- * that an identical event started twice in a row can
- * be distinguished. And off the value with ~EV_EVENT_BITS
- * to retrieve the actual event number.
- *
- **********************************************************/
-var EV_EVENT_BIT1    = 0x00000100;
-var EV_EVENT_BIT2    = 0x00000200;
-var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
-var EVENT_VALID_MSEC = 300;
-
-var EV = {
-	NONE:                0,
-
-	FOOTSTEP:            1,
-	FOOTSTEP_METAL:      2,
-	FOOTSPLASH:          3,
-	FOOTWADE:            4,
-	SWIM:                5,
-
-	STEP_4:              6,
-	STEP_8:              7,
-	STEP_12:             8,
-	STEP_16:             9,
-
-	FALL_SHORT:          10,
-	FALL_MEDIUM:         11,
-	FALL_FAR:            12,
-
-	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
-
-	JUMP:                14,
-	WATER_TOUCH:         15,                               // foot touches
-	WATER_LEAVE:         16,                               // foot leaves
-	WATER_UNDER:         17,                               // head touches
-	WATER_CLEAR:         18,                               // head leaves
-
-	ITEM_PICKUP:         29,                               // normal item pickups are predictable
-	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
-
-	NOAMMO:              21,
-	CHANGE_WEAPON:       22,
-	FIRE_WEAPON:         23,
-
-	USE_ITEM0:           24,
-	USE_ITEM1:           25,
-	USE_ITEM2:           26,
-	USE_ITEM3:           27,
-	USE_ITEM4:           28,
-	USE_ITEM5:           29,
-	USE_ITEM6:           30,
-	USE_ITEM7:           31,
-	USE_ITEM8:           32,
-	USE_ITEM9:           33,
-	USE_ITEM10:          34,
-	USE_ITEM11:          35,
-	USE_ITEM12:          36,
-	USE_ITEM13:          37,
-	USE_ITEM14:          38,
-	USE_ITEM15:          39,
-
-	ITEM_RESPAWN:        40,
-	ITEM_POP:            41,
-	PLAYER_TELEPORT_IN:  42,
-	PLAYER_TELEPORT_OUT: 43,
-
-	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
-
-	GENERAL_SOUND:       45,
-	GLOBAL_SOUND:        46,                               // no attenuation
-	GLOBAL_TEAM_SOUND:   47,
-
-	BULLET_HIT_FLESH:    48,
-	BULLET_HIT_WALL:     49,
-
-	MISSILE_HIT:         50,
-	MISSILE_MISS:        51,
-	MISSILE_MISS_METAL:  52,
-	RAILTRAIL:           53,
-	SHOTGUN:             54,
-	BULLET:              55,                               // otherEntity is the shooter
-
-	PAIN:                56,
-	DEATH1:              57,
-	DEATH2:              58,
-	DEATH3:              59,
-	OBITUARY:            60,
-
-	POWERUP_QUAD:        61,
-	POWERUP_BATTLESUIT:  62,
-	POWERUP_REGEN:       63,
-
-	GIB_PLAYER:          64,                               // gib a previously living player
-	SCOREPLUM:           65,                               // score plum
-
-	DEBUG_LINE:          66,
-	STOPLOOPINGSOUND:    67,
-	TAUNT:               68,
-	TAUNT_YES:           69,
-	TAUNT_NO:            70,
-	TAUNT_FOLLOWME:      71,
-	TAUNT_GETFLAG:       72,
-	TAUNT_GUARDBASE:     73,
-	TAUNT_PATROL:        74
-};
-
-/**
- * Animations
- */
-// Flip the togglebit every time an animation
-// changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
-
-var ANIM = {
-	BOTH_DEATH1:         0,
-	BOTH_DEAD1:          1,
-	BOTH_DEATH2:         2,
-	BOTH_DEAD2:          3,
-	BOTH_DEATH3:         4,
-	BOTH_DEAD3:          5,
-
-	TORSO_GESTURE:       6,
-
-	TORSO_ATTACK:        7,
-	TORSO_ATTACK2:       8,
-
-	TORSO_DROP:          9,
-	TORSO_RAISE:         10,
-
-	TORSO_STAND:         11,
-	TORSO_STAND2:        12,
-
-	LEGS_WALKCR:         13,
-	LEGS_WALK:           14,
-	LEGS_RUN:            15,
-	LEGS_BACK:           16,
-	LEGS_SWIM:           17,
-
-	LEGS_JUMP:           18,
-	LEGS_LAND:           19,
-
-	LEGS_JUMPB:          20,
-	LEGS_LANDB:          21,
-
-	LEGS_IDLE:           22,
-	LEGS_IDLECR:         23,
-
-	LEGS_TURN:           24,
-
-	TORSO_GETFLAG:       25,
-	TORSO_GUARDBASE:     26,
-	TORSO_PATROL:        27,
-	TORSO_FOLLOWME:      28,
-	TORSO_AFFIRMATIVE:   29,
-	TORSO_NEGATIVE:      30,
-
-	MAX:                 31,
-
-	LEGS_BACKCR:         32,
-	LEGS_BACKWALK:       33,
-	FLAG_RUN:            34,
-	FLAG_STAND:          35,
-	FLAG_STAND2RUN:      36,
-
-	MAX_TOTALANIMATIONS: 37
-};
-
-// Means of death
-var MOD = {
-	UNKNOWN:        0,
-	SHOTGUN:        1,
-	GAUNTLET:       2,
-	MACHINEGUN:     3,
-	GRENADE:        4,
-	GRENADE_SPLASH: 5,
-	ROCKET:         6,
-	ROCKET_SPLASH:  7,
-	PLASMA:         8,
-	PLASMA_SPLASH:  9,
-	RAILGUN:        10,
-	LIGHTNING:      11,
-	BFG:            12,
-	BFG_SPLASH:     13,
-	WATER:          14,
-	SLIME:          15,
-	LAVA:           16,
-	CRUSH:          17,
-	TELEFRAG:       18,
-	FALLING:        19,
-	SUICIDE:        20,
-	TARGET_LASER:   21,
-	TRIGGER_HURT:   22,
-	GRAPPLE:        23
-};
-
-	var RT = {
-	MODEL:               0,
-	POLY:                1,
-	SPRITE:              2,
-	BEAM:                3,
-	RAIL_CORE:           4,
-	RAIL_RINGS:          5,
-	LIGHTNING:           6,
-	PORTALSURFACE:       7,                                // doesn't draw anything, just info for portals
-	MAX_REF_ENTITY_TYPE: 8
-};
-
-var RF = {
-	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
-	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
-	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
-	DEPTHHACK:       0x0008,                               // for view weapon Z crunching
-	NOSHADOW:        0x0040,                               // don't add stencil shadows
-	LIGHTING_ORIGIN: 0x0080,                               // use refEntity->lightingOrigin instead of refEntity->origin
-	                                                       // for lighting.  This allows entities to sink into the floor
-	                                                       // with their origin going solid, and allows all parts of a
-	                                                       // player to get the same lighting
-	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
-	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
-};
-	
+function (_, glmatrix, sh, qm, bg) {	
 	function CGame(imp) {
 		var DEFAULT_MODEL = 'sarge';
 
@@ -13133,8 +12336,8 @@ var ClientGame = function () {
 	this.showScores            = false;
 
 	// local entities
-	this.localEntities         = new Array(MAX_LOCAL_ENTITIES);
-	this.activeLocalEntities   = new LocalEntity();        // double linked list
+	this.localEntities         = null;
+	this.activeLocalEntities   = null;                     // double linked list
 	this.freeLocalEntities     = null;                     // single linked list
 
 	// temp working variables for player view
@@ -13211,20 +12414,18 @@ var PlayerEntity = function () {
 // ClientEntity have a direct corespondence with GameEntity in the game, but
 // only the EntityState is directly communicated to the cgame.
 var ClientEntity =  function () {
-	this.currentState = new sh.EntityState();                 // from cg.frame
-	this.nextState    = new sh.EntityState();                 // from cg.nextFrame, if available
+	this.currentState = new sh.EntityState();              // from cg.frame
+	this.nextState    = new sh.EntityState();              // from cg.nextFrame, if available
 	this.interpolate  = false;                             // true if next is valid to interpolate to
 	this.currentValid = false;                             // true if cg.frame holds this entity
 
-	/*
-	int  muzzleFlashTime;  // move to playerEntity?
-	int  previousEvent;
-	int  teleportFlag;
+	// int  muzzleFlashTime;  // move to playerEntity?
+	// int  previousEvent;
+	// int  teleportFlag;
 
-	int  trailTime;        // so missile trails can handle dropped initial packets
-	int  dustTrailTime;
-	int  miscTime;
-	*/
+	this.trailTime    = 0;                                 // so missile trails can handle dropped initial packets
+	// int  dustTrailTime;
+	// int  miscTime;
 
 	this.snapshotTime = 0;                                 // last time this entity was found in a snapshot
 
@@ -13398,15 +12599,15 @@ var WeaponInfo = function () {
 
 	this.missileModel   = 0;
 	this.missileSound   = 0;
-	// this.missileTrailFunc   = null;
+	this.missileTrailFunc   = null;
 	// this.missileDlight      = 0;
 	// this.missileDlightColor = [0, 0, 0];
 	// this.missileRenderfx    = 0;
 
 	// this.ejectBrassFunc     = null;
 
-	// this.trailRadius        = 0;
-	// this.wiTrailTime        = 0;
+	this.trailRadius        = 0;
+	this.trailTime        = 0;
 
 	this.readySound     = 0;
 	this.firingSound    = 0;
@@ -13567,6 +12768,7 @@ function RegisterGraphics() {
 	cgs.media.bulletFlashModel = imp.re_RegisterModel('models/weaphits/bullet.md3');
 	cgs.media.ringFlashModel = imp.re_RegisterModel('models/weaphits/ring02.md3');
 	cgs.media.dishFlashModel = imp.re_RegisterModel('models/weaphits/boom01.md3');
+	cgs.media.smokePuffShader = imp.re_RegisterShader('smokePuff');
 }
 
 /**
@@ -13797,6 +12999,62 @@ function MakeExplosion(origin, dir, hModel, shader, msec, isSprite) {
 	vec3.set(newOrigin, le.refent.oldOrigin);
 
 	le.color[0] = le.color[1] = le.color[2] = 1.0;
+
+	return le;
+}
+
+/**
+ * SmokePuf
+ * 
+ * Adds a smoke puff or blood trail localEntity.
+ */
+function SmokePuff(p, vel,
+	               radius,
+	               r, g, b, a,
+	               duration,
+	               startTime,
+	               fadeInTime,
+	               leFlags,
+	               hShader) {
+	// static int	seed = 0x92;
+	var le = AllocLocalEntity();
+	le.leFlags = leFlags;
+	le.radius = radius;
+
+	var re = le.refent;
+	re.rotation = Math.random() * 360; //Q_random( &seed ) * 360;
+	re.radius = radius;
+	re.shaderTime = startTime / 1000;
+
+	le.leType = LE.SCALE_FADE;
+	le.startTime = startTime;
+	le.fadeInTime = fadeInTime;
+	le.endTime = startTime + duration;
+	if (fadeInTime > startTime) {
+		le.lifeRate = 1.0 / (le.endTime - le.fadeInTime);
+	} else {
+		le.lifeRate = 1.0 / (le.endTime - le.startTime);
+	}
+	le.color[0] = r;
+	le.color[1] = g; 
+	le.color[2] = b;
+	le.color[3] = a;
+
+	le.pos.trType = TR.LINEAR;
+	le.pos.trTime = startTime;
+	vec3.set(vel, le.pos.trDelta);
+	vec3.set(p, le.pos.trBase);
+
+	vec3.set(p, re.origin);
+	re.customShader = hShader;
+
+	re.shaderRGBA[0] = le.color[0] * 0xff;
+	re.shaderRGBA[1] = le.color[1] * 0xff;
+	re.shaderRGBA[2] = le.color[2] * 0xff;
+	re.shaderRGBA[3] = 0xff;
+
+	re.reType = RT.SPRITE;
+	re.radius = le.radius;
 
 	return le;
 }
@@ -14122,11 +13380,11 @@ function AddMissile(cent) {
 	vec3.set(es.angles, cent.lerpAngles);
 
 	// Add trails.
-	// if (weaponInfo.missileTrailFunc) {
-	// 	weaponInfo.missileTrailFunc( cent, weapon );
-	// }
+	if (weaponInfo.missileTrailFunc) {
+		weaponInfo.missileTrailFunc(cent, weaponInfo);
+	}
 
-	// Add dynamic light
+	// Add dynamic light.
 	// if (weaponInfo.missileDlight) {
 	// 	trap_R_AddLightToScene(cent.lerpOrigin, weaponInfo.missileDlight, 
 	// 		weaponInfo.missileDlightColor[0], weaponInfo.missileDlightColor[1], weaponInfo.missileDlightColor[2] );
@@ -14340,11 +13598,14 @@ function AddEntityEvent(cent, position) {
  * This is called at startup and for tournement restarts.
  */
 function InitLocalEntities() {
-	for (var i = 0; i < MAX_LOCAL_ENTITIES; i++) {
+	cg.localEntities = new Array(MAX_LOCAL_ENTITIES);
+	for (var i = MAX_LOCAL_ENTITIES - 1; i >= 0; i--) {
 		cg.localEntities[i] = new LocalEntity();
+		cg.localEntities[i].idx = i;
 		cg.localEntities[i].next = i === MAX_LOCAL_ENTITIES - 1 ? null : cg.localEntities[i+1];
 	}
 
+	cg.activeLocalEntities = new LocalEntity();
 	cg.activeLocalEntities.next = cg.activeLocalEntities;
 	cg.activeLocalEntities.prev = cg.activeLocalEntities;
 	cg.freeLocalEntities = cg.localEntities[0];
@@ -14443,9 +13704,9 @@ function AddLocalEntities() {
 			// 	AddFallScaleFade(le);
 			// 	break;
 
-			// case LE.SCALE_FADE:               // rocket trails
-			// 	AddScaleFade(le);
-			// 	break;
+			case LE.SCALE_FADE:               // rocket trails
+				AddScaleFade(le);
+				break;
 
 			// case LE.SCOREPLUM:
 			// 	AddScorePlum(le);
@@ -14480,7 +13741,7 @@ function AddLocalEntities() {
 // 	t2 = step * ( cg.time / step );
 
 // 	for ( ; t <= t2; t += step ) {
-// 		BG_EvaluateTrajectory( &le->pos, t, newOrigin );
+// 		BG_EvaluateTrajectory( &le.pos, t, newOrigin );
 
 // 		blood = CG_SmokePuff( newOrigin, vec3_origin, 
 // 					  20,		// radius
@@ -14491,9 +13752,9 @@ function AddLocalEntities() {
 // 					  0,		// flags
 // 					  cgs.media.bloodTrailShader );
 // 		// use the optimized version
-// 		blood->leType = LE.FALL_SCALE_FADE;
+// 		blood.leType = LE.FALL_SCALE_FADE;
 // 		// drop a total of 40 units over its lifetime
-// 		blood->pos.trDelta[2] = 40;
+// 		blood.pos.trDelta[2] = 40;
 // 	}
 // }
 
@@ -14503,29 +13764,29 @@ function AddLocalEntities() {
 // function FragmentBounceMark(le, trace) {
 // 	int			radius;
 
-// 	if ( le->leMarkType == LEMT_BLOOD ) {
+// 	if ( le.leMarkType == LEMT_BLOOD ) {
 
 // 		radius = 16 + (rand()&31);
-// 		CG_ImpactMark( cgs.media.bloodMarkShader, trace->endpos, trace->plane.normal, random()*360,
+// 		CG_ImpactMark( cgs.media.bloodMarkShader, trace.endpos, trace.plane.normal, random()*360,
 // 			1,1,1,1, qtrue, radius, qfalse );
-// 	} else if ( le->leMarkType == LEMT_BURN ) {
+// 	} else if ( le.leMarkType == LEMT_BURN ) {
 
 // 		radius = 8 + (rand()&15);
-// 		CG_ImpactMark( cgs.media.burnMarkShader, trace->endpos, trace->plane.normal, random()*360,
+// 		CG_ImpactMark( cgs.media.burnMarkShader, trace.endpos, trace.plane.normal, random()*360,
 // 			1,1,1,1, qtrue, radius, qfalse );
 // 	}
 
 
 // 	// don't allow a fragment to make multiple marks, or they
 // 	// pile up while settling
-// 	le->leMarkType = LEMT_NONE;
+// 	le.leMarkType = LEMT_NONE;
 // }
 
 // /**
 //  * FragmentBounceSound
 //  */
 // function FragmentBounceSound(le, trace) {
-// 	if ( le->leBounceSoundType == LEBS_BLOOD ) {
+// 	if ( le.leBounceSoundType == LEBS_BLOOD ) {
 // 		// half the gibs will make splat sounds
 // 		if ( rand() & 1 ) {
 // 			int r = rand()&3;
@@ -14538,15 +13799,15 @@ function AddLocalEntities() {
 // 			} else {
 // 				s = cgs.media.gibBounce3Sound;
 // 			}
-// 			trap_S_StartSound( trace->endpos, ENTITYNUM_WORLD, CHAN_AUTO, s );
+// 			trap_S_StartSound( trace.endpos, ENTITYNUM_WORLD, CHAN_AUTO, s );
 // 		}
-// 	} else if ( le->leBounceSoundType == LEBS_BRASS ) {
+// 	} else if ( le.leBounceSoundType == LEBS_BRASS ) {
 
 // 	}
 
 // 	// don't allow a fragment to make multiple bounce sounds,
 // 	// or it gets too noisy as they settle
-// 	le->leBounceSoundType = LEBS_NONE;
+// 	le.leBounceSoundType = LEBS_NONE;
 // }
 
 
@@ -14559,22 +13820,22 @@ function AddLocalEntities() {
 // 	int		hitTime;
 
 // 	// reflect the velocity on the trace plane
-// 	hitTime = cg.time - cg.frametime + cg.frametime * trace->fraction;
-// 	BG_EvaluateTrajectoryDelta( &le->pos, hitTime, velocity );
-// 	dot = DotProduct( velocity, trace->plane.normal );
-// 	VectorMA( velocity, -2*dot, trace->plane.normal, le->pos.trDelta );
+// 	hitTime = cg.time - cg.frametime + cg.frametime * trace.fraction;
+// 	BG_EvaluateTrajectoryDelta( &le.pos, hitTime, velocity );
+// 	dot = DotProduct( velocity, trace.plane.normal );
+// 	VectorMA( velocity, -2*dot, trace.plane.normal, le.pos.trDelta );
 
-// 	VectorScale( le->pos.trDelta, le->bounceFactor, le->pos.trDelta );
+// 	VectorScale( le.pos.trDelta, le.bounceFactor, le.pos.trDelta );
 
-// 	VectorCopy( trace->endpos, le->pos.trBase );
-// 	le->pos.trTime = cg.time;
+// 	VectorCopy( trace.endpos, le.pos.trBase );
+// 	le.pos.trTime = cg.time;
 
 
 // 	// check for stop, making sure that even on low FPS systems it doesn't bobble
-// 	if ( trace->allsolid || 
-// 		( trace->plane.normal[2] > 0 && 
-// 		( le->pos.trDelta[2] < 40 || le->pos.trDelta[2] < -cg.frametime * le->pos.trDelta[2] ) ) ) {
-// 		le->pos.trType = TR_STATIONARY;
+// 	if ( trace.allsolid || 
+// 		( trace.plane.normal[2] > 0 && 
+// 		( le.pos.trDelta[2] < 40 || le.pos.trDelta[2] < -cg.frametime * le.pos.trDelta[2] ) ) ) {
+// 		le.pos.trType = TR_STATIONARY;
 // 	} else {
 
 // 	}
@@ -14587,49 +13848,49 @@ function AddLocalEntities() {
 // 	vec3_t	newOrigin;
 // 	trace_t	trace;
 
-// 	if ( le->pos.trType == TR_STATIONARY ) {
+// 	if ( le.pos.trType == TR_STATIONARY ) {
 // 		// sink into the ground if near the removal time
 // 		int		t;
 // 		float	oldZ;
 		
-// 		t = le->endTime - cg.time;
+// 		t = le.endTime - cg.time;
 // 		if ( t < SINK_TIME ) {
 // 			// we must use an explicit lighting origin, otherwise the
 // 			// lighting would be lost as soon as the origin went
 // 			// into the ground
-// 			VectorCopy( le->refEntity.origin, le->refEntity.lightingOrigin );
-// 			le->refEntity.renderfx |= RF_LIGHTING_ORIGIN;
-// 			oldZ = le->refEntity.origin[2];
-// 			le->refEntity.origin[2] -= 16 * ( 1.0 - (float)t / SINK_TIME );
-// 			trap_R_AddRefEntityToScene( &le->refEntity );
-// 			le->refEntity.origin[2] = oldZ;
+// 			VectorCopy( le.refEntity.origin, le.refEntity.lightingOrigin );
+// 			le.refEntity.renderfx |= RF_LIGHTING_ORIGIN;
+// 			oldZ = le.refEntity.origin[2];
+// 			le.refEntity.origin[2] -= 16 * ( 1.0 - (float)t / SINK_TIME );
+// 			trap_R_AddRefEntityToScene( &le.refEntity );
+// 			le.refEntity.origin[2] = oldZ;
 // 		} else {
-// 			trap_R_AddRefEntityToScene( &le->refEntity );
+// 			trap_R_AddRefEntityToScene( &le.refEntity );
 // 		}
 
 // 		return;
 // 	}
 
 // 	// calculate new position
-// 	BG_EvaluateTrajectory( &le->pos, cg.time, newOrigin );
+// 	BG_EvaluateTrajectory( &le.pos, cg.time, newOrigin );
 
 // 	// trace a line from previous position to new position
-// 	CG_Trace( &trace, le->refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
+// 	CG_Trace( &trace, le.refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
 // 	if ( trace.fraction == 1.0 ) {
 // 		// still in free fall
-// 		VectorCopy( newOrigin, le->refEntity.origin );
+// 		VectorCopy( newOrigin, le.refEntity.origin );
 
-// 		if ( le->leFlags & LEF_TUMBLE ) {
+// 		if ( le.leFlags & LEF_TUMBLE ) {
 // 			vec3_t angles;
 
-// 			BG_EvaluateTrajectory( &le->angles, cg.time, angles );
-// 			qm.AnglesToAxis( angles, le->refEntity.axis );
+// 			BG_EvaluateTrajectory( &le.angles, cg.time, angles );
+// 			qm.AnglesToAxis( angles, le.refEntity.axis );
 // 		}
 
-// 		trap_R_AddRefEntityToScene( &le->refEntity );
+// 		trap_R_AddRefEntityToScene( &le.refEntity );
 
 // 		// add a blood trail
-// 		if ( le->leBounceSoundType == LEBS_BLOOD ) {
+// 		if ( le.leBounceSoundType == LEBS_BLOOD ) {
 // 			CG_BloodTrail( le );
 // 		}
 
@@ -14653,7 +13914,7 @@ function AddLocalEntities() {
 // 	// reflect the velocity on the trace plane
 // 	CG_ReflectVelocity( le, &trace );
 
-// 	trap_R_AddRefEntityToScene( &le->refEntity );
+// 	trap_R_AddRefEntityToScene( &le.refEntity );
 // }
 
 // /**********************************************************
@@ -14671,15 +13932,15 @@ function AddLocalEntities() {
 // 	refEntity_t *re;
 // 	float c;
 
-// 	re = &le->refEntity;
+// 	re = &le.refEntity;
 
-// 	c = ( le->endTime - cg.time ) * le->lifeRate;
+// 	c = ( le.endTime - cg.time ) * le.lifeRate;
 // 	c *= 0xff;
 
-// 	re->shaderRGBA[0] = le->color[0] * c;
-// 	re->shaderRGBA[1] = le->color[1] * c;
-// 	re->shaderRGBA[2] = le->color[2] * c;
-// 	re->shaderRGBA[3] = le->color[3] * c;
+// 	re.shaderRGBA[0] = le.color[0] * c;
+// 	re.shaderRGBA[1] = le.color[1] * c;
+// 	re.shaderRGBA[2] = le.color[2] * c;
+// 	re.shaderRGBA[3] = le.color[3] * c;
 
 // 	trap_R_AddRefEntityToScene( re );
 // }
@@ -14693,30 +13954,30 @@ function AddLocalEntities() {
 // 	vec3_t		delta;
 // 	float		len;
 
-// 	re = &le->refEntity;
+// 	re = &le.refEntity;
 
-// 	if ( le->fadeInTime > le->startTime && cg.time < le->fadeInTime ) {
+// 	if ( le.fadeInTime > le.startTime && cg.time < le.fadeInTime ) {
 // 		// fade / grow time
-// 		c = 1.0 - (float) ( le->fadeInTime - cg.time ) / ( le->fadeInTime - le->startTime );
+// 		c = 1.0 - (float) ( le.fadeInTime - cg.time ) / ( le.fadeInTime - le.startTime );
 // 	}
 // 	else {
 // 		// fade / grow time
-// 		c = ( le->endTime - cg.time ) * le->lifeRate;
+// 		c = ( le.endTime - cg.time ) * le.lifeRate;
 // 	}
 
-// 	re->shaderRGBA[3] = 0xff * c * le->color[3];
+// 	re.shaderRGBA[3] = 0xff * c * le.color[3];
 
-// 	if ( !( le->leFlags & LEF_PUFF_DONT_SCALE ) ) {
-// 		re->radius = le->radius * ( 1.0 - c ) + 8;
+// 	if ( !( le.leFlags & LEF_PUFF_DONT_SCALE ) ) {
+// 		re.radius = le.radius * ( 1.0 - c ) + 8;
 // 	}
 
-// 	BG_EvaluateTrajectory( &le->pos, cg.time, re->origin );
+// 	BG_EvaluateTrajectory( &le.pos, cg.time, re.origin );
 
 // 	// if the view would be "inside" the sprite, kill the sprite
 // 	// so it doesn't add too much overdraw
-// 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
+// 	VectorSubtract( re.origin, cg.refdef.vieworg, delta );
 // 	len = VectorLength( delta );
-// 	if ( len < le->radius ) {
+// 	if ( len < le.radius ) {
 // 		CG_FreeLocalEntity( le );
 // 		return;
 // 	}
@@ -14725,38 +13986,34 @@ function AddLocalEntities() {
 // }
 
 
-// /**
-//  * AddScaleFade
-//  *
-//  * For rocket smokes that hang in place, fade out, and are
-//  * removed if the view passes through them.
-//  * There are often many of these, so it needs to be simple.
-//  */
-// function AddScaleFade(le) {
-// 	refEntity_t	*re;
-// 	float		c;
-// 	vec3_t		delta;
-// 	float		len;
+/**
+ * AddScaleFade
+ *
+ * For rocket smokes that hang in place, fade out, and are
+ * removed if the view passes through them.
+ * There are often many of these, so it needs to be simple.
+ */
+function AddScaleFade(le) {
+	var re = le.refent;
 
-// 	re = &le->refEntity;
+	// fade / grow time
+	var c = (le.endTime - cg.time) * le.lifeRate;
 
-// 	// fade / grow time
-// 	c = ( le->endTime - cg.time ) * le->lifeRate;
+	re.shaderRGBA[3] = 0xff * c * le.color[3];
+	re.radius = le.radius * (1.0 - c) + 8;
 
-// 	re->shaderRGBA[3] = 0xff * c * le->color[3];
-// 	re->radius = le->radius * ( 1.0 - c ) + 8;
+	// If the view would be "inside" the sprite, kill the sprite
+	// so it doesn't add too much overdraw.
+	var delta = vec3.subtract(re.origin, cg.refdef.vieworg, [0, 0, 0]);
+	var len = vec3.length(delta);
 
-// 	// if the view would be "inside" the sprite, kill the sprite
-// 	// so it doesn't add too much overdraw
-// 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
-// 	len = VectorLength( delta );
-// 	if ( len < le->radius ) {
-// 		CG_FreeLocalEntity( le );
-// 		return;
-// 	}
+	// if (len < le.radius) {
+	// 	FreeLocalEntity(le);
+	// 	return;
+	// }
 
-// 	trap_R_AddRefEntityToScene( re );
-// }
+	imp.re_AddRefEntityToScene(re);
+}
 
 // /**
 //  * AddFallScaleFade
@@ -14772,22 +14029,22 @@ function AddLocalEntities() {
 // 	vec3_t		delta;
 // 	float		len;
 
-// 	re = &le->refEntity;
+// 	re = &le.refEntity;
 
 // 	// fade time
-// 	c = ( le->endTime - cg.time ) * le->lifeRate;
+// 	c = ( le.endTime - cg.time ) * le.lifeRate;
 
-// 	re->shaderRGBA[3] = 0xff * c * le->color[3];
+// 	re.shaderRGBA[3] = 0xff * c * le.color[3];
 
-// 	re->origin[2] = le->pos.trBase[2] - ( 1.0 - c ) * le->pos.trDelta[2];
+// 	re.origin[2] = le.pos.trBase[2] - ( 1.0 - c ) * le.pos.trDelta[2];
 
-// 	re->radius = le->radius * ( 1.0 - c ) + 16;
+// 	re.radius = le.radius * ( 1.0 - c ) + 16;
 
 // 	// if the view would be "inside" the sprite, kill the sprite
 // 	// so it doesn't add too much overdraw
-// 	VectorSubtract( re->origin, cg.refdef.vieworg, delta );
+// 	VectorSubtract( re.origin, cg.refdef.vieworg, delta );
 // 	len = VectorLength( delta );
-// 	if ( len < le->radius ) {
+// 	if ( len < le.radius ) {
 // 		CG_FreeLocalEntity( le );
 // 		return;
 // 	}
@@ -14808,14 +14065,14 @@ function AddExplosion(le) {
 	// if (le.light) {
 	// 	float light;
 
-	// 	light = (float)( cg.time - ex->startTime ) / ( ex->endTime - ex->startTime );
+	// 	light = (float)( cg.time - ex.startTime ) / ( ex.endTime - ex.startTime );
 	// 	if ( light < 0.5 ) {
 	// 		light = 1.0;
 	// 	} else {
 	// 		light = 1.0 - ( light - 0.5 ) * 2;
 	// 	}
-	// 	light = ex->light * light;
-	// 	trap_R_AddLightToScene(ent->origin, light, ex->lightColor[0], ex->lightColor[1], ex->lightColor[2] );
+	// 	light = ex.light * light;
+	// 	trap_R_AddLightToScene(ent.origin, light, ex.lightColor[0], ex.lightColor[1], ex.lightColor[2] );
 	// }
 }
 
@@ -14849,7 +14106,7 @@ function AddSpriteExplosion(le) {
 	// 		light = 1.0 - (light - 0.5) * 2;
 	// 	}
 	// 	light = le.light * light;
-	// 	trap_R_AddLightToScene(imp.re_origin, light, le->lightColor[0], le->lightColor[1], le->lightColor[2] );
+	// 	trap_R_AddLightToScene(imp.re_origin, light, le.lightColor[0], le.lightColor[1], le.lightColor[2] );
 	// }
 }
 
@@ -14864,39 +14121,39 @@ function AddSpriteExplosion(le) {
 // 	float		c, len;
 // 	int			i, score, digits[10], numdigits, negative;
 
-// 	re = &le->refEntity;
+// 	re = &le.refEntity;
 
-// 	c = ( le->endTime - cg.time ) * le->lifeRate;
+// 	c = ( le.endTime - cg.time ) * le.lifeRate;
 
-// 	score = le->radius;
+// 	score = le.radius;
 // 	if (score < 0) {
-// 		re->shaderRGBA[0] = 0xff;
-// 		re->shaderRGBA[1] = 0x11;
-// 		re->shaderRGBA[2] = 0x11;
+// 		re.shaderRGBA[0] = 0xff;
+// 		re.shaderRGBA[1] = 0x11;
+// 		re.shaderRGBA[2] = 0x11;
 // 	}
 // 	else {
-// 		re->shaderRGBA[0] = 0xff;
-// 		re->shaderRGBA[1] = 0xff;
-// 		re->shaderRGBA[2] = 0xff;
+// 		re.shaderRGBA[0] = 0xff;
+// 		re.shaderRGBA[1] = 0xff;
+// 		re.shaderRGBA[2] = 0xff;
 // 		if (score >= 50) {
-// 			re->shaderRGBA[1] = 0;
+// 			re.shaderRGBA[1] = 0;
 // 		} else if (score >= 20) {
-// 			re->shaderRGBA[0] = re->shaderRGBA[1] = 0;
+// 			re.shaderRGBA[0] = re.shaderRGBA[1] = 0;
 // 		} else if (score >= 10) {
-// 			re->shaderRGBA[2] = 0;
+// 			re.shaderRGBA[2] = 0;
 // 		} else if (score >= 2) {
-// 			re->shaderRGBA[0] = re->shaderRGBA[2] = 0;
+// 			re.shaderRGBA[0] = re.shaderRGBA[2] = 0;
 // 		}
 
 // 	}
 // 	if (c < 0.25)
-// 		re->shaderRGBA[3] = 0xff * 4 * c;
+// 		re.shaderRGBA[3] = 0xff * 4 * c;
 // 	else
-// 		re->shaderRGBA[3] = 0xff;
+// 		re.shaderRGBA[3] = 0xff;
 
-// 	re->radius = NUMBER_SIZE / 2;
+// 	re.radius = NUMBER_SIZE / 2;
 
-// 	VectorCopy(le->pos.trBase, origin);
+// 	VectorCopy(le.pos.trBase, origin);
 // 	origin[2] += 110 - c * 100;
 
 // 	VectorSubtract(cg.refdef.vieworg, origin, dir);
@@ -14931,8 +14188,8 @@ function AddSpriteExplosion(le) {
 // 	}
 
 // 	for (i = 0; i < numdigits; i++) {
-// 		VectorMA(origin, (float) (((float) numdigits / 2) - i) * NUMBER_SIZE, vec, re->origin);
-// 		re->customShader = cgs.media.numberShaders[digits[numdigits-1-i]];
+// 		VectorMA(origin, (float) (((float) numdigits / 2) - i) * NUMBER_SIZE, vec, re.origin);
+// 		re.customShader = cgs.media.numberShaders[digits[numdigits-1-i]];
 // 		trap_R_AddRefEntityToScene( re );
 // 	}
 // }
@@ -16636,7 +15893,7 @@ function ResetEntity(cent) {
 		cent.previousEvent = 0;
 	}
 
-	// cent->trailTime = cg.snap->serverTime;
+	cent.trailTime = cg.snap.serverTime;
 
 	vec3.set(cent.currentState.origin, cent.lerpOrigin);
 	vec3.set(cent.currentState.angles, cent.lerpAngles);
@@ -16979,10 +16236,10 @@ function RegisterWeapon(gitem) {
 		case WP.ROCKET_LAUNCHER:
 			weaponInfo.missileModel = imp.re_RegisterModel('models/ammo/rocket/rocket.md3');
 			weaponInfo.missileSound = imp.snd_RegisterSound('sound/weapons/rocket/rockfly');
-	// 		weaponInfo.missileTrailFunc = CG_RocketTrail;
+			weaponInfo.missileTrailFunc = RocketTrail;
 	// 		weaponInfo.missileDlight = 200;
-	// 		weaponInfo.wiTrailTime = 2000;
-	// 		weaponInfo.trailRadius = 64;
+			weaponInfo.trailTime = 2000;
+			weaponInfo.trailRadius = 64;
 	// 		MAKERGB( weaponInfo.missileDlightColor, 1, 0.75f, 0 );
 	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.75f, 0 );
 			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/rocket/rocklf1a');
@@ -16993,7 +16250,7 @@ function RegisterWeapon(gitem) {
 		case WP.GRENADE_LAUNCHER:
 	// 		weaponInfo.missileModel = trap_R_RegisterModel( "models/ammo/grenade1.md3" );
 	// 		weaponInfo.missileTrailFunc = CG_GrenadeTrail;
-	// 		weaponInfo.wiTrailTime = 700;
+	// 		weaponInfo.trailTime = 700;
 	// 		weaponInfo.trailRadius = 32;
 	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.70f, 0 );
 			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/grenade/grenlf1a');
@@ -17613,7 +16870,7 @@ function MissileHitPlayer(weapon, origin, dir, entityNum) {
  **********************************************************/
 
 /**
- * AddBullet
+ * BulletHit
  *
  * Renders bullet effects.
  */
@@ -17663,11 +16920,9 @@ SHOTGUN TRACING
 ============================================================================
 */
 
-/*
-================
-CG_ShotgunPellet
-================
-*/
+/**
+ * ShotgunPellet
+ */
 function ShotgunPellet(start, end, skipNum) {
 	var tr;
 	var sourceContentType, destContentType;
@@ -17714,14 +16969,12 @@ function ShotgunPellet(start, end, skipNum) {
 // 	}
 }
 
-/*
-================
-CG_ShotgunPattern
-
-Perform the same traces the server did to locate the
-hit splashes
-================
-*/
+/**
+ * ShotgunPattern
+ * 
+ * Perform the same traces the server did to locate the 
+ * hit splashes
+ */
 function ShotgunPattern(origin, origin2, seed, otherEntNum) {
 	var i;
 	var r, u;
@@ -17748,11 +17001,9 @@ function ShotgunPattern(origin, origin2, seed, otherEntNum) {
 	}
 }
 
-/*
-==============
-CG_ShotgunFire
-==============
-*/
+/**
+ * ShotgunFire
+ */
 function ShotgunFire(es) {
 	var v = [0, 0, 0];
 	var contents;
@@ -17764,7 +17015,7 @@ function ShotgunFire(es) {
 	
 	var up = [0, 0, 0];
 // 
-// 	contents = CG_PointContents( es->pos.trBase, 0 );
+// 	contents = CG_PointContents( es.pos.trBase, 0 );
 // 	if ( !( contents & CONTENTS_WATER ) ) {
 		vec3.set( up, [0, 0, 8] );
 // 		SmokePuff( v, up, 32, 1, 1, 1, 0.33f, 900, cg.time, 0, LEF_PUFF_DONT_SCALE, cgs.media.shotgunSmokePuffShader );
@@ -17773,6 +17024,58 @@ function ShotgunFire(es) {
 	ShotgunPattern(es.pos.trBase, es.origin2, es.eventParm, es.otherEntityNum);
 }
 
+/**********************************************************
+ *
+ * Weapon special fx
+ *
+ **********************************************************/
+function RocketTrail(cent, weaponInfo) {
+	// if (cg_noProjectileTrail.integer) {
+	// 	return;
+	// }
+
+	var up = [0, 0, 0];
+	var origin = [0, 0, 0];
+	var lastPos = [0, 0, 0];
+	var step = 50;
+	var es = cent.currentState;
+	var startTime = cent.trailTime;
+
+	cent.trailTime = cg.time;
+
+	bg.EvaluateTrajectory(es.pos, cg.time, origin);
+	//var contents = CG_PointContents( origin, -1 );
+
+	// If object (e.g. grenade) is stationary, don't toss up smoke.
+	if (es.pos.trType === TR.STATIONARY) {
+		return;
+	}
+
+	bg.EvaluateTrajectory(es.pos, cent.trailTime, lastPos);
+	//var lastContents = CG_PointContents( lastPos, -1 );
+
+	// if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
+	// 	if ( contents & lastContents & CONTENTS_WATER ) {
+	// 		CG_BubbleTrail( lastPos, origin, 8 );
+	// 	}
+	// 	return;
+	// }
+
+	var t = step * Math.floor((startTime + step) / step);
+	for (; t <= cent.trailTime; t += step) {
+		bg.EvaluateTrajectory(es.pos, t, lastPos);
+
+		SmokePuff(lastPos, up, 
+		          weaponInfo.trailRadius, 
+		          1, 1, 1, 0.33,
+		          weaponInfo.trailTime, 
+		          t,
+		          0,
+		          0, 
+		          cgs.media.smokePuffShader);
+	}
+
+}
 
 		return {
 			Init: Init,
@@ -21109,7 +20412,9 @@ define('renderer/re',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
 	function Renderer(imp) {
-		var RT = {
+		var root = typeof(global) !== 'undefined' ? global : window;
+
+root.RT = {
 	MODEL:               0,
 	POLY:                1,
 	SPRITE:              2,
@@ -21121,7 +20426,7 @@ function (_, glmatrix, ByteBuffer, sh, qm) {
 	MAX_REF_ENTITY_TYPE: 8
 };
 
-var RF = {
+root.RF = {
 	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
 	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
 	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
@@ -22363,6 +21668,9 @@ function RenderDrawSurfaces() {
 
 	backend.currentEntity = null;
 
+	// Save original time for entity shader offsets.
+	var originalTime = backend.refdef.time;
+
 	for (var i = 0; i < refdef.numDrawSurfs; i++) {
 		var drawSurf = drawSurfs[i];
 		var face = drawSurf.surface;
@@ -22393,9 +21701,11 @@ function RenderDrawSurfaces() {
 		if (oldEntityNum !== entityNum) {
 			if (entityNum !== ENTITYNUM_WORLD) {
 				backend.currentEntity = refdef.refEntities[entityNum];
+				backend.refdef.time = originalTime - backend.currentEntity.shaderTime;
 				RotateForEntity(backend.currentEntity, backend.or);
 			} else {
 				backend.currentEntity = null;
+				backend.refdef.time = originalTime;
 				parms.or.clone(backend.or);
 			}
 
@@ -22442,7 +21752,7 @@ function BeginSurface(shader) {
 	var tess = backend.tess;
 
 	tess.shader = shader;
-	tess.shaderTime = backend.refdef.time / 1000;
+	tess.shaderTime = backend.refdef.time;
 
 	tess.numIndexes = 0;
 	tess.indexOffset = 0;
@@ -22691,7 +22001,7 @@ function SetShaderStage(shader, stage) {
 	var program = stage.program;
 
 	// Sanity check after being burned so many times by this.
-	if (!tess.shaderTime || isNaN(tess.shaderTime)) {
+	if (isNaN(tess.shaderTime)) {
 		imp.com_error(sh.Err.DROP, 'Invalid time for shader');
 	}
 	
@@ -22972,25 +22282,25 @@ function AddQuadStampExt(origin, left, up, color, s1, t1, s2, t2) {
 	btexCoord.data[btexCoord.offset++] = t2;
 
 	// Constant color all the way around.
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
 
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
 
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
 
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
-	bcolor.data[bcolor.offset++] = 1;
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
 
 	bindex.modified = true;
 	bxyz.modified = true;
@@ -23870,12 +23180,12 @@ function UploadDDSLevels(gl, ext, arrayBuffer, loadMipmaps) {
 		rgb565Data, byteArray, mipmapCount, i;
 
 	if (header[DXTOFF_MAGIC] !== DDS_MAGIC) {
-		console.error("Invalid magic number in DDS header");
+		log('Invalid magic number in DDS header');
 		return 0;
 	}
 	
 	if (!header[DXTOFF_PFFLAGS] & DDPF_FOURCC) {
-		console.error("Unsupported format, must contain a FourCC code");
+		log('Unsupported format, must contain a FourCC code');
 		return 0;
 	}
 
@@ -23897,7 +23207,7 @@ function UploadDDSLevels(gl, ext, arrayBuffer, loadMipmaps) {
 			break;
 
 		default:
-			console.error("Unsupported FourCC code:", Int32ToFourCC(fourCC));
+			log('Unsupported FourCC code:', Int32ToFourCC(fourCC));
 			return null;
 	}
 
@@ -24828,7 +24138,7 @@ function RenderScene(fd) {
 	re.refdef.fovY = fd.fovY;
 	re.refdef.origin = fd.vieworg;
 	re.refdef.viewaxis = fd.viewaxis;
-	re.refdef.time = fd.time;
+	re.refdef.time = fd.time / 1000;
 
 	// Create view parms from render def.
 	var parms = new ViewParms();
@@ -24952,7 +24262,6 @@ function FindShaderByName(shaderName, lightmapIndex) {
 			return re.shaders[i];
 		}
 	}
-
 	var shader;
 	// TODO We should free up these shader bodies, they occupy ~4 MB of memory for no reason.
 	if (re.shaderBodies[shaderName]) {
@@ -25241,7 +24550,7 @@ function ParseShader(shaderText, lightmapIndex) {
 
 				// I'm having a ton of trouble getting lightingSpecular to work properly,
 				// so this little hack gets it looking right till I can figure out the problem
-				if(stage.alphaGen == 'lightingspecular') {
+				if (stage.alphaGen == 'lightingspecular') {
 					stage.blendSrc = 'GL_ONE';
 					stage.blendDest = 'GL_ZERO';
 					stage.hasBlendFunc = false;
@@ -25249,7 +24558,7 @@ function ParseShader(shaderText, lightmapIndex) {
 					shader.stages = [];
 				}
 
-				if(stage.hasBlendFunc) { shader.blend = true; } else { shader.opaque = true; }
+				if (stage.hasBlendFunc) { shader.blend = true; } else { shader.opaque = true; }
 
 				shader.stages.push(stage);
 			} break;
@@ -25404,10 +24713,10 @@ function ParseShaderStage(shader, tokens) {
 			case 'blendfunc':
 				stage.blendSrc = tokens.next();
 				stage.hasBlendFunc = true;
-				if(!stage.depthWriteOverride) {
+				if (!stage.depthWriteOverride) {
 					stage.depthWrite = false;
 				}
-				switch(stage.blendSrc) {
+				switch (stage.blendSrc) {
 					case 'add':
 						stage.blendSrc = 'GL_ONE';
 						stage.blendDest = 'GL_ONE';
@@ -25529,8 +24838,8 @@ function TranslateShader(q3shader) {
 
 		var vs = GenerateVertexShader(q3shader, q3stage);
 		var fs = GenerateFragmentShader(q3shader, q3stage);
-		// TODO affect these based on ShaderFlag.MESH, maybe GenerateVertexShader should
-		// take in a root builder?
+		// stage.vs = vs.getSource();
+		// stage.fs = fs.getSource();
 		stage.program = CompileShaderProgram(vs.getSource(), fs.getSource());
 
 		shader.stages.push(stage);
@@ -25581,7 +24890,7 @@ function TranslateBlend(blend) {
 		case 'GL_ZERO': return gl.ZERO;
 		case 'GL_DST_COLOR': return gl.DST_COLOR;
 		case 'GL_ONE_MINUS_DST_COLOR': return gl.ONE_MINUS_DST_COLOR;
-		case 'GL_SRC_ALPHA ': return gl.SRC_ALPHA;
+		case 'GL_SRC_ALPHA': return gl.SRC_ALPHA;
 		case 'GL_ONE_MINUS_SRC_ALPHA': return gl.ONE_MINUS_SRC_ALPHA;
 		case 'GL_SRC_COLOR': return gl.SRC_COLOR;
 		case 'GL_ONE_MINUS_SRC_COLOR': return gl.ONE_MINUS_SRC_COLOR;
@@ -25754,6 +25063,9 @@ function GenerateFragmentShader(q3shader, stage) {
 	}
 
 	switch (stage.alphaGen) {
+		case 'vertex':
+			builder.addLines(['float alpha = texColor.a * vColor.a;']);
+			break;
 		case 'wave':
 			builder.addWaveform('alpha', stage.alphaWaveform);
 			break;
@@ -36573,6 +35885,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
 })( window );
 
+
 //     Backbone.js 0.9.2
 
 //     (c) 2010-2012 Jeremy Ashkenas, DocumentCloud Inc.
@@ -38005,6 +37318,7 @@ if ( typeof define === "function" && define.amd && define.amd.jQuery ) {
 
 }).call(this);
 
+
 define("backbone", ["underscore","jquery"], (function (global) {
     return function () {
         var ret, fn;
@@ -38012,847 +37326,122 @@ define("backbone", ["underscore","jquery"], (function (global) {
     };
 }(this)));
 
+define('ui/ui',
+['underscore', 'jquery', 'backbone', 'common/sh'],
+function (_, $, Backbone, sh) {
+	function UserInterface(imp) {
+		var UILocals = function () {
+	this.frameCount    = 0;
+	this.views         = {};
+	this.activeMenus   = [];                               // active view stack
+	this.hoverEls      = null;                             // currently hovered element
+	this.focusEl       = null;                             // currently focused element
+	this.mx            = 0;                                // mouse x
+	this.my            = 0;                                // mouse y
+	this.vw            = 0;                                // viewport width
+	this.vh            = 0;                                // viewport height
+	this.images        = null;
+};
+
+var UIImage = function () {
+	this.index     = 0;
+	this.name      = null;
+	this.data      = null;
+	this.callbacks = [];
+};
+
 /**
- * @license RequireJS text 2.0.3 Copyright (c) 2010-2012, The Dojo Foundation All Rights Reserved.
- * Available via the MIT or new BSD license.
- * see: http://github.com/requirejs/text for details
+ * Simulated event structures.
  */
-/*jslint regexp: true */
-/*global require: false, XMLHttpRequest: false, ActiveXObject: false,
-  define: false, window: false, process: false, Packages: false,
-  java: false, location: false */
+var QkClickEvent = function (x, y) {
+	this.type = 'qk_click';
+	this.x = x;
+	this.y = y;
+};
 
-define('text',['module'], function (module) {
-    
+var QkKeyPressEvent = function (keyName) {
+	this.type = 'qk_keypress';
+	this.keyName = keyName;
+};
 
-    var text, fs,
-        progIds = ['Msxml2.XMLHTTP', 'Microsoft.XMLHTTP', 'Msxml2.XMLHTTP.4.0'],
-        xmlRegExp = /^\s*<\?xml(\s)+version=[\'\"](\d)*.(\d)*[\'\"](\s)*\?>/im,
-        bodyRegExp = /<body[^>]*>\s*([\s\S]+)\s*<\/body>/im,
-        hasLocation = typeof location !== 'undefined' && location.href,
-        defaultProtocol = hasLocation && location.protocol && location.protocol.replace(/\:/, ''),
-        defaultHostName = hasLocation && location.hostname,
-        defaultPort = hasLocation && (location.port || undefined),
-        buildMap = [],
-        masterConfig = (module.config && module.config()) || {};
+var QkChangeEvent = function (value) {
+	this.type = 'qk_change';
+	this.value = value;
+};
 
-    text = {
-        version: '2.0.3',
+var QkFocusEvent = function () {
+	this.type = 'qk_focus';
+};
 
-        strip: function (content) {
-            //Strips <?xml ...?> declarations so that external SVG and XML
-            //documents can be added to a document without worry. Also, if the string
-            //is an HTML document, only the part inside the body tag is returned.
-            if (content) {
-                content = content.replace(xmlRegExp, "");
-                var matches = content.match(bodyRegExp);
-                if (matches) {
-                    content = matches[1];
-                }
-            } else {
-                content = "";
-            }
-            return content;
-        },
+var QkBlurEvent = function () {
+	this.type = 'qk_blur';
+};
+		/**
+ * RegisterComponent
+ *
+ * Attach a component to a UI element.
+ */
+function RegisterComponent(type, element) {
+	if (!type.prototype.componentName) {
+		throw new Error('Type must define a component name property.')
+	}
 
-        jsEscape: function (content) {
-            return content.replace(/(['\\])/g, '\\$1')
-                .replace(/[\f]/g, "\\f")
-                .replace(/[\b]/g, "\\b")
-                .replace(/[\n]/g, "\\n")
-                .replace(/[\t]/g, "\\t")
-                .replace(/[\r]/g, "\\r")
-                .replace(/[\u2028]/g, "\\u2028")
-                .replace(/[\u2029]/g, "\\u2029");
-        },
+	var $el = $(element),
+		data = $el.data(type.prototype.componentName);
 
-        createXhr: masterConfig.createXhr || function () {
-            //Would love to dump the ActiveX crap in here. Need IE 6 to die first.
-            var xhr, i, progId;
-            if (typeof XMLHttpRequest !== "undefined") {
-                return new XMLHttpRequest();
-            } else if (typeof ActiveXObject !== "undefined") {
-                for (i = 0; i < 3; i += 1) {
-                    progId = progIds[i];
-                    try {
-                        xhr = new ActiveXObject(progId);
-                    } catch (e) {}
-
-                    if (xhr) {
-                        progIds = [progId];  // so faster next time
-                        break;
-                    }
-                }
-            }
-
-            return xhr;
-        },
-
-        /**
-         * Parses a resource name into its component parts. Resource names
-         * look like: module/name.ext!strip, where the !strip part is
-         * optional.
-         * @param {String} name the resource name
-         * @returns {Object} with properties "moduleName", "ext" and "strip"
-         * where strip is a boolean.
-         */
-        parseName: function (name) {
-            var strip = false, index = name.indexOf("."),
-                modName = name.substring(0, index),
-                ext = name.substring(index + 1, name.length);
-
-            index = ext.indexOf("!");
-            if (index !== -1) {
-                //Pull off the strip arg.
-                strip = ext.substring(index + 1, ext.length);
-                strip = strip === "strip";
-                ext = ext.substring(0, index);
-            }
-
-            return {
-                moduleName: modName,
-                ext: ext,
-                strip: strip
-            };
-        },
-
-        xdRegExp: /^((\w+)\:)?\/\/([^\/\\]+)/,
-
-        /**
-         * Is an URL on another domain. Only works for browser use, returns
-         * false in non-browser environments. Only used to know if an
-         * optimized .js version of a text resource should be loaded
-         * instead.
-         * @param {String} url
-         * @returns Boolean
-         */
-        useXhr: function (url, protocol, hostname, port) {
-            var uProtocol, uHostName, uPort,
-                match = text.xdRegExp.exec(url);
-            if (!match) {
-                return true;
-            }
-            uProtocol = match[2];
-            uHostName = match[3];
-
-            uHostName = uHostName.split(':');
-            uPort = uHostName[1];
-            uHostName = uHostName[0];
-
-            return (!uProtocol || uProtocol === protocol) &&
-                   (!uHostName || uHostName.toLowerCase() === hostname.toLowerCase()) &&
-                   ((!uPort && !uHostName) || uPort === port);
-        },
-
-        finishLoad: function (name, strip, content, onLoad) {
-            content = strip ? text.strip(content) : content;
-            if (masterConfig.isBuild) {
-                buildMap[name] = content;
-            }
-            onLoad(content);
-        },
-
-        load: function (name, req, onLoad, config) {
-            //Name has format: some.module.filext!strip
-            //The strip part is optional.
-            //if strip is present, then that means only get the string contents
-            //inside a body tag in an HTML string. For XML/SVG content it means
-            //removing the <?xml ...?> declarations so the content can be inserted
-            //into the current doc without problems.
-
-            // Do not bother with the work if a build and text will
-            // not be inlined.
-            if (config.isBuild && !config.inlineText) {
-                onLoad();
-                return;
-            }
-
-            masterConfig.isBuild = config.isBuild;
-
-            var parsed = text.parseName(name),
-                nonStripName = parsed.moduleName + '.' + parsed.ext,
-                url = req.toUrl(nonStripName),
-                useXhr = (masterConfig.useXhr) ||
-                         text.useXhr;
-
-            //Load the text. Use XHR if possible and in a browser.
-            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
-                text.get(url, function (content) {
-                    text.finishLoad(name, parsed.strip, content, onLoad);
-                }, function (err) {
-                    if (onLoad.error) {
-                        onLoad.error(err);
-                    }
-                });
-            } else {
-                //Need to fetch the resource across domains. Assume
-                //the resource has been optimized into a JS module. Fetch
-                //by the module name + extension, but do not include the
-                //!strip part to avoid file system issues.
-                req([nonStripName], function (content) {
-                    text.finishLoad(parsed.moduleName + '.' + parsed.ext,
-                                    parsed.strip, content, onLoad);
-                });
-            }
-        },
-
-        write: function (pluginName, moduleName, write, config) {
-            if (buildMap.hasOwnProperty(moduleName)) {
-                var content = text.jsEscape(buildMap[moduleName]);
-                write.asModule(pluginName + "!" + moduleName,
-                               "define(function () { return '" +
-                                   content +
-                               "';});\n");
-            }
-        },
-
-        writeFile: function (pluginName, moduleName, req, write, config) {
-            var parsed = text.parseName(moduleName),
-                nonStripName = parsed.moduleName + '.' + parsed.ext,
-                //Use a '.js' file name so that it indicates it is a
-                //script that can be loaded across domains.
-                fileName = req.toUrl(parsed.moduleName + '.' +
-                                     parsed.ext) + '.js';
-
-            //Leverage own load() method to load plugin value, but only
-            //write out values that do not have the strip argument,
-            //to avoid any potential issues with ! in file names.
-            text.load(nonStripName, req, function (value) {
-                //Use own write() method to construct full module value.
-                //But need to create shell that translates writeFile's
-                //write() to the right interface.
-                var textWrite = function (contents) {
-                    return write(fileName, contents);
-                };
-                textWrite.asModule = function (moduleName, contents) {
-                    return write.asModule(moduleName, fileName, contents);
-                };
-
-                text.write(pluginName, nonStripName, textWrite, config);
-            }, config);
-        }
-    };
-
-    if (masterConfig.env === 'node' || (!masterConfig.env &&
-            typeof process !== "undefined" &&
-            process.versions &&
-            !!process.versions.node)) {
-        //Using special require.nodeRequire, something added by r.js.
-        fs = require.nodeRequire('fs');
-
-        text.get = function (url, callback) {
-            var file = fs.readFileSync(url, 'utf8');
-            //Remove BOM (Byte Mark Order) from utf8 files if it is there.
-            if (file.indexOf('\uFEFF') === 0) {
-                file = file.substring(1);
-            }
-            callback(file);
-        };
-    } else if (masterConfig.env === 'xhr' || (!masterConfig.env &&
-            text.createXhr())) {
-        text.get = function (url, callback, errback) {
-            var xhr = text.createXhr();
-            xhr.open('GET', url, true);
-
-            //Allow overrides specified in config
-            if (masterConfig.onXhr) {
-                masterConfig.onXhr(xhr, url);
-            }
-
-            xhr.onreadystatechange = function (evt) {
-                var status, err;
-                //Do not explicitly handle errors, those should be
-                //visible via console output in the browser.
-                if (xhr.readyState === 4) {
-                    status = xhr.status;
-                    if (status > 399 && status < 600) {
-                        //An http 4xx or 5xx error. Signal an error.
-                        err = new Error(url + ' HTTP status: ' + status);
-                        err.xhr = xhr;
-                        errback(err);
-                    } else {
-                        callback(xhr.responseText);
-                    }
-                }
-            };
-            xhr.send(null);
-        };
-    } else if (masterConfig.env === 'rhino' || (!masterConfig.env &&
-            typeof Packages !== 'undefined' && typeof java !== 'undefined')) {
-        //Why Java, why is this so awkward?
-        text.get = function (url, callback) {
-            var stringBuffer, line,
-                encoding = "utf-8",
-                file = new java.io.File(url),
-                lineSeparator = java.lang.System.getProperty("line.separator"),
-                input = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(file), encoding)),
-                content = '';
-            try {
-                stringBuffer = new java.lang.StringBuffer();
-                line = input.readLine();
-
-                // Byte Order Mark (BOM) - The Unicode Standard, version 3.0, page 324
-                // http://www.unicode.org/faq/utf_bom.html
-
-                // Note that when we use utf-8, the BOM should appear as "EF BB BF", but it doesn't due to this bug in the JDK:
-                // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4508058
-                if (line && line.length() && line.charAt(0) === 0xfeff) {
-                    // Eat the BOM, since we've already found the encoding on this file,
-                    // and we plan to concatenating this buffer with others; the BOM should
-                    // only appear at the top of a file.
-                    line = line.substring(1);
-                }
-
-                stringBuffer.append(line);
-
-                while ((line = input.readLine()) !== null) {
-                    stringBuffer.append(lineSeparator);
-                    stringBuffer.append(line);
-                }
-                //Make sure we return a JavaScript string and not a Java string.
-                content = String(stringBuffer.toString()); //String
-            } finally {
-                input.close();
-            }
-            callback(content);
-        };
-    }
-
-    return text;
-});
-
-define('text!ui/css/views.css',[],function () { return '/**\n * Main\n */\n@font-face {\n\tfont-family: \'SourceCodeProSemibold\';\n\tsrc: url(\'data:application/x-font-ttf;base64,AAEAAAARAQAABAAQQkFTRYpzk38AAAEcAAAAUEZGVE1imDktAAABbAAAABxHREVGALIABAAAAYgAAAAgT1MvMmpCgbYAAAGoAAAAYGNtYXD4Wyw8AAACCAAAAcpjdnQgC48N3QAAA9QAAAA6ZnBnbQ+0L6cAAAQQAAACZWdhc3AAAAAQAAAGeAAAAAhnbHlmLEZk6gAABoAAAEd4aGVhZPz0FUYAAE34AAAANmhoZWEKtARdAABOMAAAACRobXR4VE5PpgAATlQAAAIUbG9jYfqzDvIAAFBoAAABDG1heHABowIVAABRdAAAACBuYW1lNFFOpwAAUZQAAAJocG9zdDMPLukAAFP8AAABzHByZXBr0oLrAABVyAAAAPYAAQAAAAgAAAAEAA4AAmlkZW9yb21uAAJERkxUAA5sYXRuACQABgAAAAAAAQACAAgADAAB/qQAAQAAAAYAAAAAAAEAAgAIAAwAAf6kAAEAAAAAAAEAAAAAyYlvMQAAAADMh2T9AAAAAMyHZP4AAQAAAA4AAAAYAAAAAAACAAEAAQCEAAEABAAAAAIAAAADBIcCWAAFAAAFMwTNAAAAmgUzBM0AAALNAGYCTgAAAgsGCQMEAwICBCAAAAcAAAABAAAAAAAAAABBREJFACAAIOAABgD+AAAABgACKCAAAZMAAAAAA+4FOwAAACAAAQAAAAMAAAADAAAAHAABAAAAAADEAAMAAQAAABwABACoAAAAJgAgAAQABgB+AKAAowClAKkArgC0IAogFCAZIB0gIiAmIC8gXyCsISLgAP//AAAAIACgAKIApQCpAK0AtCAAIBAgGCAcICIgJiAvIF8grCEi4AD////j/8L/wf/A/73/uv+14GrgZeBi4GDgXOBZ4FHgIt/W32EghAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEGAAABAAAAAAAAAAECAAAAAgAAAAAAAAAAAAAAAAAAAAEAAAMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABjZAB+AABoZoNpAAAAAAAAAABlAAAAAAAAAAAAAAAAAAAAAAAAAAB/YgAAAAAAeHl8fXp7AAAAAACCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD+cwAAA+4FOwC7AJYAogCqAK8AswC3AL8AwwDJAM8BPQDuAO4A8wCNAIsA3gCUAJEA6AB6AIQAhgBtAACwACywABNLsCpQWLBKdlmwACM/GLAGK1g9WUuwKlBYfVkg1LABEy4YLbABLCDasAwrLbACLEtSWEUjWSEtsAMsaRggsEBQWCGwQFktsAQssAYrWCEjIXpY3RvNWRtLUlhY/RvtWRsjIbAFK1iwRnZZWN0bzVlZWRgtsAUsDVxaLbAGLLEiAYhQWLAgiFxcG7AAWS2wByyxJAGIUFiwQIhcXBuwAFktsAgsEhEgOS8tsAksIH2wBitYxBvNWSCwAyVJIyCwBCZKsABQWIplimEgsABQWDgbISFZG4qKYSCwAFJYOBshIVlZGC2wCiywBitYIRAbECFZLbALLCDSsAwrLbAMLCAvsAcrXFggIEcjRmFqIFggZGI4GyEhWRshWS2wDSwSESAgOS8giiBHikZhI4ogiiNKsABQWCOwAFJYsEA4GyFZGyOwAFBYsEBlOBshWVktsA4ssAYrWD3WGCEhGyDWiktSWCCKI0kgsABVWDgbISFZGyEhWVktsA8sIyDWIC+wBytcWCMgWEtTGyGwAVlYirAEJkkjiiMgikmKI2E4GyEhISFZGyEhISEhWS2wECwg2rASKy2wESwg0rASKy2wEiwgL7AHK1xYICBHI0ZhaoogRyNGI2FqYCBYIGRiOBshIVkbISFZLbATLCCKIIqHILADJUpkI4oHsCBQWDwbwFktsBQsswBAAUBCQgFLuBAAYwBLuBAAYyCKIIpVWCCKIIpSWCNiILAAI0IbYiCwASNCWSCwQFJYsgAgAENjQrIBIAFDY0KwIGOwGWUcIVkbISFZLbAVLLABQ2MjsABDYyMtAAAAAAEAAf//AA8ABQBiAAAEagVIAAMABgAMABIAFQBUALIAAQArsQcF6bIBAwArsQ0F6QGwFi+wANa0BBAAFgQrsAQQsRQBK7QDEAAWBCuxFwErsRQEERK1BQcIDRITJBc5ALENBxEStQYECg8UFSQXOTAxMxEhEQETAxMhLwEjBwMfATM/AQMTEWIECPyg5OSDAa5yXwhgYmReCF9iTOIFSPq4ARABqAGs/DbVzMwDPbbBwbb+DP5YA1QAAAAAAgG0/+cDGQVcAAkADwBHALIIAQArtAMPAAwEKwGwEC+wANa0BRIADAQrtAUSAAwEK7MMBQAIK7EPEOmwDy+xDBDpsREBK7EMDxESswMHCAIkFzkAMDElNDYyFhUUBiImEzMHAyMDAbRnl2dnl2c+6QYhmyGgUGRkUFJnZwUO6f2BAn8AAgDZAp4D9AV9AAUACwAkAAGwDC+wBda0AhIAHgQrsAIQsQsBK7QIEgAeBCuxDQErADAxEyELASMDASELASMD2QEfBj6XPgH2AR8GPpc+BX3++v4nAdkBBv76/icB2QAAAgCgAAAENQUzABsAHwFbALIaAQArshUWGTMzM7AAL7MUFxgbJBczsQEF6bMCERwdJBcysAQvswMQHh8kFzOxBQXpswYJCg0kFzKyBQQKK7NABQgJK7IHCwwyMjIBsCAvsBrWtBkQAA0EK7AZELEHASu0CBAADQQrsgcICiuzQAcECSuwCBCxFgErtBUQAA0EK7IVFgors0AVEwkrsBUQsQsBK7QMEAANBCuxIQErsDYauj+B+BAAFSsKuj+K+FMAFSsKsBoQswIaBxMrswMaBxMrswYaBxMrsBkQswkZCBMrsBYQswoWCxMrsBUQsw0VDBMrsxAVDBMrsxEVDBMrsxQVDBMrsBYQsxcWCxMrsBkQsxgZCBMrsBoQsxsaBxMrsBkQsxwZCBMrsBYQsx0WCxMrsx4WCxMrsBkQsx8ZCBMrA0AQAgMGCQoNEBEUFxgbHB0eHy4uLi4uLi4uLi4uLi4uLi6wQBoAMDETNTMTIzUzEzMDMxMzAzMVIwMzFSMDIxMjAyMTNzMTI6CwIai6L4sr8i2NK6K0Iay+MZAx8S+QL6LyIfIBj5wBCJwBZP6cAWT+nJz++Jz+cQGP/nEBj5wBCAABAJj/HwQlBfgAKACZALAkL7AnM7EDBOmyJAMKK7NAJCYJK7AYL7EPBOmwEjKyDxgKK7NADxAJKwGwKS+wDNaxGxDpsBsQsSYBK7APMrQlEAAWBCuwETKwJRCxBgErsSEQ6bEqASuxGwwRErABObAmEbAJObAlErEDGDk5sAYRsB45sCESsRQVOTkAsQMkERKwADmwGBGzAQwVISQXObAPErAUOTAxPwEWMzI2NTQuAzU0NjcRMxEWFwcuASMiBhUUHgMVFAYHESMRJphqya5gZoG2toG0mqS4jXdOgFlUYoG5toG9paTh6aKFSD85V0NQlGaDqhUBDP72FY2JOzNFPjFOP1KYaIO3GP7TASkXAAYAL//nBKAFLwADAA0AFQAfACMAKwDgALIeAQArtCcFABwEK7ArL7QZBQAcBCuzDBkrCCu0EQUAHAQrsBUvtAcFABwEKwGwLC+wBNawADK0DhAAFgQrsA4QsRYBK7QkEAAWBCuzCSQWCCu0ExAAFgQrsBMvtAkQABYEK7AkELEpASu0GxAAFgQrsCIysS0BK7EOBBESsgMGDDk5ObATEbABObAWErIHCwI5OTmxJAkRErIYHiA5OTmwKRGwIzmwGxKyGR0hOTk5ALEnHhESsAM5sCsRswIAGxYkFzmwDBKwATmxFRERErMJICIjJBc5sAcRsCE5MDE3ARcBAzQ2IBYVFAYgJjcUFjI2NTQiATQ2IBYVFAYgJhMBFwEDFBYyNjU0Ii8Be1b+rnukAQakpv7+pqhIbkj+AXGkAQakpv7+poMBUn/+hTFHb0j+tgFzUP5kA6KctLScnrq7nWpra2rN/JOctLScnrq7AsABnHn+jf4tamtras0AAAAAAwBC/+cEqAVUACAAKQAyAJQAsh4BACuwGjOxJArpsggDACuxMAbpAbAzL7AF1rQqEAAfBCuzISoFCCuxABDpsAAvsSEQ6bAqELEuASu0CxAAFgQrsAsQsRQBK7EVEOmxNAErsSohERKxAyg5ObAuEbIIJBA5OTmwCxKwJjmwFBGxEhw5ObAVErEXGjk5ALEkHhESsBw5sDARtQAFCxkoLCQXOTAxEzQ2NyY1NDYzMhYVFA4CBxYXNjczAgcWFwcmJwYHIiY3FBYzMjcmJwYTFBc2NTQjIgZCfG1YrouHnCtaSkF3pV4u2UiBd1o7h5Skzbzj4X1eYFqwf2Z1M6xpNUEBYHuuTqyDjcGcgT1tZEAzpomRy/74yU8bwSVniwHXsVx1Tpq1ZgIzWGp5dn9eAAEB1wKeAvYFfQAFAB0AAbAGL7AF1rQCEgAeBCu0AhIAHgQrsQcBKwAwMQEhCwEjAwHXAR8GPpc+BX3++v4nAdkAAAAAAQGN/pYDzwXdAAkAFgABsAovsAHWtAYQACcEK7ELASsAMDEkAgEXBgIQEhcHAY4BAb+Dw7S0w4MJBGEBc2yw/nL+DP5zsGwAAQD+/pYDPwXdAAkAFgABsAovsAPWtAgQACcEK7ELASsAMDEXNhIQAic3ABAB/sO0tMODAb7+Qv6wAY0B9AGOsGz+jfuf/o0AAQDBAmAEDAWyAA4AHgABsA8vsAPWtAQQAA0EK7EQASuxBAMRErALOQAwMRM3BRMzEyUXBRMHCwEnE8EmASUZgxkBJCf+7Kxt0dBtrARGeEkBPf7FR3h7/uFMAQT+/EwBHwAAAAEAoACiBC0EVAALAFUAsAAvsAczsQEH6bAFMrIAAQors0AACgkrsgEACiuzQAEDCSsBsAwvsArWsAIytAkQABYEK7AEMrIJCgors0AJBwkrsgoJCiuzQAoACSuxDQErADAxEzUhETMRIRUhESMRoAFstQFs/pS1AiWsAYP+faz+fQGDAAEBg/5IA04BewAQACEAAbARL7AC1rQNEAAfBCuyAg0KK7MAAgcJK7ESASsAMDEBJDcGIyImNTQ2MzIWFRQCBwGDAQQCChJSb3NSbXDMwf7VaNMCYVZSZKKRuv75PwAAAAEBCAH8A8UCuAADABcAsAAvsQEE6bEBBOkBsAQvsQUBKwAwMQE1IRUBCAK9Afy8vAAAAAABAZz/5wMxAYUABwA1ALIHAQArtAMPAAoEK7IHAQArtAMPAAoEKwGwCC+wAda0BRIACwQrtAUSAAsEK7EJASsAMDEkNDYyFhQGIgGccrBzc7BctHV1tHUAAQCw/rgEHQWuAAMAABMBMwGwAqLL/V7+uAb2+QoAAAADAIP/5wRKBS8ABwAPABcAdQCyBwEAK7ELBOmwFy+xEw/psA8vsQMK6QGwGC+wAda0CBAAMAQrsAgQsREBK7QVEgAdBCuwFRCxDQErtAUQADAEK7EZASuxEQgRErECBzk5sQ0VERKxAwY5OQCxFwsRErEFADk5sBMRsA05sA8SsQQBOTkwMRIQACAAEAAgAxAWMjYRECASNDYyFhQGIoMBAAHHAQD+/v49LZH6kv3jgVJ3UlJ3AUwCiwFY/qj9df6bAqr/APHxAQAB5v3hg1BQg1AAAAEAuAAABEQFFwALAFUAsgABACuxAQvpsAkysAQvsQUF6bIFBAors0AFBwkrAbAML7AC1rEJEOmyCQIKK7NACQsJK7ICCQors0ACAAkrs0ACBAkrsQ0BK7EJAhESsAc5ADAxMzUhESE1NjczESEVuAFh/u/LhawBQMEDWJMjSPuqwQAAAAEAewAABDkFLwAWAE4AsgwBACuxCg3psBQvsQIE6QGwFy+wEdaxBRDpsgURCiuzQAUMCSuyEQUKK7NAEQ0JK7EYASsAsQoMERKxCA45ObAUEbMABREWJBc5MDETNjMyFhUUAAU2NyEVITUIATU0JiMiB3vF+cn0/vH+9LA+AXD8TAFkASuBeI2SBGbJ27Se/qryDgHJiQExAU6LaHqSAAABAGb/5wQzBS8AIABeALIfAQArsQML6bAIL7EJB+mwEC+wDi+xEwTpAbAhL7AG1rEcEOmwCyDWEbEWEOmxIgErALEDHxESsAA5sAgRsQEcOTmwCRKxGBk5ObAQEbELFjk5sRMOERKwETkwMT8BFjMyNjU0ITUgNTQmIyIHJzYzMhYVFAUVHgEVFAQjJGZvmsB7nP5QAYN9aZqPe8fnzfz++Ieu/uHQ/tCgl49qW92s0VJce5GktqLPXAghqHuszQEAAAAAAgBMAAAEagUZAAoAEwBcALIJAQArsAAvsAYzsQsK6bAEMrILAAors0ALAwkrAbAUL7AJ1rAMMrEIEOmwAzKyCAkKK7NACAYJK7IJCAors0AJAAkrsRUBK7EICRESsBA5ALELABESsAE5MDETNQEhETMVIxEjESUhETY3Iw4BB0wCVgEQuLjd/mYBmgIKChdeFAFQoAMp/O22/rABULYBNzHRJYseAAAAAQBo/+cENwUXABkAdgCyGAEAK7EDC+mwCC+xEgfpsA8vsQwN6QGwGi+wBtaxFRDpsRsBK7A2Gro/u/onABUrCrAMLg6wC8AFsQ8V+Q6wEMAAsQsQLi4BswsMDxAuLi4usEAaAbEVBhESsQ0OOTkAsQMYERKwADmwCBGyAQoVOTk5MDE/ARYzMjY0JiMiBycTIRUhAzYzMhYVFAQjJGhtpq5/oph/cYBxKQMA/c0dbWDF+/7bzP7lnJeLh+WCSkcChMf+xCvOyc30AQAAAgCL/+cEUgUvABUAHwBlALITAQArsRkJ6bAeL7ENB+mwCC+xAwvpAbAgL7AA1rELEOmwCxCxHAErsRAQ6bEhASuxHAsRErQKAw0TFiQXObAQEbEGBTk5ALEeGRESsBA5sA0RsAs5sAgSsAY5sAMRsAU5MDETEAAzMhcHJiciBgc2MzIWFRQEIyIANx4BMzI2NCYjIosBQOvnnn9mjZjCCaK0tuD+9rvd/tvkFJVzZIh7cZwCZAFkAWeTkGIB6P6ez8W+7gFGtqahheV1AAAAAAEAhwAABEoFFwALAEUAsggBACuwAC+xAQ3pAbAML7AI1rEHEOmyBwgKK7NABwMJK7IIBwors0AIAAkrsQ0BK7EHCBESsAk5ALEBABESsAM5MDETNSEVBgoBAyMaAROHA8OotEYM8BK10wRQx5C6/qT+of7uAV4B7AEGAAADAIP/5wRKBS8AFgAoADMAdgCyFAEAK7EaB+mwMS+xCAfpAbA0L7AA1rQXEAAnBCuwBSDWEbQpEAAnBCuwFxCxLgErtAsQAB8EK7AdINYRsREQ6bE1ASuxKRcRErEDAjk5sC4RtBQaIycIJBc5sB0SsQ4NOTkAsTEaERK1AAMLEScsJBc5MDETNCU1Jjc0NjMyFhUUBxUeARUUBCMiJDcUFjMyNjU0LgMnLgInBhMUFhc2NTQmIyIGgwEIwwHtucHgwnmD/wDi3f740Zx9d4YgNlZaPQkHDwauRpWagXdpXHQBTs9/CH20nL7AoKp/CDucfZzHx7hgd2laKUEwKyIUAwQEAmcB4lppM2h6WG5gAAIAe//nBD8FLwAUAB4AYwCyCQEAK7ENC+mwEi+xGAfpsB0vsQMJ6QGwHy+wANaxFhDpsBYQsRABK7EGEOmxIAErsRYAERKxCgs5ObAQEbIPAxo5OTkAsQ0JERKwCjmwEhGwCzmwGBKwEDmwHRGwBjkwMRM0JDMyABEQACQnNxYzMjY3BiciJhIUFjMyNy4BIyJ7AQi63wEj/sH+LZ5/aI6YwgimsLjd2XpxnIMUlnJkA4W87v69/sj+nP6XAZOPYuf+nAHPATfmdpmkogAAAAACAZz/5wMxBD8ABwARADkAsgcBACu0Aw8ACgQrsBAvtAsPAAoEKwGwEi+wCNawADK0DRIACwQrsAQytAUSAAsEK7ETASsAMDEkNDYyFhQGIgM0NjIWFRQGIiYBnHKwc3OwcnKwc3Owcly0dXW0dQOKWHZ2WFp3dwACAYP+SANOBD8AEAAaAFYAsBkvtBQPAAoEKwGwGy+wEda0FhIACwQrsBYQsA0g1hG0AhAAHwQrsAIvtA0QAB8EK7ICDQorswACBwkrsRwBK7ECERESsRMZOTmwFhGxFBg5OQAwMQEkNwYjIiY1NDYzMhYVFAIHAzQ2MhYVFAYiJgGDAQQCChJSb3NSbXDMwSVysHNzsHL+1WjTAmFWUmSikbr++T8FKVh2dlhad3cAAAEA8gAnA/wE1wAHAAATNQEVARUBFfIDCv28AkQCK6gCBNv+hwj+h9sAAAAAAgCgAT8ELQO2AAMABwAaALAAL7EBCOmwBC+xBQfpAbAIL7EJASsAMDETNSEVATUhFaADjfxzA40BP62tAcusrAAAAAABANEAJwPbBNcABwAANzUBNQE1ARXRAkP9vQMKJ9sBeQgBedv9/KgAAgDV/+cD5wV1ABcAIQB3ALIgAQArtBsPAAwEK7AVL7ECC+kBsCIvsBjWtB0SAAwEK7MMHRgIK7QLEAAnBCuwHRCxEgErsQUQ6bEjASuxDBgRErANObALEbYCChUaGx8gJBc5sB0SsBA5sQUSERKwCDkAsRUbERKyBQsXOTk5sAIRsAA5MDETNjMyFhUUDgMXIyY+AzU0JiMiBxM0NjIWFRQGIibVouGy3UdlYjsIzwwzXmBIZlZ/bz5mmGZmmGYExbCumkp9XFp3RU6HYFZgMUpaavxWUGRkUFJnZwAAAAACAFL+1QRiBR8AJAAtAKsAsCIvsR0F6bANL7EoBumwKy+xEwXpsBcvsQMF6QGwLi+wANa0GhAAFgQrsBoQsRABK7QlEAAWBCuwJRCxEwErsAkytAYQAA0EK7AGELQqEAAWBCuwKi+wBhC0CBAADQQrsAgvsS8BK7EqJREStAMXHSINJBc5sBMRsAo5sAgSsB85sAYRsCA5ALEdIhESsCA5sA0RsB85sCgSsQkHOTmwKxGyEAAaOTk5MDETEAAhMhIVESMnIw4BIyImNTQkJTU0JiMiAhEQADMyNxcGIyAAARQWMzI3NQ4BUgFWAQrV24MSCC2ITXGWAQsBBJSNtPwBBMOcekqyt/78/p4CHUdAXGKwlQIEAYMBmP7t3f2ebjtMnnmaoyEfi7j+sP7B/sn+pVR4cQGqAVA5RGbgG1wAAAIAKQAABKQFOwAHAA8ASwCyAAEAK7ADM7IBAwArtAYIAAENK7EGBOkBsBAvsADWsQcS6bAHELEEASuxAxLpsREBK7EEBxESswIBCAkkFzkAsQEIERKwDDkwMTMBIQEjAyEDEyEnJgMjBgcpAbIBFwGy/Gb+QWidAVQvMUYINUIFO/rFAWr+lgIlpLIBCNnhAAMAvgAABGgFOwANABYAHQBzALINAQArsQ4K6bICAwArsR0K6bQXFg0CDSuxFwfpAbAeL7AA1rEOEOmwFzKwDhCxEQErsQoQ6bAKELAEINYRsRoQ6bAaL7EEEOmxHwErsRoOERKyCAcTOTk5ALEWDhESsAo5sBcRsQcIOTmwHRKwBDkwMTMRISARFAYHFQQRFAQjJzMgNTQhIisBNTMgNTQhI74BjAHbeXEBLf7q6L6mAS/+1AECpocBCP7+jQU7/rdkoh0IM/71w8a44syqxa4AAAAAAQB7/+cEfQVUABcAPQCyFQEAK7EQDumyAwMAK7EKDukBsBgvsADWsQ0S6bEZASsAsRAVERKwEzmwChGyAAYSOTk5sAMSsAU5MDETEAAhMhcHJiMiIyICFRQSMzI3FwYjIAB7AVwBENmkhWyJAQKqztCvk3mDqvT+9v6mApoBQgF4qJNs/vrf4/75hZHDAW8AAgCaAAAEagU7AAcADgA6ALIHAQArsQgL6bICAwArsQ4L6QGwDy+wANaxCBDpsAgQsQsBK7EFEumxEAErALEOCBESsQQFOTkwMTMRISAAEAAhJzMgExAhI5oBWgEtAUn+uf7deV4BkQH+bl4FO/6x/XD+pMEB4wHXAAAAAAEA1QAABEIFOwALAEoAsgABACuxCQ3psgEDACuxBA3ptAUIAAENK7EFDekBsAwvsADWsQkQ6bAEMrIJAAors0AJCwkrs0AJAwkrs0AJBwkrsQ0BKwAwMTMRIRUhESEVIREhFdUDWP2WAgz99AJ/BTvI/qrJ/nXJAAEA+AAABEwFOwAJAEAAsgABACuyAQMAK7EEDem0CAUAAQ0rsQgN6QGwCi+wANaxCRDpsAQysgkACiuzQAkDCSuzQAkHCSuxCwErADAxMxEhFSERIRUhEfgDVP2ZAgv99QU7yP6Fyf3RAAAAAAEAYv/nBFIFVAAbAHYAshoBACuxEA7psgMDACuxCg7ptBQVGgMNK7EUDOkBsBwvsAHWsQ0S6bANELESASuxFxDpshIXCiuzQBIUCSuxHQErsRINERKyCAMaOTk5sBcRsQYFOTkAsRAaERKwFzmxFRQRErANObAKEbAGObADErAFOTAxEhAAITIXByYjIiMiAhUUEjMyNxEjNSERDgEjIGIBVAEN25+DZ40CAaLJv7B5O+gBv0jXe/74AVYChwF3qJNs/vrf5/79PAEgw/2yRloAAAAAAQCTAAAEOQU7AAsAPwCyAAEAK7AHM7IBAwArsAUztAMKAAENK7EDDukBsAwvsADWsQsQ6bACMrALELEIASuwBDKxBxDpsQ0BKwAwMTMRMxEhETMRIxEhEZPuAcvt7f41BTv95gIa+sUCUv2uAAAAAAEArAAABCEFOwALAEcAsgABACuxAQ3psAkysgUDACuxBA3psAcyAbAML7AC1rEJEOmyCQIKK7NACQsJK7AGMrICCQors0ACAAkrsAQysQ0BKwAwMTM1IREhNSEVIREhFawBRP68A3X+vAFEyQOqyMj8VskAAQCP/+cECgU7AA8AOgCyDgEAK7EDDumyCQMAK7EIDOkBsBAvsAbWsQsQ6bIGCwors0AGCAkrsREBKwCxCAMRErEAATk5MDE/ARYzMjY1ESE1IREUAiMkj5BzmX11/eEDDOH4/u/FkaKFlgKmxvx/0/8AAQABAKoAAASyBTsADAAwALIAAQArsAgzsgEDACuwBTMBsA0vsADWsQwQ6bACMrEOASsAsQEAERKxAwo5OTAxMxEzETMBIQkBIQEHEarwBgHdAQj+ZAHJ/vj+ssIFO/2gAmD99vzPAnfw/nkAAAABAPYAAARWBTsABQAsALIAAQArsQMN6bIBAwArAbAGL7AA1rEDEOmyAwAKK7NAAwUJK7EHASsAMDEzETMRIRX26wJ1BTv7jskAAAAAAQCWAAAENwU7ABcA7wCyAAEAK7AJM7IBAwArsQIHMzMBsBgvsADWtBcQAB8EK7AXELEKASu0CRAAHwQrsRkBK7A2GrrC5uz3ABUrCrACLg6wBMCxEwX5sBLAuj3G70MAFSsKBbAHLg6wBcCxDhb5sA/AusLA7XIAFSsLsAIQswMCBBMruj1k7eoAFSsLsAUQswYFBxMrsgMCBCCKIIojBg4REjmyBgUHIIogiiMGDhESOQC3AwQFBg4PEhMuLi4uLi4uLgFACgIDBAUGBw4PEhMuLi4uLi4uLi4usEAaAbEXABESsBQ5sQkKERKwDTkAsQEAERKxDRA5OTAxMxEzExczNxMzESMRNBMjCwEjCwEjEhURlvWiOQc3nvXCHAZgjXOPXwYfBTv9+MvLAgj6xQJSmgFk/rj+YAGgAUj+g4H9rgAAAQCYAAAENQU7ABUAUgCyAAEAK7AMM7IBAwArsAozAbAWL7AA1rEVEOmwAjKwFRCxCQErsA0ysQsQ6bEXASuxFQARErEPEDk5sQsJERKxBAU5OQCxAQARErEEDzk5MDEzETMBEzMuAjURMxEjAQMjHgIVEZjxAWd9BgQTCuPx/pl9BgQTCgU7/Q/+4ynBm0QCRfrFAvQBGi26nEH9tgAAAAIAWP/nBHUFVAAJABMARwCyCAEAK7ENDumyAwMAK7ESDukBsBQvsADWsQoS6bAKELEPASuxBRLpsRUBK7EPChESswMCCAckFzkAsRINERKxBQA5OTAxExAAIAAREAAgABMUEiASNTQCIAJYASEB2wEh/t3+Kf7d9JkBApqa/v6ZAqQBPwFx/o/+wf6+/oUBewFC4f7zAQ3h3wEC/v4AAAACALIAAARzBTsACQARAEIAsgABACuyAgMAK7ERC+m0CAoAAg0rsQgL6QGwEi+wANaxCRDpsAoysAkQsQ0BK7EEEOmxEwErALERChESsAQ5MDEzESEgERQEKwEZATMgNTQmKwGyAcMB/v7l49XCASePmMIFO/5j1d3+FAKq9HtkAAIAWP6kBIkFVAAUAB8AWQCyAwMAK7EdDumwDy+xCgvpAbAgL7AA1rEVEumwFRCxGgErsQUS6bEhASuxGhURErMDAhIIJBc5sAURsgoMDzk5OQCxCg8RErANObAdEbQFAAwSFyQXOTAxExAAIAAREAIHFjMyNxcGIyImJyYCExQSIBI1NAIjIgJYAR8B1wEfz7JExjM1K0xitPo7vN7ylwEClpaBg5UCpAE/AXH+j/7B/vL+lzOWGbYjtporAWwBGeP+8wEN498BBP7+AAIArAAABI0FOwALABMAWwCyAAEAK7AHM7ICAwArsRML6bQKDAACDSuxCgTpAbAUL7AA1rELEOmwDDKwCxCxDwErsQQQ6bEVASuxDwsRErEJBjk5sAQRsAg5ALEMChESsAY5sBMRsAQ5MDEzESEgERAFASEBIxkBMyA1NCYrAawBvgHu/vYBP/70/uHIuAEdjo+4BTv+c/7dXP3RAgz99ALJ5W9gAAAAAAEAd//nBFoFVAAlAGgAsiQBACuxAw7psg8DACuxFA7pAbAmL7AM1rEXEOmwFxCxBgErsSES6bEnASuxFwwRErABObAGEbUDCg8UHiQkFzmwIRKyERIfOTk5ALEDJBESsAA5sBQRswEMEiEkFzmwDxKwETkwMT8BFjMyNjU0Ji8BJDU0JDMyFwcmIyIGFRQeARcWHwEeARUUBCMgd4uoxXmAZnu2/uEBBsv6tHuPpGh5QUpJCwawi5j+9OT+3qyimFxQTEovUHHzoteqmHNUSi9HIxwFAkw3qomo5gABAEoAAASDBTsABwA6ALIGAQArsgEDACuxAA3psAMyAbAIL7AG1rEFEOmyBQYKK7NABQMJK7IGBQors0AGAAkrsQkBKwAwMRM1IRUhESMRSgQ5/lrtBHPIyPuNBHMAAAABAJP/5wQ5BTsADgA5ALINAQArsQUO6bIBAwArsAgzAbAPL7AA1rEDEOmwAxCxBwErsQoQ6bEQASuxBwMRErEMDTk5ADAxExEzERAXMhkBMxEQAiACk+7n7uPv/j30AgADO/yz/skBATgDTfzF/vL+9QENAAEAOQAABJMFOwANAD0Asg0BACuyAAMAK7AKMwGwDi+wANaxARLpsAEQsQoBK7ELEumxDwErsQoBERKxDA05OQCxAA0RErAFOTAxEzMTFhIXMzYSNxMzASE5/L0STBgJG1EIu/P+Yf7nBTv9X0L+4VRaATohAqH6xQAAAAABAA4AAAS+BTsAHwEXALIfAQArsRceMzOyAAMAK7AUMwGwIC+wANaxARDpsAEQsRQBK7EVEOmxIQErsDYauj6i8toAFSsKsB4uDrAbwLEGF/mwCcC6wiPvmwAVKwoFsBcuDrAYwLEOCfmwDMC6PljxhwAVKwuwBhCzBwYJEyuzCAYJEyu6wa3xcQAVKwuwDBCzDQwOEyu6PpryswAVKwuwHhCzHR4bEyuyBwYJIIogiiMGDhESObAIObIdHhsREjmyDQwOIIogiiMGDhESOQBACgYJDBgbHQcIDQ4uLi4uLi4uLi4uAUAMBgkMFxgbHR4HCA0OLi4uLi4uLi4uLi4usEAaAbEBABESsB85sRUUERKwFjkAsQAfERKzBQoPGiQXOTAxEzMTHgEXMz4BNxMzEx4BFzM+ATcTMwMjAyYnIwYHAyMO8EoCEAIGDDoIdZdzCjYMCAQPAkXhtvx2GxEGFxZw+AU7/Pg53zg/6icBsv5OMeE+PeQvAwj6xQHpeYGWZP4XAAAAAAEASgAABIMFOwAWACYAsgABACuwDjOyAgMAK7ALMwGwFy+xGAErALECABESsQcSOTkwMTMJASETHgEXMzY3EzMJASEDJicjBgcDSgGJ/o8BCJ4SSg0INyeY+/6QAYn++q43OggtO6gCsgKJ/tcjkRh/TQEp/W39WAE7aHRmdv7FAAAAAAEANwAABJYFOwAOADIAsg0BACuyAAMAK7AJMwGwDy+wDdaxDBDpsRABK7EMDRESsQUEOTkAsQANERKwBDkwMRMzExYXMz4BNxMzAREjETf8qDVUCQZsG6b2/kftBTv+mHXAEOo9AWb8lv4vAdEAAAABAH0AAARYBTsACQAuALIAAQArsQcN6bIEAwArsQMM6QGwCi+xCwErALEHABESsAE5sQQDERKwBjkwMTM1ASE1IRUBIRV9Aq79jwOW/VACuI8D5saP/B3JAAAAAAEBtP7JA/4FqgAHADgAsAAvtAUFABwEK7AEL7QBBQAcBCsBsAgvsADWtAUQABYEK7IFAAors0AFBwkrsAIysQkBKwAwMQERIRUhESEVAbQCSv5sAZT+yQbhgfohgQAAAAEAsP64BB0FrgADAAATMwEjsMsCossFrvkKAAABANH+yQMbBaoABwA4ALAHL7QABQAcBCuwAy+0BAUAHAQrAbAIL7AB1rQGEAAWBCuyAQYKK7NAAQcJK7ADMrEJASsAMDEXIREhNSERIdEBkf5vAkr9trYF34H5HwAAAAABAMkCOwQEBVwACQAAEwEzASMLASMLAckBO8UBO8dyYQhgcwI7AyH83wE2ART+7P7KAAAAAQB7/skEUv+BAAMAFwCwAy+xAArpsQAK6QGwBC+xBQErADAxFyEVIXsD1/wpf7gAAQFQBJYC/gXZAAMAJQCwAy+xAQ/pAbAEL7AA1rQCEgAKBCuxBQErALEBAxESsAA5MDEBMxMjAVD2uLAF2f69AAIAkf/nBDMEBgAVAB4AeQCyDwEAK7ITAQArsRkE6bIKAgArsQUL6QGwHy+wANaxFhDpsBYQsRsBK7ADMrEOEOmwDhC0DxAAHwQrsA8vsSABK7EWABESsQcIOTmwGxGyBQoTOTk5sA8SsBE5ALEZDxESsRAROTmwBRGyAAccOTk5sAoSsAg5MDETNCQlJiMiByc2MzIWFREjJyMGIyImNxQWMzI3NQQGkQFGAXEO4ofDVuzf0d/AEwbDtpO95GRQhZr+/tEBDqqwG8Vrnovf0/2sfZaklj9Ce9USZwACAKj/5wRgBaYAEAAaAGUAsgABACuyDAEAK7ETDOmyBgIAK7EYDOkBsBsvsADWsREQ6bACMrQQEAAWBCuwERCxFgErsQkS6bEcASuxERARErEEDjk5sBYRsQYMOTkAsRMAERKwDjmwGBGwCTmwBhKwBDkwMTMRMxEHNjMyEhUUACMiJyMHExYzMjY1ECciB6juCY+pwdr++LaaiwYVNGR5b4vqd3YFpv6LsIX+7Or4/teIbwEGXLSmAT8BeQAAAAABAJb/5wRYBAYAFAA+ALITAQArsQ4L6bIDAgArsQgL6QGwFS+wAdaxCxLpsRYBKwCxDhMRErARObAIEbMAAQYQJBc5sAMSsAU5MDESEAAzMhcHJiciBhUUFjMyNxcGIyKWAUny35Zxd4GYvLmVjZJirun0AQIB5wEdjZRgAbmXlrhvmJgAAAAAAgBt/+cEJQWmABAAGwBtALIKAQArsg4BACuxFAzpsgMCACuxGQzpAbAcL7AA1rEREumwERCxFgErsAYysQkQ6bAJELQKEAAfBCuwCi+xHQErsRYRERKxAw45ObAKEbEFDDk5ALEUChESsQsMOTmwGRGwADmwAxKwBTkwMRM0ADMyFycRMxEjJyMGByICNxQWMzI3ESYnIgZtAQi0loML7sMSBo2ixenzf3V9ZmJ1bZMB9uwBJHeqAW36WnWNAQEZ+KKseQHEXAGyAAAAAgB//+cEVgQGABMAGgBrALIRAQArsQwK6bIDAgArsRgK6bQUCREDDSuxFAXpAbAbL7AA1rEJEumwFDKwCRCxFQErsQYQ6bEcASuxFQkRErMDDBEYJBc5sAYRsggODzk5OQCxDBERErAPObAJEbAOObAUErEGADk5MDETNAAzMhIVFAchHgEzMjcXBiMiABMhNCYjIgZ/ATXP2/gK/SUQtoyHk1C8zez+x/ACDn13ap4B9u4BIv741TE+h5VSlHUBHQFMeYeHAAABALwAAASoBb4AFABYALITAQArsgICACuwDjOxFATpsBAysAsvsQYE6QGwFS+wE9awAjKxEhDpsA0yshITCiuzQBIQCSuyExIKK7NAEwAJK7EWASsAsQsCERKwCTmwBhGwCDkwMRM1JTU0NjMyFwcmIyIHFSEVIREjEbwBF9XVnI8xb27dAQF//oHpAzOwCze63zeuK9s7u/zNAzMAAAAAAwB//kQEjQQGACYANAA+AMIAsg0CACuxPQbpsg8CACuxEgjpsCQvsSoF6bAxL7EdBOmwFy+xOAXpAbA/L7AK1rAFMrE1EOmwACDWEbQnEAAfBCuwChC0GxAAHwQrsDUQsToBK7QUEAAnBCuzLRQ6CCuxIRDpsBAysUABK7EnChESsQIHOTmxOjUREkAKDxcZHR4kKjAzDSQXObAtEbASOQCxMSoRErIhACc5OTmwHRGyAgMzOTk5sBcSsBs5sDgRsggHGTk5ObASErIKNTo5OTkwMRc0NzUmJzQ3NSY1NDYzMhchFSMWBxQGIyInBhUUOwEyFhUUBCEiJjcUFjMyNjU0JisBIicGExQWMjY1NCYiBn+gZgF5gfCuWkQBm+tEAeGwTE49vs3HxP7B/vzV9sWXi4+1YGugZjNiS22kbnCgb7B/VAg7bWpUCViqqMIYr1BcorIbJzVgdYGYzImiRE5gRDcrETsC41xtbF1abm4AAAAAAQCoAAAEQgWmABIASACyAAEAK7AJM7IGAgArsQ4N6QGwEy+wANaxEhDpsAIysBIQsQoBK7EJEOmxFAErsRIAERKwBDmwChGwBjkAsQYOERKwBDkwMTMRMxEHNjMgGQEjETQmIyIGBxGo7g+svQFS7lZmRnNJBab+i9es/mn9kQJQe3BBTP1SAAIArAAAA20F2wAFAA4AWQCyBAEAK7IBAgArsQAE6bAOL7EJD+kBsA8vsATWsQMQ6bIEAwors0AEAAkrsAMQsxMDDA4rtAcSABMEK7AHL7QMEgATBCuxEAErsQMEERKyCQ0OOTk5ADAxEzUhESMRAjQ2MzIWFAYirAKg7ENgSEpeX5MDM7v8EgMzAcOLWlqLWAAAAAACAGT+WgNtBdsADgAXAGsAsg0AACuxAwTpsgkCACuxCATpsBcvsRIP6QGwGC+wBtaxCxDpsgYLCiuzQAYICSuwCxCzEwsVDiu0EBIAEwQrsBAvtBUSABMEK7EZASuxCwYRErISFhc5OTkAsQMNERKwADmwCBGwATkwMRM3FhcyNjURITUhERAhIgA0NjMyFhQGImRIb2h7Yv5MAqD+Q54BLGBISl5fk/6eqjMBdX0DLbv8JP5IBpyLWlqLWAAAAAABALgAAASkBaYADAAtALIAAQArsAgzsgUCACsBsA0vsADWsQwQ6bACMrEOASsAsQUAERKxAwo5OTAxMxEzETcBIQkBIQEHEbjuBgHHAQb+ewGw/v7+xMAFpvx5AgHN/mr9qAG8uv7+AAEAkf/nBFIFpgAOADwAsgoBACuxBQvpsAAvsQEE6QGwDy+wDdaxAxDpsg0DCiuzQA0ACSuxEAErALEFChESsAg5sAARsAc5MDETNSERFDMyNxcGByImNRGRAim1SmI3qHWuuATsuvu8uieuOQHLvQN9AAAAAQBiAAAEhQQGAB4AeQCyAAEAK7EQFzMzsgECACuyBgIAK7AMM7EbDemwFDIBsB8vsADWsR4Q6bQCEAAWBCuwHhCxGAErtBcQABYEK7AXELERASuxEBDpsSABK7EeAhESsAQ5sBgRsQgGOTmwFxKwCjmwERGwDDkAsQEbERKyAwQKOTk5MDEzETMXMzYzMjMyFzYzMhYVESMRNCMiBxEjETQjIgcRYrITBk2OAQGTJlKRanXfVEo5uFZGOQPugZmoqKaX/TcCtoV9/UICtoV9/UIAAAABAKgAAARCBAYAEgBTALIAAQArsAkzsgECACuyBgIAK7EODekBsBMvsADWsRIQ6bQCEAAfBCuwEhCxCgErsQkQ6bEUASuxEgIRErAEObAKEbAGOQCxAQ4RErEDBDk5MDEzETMXMzYzIBkBIxE0JiMiBgcRqMITCKy/AVLuVmZGc0kD7piw/mn9kQJQe3BBTP1SAAAAAgBt/+cEYAQGAAkAEwBHALIIAQArsQ0L6bIDAgArsRIL6QGwFC+wANaxChLpsAoQsQ8BK7EFEumxFQErsQ8KERKzAwcIAiQXOQCxEg0RErEFADk5MDETNAAgABUUACAANxQWMjY1NCYiBm0BKQGhASn+1/5f/tfzjvGOjPWMAfbyAR7+4fHw/uEBH/CYtraYmra2AAIAqP5zBGAEBgAQABoAbACyDAEAK7ETDOmyAAAAK7IBAgArsgYCACuxGAzpAbAbL7AA1rEQEOmwETK0AhAAHwQrsBAQsRYBK7EJEumxHAErsRACERKxBA45ObAWEbEGDDk5ALETDBESsA45sBgRsAk5sAESsQMEOTkwMRMRMxczNjMyEhUUACMiJxcZARYzMjY1ECciB6jCEwaWrMPY/vi2lIEJZHdxi+p3dv5zBXtzi/7s7Pj+2Xew/sUCk1y0pgE/AXkAAAAAAgBt/nMEJQQGABAAGwBsALIOAQArsRQM6bIKAAArsgcCACuyAwIAK7EZDOkBsBwvsADWsRES6bARELEKASuwFjKxCRDpsAkQtAcQAB8EK7AHL7EdASuxChERErEDDjk5sAcRsQUMOTkAsRQOERKwDDmxBxkRErAFOTAxEzQAMzIXMzczESMRNwYHIgI3FBYzMjcRJiciBm0BCLSkgwYUu+4LiZ7F6fN/dX1mYnVtkwH27AEkg2v6hQFSqIUBARn4oqx5AcRcAbIAAAAAAQEKAAAEVgQGABAARwCyAAEAK7IBAgArsgYCACuxDQ7pAbARL7AA1rEQEOm0AhAAHwQrsRIBK7EQAhESsAQ5ALENABESsgMECTk5ObABEbAIOTAxIREzFzM2ITIXByYjIiMiAxEBCsMUBqABDG9UMV9SAwLsiwPu5Pwpxh7+9v3VAAAAAQB//+cERAQGAB8AaACyHgEAK7EDCemyDgIAK7ETCekBsCAvsAvWsRUQ6bAVELEGASuxGxDpsSEBK7EVCxESsAE5sAYRtQMJDhMYHiQXObAbErIQERk5OTkAsQMeERKwADmwExGzAQsRGyQXObAOErAQOTAxPwEWMzI2NTQmJyQ1NDYzMhcHJiMiFRQWFx4BFRQGIyB/b7jNc3KJoP6N7NHZyW2Ym9ONjsHA+t3+84OWf0E3M0opYr+HpoWRZG8xQSUziHSHsQABAHn/5wRiBQAAFABtALIRAQArsQwE6bICAgArsAUzsRQE6bAHMrICFAors0ACBAkrAbAVL7AT1rACMrEJEOmwBDKyCRMKK7NACQcJK7ITCQors0ATAAkrsAkQtAMQAB8EK7ADL7EWASsAsQwRERKwDzmwFBGwDjkwMRM1JRMzESEVIREUFjMyNxcGByQZAXkBFh/DAcj+OGp9c2wrpJ/+ZgMzsAsBEv7uu/5jf3MprDkBAQGuAZ0AAQCP/+cEHwPuABIAWQCyDQEAK7IRAQArsQYN6bIBAgArsAozAbATL7AA1rEDEOmwAxCxCQErsQwQ6bAMELQNEAAfBCuwDS+xFAErsQkDERKwETmwDRGwDzkAsQYNERKxDg85OTAxExEzERQWMzI2NxEzESMnIwYHII/sVmZIcUPswRIInsf+sAF/Am/9sHtxRFICpvwSoLgBAAAAAQBUAAAEeQPuAAsAIQCyCwEAK7IAAgArsAgzAbAML7ENASsAsQALERKwBDkwMRMzExYXMzY3EzMBIVTuwhtJCUoaw+H+ef7zA+799Ujn50gCC/wSAAAAAAEACgAABMMD7gAgAdIAsiABACuyFBUfMzMzsgACACuyARITMzMzAbAhL7AA1rEBEOmwARCxEgErsRMQ6bEiASuwNhq6wPj06gAVKwqwABCwIMAOsAEQsAXAuj8p9awAFSsKBbAfLg6wGsCxBhn5sAjAusGl8ZYAFSsKDrAZELAWwLEKGvmwC8C6wOP1ZAAVKwoFsBUuDrAYwLENG/mxCgsIsAvAuj8j9YcAFSsKDrASELAOwAWwExCwFMC6wNj1pQAVKwuwARCzAgEFEyu6Pyj1pQAVKwuwDhCzDw4SEyuzEA4SEyuzEQ4SEyuxGRYIsBgQsxYYFRMrusEo8+QAFSsLsxcYFRMruj769JsAFSsLsB8QsxsfGhMrsxwfGhMrsx0fGhMrsx4fGhMrsgIBBSCKIIojBg4REjmyHB8aIIogiiMGDhESObAdObAbObAeObIXGBUgiiCKIwYOERI5sg8OEiCKIIojBg4REjmwEDmwETkAQBQCBQYICgsNDhEWGRoeDxAXGBscHS4uLi4uLi4uLi4uLi4uLi4uLi4uAUAYAgUGCAoLDQ4RFBUWGRoeHyAPEBcYGxwdLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4usEAaAQCxACARErAJOTAxEzMTHgEXMzY3EzMTFhczPgE3EzMDIQMuAScjDgIHAyEK7FwKGwQIGRper2IZHAgKGwRc3Lv+6lgIHwsIBA4RClT+8APu/fU30RiifgGo/lhvsTfJIAIL/BIBpC/ANhlqazn+XgABAGgAAARkA+4AGQAmALIAAQArsBAzsgICACuwDTMBsBovsRsBKwCxAgARErEIFTk5MDEzCQEhFx4CFzM+AT8BMwkBIScuAScjBg8BaAFt/qwBAIMOJS8NCBJGCnf4/qoBbv8AkRBUFwg9MIMCCgHkvxk5RxMheRS9/gT+DscZeh9iUsUAAAAAAQBS/mIEfQPuABUALQCyDQAAK7ESC+myAAIAK7AIMwGwFi+xFwErALESDRESsA85sAARsQQQOTkwMRMzExYXMzY3EzMBDgEjIic3FjMyPwFS688XWAgZS7ff/lxGzqxOQi0vJaxGGAPu/hI18k7ZAe775ba7FbgOrD8AAAEAkQAABEwD7gAJAC4AsgABACuxBwTpsgQCACuxAwTpAbAKL7ELASsAsQcAERKwATmxBAMRErAGOTAxMzUBITUhFQEhFZECXf3pA2L9ogJxfwK0u339S7wAAAAAAQDn/skD/gWqACkAeQCwIi+0HwUAHAQrsAAvsQEF6bAML7QJBQAcBCsBsCovsCXWsAYytBwQAB8EK7APMrAcELQoEAAfBCuwKC+wAzOyHCgKK7NAHCEJK7AKMrErASuxKCURErEVFjk5ALEAHxESsRklOTmwARGxFRY5ObAMErEGEjk5MDETNSQ1NCY1NDY7ARUjIgYVFBYVFAYHFR4BFRQGFRQWOwEVIyImNTQ2NTTnASEUtMmNXotdC1lqalkLXIxejcm0FAHyjwKYP+5Hnn2BRl436j9taBMIEmlsROM5XkaBfJ5M6EGYAAABAhf+AAK2BgAAAwAdAAGwBC+wANa0AxAAFgQrtAMQABYEK7EFASsAMDEBETMRAhef/gAIAPgAAAEA0f7JA+UFqgApAHMAsCkvtAAFABwEK7AgL7EfBemwFS+0FgUAHAQrAbAqL7AE1rAOMrQlEAAfBCuwGjK0IhAAFgQrsB0ysgQiCiuzQAQpCSuwFTKxKwErsSUiERKxCwo5OQCxIAARErEHJTk5sB8RsQoLOTmwFRKxDho5OTAxFzMyNjU0JjU0Njc1LgE1NDY1NCYrATUzMhYVFAYVFAUVBBcUFhUUBisB0V6LXQtWbW1WC12LXo3JshQBIP7fARSyyY22RV8540RtaBIIEmltP+o3XkaBfZ5I7T+YAo8CmELnTJ58AAABAIMBywRKAysAEQAtALALL7EGB+mzDwYLCCuxAgfpAbASL7ETASsAsQ8LERKwADmxAgYRErAJOTAxExIzMh4BMzI3FwIjIi4BIyIHg2rJRoNvLWQ7kGrJRoNvLWM9AgwBF1JSrET+7FJSrAACANX/tAQfBTsAFgAcAF8AsgQDACuwFC+wETOxGQ7psQwL6bIUDAors0AUEwkrAbAdL7AA1rEXEOmwFxCxEwErsQMZMjK0EhAADQQrsQULMjKxHgErALEMFBESsA85sQQZERK0AwkLDhokFzkwMRM0Ejc1MxUWFwcmJxE2NxcGBxUjNSYCNxQXEQ4B1ey+iZhsbkhOVl5jeZ6JxeXnw15lAnfRAQYfzsgIbZE/CP2JCkqVbRDLyxkBCNfuPQJYH54AAAAAAQCWAAAEVAUvACMAmgCyAAEAK7EhDemwGy+wBjOxGAXpsAgysBMvsQ4L6QGwJC+wBNa0HRAAJwQrsh0ECiuzQB0jCSuzQB0aCSuwHRCwFiDWEbELEOmwCy+xFhDpsgsWCiuzQAsACSuxJQErsQQLERKwCTmwFhGxICE5ObAdErAYOQCxIQARErABObAbEbAEObAYErAJObATEbELETk5sA4SsBA5MDEzNT4BNTQnIzU3JjU0NjMyFwcmJyIGFRQXIRUhFhUUBgcVIRWWc4IK6bgz98vjkINgfXV/KwFv/roIP0QCfZExs3AlL44KhUy216CBYAFzZkh9mCcvWH09CMkAAAABAFYAAAR3BRcAHQBkALIVAQArsBcvsBIztBgFABwEK7AQMrAbL7AOM7QcBQARBCuwDDIBsB4vsBXWsBkysRQQ6bAPMrIUFQors0AUEgkrsA0yshUUCiuzQBUXCSuwGzKxHwErsRQVERKxBAg5OQAwMRMzEx4BFzM+ATcTMwEhFSEVIRUhESMRITUhNSE1IVbymxlUFAkSWBmb7P6bATL+lwFp/pfr/pkBZ/6ZAS8FF/7KMbYpJboxATb9jXl5e/7JATd7eXkAAAMAMf/sBJwFOwAJABEAJwCYALIIAQArtA0FABEEK7IDAwArtBEFABEEK7QlIAgDDSuxJQXptBUaCAMNK7EVBekBsCgvsADWtAsQAA0EK7ALELESASu0HRAAFgQrsB0QsQ8BK7QFEAANBCuxKQErsR0SERKyCBECOTk5sA8RtgcDEBUXIyUkFzkAsSAlERKxDiM5ObAaEbQFABIYIiQXObAVErEPFzk5MDETEAAgABEQACAAEhASIBIQAiADNDYzMhcHJiMiBhUUFjMyNxcGIyImMQFEAeMBRP68/h3+vHP4AZX4+P5rec2NfWJcOzpUYl5OP1JOcXSWwgKYATUBbv6S/sv+zf6HAXkCN/33/sMBPQIJATf9w67ZY2Y3iWx3jDxzWtwAAAAAAQEIAfwDxQK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxATUhFQEIAr0B/Ly8AAAAAAQA2QKFA/IFtgAKABQAIAAmALAAsAkvtA4FABEEK7AfL7QhBQARBCuyHyEKK7NAHx0JK7AVMrAmL7QXBQARBCuwEy+0AwUAEQQrAbAnL7AA1rQLEAANBCuwCxCxFQErtCAQAA0EK7AhMrAgELEkASu0GRAADQQrsBkQsRABK7QGEAANBCuxKAErsRULERKwCTmwIBGxEw05ObAkErEeAzk5sBkRtAgSDhsdJBc5sBASsBw5ALEhHxESswsQBhskFzkwMRM0NjMyFhUUBiAmNxQWIDY1NCYgBhMRMzIHFAcXIycjFTUzMjQrAdnlpqjm6P605WCoAQaoqP76qJCopAFJWm9BSC9MSDMEHbLn57Kw6OiwjbOyjo+0tP6qAZiGUCCihYXPewAAAQHPBJYDfQXZAAMAHQCwAC+xAQ/pAbAEL7AA1rQCEgAKBCuxBQErADAxARMzAwHPuPb+BJYBQ/69AAAAAQEIAfwDxQK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxATUhFQEIAr0B/Ly8AAAAAAEBCAH8A8UCuAADABcAsAAvsQEE6bEBBOkBsAQvsQUBKwAwMQE1IRUBCAK9Afy8vAAAAAABAQgB/APFArgAAwAXALAAL7EBBOmxAQTpAbAEL7EFASsAMDEBNSEVAQgCvQH8vLwAAAAAAQCkAfwEKQK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxEzUhFaQDhQH8vLwAAQApAfwEpAK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxEzUhFSkEewH8vLwAAQGRAo0DHQWWABAAMwCwDi+xCA/pAbARL7AA1rQLEgALBCuxEgErsQsAERKyAwUGOTk5ALEIDhESsQAGOTkwMQE0NjcXBgc2NzIWFRQGIyImAZGooETPDBIbSltgTmJzA66g/EyCbcQIAV1JUmeaAAEBrgKNAzcFlgAQAD0AsAQvsQoP6QGwES+wB9awADK0DRIACwQrtA0SAAsEK7ESASuxDQcRErIBAhA5OTkAsQoEERKxAg05OTAxATY3BiMiJjU0NjMyFhUUBgcBrs8OFxpIXmNLYnOnngMObcQIXEpSZ5qHoPxMAAIAkwKNBBsFlgAQACEAWgCwDi+wHzOxCA/psBkyAbAiL7AA1rQLEgALBCuwCxCxEQErtBwSAAsEK7EjASuxCwARErIDBQY5OTmwERGwBDmwHBKyFBYXOTk5ALEIDhESswAGERckFzkwMRM0NjcXBgc2NzIWFRQGIyImJTQ2NxcGBzY3MhYVFAYjIiaTqKBEzwwSG0pcYU5icwH8qKBEzw0SHEpbYE5icwOuoPxMgm3ECAFdSVJnmoeg/EyCbcQIAV1JUmeaAAAAAgCwAo0ENQWWABAAIQBcALAEL7AVM7EKD+mwGzIBsCIvsAfWsAAytA0SAAsEK7ANELEYASuwETK0HhIACwQrsSMBK7ENBxESsgECEDk5ObEeGBESshITITk5OQCxCgQRErMCDRMeJBc5MDETNjcGIyImNTQ2MzIWFRQGByU2NwYjIiY1NDYzMhYVFAYHsM8OFxpIXmNLYnOnngG4zw4XGkheYkxic6eeAw5txAhcSlJnmoeg/EyBbcQIXEpSZ5qHoPxMAAEBJwExA6YDqAAHAC4AsAcvtAMPAAcEK7QDDwAHBCsBsAgvsAHWtAUSAAcEK7QFEgAHBCuxCQErADAxABA2IBYQBiABJ7oBC7q6/vUB4wETsrL+7bIAAAADAB//5wSuAUgABwAPABcAVACyBwEAK7EOFjMztAMPAAwEK7EKEjIysgcBACu0Aw8ADAQrAbAYL7AB1rQFEgATBCuwBRCxCQErtA0SABMEK7ANELERASu0FRIAEwQrsRkBKwAwMTY0NjIWFAYiJDQ2MhYUBiIkNDYyFhQGIh9ej15ejwFEXo9eXo8BQ1+PXl6PTJdlZZdlZZdlZZdlZZdlZZdlAAEAaP/nBJoFLwApAJQAsiYBACuxIQTpsB4vsAAztBsFABwEK7ABMrAXL7AGM7QUBQAcBCuwCDKwES+xDArpAbAqL7AE1rEZEOmyGQQKK7NAGR0JK7NAGRYJK7IEGQors0AEAAkrsAcysSsBK7EZBBESsQkpOTkAsR4hERKxIyQ5ObAbEbACObAXErAEObAUEbAJObARErAPObAMEbAOOTAxEzU3JjU0NyM1NzYAMzIXByYnIgYHIRUhBhUUFyEVIR4BMzI3FwYHIiQnaHUCAnWEKwEt29WThXN4f6AdAi/9wwICAev+JSGedpFxhqzoz/7gKwHNcgkUKykTcgjsAQaggWgBopZ8ECQvFn2RnIF7vgH+6AAAAAAC/+4C6QSyBWgABwAbALMAsAAvsAMzsQEF6bEJDzIysgABCiuzQAAGCSuxCBEyMgGwHC+wBta0BRAAFgQrsgUGCiuzQAUDCSuyBgUKK7NABgAJK7AFELEIASu0GxAADQQrsBsQsRIBK7QREAANBCuxHQErsDYausL67LUAFSsKDrAYELAXwLELHPmwDMAAswsMFxguLi4uAbMLDBcYLi4uLrBAGgGxGwgRErAZObASEbIKDxY5OTmwERKxFBU5OQAwMQM1IRUjESMRAREzHwEzPwEzESM1NyMDIwMjFxUSAga1nwGkslIxCC9Qso0QCH9mfwgSBNeRkf4SAe7+EgJ/1Zub1f2B7uH+qgFW4e4AAAEAAAAAA+0D7QADAAARIREhA+38EwPt/BMAAAABAAAAAQJNrT3hu18PPPUAHwgAAAAAAMyHZP4AAAAAzIdk/v/u/gAEwwYAAAEACAACAAAAAAAAAAEAAAYA/dgAAAYA/+7//wTDAAEAAAAAAAAAAAAAAAAAAACFBMwAYgAAAAACqgAABMwAAATMAbQEzADZBMwAoATMAJgEzAAvBMwAQgTMAdcEzAGNBMwA/gTMAMEEzACgBMwBgwTMAQgEzAGcBMwAsATMAIMEzAC4BMwAewTMAGYEzABMBMwAaATMAIsEzACHBMwAgwTMAHsEzAGcBMwBgwTMAPIEzACgBMwA0QTMANUEzABSBMwAKQTMAL4EzAB7BMwAmgTMANUEzAD4BMwAYgTMAJMEzACsBMwAjwTMAKoEzAD2BMwAlgTMAJgEzABYBMwAsgTMAFgEzACsBMwAdwTMAEoEzACTBMwAOQTMAA4EzABKBMwANwTMAH0EzAG0BMwAsATMANEEzADJBMwAewTMAVAEzACRBMwAqATMAJYEzABtBMwAfwTMALwEzAB/BMwAqATMAKwEzABkBMwAuATMAJEEzABiBMwAqATMAG0EzACoBMwAbQTMAQoEzAB/BMwAeQTMAI8EzABUBMwACgTMAGgEzABSBMwAkQTMAOcEzAIXBMwA0QTMAIMEzAAABMwA1QTMAJYEzABWBMwAMQTMAQgEzADZBMwBzwMAAAAGAAAAAwAAAAYAAAACAAAAAYAAAAEAAAABAAAAAMAAAAEzAAAAVQAABMwBCATMAQgEzAEIBMwApATMACkEzAGRBMwBrgTMAJMEzACwBMwBJwTMAB8BMwAAAYAAAATMAGgEzP/uA+wAAAAAAFoAWgBaAFoAnADMAa4CNgL0A4wDrgPSA/YEKARqBJoEtATgBPAFWgWcBewGTgaiBwgHcAeuCDYIngjaCTIJSAlqCX4J7gqOCtYLQAuIC8YMAgw4DKIM2g0UDU4NhA2qDkwOnA7sDywPkg/mEFQQhBC+EPwRwBICEjoSaBKYEqYS1hLwEwgTKBOWE/YUOhSgFQQVVBYOFlIWnBb8FzAXahfUGB4YaBjMGTIZdBnYGjQaghquG9AcFBxSHIAc9h0SHYYdvB28Hh4eoB8EH5gfsiBGIGQgZCBkIGQgZCBkIGQgZCBkIGQgZCBkIH4gmCCyIMog4iEaIVYhuiIcIkgimiKaIpojJiOuI7wAAQAAAIUAPwAGAAAAAAACAAEAAgAWAAABAAHSAAAAAAAAAAgAZgADAAEECQAAAIoAAAADAAEECQABAB4AigADAAEECQACABAAqAADAAEECQADAA4AuAADAAEECQAEADAAxgADAAEECQAFAHIA9gADAAEECQAGACwBaAADAAEECQDIAG4BlABDAG8AcAB5AHIAaQBnAGgAdAAgADIAMAAxADAALAAgADIAMAAxADIAIABBAGQAbwBiAGUAIABTAHkAcwB0AGUAbQBzACAASQBuAGMAbwByAHAAbwByAGEAdABlAGQALgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALgBTAG8AdQByAGMAZQAgAEMAbwBkAGUAIABQAHIAbwBTAGUAbQBpAGIAbwBsAGQAdwBlAGIAZgBvAG4AdABTAG8AdQByAGMAZQAgAEMAbwBkAGUAIABQAHIAbwAgAFMAZQBtAGkAYgBvAGwAZABWAGUAcgBzAGkAbwBuACAAMQAuADAAMAA5ADsAUABTACAAMQAuADAAMAAwADsAaABvAHQAYwBvAG4AdgAgADEALgAwAC4ANwAwADsAbQBhAGsAZQBvAHQAZgAuAGwAaQBiADIALgA1AC4ANQA5ADAAMABTAG8AdQByAGMAZQBDAG8AZABlAFAAcgBvAC0AUwBlAG0AaQBiAG8AbABkAFQAaABpAHMAIABmAG8AbgB0ACAAdwBhAHMAIABnAGUAbgBlAHIAYQB0AGUAZAAgAGIAeQAgAHQAaABlACAARgBvAG4AdAAgAFMAcQB1AGkAcgByAGUAbAAgAEcAZQBuAGUAcgBhAHQAbwByAC4AAgAAAAAAAP9nAGYAAAAAAAAAAAAAAAAAAAAAAAAAAACFAAAAAQACAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQAJQAmACcAKAApACoAKwAsAC0ALgAvADAAMQAyADMANAA1ADYANwA4ADkAOgA7ADwAPQA+AD8AQABBAEIAQwBEAEUARgBHAEgASQBKAEsATABNAE4ATwBQAFEAUgBTAFQAVQBWAFcAWABZAFoAWwBcAF0AXgBfAGAAYQECAIQAhQCWAIsBAwCKAI0BBAEFAQYBBwEIAQkBCgELAQwBDQEOAQ8BEAERALIAswC2ALcAtAC1AIcAqwESARMBFACMARUHdW5pMDBBMAd1bmkwMEFEB3VuaTIwMDAHdW5pMjAwMQd1bmkyMDAyB3VuaTIwMDMHdW5pMjAwNAd1bmkyMDA1B3VuaTIwMDYHdW5pMjAwNwd1bmkyMDA4B3VuaTIwMDkHdW5pMjAwQQd1bmkyMDEwB3VuaTIwMTEKZmlndXJlZGFzaAd1bmkyMDJGB3VuaTIwNUYERXVybwd1bmlFMDAwuAH/hbABjQBLsAhQWLEBAY5ZsUYGK1ghsBBZS7AUUlghsIBZHbAGK1xYALAEIEWwAytEsAogRboABAEjAAIrsAMrRLAJIEWyCokCK7ADK0SwCCBFsgloAiuwAytEsAcgRbIISAIrsAMrRLAGIEWyBzICK7ADK0SwBSBFsgYnAiuwAytEsAsgRboABAEMAAIrsAMrRLAMIEWyC5MCK7ADK0SwDSBFsgxSAiuwAytEsA4gRbINPAIrsAMrRLAPIEWyDg0CK7ADK0QBsBAgRbADK0SwESBFugAQf/8AAiuxA0Z2K0SwEiBFshHsAiuxA0Z2K0RZsBQrAAA=\') format(\'truetype\');\n\tfont-weight: normal;\n\tfont-style: normal;\n}\n\n#viewport-ui {\n\tfont-family: \'SourceCodeProSemibold\', sans-serif;\n\t/**\n\t * Don\'t let people accidently highlight text.\n\t */\n\t-webkit-touch-callout: none;\n\t-webkit-user-select: none;\n\t-khtml-user-select: none;\n\t-moz-user-select: none;\n\t-ms-user-select: none;\n\tuser-select: none;\n}\n\n#viewport-ui .pointer {\n\tdisplay: none;\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\twidth: 13px;\n\theight: 20px;\n\tbackground-image: url(\'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAUCAYAAABWMrcvAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZpJREFUeNqUk79LAnEUwN9FgXh4wUGIg7g46XCI4NLgcERi0NzQXyBRc/9AU4uDBNFgY4QQgi1phIqKUy2OTimBnYFy/s7Xe0eKmuJ18Pny5b37vO+77/e+gIjnhECAWXjQiat/Sf1+v1mv12mO16alTqejBYNBLJVKLN4SG2ul0WikuVwulCQJy+Uyi3fE1lrJ7XbTDFCWZczlciw+EBZTEsMrZjIZFh8J0ZTEiKI4EXmQTEmMzWbDdDrNYnZRXCkxVqsVU6kUi8/EtimJEQQB4/E4i3lCZmkTVjyqqoLX64VWqwV0hhAKhXbtdnuWUgdzkqIo0G63oVqtAm0GRKNRDj8RnwS/KxHHMBwONafTiX6/H3VdN1qZtJZIJLityz+7R5W1SCSCjUbjmwI3VOQjEAgYks/nw16v16W4MieNx+OvwWDAFc9+gxfJZHK6WiwW49z94tVoEiczwR3iPRwOG5LD4cBarcaiOisdLvlVTguFgiF5PB6sVCqTs5pKy7DQ+b0Vi0XsdvmT8IXYWycxR8Qrsb+Y+xFgABTcmOagLuC4AAAAAElFTkSuQmCC\');\n\n\tz-index: 1;\n\t/* Don\'t let elementFromPoint() return the actual pointer */\n\tpointer-events: none;\n}\n\n#viewport-ui.active .pointer {\n\tdisplay: inline-block;\n}\n\n.fullscreen {\n\tposition: fixed;\n\ttop: 0;\n\tleft: 0;\n\twidth: 100%;\n\theight: 100%;\n}\n\n/**\n * Dialogs\n */\n.dialog {\n\tposition: relative;\n\twidth: 40%;\n\tmargin: 10em auto 0;\n\tpadding: 1.2em 1.6em;\n\tbackground: #111;\n\tcolor: #bfbfbf;\n\tborder-radius: 1em;\n\tword-break: break-all;\n\toverflow: hidden;\n}\n\n.dialog .close {\n\tposition: absolute;\n\twidth: 1.4em;\n\theight: 1.4em;\n\ttop: 0;\n\tright: 0;\n\tfont-size: 1.4em;\n\tcolor: #999999;\n\ttext-align: center;\n}\n\n.dialog .close.hover {\n\tcolor: #bfbfbf;\n}\n\n.dialog h1 {\n\tfont-size: 1.2em;\n\tpadding-bottom: .2em;\n\tborder-bottom: 1px solid #222;\n}\n\n.dialog .menu-item {\n\tmargin-bottom: .5em;\n\tpadding: .5em;\n\tbackground: #222;\n}\n\n.dialog .menu-item.hover {\n\tbackground: #333;\n}\n\n.dialog .control-group {\n\tmargin-bottom: .5em;\n}\n\n.dialog .control-label {\n\tfloat: left;\n\tpadding: .5em 0;\n\twidth: 10em;\n\tcolor: #a6e22e;\n\ttext-align: right\n}\n\n.dialog .control-input {\n\tmargin-left: 11em;\n\t/* Empty fields */\n\tmin-height: 1em;\n}\n\n.dialog .control-input.input-text,\n.dialog .control-input.input-key {\n\tpadding: .5em;\n\tbackground: #222;\n\tborder: 1px solid transparent;\n}\n\n.dialog .control-input.input-text.hover,\n.dialog .control-input.input-key.hover {\n\tbackground: #333;\n}\n\n.dialog .control-input.input-text.focus,\n.dialog .control-input.input-key.focus {\n\tborder: 1px solid #0f0;\n}\n\n.dialog .form-horizontal .form-actions {\n\tmargin-left: 11em;\n}\n\n.dialog .button {\n\tdisplay: inline-block;\n\tpadding: .5em;\n\tbackground-color: #222;\n\tbackground-image: -moz-linear-gradient(top, #333, #222);\n\tbackground-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));\n\tbackground-image: -webkit-linear-gradient(top, #333, #222);\n\tbackground-image: linear-gradient(to bottom, #303030, #222);\n}\n\n.dialog .button.hover {\n\tbackground: #333;\n}\n\n/**\n * Tabs\n */\n.nav-tabs {\n\tlist-style: none;\n\tmargin: 0;\n\tpadding: 0;\n}\n\n.nav-tabs li {\n\tdisplay: inline-block;\n\tpadding: 0.33em 0.5em;\n}\n\n.nav-tabs li a {\n\tcolor: #fff;\n\ttext-decoration: none;\n}\n\n.nav-tabs li.active {\n\tcolor: #fff;\n\tbackground-color: #222;\n}\n\n.tab-pane {\n\tdisplay: none;\n}\n\n.tab-pane.active {\n\tdisplay: block;\n}\n\n/**\n * Ranges\n */\n.input-range {\n\tposition: relative;\n\theight: 1em;\n}\n\n.input-range .input-range-track {\n\tposition: absolute;\n\ttop: 50%;\n\tleft: 0;\n\twidth: 100%;\n\theight: 1px;\n\tbackground: #222;\n}\n\n.input-range .input-range-slider {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\tbackground: #a6e22e;\n\twidth: 1em;\n\theight: 1em;\n\tcontent: \'\';\n}\n\n/**********************************************************\n *\n * Specialized\n *\n **********************************************************/\n\n/**\n * Main menu\n */\n#main .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#main .menu-item {\n\ttext-align: center;\n}\n\n#main .settings.menu-item {\n\tmargin-bottom: 0;\n}\n\n/**\n * Singleplayer menu\n */\n#singleplayer .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#singleplayer .level-select-wrapper {\n\toverflow: hidden;\n}\n\n#singleplayer .levels {\n\tlist-style: none;\n\tmargin: 0 11em 0 0;\n\tpadding: 0;\n}\n\n#singleplayer .preview {\n\tfloat: right;\n\twidth: 10em;\n\theight: 10em;\n}\n\n#singleplayer .preview img {\n\tdisplay: block;\n\twidth: 100%;\n\theight: 100%;\n}\n\n/**\n * Multiplayer menu\n */\n#multiplayer .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n/**\n * Settings menu\n */\n#settings .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#settings .nav-tabs {\n\tmargin: 0.67em 0;\n}\n\n#settings .tab-pane {\n\tmin-height: 12em;\n}\n\n/**\n * Ingame menu\n */\n#ingame .background {\n\tbackground: rgba(0, 0, 0, 0.3);\n}\n\n#ingame .menu-item {\n\ttext-align: center;\n}\n\n#ingame .exit-game.menu-item {\n\tmargin-bottom: 0;\n}\n\n/**\n * Connect view\n */\n#connect .background {\n\tbackground: #222;\n}\n\n#connect .background .loading {\n\t/* TODO change pixel values to relative values */\n\tdisplay: block;\n\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\twidth: 40%;\n\theight: 400px;\n\tmargin: -200px 0 0 -20%;\n\ttext-align: center;\n\tline-height: 400px;\n}\n\n/**\n * Hud view\n */\n#hud {\n\tdisplay: none;\n\tpadding: 1em;\n}\n\n#hud .fps-wrapper {\n\tposition: absolute;\n\ttop: 1em;\n\tright: 1em;\n}\n\n#hud .weapons {\n\tposition: absolute;\n\tbottom: 1em;\n\tleft: 1em;\n\tmargin: 0;\n\tpadding: 0;\n\tlist-style: none;\n}\n\n#hud .weapons li {\n\tdisplay: block;\n\tborder: 1px solid transparent;\n}\n\n#hud .weapons li.selected {\n\tborder: 1px solid #A6E22E;\n}\n\n#hud .weapons li img {\n\tdisplay: block;\n}\n\n#hud .ammo-wrapper {\n\tposition: absolute;\n\tbottom: 1em;\n\tleft: 2em;\n\tmargin: 0;\n\tpadding: 0 0 0 34px;\n\tlist-style: none;\n}\n\n#hud .ammo-wrapper .ammo {\n\theight: 34px;\n\tline-height: 34px;\n}\n\n#hud .count-wrapper {\n\tposition: absolute;\n\tbottom: 1em;\n\tright: 1em;\n}\n\n#hud .count-label {\n\tdisplay: inline-block;\n\twidth: 10em;\n\ttext-align: right;\n}\n\n/**\n * Scoreboard view\n */\n#scoreboard {\n\tposition: absolute;\n\ttop: 25%;\n\tleft: 25%;\n\twidth: 50%;\n\theight: 50%;\n}\n';});
-
-define('text!ui/css/normalize.css',[],function () { return '/*! normalize.css v1.0.1 | MIT License | git.io/normalize */\n\n/* ==========================================================================\n   HTML5 display definitions\n   ========================================================================== */\n\n/*\n * Corrects `block` display not defined in IE 6/7/8/9 and Firefox 3.\n */\n\narticle,\naside,\ndetails,\nfigcaption,\nfigure,\nfooter,\nheader,\nhgroup,\nnav,\nsection,\nsummary {\n    display: block;\n}\n\n/*\n * Corrects `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.\n */\n\naudio,\ncanvas,\nvideo {\n    display: inline-block;\n    *display: inline;\n    *zoom: 1;\n}\n\n/*\n * Prevents modern browsers from displaying `audio` without controls.\n * Remove excess height in iOS 5 devices.\n */\n\naudio:not([controls]) {\n    display: none;\n    height: 0;\n}\n\n/*\n * Addresses styling for `hidden` attribute not present in IE 7/8/9, Firefox 3,\n * and Safari 4.\n * Known issue: no IE 6 support.\n */\n\n[hidden] {\n    display: none;\n}\n\n/* ==========================================================================\n   Base\n   ========================================================================== */\n\n/*\n * 1. Corrects text resizing oddly in IE 6/7 when body `font-size` is set using\n *    `em` units.\n * 2. Prevents iOS text size adjust after orientation change, without disabling\n *    user zoom.\n */\n\nhtml {\n    font-size: 100%; /* 1 */\n    -webkit-text-size-adjust: 100%; /* 2 */\n    -ms-text-size-adjust: 100%; /* 2 */\n}\n\n/*\n * Addresses `font-family` inconsistency between `textarea` and other form\n * elements.\n */\n\nhtml,\nbutton,\ninput,\nselect,\ntextarea {\n    font-family: sans-serif;\n}\n\n/*\n * Addresses margins handled incorrectly in IE 6/7.\n */\n\nbody {\n    margin: 0;\n}\n\n/* ==========================================================================\n   Links\n   ========================================================================== */\n\n/*\n * Addresses `outline` inconsistency between Chrome and other browsers.\n */\n\na:focus {\n    outline: thin dotted;\n}\n\n/*\n * Improves readability when focused and also mouse hovered in all browsers.\n */\n\na:active,\na:hover {\n    outline: 0;\n}\n\n/* ==========================================================================\n   Typography\n   ========================================================================== */\n\n/*\n * Addresses font sizes and margins set differently in IE 6/7.\n * Addresses font sizes within `section` and `article` in Firefox 4+, Safari 5,\n * and Chrome.\n */\n\nh1 {\n    font-size: 2em;\n    margin: 0.67em 0;\n}\n\nh2 {\n    font-size: 1.5em;\n    margin: 0.83em 0;\n}\n\nh3 {\n    font-size: 1.17em;\n    margin: 1em 0;\n}\n\nh4 {\n    font-size: 1em;\n    margin: 1.33em 0;\n}\n\nh5 {\n    font-size: 0.83em;\n    margin: 1.67em 0;\n}\n\nh6 {\n    font-size: 0.75em;\n    margin: 2.33em 0;\n}\n\n/*\n * Addresses styling not present in IE 7/8/9, Safari 5, and Chrome.\n */\n\nabbr[title] {\n    border-bottom: 1px dotted;\n}\n\n/*\n * Addresses style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.\n */\n\nb,\nstrong {\n    font-weight: bold;\n}\n\nblockquote {\n    margin: 1em 40px;\n}\n\n/*\n * Addresses styling not present in Safari 5 and Chrome.\n */\n\ndfn {\n    font-style: italic;\n}\n\n/*\n * Addresses styling not present in IE 6/7/8/9.\n */\n\nmark {\n    background: #ff0;\n    color: #000;\n}\n\n/*\n * Addresses margins set differently in IE 6/7.\n */\n\np,\npre {\n    margin: 1em 0;\n}\n\n/*\n * Corrects font family set oddly in IE 6, Safari 4/5, and Chrome.\n */\n\ncode,\nkbd,\npre,\nsamp {\n    font-family: monospace, serif;\n    _font-family: \'courier new\', monospace;\n    font-size: 1em;\n}\n\n/*\n * Improves readability of pre-formatted text in all browsers.\n */\n\npre {\n    white-space: pre;\n    white-space: pre-wrap;\n    word-wrap: break-word;\n}\n\n/*\n * Addresses CSS quotes not supported in IE 6/7.\n */\n\nq {\n    quotes: none;\n}\n\n/*\n * Addresses `quotes` property not supported in Safari 4.\n */\n\nq:before,\nq:after {\n    content: \'\';\n    content: none;\n}\n\n/*\n * Addresses inconsistent and variable font size in all browsers.\n */\n\nsmall {\n    font-size: 80%;\n}\n\n/*\n * Prevents `sub` and `sup` affecting `line-height` in all browsers.\n */\n\nsub,\nsup {\n    font-size: 75%;\n    line-height: 0;\n    position: relative;\n    vertical-align: baseline;\n}\n\nsup {\n    top: -0.5em;\n}\n\nsub {\n    bottom: -0.25em;\n}\n\n/* ==========================================================================\n   Lists\n   ========================================================================== */\n\n/*\n * Addresses margins set differently in IE 6/7.\n */\n\ndl,\nmenu,\nol,\nul {\n    margin: 1em 0;\n}\n\ndd {\n    margin: 0 0 0 40px;\n}\n\n/*\n * Addresses paddings set differently in IE 6/7.\n */\n\nmenu,\nol,\nul {\n    padding: 0 0 0 40px;\n}\n\n/*\n * Corrects list images handled incorrectly in IE 7.\n */\n\nnav ul,\nnav ol {\n    list-style: none;\n    list-style-image: none;\n}\n\n/* ==========================================================================\n   Embedded content\n   ========================================================================== */\n\n/*\n * 1. Removes border when inside `a` element in IE 6/7/8/9 and Firefox 3.\n * 2. Improves image quality when scaled in IE 7.\n */\n\nimg {\n    border: 0; /* 1 */\n    -ms-interpolation-mode: bicubic; /* 2 */\n}\n\n/*\n * Corrects overflow displayed oddly in IE 9.\n */\n\nsvg:not(:root) {\n    overflow: hidden;\n}\n\n/* ==========================================================================\n   Figures\n   ========================================================================== */\n\n/*\n * Addresses margin not present in IE 6/7/8/9, Safari 5, and Opera 11.\n */\n\nfigure {\n    margin: 0;\n}\n\n/* ==========================================================================\n   Forms\n   ========================================================================== */\n\n/*\n * Corrects margin displayed oddly in IE 6/7.\n */\n\nform {\n    margin: 0;\n}\n\n/*\n * Define consistent border, margin, and padding.\n */\n\nfieldset {\n    border: 1px solid #c0c0c0;\n    margin: 0 2px;\n    padding: 0.35em 0.625em 0.75em;\n}\n\n/*\n * 1. Corrects color not being inherited in IE 6/7/8/9.\n * 2. Corrects text not wrapping in Firefox 3.\n * 3. Corrects alignment displayed oddly in IE 6/7.\n */\n\nlegend {\n    border: 0; /* 1 */\n    padding: 0;\n    white-space: normal; /* 2 */\n    *margin-left: -7px; /* 3 */\n}\n\n/*\n * 1. Corrects font size not being inherited in all browsers.\n * 2. Addresses margins set differently in IE 6/7, Firefox 3+, Safari 5,\n *    and Chrome.\n * 3. Improves appearance and consistency in all browsers.\n */\n\nbutton,\ninput,\nselect,\ntextarea {\n    font-size: 100%; /* 1 */\n    margin: 0; /* 2 */\n    vertical-align: baseline; /* 3 */\n    *vertical-align: middle; /* 3 */\n}\n\n/*\n * Addresses Firefox 3+ setting `line-height` on `input` using `!important` in\n * the UA stylesheet.\n */\n\nbutton,\ninput {\n    line-height: normal;\n}\n\n/*\n * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`\n *    and `video` controls.\n * 2. Corrects inability to style clickable `input` types in iOS.\n * 3. Improves usability and consistency of cursor style between image-type\n *    `input` and others.\n * 4. Removes inner spacing in IE 7 without affecting normal text inputs.\n *    Known issue: inner spacing remains in IE 6.\n */\n\nbutton,\nhtml input[type="button"], /* 1 */\ninput[type="reset"],\ninput[type="submit"] {\n    -webkit-appearance: button; /* 2 */\n    cursor: pointer; /* 3 */\n    *overflow: visible;  /* 4 */\n}\n\n/*\n * Re-set default cursor for disabled elements.\n */\n\nbutton[disabled],\ninput[disabled] {\n    cursor: default;\n}\n\n/*\n * 1. Addresses box sizing set to content-box in IE 8/9.\n * 2. Removes excess padding in IE 8/9.\n * 3. Removes excess padding in IE 7.\n *    Known issue: excess padding remains in IE 6.\n */\n\ninput[type="checkbox"],\ninput[type="radio"] {\n    box-sizing: border-box; /* 1 */\n    padding: 0; /* 2 */\n    *height: 13px; /* 3 */\n    *width: 13px; /* 3 */\n}\n\n/*\n * 1. Addresses `appearance` set to `searchfield` in Safari 5 and Chrome.\n * 2. Addresses `box-sizing` set to `border-box` in Safari 5 and Chrome\n *    (include `-moz` to future-proof).\n */\n\ninput[type="search"] {\n    -webkit-appearance: textfield; /* 1 */\n    -moz-box-sizing: content-box;\n    -webkit-box-sizing: content-box; /* 2 */\n    box-sizing: content-box;\n}\n\n/*\n * Removes inner padding and search cancel button in Safari 5 and Chrome\n * on OS X.\n */\n\ninput[type="search"]::-webkit-search-cancel-button,\ninput[type="search"]::-webkit-search-decoration {\n    -webkit-appearance: none;\n}\n\n/*\n * Removes inner padding and border in Firefox 3+.\n */\n\nbutton::-moz-focus-inner,\ninput::-moz-focus-inner {\n    border: 0;\n    padding: 0;\n}\n\n/*\n * 1. Removes default vertical scrollbar in IE 6/7/8/9.\n * 2. Improves readability and alignment in all browsers.\n */\n\ntextarea {\n    overflow: auto; /* 1 */\n    vertical-align: top; /* 2 */\n}\n\n/* ==========================================================================\n   Tables\n   ========================================================================== */\n\n/*\n * Remove most spacing between table cells.\n */\n\ntable {\n    border-collapse: collapse;\n    border-spacing: 0;\n}\n';});
-
-define('text!ui/templates/ConnectView.tpl',[],function () { return '<div class="background fullscreen">\n\t<span class="loading"><%- loading %></span>\n</div>';});
-
-define('ui/views/ConnectView',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'text!ui/templates/ConnectView.tpl'
-],
-function (_, $, Backbone, templateSrc) {
-	var ui;
-
-	var HudView = Backbone.View.extend({
-		id: 'connect',
-		template: _.template(templateSrc),
-		model: {
-			loading: 'Loading...'
-		},
-		loadingEl: null,
-		initialize: function (opts) {
-			ui = opts.ui;
-			this.render();
-		},
-		setLoading: function (str) {
-			if (!this.loadingEl) this.loadingEl = this.$el.find('.loading');
-			this.model.loading = str;
-			this.loadingEl.text(this.model.loading);
-		},
-		render: function () {
-			this.$el.html(this.template(this.model));
-			return this;
-		}
-	});
-
-	return HudView;
-});
-
-define('text!ui/templates/HudView.tpl',[],function () { return '<div class="fps-wrapper">\n\t<span class="fps"><%- fps %></span> FPS\n</div>\n<div class="count-wrapper">\n\t<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>\n\t<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>\n\t<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>\n\t<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>\n\t<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>\n\t<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>\n\t<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div>\n</div>\n<div class="weapons-wrapper">\n\t<ul class="weapons">\n\t\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t\t<% if (!weapons[i]) continue; %>\n\t\t\t<li<% if (i === weaponSelect) { %> class="selected"<% } %>><img src="<%= weaponIconData[i] %>" /></li>\n\t\t<% } %>\n\t</ul>\n</div>\n<div class="ammo-wrapper">\n\t<% for (var i = 0; i < weapons.length; i++) { %>\n\t\t<% if (!weapons[i]) continue; %>\n\t\t<div class="ammo"><%- ammo[i] %></div>\n\t<% } %>\n</div>\n<div class="armor-wrapper">\n\tArmor: <span class="armor"><%- armor %></span>\n</div>\n<div class="health-wrapper">\n\tHealth: <span class="health"><%- health %></span>\n</div>\n';});
-
-define('ui/views/HudView',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'text!ui/templates/HudView.tpl'
-],
-function (_, $, Backbone, templateSrc) {
-	var imp;
-
-	var HudView = Backbone.View.extend({
-		id: 'hud',
-		model: {
-			fps: 0,
-			shaders: 0,
-			vertexes: 0,
-			indexes: 0,
-			culledFaces: 0,
-			culledModelOut: 0,
-			culledModelIn: 0,
-			culledModelClip: 0,
-			weapons: [],
-			weaponIconData: [],
-			weaponSelect: 0,
-			ammo: [],
-			armor: 'N/A',
-			health: 'N/A'
-		},
-		template: _.template(templateSrc),
-		// Cache all these elements.
-		fpsEl: null,
-		shadersEl: null,
-		vertexesEl: null,
-		indexesEl: null,
-		culledFacesEl: null,
-		culledModelOutEl: null,
-		culledModelInEl: null,
-		culledModelClipEl: null,
-		ammoEls: null,
-		armorEl: null,
-		healthEl: null,
-		initialize: function (opts) {
-			imp = opts;
-			this.render();
-		},
-		setFPS: function (fps) {
-			this.model.fps = fps;
-			this.fpsEl.text(this.model.fps);
-		},
-		setCounts: function (counts) {
-			_.extend(this.model, counts);
-
-			this.shadersEl.text(this.model.shaders);
-			this.vertexesEl.text(this.model.vertexes);
-			this.indexesEl.text(this.model.indexes);
-			this.culledFacesEl.text(this.model.culledFaces);
-			this.culledModelOutEl.text(this.model.culledModelOut);
-			this.culledModelInEl.text(this.model.culledModelIn);
-			this.culledModelClipEl.text(this.model.culledModelClip);
-		},
-		setWeapons: function (currentWeapons, selected) {
-			var render = false;
-
-			// Update weapons list on model.
-			for (var i = 0; i < currentWeapons.length; i++) {
-				var weaponInfo = currentWeapons[i];
-
-				// Re-render if the current weapon info changed.
-				if (this.model.weapons[i] !== weaponInfo) {
-					this.model.weapons[i] = weaponInfo;
-					render = true;
-				}
-
-				// Also, re-render if the icon changed (async loading..)
-				if (weaponInfo) {
-					var icon = imp.ui_GetImageByHandle(weaponInfo.weaponIcon);
-
-					if (this.model.weaponIconData[i] !== icon.data) {
-						this.model.weaponIconData[i] = icon.data;
-						render = true;
-					}
-				}
-			}
-
-			// Update selected weapon on model.
-			if (this.model.weaponSelect !== selected) {
-				this.model.weaponSelect = selected;
-				render = true;
-			}
-
-			if (render) {
-				this.render();
-			}
-		},
-		setAmmo: function (ammo) {
-			var render = false;
-			
-			for (var i = 0; i < ammo.length; i++) {
-				
-				if (this.model.ammo[i] !== ammo[i]) {
-					this.model.ammo[i] = ammo[i];
-					render = true;
-				}
-			}
-			
-			if (render) {
-				var hud_i = 0;
-				
-				for (var i = 0; i < this.model.weapons.length; i++) {
-					if (!this.model.weapons[i]) { continue; }
-					
-					this.ammoEls.eq(hud_i).text(ammo[i]);
-					hud_i++;
-				}
-			}
-		},
-		setArmor: function (armor) {
-			if (this.model.armor !== armor) {
-				this.model.armor = armor;
-				this.armorEl.text(this.model.armor);
-			}
-		},
-		setHealth: function (health) {
-			if (this.model.health !== health) {
-				this.model.health = health;
-				this.healthEl.text(this.model.health);
-			}
-		},
-		render: function () {
-			this.$el.html(this.template(this.model));
-			
-			this.fpsEl = this.$el.find('.fps');
-			this.shadersEl = this.$el.find('.count-shaders');
-			this.vertexesEl = this.$el.find('.count-vertexes');
-			this.indexesEl = this.$el.find('.count-indexes');
-			this.culledFacesEl = this.$el.find('.count-culled-faces');
-			this.culledModelOutEl = this.$el.find('.count-culled-model-out');
-			this.culledModelInEl = this.$el.find('.count-culled-model-in');
-			this.culledModelClipEl = this.$el.find('.count-culled-model-clip');
-			this.ammoEls = this.$el.find('.ammo');
-			this.armorEl = this.$el.find('.armor');
-			this.healthEl = this.$el.find('.health');
-			
-			return this;
-		}
-	});
-
-	return HudView;
-});
-
-define('text!ui/templates/ScoreboardView.tpl',[],function () { return '<table>\n\t<thead>\n\t\t<tr>\n\t\t\t<th>Name</th>\n\t\t</tr>\n\t</thead>\n\t<tbody>\n\t<% _.each(players, function (player) { %>\n\t\t<tr>\n\t\t\t<td><%- player.name %></td>\n\t\t</tr>\n\t<% }); %>\n</table>';});
-
-define('ui/views/ScoreboardView',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'text!ui/templates/ScoreboardView.tpl'
-],
-function (_, $, Backbone, templateSrc) {
-	var ui;
+	if (!data) {
+		$el.data(type.prototype.componentName, (data = new type($el)));
+	}
 	
-	var ScoreboardView = Backbone.View.extend({
-		id: 'scoreboard',
-		template: _.template(templateSrc),
-		initialize: function (opts) {
-			ui = opts.ui;
-			this.render();
-		},
-		update: function (newModel) {
-			var modelJson = JSON.stringify(this.model);
-
-			if (modelJson !== this.oldModelJson) {
-				$(this.el).html(this.template(this.model));
-			}
-
-			this.oldModelJson = modelJson;
-
-			return this;
-		},
-		render: function () {
-			$(this.el).html(this.template(this.model));
-			return this;
-		}
-	});
-
-	return ScoreboardView;
-});
-define('text!ui/templates/IngameMenu.tpl',[],function () { return '<div class="background fullscreen">\n<div class="dialog abscenter">\n\t<div class="close">×</div>\n\t<div class="menu-item settings">Settings</div>\n\t<div class="menu-item exit-game">Exit game</div>\n</div>\n</div>';});
-
-define('ui/views/IngameMenu',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'text!ui/templates/IngameMenu.tpl' 
-],
-function (_, $, Backbone, templateSrc) {
-	var imp;
-
-	var IngameMenu = Backbone.View.extend({
-		id: 'ingame',
-		model: {},
-		template: _.template(templateSrc),
-		events: {
-			'qk_click .settings':  'openSettingsMenu',
-			'qk_click .exit-game': 'exitGame',
-			'qk_click .close':     'closeMenu'
-		},
-		initialize: function (opts) {
-			imp = opts;
-			this.render();
-		},
-		openSettingsMenu: function () {
-			imp.ui_PushMenu('settings');
-		},
-		exitGame: function () {
-			imp.cl_Disconnect();
-		},
-		closeMenu: function () {
-			imp.ui_PopAllMenus();
-		},
-		render: function () {
-			$(this.el).html(this.template(this.model));
-			return this;
-		}
-	});
-
-	return IngameMenu;
-});
-define('text!ui/templates/MainMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<div class="singleplayer menu-item">Single player game</div>\n\t\t<div class="multiplayer menu-item">Multi player game</div>\n\t\t<div class="settings menu-item">Settings</div>\n\t</div>\n</div>';});
-
-define('ui/views/MainMenu',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'text!ui/templates/MainMenu.tpl' 
-],
-function (_, $, Backbone, templateSrc) {
-	var ui;
-
-	var IngameMenu = Backbone.View.extend({
-		id: 'main',
-		model: {},
-		template: _.template(templateSrc),
-		events: {
-			'qk_click .singleplayer': 'openSinglePlayerMenu',
-			'qk_click .multiplayer': 'openMultiPlayerMenu',
-			'qk_click .settings': 'openSettingsMenu'
-		},
-		initialize: function (opts) {
-			ui = opts.ui;
-			this.render();
-		},
-		openSinglePlayerMenu: function() {
-			imp.ui_PushMenu('singleplayer');
-		},
-		openMultiPlayerMenu: function() {
-			imp.ui_PushMenu('multiplayer');
-		},
-		openSettingsMenu: function() {
-			imp.ui_PushMenu('settings');
-		},
-		update: function (newModel) {
-		},
-		render: function () {
-			$(this.el).html(this.template(this.model));
-			return this;
-		}
-	});
-
-	return IngameMenu;
-});
-define('text!ui/templates/SinglePlayerMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<h1>Choose a level</h1>\n\t\t<div class="level-select-wrapper">\n\t\t\t<div class="preview">\n\t\t\t\t<img src="<%= levels[previewLevel].url %>" />\n\t\t\t</div>\n\t\t\t<ul class="levels">\n\t\t\t<% _.each(levels, function (level, i) { %>\n\t\t\t\t<li data-idx="<%- i %>" class="menu-item"><%- level.name %></li>\n\t\t\t<% }); %>\n\t\t\t</ul>\n\t\t</div>\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
-
-define('ui/views/SinglePlayerMenu',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'text!ui/templates/SinglePlayerMenu.tpl'
-],
-function (_, $, Backbone, templateSrc) {
-	var imp;
-
-	var SinglePlayerMenu = Backbone.View.extend({
-		id: 'singleplayer',
-		model: {
-			previewLevel: 0,
-			levels: [
-				{ name: 'q3dm7' },
-				{ name: 'q3dm17' },
-				{ name: 'q3tourney2' }
-			]
-		},
-		template: _.template(templateSrc),
-		events: {
-			'qk_mouseenter .levels li': 'levelPreview',
-			'qk_click .levels li':      'levelSelect',
-			'qk_click .back' :          'goBack'
-		},
-		initialize: function (opts) {
-			imp = opts;
-
-			// Render first.
-			this.render();
-
-			// Then async load levelshots.
-			var self = this;
-
-			var loadLevelshot = function (i) {
-				var $preview = self.$el.find('.preview img');
-				var level = self.model.levels[i];
-
-				imp.ui_RegisterImage('levelshots/' + level.name, function (err, img) {
-					level.url = img.data;
-
-					// If this is the image for the current level preview,
-					// update the image.
-					if (self.model.previewLevel === i) {
-						$preview.attr('src', level.url);
-					}
-				});
-			};
-
-			for (var i = 0; i < this.model.levels.length; i++) {
-				loadLevelshot(i);
-			}
-		},
-		levelPreview: function (ev) {
-			var $li = $(ev.target);
-			var $preview = this.$el.find('.preview img');
-
-			previewLevel = $li.data('idx');
-			var level = this.model.levels[previewLevel];
-
-			$preview.attr('src', level.url);
-		},
-		levelSelect: function (ev) {
-			var $li = $(ev.target);
-
-			var idx = $li.data('idx');
-			var level = this.model.levels[idx];
-
-			imp.com_ExecuteBuffer('map ' + level.name);
-		},
-		render: function () {
-			this.$el.html(this.template(this.model));
-			return this;
-		},
-		goBack: function () {
-			imp.ui_PopMenu();
-		}
-	});
-
-	return SinglePlayerMenu;
-});
-define('ui/components/TextInput', ['jquery'], function ($) {
-
-var TextInput = function (element) {
-	var self = this;
-
-	this.$el = $(element);
-	this.tempValue = '';
-
-	this.$el.bind('qk_focus', function (ev) {
-		self.onFocus(ev);
-	});
-
-	this.$el.bind('qk_keypress', function (ev) {
-		self.onKeyPress(ev);
-	});
+	return data;
 };
 
-TextInput.prototype.val = function (newValue) {
-	if (arguments.length) {
-		this._value = newValue;
+/**
+ * Async image component
+ *
+ * Load default image into elements decorated with image handle attributes,
+ * followed by the real image once it's done loading.
+ */
+var AsyncImage = function (element) {
+	var $el = $(element);
 
-		// Update the element text.
-		this.$el.text(this._value);
+	var setImageData = function (data) {
+		$el.css({
+			'background-size': 'cover',
+			'background-image': 'url(\'' + data + '\')'
+		});
+	};
 
-		// Trigger changed event.
-		this.$el.trigger(new QkChangeEvent(this._value));
-	} else {
-		return this._value;
+	// If a physical path is specified, first convert that to a handle.
+	if ($el.data('image')) {
+		var path = $el.data('image'),
+			hImage = RegisterImage(path);
+
+		$el.data('himage', hImage);
+	}
+
+	// Async load and process the image.
+	if ($el.data('himage')) {
+		var hImage = $el.data('himage'),
+			img = GetImageByHandle(hImage);
+
+		// Use first image by default.
+		setImageData(FindImageByName('*default').data);
+
+		//
+		ImageOnLoad(img, function (img) {
+			setImageData(img.data);
+		});
 	}
 };
 
-TextInput.prototype.onFocus = function (ev) {
-	this.tempValue = this.val();
-	if (this.tempValue === undefined) {
-		this.tempValue = '';
-	}
-};
+AsyncImage.prototype.componentName = 'AsyncImage';
 
-TextInput.prototype.onKeyPress = function (ev) {
-	var keyName = ev.keyName;
-
-	if (keyName === 'enter') {
-		// Update the actual value.
-		this.val(this.tempValue);
-
-		// Trigger a blur to clear focus.
-		this.$el.trigger(new QkBlurEvent());
-		return;
-	}
-
-	if (keyName.length === 1) {
-		this.tempValue += keyName;
-	} else if (keyName === 'space') {
-		this.tempValue += ' ';
-	} else if (keyName === 'backspace') {
-		this.tempValue = this.tempValue.slice(0, -1);
-	}
-
-	// Update element text.
-	this.$el.text(this.tempValue);
-};
-
-// Export jQuery plugin.
-$.fn.textInput = function (option) {
-	return this.each(function () {
-		var $this = $(this),
-			data = $this.data('textInput');
-		
-		if (!data) {
-			$this.data('textInput', (data = new TextInput(this)));
-		};
-	});
-};
-
-return TextInput;
-
-});
-define('text!ui/templates/MultiPlayerMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<div class="form-horizontal">\n\t\t\t<h1>Connect to a server</h1>\n\t\t\t<div class="address control-group">\n\t\t\t\t<div class="control-label">Address:</div><div class="control-input"><%- address %></div>\n\t\t\t</div>\n\t\t\t<div class="form-actions">\n\t\t\t\t<div class="connect button">Connect</div>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
-
-define('ui/views/MultiPlayerMenu',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'ui/components/TextInput',
-	'text!ui/templates/MultiPlayerMenu.tpl'
-],
-function (_, $, Backbone, TexInput, templateSrc) {
-	var imp;
-
-	var MultiPlayerMenu = Backbone.View.extend({
-		id: 'multiplayer',
-		template: _.template(templateSrc),
-		model: {
-			address: '192.168.0.102:9001'
-		},
-		$address: null,
-		events: {
-			'qk_keypress .address': 'updateAddress',
-			'qk_click .connect':    'connect',
-			'qk_click .back':       'goBack'
-		},
-		initialize: function (opts) {
-			imp = opts;
-			this.render();
-		},
-		updateAddress: function (ev) {
-			var str = ev.value;
-			this.$address.text(str);
-		},
-		connect: function () {
-			var address = this.$address.text();
-			imp.com_ExecuteBuffer('connect ' + address);
-		},
-		render: function () {
-			this.$el.html(this.template(this.model));
-			this.$address = this.$el.find('.address .control-input');
-
-			this.$address.textInput();
-
-			return this;
-		},
-		goBack: function () {
-			imp.ui_PopMenu();
-		}
-	});
-
-	return MultiPlayerMenu;
-});
-define('ui/components/KeyInput', ['jquery'], function ($) {
-
+/**
+ * Key input components
+ *
+ * Process key input for binds.
+ */
 var KeyInput = function (element) {
 	var self = this;
 
@@ -38862,6 +37451,8 @@ var KeyInput = function (element) {
 		self.onKeyPress(ev);
 	});
 };
+
+KeyInput.prototype.componentName = 'KeyInput';
 
 KeyInput.prototype.val = function (newValue) {
 	if (arguments.length) {
@@ -38887,23 +37478,11 @@ KeyInput.prototype.onKeyPress = function (ev) {
 	this.$el.trigger(new QkBlurEvent());
 };
 
-// Export jQuery plugin.
-$.fn.keyInput = function (option) {
-	return this.each(function () {
-		var $this = $(this),
-			data = $this.data('keyInput');
-
-		if (!data) {
-			$this.data('keyInput', (data = new KeyInput(this)));
-		};
-	});
-};
-
-return KeyInput;
-
-});
-define('ui/components/RangeInput', ['jquery'], function ($) {
-
+/**
+ * RangeInput component
+ *
+ * Min/max slider component.
+ */
 var RangeInput = function (element) {
 	var self = this;
 
@@ -38922,6 +37501,8 @@ var RangeInput = function (element) {
 		self.onClick(ev);
 	});
 };
+
+RangeInput.prototype.componentName = 'RangeInput';
 
 RangeInput.prototype.val = function (newValue) {
 	if (arguments.length) {
@@ -38983,26 +37564,84 @@ RangeInput.prototype._refreshSlider = function () {
 	});
 };
 
-// Export jQuery plugin.
-$.fn.rangeInput = function (option) {
-	return this.each(function () {
-		var $this = $(this),
-			data = $this.data('rangeInput');
-		
-		if (!data) {
-			$this.data('rangeInput', (data = new RangeInput(this)));
-		};
+/**
+ * TextInput component
+ *
+ * General text input component.
+ */
+var TextInput = function (element) {
+	var self = this;
+
+	this.$el = $(element);
+	this.tempValue = '';
+
+	this.$el.bind('qk_focus', function (ev) {
+		self.onFocus(ev);
+	});
+
+	this.$el.bind('qk_keypress', function (ev) {
+		self.onKeyPress(ev);
 	});
 };
 
-return RangeInput;
+TextInput.prototype.componentName = 'TextInput';
 
-});
-define('ui/components/Tab', ['jquery'], function ($) {
+TextInput.prototype.val = function (newValue) {
+	if (arguments.length) {
+		this._value = newValue;
 
+		// Update the element text.
+		this.$el.text(this._value);
+
+		// Trigger changed event.
+		this.$el.trigger(new QkChangeEvent(this._value));
+	} else {
+		return this._value;
+	}
+};
+
+TextInput.prototype.onFocus = function (ev) {
+	this.tempValue = this.val();
+	if (this.tempValue === undefined) {
+		this.tempValue = '';
+	}
+};
+
+TextInput.prototype.onKeyPress = function (ev) {
+	var keyName = ev.keyName;
+
+	if (keyName === 'enter') {
+		// Update the actual value.
+		this.val(this.tempValue);
+
+		// Trigger a blur to clear focus.
+		this.$el.trigger(new QkBlurEvent());
+		return;
+	}
+
+	if (keyName.length === 1) {
+		this.tempValue += keyName;
+	} else if (keyName === 'space') {
+		this.tempValue += ' ';
+	} else if (keyName === 'backspace') {
+		this.tempValue = this.tempValue.slice(0, -1);
+	}
+
+	// Update element text.
+	this.$el.text(this.tempValue);
+};
+
+/**
+ * Tab component
+ *
+ * Single tab component for li elements. Walks DOM to find siblings
+ * when toggling.
+ */
 var Tab = function (element) {
 	this.element = $(element);
 };
+
+Tab.prototype.componentName = 'Tab';
 
 Tab.prototype.show = function () {
 	var $this = this.element,
@@ -39028,8 +37667,7 @@ Tab.prototype.show = function () {
 	this.activate($this.parent('li'), $ul);
 	this.activate($target, $target.parent(), function () {
 		$this.trigger({
-			type: 'qk_shown',
-			relatedTarget: previous
+			type: 'qk_render'
 		});
 	});
 };
@@ -39068,259 +37706,8 @@ Tab.prototype.activate = function (element, container, callback) {
 
 	$active.removeClass('in');
 };
-
-// Export jQuery plugin.
-$.fn.tab = function (option) {
-	return this.each(function () {
-		var $this = $(this),
-			data = $this.data('tab');
-		
-		if (!data) {
-			$this.data('tab', (data = new Tab(this)));
-		}
-
-		if (typeof option === 'string') {
-			data[option]();
-		}
-	});
-};
-
-return Tab;
-
-});
-define('text!ui/templates/SettingsMenu.tpl',[],function () { return '<div class="background fullscreen">\n\t<div class="dialog abscenter">\n\t\t<div class="form-horizontal">\n\t\t\t<h1>Settings</h1>\n\t\t\t<div class="name control-group">\n\t\t\t\t<div class="control-label">Name:</div><div name="name" class="control-input input-text"><%- name %></div>\n\t\t\t</div>\n\t\t\t\n\t\t\t<h1>Controls</h1>\n\t\t\t<ul class="nav-tabs">\n\t\t\t\t<li class="active"><a href="#look" data-toggle="tab">Look</a></li>\n\t\t\t\t<li><a href="#move" data-toggle="tab">Move</a></li>\n\t\t\t\t<li><a href="#shoot" data-toggle="tab">Shoot</a></li>\n\t\t\t</ul>\n\t\t\t<div class="tab-content">\n\t\t\t\t<div class="tab-pane active" id="look">\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Sensitivity:</div><div name="sensitivity" class="control-input input-range" data-min="0" data-max="10" data-value="<%- sensitivity %>"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="tab-pane" id="move">\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move forward:</div><div name="forwardKey" class="control-input input-key"><%- forwardKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move left:</div><div name="leftKey" class="control-input input-key"><%- leftKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move back:</div><div name="backKey" class="control-input input-key"><%- backKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Move right:</div><div name="rightKey" class="control-input input-key"><%- rightKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Jump:</div><div name="upKey" class="control-input input-key"><%- upKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class="tab-pane" id="shoot">\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Attack:</div><div name="attackKey" class="control-input input-key"><%- attackKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Next weapon:</div><div name="weapnextKey" class="control-input input-key"><%- weapnextKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Previous weapon:</div><div name="weapprevKey" class="control-input input-key"><%- weapprevKey %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Gauntlet:</div><div name="weapon1Key" class="control-input input-key"><%- weapon1Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Machinegun:</div><div name="weapon2Key" class="control-input input-key"><%- weapon2Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Shotgun:</div><div name="weapon3Key" class="control-input input-key"><%- weapon3Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Grenade launcher:</div><div name="weapon4Key" class="control-input input-key"><%- weapon4Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Rocket launcher:</div><div name="weapon5Key" class="control-input input-key"><%- weapon5Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Lightning gun:</div><div name="weapon6Key" class="control-input input-key"><%- weapon6Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Railgun:</div><div name="weapon7Key" class="control-input input-key"><%- weapon7Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">Plasma gun:</div><div name="weapon8Key" class="control-input input-key"><%- weapon8Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class="control-group">\n\t\t\t\t\t\t<div class="control-label">BFG:</div><div name="weapon9Key" class="control-input input-key"><%- weapon9Key %></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\n\t\t<div class="footer">\n\t\t\t<div class="button back">Back</div>\n\t\t</div>\n\t</div>\n</div>';});
-
-define('ui/views/SettingsMenu',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'ui/components/KeyInput',
-	'ui/components/RangeInput',
-	'ui/components/TextInput',
-	'ui/components/Tab',
-	'text!ui/templates/SettingsMenu.tpl' 
-],
-function (_, $, Backbone, KeyInput, RangeInput, TextInput, Tab, templateSrc) {
-	var imp;
-
-	var SettingsMenu = Backbone.View.extend({
-		id: 'settings',
-		template: _.template(templateSrc),
-		model: new Backbone.Model(),
-		cvars: {
-			'name':        'name',
-			'sensitivity': 'cl_sensitivity'
-		},
-		cmds: {
-			'forwardKey':  '+forward',
-			'leftKey':     '+left',
-			'backKey':     '+back',
-			'rightKey':    '+right',
-			'upKey':       '+jump',
-			'attackKey':   '+attack',
-			'weapnextKey': 'weapnext',
-			'weapprevKey': 'weapprev',
-			'weapon1Key':  'weapon 1',
-			'weapon2Key':  'weapon 2',
-			'weapon3Key':  'weapon 3',
-			'weapon4Key':  'weapon 4',
-			'weapon5Key':  'weapon 5',
-			'weapon6Key':  'weapon 6',
-			'weapon7Key':  'weapon 7',
-			'weapon8Key':  'weapon 8',
-			'weapon9Key':  'weapon 9'
-		},
-		events: {
-			'qk_click .back': 'goBack'
-		},
-		initialize: function (opts) {
-			imp = opts;
-
-			// Add cvar / cmd input change events.
-			for (var name in this.cvars) {
-				if (!this.cvars.hasOwnProperty(name)) {
-					continue;
-				}
-
-				var evt = 'qk_change [name="' + name + '"]';
-				this.events[evt] = 'formChanged';
-			}
-
-			for (var name in this.cmds) {
-				if (!this.cmds.hasOwnProperty(name)) {
-					continue;
-				}
-
-				var evt = 'qk_change [name="' + name + '"]';
-				this.events[evt] = 'formChanged';
-			}
-
-			this.loadConfigToModel();
-
-			this.render();
-		},
-		formChanged: function (ev) {
-			var name = $(ev.target).attr('name'),
-				value = ev.value;
-
-			this.model.set(name, value);
-
-			// Update all of our cvars / binds.
-			for (var name in this.cvars) {
-				if (!this.cvars.hasOwnProperty(name)) {
-					continue;
-				}
-
-				var cvar = this.cvars[name];
-				var value = this.model.get(name);
-
-				imp.com_SetCvarVal(cvar, value);
-			}
-
-			for (var name in this.cmds) {
-				if (!this.cmds.hasOwnProperty(name)) {
-					continue;
-				}
-
-				// Bind any keys that have a value.
-				var cmd = this.cmds[name];
-				var key = this.model.get(name);
-
-				if (key !== '') {
-					imp.cl_Bind(key, cmd);
-				}
-			}
-		},
-		loadConfigToModel: function () {
-			var data = {};
-
-			for (var name in this.cvars) {
-				if (!this.cvars.hasOwnProperty(name)) {
-					continue;
-				}
-
-				var cvar = this.cvars[name];
-				data[name] = imp.com_GetCvarVal(cvar);
-			}
-
-			for (var name in this.cmds) {
-				if (!this.cmds.hasOwnProperty(name)) {
-					continue;
-				}
-
-				var cmd = this.cmds[name];
-				var keys = imp.cl_GetKeyNamesForCmd(cmd);
-				data[name] = keys.length ? keys[0] : '';
-			}
-
-			this.model.set(data);
-		},
-		goBack: function () {
-			imp.ui_PopMenu();
-		},
-		render: function () {
-			this.$el.html(this.template(this.model.toJSON()));
-
-			this.$el.on('qk_click', '[data-toggle="tab"]', function () {
-				$(this).tab('show');
-			});
-			this.$el.find('.input-range').rangeInput();
-			this.$el.find('.input-key').keyInput();
-			this.$el.find('.input-text').textInput();
-
-			return this;
-		}
-	});
-
-	return SettingsMenu;
-});
-define('ui/ui',
-[
-	'underscore',
-	'jquery',
-	'backbone',
-	'common/sh',
-	'text!ui/css/views.css',
-	'text!ui/css/normalize.css',
-	'ui/views/ConnectView',
-	'ui/views/HudView',
-	'ui/views/ScoreboardView',
-	'ui/views/IngameMenu',
-	'ui/views/MainMenu',
-	'ui/views/SinglePlayerMenu',
-	'ui/views/MultiPlayerMenu',
-	'ui/views/SettingsMenu'
-],
-function (
-	_,
-	$,
-	Backbone,
-	sh,
-	viewsCss,
-	normalizeCss,
-	ConnectView, HudView, ScoreboardView,
-	IngameMenu, MainMenu, SinglePlayerMenu, MultiPlayerMenu, SettingsMenu
-) {
-	var root = typeof(global) !== 'undefined' ? global : window;
-
-/**
- * Simulated event structures.
- */
-root.QkClickEvent = function (x, y) {
-	this.type = 'qk_click';
-	this.x = x;
-	this.y = y;
-};
-
-root.QkKeyPressEvent = function (keyName) {
-	this.type = 'qk_keypress';
-	this.keyName = keyName;
-};
-
-root.QkChangeEvent = function (value) {
-	this.type = 'qk_change';
-	this.value = value;
-};
-
-root.QkFocusEvent = function () {
-	this.type = 'qk_focus';
-};
-
-root.QkBlurEvent = function () {
-	this.type = 'qk_blur';
-};
-
-	function UserInterface(imp) {
-		var UILocals = function () {
-	this.frameCount    = 0;
-	this.views         = {};
-	this.activeMenus   = [];                               // active view stack
-	this.hoverEls      = null;                             // currently hovered element
-	this.focusEl       = null;                             // currently focused element
-	this.mx            = 0;                                // mouse x
-	this.my            = 0;                                // mouse y
-	this.vw            = 0;                                // viewport width
-	this.vh            = 0;                                // viewport height
-	this.images        = [];
-};
-
-var UIImage = function () {
-	this.b64 = null;
-};
 		var uil;
 var $viewportUI;
-
-var map = {
-	'connect':      ConnectView,
-	'hud':          HudView,
-	'scoreboard':   ScoreboardView,
-	'ingame':       IngameMenu,
-	'main':         MainMenu,
-	'singleplayer': SinglePlayerMenu,
-	'multiplayer':  MultiPlayerMenu,
-	'settings':     SettingsMenu
-};
 
 /**
  * log
@@ -39343,10 +37730,16 @@ function Init() {
 	//
 	var context = imp.sys_GetUIContext();
 	$viewportUI = $(context);
+
+	// Reset the UI container.
+	$viewportUI.empty();
 	ScaleElements();
 
 	// Embed our CSS.
-	var css = [viewsCss, normalizeCss];
+	var css = [
+		'/** * Main */@font-face {	font-family: \'SourceCodeProSemibold\';	src: url(\'data:application/x-font-ttf;base64,AAEAAAARAQAABAAQQkFTRYpzk38AAAEcAAAAUEZGVE1imDktAAABbAAAABxHREVGALIABAAAAYgAAAAgT1MvMmpCgbYAAAGoAAAAYGNtYXD4Wyw8AAACCAAAAcpjdnQgC48N3QAAA9QAAAA6ZnBnbQ+0L6cAAAQQAAACZWdhc3AAAAAQAAAGeAAAAAhnbHlmLEZk6gAABoAAAEd4aGVhZPz0FUYAAE34AAAANmhoZWEKtARdAABOMAAAACRobXR4VE5PpgAATlQAAAIUbG9jYfqzDvIAAFBoAAABDG1heHABowIVAABRdAAAACBuYW1lNFFOpwAAUZQAAAJocG9zdDMPLukAAFP8AAABzHByZXBr0oLrAABVyAAAAPYAAQAAAAgAAAAEAA4AAmlkZW9yb21uAAJERkxUAA5sYXRuACQABgAAAAAAAQACAAgADAAB/qQAAQAAAAYAAAAAAAEAAgAIAAwAAf6kAAEAAAAAAAEAAAAAyYlvMQAAAADMh2T9AAAAAMyHZP4AAQAAAA4AAAAYAAAAAAACAAEAAQCEAAEABAAAAAIAAAADBIcCWAAFAAAFMwTNAAAAmgUzBM0AAALNAGYCTgAAAgsGCQMEAwICBCAAAAcAAAABAAAAAAAAAABBREJFACAAIOAABgD+AAAABgACKCAAAZMAAAAAA+4FOwAAACAAAQAAAAMAAAADAAAAHAABAAAAAADEAAMAAQAAABwABACoAAAAJgAgAAQABgB+AKAAowClAKkArgC0IAogFCAZIB0gIiAmIC8gXyCsISLgAP//AAAAIACgAKIApQCpAK0AtCAAIBAgGCAcICIgJiAvIF8grCEi4AD////j/8L/wf/A/73/uv+14GrgZeBi4GDgXOBZ4FHgIt/W32EghAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEGAAABAAAAAAAAAAECAAAAAgAAAAAAAAAAAAAAAAAAAAEAAAMEBQYHCAkKCwwNDg8QERITFBUWFxgZGhscHR4fICEiIyQlJicoKSorLC0uLzAxMjM0NTY3ODk6Ozw9Pj9AQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVpbXF1eX2BhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABjZAB+AABoZoNpAAAAAAAAAABlAAAAAAAAAAAAAAAAAAAAAAAAAAB/YgAAAAAAeHl8fXp7AAAAAACCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD+cwAAA+4FOwC7AJYAogCqAK8AswC3AL8AwwDJAM8BPQDuAO4A8wCNAIsA3gCUAJEA6AB6AIQAhgBtAACwACywABNLsCpQWLBKdlmwACM/GLAGK1g9WUuwKlBYfVkg1LABEy4YLbABLCDasAwrLbACLEtSWEUjWSEtsAMsaRggsEBQWCGwQFktsAQssAYrWCEjIXpY3RvNWRtLUlhY/RvtWRsjIbAFK1iwRnZZWN0bzVlZWRgtsAUsDVxaLbAGLLEiAYhQWLAgiFxcG7AAWS2wByyxJAGIUFiwQIhcXBuwAFktsAgsEhEgOS8tsAksIH2wBitYxBvNWSCwAyVJIyCwBCZKsABQWIplimEgsABQWDgbISFZG4qKYSCwAFJYOBshIVlZGC2wCiywBitYIRAbECFZLbALLCDSsAwrLbAMLCAvsAcrXFggIEcjRmFqIFggZGI4GyEhWRshWS2wDSwSESAgOS8giiBHikZhI4ogiiNKsABQWCOwAFJYsEA4GyFZGyOwAFBYsEBlOBshWVktsA4ssAYrWD3WGCEhGyDWiktSWCCKI0kgsABVWDgbISFZGyEhWVktsA8sIyDWIC+wBytcWCMgWEtTGyGwAVlYirAEJkkjiiMgikmKI2E4GyEhISFZGyEhISEhWS2wECwg2rASKy2wESwg0rASKy2wEiwgL7AHK1xYICBHI0ZhaoogRyNGI2FqYCBYIGRiOBshIVkbISFZLbATLCCKIIqHILADJUpkI4oHsCBQWDwbwFktsBQsswBAAUBCQgFLuBAAYwBLuBAAYyCKIIpVWCCKIIpSWCNiILAAI0IbYiCwASNCWSCwQFJYsgAgAENjQrIBIAFDY0KwIGOwGWUcIVkbISFZLbAVLLABQ2MjsABDYyMtAAAAAAEAAf//AA8ABQBiAAAEagVIAAMABgAMABIAFQBUALIAAQArsQcF6bIBAwArsQ0F6QGwFi+wANa0BBAAFgQrsAQQsRQBK7QDEAAWBCuxFwErsRQEERK1BQcIDRITJBc5ALENBxEStQYECg8UFSQXOTAxMxEhEQETAxMhLwEjBwMfATM/AQMTEWIECPyg5OSDAa5yXwhgYmReCF9iTOIFSPq4ARABqAGs/DbVzMwDPbbBwbb+DP5YA1QAAAAAAgG0/+cDGQVcAAkADwBHALIIAQArtAMPAAwEKwGwEC+wANa0BRIADAQrtAUSAAwEK7MMBQAIK7EPEOmwDy+xDBDpsREBK7EMDxESswMHCAIkFzkAMDElNDYyFhUUBiImEzMHAyMDAbRnl2dnl2c+6QYhmyGgUGRkUFJnZwUO6f2BAn8AAgDZAp4D9AV9AAUACwAkAAGwDC+wBda0AhIAHgQrsAIQsQsBK7QIEgAeBCuxDQErADAxEyELASMDASELASMD2QEfBj6XPgH2AR8GPpc+BX3++v4nAdkBBv76/icB2QAAAgCgAAAENQUzABsAHwFbALIaAQArshUWGTMzM7AAL7MUFxgbJBczsQEF6bMCERwdJBcysAQvswMQHh8kFzOxBQXpswYJCg0kFzKyBQQKK7NABQgJK7IHCwwyMjIBsCAvsBrWtBkQAA0EK7AZELEHASu0CBAADQQrsgcICiuzQAcECSuwCBCxFgErtBUQAA0EK7IVFgors0AVEwkrsBUQsQsBK7QMEAANBCuxIQErsDYauj+B+BAAFSsKuj+K+FMAFSsKsBoQswIaBxMrswMaBxMrswYaBxMrsBkQswkZCBMrsBYQswoWCxMrsBUQsw0VDBMrsxAVDBMrsxEVDBMrsxQVDBMrsBYQsxcWCxMrsBkQsxgZCBMrsBoQsxsaBxMrsBkQsxwZCBMrsBYQsx0WCxMrsx4WCxMrsBkQsx8ZCBMrA0AQAgMGCQoNEBEUFxgbHB0eHy4uLi4uLi4uLi4uLi4uLi6wQBoAMDETNTMTIzUzEzMDMxMzAzMVIwMzFSMDIxMjAyMTNzMTI6CwIai6L4sr8i2NK6K0Iay+MZAx8S+QL6LyIfIBj5wBCJwBZP6cAWT+nJz++Jz+cQGP/nEBj5wBCAABAJj/HwQlBfgAKACZALAkL7AnM7EDBOmyJAMKK7NAJCYJK7AYL7EPBOmwEjKyDxgKK7NADxAJKwGwKS+wDNaxGxDpsBsQsSYBK7APMrQlEAAWBCuwETKwJRCxBgErsSEQ6bEqASuxGwwRErABObAmEbAJObAlErEDGDk5sAYRsB45sCESsRQVOTkAsQMkERKwADmwGBGzAQwVISQXObAPErAUOTAxPwEWMzI2NTQuAzU0NjcRMxEWFwcuASMiBhUUHgMVFAYHESMRJphqya5gZoG2toG0mqS4jXdOgFlUYoG5toG9paTh6aKFSD85V0NQlGaDqhUBDP72FY2JOzNFPjFOP1KYaIO3GP7TASkXAAYAL//nBKAFLwADAA0AFQAfACMAKwDgALIeAQArtCcFABwEK7ArL7QZBQAcBCuzDBkrCCu0EQUAHAQrsBUvtAcFABwEKwGwLC+wBNawADK0DhAAFgQrsA4QsRYBK7QkEAAWBCuzCSQWCCu0ExAAFgQrsBMvtAkQABYEK7AkELEpASu0GxAAFgQrsCIysS0BK7EOBBESsgMGDDk5ObATEbABObAWErIHCwI5OTmxJAkRErIYHiA5OTmwKRGwIzmwGxKyGR0hOTk5ALEnHhESsAM5sCsRswIAGxYkFzmwDBKwATmxFRERErMJICIjJBc5sAcRsCE5MDE3ARcBAzQ2IBYVFAYgJjcUFjI2NTQiATQ2IBYVFAYgJhMBFwEDFBYyNjU0Ii8Be1b+rnukAQakpv7+pqhIbkj+AXGkAQakpv7+poMBUn/+hTFHb0j+tgFzUP5kA6KctLScnrq7nWpra2rN/JOctLScnrq7AsABnHn+jf4tamtras0AAAAAAwBC/+cEqAVUACAAKQAyAJQAsh4BACuwGjOxJArpsggDACuxMAbpAbAzL7AF1rQqEAAfBCuzISoFCCuxABDpsAAvsSEQ6bAqELEuASu0CxAAFgQrsAsQsRQBK7EVEOmxNAErsSohERKxAyg5ObAuEbIIJBA5OTmwCxKwJjmwFBGxEhw5ObAVErEXGjk5ALEkHhESsBw5sDARtQAFCxkoLCQXOTAxEzQ2NyY1NDYzMhYVFA4CBxYXNjczAgcWFwcmJwYHIiY3FBYzMjcmJwYTFBc2NTQjIgZCfG1YrouHnCtaSkF3pV4u2UiBd1o7h5Skzbzj4X1eYFqwf2Z1M6xpNUEBYHuuTqyDjcGcgT1tZEAzpomRy/74yU8bwSVniwHXsVx1Tpq1ZgIzWGp5dn9eAAEB1wKeAvYFfQAFAB0AAbAGL7AF1rQCEgAeBCu0AhIAHgQrsQcBKwAwMQEhCwEjAwHXAR8GPpc+BX3++v4nAdkAAAAAAQGN/pYDzwXdAAkAFgABsAovsAHWtAYQACcEK7ELASsAMDEkAgEXBgIQEhcHAY4BAb+Dw7S0w4MJBGEBc2yw/nL+DP5zsGwAAQD+/pYDPwXdAAkAFgABsAovsAPWtAgQACcEK7ELASsAMDEXNhIQAic3ABAB/sO0tMODAb7+Qv6wAY0B9AGOsGz+jfuf/o0AAQDBAmAEDAWyAA4AHgABsA8vsAPWtAQQAA0EK7EQASuxBAMRErALOQAwMRM3BRMzEyUXBRMHCwEnE8EmASUZgxkBJCf+7Kxt0dBtrARGeEkBPf7FR3h7/uFMAQT+/EwBHwAAAAEAoACiBC0EVAALAFUAsAAvsAczsQEH6bAFMrIAAQors0AACgkrsgEACiuzQAEDCSsBsAwvsArWsAIytAkQABYEK7AEMrIJCgors0AJBwkrsgoJCiuzQAoACSuxDQErADAxEzUhETMRIRUhESMRoAFstQFs/pS1AiWsAYP+faz+fQGDAAEBg/5IA04BewAQACEAAbARL7AC1rQNEAAfBCuyAg0KK7MAAgcJK7ESASsAMDEBJDcGIyImNTQ2MzIWFRQCBwGDAQQCChJSb3NSbXDMwf7VaNMCYVZSZKKRuv75PwAAAAEBCAH8A8UCuAADABcAsAAvsQEE6bEBBOkBsAQvsQUBKwAwMQE1IRUBCAK9Afy8vAAAAAABAZz/5wMxAYUABwA1ALIHAQArtAMPAAoEK7IHAQArtAMPAAoEKwGwCC+wAda0BRIACwQrtAUSAAsEK7EJASsAMDEkNDYyFhQGIgGccrBzc7BctHV1tHUAAQCw/rgEHQWuAAMAABMBMwGwAqLL/V7+uAb2+QoAAAADAIP/5wRKBS8ABwAPABcAdQCyBwEAK7ELBOmwFy+xEw/psA8vsQMK6QGwGC+wAda0CBAAMAQrsAgQsREBK7QVEgAdBCuwFRCxDQErtAUQADAEK7EZASuxEQgRErECBzk5sQ0VERKxAwY5OQCxFwsRErEFADk5sBMRsA05sA8SsQQBOTkwMRIQACAAEAAgAxAWMjYRECASNDYyFhQGIoMBAAHHAQD+/v49LZH6kv3jgVJ3UlJ3AUwCiwFY/qj9df6bAqr/APHxAQAB5v3hg1BQg1AAAAEAuAAABEQFFwALAFUAsgABACuxAQvpsAkysAQvsQUF6bIFBAors0AFBwkrAbAML7AC1rEJEOmyCQIKK7NACQsJK7ICCQors0ACAAkrs0ACBAkrsQ0BK7EJAhESsAc5ADAxMzUhESE1NjczESEVuAFh/u/LhawBQMEDWJMjSPuqwQAAAAEAewAABDkFLwAWAE4AsgwBACuxCg3psBQvsQIE6QGwFy+wEdaxBRDpsgURCiuzQAUMCSuyEQUKK7NAEQ0JK7EYASsAsQoMERKxCA45ObAUEbMABREWJBc5MDETNjMyFhUUAAU2NyEVITUIATU0JiMiB3vF+cn0/vH+9LA+AXD8TAFkASuBeI2SBGbJ27Se/qryDgHJiQExAU6LaHqSAAABAGb/5wQzBS8AIABeALIfAQArsQML6bAIL7EJB+mwEC+wDi+xEwTpAbAhL7AG1rEcEOmwCyDWEbEWEOmxIgErALEDHxESsAA5sAgRsQEcOTmwCRKxGBk5ObAQEbELFjk5sRMOERKwETkwMT8BFjMyNjU0ITUgNTQmIyIHJzYzMhYVFAUVHgEVFAQjJGZvmsB7nP5QAYN9aZqPe8fnzfz++Ieu/uHQ/tCgl49qW92s0VJce5GktqLPXAghqHuszQEAAAAAAgBMAAAEagUZAAoAEwBcALIJAQArsAAvsAYzsQsK6bAEMrILAAors0ALAwkrAbAUL7AJ1rAMMrEIEOmwAzKyCAkKK7NACAYJK7IJCAors0AJAAkrsRUBK7EICRESsBA5ALELABESsAE5MDETNQEhETMVIxEjESUhETY3Iw4BB0wCVgEQuLjd/mYBmgIKChdeFAFQoAMp/O22/rABULYBNzHRJYseAAAAAQBo/+cENwUXABkAdgCyGAEAK7EDC+mwCC+xEgfpsA8vsQwN6QGwGi+wBtaxFRDpsRsBK7A2Gro/u/onABUrCrAMLg6wC8AFsQ8V+Q6wEMAAsQsQLi4BswsMDxAuLi4usEAaAbEVBhESsQ0OOTkAsQMYERKwADmwCBGyAQoVOTk5MDE/ARYzMjY0JiMiBycTIRUhAzYzMhYVFAQjJGhtpq5/oph/cYBxKQMA/c0dbWDF+/7bzP7lnJeLh+WCSkcChMf+xCvOyc30AQAAAgCL/+cEUgUvABUAHwBlALITAQArsRkJ6bAeL7ENB+mwCC+xAwvpAbAgL7AA1rELEOmwCxCxHAErsRAQ6bEhASuxHAsRErQKAw0TFiQXObAQEbEGBTk5ALEeGRESsBA5sA0RsAs5sAgSsAY5sAMRsAU5MDETEAAzMhcHJiciBgc2MzIWFRQEIyIANx4BMzI2NCYjIosBQOvnnn9mjZjCCaK0tuD+9rvd/tvkFJVzZIh7cZwCZAFkAWeTkGIB6P6ez8W+7gFGtqahheV1AAAAAAEAhwAABEoFFwALAEUAsggBACuwAC+xAQ3pAbAML7AI1rEHEOmyBwgKK7NABwMJK7IIBwors0AIAAkrsQ0BK7EHCBESsAk5ALEBABESsAM5MDETNSEVBgoBAyMaAROHA8OotEYM8BK10wRQx5C6/qT+of7uAV4B7AEGAAADAIP/5wRKBS8AFgAoADMAdgCyFAEAK7EaB+mwMS+xCAfpAbA0L7AA1rQXEAAnBCuwBSDWEbQpEAAnBCuwFxCxLgErtAsQAB8EK7AdINYRsREQ6bE1ASuxKRcRErEDAjk5sC4RtBQaIycIJBc5sB0SsQ4NOTkAsTEaERK1AAMLEScsJBc5MDETNCU1Jjc0NjMyFhUUBxUeARUUBCMiJDcUFjMyNjU0LgMnLgInBhMUFhc2NTQmIyIGgwEIwwHtucHgwnmD/wDi3f740Zx9d4YgNlZaPQkHDwauRpWagXdpXHQBTs9/CH20nL7AoKp/CDucfZzHx7hgd2laKUEwKyIUAwQEAmcB4lppM2h6WG5gAAIAe//nBD8FLwAUAB4AYwCyCQEAK7ENC+mwEi+xGAfpsB0vsQMJ6QGwHy+wANaxFhDpsBYQsRABK7EGEOmxIAErsRYAERKxCgs5ObAQEbIPAxo5OTkAsQ0JERKwCjmwEhGwCzmwGBKwEDmwHRGwBjkwMRM0JDMyABEQACQnNxYzMjY3BiciJhIUFjMyNy4BIyJ7AQi63wEj/sH+LZ5/aI6YwgimsLjd2XpxnIMUlnJkA4W87v69/sj+nP6XAZOPYuf+nAHPATfmdpmkogAAAAACAZz/5wMxBD8ABwARADkAsgcBACu0Aw8ACgQrsBAvtAsPAAoEKwGwEi+wCNawADK0DRIACwQrsAQytAUSAAsEK7ETASsAMDEkNDYyFhQGIgM0NjIWFRQGIiYBnHKwc3OwcnKwc3Owcly0dXW0dQOKWHZ2WFp3dwACAYP+SANOBD8AEAAaAFYAsBkvtBQPAAoEKwGwGy+wEda0FhIACwQrsBYQsA0g1hG0AhAAHwQrsAIvtA0QAB8EK7ICDQorswACBwkrsRwBK7ECERESsRMZOTmwFhGxFBg5OQAwMQEkNwYjIiY1NDYzMhYVFAIHAzQ2MhYVFAYiJgGDAQQCChJSb3NSbXDMwSVysHNzsHL+1WjTAmFWUmSikbr++T8FKVh2dlhad3cAAAEA8gAnA/wE1wAHAAATNQEVARUBFfIDCv28AkQCK6gCBNv+hwj+h9sAAAAAAgCgAT8ELQO2AAMABwAaALAAL7EBCOmwBC+xBQfpAbAIL7EJASsAMDETNSEVATUhFaADjfxzA40BP62tAcusrAAAAAABANEAJwPbBNcABwAANzUBNQE1ARXRAkP9vQMKJ9sBeQgBedv9/KgAAgDV/+cD5wV1ABcAIQB3ALIgAQArtBsPAAwEK7AVL7ECC+kBsCIvsBjWtB0SAAwEK7MMHRgIK7QLEAAnBCuwHRCxEgErsQUQ6bEjASuxDBgRErANObALEbYCChUaGx8gJBc5sB0SsBA5sQUSERKwCDkAsRUbERKyBQsXOTk5sAIRsAA5MDETNjMyFhUUDgMXIyY+AzU0JiMiBxM0NjIWFRQGIibVouGy3UdlYjsIzwwzXmBIZlZ/bz5mmGZmmGYExbCumkp9XFp3RU6HYFZgMUpaavxWUGRkUFJnZwAAAAACAFL+1QRiBR8AJAAtAKsAsCIvsR0F6bANL7EoBumwKy+xEwXpsBcvsQMF6QGwLi+wANa0GhAAFgQrsBoQsRABK7QlEAAWBCuwJRCxEwErsAkytAYQAA0EK7AGELQqEAAWBCuwKi+wBhC0CBAADQQrsAgvsS8BK7EqJREStAMXHSINJBc5sBMRsAo5sAgSsB85sAYRsCA5ALEdIhESsCA5sA0RsB85sCgSsQkHOTmwKxGyEAAaOTk5MDETEAAhMhIVESMnIw4BIyImNTQkJTU0JiMiAhEQADMyNxcGIyAAARQWMzI3NQ4BUgFWAQrV24MSCC2ITXGWAQsBBJSNtPwBBMOcekqyt/78/p4CHUdAXGKwlQIEAYMBmP7t3f2ebjtMnnmaoyEfi7j+sP7B/sn+pVR4cQGqAVA5RGbgG1wAAAIAKQAABKQFOwAHAA8ASwCyAAEAK7ADM7IBAwArtAYIAAENK7EGBOkBsBAvsADWsQcS6bAHELEEASuxAxLpsREBK7EEBxESswIBCAkkFzkAsQEIERKwDDkwMTMBIQEjAyEDEyEnJgMjBgcpAbIBFwGy/Gb+QWidAVQvMUYINUIFO/rFAWr+lgIlpLIBCNnhAAMAvgAABGgFOwANABYAHQBzALINAQArsQ4K6bICAwArsR0K6bQXFg0CDSuxFwfpAbAeL7AA1rEOEOmwFzKwDhCxEQErsQoQ6bAKELAEINYRsRoQ6bAaL7EEEOmxHwErsRoOERKyCAcTOTk5ALEWDhESsAo5sBcRsQcIOTmwHRKwBDkwMTMRISARFAYHFQQRFAQjJzMgNTQhIisBNTMgNTQhI74BjAHbeXEBLf7q6L6mAS/+1AECpocBCP7+jQU7/rdkoh0IM/71w8a44syqxa4AAAAAAQB7/+cEfQVUABcAPQCyFQEAK7EQDumyAwMAK7EKDukBsBgvsADWsQ0S6bEZASsAsRAVERKwEzmwChGyAAYSOTk5sAMSsAU5MDETEAAhMhcHJiMiIyICFRQSMzI3FwYjIAB7AVwBENmkhWyJAQKqztCvk3mDqvT+9v6mApoBQgF4qJNs/vrf4/75hZHDAW8AAgCaAAAEagU7AAcADgA6ALIHAQArsQgL6bICAwArsQ4L6QGwDy+wANaxCBDpsAgQsQsBK7EFEumxEAErALEOCBESsQQFOTkwMTMRISAAEAAhJzMgExAhI5oBWgEtAUn+uf7deV4BkQH+bl4FO/6x/XD+pMEB4wHXAAAAAAEA1QAABEIFOwALAEoAsgABACuxCQ3psgEDACuxBA3ptAUIAAENK7EFDekBsAwvsADWsQkQ6bAEMrIJAAors0AJCwkrs0AJAwkrs0AJBwkrsQ0BKwAwMTMRIRUhESEVIREhFdUDWP2WAgz99AJ/BTvI/qrJ/nXJAAEA+AAABEwFOwAJAEAAsgABACuyAQMAK7EEDem0CAUAAQ0rsQgN6QGwCi+wANaxCRDpsAQysgkACiuzQAkDCSuzQAkHCSuxCwErADAxMxEhFSERIRUhEfgDVP2ZAgv99QU7yP6Fyf3RAAAAAAEAYv/nBFIFVAAbAHYAshoBACuxEA7psgMDACuxCg7ptBQVGgMNK7EUDOkBsBwvsAHWsQ0S6bANELESASuxFxDpshIXCiuzQBIUCSuxHQErsRINERKyCAMaOTk5sBcRsQYFOTkAsRAaERKwFzmxFRQRErANObAKEbAGObADErAFOTAxEhAAITIXByYjIiMiAhUUEjMyNxEjNSERDgEjIGIBVAEN25+DZ40CAaLJv7B5O+gBv0jXe/74AVYChwF3qJNs/vrf5/79PAEgw/2yRloAAAAAAQCTAAAEOQU7AAsAPwCyAAEAK7AHM7IBAwArsAUztAMKAAENK7EDDukBsAwvsADWsQsQ6bACMrALELEIASuwBDKxBxDpsQ0BKwAwMTMRMxEhETMRIxEhEZPuAcvt7f41BTv95gIa+sUCUv2uAAAAAAEArAAABCEFOwALAEcAsgABACuxAQ3psAkysgUDACuxBA3psAcyAbAML7AC1rEJEOmyCQIKK7NACQsJK7AGMrICCQors0ACAAkrsAQysQ0BKwAwMTM1IREhNSEVIREhFawBRP68A3X+vAFEyQOqyMj8VskAAQCP/+cECgU7AA8AOgCyDgEAK7EDDumyCQMAK7EIDOkBsBAvsAbWsQsQ6bIGCwors0AGCAkrsREBKwCxCAMRErEAATk5MDE/ARYzMjY1ESE1IREUAiMkj5BzmX11/eEDDOH4/u/FkaKFlgKmxvx/0/8AAQABAKoAAASyBTsADAAwALIAAQArsAgzsgEDACuwBTMBsA0vsADWsQwQ6bACMrEOASsAsQEAERKxAwo5OTAxMxEzETMBIQkBIQEHEarwBgHdAQj+ZAHJ/vj+ssIFO/2gAmD99vzPAnfw/nkAAAABAPYAAARWBTsABQAsALIAAQArsQMN6bIBAwArAbAGL7AA1rEDEOmyAwAKK7NAAwUJK7EHASsAMDEzETMRIRX26wJ1BTv7jskAAAAAAQCWAAAENwU7ABcA7wCyAAEAK7AJM7IBAwArsQIHMzMBsBgvsADWtBcQAB8EK7AXELEKASu0CRAAHwQrsRkBK7A2GrrC5uz3ABUrCrACLg6wBMCxEwX5sBLAuj3G70MAFSsKBbAHLg6wBcCxDhb5sA/AusLA7XIAFSsLsAIQswMCBBMruj1k7eoAFSsLsAUQswYFBxMrsgMCBCCKIIojBg4REjmyBgUHIIogiiMGDhESOQC3AwQFBg4PEhMuLi4uLi4uLgFACgIDBAUGBw4PEhMuLi4uLi4uLi4usEAaAbEXABESsBQ5sQkKERKwDTkAsQEAERKxDRA5OTAxMxEzExczNxMzESMRNBMjCwEjCwEjEhURlvWiOQc3nvXCHAZgjXOPXwYfBTv9+MvLAgj6xQJSmgFk/rj+YAGgAUj+g4H9rgAAAQCYAAAENQU7ABUAUgCyAAEAK7AMM7IBAwArsAozAbAWL7AA1rEVEOmwAjKwFRCxCQErsA0ysQsQ6bEXASuxFQARErEPEDk5sQsJERKxBAU5OQCxAQARErEEDzk5MDEzETMBEzMuAjURMxEjAQMjHgIVEZjxAWd9BgQTCuPx/pl9BgQTCgU7/Q/+4ynBm0QCRfrFAvQBGi26nEH9tgAAAAIAWP/nBHUFVAAJABMARwCyCAEAK7ENDumyAwMAK7ESDukBsBQvsADWsQoS6bAKELEPASuxBRLpsRUBK7EPChESswMCCAckFzkAsRINERKxBQA5OTAxExAAIAAREAAgABMUEiASNTQCIAJYASEB2wEh/t3+Kf7d9JkBApqa/v6ZAqQBPwFx/o/+wf6+/oUBewFC4f7zAQ3h3wEC/v4AAAACALIAAARzBTsACQARAEIAsgABACuyAgMAK7ERC+m0CAoAAg0rsQgL6QGwEi+wANaxCRDpsAoysAkQsQ0BK7EEEOmxEwErALERChESsAQ5MDEzESEgERQEKwEZATMgNTQmKwGyAcMB/v7l49XCASePmMIFO/5j1d3+FAKq9HtkAAIAWP6kBIkFVAAUAB8AWQCyAwMAK7EdDumwDy+xCgvpAbAgL7AA1rEVEumwFRCxGgErsQUS6bEhASuxGhURErMDAhIIJBc5sAURsgoMDzk5OQCxCg8RErANObAdEbQFAAwSFyQXOTAxExAAIAAREAIHFjMyNxcGIyImJyYCExQSIBI1NAIjIgJYAR8B1wEfz7JExjM1K0xitPo7vN7ylwEClpaBg5UCpAE/AXH+j/7B/vL+lzOWGbYjtporAWwBGeP+8wEN498BBP7+AAIArAAABI0FOwALABMAWwCyAAEAK7AHM7ICAwArsRML6bQKDAACDSuxCgTpAbAUL7AA1rELEOmwDDKwCxCxDwErsQQQ6bEVASuxDwsRErEJBjk5sAQRsAg5ALEMChESsAY5sBMRsAQ5MDEzESEgERAFASEBIxkBMyA1NCYrAawBvgHu/vYBP/70/uHIuAEdjo+4BTv+c/7dXP3RAgz99ALJ5W9gAAAAAAEAd//nBFoFVAAlAGgAsiQBACuxAw7psg8DACuxFA7pAbAmL7AM1rEXEOmwFxCxBgErsSES6bEnASuxFwwRErABObAGEbUDCg8UHiQkFzmwIRKyERIfOTk5ALEDJBESsAA5sBQRswEMEiEkFzmwDxKwETkwMT8BFjMyNjU0Ji8BJDU0JDMyFwcmIyIGFRQeARcWHwEeARUUBCMgd4uoxXmAZnu2/uEBBsv6tHuPpGh5QUpJCwawi5j+9OT+3qyimFxQTEovUHHzoteqmHNUSi9HIxwFAkw3qomo5gABAEoAAASDBTsABwA6ALIGAQArsgEDACuxAA3psAMyAbAIL7AG1rEFEOmyBQYKK7NABQMJK7IGBQors0AGAAkrsQkBKwAwMRM1IRUhESMRSgQ5/lrtBHPIyPuNBHMAAAABAJP/5wQ5BTsADgA5ALINAQArsQUO6bIBAwArsAgzAbAPL7AA1rEDEOmwAxCxBwErsQoQ6bEQASuxBwMRErEMDTk5ADAxExEzERAXMhkBMxEQAiACk+7n7uPv/j30AgADO/yz/skBATgDTfzF/vL+9QENAAEAOQAABJMFOwANAD0Asg0BACuyAAMAK7AKMwGwDi+wANaxARLpsAEQsQoBK7ELEumxDwErsQoBERKxDA05OQCxAA0RErAFOTAxEzMTFhIXMzYSNxMzASE5/L0STBgJG1EIu/P+Yf7nBTv9X0L+4VRaATohAqH6xQAAAAABAA4AAAS+BTsAHwEXALIfAQArsRceMzOyAAMAK7AUMwGwIC+wANaxARDpsAEQsRQBK7EVEOmxIQErsDYauj6i8toAFSsKsB4uDrAbwLEGF/mwCcC6wiPvmwAVKwoFsBcuDrAYwLEOCfmwDMC6PljxhwAVKwuwBhCzBwYJEyuzCAYJEyu6wa3xcQAVKwuwDBCzDQwOEyu6PpryswAVKwuwHhCzHR4bEyuyBwYJIIogiiMGDhESObAIObIdHhsREjmyDQwOIIogiiMGDhESOQBACgYJDBgbHQcIDQ4uLi4uLi4uLi4uAUAMBgkMFxgbHR4HCA0OLi4uLi4uLi4uLi4usEAaAbEBABESsB85sRUUERKwFjkAsQAfERKzBQoPGiQXOTAxEzMTHgEXMz4BNxMzEx4BFzM+ATcTMwMjAyYnIwYHAyMO8EoCEAIGDDoIdZdzCjYMCAQPAkXhtvx2GxEGFxZw+AU7/Pg53zg/6icBsv5OMeE+PeQvAwj6xQHpeYGWZP4XAAAAAAEASgAABIMFOwAWACYAsgABACuwDjOyAgMAK7ALMwGwFy+xGAErALECABESsQcSOTkwMTMJASETHgEXMzY3EzMJASEDJicjBgcDSgGJ/o8BCJ4SSg0INyeY+/6QAYn++q43OggtO6gCsgKJ/tcjkRh/TQEp/W39WAE7aHRmdv7FAAAAAAEANwAABJYFOwAOADIAsg0BACuyAAMAK7AJMwGwDy+wDdaxDBDpsRABK7EMDRESsQUEOTkAsQANERKwBDkwMRMzExYXMz4BNxMzAREjETf8qDVUCQZsG6b2/kftBTv+mHXAEOo9AWb8lv4vAdEAAAABAH0AAARYBTsACQAuALIAAQArsQcN6bIEAwArsQMM6QGwCi+xCwErALEHABESsAE5sQQDERKwBjkwMTM1ASE1IRUBIRV9Aq79jwOW/VACuI8D5saP/B3JAAAAAAEBtP7JA/4FqgAHADgAsAAvtAUFABwEK7AEL7QBBQAcBCsBsAgvsADWtAUQABYEK7IFAAors0AFBwkrsAIysQkBKwAwMQERIRUhESEVAbQCSv5sAZT+yQbhgfohgQAAAAEAsP64BB0FrgADAAATMwEjsMsCossFrvkKAAABANH+yQMbBaoABwA4ALAHL7QABQAcBCuwAy+0BAUAHAQrAbAIL7AB1rQGEAAWBCuyAQYKK7NAAQcJK7ADMrEJASsAMDEXIREhNSERIdEBkf5vAkr9trYF34H5HwAAAAABAMkCOwQEBVwACQAAEwEzASMLASMLAckBO8UBO8dyYQhgcwI7AyH83wE2ART+7P7KAAAAAQB7/skEUv+BAAMAFwCwAy+xAArpsQAK6QGwBC+xBQErADAxFyEVIXsD1/wpf7gAAQFQBJYC/gXZAAMAJQCwAy+xAQ/pAbAEL7AA1rQCEgAKBCuxBQErALEBAxESsAA5MDEBMxMjAVD2uLAF2f69AAIAkf/nBDMEBgAVAB4AeQCyDwEAK7ITAQArsRkE6bIKAgArsQUL6QGwHy+wANaxFhDpsBYQsRsBK7ADMrEOEOmwDhC0DxAAHwQrsA8vsSABK7EWABESsQcIOTmwGxGyBQoTOTk5sA8SsBE5ALEZDxESsRAROTmwBRGyAAccOTk5sAoSsAg5MDETNCQlJiMiByc2MzIWFREjJyMGIyImNxQWMzI3NQQGkQFGAXEO4ofDVuzf0d/AEwbDtpO95GRQhZr+/tEBDqqwG8Vrnovf0/2sfZaklj9Ce9USZwACAKj/5wRgBaYAEAAaAGUAsgABACuyDAEAK7ETDOmyBgIAK7EYDOkBsBsvsADWsREQ6bACMrQQEAAWBCuwERCxFgErsQkS6bEcASuxERARErEEDjk5sBYRsQYMOTkAsRMAERKwDjmwGBGwCTmwBhKwBDkwMTMRMxEHNjMyEhUUACMiJyMHExYzMjY1ECciB6juCY+pwdr++LaaiwYVNGR5b4vqd3YFpv6LsIX+7Or4/teIbwEGXLSmAT8BeQAAAAABAJb/5wRYBAYAFAA+ALITAQArsQ4L6bIDAgArsQgL6QGwFS+wAdaxCxLpsRYBKwCxDhMRErARObAIEbMAAQYQJBc5sAMSsAU5MDESEAAzMhcHJiciBhUUFjMyNxcGIyKWAUny35Zxd4GYvLmVjZJirun0AQIB5wEdjZRgAbmXlrhvmJgAAAAAAgBt/+cEJQWmABAAGwBtALIKAQArsg4BACuxFAzpsgMCACuxGQzpAbAcL7AA1rEREumwERCxFgErsAYysQkQ6bAJELQKEAAfBCuwCi+xHQErsRYRERKxAw45ObAKEbEFDDk5ALEUChESsQsMOTmwGRGwADmwAxKwBTkwMRM0ADMyFycRMxEjJyMGByICNxQWMzI3ESYnIgZtAQi0loML7sMSBo2ixenzf3V9ZmJ1bZMB9uwBJHeqAW36WnWNAQEZ+KKseQHEXAGyAAAAAgB//+cEVgQGABMAGgBrALIRAQArsQwK6bIDAgArsRgK6bQUCREDDSuxFAXpAbAbL7AA1rEJEumwFDKwCRCxFQErsQYQ6bEcASuxFQkRErMDDBEYJBc5sAYRsggODzk5OQCxDBERErAPObAJEbAOObAUErEGADk5MDETNAAzMhIVFAchHgEzMjcXBiMiABMhNCYjIgZ/ATXP2/gK/SUQtoyHk1C8zez+x/ACDn13ap4B9u4BIv741TE+h5VSlHUBHQFMeYeHAAABALwAAASoBb4AFABYALITAQArsgICACuwDjOxFATpsBAysAsvsQYE6QGwFS+wE9awAjKxEhDpsA0yshITCiuzQBIQCSuyExIKK7NAEwAJK7EWASsAsQsCERKwCTmwBhGwCDkwMRM1JTU0NjMyFwcmIyIHFSEVIREjEbwBF9XVnI8xb27dAQF//oHpAzOwCze63zeuK9s7u/zNAzMAAAAAAwB//kQEjQQGACYANAA+AMIAsg0CACuxPQbpsg8CACuxEgjpsCQvsSoF6bAxL7EdBOmwFy+xOAXpAbA/L7AK1rAFMrE1EOmwACDWEbQnEAAfBCuwChC0GxAAHwQrsDUQsToBK7QUEAAnBCuzLRQ6CCuxIRDpsBAysUABK7EnChESsQIHOTmxOjUREkAKDxcZHR4kKjAzDSQXObAtEbASOQCxMSoRErIhACc5OTmwHRGyAgMzOTk5sBcSsBs5sDgRsggHGTk5ObASErIKNTo5OTkwMRc0NzUmJzQ3NSY1NDYzMhchFSMWBxQGIyInBhUUOwEyFhUUBCEiJjcUFjMyNjU0JisBIicGExQWMjY1NCYiBn+gZgF5gfCuWkQBm+tEAeGwTE49vs3HxP7B/vzV9sWXi4+1YGugZjNiS22kbnCgb7B/VAg7bWpUCViqqMIYr1BcorIbJzVgdYGYzImiRE5gRDcrETsC41xtbF1abm4AAAAAAQCoAAAEQgWmABIASACyAAEAK7AJM7IGAgArsQ4N6QGwEy+wANaxEhDpsAIysBIQsQoBK7EJEOmxFAErsRIAERKwBDmwChGwBjkAsQYOERKwBDkwMTMRMxEHNjMgGQEjETQmIyIGBxGo7g+svQFS7lZmRnNJBab+i9es/mn9kQJQe3BBTP1SAAIArAAAA20F2wAFAA4AWQCyBAEAK7IBAgArsQAE6bAOL7EJD+kBsA8vsATWsQMQ6bIEAwors0AEAAkrsAMQsxMDDA4rtAcSABMEK7AHL7QMEgATBCuxEAErsQMEERKyCQ0OOTk5ADAxEzUhESMRAjQ2MzIWFAYirAKg7ENgSEpeX5MDM7v8EgMzAcOLWlqLWAAAAAACAGT+WgNtBdsADgAXAGsAsg0AACuxAwTpsgkCACuxCATpsBcvsRIP6QGwGC+wBtaxCxDpsgYLCiuzQAYICSuwCxCzEwsVDiu0EBIAEwQrsBAvtBUSABMEK7EZASuxCwYRErISFhc5OTkAsQMNERKwADmwCBGwATkwMRM3FhcyNjURITUhERAhIgA0NjMyFhQGImRIb2h7Yv5MAqD+Q54BLGBISl5fk/6eqjMBdX0DLbv8JP5IBpyLWlqLWAAAAAABALgAAASkBaYADAAtALIAAQArsAgzsgUCACsBsA0vsADWsQwQ6bACMrEOASsAsQUAERKxAwo5OTAxMxEzETcBIQkBIQEHEbjuBgHHAQb+ewGw/v7+xMAFpvx5AgHN/mr9qAG8uv7+AAEAkf/nBFIFpgAOADwAsgoBACuxBQvpsAAvsQEE6QGwDy+wDdaxAxDpsg0DCiuzQA0ACSuxEAErALEFChESsAg5sAARsAc5MDETNSERFDMyNxcGByImNRGRAim1SmI3qHWuuATsuvu8uieuOQHLvQN9AAAAAQBiAAAEhQQGAB4AeQCyAAEAK7EQFzMzsgECACuyBgIAK7AMM7EbDemwFDIBsB8vsADWsR4Q6bQCEAAWBCuwHhCxGAErtBcQABYEK7AXELERASuxEBDpsSABK7EeAhESsAQ5sBgRsQgGOTmwFxKwCjmwERGwDDkAsQEbERKyAwQKOTk5MDEzETMXMzYzMjMyFzYzMhYVESMRNCMiBxEjETQjIgcRYrITBk2OAQGTJlKRanXfVEo5uFZGOQPugZmoqKaX/TcCtoV9/UICtoV9/UIAAAABAKgAAARCBAYAEgBTALIAAQArsAkzsgECACuyBgIAK7EODekBsBMvsADWsRIQ6bQCEAAfBCuwEhCxCgErsQkQ6bEUASuxEgIRErAEObAKEbAGOQCxAQ4RErEDBDk5MDEzETMXMzYzIBkBIxE0JiMiBgcRqMITCKy/AVLuVmZGc0kD7piw/mn9kQJQe3BBTP1SAAAAAgBt/+cEYAQGAAkAEwBHALIIAQArsQ0L6bIDAgArsRIL6QGwFC+wANaxChLpsAoQsQ8BK7EFEumxFQErsQ8KERKzAwcIAiQXOQCxEg0RErEFADk5MDETNAAgABUUACAANxQWMjY1NCYiBm0BKQGhASn+1/5f/tfzjvGOjPWMAfbyAR7+4fHw/uEBH/CYtraYmra2AAIAqP5zBGAEBgAQABoAbACyDAEAK7ETDOmyAAAAK7IBAgArsgYCACuxGAzpAbAbL7AA1rEQEOmwETK0AhAAHwQrsBAQsRYBK7EJEumxHAErsRACERKxBA45ObAWEbEGDDk5ALETDBESsA45sBgRsAk5sAESsQMEOTkwMRMRMxczNjMyEhUUACMiJxcZARYzMjY1ECciB6jCEwaWrMPY/vi2lIEJZHdxi+p3dv5zBXtzi/7s7Pj+2Xew/sUCk1y0pgE/AXkAAAAAAgBt/nMEJQQGABAAGwBsALIOAQArsRQM6bIKAAArsgcCACuyAwIAK7EZDOkBsBwvsADWsRES6bARELEKASuwFjKxCRDpsAkQtAcQAB8EK7AHL7EdASuxChERErEDDjk5sAcRsQUMOTkAsRQOERKwDDmxBxkRErAFOTAxEzQAMzIXMzczESMRNwYHIgI3FBYzMjcRJiciBm0BCLSkgwYUu+4LiZ7F6fN/dX1mYnVtkwH27AEkg2v6hQFSqIUBARn4oqx5AcRcAbIAAAAAAQEKAAAEVgQGABAARwCyAAEAK7IBAgArsgYCACuxDQ7pAbARL7AA1rEQEOm0AhAAHwQrsRIBK7EQAhESsAQ5ALENABESsgMECTk5ObABEbAIOTAxIREzFzM2ITIXByYjIiMiAxEBCsMUBqABDG9UMV9SAwLsiwPu5Pwpxh7+9v3VAAAAAQB//+cERAQGAB8AaACyHgEAK7EDCemyDgIAK7ETCekBsCAvsAvWsRUQ6bAVELEGASuxGxDpsSEBK7EVCxESsAE5sAYRtQMJDhMYHiQXObAbErIQERk5OTkAsQMeERKwADmwExGzAQsRGyQXObAOErAQOTAxPwEWMzI2NTQmJyQ1NDYzMhcHJiMiFRQWFx4BFRQGIyB/b7jNc3KJoP6N7NHZyW2Ym9ONjsHA+t3+84OWf0E3M0opYr+HpoWRZG8xQSUziHSHsQABAHn/5wRiBQAAFABtALIRAQArsQwE6bICAgArsAUzsRQE6bAHMrICFAors0ACBAkrAbAVL7AT1rACMrEJEOmwBDKyCRMKK7NACQcJK7ITCQors0ATAAkrsAkQtAMQAB8EK7ADL7EWASsAsQwRERKwDzmwFBGwDjkwMRM1JRMzESEVIREUFjMyNxcGByQZAXkBFh/DAcj+OGp9c2wrpJ/+ZgMzsAsBEv7uu/5jf3MprDkBAQGuAZ0AAQCP/+cEHwPuABIAWQCyDQEAK7IRAQArsQYN6bIBAgArsAozAbATL7AA1rEDEOmwAxCxCQErsQwQ6bAMELQNEAAfBCuwDS+xFAErsQkDERKwETmwDRGwDzkAsQYNERKxDg85OTAxExEzERQWMzI2NxEzESMnIwYHII/sVmZIcUPswRIInsf+sAF/Am/9sHtxRFICpvwSoLgBAAAAAQBUAAAEeQPuAAsAIQCyCwEAK7IAAgArsAgzAbAML7ENASsAsQALERKwBDkwMRMzExYXMzY3EzMBIVTuwhtJCUoaw+H+ef7zA+799Ujn50gCC/wSAAAAAAEACgAABMMD7gAgAdIAsiABACuyFBUfMzMzsgACACuyARITMzMzAbAhL7AA1rEBEOmwARCxEgErsRMQ6bEiASuwNhq6wPj06gAVKwqwABCwIMAOsAEQsAXAuj8p9awAFSsKBbAfLg6wGsCxBhn5sAjAusGl8ZYAFSsKDrAZELAWwLEKGvmwC8C6wOP1ZAAVKwoFsBUuDrAYwLENG/mxCgsIsAvAuj8j9YcAFSsKDrASELAOwAWwExCwFMC6wNj1pQAVKwuwARCzAgEFEyu6Pyj1pQAVKwuwDhCzDw4SEyuzEA4SEyuzEQ4SEyuxGRYIsBgQsxYYFRMrusEo8+QAFSsLsxcYFRMruj769JsAFSsLsB8QsxsfGhMrsxwfGhMrsx0fGhMrsx4fGhMrsgIBBSCKIIojBg4REjmyHB8aIIogiiMGDhESObAdObAbObAeObIXGBUgiiCKIwYOERI5sg8OEiCKIIojBg4REjmwEDmwETkAQBQCBQYICgsNDhEWGRoeDxAXGBscHS4uLi4uLi4uLi4uLi4uLi4uLi4uAUAYAgUGCAoLDQ4RFBUWGRoeHyAPEBcYGxwdLi4uLi4uLi4uLi4uLi4uLi4uLi4uLi4usEAaAQCxACARErAJOTAxEzMTHgEXMzY3EzMTFhczPgE3EzMDIQMuAScjDgIHAyEK7FwKGwQIGRper2IZHAgKGwRc3Lv+6lgIHwsIBA4RClT+8APu/fU30RiifgGo/lhvsTfJIAIL/BIBpC/ANhlqazn+XgABAGgAAARkA+4AGQAmALIAAQArsBAzsgICACuwDTMBsBovsRsBKwCxAgARErEIFTk5MDEzCQEhFx4CFzM+AT8BMwkBIScuAScjBg8BaAFt/qwBAIMOJS8NCBJGCnf4/qoBbv8AkRBUFwg9MIMCCgHkvxk5RxMheRS9/gT+DscZeh9iUsUAAAAAAQBS/mIEfQPuABUALQCyDQAAK7ESC+myAAIAK7AIMwGwFi+xFwErALESDRESsA85sAARsQQQOTkwMRMzExYXMzY3EzMBDgEjIic3FjMyPwFS688XWAgZS7ff/lxGzqxOQi0vJaxGGAPu/hI18k7ZAe775ba7FbgOrD8AAAEAkQAABEwD7gAJAC4AsgABACuxBwTpsgQCACuxAwTpAbAKL7ELASsAsQcAERKwATmxBAMRErAGOTAxMzUBITUhFQEhFZECXf3pA2L9ogJxfwK0u339S7wAAAAAAQDn/skD/gWqACkAeQCwIi+0HwUAHAQrsAAvsQEF6bAML7QJBQAcBCsBsCovsCXWsAYytBwQAB8EK7APMrAcELQoEAAfBCuwKC+wAzOyHCgKK7NAHCEJK7AKMrErASuxKCURErEVFjk5ALEAHxESsRklOTmwARGxFRY5ObAMErEGEjk5MDETNSQ1NCY1NDY7ARUjIgYVFBYVFAYHFR4BFRQGFRQWOwEVIyImNTQ2NTTnASEUtMmNXotdC1lqalkLXIxejcm0FAHyjwKYP+5Hnn2BRl436j9taBMIEmlsROM5XkaBfJ5M6EGYAAABAhf+AAK2BgAAAwAdAAGwBC+wANa0AxAAFgQrtAMQABYEK7EFASsAMDEBETMRAhef/gAIAPgAAAEA0f7JA+UFqgApAHMAsCkvtAAFABwEK7AgL7EfBemwFS+0FgUAHAQrAbAqL7AE1rAOMrQlEAAfBCuwGjK0IhAAFgQrsB0ysgQiCiuzQAQpCSuwFTKxKwErsSUiERKxCwo5OQCxIAARErEHJTk5sB8RsQoLOTmwFRKxDho5OTAxFzMyNjU0JjU0Njc1LgE1NDY1NCYrATUzMhYVFAYVFAUVBBcUFhUUBisB0V6LXQtWbW1WC12LXo3JshQBIP7fARSyyY22RV8540RtaBIIEmltP+o3XkaBfZ5I7T+YAo8CmELnTJ58AAABAIMBywRKAysAEQAtALALL7EGB+mzDwYLCCuxAgfpAbASL7ETASsAsQ8LERKwADmxAgYRErAJOTAxExIzMh4BMzI3FwIjIi4BIyIHg2rJRoNvLWQ7kGrJRoNvLWM9AgwBF1JSrET+7FJSrAACANX/tAQfBTsAFgAcAF8AsgQDACuwFC+wETOxGQ7psQwL6bIUDAors0AUEwkrAbAdL7AA1rEXEOmwFxCxEwErsQMZMjK0EhAADQQrsQULMjKxHgErALEMFBESsA85sQQZERK0AwkLDhokFzkwMRM0Ejc1MxUWFwcmJxE2NxcGBxUjNSYCNxQXEQ4B1ey+iZhsbkhOVl5jeZ6JxeXnw15lAnfRAQYfzsgIbZE/CP2JCkqVbRDLyxkBCNfuPQJYH54AAAAAAQCWAAAEVAUvACMAmgCyAAEAK7EhDemwGy+wBjOxGAXpsAgysBMvsQ4L6QGwJC+wBNa0HRAAJwQrsh0ECiuzQB0jCSuzQB0aCSuwHRCwFiDWEbELEOmwCy+xFhDpsgsWCiuzQAsACSuxJQErsQQLERKwCTmwFhGxICE5ObAdErAYOQCxIQARErABObAbEbAEObAYErAJObATEbELETk5sA4SsBA5MDEzNT4BNTQnIzU3JjU0NjMyFwcmJyIGFRQXIRUhFhUUBgcVIRWWc4IK6bgz98vjkINgfXV/KwFv/roIP0QCfZExs3AlL44KhUy216CBYAFzZkh9mCcvWH09CMkAAAABAFYAAAR3BRcAHQBkALIVAQArsBcvsBIztBgFABwEK7AQMrAbL7AOM7QcBQARBCuwDDIBsB4vsBXWsBkysRQQ6bAPMrIUFQors0AUEgkrsA0yshUUCiuzQBUXCSuwGzKxHwErsRQVERKxBAg5OQAwMRMzEx4BFzM+ATcTMwEhFSEVIRUhESMRITUhNSE1IVbymxlUFAkSWBmb7P6bATL+lwFp/pfr/pkBZ/6ZAS8FF/7KMbYpJboxATb9jXl5e/7JATd7eXkAAAMAMf/sBJwFOwAJABEAJwCYALIIAQArtA0FABEEK7IDAwArtBEFABEEK7QlIAgDDSuxJQXptBUaCAMNK7EVBekBsCgvsADWtAsQAA0EK7ALELESASu0HRAAFgQrsB0QsQ8BK7QFEAANBCuxKQErsR0SERKyCBECOTk5sA8RtgcDEBUXIyUkFzkAsSAlERKxDiM5ObAaEbQFABIYIiQXObAVErEPFzk5MDETEAAgABEQACAAEhASIBIQAiADNDYzMhcHJiMiBhUUFjMyNxcGIyImMQFEAeMBRP68/h3+vHP4AZX4+P5rec2NfWJcOzpUYl5OP1JOcXSWwgKYATUBbv6S/sv+zf6HAXkCN/33/sMBPQIJATf9w67ZY2Y3iWx3jDxzWtwAAAAAAQEIAfwDxQK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxATUhFQEIAr0B/Ly8AAAAAAQA2QKFA/IFtgAKABQAIAAmALAAsAkvtA4FABEEK7AfL7QhBQARBCuyHyEKK7NAHx0JK7AVMrAmL7QXBQARBCuwEy+0AwUAEQQrAbAnL7AA1rQLEAANBCuwCxCxFQErtCAQAA0EK7AhMrAgELEkASu0GRAADQQrsBkQsRABK7QGEAANBCuxKAErsRULERKwCTmwIBGxEw05ObAkErEeAzk5sBkRtAgSDhsdJBc5sBASsBw5ALEhHxESswsQBhskFzkwMRM0NjMyFhUUBiAmNxQWIDY1NCYgBhMRMzIHFAcXIycjFTUzMjQrAdnlpqjm6P605WCoAQaoqP76qJCopAFJWm9BSC9MSDMEHbLn57Kw6OiwjbOyjo+0tP6qAZiGUCCihYXPewAAAQHPBJYDfQXZAAMAHQCwAC+xAQ/pAbAEL7AA1rQCEgAKBCuxBQErADAxARMzAwHPuPb+BJYBQ/69AAAAAQEIAfwDxQK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxATUhFQEIAr0B/Ly8AAAAAAEBCAH8A8UCuAADABcAsAAvsQEE6bEBBOkBsAQvsQUBKwAwMQE1IRUBCAK9Afy8vAAAAAABAQgB/APFArgAAwAXALAAL7EBBOmxAQTpAbAEL7EFASsAMDEBNSEVAQgCvQH8vLwAAAAAAQCkAfwEKQK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxEzUhFaQDhQH8vLwAAQApAfwEpAK4AAMAFwCwAC+xAQTpsQEE6QGwBC+xBQErADAxEzUhFSkEewH8vLwAAQGRAo0DHQWWABAAMwCwDi+xCA/pAbARL7AA1rQLEgALBCuxEgErsQsAERKyAwUGOTk5ALEIDhESsQAGOTkwMQE0NjcXBgc2NzIWFRQGIyImAZGooETPDBIbSltgTmJzA66g/EyCbcQIAV1JUmeaAAEBrgKNAzcFlgAQAD0AsAQvsQoP6QGwES+wB9awADK0DRIACwQrtA0SAAsEK7ESASuxDQcRErIBAhA5OTkAsQoEERKxAg05OTAxATY3BiMiJjU0NjMyFhUUBgcBrs8OFxpIXmNLYnOnngMObcQIXEpSZ5qHoPxMAAIAkwKNBBsFlgAQACEAWgCwDi+wHzOxCA/psBkyAbAiL7AA1rQLEgALBCuwCxCxEQErtBwSAAsEK7EjASuxCwARErIDBQY5OTmwERGwBDmwHBKyFBYXOTk5ALEIDhESswAGERckFzkwMRM0NjcXBgc2NzIWFRQGIyImJTQ2NxcGBzY3MhYVFAYjIiaTqKBEzwwSG0pcYU5icwH8qKBEzw0SHEpbYE5icwOuoPxMgm3ECAFdSVJnmoeg/EyCbcQIAV1JUmeaAAAAAgCwAo0ENQWWABAAIQBcALAEL7AVM7EKD+mwGzIBsCIvsAfWsAAytA0SAAsEK7ANELEYASuwETK0HhIACwQrsSMBK7ENBxESsgECEDk5ObEeGBESshITITk5OQCxCgQRErMCDRMeJBc5MDETNjcGIyImNTQ2MzIWFRQGByU2NwYjIiY1NDYzMhYVFAYHsM8OFxpIXmNLYnOnngG4zw4XGkheYkxic6eeAw5txAhcSlJnmoeg/EyBbcQIXEpSZ5qHoPxMAAEBJwExA6YDqAAHAC4AsAcvtAMPAAcEK7QDDwAHBCsBsAgvsAHWtAUSAAcEK7QFEgAHBCuxCQErADAxABA2IBYQBiABJ7oBC7q6/vUB4wETsrL+7bIAAAADAB//5wSuAUgABwAPABcAVACyBwEAK7EOFjMztAMPAAwEK7EKEjIysgcBACu0Aw8ADAQrAbAYL7AB1rQFEgATBCuwBRCxCQErtA0SABMEK7ANELERASu0FRIAEwQrsRkBKwAwMTY0NjIWFAYiJDQ2MhYUBiIkNDYyFhQGIh9ej15ejwFEXo9eXo8BQ1+PXl6PTJdlZZdlZZdlZZdlZZdlZZdlAAEAaP/nBJoFLwApAJQAsiYBACuxIQTpsB4vsAAztBsFABwEK7ABMrAXL7AGM7QUBQAcBCuwCDKwES+xDArpAbAqL7AE1rEZEOmyGQQKK7NAGR0JK7NAGRYJK7IEGQors0AEAAkrsAcysSsBK7EZBBESsQkpOTkAsR4hERKxIyQ5ObAbEbACObAXErAEObAUEbAJObARErAPObAMEbAOOTAxEzU3JjU0NyM1NzYAMzIXByYnIgYHIRUhBhUUFyEVIR4BMzI3FwYHIiQnaHUCAnWEKwEt29WThXN4f6AdAi/9wwICAev+JSGedpFxhqzoz/7gKwHNcgkUKykTcgjsAQaggWgBopZ8ECQvFn2RnIF7vgH+6AAAAAAC/+4C6QSyBWgABwAbALMAsAAvsAMzsQEF6bEJDzIysgABCiuzQAAGCSuxCBEyMgGwHC+wBta0BRAAFgQrsgUGCiuzQAUDCSuyBgUKK7NABgAJK7AFELEIASu0GxAADQQrsBsQsRIBK7QREAANBCuxHQErsDYausL67LUAFSsKDrAYELAXwLELHPmwDMAAswsMFxguLi4uAbMLDBcYLi4uLrBAGgGxGwgRErAZObASEbIKDxY5OTmwERKxFBU5OQAwMQM1IRUjESMRAREzHwEzPwEzESM1NyMDIwMjFxUSAga1nwGkslIxCC9Qso0QCH9mfwgSBNeRkf4SAe7+EgJ/1Zub1f2B7uH+qgFW4e4AAAEAAAAAA+0D7QADAAARIREhA+38EwPt/BMAAAABAAAAAQJNrT3hu18PPPUAHwgAAAAAAMyHZP4AAAAAzIdk/v/u/gAEwwYAAAEACAACAAAAAAAAAAEAAAYA/dgAAAYA/+7//wTDAAEAAAAAAAAAAAAAAAAAAACFBMwAYgAAAAACqgAABMwAAATMAbQEzADZBMwAoATMAJgEzAAvBMwAQgTMAdcEzAGNBMwA/gTMAMEEzACgBMwBgwTMAQgEzAGcBMwAsATMAIMEzAC4BMwAewTMAGYEzABMBMwAaATMAIsEzACHBMwAgwTMAHsEzAGcBMwBgwTMAPIEzACgBMwA0QTMANUEzABSBMwAKQTMAL4EzAB7BMwAmgTMANUEzAD4BMwAYgTMAJMEzACsBMwAjwTMAKoEzAD2BMwAlgTMAJgEzABYBMwAsgTMAFgEzACsBMwAdwTMAEoEzACTBMwAOQTMAA4EzABKBMwANwTMAH0EzAG0BMwAsATMANEEzADJBMwAewTMAVAEzACRBMwAqATMAJYEzABtBMwAfwTMALwEzAB/BMwAqATMAKwEzABkBMwAuATMAJEEzABiBMwAqATMAG0EzACoBMwAbQTMAQoEzAB/BMwAeQTMAI8EzABUBMwACgTMAGgEzABSBMwAkQTMAOcEzAIXBMwA0QTMAIMEzAAABMwA1QTMAJYEzABWBMwAMQTMAQgEzADZBMwBzwMAAAAGAAAAAwAAAAYAAAACAAAAAYAAAAEAAAABAAAAAMAAAAEzAAAAVQAABMwBCATMAQgEzAEIBMwApATMACkEzAGRBMwBrgTMAJMEzACwBMwBJwTMAB8BMwAAAYAAAATMAGgEzP/uA+wAAAAAAFoAWgBaAFoAnADMAa4CNgL0A4wDrgPSA/YEKARqBJoEtATgBPAFWgWcBewGTgaiBwgHcAeuCDYIngjaCTIJSAlqCX4J7gqOCtYLQAuIC8YMAgw4DKIM2g0UDU4NhA2qDkwOnA7sDywPkg/mEFQQhBC+EPwRwBICEjoSaBKYEqYS1hLwEwgTKBOWE/YUOhSgFQQVVBYOFlIWnBb8FzAXahfUGB4YaBjMGTIZdBnYGjQaghquG9AcFBxSHIAc9h0SHYYdvB28Hh4eoB8EH5gfsiBGIGQgZCBkIGQgZCBkIGQgZCBkIGQgZCBkIH4gmCCyIMog4iEaIVYhuiIcIkgimiKaIpojJiOuI7wAAQAAAIUAPwAGAAAAAAACAAEAAgAWAAABAAHSAAAAAAAAAAgAZgADAAEECQAAAIoAAAADAAEECQABAB4AigADAAEECQACABAAqAADAAEECQADAA4AuAADAAEECQAEADAAxgADAAEECQAFAHIA9gADAAEECQAGACwBaAADAAEECQDIAG4BlABDAG8AcAB5AHIAaQBnAGgAdAAgADIAMAAxADAALAAgADIAMAAxADIAIABBAGQAbwBiAGUAIABTAHkAcwB0AGUAbQBzACAASQBuAGMAbwByAHAAbwByAGEAdABlAGQALgAgAEEAbABsACAAUgBpAGcAaAB0AHMAIABSAGUAcwBlAHIAdgBlAGQALgBTAG8AdQByAGMAZQAgAEMAbwBkAGUAIABQAHIAbwBTAGUAbQBpAGIAbwBsAGQAdwBlAGIAZgBvAG4AdABTAG8AdQByAGMAZQAgAEMAbwBkAGUAIABQAHIAbwAgAFMAZQBtAGkAYgBvAGwAZABWAGUAcgBzAGkAbwBuACAAMQAuADAAMAA5ADsAUABTACAAMQAuADAAMAAwADsAaABvAHQAYwBvAG4AdgAgADEALgAwAC4ANwAwADsAbQBhAGsAZQBvAHQAZgAuAGwAaQBiADIALgA1AC4ANQA5ADAAMABTAG8AdQByAGMAZQBDAG8AZABlAFAAcgBvAC0AUwBlAG0AaQBiAG8AbABkAFQAaABpAHMAIABmAG8AbgB0ACAAdwBhAHMAIABnAGUAbgBlAHIAYQB0AGUAZAAgAGIAeQAgAHQAaABlACAARgBvAG4AdAAgAFMAcQB1AGkAcgByAGUAbAAgAEcAZQBuAGUAcgBhAHQAbwByAC4AAgAAAAAAAP9nAGYAAAAAAAAAAAAAAAAAAAAAAAAAAACFAAAAAQACAAMABAAFAAYABwAIAAkACgALAAwADQAOAA8AEAARABIAEwAUABUAFgAXABgAGQAaABsAHAAdAB4AHwAgACEAIgAjACQAJQAmACcAKAApACoAKwAsAC0ALgAvADAAMQAyADMANAA1ADYANwA4ADkAOgA7ADwAPQA+AD8AQABBAEIAQwBEAEUARgBHAEgASQBKAEsATABNAE4ATwBQAFEAUgBTAFQAVQBWAFcAWABZAFoAWwBcAF0AXgBfAGAAYQECAIQAhQCWAIsBAwCKAI0BBAEFAQYBBwEIAQkBCgELAQwBDQEOAQ8BEAERALIAswC2ALcAtAC1AIcAqwESARMBFACMARUHdW5pMDBBMAd1bmkwMEFEB3VuaTIwMDAHdW5pMjAwMQd1bmkyMDAyB3VuaTIwMDMHdW5pMjAwNAd1bmkyMDA1B3VuaTIwMDYHdW5pMjAwNwd1bmkyMDA4B3VuaTIwMDkHdW5pMjAwQQd1bmkyMDEwB3VuaTIwMTEKZmlndXJlZGFzaAd1bmkyMDJGB3VuaTIwNUYERXVybwd1bmlFMDAwuAH/hbABjQBLsAhQWLEBAY5ZsUYGK1ghsBBZS7AUUlghsIBZHbAGK1xYALAEIEWwAytEsAogRboABAEjAAIrsAMrRLAJIEWyCokCK7ADK0SwCCBFsgloAiuwAytEsAcgRbIISAIrsAMrRLAGIEWyBzICK7ADK0SwBSBFsgYnAiuwAytEsAsgRboABAEMAAIrsAMrRLAMIEWyC5MCK7ADK0SwDSBFsgxSAiuwAytEsA4gRbINPAIrsAMrRLAPIEWyDg0CK7ADK0QBsBAgRbADK0SwESBFugAQf/8AAiuxA0Z2K0SwEiBFshHsAiuxA0Z2K0RZsBQrAAA=\') format(\'truetype\');	font-weight: normal;	font-style: normal;}#viewport-ui {	font-family: \'SourceCodeProSemibold\', sans-serif;	/**	 * Don\'t let people accidently highlight text.	 */	-webkit-touch-callout: none;	-webkit-user-select: none;	-khtml-user-select: none;	-moz-user-select: none;	-ms-user-select: none;	user-select: none;}#viewport-ui .pointer {	display: none;	position: absolute;	top: 0;	left: 0;	width: 13px;	height: 20px;	background-image: url(\'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAUCAYAAABWMrcvAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZpJREFUeNqUk79LAnEUwN9FgXh4wUGIg7g46XCI4NLgcERi0NzQXyBRc/9AU4uDBNFgY4QQgi1phIqKUy2OTimBnYFy/s7Xe0eKmuJ18Pny5b37vO+77/e+gIjnhECAWXjQiat/Sf1+v1mv12mO16alTqejBYNBLJVKLN4SG2ul0WikuVwulCQJy+Uyi3fE1lrJ7XbTDFCWZczlciw+EBZTEsMrZjIZFh8J0ZTEiKI4EXmQTEmMzWbDdDrNYnZRXCkxVqsVU6kUi8/EtimJEQQB4/E4i3lCZmkTVjyqqoLX64VWqwV0hhAKhXbtdnuWUgdzkqIo0G63oVqtAm0GRKNRDj8RnwS/KxHHMBwONafTiX6/H3VdN1qZtJZIJLityz+7R5W1SCSCjUbjmwI3VOQjEAgYks/nw16v16W4MieNx+OvwWDAFc9+gxfJZHK6WiwW49z94tVoEiczwR3iPRwOG5LD4cBarcaiOisdLvlVTguFgiF5PB6sVCqTs5pKy7DQ+b0Vi0XsdvmT8IXYWycxR8Qrsb+Y+xFgABTcmOagLuC4AAAAAElFTkSuQmCC\');	z-index: 1;	/* Don\'t let elementFromPoint() return the actual pointer */	pointer-events: none;}#viewport-ui.active .pointer {	display: inline-block;}.fullscreen {	position: fixed;	top: 0;	left: 0;	width: 100%;	height: 100%;}/** * Dialogs */.dialog {	position: relative;	width: 40%;	margin: 10em auto 0;	padding: 1.2em 1.6em;	background: #111;	color: #bfbfbf;	border-radius: 1em;	word-break: break-all;	overflow: hidden;}.dialog .close {	position: absolute;	width: 1.4em;	height: 1.4em;	top: 0;	right: 0;	font-size: 1.4em;	color: #999999;	text-align: center;}.dialog .close.hover {	color: #bfbfbf;}.dialog h1 {	font-size: 1.2em;	padding-bottom: .2em;	border-bottom: 1px solid #222;}.dialog .menu-item {	margin-bottom: .5em;	padding: .5em;	background: #222;}.dialog .menu-item.hover {	background: #333;}.dialog .control-group {	margin-bottom: .5em;}.dialog .control-label {	float: left;	padding: .5em 0;	width: 10em;	color: #a6e22e;	text-align: right}.dialog .control-input {	margin-left: 11em;	/* Empty fields */	min-height: 1em;}.dialog .control-input.input-text,.dialog .control-input.input-key {	padding: .5em;	background: #222;	border: 1px solid transparent;}.dialog .control-input.input-text.hover,.dialog .control-input.input-key.hover {	background: #333;}.dialog .control-input.input-text.focus,.dialog .control-input.input-key.focus {	border: 1px solid #0f0;}.dialog .form-horizontal .form-actions {	margin-left: 11em;}.dialog .button {	display: inline-block;	padding: .5em;	background-color: #222;	background-image: -moz-linear-gradient(top, #333, #222);	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));	background-image: -webkit-linear-gradient(top, #333, #222);	background-image: linear-gradient(to bottom, #303030, #222);}.dialog .button.hover {	background: #333;}/** * Tabs */.nav-tabs {	list-style: none;	margin: 0;	padding: 0;}.nav-tabs li {	display: inline-block;	padding: 0.33em 0.5em;}.nav-tabs li a {	color: #fff;	text-decoration: none;}.nav-tabs li.active {	color: #fff;	background-color: #222;}.tab-pane {	display: none;}.tab-pane.active {	display: block;}/** * Ranges */.input-range {	position: relative;	height: 1em;}.input-range .input-range-track {	position: absolute;	top: 50%;	left: 0;	width: 100%;	height: 1px;	background: #222;}.input-range .input-range-slider {	position: absolute;	top: 0;	left: 0;	background: #a6e22e;	width: 1em;	height: 1em;	content: \'\';}/********************************************************** * * Specialized * **********************************************************//** * Main menu */#main .background {	background: rgba(0, 0, 0, 0.3);}#main .menu-item {	text-align: center;}#main .settings.menu-item {	margin-bottom: 0;}/** * Singleplayer menu */#singleplayer .background {	background: rgba(0, 0, 0, 0.3);}#singleplayer .level-select-wrapper {	overflow: hidden;}#singleplayer .levels {	list-style: none;	margin: 0 11em 0 0;	padding: 0;}#singleplayer .preview {	float: right;}#singleplayer .preview .preview-image {	display: none;	width: 10em;	height: 10em;}/** * Multiplayer menu */#multiplayer .background {	background: rgba(0, 0, 0, 0.3);}/** * Settings menu */#settings .background {	background: rgba(0, 0, 0, 0.3);}#settings .nav-tabs {	margin: 0.67em 0;}#settings .tab-pane {	min-height: 12em;}/** * Ingame menu */#ingame .background {	background: rgba(0, 0, 0, 0.3);}#ingame .menu-item {	text-align: center;}#ingame .exit-game.menu-item {	margin-bottom: 0;}/** * Connect view */#connect .background {	background: #222;}#connect .background .loading {	/* TODO change pixel values to relative values */	display: block;	position: absolute;	top: 50%;	left: 50%;	width: 40%;	height: 400px;	margin: -200px 0 0 -20%;	text-align: center;	line-height: 400px;}/** * Hud view */#hud {	padding: 1em;}#hud .crosshair {	width: 2em;	height: 2em;}#hud .fps-wrapper {	position: absolute;	top: 1em;	right: 1em;}#hud .weapons {	position: absolute;	bottom: 1em;	left: 1em;	margin: 0;	padding: 0;	list-style: none;}#hud .weapons li {	display: block;	border: 1px solid transparent;}#hud .weapons li.selected {	border: 1px solid #A6E22E;}#hud .weapons li .icon {	float: left;	display: block;	width: 2em;	height: 2em;}#hud .weapons li .ammo {	display: block;	margin-left: 2.2em;	padding: 0 .5em;	line-height: 2em;}#hud .count-wrapper {	position: absolute;	bottom: 1em;	right: 1em;}#hud .count-label {	display: inline-block;	width: 10em;	text-align: right;}/** * Scoreboard view */#scoreboard {	position: absolute;	top: 25%;	left: 25%;	width: 50%;	height: 50%;}',
+		'/*! normalize.css v1.0.1 | MIT License | git.io/normalize *//* ==========================================================================   HTML5 display definitions   ========================================================================== *//* * Corrects `block` display not defined in IE 6/7/8/9 and Firefox 3. */article,aside,details,figcaption,figure,footer,header,hgroup,nav,section,summary {    display: block;}/* * Corrects `inline-block` display not defined in IE 6/7/8/9 and Firefox 3. */audio,canvas,video {    display: inline-block;    *display: inline;    *zoom: 1;}/* * Prevents modern browsers from displaying `audio` without controls. * Remove excess height in iOS 5 devices. */audio:not([controls]) {    display: none;    height: 0;}/* * Addresses styling for `hidden` attribute not present in IE 7/8/9, Firefox 3, * and Safari 4. * Known issue: no IE 6 support. */[hidden] {    display: none;}/* ==========================================================================   Base   ========================================================================== *//* * 1. Corrects text resizing oddly in IE 6/7 when body `font-size` is set using *    `em` units. * 2. Prevents iOS text size adjust after orientation change, without disabling *    user zoom. */html {    font-size: 100%; /* 1 */    -webkit-text-size-adjust: 100%; /* 2 */    -ms-text-size-adjust: 100%; /* 2 */}/* * Addresses `font-family` inconsistency between `textarea` and other form * elements. */html,button,input,select,textarea {    font-family: sans-serif;}/* * Addresses margins handled incorrectly in IE 6/7. */body {    margin: 0;}/* ==========================================================================   Links   ========================================================================== *//* * Addresses `outline` inconsistency between Chrome and other browsers. */a:focus {    outline: thin dotted;}/* * Improves readability when focused and also mouse hovered in all browsers. */a:active,a:hover {    outline: 0;}/* ==========================================================================   Typography   ========================================================================== *//* * Addresses font sizes and margins set differently in IE 6/7. * Addresses font sizes within `section` and `article` in Firefox 4+, Safari 5, * and Chrome. */h1 {    font-size: 2em;    margin: 0.67em 0;}h2 {    font-size: 1.5em;    margin: 0.83em 0;}h3 {    font-size: 1.17em;    margin: 1em 0;}h4 {    font-size: 1em;    margin: 1.33em 0;}h5 {    font-size: 0.83em;    margin: 1.67em 0;}h6 {    font-size: 0.75em;    margin: 2.33em 0;}/* * Addresses styling not present in IE 7/8/9, Safari 5, and Chrome. */abbr[title] {    border-bottom: 1px dotted;}/* * Addresses style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome. */b,strong {    font-weight: bold;}blockquote {    margin: 1em 40px;}/* * Addresses styling not present in Safari 5 and Chrome. */dfn {    font-style: italic;}/* * Addresses styling not present in IE 6/7/8/9. */mark {    background: #ff0;    color: #000;}/* * Addresses margins set differently in IE 6/7. */p,pre {    margin: 1em 0;}/* * Corrects font family set oddly in IE 6, Safari 4/5, and Chrome. */code,kbd,pre,samp {    font-family: monospace, serif;    _font-family: \'courier new\', monospace;    font-size: 1em;}/* * Improves readability of pre-formatted text in all browsers. */pre {    white-space: pre;    white-space: pre-wrap;    word-wrap: break-word;}/* * Addresses CSS quotes not supported in IE 6/7. */q {    quotes: none;}/* * Addresses `quotes` property not supported in Safari 4. */q:before,q:after {    content: \'\';    content: none;}/* * Addresses inconsistent and variable font size in all browsers. */small {    font-size: 80%;}/* * Prevents `sub` and `sup` affecting `line-height` in all browsers. */sub,sup {    font-size: 75%;    line-height: 0;    position: relative;    vertical-align: baseline;}sup {    top: -0.5em;}sub {    bottom: -0.25em;}/* ==========================================================================   Lists   ========================================================================== *//* * Addresses margins set differently in IE 6/7. */dl,menu,ol,ul {    margin: 1em 0;}dd {    margin: 0 0 0 40px;}/* * Addresses paddings set differently in IE 6/7. */menu,ol,ul {    padding: 0 0 0 40px;}/* * Corrects list images handled incorrectly in IE 7. */nav ul,nav ol {    list-style: none;    list-style-image: none;}/* ==========================================================================   Embedded content   ========================================================================== *//* * 1. Removes border when inside `a` element in IE 6/7/8/9 and Firefox 3. * 2. Improves image quality when scaled in IE 7. */img {    border: 0; /* 1 */    -ms-interpolation-mode: bicubic; /* 2 */}/* * Corrects overflow displayed oddly in IE 9. */svg:not(:root) {    overflow: hidden;}/* ==========================================================================   Figures   ========================================================================== *//* * Addresses margin not present in IE 6/7/8/9, Safari 5, and Opera 11. */figure {    margin: 0;}/* ==========================================================================   Forms   ========================================================================== *//* * Corrects margin displayed oddly in IE 6/7. */form {    margin: 0;}/* * Define consistent border, margin, and padding. */fieldset {    border: 1px solid #c0c0c0;    margin: 0 2px;    padding: 0.35em 0.625em 0.75em;}/* * 1. Corrects color not being inherited in IE 6/7/8/9. * 2. Corrects text not wrapping in Firefox 3. * 3. Corrects alignment displayed oddly in IE 6/7. */legend {    border: 0; /* 1 */    padding: 0;    white-space: normal; /* 2 */    *margin-left: -7px; /* 3 */}/* * 1. Corrects font size not being inherited in all browsers. * 2. Addresses margins set differently in IE 6/7, Firefox 3+, Safari 5, *    and Chrome. * 3. Improves appearance and consistency in all browsers. */button,input,select,textarea {    font-size: 100%; /* 1 */    margin: 0; /* 2 */    vertical-align: baseline; /* 3 */    *vertical-align: middle; /* 3 */}/* * Addresses Firefox 3+ setting `line-height` on `input` using `!important` in * the UA stylesheet. */button,input {    line-height: normal;}/* * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio` *    and `video` controls. * 2. Corrects inability to style clickable `input` types in iOS. * 3. Improves usability and consistency of cursor style between image-type *    `input` and others. * 4. Removes inner spacing in IE 7 without affecting normal text inputs. *    Known issue: inner spacing remains in IE 6. */button,html input[type="button"], /* 1 */input[type="reset"],input[type="submit"] {    -webkit-appearance: button; /* 2 */    cursor: pointer; /* 3 */    *overflow: visible;  /* 4 */}/* * Re-set default cursor for disabled elements. */button[disabled],input[disabled] {    cursor: default;}/* * 1. Addresses box sizing set to content-box in IE 8/9. * 2. Removes excess padding in IE 8/9. * 3. Removes excess padding in IE 7. *    Known issue: excess padding remains in IE 6. */input[type="checkbox"],input[type="radio"] {    box-sizing: border-box; /* 1 */    padding: 0; /* 2 */    *height: 13px; /* 3 */    *width: 13px; /* 3 */}/* * 1. Addresses `appearance` set to `searchfield` in Safari 5 and Chrome. * 2. Addresses `box-sizing` set to `border-box` in Safari 5 and Chrome *    (include `-moz` to future-proof). */input[type="search"] {    -webkit-appearance: textfield; /* 1 */    -moz-box-sizing: content-box;    -webkit-box-sizing: content-box; /* 2 */    box-sizing: content-box;}/* * Removes inner padding and search cancel button in Safari 5 and Chrome * on OS X. */input[type="search"]::-webkit-search-cancel-button,input[type="search"]::-webkit-search-decoration {    -webkit-appearance: none;}/* * Removes inner padding and border in Firefox 3+. */button::-moz-focus-inner,input::-moz-focus-inner {    border: 0;    padding: 0;}/* * 1. Removes default vertical scrollbar in IE 6/7/8/9. * 2. Improves readability and alignment in all browsers. */textarea {    overflow: auto; /* 1 */    vertical-align: top; /* 2 */}/* ==========================================================================   Tables   ========================================================================== *//* * Remove most spacing between table cells. */table {    border-collapse: collapse;    border-spacing: 0;}'
+	];
 
 	for (var i = 0; i < css.length; i++) {
 		var $style = $('<style>', { 'type': 'text/css'}).append(css[i]);
@@ -39354,14 +37747,16 @@ function Init() {
 	}
 
 	// 
+	InitImages();
 	InitMenus();
-	InitViews();
 }
 
 /**
  * Shutdown
  */
 function Shutdown() {
+	// Clean up and clear input handlers.
+	PopAllMenus();
 }
 
 /**
@@ -39398,53 +37793,123 @@ function Render() {
 	uil.frameCount++;
 }
 		/**
+ * InitImages
+ */
+function InitImages() {
+	uil.images = [];
+
+	RegisterDefaultImage();
+}
+
+/**
+ * RegisterDefaultImage
+ */
+function RegisterDefaultImage() {
+	var img = uil.images[0] = new UIImage();
+	img.name = '*default';
+	img.data = 'data:image/png;base64,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';
+	img.index = 0;;
+	uil.images.push(img);
+}
+
+/**
  * GetImageByHandle
  */
-function GetImageByHandle(hImage) {
-	// // Out of range gets the default model.
-	// if (index >= uil.images.length) {
-	// 	return null;
-	// }
+function GetImageByHandle(index) {
+	// Out of range gets the default model.
+	if (index < 1 || index > uil.images.length) {
+		return uil.images[0];
+	}
 
-	return uil.images[hImage];
+	return uil.images[index];
+}
+
+/**
+ * FindImageByName
+ */
+function FindImageByName(name) {
+	var img;
+
+	// Currently we're only supporting PNG images.
+	if (name.charAt(0) !== '*') {
+		name = name.replace(/\.[^\/.]+$/, '');
+		name += '.png';
+	}
+
+	// See if the image has already been requested.
+	for (var i = 0; i < uil.images.length; i++) {
+		img = uil.images[i];
+
+		if (img.name === name) {
+			return uil.images[i];
+		}
+	}
+
+	// Create a new image instance.
+	img = new UIImage();
+	img.index = uil.images.length;
+	img.name = name;
+
+	// Start loading the image.
+	imp.sys_ReadFile(name, 'binary', function (err, data) {
+		if (err) {
+			log('Failed to load image \'' + name + '\'');
+			return;
+		}
+
+		img.data = 'data:image/png;base64,' + sh.atob64(new Uint8Array(data));
+
+		// Trigger the image's callbacks once it's loaded.
+		ImageLoadComplete(img);
+	});
+
+	uil.images.push(img);
+
+	return img;
+}
+
+/**
+ * ImageOnLoad
+ */
+function ImageOnLoad(img, callback) {
+	if (!callback) {
+		throw new Error('No callback specified');
+	}
+
+	// If the image has already been loaded, immediately 
+	// call the callback.
+	if (img.data) {
+		callback(img);
+	}
+	// If it hasn't loaded yet, append to the image's
+	// callback list.
+	else if (!img.data) {
+		img.callbacks.push(callback);
+	}
+}
+
+/**
+ * ImageLoadComplete
+ */
+function ImageLoadComplete(img) {
+	if (!img.data) {
+		throw new Error('Load event triggered before we have a valid buffer.');
+	}
+
+	for (var i = 0; i < img.callbacks.length; i++) {
+		img.callbacks[i](img);
+	}
+
+	// Clear callback list.
+	img.callbacks = null;
 }
 
 /**
  * RegisterImage
  */
-function RegisterImage(name, callback) {
-	var img;
-
-	// Currently we're only going to support PNG images.
-	name = name.replace(/\.[^\/.]+$/, '');
-	name += '.png';
-
-	for (var i = 0; i < uil.images.length; i++) {
-		if (uil.images[i].name === name) {
-			return uil.images[i];
-		}
-	}
-
-	var img = new UIImage();
-
-	// Default image data.
-	img.data = 'data:image/png;base64,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';
-
-	imp.sys_ReadFile(name, 'binary', function (err, data) {
-		if (err) {
-			log('Failed to load image \'' + name + '\'');
-		} else {
-			img.data = 'data:image/png;base64,' + sh.atob64(new Uint8Array(data));
-		}
-
-		if (callback) {
-			callback(err, img);
-		}
-	});
-
-	var hImage = uil.images.length;
-	uil.images.push(img);
-	return hImage;
+function RegisterImage(name) {
+	var img = FindImageByName(name);
+	return img.index;
 }
 		var $ptr;
 
@@ -39677,15 +38142,20 @@ function ClearFocusedElement(triggerBlur) {
 	uil.focusEl = null;
 }
 		/**
- * InitViews
+ * GetViewConstructor
  */
-function InitViews() {
-	// Update centered elements when tabs are toggled.
-	$viewportUI.on('qk_shown', '.view', function () {
-		var $view = $(this);
-		UpdateCenteredElements($view);
-	});
-
+function GetViewConstructor(name) {
+	switch (name) {
+		case 'connect':      return ConnectView;
+		case 'hud':          return HudView;
+		case 'scoreboard':   return ScoreboardView;
+		case 'ingame':       return IngameMenu;
+		case 'main':         return MainMenu;
+		case 'singleplayer': return SinglePlayerMenu;
+		case 'multiplayer':  return MultiPlayerMenu;
+		case 'settings':     return SettingsMenu;
+		default:             throw Error('Unsupported view');
+	}
 }
 
 /**
@@ -39693,7 +38163,6 @@ function InitViews() {
  */
 function GetView(name) {
 	var view = uil.views[name];
-
 	if (!view) {
 		view = RegisterView(name);
 	}
@@ -39705,43 +38174,20 @@ function GetView(name) {
  * RegisterView
  */
 function RegisterView(name) {
-	var view = uil.views[name] = new map[name](GetViewExports());
+	var ctor = GetViewConstructor(name);
 
-	// Add view class to all views.
-	view.$el.addClass('view');
+	// Create the element for the view and append
+	// to the container.
+	var $el = $('<div />', { id: name })
+		.appendTo($viewportUI);
 
-	// Append view to container.
-	$viewportUI.append(view.$el);
+	// Create the view with the new element.
+	var view = uil.views[name] = new ctor({ el: $el });
 	
 	// Hide by default.
 	HideView(view);
 
 	return view;
-}
-
-/**
- * GetViewExports
- */
-function GetViewExports() {
-	return {
-		sys_ReadFile:           imp.sys_ReadFile,
-		
-		com_GetCvarVal:         imp.com_GetCvarVal,
-		com_SetCvarVal:         imp.com_SetCvarVal,
-		com_LoadConfig:         imp.com_LoadConfig,
-		com_SaveConfig:         imp.com_SaveConfig,
-		
-		cl_Bind:                imp.cl_Bind,
-		cl_UnbindAll:           imp.cl_UnbindAll,
-		cl_GetKeyNamesForCmd:   imp.cl_GetKeyNamesForCmd,
-		cl_CaptureInput:        imp.cl_CaptureInput,
-		cl_Disconnect:          imp.cl_Disconnect,
-
-		ui_GetImageByHandle:    GetImageByHandle,
-		ui_PushMenu:            PushMenu,
-		ui_PopMenu:             PopMenu,
-		ui_PopAllMenus:         PopAllMenus
-	};
 }
 
 /**
@@ -39764,11 +38210,6 @@ function ShowView(view) {
 
 	if (!visible) {
 		view.$el.show();
-
-		// Let's make sure the view has the most up to date font sizes
-		// as it may have not been visible on the last resize.
-		UpdateCenteredElements(view.$el);
-		UpdateFontSizes(view.$el);
 	}
 }
 
@@ -39827,6 +38268,460 @@ function UpdateCenteredElements($el) {
 function UpdateFontSizes($el) {
 	$el.css('font-size', (uil.vw / 100) + 'px');
 }
+
+/**
+ * UIView
+ *
+ * This is the default Backbone view with the render
+ * function shimmed to make the view integrate with our UI.
+ */
+var UIView = Backbone.View.extend({
+	render: function () {
+		this.renderView();
+		this._postRender();
+	},
+	_postRender: function () {
+		this.$el.find('[data-image], [data-himage]').each(function () {
+			RegisterComponent(AsyncImage, this);
+		});
+
+		this.$el.on('qk_click', '[data-toggle="tab"]', function () {
+			var tab = RegisterComponent(Tab, this);
+			tab.show();
+
+			// Re-center after a tab is toggled.
+			UpdateCenteredElements($el);
+		});
+
+		this.$el.find('.input-range').each(function () {
+			RegisterComponent(RangeInput, this);
+		});
+
+		this.$el.find('.input-key').each(function () {
+			RegisterComponent(KeyInput, this);
+		});
+
+		this.$el.find('.input-text').each(function () {
+			RegisterComponent(TextInput, this);
+		});
+
+		UpdateCenteredElements(this.$el);
+		UpdateFontSizes(this.$el);
+	}
+});
+
+		var ConnectView = UIView.extend({
+	template: _.template('<div class="background fullscreen">	<span class="loading"><%- loading %></span></div>'),
+	model: {
+		loading: 'Loading...'
+	},
+	loadingEl: null,
+	initialize: function () {
+		this.render();
+	},
+	setLoading: function (str) {
+		if (!this.loadingEl) this.loadingEl = this.$el.find('.loading');
+		this.model.loading = str;
+		this.loadingEl.text(this.model.loading);
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+		
+		return this;
+	}
+});
+		var HudView = UIView.extend({
+	model: {
+		fps: 0,
+		shaders: 0,
+		vertexes: 0,
+		indexes: 0,
+		culledFaces: 0,
+		culledModelOut: 0,
+		culledModelIn: 0,
+		culledModelClip: 0,
+		weapons: [],
+		weaponSelect: 0,
+		ammo: [],
+		armor: 'N/A',
+		health: 'N/A'
+	},
+	template: _.template('<div class="crosshair abscenter" data-image="gfx/2d/crosshaira"></div><div class="fps-wrapper">	<span class="fps"><%- fps %></span> FPS</div><div class="count-wrapper">	<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>	<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>	<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>	<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>	<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>	<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>	<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div></div><div class="weapons-wrapper">	<ul class="weapons">		<% for (var i = 0; i < weapons.length; i++) { %>			<% if (!weapons[i]) continue; %>			<li<% if (i === weaponSelect) { %> class="selected"<% } %>>				<span class="icon" data-himage="<%= weapons[i].weaponIcon %>"></span>				<span class="ammo"><%- ammo[i] %></span>			</li>		<% } %>	</ul></div><div class="armor-wrapper">	Armor: <span class="armor"><%- armor %></span></div><div class="health-wrapper">	Health: <span class="health"><%- health %></span></div>'),
+	// Cache all these elements.
+	fpsEl: null,
+	shadersEl: null,
+	vertexesEl: null,
+	indexesEl: null,
+	culledFacesEl: null,
+	culledModelOutEl: null,
+	culledModelInEl: null,
+	culledModelClipEl: null,
+	ammoEls: null,
+	armorEl: null,
+	healthEl: null,
+	initialize: function () {
+		this.render();
+	},
+	setFPS: function (fps) {
+		this.model.fps = fps;
+		this.fpsEl.text(this.model.fps);
+	},
+	setCounts: function (counts) {
+		_.extend(this.model, counts);
+
+		this.shadersEl.text(this.model.shaders);
+		this.vertexesEl.text(this.model.vertexes);
+		this.indexesEl.text(this.model.indexes);
+		this.culledFacesEl.text(this.model.culledFaces);
+		this.culledModelOutEl.text(this.model.culledModelOut);
+		this.culledModelInEl.text(this.model.culledModelIn);
+		this.culledModelClipEl.text(this.model.culledModelClip);
+	},
+	setWeapons: function (currentWeapons, selected) {
+		var render = false;
+
+		// Update weapons list.
+		for (var i = 0; i < currentWeapons.length; i++) {
+			var weaponInfo = currentWeapons[i];
+
+			// Re-render if the current weapon info changed.
+			if (this.model.weapons[i] !== weaponInfo) {
+				this.model.weapons[i] = weaponInfo;
+				render = true;
+			}
+		}
+
+		// Update selected weapon.
+		if (this.model.weaponSelect !== selected) {
+			this.model.weaponSelect = selected;
+			render = true;
+		}
+
+		if (render) {
+			this.render();
+		}
+	},
+	setAmmo: function (ammo) {
+		var render = false;
+		
+		for (var i = 0; i < ammo.length; i++) {
+			if (this.model.ammo[i] !== ammo[i]) {
+				this.model.ammo[i] = ammo[i];
+				render = true;
+			}
+		}
+		
+		if (render) {
+			var hud_i = 0;
+			
+			for (var i = 0; i < this.model.weapons.length; i++) {
+				if (!this.model.weapons[i]) { continue; }
+				
+				this.ammoEls.eq(hud_i).text(ammo[i]);
+				hud_i++;
+			}
+		}
+	},
+	setArmor: function (armor) {
+		if (this.model.armor !== armor) {
+			this.model.armor = armor;
+			this.armorEl.text(this.model.armor);
+		}
+	},
+	setHealth: function (health) {
+		if (this.model.health !== health) {
+			this.model.health = health;
+			this.healthEl.text(this.model.health);
+		}
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+		
+		this.fpsEl = this.$el.find('.fps');
+		this.shadersEl = this.$el.find('.count-shaders');
+		this.vertexesEl = this.$el.find('.count-vertexes');
+		this.indexesEl = this.$el.find('.count-indexes');
+		this.culledFacesEl = this.$el.find('.count-culled-faces');
+		this.culledModelOutEl = this.$el.find('.count-culled-model-out');
+		this.culledModelInEl = this.$el.find('.count-culled-model-in');
+		this.culledModelClipEl = this.$el.find('.count-culled-model-clip');
+		this.ammoEls = this.$el.find('.ammo');
+		this.armorEl = this.$el.find('.armor');
+		this.healthEl = this.$el.find('.health');
+
+		return this;
+	}
+});
+		var IngameMenu = UIView.extend({
+	model: {},
+	template: _.template('<div class="background fullscreen"><div class="dialog abscenter">	<div class="close">×</div>	<div class="menu-item settings">Settings</div>	<div class="menu-item exit-game">Exit game</div></div></div>'),
+	events: {
+		'qk_click .settings':  'openSettingsMenu',
+		'qk_click .exit-game': 'exitGame',
+		'qk_click .close':     'closeMenu'
+	},
+	initialize: function () {
+		this.render();
+	},
+	openSettingsMenu: function () {
+		PushMenu('settings');
+	},
+	exitGame: function () {
+		imp.cl_Disconnect();
+	},
+	closeMenu: function () {
+		PopAllMenus();
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+		
+		return this;
+	}
+});
+		var MainMenu = UIView.extend({
+	model: {},
+	template: _.template('<div class="background fullscreen">	<div class="dialog abscenter">		<div class="singleplayer menu-item">Single player game</div>		<div class="multiplayer menu-item">Multi player game</div>		<div class="settings menu-item">Settings</div>	</div></div>'),
+	events: {
+		'qk_click .singleplayer': 'openSinglePlayerMenu',
+		'qk_click .multiplayer': 'openMultiPlayerMenu',
+		'qk_click .settings': 'openSettingsMenu'
+	},
+	initialize: function () {
+		this.render();
+	},
+	openSinglePlayerMenu: function() {
+		PushMenu('singleplayer');
+	},
+	openMultiPlayerMenu: function() {
+		PushMenu('multiplayer');
+	},
+	openSettingsMenu: function() {
+		PushMenu('settings');
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+		return this;
+	}
+});
+		var MultiPlayerMenu = UIView.extend({
+	template: _.template('<div class="background fullscreen">	<div class="dialog abscenter">		<div class="singleplayer menu-item">Single player game</div>		<div class="multiplayer menu-item">Multi player game</div>		<div class="settings menu-item">Settings</div>	</div></div>'),
+	model: {
+		address: '192.168.0.102:9001'
+	},
+	$address: null,
+	events: {
+		'qk_keypress .address': 'updateAddress',
+		'qk_click .connect':    'connect',
+		'qk_click .back':       'goBack'
+	},
+	initialize: function () {
+		this.render();
+	},
+	updateAddress: function (ev) {
+		var str = ev.value;
+		this.$address.text(str);
+	},
+	connect: function () {
+		var address = this.$address.text();
+		imp.com_ExecuteBuffer('connect ' + address);
+	},
+	goBack: function () {
+		PopMenu();
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+		this.$address = this.$el.find('.address .control-input');
+
+		return this;
+	}
+});
+		var ScoreboardView = UIView.extend({
+	template: _.template('<table>	<thead>		<tr>			<th>Name</th>		</tr>	</thead>	<tbody>	<% _.each(players, function (player) { %>		<tr>			<td><%- player.name %></td>		</tr>	<% }); %></table>'),
+	initialize: function () {
+		this.render();
+	},
+	update: function (newModel) {
+		var modelJson = JSON.stringify(this.model);
+
+		if (modelJson !== this.oldModelJson) {
+			$(this.el).html(this.template(this.model));
+		}
+
+		this.oldModelJson = modelJson;
+
+		return this;
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+
+		return this;
+	}
+});
+		var SettingsMenu = UIView.extend({
+	template: _.template('<div class="background fullscreen">	<div class="dialog abscenter">		<div class="form-horizontal">			<h1>Settings</h1>			<div class="name control-group">				<div class="control-label">Name:</div><div name="name" class="control-input input-text"><%- name %></div>			</div>						<h1>Controls</h1>			<ul class="nav-tabs">				<li class="active"><a href="#look" data-toggle="tab">Look</a></li>				<li><a href="#move" data-toggle="tab">Move</a></li>				<li><a href="#shoot" data-toggle="tab">Shoot</a></li>			</ul>			<div class="tab-content">				<div class="tab-pane active" id="look">					<div class="control-group">						<div class="control-label">Sensitivity:</div><div name="sensitivity" class="control-input input-range" data-min="0" data-max="10" data-value="<%- sensitivity %>"></div>					</div>				</div>				<div class="tab-pane" id="move">					<div class="control-group">						<div class="control-label">Move forward:</div><div name="forwardKey" class="control-input input-key"><%- forwardKey %></div>					</div>					<div class="control-group">						<div class="control-label">Move left:</div><div name="leftKey" class="control-input input-key"><%- leftKey %></div>					</div>					<div class="control-group">						<div class="control-label">Move back:</div><div name="backKey" class="control-input input-key"><%- backKey %></div>					</div>					<div class="control-group">						<div class="control-label">Move right:</div><div name="rightKey" class="control-input input-key"><%- rightKey %></div>					</div>					<div class="control-group">						<div class="control-label">Jump:</div><div name="upKey" class="control-input input-key"><%- upKey %></div>					</div>				</div>				<div class="tab-pane" id="shoot">					<div class="control-group">						<div class="control-label">Attack:</div><div name="attackKey" class="control-input input-key"><%- attackKey %></div>					</div>					<div class="control-group">						<div class="control-label">Next weapon:</div><div name="weapnextKey" class="control-input input-key"><%- weapnextKey %></div>					</div>					<div class="control-group">						<div class="control-label">Previous weapon:</div><div name="weapprevKey" class="control-input input-key"><%- weapprevKey %></div>					</div>					<div class="control-group">						<div class="control-label">Gauntlet:</div><div name="weapon1Key" class="control-input input-key"><%- weapon1Key %></div>					</div>					<div class="control-group">						<div class="control-label">Machinegun:</div><div name="weapon2Key" class="control-input input-key"><%- weapon2Key %></div>					</div>					<div class="control-group">						<div class="control-label">Shotgun:</div><div name="weapon3Key" class="control-input input-key"><%- weapon3Key %></div>					</div>					<div class="control-group">						<div class="control-label">Grenade launcher:</div><div name="weapon4Key" class="control-input input-key"><%- weapon4Key %></div>					</div>					<div class="control-group">						<div class="control-label">Rocket launcher:</div><div name="weapon5Key" class="control-input input-key"><%- weapon5Key %></div>					</div>					<div class="control-group">						<div class="control-label">Lightning gun:</div><div name="weapon6Key" class="control-input input-key"><%- weapon6Key %></div>					</div>					<div class="control-group">						<div class="control-label">Railgun:</div><div name="weapon7Key" class="control-input input-key"><%- weapon7Key %></div>					</div>					<div class="control-group">						<div class="control-label">Plasma gun:</div><div name="weapon8Key" class="control-input input-key"><%- weapon8Key %></div>					</div>					<div class="control-group">						<div class="control-label">BFG:</div><div name="weapon9Key" class="control-input input-key"><%- weapon9Key %></div>					</div>				</div>			</div>		</div>		<div class="footer">			<div class="button back">Back</div>		</div>	</div></div>'),
+	model: {},
+	cvars: {
+		'name':        'name',
+		'sensitivity': 'cl_sensitivity'
+	},
+	cmds: {
+		'forwardKey':  '+forward',
+		'leftKey':     '+left',
+		'backKey':     '+back',
+		'rightKey':    '+right',
+		'upKey':       '+jump',
+		'attackKey':   '+attack',
+		'weapnextKey': 'weapnext',
+		'weapprevKey': 'weapprev',
+		'weapon1Key':  'weapon 1',
+		'weapon2Key':  'weapon 2',
+		'weapon3Key':  'weapon 3',
+		'weapon4Key':  'weapon 4',
+		'weapon5Key':  'weapon 5',
+		'weapon6Key':  'weapon 6',
+		'weapon7Key':  'weapon 7',
+		'weapon8Key':  'weapon 8',
+		'weapon9Key':  'weapon 9'
+	},
+	events: {
+		'qk_click .back': 'goBack'
+	},
+	initialize: function () {
+		// Add cvar / cmd input change events.
+		for (var name in this.cvars) {
+			if (!this.cvars.hasOwnProperty(name)) {
+				continue;
+			}
+
+			var evt = 'qk_change [name="' + name + '"]';
+			this.events[evt] = 'formChanged';
+		}
+
+		for (var name in this.cmds) {
+			if (!this.cmds.hasOwnProperty(name)) {
+				continue;
+			}
+
+			var evt = 'qk_change [name="' + name + '"]';
+			this.events[evt] = 'formChanged';
+		}
+
+		this.loadConfigToModel();
+
+		this.render();
+	},
+	formChanged: function (ev) {
+		var name = $(ev.target).attr('name'),
+			value = ev.value;
+
+		this.model[name] = value;
+
+		// Update all of our cvars / binds.
+		for (var name in this.cvars) {
+			if (!this.cvars.hasOwnProperty(name)) {
+				continue;
+			}
+
+			var cvar = this.cvars[name];
+			var value = this.model[name];
+
+			imp.com_SetCvarVal(cvar, value);
+		}
+
+		for (var name in this.cmds) {
+			if (!this.cmds.hasOwnProperty(name)) {
+				continue;
+			}
+
+			// Bind any keys that have a value.
+			var cmd = this.cmds[name];
+			var key = this.model[name];
+
+			if (key !== '') {
+				imp.cl_Bind(key, cmd);
+			}
+		}
+	},
+	loadConfigToModel: function () {
+		for (var name in this.cvars) {
+			if (!this.cvars.hasOwnProperty(name)) {
+				continue;
+			}
+
+			var cvar = this.cvars[name];
+			this.model[name] = imp.com_GetCvarVal(cvar);
+		}
+
+		for (var name in this.cmds) {
+			if (!this.cmds.hasOwnProperty(name)) {
+				continue;
+			}
+
+			var cmd = this.cmds[name];
+			var keys = imp.cl_GetKeyNamesForCmd(cmd);
+			this.model[name] = keys.length ? keys[0] : '';
+		}
+	},
+	goBack: function () {
+		PopMenu();
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+		
+		return this;
+	}
+});
+		var SinglePlayerMenu = UIView.extend({
+	model: {
+		previewLevel: 0,
+		levels: [
+			{ name: 'q3dm7' },
+			{ name: 'q3dm17' },
+			{ name: 'q3tourney2' }
+		]
+	},
+	template: _.template('<div class="background fullscreen">	<div class="dialog abscenter">		<h1>Choose a level</h1>		<div class="level-select-wrapper">			<div class="preview">			<% _.each(levels, function (level, i) { %>				<div class="preview-image" data-himage="<%- level.himage %>" <% if (i === 0) { %>style="display: block;"<% } %>></div>			<% }); %>			</div>			<ul class="levels">			<% _.each(levels, function (level, i) { %>				<li class="menu-item"><%- level.name %></li>			<% }); %>			</ul>		</div>		<div class="footer">			<div class="button back">Back</div>		</div>	</div></div>'),
+	events: {
+		'qk_mouseenter .levels li': 'levelPreview',
+		'qk_click .levels li':      'levelSelect',
+		'qk_click .back' :          'goBack'
+	},
+	initialize: function () {
+		// Get valid image handles for the levelshots.
+		for (var i = 0; i < this.model.levels.length; i++) {
+			var level = this.model.levels[i];
+			level.himage = RegisterImage('levelshots/' + level.name);
+		}
+
+		this.render();
+	},
+	levelPreview: function (ev) {
+		var $li = $(ev.target);
+
+		// Hide all preview images.
+		$('.preview .preview-image').hide();
+
+		// Show the one for this level.
+		var idx = $li.index();
+		$('.preview .preview-image').eq(idx).show();
+	},
+	levelSelect: function (ev) {
+		var $li = $(ev.target);
+
+		var idx = $li.index();
+		var level = this.model.levels[idx];
+
+		imp.com_ExecuteBuffer('map ' + level.name);
+	},
+	goBack: function () {
+		PopMenu();
+	},
+	renderView: function () {
+		this.$el.html(this.template(this.model));
+
+		return this;
+	}
+});
 
 		return {
 			Init:          Init,
@@ -40083,6 +38978,7 @@ function Init(sys_, com_) {
 	
 	RegisterCommands();
 	RegisterDefaultBinds();
+	InitSubsystems();
 	
 	cls.initialized = true;
 }
@@ -40136,6 +39032,7 @@ function UIExports() {
 		com_SetCvarVal:       com.SetCvarVal,
 		com_LoadConfig:       com.LoadConfig,
 		com_SaveConfig:       com.SaveConfig,
+		com_ExecuteBuffer:    com.ExecuteBuffer,
 
 		cl_Bind:              CmdBind,
 		cl_UnbindAll:         CmdUnbindAll,
@@ -42069,10 +40966,10 @@ function Init(sys_, com_, isdedicated) {
 
 	RegisterCommands();
 
-	// For dev purposes, simulate command line input.
-	setTimeout(function () {
-		CmdLoadMap('q3tourney2');
-	}, 50);
+	// // For dev purposes, simulate command line input.
+	// setTimeout(function () {
+	// 	CmdLoadMap('q3dm17');
+	// }, 50);
 }
 
 /**
@@ -44181,6 +43078,13 @@ function Init(sysinterface, isdedicated) {
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
+	// Load the user's config.
+	LoadConfig();
+
+	// If any archived cvars are modified after this, we will trigger a
+	// writing of the config file.
+	cvarModifiedFlags &= ~CVF.ARCHIVE;
+
 	InitCvar();
 	InitCmd();
 	
@@ -44189,12 +43093,6 @@ function Init(sysinterface, isdedicated) {
 	if (!dedicated) {
 		cl.Init(sys, GetExports());
 	}
-
-	LoadConfig();
-
-	// If any archived cvars are modified after this, we will trigger a
-	// writing of the config file.
-	cvarModifiedFlags &= ~CVF.ARCHIVE;
 
 	initialized = true;
 }
