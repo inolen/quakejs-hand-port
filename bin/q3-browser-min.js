@@ -200,12 +200,28 @@ function LerpAngle(from, to, frac) {
 }
 
 /**
- * AngleMod
+ * AngleNormalize360
+ *
+ * Returns angle normalized to the range [0 <= angle < 360].
  */
-function AngleMod(a) {
+function AngleNormalize360(a) {
 	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
 	return a;
 }
+
+/**
+ * AngleNormalize180
+ *
+ * Returns angle normalized to the range [-180 < angle <= 180].
+ */
+function AngleNormalize180(a) {
+	a = AngleNormalize360(a);
+	if (a > 180.0) {
+		a -= 360.0;
+	}
+	return a;
+}
+
 
 /**
  * AnglesToVectors
@@ -241,6 +257,40 @@ function AnglesToVectors(angles, forward, right, up) {
 		up[1] = (cr*sp*sy+-sr*cy);
 		up[2] = cr*cp;
 	}
+}
+
+/**
+ * VectorToAngles
+ */
+function VectorToAngles(value1, angles) {
+	var forward, yaw, pitch;
+
+	if (value1[1] === 0 && value1[0] === 0) {
+		yaw = 0;
+		pitch = value1[2] > 0 ? 90 : 270;
+	} else {
+		if (value1[0]) {
+			yaw = (Math.atan2(value1[1], value1[0]) * 180 / Math.PI);
+		} else if (value1[1] > 0) {
+			yaw = 90;
+		} else {
+			yaw = 270;
+		}
+
+		if (yaw < 0) {
+			yaw += 360;
+		}
+
+		forward = Math.sqrt(value1[0]*value1[0] + value1[1]*value1[1]);
+		pitch = (Math.atan2(value1[2], forward) * 180 / Math.PI);
+		if (pitch < 0) {
+			pitch += 360;
+		}
+	}
+
+	angles[PITCH] = -pitch;
+	angles[YAW] = yaw;
+	angles[ROLL] = 0;
 }
 
 /**
@@ -624,8 +674,10 @@ return {
 	AngleSubtract:         AngleSubtract,
 	AnglesSubtract:        AnglesSubtract,
 	LerpAngle:             LerpAngle,
-	AngleMod:              AngleMod,
+	AngleNormalize360:     AngleNormalize360,
+	AngleNormalize180:     AngleNormalize180,
 	AnglesToVectors:       AnglesToVectors,
+	VectorToAngles:        VectorToAngles,
 	AngleToShort:          AngleToShort,
 	ShortToAngle:          ShortToAngle,
 
@@ -657,19 +709,17 @@ return {
 });
 
 define('common/sh', ['common/qmath'], function (qm) {
-	var root = typeof(global) !== 'undefined' ? global : window;
-
-root.BASE_FOLDER = 'baseq3';
-root.MAX_QPATH   = 64;
-root.CMD_BACKUP  = 64;
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
 // If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-root.SOLID_BMODEL = 0xffffff;
+var SOLID_BMODEL = 0xffffff;
 
 /**
  * Cvar flags
  */
-root.CVF = {
+var CVF = {
 	ARCHIVE:    0x0001,                                    // save to config file
 	USERINFO:   0x0002,                                    // sent to server on connect or change
 	SERVERINFO: 0x0004,                                    // sent in response to front end requests
@@ -679,45 +729,45 @@ root.CVF = {
 /**
  * Renderer (should be moved)
  */
-root.MAX_DRAWSURFS  = 0x10000;
+var MAX_DRAWSURFS  = 0x10000;
 
 /**
  * Snapshot flags
  */
-root.SNAPFLAG_RATE_DELAYED   = 1;
-root.SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-root.SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
 
 /**
  * MAX_* defines used to pre-alloc many structures
  */
-root.GENTITYNUM_BITS         = 10;
-root.MAX_CLIENTS             = 32;                       // absolute limit
-root.MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-root.MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-root.MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
 
 /**
  * Faux entity numbers
  */
-root.ENTITYNUM_NONE          = MAX_GENTITIES-1;
-root.ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-root.ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
 
-root.MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
 	                                                       // then BUTTON_WALKING should be set
 
 /**
  * Playerstate
  */
-root.MAX_STATS               = 16;
-root.MAX_PERSISTANT          = 16;
-root.MAX_POWERUPS            = 16;
-root.MAX_WEAPONS             = 16;
-root.MAX_PS_EVENTS           = 2;
-root.PMOVEFRAMECOUNTBITS     = 6;
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
 
-root.BUTTON = {
+var BUTTON = {
 	ATTACK:       1,
 	TALK:         2,                                       // displays talk balloon and disables actions
 	USE_HOLDABLE: 4,
@@ -736,7 +786,7 @@ root.BUTTON = {
 	ANY:          2048                                     // any key whatsoever
 };
 
-root.TR = {
+var TR = {
 	STATIONARY:  0,
 	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
 	LINEAR:      2,
@@ -745,7 +795,7 @@ root.TR = {
 	GRAVITY:     5
 };
 
-root.SURF = {
+var SURF = {
 	NODAMAGE:    0x1,                            // never give falling damage
 	SLICK:       0x2,                            // effects game physics
 	SKY:         0x4,                            // lighting from environment map
@@ -767,7 +817,7 @@ root.SURF = {
 	DUST:        0x40000                         // leave a dust trail when walking on this surface
 };
 
-root.CONTENTS = {
+var CONTENTS = {
 	SOLID:         1,                                      // an eye is never valid in a solid
 	LAVA:          8,
 	SLIME:         16,
@@ -963,6 +1013,7 @@ PlayerState.prototype.clone = function (ps) {
 	ps.jumppad_ent          = this.jumppad_ent;
 	ps.jumppad_frame        = this.jumppad_frame;
 	ps.pmove_framecount     = this.pmove_framecount;
+	ps.entityEventSequence  = this.entityEventSequence;
 
 	return ps;
 };
@@ -7059,22 +7110,161 @@ else {
 define('game/bg',
 ['glmatrix', 'common/sh', 'common/qmath'],
 function (glmatrix, sh, qm) {
-	var root = typeof(global) !== 'undefined' ? global : window;
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-root.GIB_HEALTH = -40;
-root.ARMOR_PROTECTION = 0.66;
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
 
-root.DEFAULT_SHOTGUN_SPREAD = 700;
-root.DEFAULT_SHOTGUN_COUNT = 11;
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
 
-root.ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
 
-root.MINS_Z = -24;
-root.DEFAULT_VIEWHEIGHT = 26;
-root.CROUCH_VIEWHEIGHT = 12;
-root.DEAD_VIEWHEIGHT = -16;
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
 
-root.PM = {
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
+	var GIB_HEALTH = -40;
+var ARMOR_PROTECTION = 0.66;
+
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
+
+var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var MINS_Z = -24;
+var DEFAULT_VIEWHEIGHT = 26;
+var CROUCH_VIEWHEIGHT = 12;
+var DEAD_VIEWHEIGHT = -16;
+
+var PM = {
 	NORMAL:       0,                                       // can accelerate and turn
 	NOCLIP:       1,                                       // noclip movement
 	SPECTATOR:    2,                                       // still run into walls
@@ -7083,7 +7273,7 @@ root.PM = {
 	INTERMISSION: 5                                        // no movement or status bar
 };
 
-root.PMF = {
+var PMF = {
 	DUCKED:         1,
 	JUMP_HELD:      2,
 	BACKWARDS_JUMP: 8,                                     // go into backwards land
@@ -7101,7 +7291,7 @@ root.PMF = {
 };
 
 // Weapon state.
-root.WS = {
+var WS = {
 	READY:    0,
 	RAISING:  1,
 	DROPPING: 2,
@@ -7109,7 +7299,7 @@ root.WS = {
 };
 
 // Item types.
-root.IT = {
+var IT = {
 	BAD:                0,
 	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
 	AMMO:               2,                                 // EFX: rotate
@@ -7123,7 +7313,7 @@ root.IT = {
 	TEAM:               8
 };
 
-root.MASK = {
+var MASK = {
 	ALL:         -1,
 	SOLID:       CONTENTS.SOLID,
 	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
@@ -7136,7 +7326,7 @@ root.MASK = {
 /**
  * Playerstate flags
  */
-root.STAT = {
+var STAT = {
 	HEALTH:        0,
 	HOLDABLE_ITEM: 1,
 	WEAPONS:       2,
@@ -7146,7 +7336,7 @@ root.STAT = {
 	MAX_HEALTH:    6				// health / armor limit, changable by handicap
 };
 
-root.WP = {
+var WP = {
 	NONE:             0,
 	GAUNTLET:         1,
 	MACHINEGUN:       2,
@@ -7162,7 +7352,7 @@ root.WP = {
 };
 
 // NOTE: may not have more than 16
-root.PW = {
+var PW = {
 	NONE:         0,
 	QUAD:         1,
 	BATTLESUIT:   2,
@@ -7180,7 +7370,7 @@ root.PW = {
 // These fields are the only part of player_state that aren't
 // cleared on respawn.
 // NOTE: may not have more than 16
-root.PERS = {
+var PERS = {
 	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
 	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
 	RANK:                 2,                               // player rank or team rank
@@ -7203,7 +7393,7 @@ root.PERS = {
  * Entitystate flags
  */
 // entityState_t->eType
-root.ET = {
+var ET = {
 	GENERAL:          0,
 	PLAYER:           1,
 	ITEM:             2,
@@ -7223,7 +7413,7 @@ root.ET = {
 };
 
 // entityState_t->eFlags
-root.EF = {
+var EF = {
 	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
 	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
 	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
@@ -7260,12 +7450,12 @@ root.EF = {
  * to retrieve the actual event number.
  *
  **********************************************************/
-root.EV_EVENT_BIT1    = 0x00000100;
-root.EV_EVENT_BIT2    = 0x00000200;
-root.EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
-root.EVENT_VALID_MSEC = 300;
+var EV_EVENT_BIT1    = 0x00000100;
+var EV_EVENT_BIT2    = 0x00000200;
+var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
+var EVENT_VALID_MSEC = 300;
 
-root.EV = {
+var EV = {
 	NONE:                0,
 
 	FOOTSTEP:            1,
@@ -7291,7 +7481,7 @@ root.EV = {
 	WATER_UNDER:         17,                               // head touches
 	WATER_CLEAR:         18,                               // head leaves
 
-	ITEM_PICKUP:         29,                               // normal item pickups are predictable
+	ITEM_PICKUP:         19,                               // normal item pickups are predictable
 	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
 
 	NOAMMO:              21,
@@ -7365,9 +7555,9 @@ root.EV = {
  */
 // Flip the togglebit every time an animation
 // changes so a restart of the same anim can be detected.
-root.ANIM_TOGGLEBIT = 128;
+var ANIM_TOGGLEBIT = 128;
 
-root.ANIM = {
+var ANIM = {
 	BOTH_DEATH1:         0,
 	BOTH_DEAD1:          1,
 	BOTH_DEATH2:         2,
@@ -7422,7 +7612,7 @@ root.ANIM = {
 };
 
 // Means of death
-root.MOD = {
+var MOD = {
 	UNKNOWN:        0,
 	SHOTGUN:        1,
 	GAUNTLET:       2,
@@ -7458,13 +7648,35 @@ var STEPSIZE = 18;
 var OVERCLIP = 1.001;
 var DEFAULT_VIEWHEIGHT = 26;
 
+var PmoveLocals = function () {
+	this.reset();
+};
+
+PmoveLocals.prototype.reset = function () {
+	this.forward             = [0, 0, 0];
+	this.right               = [0, 0, 0];
+	this.up                  = [0, 0, 0];
+	
+	this.frameTime           = 0;
+	this.msec                = 0;
+
+	this.walking             = false;
+	this.groundPlane         = false;
+	this.groundTrace         = null; // TODO pre-alloc
+
+	this.impactSpeed         = 0;
+
+	this.previous_origin     = [0, 0, 0];
+	this.previous_velocity   = [0, 0, 0];
+	this.previous_waterlevel = 0;
+};
+
 var PmoveInfo = function () {
 	this.ps        = null;
 	this.cmd       = null;
-	this.frameTime = 0;
 	this.mins      = [0, 0, 0];
 	this.maxs      = [0, 0, 0];
-	//this.tracemask = 0;                                    // collide against these surfaces
+	this.tracemask = 0;                                    // collide against these surfaces
 	//this.framecount = 0;
 
 	// results (out)
@@ -7499,101 +7711,14 @@ var Animation = function () {
 	this.reversed    = false;                              // true if animation is reversed
 	this.flipflop    = false;                              // true if animation should flipflop back to base
 };
-
 	/**
- * CanItemBeGrabbed
- *
- * Returns false if the item should not be picked up.
- * This needs to be the same for client side prediction and server use.
- */
-function CanItemBeGrabbed(gametype, ent, ps) {
-	// TODO Why is this crashing
-	// if (ent.modelIndex < 1 || ent.modelIndex >= itemList.length) {
-	// 	throw new Error('CanItemBeGrabbed: index out of range'); /* ERR_DROPPED */
-	// }
-	
-	var item = itemList[ent.modelIndex];
-	
-	switch (item.giType) {
-		case IT.WEAPON:
-			return true;	// weapons are always picked up
-		
-		case IT.AMMO:
-			if (ps.ammo[ item.giTag ] >= 200) {
-				return false;		// can't hold any more
-			}
-			return true;
-		
-		case IT.ARMOR:
-			if (ps.stats[STAT.ARMOR] >= ps.stats[STAT.MAX_HEALTH] * 2) {
-				return false;
-			}
-			
-			return true;
-		
-		case IT.HEALTH:
-			// Small and mega healths will go over the max, otherwise
-			// don't pick up if already at max.
-			if (item.quantity == 5 || item.quantity == 100) {
-				if (ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2) {
-					return false;
-				}
-				
-				return true;
-			}			
-			if (ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH]) {
-				return false;
-			}
-			return true;
-		
-		case IT.POWERUP:
-			return true;	// powerups are always picked up
-		
-	// 	case IT.TEAM: // team items, such as flags
-	// 		if( gametype == GT.CTF ) {
-	// 			// ent.modelIndex2 is non-zero on items if they are dropped
-	// 			// we need to know this because we can pick up our dropped flag (and return it)
-	// 			// but we can't pick up our flag at base
-	// 			if (ps.persistant[PERS_TEAM] == TEAM_RED) {
-	// 				if (item.giTag == PW_BLUEFLAG ||
-	// 					(item.giTag == PW_REDFLAG && ent.modelIndex2) ||
-	// 					(item.giTag == PW_REDFLAG && ps.powerups[PW_BLUEFLAG]) )
-	// 					return true;
-	// 			} else if (ps.persistant[PERS_TEAM] == TEAM_BLUE) {
-	// 				if (item.giTag == PW_REDFLAG ||
-	// 					(item.giTag == PW_BLUEFLAG && ent.modelIndex2) ||
-	// 					(item.giTag == PW_BLUEFLAG && ps.powerups[PW_REDFLAG]) )
-	// 					return true;
-	// 			}
-	// 		}
-	// 
-	// 		return false;
-		
-		case IT.HOLDABLE:
-			// Can only hold one item at a time
-			if (ps.stats[STAT.HOLDABLE_ITEM]) {
-				return false;
-			}
-			return true;
-		
-	// 	case IT.BAD:
-	// 		log( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
-		
-		default:
-			break;
-	}
-	
-	return false;
-}
-
-/**
  * AddPredictableEventToPlayerstate
  *
  * Handles the sequence numbers.
  */
 function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {
-	ps.events[ps.eventSequence % MAX_PS_EVENTS] = newEvent;
-	ps.eventParms[ps.eventSequence % MAX_PS_EVENTS] = eventParm;
+	ps.events[ps.eventSequence & (MAX_PS_EVENTS - 1)] = newEvent;
+	ps.eventParms[ps.eventSequence & (MAX_PS_EVENTS - 1)] = eventParm;
 	ps.eventSequence++;
 }
 
@@ -7604,7 +7729,7 @@ function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {
  * and after local prediction on the client
  */
 function PlayerStateToEntityState(ps, es) {
-	/*if (ps.pm_type === PM_INTERMISSION || ps.pm_type === PM_SPECTATOR) {
+	/*if (ps.pm_type === PM.INTERMISSION || ps.pm_type === PM.SPECTATOR) {
 		es.eType = ET.INVISIBLE;
 	} else if ( ps.stats[STAT_HEALTH] <= GIB_HEALTH ) {
 		es.eType = ET.INVISIBLE;
@@ -7626,7 +7751,7 @@ function PlayerStateToEntityState(ps, es) {
 	es.legsAnim = ps.legsAnim;
 	es.torsoAnim = ps.torsoAnim;
 	es.clientNum = ps.clientNum;                  // ET_PLAYER looks here instead of at number
-	                                             // so corpses can also reference the proper config
+	                                              // so corpses can also reference the proper config
 	es.eFlags = ps.eFlags;
 	if (ps.stats[STAT.HEALTH] <= 0) {
 		es.eFlags |= EF.DEAD;
@@ -7641,7 +7766,7 @@ function PlayerStateToEntityState(ps, es) {
 		if (ps.entityEventSequence < ps.eventSequence - MAX_PS_EVENTS) {
 			ps.entityEventSequence = ps.eventSequence - MAX_PS_EVENTS;
 		}
-		var seq = ps.entityEventSequence % MAX_PS_EVENTS;
+		var seq = ps.entityEventSequence & (MAX_PS_EVENTS - 1);
 		es.event = ps.events[seq] | ((ps.entityEventSequence & 3) << 8);
 		es.eventParm = ps.eventParms[seq];
 		ps.entityEventSequence++;
@@ -7751,18 +7876,28 @@ function EvaluateTrajectoryDelta(tr, atTime, result) {
  * TouchJumpPad
  */
 function TouchJumpPad(ps, jumppad) {
+	// Spectators don't use jump pads.
+	if (ps.pm_type !== PM.NORMAL) {
+		return;
+	}
+
+	// Flying characters don't hit bounce pads.
+	if (ps.powerups[PW.FLIGHT]) {
+		return;
+	}
+
 	// If we didn't hit this same jumppad the previous frame
 	// then don't play the event sound again if we are in a fat trigger
-	/*if (ps.jumppad_ent !== jumppad.number) {		
-		vectoangles( jumppad.origin2, angles);
-		p = fabs( AngleNormalize180( angles[qm.PITCH] ) );
-		if( p < 45 ) {
-			effectNum = 0;
-		} else {
-			effectNum = 1;
-		}
-		BG_AddPredictableEventToPlayerstate( EV_JUMP_PAD, effectNum, ps );
-	}*/
+	if (ps.jumppad_ent !== jumppad.number) {
+		var angles = [0, 0, 0];
+		qm.VectorToAngles(jumppad.origin2, angles);
+
+		var p = Math.abs(qm.AngleNormalize180(angles[qm.PITCH]));
+		var effectNum = p < 45 ? 0 : 1;
+
+		AddPredictableEventToPlayerstate(ps, EV.JUMP_PAD, effectNum);
+	}
+
 	// remember hitting this jumppad this frame
 	ps.jumppad_ent = jumppad.number;
 	ps.jumppad_frame = ps.pmove_framecount;
@@ -7771,31 +7906,139 @@ function TouchJumpPad(ps, jumppad) {
 	vec3.set(jumppad.origin2, ps.velocity);
 }
 
-	var q3movement_stopspeed = 100.0;
-var q3movement_duckScale = 0.25;
-var q3movement_jumpvelocity = 50;
-var q3movement_accelerate = 10.0;
-var q3movement_airaccelerate = 1.0;
-var q3movement_flyaccelerate = 8.0;
-var q3movement_friction = 6.0;
-var q3movement_flightfriction = 3.0;
-var q3movement_playerRadius = 10.0;
+/**
+ * CanItemBeGrabbed
+ *
+ * Returns false if the item should not be picked up.
+ * This needs to be the same for client side prediction and server use.
+ */
+function CanItemBeGrabbed(gametype, ent, ps) {
+	// TODO Why is this crashing
+	// if (ent.modelIndex < 1 || ent.modelIndex >= itemList.length) {
+	// 	throw new Error('CanItemBeGrabbed: index out of range'); /* ERR_DROPPED */
+	// }
+	
+	var item = itemList[ent.modelIndex];
+	
+	switch (item.giType) {
+		case IT.WEAPON:
+			return true;	// weapons are always picked up
+		
+		case IT.AMMO:
+			if (ps.ammo[ item.giTag ] >= 200) {
+				return false;		// can't hold any more
+			}
+			return true;
+		
+		case IT.ARMOR:
+			if (ps.stats[STAT.ARMOR] >= ps.stats[STAT.MAX_HEALTH] * 2) {
+				return false;
+			}
+			
+			return true;
+		
+		case IT.HEALTH:
+			// Small and mega healths will go over the max, otherwise
+			// don't pick up if already at max.
+			if (item.quantity == 5 || item.quantity == 100) {
+				if (ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH] * 2) {
+					return false;
+				}
+				
+				return true;
+			}			
+			if (ps.stats[STAT.HEALTH] >= ps.stats[STAT.MAX_HEALTH]) {
+				return false;
+			}
+			return true;
+		
+		case IT.POWERUP:
+			return true;	// powerups are always picked up
+		
+	// 	case IT.TEAM: // team items, such as flags
+	// 		if( gametype == GT.CTF ) {
+	// 			// ent.modelIndex2 is non-zero on items if they are dropped
+	// 			// we need to know this because we can pick up our dropped flag (and return it)
+	// 			// but we can't pick up our flag at base
+	// 			if (ps.persistant[PERS_TEAM] == TEAM_RED) {
+	// 				if (item.giTag == PW_BLUEFLAG ||
+	// 					(item.giTag == PW_REDFLAG && ent.modelIndex2) ||
+	// 					(item.giTag == PW_REDFLAG && ps.powerups[PW_BLUEFLAG]) )
+	// 					return true;
+	// 			} else if (ps.persistant[PERS_TEAM] == TEAM_BLUE) {
+	// 				if (item.giTag == PW_REDFLAG ||
+	// 					(item.giTag == PW_BLUEFLAG && ent.modelIndex2) ||
+	// 					(item.giTag == PW_BLUEFLAG && ps.powerups[PW_REDFLAG]) )
+	// 					return true;
+	// 			}
+	// 		}
+	// 
+	// 		return false;
+		
+		case IT.HOLDABLE:
+			// Can only hold one item at a time
+			if (ps.stats[STAT.HOLDABLE_ITEM]) {
+				return false;
+			}
+			return true;
+		
+	// 	case IT.BAD:
+	// 		log( ERR_DROP, "BG_CanItemBeGrabbed: IT_BAD" );
+		
+		default:
+			break;
+	}
+	
+	return false;
+}
 
-// TODO Move these into a PmoveLocals structure?
-var forward = [0, 0, 0];
-var right = [0, 0, 0];
-var up = [0, 0, 0];
-var groundTrace;
-var groundPlane;
-var walking;
-var msec;
+/**
+ * PlayerTouchesItem
+ *  
+ * Items can be picked up without actually touching their physical bounds to make
+ * grabbing them easier.
+ */
+function PlayerTouchesItem(ps, item, atTime) {
+	var origin = [0, 0, 0];
+
+	EvaluateTrajectory(item.pos, atTime, origin);
+
+	// We are ignoring ducked differences here.
+	if (ps.origin[0] - origin[0] > 44 ||
+		ps.origin[0] - origin[0] < -50 ||
+		ps.origin[1] - origin[1] > 36 ||
+		ps.origin[1] - origin[1] < -36 ||
+		ps.origin[2] - origin[2] > 36 ||
+		ps.origin[2] - origin[2] < -36) {
+		return false;
+	}
+
+	return true;
+}
+	var pml = new PmoveLocals();
+var pm = null;  // current pmove
+
+// Movement parameters.
+var pm_stopspeed = 100;
+var pm_duckScale = 0.25;
+var pm_swimScale = 0.50;
+
+var pm_accelerate = 10.0;
+var pm_airaccelerate = 1.0;
+var pm_wateraccelerate = 4.0;
+var pm_flyaccelerate = 8.0;
+
+var pm_friction = 6.0;
+var pm_waterfriction = 1.0;
+var pm_flightfriction = 3.0;
+var pm_spectatorfriction = 5.0;
 
 /**
  * Pmove
  */
-function Pmove(pm) {
-	var ps = pm.ps;
-	var cmd = pm.cmd;
+function Pmove(pmove) {
+	var ps = pmove.ps;
+	var cmd = pmove.cmd;
 
 	// TODO WHY DOES THIS HAPPEN
 	if (cmd.serverTime < ps.commandTime) {
@@ -7812,18 +8055,10 @@ function Pmove(pm) {
 	// Chop the move up if it is too long, to prevent framerate
 	// dependent behavior.
 	while (ps.commandTime != cmd.serverTime) {
-		msec = cmd.serverTime - ps.commandTime;
+		PmoveSingle(pmove);
 
-		if (msec < 1) {
-			msec = 1;
-		} else if (msec > 66) {
-			msec = 66;
-		}
-
-		PmoveSingle(pm);
-
-		if (pm.ps.pm_flags & PMF.JUMP_HELD) {
-			pm.cmd.upmove = 20;
+		if (pmove.ps.pm_flags & PMF.JUMP_HELD) {
+			pmove.cmd.upmove = 20;
 		}
 	}
 }
@@ -7831,19 +8066,31 @@ function Pmove(pm) {
 /**
  * PmoveSingle
  */
-function PmoveSingle(pm) {
+function PmoveSingle(pmove) {
+	pm = pmove;
+
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
+	// Clear all pmove local vars.
+	pml.reset();
+
+	pml.msec = cmd.serverTime - ps.commandTime;
+	if (pml.msec < 1) {
+		pml.msec = 1;
+	} else if (pml.msec > 66) {
+		pml.msec = 66;
+	}
+
 	// Make sure walking button is clear if they are running, to avoid
 	// proxy no-footsteps cheats.
-	if (Math.abs(pm.cmd.forwardmove) > 64 || Math.abs(pm.cmd.rightmove) > 64) {
-		pm.cmd.buttons &= ~BUTTON.WALKING;
+	if (Math.abs(cmd.forwardmove) > 64 || Math.abs(cmd.rightmove) > 64) {
+		cmd.buttons &= ~BUTTON.WALKING;
 	}
 
 	// Set the firing flag for continuous beam weapons.
 	if ( !(ps.pm_flags & PMF.RESPAWNED) && ps.pm_type !== PM.INTERMISSION && ps.pm_type !== PM.NOCLIP
-		&& (pm.cmd.buttons & BUTTON.ATTACK) && ps.ammo[ps.weapon]) {
+		&& (cmd.buttons & BUTTON.ATTACK) && ps.ammo[ps.weapon]) {
 		ps.eFlags |= EF.FIRING;
 	} else {
 		ps.eFlags &= ~EF.FIRING;
@@ -7851,17 +8098,17 @@ function PmoveSingle(pm) {
 
 	// Clear the respawned flag if attack and use are cleared
 	if (ps.stats[STAT.HEALTH] > 0 && 
-		!(pm.cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE))) {
+		!(cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE))) {
 		ps.pm_flags &= ~PMF.RESPAWNED;
 	}
 
 	// Determine the time.
 	ps.commandTime = cmd.serverTime;
-	pm.frameTime = msec * 0.001;
+	pml.frameTime = pml.msec * 0.001;
 
 	// Update our view angles.
 	UpdateViewAngles(ps, cmd);
-	qm.AnglesToVectors(ps.viewangles, forward, right, up);
+	qm.AnglesToVectors(ps.viewangles, pml.forward, pml.right, pml.up);
 
 	// Make sure walking button is clear if they are running, to avoid
 	// proxy no-footsteps cheats.
@@ -7913,35 +8160,37 @@ function PmoveSingle(pm) {
 	// pml.previous_waterlevel = pmove->waterlevel;
 
 	// Set mins, maxs and viewheight.
-	CheckDuck(pm);
+	CheckDuck();
 
 	// Set ground entity.
-	GroundTrace(pm);
+	GroundTrace();
 
 	if (ps.pm_type === PM.DEAD) {
-		DeadMove(pm);
+		DeadMove();
 	}
 
 	// Kill animation timers.
-	DropTimers(pm);
+	DropTimers();
 
-	//FlyMove(pm);
-	if (walking) {
-		WalkMove(pm);
+	//FlyMove();
+	if (pml.walking) {
+		WalkMove();
 	} else {
-		AirMove(pm);
+		AirMove();
 	}
 
-	GroundTrace(pm);
+	GroundTrace();
 
 	// Weapons.
-	UpdateWeapon(pm);
+	UpdateWeapon();
 
 	// Torso animations.
-	TorsoAnimation(pm);
+	TorsoAnimation();
 
 	// Footstep events / legs animations.
-	Footsteps(pm);
+	Footsteps();
+
+	pm = null;
 }
 
 /**
@@ -7972,7 +8221,7 @@ function CmdScale(cmd, speed) {
 /**
  * CheckDuck
  */
-function CheckDuck(pm) {
+function CheckDuck() {
 	var ps = pm.ps;
 
 	pm.mins[0] = -15;
@@ -8016,7 +8265,7 @@ function CheckDuck(pm) {
 /**
  * CheckJump
  */
-function CheckJump(pm) {
+function CheckJump() {
 	var ps = pm.ps;
 
 	if (pm.cmd.upmove < 10) {
@@ -8031,19 +8280,19 @@ function CheckJump(pm) {
 		return false;
 	}
 
-	groundPlane = false; // jumping away
-	walking = false;
+	pml.groundPlane = false; // jumping away
+	pml.walking = false;
 	ps.pm_flags |= PMF.JUMP_HELD;
 
 	ps.groundEntityNum = ENTITYNUM_NONE;
 	ps.velocity[2] = JUMP_VELOCITY;
-	AddEvent(pm, EV.JUMP);
+	AddEvent(EV.JUMP);
 
 	if (pm.cmd.forwardmove >= 0) {
-		ForceLegsAnim(pm, ANIM.LEGS_JUMP);
+		ForceLegsAnim(ANIM.LEGS_JUMP);
 		ps.pm_flags &= ~PMF.BACKWARDS_JUMP;
 	} else {
-		ForceLegsAnim(pm, ANIM.LEGS_JUMPB);
+		ForceLegsAnim(ANIM.LEGS_JUMPB);
 		ps.pm_flags |= PMF.BACKWARDS_JUMP;
 	}
 
@@ -8053,25 +8302,25 @@ function CheckJump(pm) {
 /**
  * GroundTrace
  */
-function GroundTrace(pm) {
+function GroundTrace() {
 	var ps = pm.ps;
 	var point = [ps.origin[0], ps.origin[1], ps.origin[2] - 0.25];
 	var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 
-	groundTrace = trace;
+	pml.groundTrace = trace;
 
 	// Do something corrective if the trace starts in a solid.
 	if (trace.allSolid) {
 		// This will nudge us around and, if successful, copy its
 		// new successful trace results into ours.
-		if (!CorrectAllSolid(pm, trace)) {
+		if (!CorrectAllSolid(trace)) {
 			return;
 		}
 	}
 
 	// If the trace didn't hit anything, we are in free fall.
 	if (trace.fraction === 1.0) {
-		GroundTraceMissed(pm);
+		GroundTraceMissed();
 		return;
 	}
 
@@ -8079,38 +8328,38 @@ function GroundTrace(pm) {
 	if (ps.velocity[2] > 0 && vec3.dot(ps.velocity, trace.plane.normal) > 10 ) {
 		// go into jump animation
 		if (pm.cmd.forwardmove >= 0) {
-			ForceLegsAnim(pm, ANIM.LEGS_JUMP);
+			ForceLegsAnim(ANIM.LEGS_JUMP);
 			ps.pm_flags &= ~PMF.BACKWARDS_JUMP;
 		} else {
-			ForceLegsAnim(pm, ANIM.LEGS_JUMPB);
+			ForceLegsAnim(ANIM.LEGS_JUMPB);
 			ps.pm_flags |= PMF.BACKWARDS_JUMP;
 		}
 
 		ps.groundEntityNum = ENTITYNUM_NONE;
-		groundPlane = false;
-		walking = false;
+		pml.groundPlane = false;
+		pml.walking = false;
 
 		return;
 	}
 
 	if (trace.plane.normal[2] < MIN_WALK_NORMAL) {
 		ps.groundEntityNum = ENTITYNUM_NONE;
-		groundPlane = true;
-		walking = false;
+		pml.groundPlane = true;
+		pml.walking = false;
 
 		return;
 	}
 
 	// TODO return entitynum in tracework
 	ps.groundEntityNum = trace.entityNum;
-	groundPlane = true;
-	walking = true;
+	pml.groundPlane = true;
+	pml.walking = true;
 }
 
 /**
  * CorrectAllSolid
  */
-function CorrectAllSolid(pm, trace) {
+function CorrectAllSolid(trace) {
 	var ps = pm.ps;
 	var point = [0, 0, 0];
 	var tr;
@@ -8136,8 +8385,8 @@ function CorrectAllSolid(pm, trace) {
 	}
 
 	ps.groundEntityNum = ENTITYNUM_NONE;
-	groundPlane = false;
-	walking = false;
+	pml.groundPlane = false;
+	pml.walking = false;
 
 	return false;
 }
@@ -8145,7 +8394,7 @@ function CorrectAllSolid(pm, trace) {
 /**
  * GroundTraceMissed
  */
-function GroundTraceMissed(pm) {
+function GroundTraceMissed() {
 	var ps = pm.ps;
 
 	if (ps.groundEntityNum !== ENTITYNUM_NONE) {
@@ -8157,38 +8406,38 @@ function GroundTraceMissed(pm) {
 		var trace = pm.trace(ps.origin, point, pm.mins, pm.maxs, ps.clientNum, pm.tracemask);
 		if (trace.fraction === 1.0) {
 			if (pm.cmd.forwardmove >= 0) {
-				ForceLegsAnim(pm, ANIM.LEGS_JUMP);
+				ForceLegsAnim(ANIM.LEGS_JUMP);
 				ps.pm_flags &= ~PMF.BACKWARDS_JUMP;
 			} else {
-				ForceLegsAnim(pm, ANIM.LEGS_JUMPB);
+				ForceLegsAnim(ANIM.LEGS_JUMPB);
 				ps.pm_flags |= PMF.BACKWARDS_JUMP;
 			}
 		}
 	}
 
-	pm.ps.groundEntityNum = ENTITYNUM_NONE;
-	groundPlane = false;
-	walking = false;
+	ps.groundEntityNum = ENTITYNUM_NONE;
+	pml.groundPlane = false;
+	pml.walking = false;
 }
 
 /**
  * DeadMove
  */
-function DeadMove(pm) {
-	if (!walking) {
+function DeadMove() {
+	if (!pml.walking) {
 		return;
 	}
 
 	var ps = pm.ps;
 
 	// Extra friction.
-	var forward = vec3.length(ps.velocity);
-	forward -= 20;
-	if (forward <= 0) {
+	var speed = vec3.length(ps.velocity);
+	speed -= 20;
+	if (speed <= 0) {
 		ps.velocity[0] = ps.velocity[1] = ps.velocity[2] = 0;
 	} else {
 		vec3.normalize(ps.velocity);
-		vec3.scale(ps.velocity, forward);
+		vec3.scale(ps.velocity, speed);
 	}
 }
 
@@ -8197,96 +8446,96 @@ function DeadMove(pm) {
 /**
  * FlyMove
  */
-function FlyMove(pm) {
+function FlyMove() {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
 	// normal slowdown
-	Friction(pm, true);
+	Friction(true);
 
 	var scale = CmdScale(cmd, ps.speed);
 	var wishvel = [0, 0, 0];
 	for (var i = 0; i < 3; i++) {
-		wishvel[i] = scale * forward[i]*cmd.forwardmove + scale * right[i]*cmd.rightmove;
+		wishvel[i] = scale * pml.forward[i]*cmd.forwardmove + scale * pml.right[i]*cmd.rightmove;
 	}
 	wishvel[2] += cmd.upmove;
 	var wishspeed = vec3.length(wishvel);
 	var wishdir = vec3.normalize(wishvel, [0, 0, 0]);
 
-	Accelerate(pm, wishdir, wishspeed, q3movement_flyaccelerate);
-	StepSlideMove(pm, false);
+	Accelerate(wishdir, wishspeed, pm_flyaccelerate);
+	StepSlideMove(false);
 }
 
 /**
  * AirMove
  */
-function AirMove(pm) {
+function AirMove() {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
-	Friction(pm);
+	Friction();
 
 	// Set the movementDir so clients can rotate the legs for strafing.
-	SetMovementDir(pm);
+	SetMovementDir();
 
 	// project moves down to flat plane
-	forward[2] = 0;
-	right[2] = 0;
-	vec3.normalize(forward);
-	vec3.normalize(right);
+	pml.forward[2] = 0;
+	pml.right[2] = 0;
+	vec3.normalize(pml.forward);
+	vec3.normalize(pml.right);
 
 	var scale = CmdScale(cmd, ps.speed);
 	var wishvel = [0, 0, 0];
 	for (var i = 0 ; i < 2 ; i++) {
-		wishvel[i] = forward[i]*cmd.forwardmove + right[i]*cmd.rightmove;
+		wishvel[i] = pml.forward[i]*cmd.forwardmove + pml.right[i]*cmd.rightmove;
 	}
 	wishvel[2] = 0;
 	var wishspeed = vec3.length(wishvel) * scale;
 	var wishdir = vec3.normalize(wishvel, [0, 0, 0]);
 
 	// Not on ground, so little effect on velocity.
-	Accelerate(pm, wishdir, wishspeed, q3movement_airaccelerate);
+	Accelerate(wishdir, wishspeed, pm_airaccelerate);
 
 	// We may have a ground plane that is very steep, even though
 	// we don't have a groundentity. Slide along the steep plane.
-	if (groundPlane) {
-		ClipVelocity(ps.velocity, groundTrace.plane.normal, ps.velocity, OVERCLIP);
+	if (pml.groundPlane) {
+		ps.velocity = ClipVelocity(ps.velocity, pml.groundTrace.plane.normal, OVERCLIP);
 	}
 
-	StepSlideMove(pm, true);
+	StepSlideMove(true);
 }
 
 /**
  * WalkMove
  */
-function WalkMove(pm) {
+function WalkMove() {
 	var ps = pm.ps;
 	var cmd = pm.cmd;
 
-	if (CheckJump(pm)) {
-		AirMove(pm);
+	if (CheckJump()) {
+		AirMove();
 		return;
 	}
 
-	Friction(pm);
+	Friction();
 
 	// Set the movementDir so clients can rotate the legs for strafing.
-	SetMovementDir(pm);
+	SetMovementDir();
 
 	// Project moves down to flat plane.
-	forward[2] = 0;
-	right[2] = 0;
+	pml.forward[2] = 0;
+	pml.right[2] = 0;
 
 	// Project the forward and right directions onto the ground plane.
-	forward = ClipVelocity(forward, groundTrace.plane.normal, OVERCLIP);
-	right = ClipVelocity(right, groundTrace.plane.normal, OVERCLIP);	
-	vec3.normalize(forward);
-	vec3.normalize(right);
+	pml.forward = ClipVelocity(pml.forward, pml.groundTrace.plane.normal, OVERCLIP);
+	pml.right = ClipVelocity(pml.right, pml.groundTrace.plane.normal, OVERCLIP);
+	vec3.normalize(pml.forward);
+	vec3.normalize(pml.right);
 
 	var scale = CmdScale(cmd, ps.speed);
 	var wishvel = [0, 0, 0];
 	for (var i = 0 ; i < 3 ; i++ ) {
-		wishvel[i] = forward[i]*cmd.forwardmove + right[i]*cmd.rightmove;
+		wishvel[i] = pml.forward[i]*cmd.forwardmove + pml.right[i]*cmd.rightmove;
 	}
 	var wishspeed = vec3.length(wishvel);
 	var wishdir = vec3.normalize(wishvel, [0, 0, 0]);
@@ -8294,7 +8543,7 @@ function WalkMove(pm) {
 
 	// Clamp the speed lower if wading or walking on the bottom.
 	/*if (pm.waterlevel) {
-		float	waterScale;
+		var waterScale;
 
 		waterScale = pm.waterlevel / 3.0;
 		waterScale = 1.0 - ( 1.0 - pm_swimScale ) * waterScale;
@@ -8305,22 +8554,22 @@ function WalkMove(pm) {
 
 	// When a player gets hit, they temporarily lose
 	// full control, which allows them to be moved a bit.
-	var accelerate = q3movement_accelerate;
+	var accelerate = pm_accelerate;
 
-	if ((groundTrace.surfaceFlags & SURF.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
-		accelerate = q3movement_airaccelerate;
+	if ((pml.groundTrace.surfaceFlags & SURF.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
+		accelerate = pm_airaccelerate;
 	}
 
-	Accelerate(pm, wishdir, wishspeed, accelerate);
+	Accelerate(wishdir, wishspeed, accelerate);
 
-	if ((groundTrace.surfaceFlags & SURF.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
-		ps.velocity[2] -= ps.gravity * pm.frameTime;
+	if ((pml.groundTrace.surfaceFlags & SURF.SLICK ) || ps.pm_flags & PMF.TIME_KNOCKBACK) {
+		ps.velocity[2] -= ps.gravity * pml.frameTime;
 	}
 
 	var vel = vec3.length(ps.velocity);
 
 	// Slide along the ground plane.
-	ps.velocity = ClipVelocity(ps.velocity, groundTrace.plane.normal, OVERCLIP);
+	ps.velocity = ClipVelocity(ps.velocity, pml.groundTrace.plane.normal, OVERCLIP);
 
 	// Don't decrease velocity when going up or down a slope.
 	vec3.normalize(ps.velocity);
@@ -8331,7 +8580,7 @@ function WalkMove(pm) {
 		return;
 	}
 
-	StepSlideMove(pm, false);
+	StepSlideMove(false);
 }
 
 /**
@@ -8340,7 +8589,7 @@ function WalkMove(pm) {
  * Determine the rotation of the legs relative
  * to the facing dir
  */
-function SetMovementDir(pm) {
+function SetMovementDir() {
 	var ps = pm.ps;
 
 	if (pm.cmd.forwardmove || pm.cmd.rightmove) {
@@ -8376,11 +8625,11 @@ function SetMovementDir(pm) {
 /**
  * Friction
  */
-function Friction(pm, flying) {
+function Friction(flying) {
 	var ps = pm.ps;
 
 	var vec = vec3.set(ps.velocity, [0, 0, 0]);
-	if (walking) {
+	if (pml.walking) {
 		vec[2] = 0;	// ignore slope movement
 	}
 
@@ -8396,11 +8645,11 @@ function Friction(pm, flying) {
 
 	// Apply ground friction.
 	//if (pm.waterlevel <= 1) {
-		if (walking && !(groundTrace.surfaceFlags & SURF.SLICK) ) {
+		if (pml.walking && !(pml.groundTrace.surfaceFlags & SURF.SLICK) ) {
 			// if getting knocked back, no friction
 			if (!(ps.pm_flags & PMF.TIME_KNOCKBACK)) {
-				var control = speed < q3movement_stopspeed ? q3movement_stopspeed : speed;
-				drop += control * q3movement_friction * pm.frameTime;
+				var control = speed < pm_stopspeed ? pm_stopspeed : speed;
+				drop += control * pm_friction * pml.frameTime;
 			}
 		}
 	//}
@@ -8411,7 +8660,7 @@ function Friction(pm, flying) {
 	}*/
 
 	if (flying) {
-		drop += speed * q3movement_flightfriction * pm.frameTime;
+		drop += speed * pm_flightfriction * pml.frameTime;
 	}
 
 	var newspeed = speed - drop;
@@ -8426,7 +8675,7 @@ function Friction(pm, flying) {
 /**
  * Accelerate
  */
-function Accelerate(pm, wishdir, wishspeed, accel) {
+function Accelerate(wishdir, wishspeed, accel) {
 	var ps = pm.ps;
 	var currentspeed = vec3.dot(ps.velocity, wishdir);
 	var addspeed = wishspeed - currentspeed;
@@ -8435,7 +8684,7 @@ function Accelerate(pm, wishdir, wishspeed, accel) {
 		return;
 	}
 
-	var accelspeed = accel * pm.frameTime * wishspeed;
+	var accelspeed = accel * pml.frameTime * wishspeed;
 
 	if (accelspeed > addspeed) {
 		accelspeed = addspeed;
@@ -8463,10 +8712,10 @@ function ClipVelocity(vel, normal, overbounce) {
 /**
  * SlideMove
  */
-function SlideMove(pm, gravity) {
+function SlideMove(gravity) {
 	var ps = pm.ps;
 	var endVelocity = [0, 0, 0];
-	var time_left = pm.frameTime;
+	var time_left = pml.frameTime;
 	var planes = [];
 	var numbumps = 4;
 	var end = [0, 0, 0];
@@ -8476,15 +8725,15 @@ function SlideMove(pm, gravity) {
 		endVelocity[2] -= ps.gravity * time_left;
 		ps.velocity[2] = (ps.velocity[2] + endVelocity[2]) * 0.5;
 
-		if (groundPlane) {
+		if (pml.groundPlane) {
 			// slide along the ground plane
-			ps.velocity = ClipVelocity(ps.velocity, groundTrace.plane.normal, OVERCLIP);
+			ps.velocity = ClipVelocity(ps.velocity, pml.groundTrace.plane.normal, OVERCLIP);
 		}
 	}
 
 	// Never turn against the ground plane.
-	if (groundPlane) {
-		planes.push(vec3.set(groundTrace.plane.normal, [0, 0, 0]));
+	if (pml.groundPlane) {
+		planes.push(vec3.set(pml.groundTrace.plane.normal, [0, 0, 0]));
 	}
 
 	// Never turn against original velocity.
@@ -8614,7 +8863,7 @@ function SlideMove(pm, gravity) {
 /**
  * StepSlideMove
  */
-function StepSlideMove(pm, gravity) {
+function StepSlideMove(gravity) {
 	var ps = pm.ps;
 
 	// Make sure these are stored BEFORE the initial SlideMove.
@@ -8622,7 +8871,7 @@ function StepSlideMove(pm, gravity) {
 	var start_v = vec3.set(ps.velocity, [0, 0, 0]);
 
 	// We got exactly where we wanted to go first try.
-	if (SlideMove(pm, gravity)) {
+	if (SlideMove(gravity)) {
 		return;
 	}
 	
@@ -8648,7 +8897,7 @@ function StepSlideMove(pm, gravity) {
 	// Try slidemove from this position.
 	vec3.set(trace.endPos, ps.origin);
 	vec3.set(start_v, ps.velocity);
-	SlideMove(pm, gravity);
+	SlideMove(gravity);
 
 	// Push down the final amount.
 	var stepSize = trace.endPos[2] - start_o[2];
@@ -8666,13 +8915,13 @@ function StepSlideMove(pm, gravity) {
 	var delta = ps.origin[2] - start_o[2];
 	if (delta > 2) {
 		if (delta < 7) {
-			AddEvent(pm, EV.STEP_4);
+			AddEvent(EV.STEP_4);
 		} else if (delta < 11) {
-			AddEvent(pm, EV.STEP_8);
+			AddEvent(EV.STEP_8);
 		} else if (delta < 15 ) {
-			AddEvent(pm, EV.STEP_12);
+			AddEvent(EV.STEP_12);
 		} else {
-			AddEvent(pm, EV.STEP_16);
+			AddEvent(EV.STEP_16);
 		}
 	}
 }
@@ -8714,16 +8963,16 @@ function UpdateViewAngles(ps, cmd) {
 /**
  * DropTimers
  */
-function DropTimers(pm) {
+function DropTimers() {
 	var ps = pm.ps;
 
 	// Drop misc timing counter.
 	if (ps.pm_time) {
-		if (msec >= ps.pm_time) {
+		if (pml.msec >= ps.pm_time) {
 			ps.pm_flags &= ~PMF.ALL_TIMES;
 			ps.pm_time = 0;
 		} else {
-			ps.pm_time -= msec;
+			ps.pm_time -= pml.msec;
 		}
 	}
 }
@@ -8731,7 +8980,7 @@ function DropTimers(pm) {
 /**
  * UpdateWeapon
  */
-function UpdateWeapon(pm) {
+function UpdateWeapon() {
 	var ps = pm.ps;
 
 	// int		addTime;
@@ -8771,7 +9020,7 @@ function UpdateWeapon(pm) {
 
 	// Make weapon function.
 	if (ps.weaponTime > 0) {
-		ps.weaponTime -= msec;
+		ps.weaponTime -= pml.msec;
 	}
 
 	// Check for weapon change.
@@ -8779,7 +9028,7 @@ function UpdateWeapon(pm) {
 	// again if lowering or raising.
 	if (ps.weaponTime <= 0 || ps.weaponState != WS.FIRING) {
 		if (ps.weapon !== pm.cmd.weapon) {
-			BeginWeaponChange(pm, pm.cmd.weapon);
+			BeginWeaponChange(pm.cmd.weapon);
 		}
 	}
 
@@ -8789,16 +9038,16 @@ function UpdateWeapon(pm) {
 
 	// Change weapon if time.
 	if (ps.weaponState === WS.DROPPING) {
-		FinishWeaponChange(pm);
+		FinishWeaponChange();
 		return;
 	}
 
 	if (ps.weaponState === WS.RAISING ) {
 		ps.weaponState = WS.READY;
 		if (ps.weapon === WP.GAUNTLET) {
-			StartTorsoAnim(pm, ANIM.TORSO_STAND2);
+			StartTorsoAnim(ANIM.TORSO_STAND2);
 		} else {
-			StartTorsoAnim(pm, ANIM.TORSO_STAND);
+			StartTorsoAnim(ANIM.TORSO_STAND);
 		}
 		return;
 	}
@@ -8820,14 +9069,14 @@ function UpdateWeapon(pm) {
 	// 	}
 	// 	StartTorsoAnim(ANIM.TORSO_ATTACK2);
 	// } else {
-		StartTorsoAnim(pm, ANIM.TORSO_ATTACK);
+		StartTorsoAnim(ANIM.TORSO_ATTACK);
 	// }
 	
 	ps.weaponState = WS.FIRING;
 	
 	// Check for out of ammo.
 	if (!ps.ammo[ps.weapon]) {
-		AddEvent(pm, EV.NOAMMO);
+		AddEvent(EV.NOAMMO);
 		ps.weaponTime += 500;
 		return;
 	}
@@ -8838,7 +9087,7 @@ function UpdateWeapon(pm) {
 	}
 	
 	// Fire weapon.
-	AddEvent(pm, EV.FIRE_WEAPON);
+	AddEvent(EV.FIRE_WEAPON);
 
 	var addTime = 0;
 
@@ -8886,7 +9135,7 @@ function UpdateWeapon(pm) {
 /**
  * BeginWeaponChange
  */
-function BeginWeaponChange(pm, weapon) {
+function BeginWeaponChange(weapon) {
 	var ps = pm.ps;
 
 	if (weapon <= WP.NONE || weapon >= WP.NUM_WEAPONS) {
@@ -8901,16 +9150,16 @@ function BeginWeaponChange(pm, weapon) {
 		return;
 	}
 
-	AddEvent(pm, EV.CHANGE_WEAPON);
+	AddEvent(EV.CHANGE_WEAPON);
 	ps.weaponState = WS.DROPPING;
 	ps.weaponTime += 200;
-	StartTorsoAnim(pm, ANIM.TORSO_DROP);
+	StartTorsoAnim(ANIM.TORSO_DROP);
 }
 
 /**
  * FinishWeaponChange
  */
-function FinishWeaponChange(pm) {
+function FinishWeaponChange() {
 	var ps = pm.ps;
 	var weapon = pm.cmd.weapon;
 
@@ -8924,20 +9173,20 @@ function FinishWeaponChange(pm) {
 	ps.weapon = weapon;
 	ps.weaponState = WS.RAISING;
 	ps.weaponTime += 250;
-	StartTorsoAnim(pm, ANIM.TORSO_RAISE);
+	StartTorsoAnim(ANIM.TORSO_RAISE);
 }
 
 /**
  * TorsoAnimation
  */
-function TorsoAnimation(pm) {
+function TorsoAnimation() {
 	var ps = pm.ps;
 
 	if (ps.weaponState === WS.READY) {
 		if (ps.weapon == WP.GAUNTLET) {
-			ContinueTorsoAnim(pm, ANIM.TORSO_STAND2);
+			ContinueTorsoAnim(ANIM.TORSO_STAND2);
 		} else {
-			ContinueTorsoAnim(pm, ANIM.TORSO_STAND);
+			ContinueTorsoAnim(ANIM.TORSO_STAND);
 		}
 	}
 }
@@ -8945,7 +9194,7 @@ function TorsoAnimation(pm) {
 /**
  * Footsteps
  */
-function Footsteps(pm) {
+function Footsteps() {
 	var ps = pm.ps;
 
 	// Calculate speed and cycle to be used for
@@ -8954,11 +9203,11 @@ function Footsteps(pm) {
 
 	if (ps.groundEntityNum === ENTITYNUM_NONE) {
 		// if (ps.powerups[PW_INVULNERABILITY]) {
-		// 	ContinueLegsAnim(pm, ANIM.LEGS_IDLECR);
+		// 	ContinueLegsAnim(ANIM.LEGS_IDLECR);
 		// }
 		// Airborne leaves position in cycle intact, but doesn't advance.
 		if (pm.waterlevel > 1) {
-			ContinueLegsAnim(pm, ANIM.LEGS_SWIM);
+			ContinueLegsAnim(ANIM.LEGS_SWIM);
 		}
 		return;
 	}
@@ -8968,9 +9217,9 @@ function Footsteps(pm) {
 		if (pm.xyspeed < 5) {
 			ps.bobCycle = 0;  // start at beginning of cycle again
 			if (ps.pm_flags & PMF.DUCKED) {
-				ContinueLegsAnim(pm, ANIM.LEGS_IDLECR);
+				ContinueLegsAnim(ANIM.LEGS_IDLECR);
 			} else {
-				ContinueLegsAnim(pm, ANIM.LEGS_IDLE);
+				ContinueLegsAnim(ANIM.LEGS_IDLE);
 			}
 		}
 		return;
@@ -8982,48 +9231,48 @@ function Footsteps(pm) {
 	if (ps.pm_flags & PMF.DUCKED) {
 		bobmove = 0.5;  // ducked characters bob much faster
 		if (ps.pm_flags & PMF.BACKWARDS_RUN) {
-			ContinueLegsAnim(pm, ANIM.LEGS_BACKCR);
+			ContinueLegsAnim(ANIM.LEGS_BACKCR);
 		} else {
-			ContinueLegsAnim(pm, ANIM.LEGS_WALKCR);
+			ContinueLegsAnim(ANIM.LEGS_WALKCR);
 		}
 		// Ducked characters never play footsteps.
 	} else {
 		if (!(pm.cmd.buttons & BUTTON.WALKING)) {
 			bobmove = 0.4; // faster speeds bob faster
 			if (ps.pm_flags & PMF.BACKWARDS_RUN) {
-				ContinueLegsAnim(pm, ANIM.LEGS_BACK);
+				ContinueLegsAnim(ANIM.LEGS_BACK);
 			}
 			else {
-				ContinueLegsAnim(pm, ANIM.LEGS_RUN);
+				ContinueLegsAnim(ANIM.LEGS_RUN);
 			}
 			footstep = true;
 		} else {
 			bobmove = 0.3;  // walking bobs slow
 			if (ps.pm_flags & PMF.BACKWARDS_RUN) {
-				ContinueLegsAnim(pm, ANIM.LEGS_BACKWALK);
+				ContinueLegsAnim(ANIM.LEGS_BACKWALK);
 			} else {
-				ContinueLegsAnim(pm, ANIM.LEGS_WALK);
+				ContinueLegsAnim(ANIM.LEGS_WALK);
 			}
 		}
 	}
 	
 	// Check for footstep / splash sounds.
 	var old = ps.bobCycle;
-	ps.bobCycle = parseInt(old + bobmove * msec, 10) % 256;
+	ps.bobCycle = parseInt(old + bobmove * pml.msec, 10) % 256;
 
 	// // If we just crossed a cycle boundary, play an apropriate footstep event.
 	if (((old + 64) ^ (ps.bobCycle + 64)) & 128) {
 	// 	if (pm.waterlevel === 0) {
 	// 		// On ground will only play sounds if running
 			if (footstep && !pm.noFootsteps) {
-				AddEvent(pm, FootstepForSurface());
+				AddEvent(FootstepForSurface());
 			}
 	// 	} else if (pm.waterlevel === 1) {
 	// 		// splashing
-//			AddEvent(pm, EntityEvent.FOOTSPLASH);
+//			AddEvent(EntityEvent.FOOTSPLASH);
 	// 	} else if (pm.waterlevel === 2) {
 	// 		// wading / swimming at surface
-//			AddEvent(pm, EntityEvent.SWIM);
+//			AddEvent(EntityEvent.SWIM);
 	// 	} else if (pm.waterlevel === 3) {
 	// 		// no sound when completely underwater
 	// 	}
@@ -9034,10 +9283,10 @@ function Footsteps(pm) {
  * FootstepForSurface
  */
 function FootstepForSurface () {
-	if (groundTrace.surfaceFlags & SURF.NOSTEPS) {
+	if (pml.groundTrace.surfaceFlags & SURF.NOSTEPS) {
 		return 0;
 	}
-	if (groundTrace.surfaceFlags & SURF.METALSTEPS) {
+	if (pml.groundTrace.surfaceFlags & SURF.METALSTEPS) {
 		return EV.FOOTSTEP_METAL;
 	}
 	return EV.FOOTSTEP;
@@ -9046,14 +9295,14 @@ function FootstepForSurface () {
 /**
  * AddEvent
  */
-function AddEvent(pm, newEvent) {
+function AddEvent(newEvent) {
 	AddPredictableEventToPlayerstate(pm.ps, newEvent, 0);
 }
 
 /**
  * StartTorsoAnim
  */
-function StartTorsoAnim(pm, anim) {
+function StartTorsoAnim(anim) {
 	var ps = pm.ps;
 
 	if (ps.pm_type >= PM.DEAD) {
@@ -9066,7 +9315,7 @@ function StartTorsoAnim(pm, anim) {
 /**
  * StartLegsAnim
  */
-function StartLegsAnim(pm, anim) {
+function StartLegsAnim(anim) {
 	var ps = pm.ps;
 
 	if (ps.pm_type >= PM.DEAD) {
@@ -9083,7 +9332,7 @@ function StartLegsAnim(pm, anim) {
 /**
  * ContinueLegsAnim
  */
-function ContinueLegsAnim(pm, anim) {
+function ContinueLegsAnim(anim) {
 	var ps = pm.ps;
 
 	if ((ps.legsAnim & ~ANIM_TOGGLEBIT) === anim) {
@@ -9094,13 +9343,13 @@ function ContinueLegsAnim(pm, anim) {
 		return;  // a high priority animation is running
 	}
 
-	StartLegsAnim(pm, anim);
+	StartLegsAnim(anim);
 }
 
 /**
  * ContinueTorsoAnim
  */
-function ContinueTorsoAnim(pm, anim) {
+function ContinueTorsoAnim(anim) {
 	var ps = pm.ps;
 
 	if ((ps.torsoAnim & ~ANIM_TOGGLEBIT) === anim) {
@@ -9111,17 +9360,17 @@ function ContinueTorsoAnim(pm, anim) {
 		return;  // a high priority animation is running
 	}
 
-	StartTorsoAnim(pm, anim);
+	StartTorsoAnim(anim);
 }
 
 /**
  * ForceLegsAnim
  */
-function ForceLegsAnim(pm, anim) {
+function ForceLegsAnim(anim) {
 	var ps = pm.ps;
 	
 	ps.legsTimer = 0;
-	StartLegsAnim(pm, anim);
+	StartLegsAnim(anim);
 }
 	// typedef struct gitem_s {
 // 	char		*classname;	// spawning name
@@ -9469,15 +9718,15 @@ var itemList = [
 		ItemList:                         itemList,
 		Pmove:                            Pmove,
 		UpdateViewAngles:                 UpdateViewAngles,
-		CanItemBeGrabbed:                 CanItemBeGrabbed,
 		AddPredictableEventToPlayerstate: AddPredictableEventToPlayerstate,
 		PlayerStateToEntityState:         PlayerStateToEntityState,
 		EvaluateTrajectory:               EvaluateTrajectory,
 		EvaluateTrajectoryDelta:          EvaluateTrajectoryDelta,
-		TouchJumpPad:                     TouchJumpPad
+		TouchJumpPad:                     TouchJumpPad,
+		CanItemBeGrabbed:                 CanItemBeGrabbed,
+		PlayerTouchesItem:                PlayerTouchesItem
 	};
 });
-
 
 /*global vec3: true, mat4: true */
 
@@ -9485,6 +9734,549 @@ define('game/gm',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {
 	function Game(com, sv) {
+		var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+		var GIB_HEALTH = -40;
+var ARMOR_PROTECTION = 0.66;
+
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
+
+var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var MINS_Z = -24;
+var DEFAULT_VIEWHEIGHT = 26;
+var CROUCH_VIEWHEIGHT = 12;
+var DEAD_VIEWHEIGHT = -16;
+
+var PM = {
+	NORMAL:       0,                                       // can accelerate and turn
+	NOCLIP:       1,                                       // noclip movement
+	SPECTATOR:    2,                                       // still run into walls
+	DEAD:         3,                                       // no acceleration or turning, but free falling
+	FREEZE:       4,                                       // stuck in place with no control
+	INTERMISSION: 5                                        // no movement or status bar
+};
+
+var PMF = {
+	DUCKED:         1,
+	JUMP_HELD:      2,
+	BACKWARDS_JUMP: 8,                                     // go into backwards land
+	BACKWARDS_RUN:  16,                                    // coast down to backwards run
+	TIME_LAND:      32,                                    // pm_time is time before rejump
+	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
+	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
+	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
+	USE_ITEM_HELD:  1024,
+	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
+	FOLLOW:         4096,                                  // spectate following another player
+	SCOREBOARD:     8192,                                  // spectate as a scoreboard
+	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
+	ALL_TIMES:      (32|64|256)
+};
+
+// Weapon state.
+var WS = {
+	READY:    0,
+	RAISING:  1,
+	DROPPING: 2,
+	FIRING:   3
+};
+
+// Item types.
+var IT = {
+	BAD:                0,
+	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
+	AMMO:               2,                                 // EFX: rotate
+	ARMOR:              3,                                 // EFX: rotate + minlight
+	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
+	POWERUP:            5,                                 // instant on, timer based
+	                                                       // EFX: rotate + external ring that rotates
+	HOLDABLE:           6,                                 // single use, holdable item
+	                                                       // EFX: rotate + bob
+	PERSISTANT_POWERUP: 7,
+	TEAM:               8
+};
+
+var MASK = {
+	ALL:         -1,
+	SOLID:       CONTENTS.SOLID,
+	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
+	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
+	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
+	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
+	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
+};
+
+/**
+ * Playerstate flags
+ */
+var STAT = {
+	HEALTH:        0,
+	HOLDABLE_ITEM: 1,
+	WEAPONS:       2,
+	ARMOR:         3,
+	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
+	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
+	MAX_HEALTH:    6				// health / armor limit, changable by handicap
+};
+
+var WP = {
+	NONE:             0,
+	GAUNTLET:         1,
+	MACHINEGUN:       2,
+	SHOTGUN:          3,
+	GRENADE_LAUNCHER: 4,
+	ROCKET_LAUNCHER:  5,
+	LIGHTNING:        6,
+	RAILGUN:          7,
+	PLASMAGUN:        8,
+	BFG:              9,
+	GRAPPLING_HOOK:   10,
+	NUM_WEAPONS:      11
+};
+
+// NOTE: may not have more than 16
+var PW = {
+	NONE:         0,
+	QUAD:         1,
+	BATTLESUIT:   2,
+	HASTE:        3,
+	INVIS:        4,
+	REGEN:        5,
+	FLIGHT:       6,
+	REDFLAG:      7,
+	BLUEFLAG:     8,
+	NEUTRALFLAG:  9,
+	NUM_POWERUPS: 10
+};
+
+// PlayerState.persistant[] indexes
+// These fields are the only part of player_state that aren't
+// cleared on respawn.
+// NOTE: may not have more than 16
+var PERS = {
+	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
+	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
+	RANK:                 2,                               // player rank or team rank
+	TEAM:                 3,                               // player team
+	SPAWN_COUNT:          4,                               // incremented every respawn
+	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
+	ATTACKER:             6,                               // clientnum of last damage inflicter
+	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
+	KILLED:               8,                               // count of the number of times you died
+	// player awards tracking
+	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
+	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
+	DEFEND_COUNT:         11,                              // defend awards
+	ASSIST_COUNT:         12,                              // assist awards
+	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
+	CAPTURES:             14                               // captures
+};
+
+/**
+ * Entitystate flags
+ */
+// entityState_t->eType
+var ET = {
+	GENERAL:          0,
+	PLAYER:           1,
+	ITEM:             2,
+	MISSILE:          3,
+	MOVER:            4,
+	BEAM:             5,
+	PORTAL:           6,
+	SPEAKER:          7,
+	PUSH_TRIGGER:     8,
+	TELEPORT_TRIGGER: 9,
+	INVISIBLE:        10,
+	GRAPPLE:          11,                                  // grapple hooked on wall
+	TEAM:             12,
+	EVENTS:           13                                   // any of the EV_* events can be added freestanding
+	                                                       // by setting eType to ET_EVENTS + eventNum
+	                                                       // this avoids having to set eFlags and eventNum
+};
+
+// entityState_t->eFlags
+var EF = {
+	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
+	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
+	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
+	PLAYER_EVENT:     0x00000010,
+	BOUNCE:           0x00000010,                          // for missiles
+	BOUNCE_HALF:      0x00000020,                          // for missiles
+	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
+	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
+	FIRING:           0x00000100,                          // for lightning gun
+	KAMIKAZE:         0x00000200,
+	MOVER_STOP:       0x00000400,                          // will push otherwise
+	AWARD_CAP:        0x00000800,                          // draw the capture sprite
+	TALK:             0x00001000,                          // draw a talk balloon
+	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
+	VOTED:            0x00004000,                          // already cast a vote
+	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
+	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
+	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
+	AWARD_DENIED:     0x00040000,                          // denied
+	TEAMVOTED:        0x00080000                           // already cast a team vote
+};
+
+/**********************************************************
+ * 
+ * Entitystate events
+ * 
+ * Entity events are for effects that take place relative
+ * to an existing entities origin. Very network efficient.
+ *
+ * Two bits at the top of the entityState->event field
+ * will be incremented with each change in the event so
+ * that an identical event started twice in a row can
+ * be distinguished. And off the value with ~EV_EVENT_BITS
+ * to retrieve the actual event number.
+ *
+ **********************************************************/
+var EV_EVENT_BIT1    = 0x00000100;
+var EV_EVENT_BIT2    = 0x00000200;
+var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
+var EVENT_VALID_MSEC = 300;
+
+var EV = {
+	NONE:                0,
+
+	FOOTSTEP:            1,
+	FOOTSTEP_METAL:      2,
+	FOOTSPLASH:          3,
+	FOOTWADE:            4,
+	SWIM:                5,
+
+	STEP_4:              6,
+	STEP_8:              7,
+	STEP_12:             8,
+	STEP_16:             9,
+
+	FALL_SHORT:          10,
+	FALL_MEDIUM:         11,
+	FALL_FAR:            12,
+
+	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
+
+	JUMP:                14,
+	WATER_TOUCH:         15,                               // foot touches
+	WATER_LEAVE:         16,                               // foot leaves
+	WATER_UNDER:         17,                               // head touches
+	WATER_CLEAR:         18,                               // head leaves
+
+	ITEM_PICKUP:         19,                               // normal item pickups are predictable
+	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
+
+	NOAMMO:              21,
+	CHANGE_WEAPON:       22,
+	FIRE_WEAPON:         23,
+
+	USE_ITEM0:           24,
+	USE_ITEM1:           25,
+	USE_ITEM2:           26,
+	USE_ITEM3:           27,
+	USE_ITEM4:           28,
+	USE_ITEM5:           29,
+	USE_ITEM6:           30,
+	USE_ITEM7:           31,
+	USE_ITEM8:           32,
+	USE_ITEM9:           33,
+	USE_ITEM10:          34,
+	USE_ITEM11:          35,
+	USE_ITEM12:          36,
+	USE_ITEM13:          37,
+	USE_ITEM14:          38,
+	USE_ITEM15:          39,
+
+	ITEM_RESPAWN:        40,
+	ITEM_POP:            41,
+	PLAYER_TELEPORT_IN:  42,
+	PLAYER_TELEPORT_OUT: 43,
+
+	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
+
+	GENERAL_SOUND:       45,
+	GLOBAL_SOUND:        46,                               // no attenuation
+	GLOBAL_TEAM_SOUND:   47,
+
+	BULLET_HIT_FLESH:    48,
+	BULLET_HIT_WALL:     49,
+
+	MISSILE_HIT:         50,
+	MISSILE_MISS:        51,
+	MISSILE_MISS_METAL:  52,
+	RAILTRAIL:           53,
+	SHOTGUN:             54,
+	BULLET:              55,                               // otherEntity is the shooter
+
+	PAIN:                56,
+	DEATH1:              57,
+	DEATH2:              58,
+	DEATH3:              59,
+	OBITUARY:            60,
+
+	POWERUP_QUAD:        61,
+	POWERUP_BATTLESUIT:  62,
+	POWERUP_REGEN:       63,
+
+	GIB_PLAYER:          64,                               // gib a previously living player
+	SCOREPLUM:           65,                               // score plum
+
+	DEBUG_LINE:          66,
+	STOPLOOPINGSOUND:    67,
+	TAUNT:               68,
+	TAUNT_YES:           69,
+	TAUNT_NO:            70,
+	TAUNT_FOLLOWME:      71,
+	TAUNT_GETFLAG:       72,
+	TAUNT_GUARDBASE:     73,
+	TAUNT_PATROL:        74
+};
+
+/**
+ * Animations
+ */
+// Flip the togglebit every time an animation
+// changes so a restart of the same anim can be detected.
+var ANIM_TOGGLEBIT = 128;
+
+var ANIM = {
+	BOTH_DEATH1:         0,
+	BOTH_DEAD1:          1,
+	BOTH_DEATH2:         2,
+	BOTH_DEAD2:          3,
+	BOTH_DEATH3:         4,
+	BOTH_DEAD3:          5,
+
+	TORSO_GESTURE:       6,
+
+	TORSO_ATTACK:        7,
+	TORSO_ATTACK2:       8,
+
+	TORSO_DROP:          9,
+	TORSO_RAISE:         10,
+
+	TORSO_STAND:         11,
+	TORSO_STAND2:        12,
+
+	LEGS_WALKCR:         13,
+	LEGS_WALK:           14,
+	LEGS_RUN:            15,
+	LEGS_BACK:           16,
+	LEGS_SWIM:           17,
+
+	LEGS_JUMP:           18,
+	LEGS_LAND:           19,
+
+	LEGS_JUMPB:          20,
+	LEGS_LANDB:          21,
+
+	LEGS_IDLE:           22,
+	LEGS_IDLECR:         23,
+
+	LEGS_TURN:           24,
+
+	TORSO_GETFLAG:       25,
+	TORSO_GUARDBASE:     26,
+	TORSO_PATROL:        27,
+	TORSO_FOLLOWME:      28,
+	TORSO_AFFIRMATIVE:   29,
+	TORSO_NEGATIVE:      30,
+
+	MAX:                 31,
+
+	LEGS_BACKCR:         32,
+	LEGS_BACKWALK:       33,
+	FLAG_RUN:            34,
+	FLAG_STAND:          35,
+	FLAG_STAND2RUN:      36,
+
+	MAX_TOTALANIMATIONS: 37
+};
+
+// Means of death
+var MOD = {
+	UNKNOWN:        0,
+	SHOTGUN:        1,
+	GAUNTLET:       2,
+	MACHINEGUN:     3,
+	GRENADE:        4,
+	GRENADE_SPLASH: 5,
+	ROCKET:         6,
+	ROCKET_SPLASH:  7,
+	PLASMA:         8,
+	PLASMA_SPLASH:  9,
+	RAILGUN:        10,
+	LIGHTNING:      11,
+	BFG:            12,
+	BFG_SPLASH:     13,
+	WATER:          14,
+	SLIME:          15,
+	LAVA:           16,
+	CRUSH:          17,
+	TELEFRAG:       18,
+	FALLING:        19,
+	SUICIDE:        20,
+	TARGET_LASER:   21,
+	TRIGGER_HURT:   22,
+	GRAPPLE:        23
+};
+
+
+		// The server does not know how to interpret most of the values
+// in entityStates (level eType), so the game must explicitly flag
+// special server behaviors.
+var SVF = {
+	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
+	BOT:                0x00000002,                        // set if the entity is a bot
+	BROADCAST:          0x00000008,                        // send to all connected clients
+	PORTAL:             0x00000020,                        // merge a second pvs at origin2 into snapshots
+	USE_CURRENT_ORIGIN: 0x00000040,                        // entity->r.currentOrigin instead of entity->s.origin
+	                                                       // for link position (missiles and movers)
+	SINGLECLIENT:       0x00000080,                        // only send to a single client (entityShared_t->singleClient)
+	NOTSINGLECLIENT:    0x00000100                         // send entity to everyone but one client
+};
+
 		var FRAMETIME = 100; // msec
 var CARNAGE_REWARD_TIME = 3000;
 var REWARD_SPRITE_TIME = 2000;
@@ -9519,20 +10311,6 @@ var LevelLocals = function () {
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		this.gentities[i] = new GameEntity();
 	}
-};
-
-// The server does not know how to interpret most of the values
-// in entityStates (level eType), so the game must explicitly flag
-// special server behaviors.
-var SVF = {
-	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
-	BOT:                0x00000002,                        // set if the entity is a bot
-	BROADCAST:          0x00000008,                        // send to all connected clients
-	PORTAL:             0x00000020,                        // merge a second pvs at origin2 into snapshots
-	USE_CURRENT_ORIGIN: 0x00000040,                        // entity->r.currentOrigin instead of entity->s.origin
-	                                                       // for link position (missiles and movers)
-	SINGLECLIENT:       0x00000080,                        // only send to a single client (entityShared_t->singleClient)
-	NOTSINGLECLIENT:    0x00000100                         // send entity to everyone but one client
 };
 
 var GameEntity = function () {
@@ -9773,11 +10551,11 @@ function Frame(levelTime) {
 				FreeEntity(ent);
 				continue;
 			}
-			// else if (ent->unlinkAfterEvent) {
-			// 	// items that will respawn will hide themselves after their pickup event
-			// 	ent->unlinkAfterEvent = qfalse;
-			// 	trap_UnlinkEntity( ent );
-			// }
+			else if (ent.unlinkAfterEvent) {
+				// items that will respawn will hide themselves after their pickup event
+				ent.unlinkAfterEvent = false;
+				sv.UnlinkEntity(ent);
+			}
 		}
 
 		// Temporary entities don't think.
@@ -9810,17 +10588,24 @@ function TouchTriggers(ent) {
 		return;
 	}
 
+	// Dead clients don't activate triggers!
+	if (ent.client.pm_type === PM.DEAD) {
+		return;
+	}
+
 	var ps = ent.client.ps;
 	var range = [40, 40, 52];
-	var mins = [0, 0, 0], maxs = [0, 0, 0];
+	var mins = [0, 0, 0];
+	var maxs = [0, 0, 0];
+
 	vec3.subtract(ps.origin, range, mins);
 	vec3.add(ps.origin, range, maxs);
 
 	var entityNums = sv.FindEntitiesInBox(mins, maxs);
 
-	/*// can't use ent->absmin, because that has a one unit pad
-	vec3.add(ps.origin, ent.r.mins, mins);
-	vec3.add(ps.origin, ent.r.maxs, maxs);*/
+	// Can't use ent->absmin, because that has a one unit pad.
+	vec3.add(ps.origin, ent.mins, mins);
+	vec3.add(ps.origin, ent.maxs, maxs);
 
 	for (var i = 0; i < entityNums.length; i++) {
 		var hit = level.gentities[entityNums[i]];
@@ -9834,9 +10619,17 @@ function TouchTriggers(ent) {
 			continue;
 		}
 
-		/*if (!trap_EntityContact(mins, maxs, hit) ) {
-			continue;
-		}*/
+		// Use seperate code for determining if an item is picked up
+		// so you don't have to actually contact its bounding box.
+		if (hit.s.eType === ET.ITEM) {
+			if (!bg.PlayerTouchesItem(ent.client.ps, hit.s, level.time)) {
+				continue;
+			}
+		} else {
+			if (!sv.EntityContact(mins, maxs, hit)) {
+				continue;
+			}
+		}
 
 		hit.touch.call(this, hit, ent);
 	}
@@ -9983,6 +10776,7 @@ function ClientThink(clientNum) {
 
 	// Save results of pmove.
 	bg.PlayerStateToEntityState(ent.client.ps, ent.s);
+	// SendPendingPredictableEvents(ent.client.ps);
 
 	// Update game entity info.
 	vec3.set(client.ps.origin, ent.currentOrigin);
@@ -10033,7 +10827,7 @@ function ClientEvents(ent, oldEventSequence) {
 		oldEventSequence = client.ps.eventSequence - MAX_PS_EVENTS;
 	}
 	for (var i = oldEventSequence; i < client.ps.eventSequence; i++) {
-		var event = client.ps.events[i % MAX_PS_EVENTS];
+		var event = client.ps.events[i & (MAX_PS_EVENTS - 1)];
 
 		switch (event) {
 			// case EV_FALL_MEDIUM:
@@ -10141,12 +10935,12 @@ function ClientSpawn(ent) {
 
 	client.respawnTime = level.time;
 	
-	// set max health
+	// Set max health.
 // 	client.pers.maxHealth = atoi( Info_ValueForKey( userinfo, "handicap" ) );
 // 	if ( client.pers.maxHealth < 1 || client.pers.maxHealth > 100 ) {
 		client.pers.maxHealth = 100;
 // 	}
-	// clear entity values
+	// Clear entity values.
 	client.ps.stats[STAT.MAX_HEALTH] = client.pers.maxHealth;
 // 	client.ps.eFlags = flags;
 	
@@ -10169,8 +10963,9 @@ function ClientSpawn(ent) {
 	client.ps.commandTime = level.time - 100;
 	client.pers.cmd.serverTime = level.time;
 	ClientThink(client.ps.clientNum);
+
 	// // run the presend to set anything else
-	//ClientEndFrame( ent );
+	// ClientEndFrame(ent);
 
 	// Clear entity state values.
 	bg.PlayerStateToEntityState(client.ps, ent.s);
@@ -11317,12 +12112,13 @@ function RespawnItem(self) {
 /**
  * TouchItem
  */
-function TouchItem(self, other) {
-	var respawn,
-		predict;
-	
-	if (!other.client) { return; }
-//	if (!other.health || other.health < 1) { return; } // dead people can't pickup
+function TouchItem(self, other) {	
+	if (!other.client) {
+		return;
+	}
+	if (other.health < 1) {
+		return;  // dead people can't pickup
+	}
 	
 	// The same pickup rules are used for client side and server side.
 	if (!bg.CanItemBeGrabbed(/*g_gametype()*/ null, self.s, other.client.ps)) {
@@ -11331,9 +12127,10 @@ function TouchItem(self, other) {
 
 // 	G_LogPrintf( "Item: %i %s\n", other->s.number, ent->item->classname );
 // 
-// 	predict = other.client.pers['predictItemPickup'];
+	var predict = true;// other.client.pers.predictItemPickup;
 	
-	// call the item-specific pickup function
+	// Call the item-specific pickup function.
+	var respawn;
 	switch (self.item.giType) {
 		case IT.WEAPON:
 			respawn = PickupWeapon(self, other);
@@ -11363,13 +12160,13 @@ function TouchItem(self, other) {
 	
 	if (!respawn) { return; }
 	
-// 	// play the normal pickup sound
-// 	if (predict) {
-		bg.AddPredictableEventToPlayerstate(other.client.ps, EV.ITEM_PICKUP, self.s.modelIndex);
-// 	} else {
-// 		G_AddEvent( other, EV.ITEM_PICKUP, self.s.modelIndex );
-// 	}
-// 
+	// Play the normal pickup sound.
+	if (predict) {
+		AddPredictableEvent(other, EV.ITEM_PICKUP, self.s.modelIndex);
+	} else {
+		AddEvent(other, EV.ITEM_PICKUP, self.s.modelIndex);
+	}
+
 // 	// powerup pickups are global broadcasts
 // 	if ( self.item->giType == IT.POWERUP || self.item->giType == IT.TEAM) {
 // 		// if we want the global sound to play
@@ -12261,9 +13058,562 @@ define('cgame/cg',
 ['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
 function (_, glmatrix, sh, qm, bg) {	
 	function CGame(imp) {
+		var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+		var GIB_HEALTH = -40;
+var ARMOR_PROTECTION = 0.66;
+
+var DEFAULT_SHOTGUN_SPREAD = 700;
+var DEFAULT_SHOTGUN_COUNT = 11;
+
+var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
+
+var MINS_Z = -24;
+var DEFAULT_VIEWHEIGHT = 26;
+var CROUCH_VIEWHEIGHT = 12;
+var DEAD_VIEWHEIGHT = -16;
+
+var PM = {
+	NORMAL:       0,                                       // can accelerate and turn
+	NOCLIP:       1,                                       // noclip movement
+	SPECTATOR:    2,                                       // still run into walls
+	DEAD:         3,                                       // no acceleration or turning, but free falling
+	FREEZE:       4,                                       // stuck in place with no control
+	INTERMISSION: 5                                        // no movement or status bar
+};
+
+var PMF = {
+	DUCKED:         1,
+	JUMP_HELD:      2,
+	BACKWARDS_JUMP: 8,                                     // go into backwards land
+	BACKWARDS_RUN:  16,                                    // coast down to backwards run
+	TIME_LAND:      32,                                    // pm_time is time before rejump
+	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
+	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
+	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
+	USE_ITEM_HELD:  1024,
+	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
+	FOLLOW:         4096,                                  // spectate following another player
+	SCOREBOARD:     8192,                                  // spectate as a scoreboard
+	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
+	ALL_TIMES:      (32|64|256)
+};
+
+// Weapon state.
+var WS = {
+	READY:    0,
+	RAISING:  1,
+	DROPPING: 2,
+	FIRING:   3
+};
+
+// Item types.
+var IT = {
+	BAD:                0,
+	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
+	AMMO:               2,                                 // EFX: rotate
+	ARMOR:              3,                                 // EFX: rotate + minlight
+	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
+	POWERUP:            5,                                 // instant on, timer based
+	                                                       // EFX: rotate + external ring that rotates
+	HOLDABLE:           6,                                 // single use, holdable item
+	                                                       // EFX: rotate + bob
+	PERSISTANT_POWERUP: 7,
+	TEAM:               8
+};
+
+var MASK = {
+	ALL:         -1,
+	SOLID:       CONTENTS.SOLID,
+	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
+	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
+	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
+	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
+	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
+};
+
+/**
+ * Playerstate flags
+ */
+var STAT = {
+	HEALTH:        0,
+	HOLDABLE_ITEM: 1,
+	WEAPONS:       2,
+	ARMOR:         3,
+	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
+	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
+	MAX_HEALTH:    6				// health / armor limit, changable by handicap
+};
+
+var WP = {
+	NONE:             0,
+	GAUNTLET:         1,
+	MACHINEGUN:       2,
+	SHOTGUN:          3,
+	GRENADE_LAUNCHER: 4,
+	ROCKET_LAUNCHER:  5,
+	LIGHTNING:        6,
+	RAILGUN:          7,
+	PLASMAGUN:        8,
+	BFG:              9,
+	GRAPPLING_HOOK:   10,
+	NUM_WEAPONS:      11
+};
+
+// NOTE: may not have more than 16
+var PW = {
+	NONE:         0,
+	QUAD:         1,
+	BATTLESUIT:   2,
+	HASTE:        3,
+	INVIS:        4,
+	REGEN:        5,
+	FLIGHT:       6,
+	REDFLAG:      7,
+	BLUEFLAG:     8,
+	NEUTRALFLAG:  9,
+	NUM_POWERUPS: 10
+};
+
+// PlayerState.persistant[] indexes
+// These fields are the only part of player_state that aren't
+// cleared on respawn.
+// NOTE: may not have more than 16
+var PERS = {
+	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
+	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
+	RANK:                 2,                               // player rank or team rank
+	TEAM:                 3,                               // player team
+	SPAWN_COUNT:          4,                               // incremented every respawn
+	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
+	ATTACKER:             6,                               // clientnum of last damage inflicter
+	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
+	KILLED:               8,                               // count of the number of times you died
+	// player awards tracking
+	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
+	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
+	DEFEND_COUNT:         11,                              // defend awards
+	ASSIST_COUNT:         12,                              // assist awards
+	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
+	CAPTURES:             14                               // captures
+};
+
+/**
+ * Entitystate flags
+ */
+// entityState_t->eType
+var ET = {
+	GENERAL:          0,
+	PLAYER:           1,
+	ITEM:             2,
+	MISSILE:          3,
+	MOVER:            4,
+	BEAM:             5,
+	PORTAL:           6,
+	SPEAKER:          7,
+	PUSH_TRIGGER:     8,
+	TELEPORT_TRIGGER: 9,
+	INVISIBLE:        10,
+	GRAPPLE:          11,                                  // grapple hooked on wall
+	TEAM:             12,
+	EVENTS:           13                                   // any of the EV_* events can be added freestanding
+	                                                       // by setting eType to ET_EVENTS + eventNum
+	                                                       // this avoids having to set eFlags and eventNum
+};
+
+// entityState_t->eFlags
+var EF = {
+	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
+	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
+	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
+	PLAYER_EVENT:     0x00000010,
+	BOUNCE:           0x00000010,                          // for missiles
+	BOUNCE_HALF:      0x00000020,                          // for missiles
+	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
+	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
+	FIRING:           0x00000100,                          // for lightning gun
+	KAMIKAZE:         0x00000200,
+	MOVER_STOP:       0x00000400,                          // will push otherwise
+	AWARD_CAP:        0x00000800,                          // draw the capture sprite
+	TALK:             0x00001000,                          // draw a talk balloon
+	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
+	VOTED:            0x00004000,                          // already cast a vote
+	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
+	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
+	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
+	AWARD_DENIED:     0x00040000,                          // denied
+	TEAMVOTED:        0x00080000                           // already cast a team vote
+};
+
+/**********************************************************
+ * 
+ * Entitystate events
+ * 
+ * Entity events are for effects that take place relative
+ * to an existing entities origin. Very network efficient.
+ *
+ * Two bits at the top of the entityState->event field
+ * will be incremented with each change in the event so
+ * that an identical event started twice in a row can
+ * be distinguished. And off the value with ~EV_EVENT_BITS
+ * to retrieve the actual event number.
+ *
+ **********************************************************/
+var EV_EVENT_BIT1    = 0x00000100;
+var EV_EVENT_BIT2    = 0x00000200;
+var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
+var EVENT_VALID_MSEC = 300;
+
+var EV = {
+	NONE:                0,
+
+	FOOTSTEP:            1,
+	FOOTSTEP_METAL:      2,
+	FOOTSPLASH:          3,
+	FOOTWADE:            4,
+	SWIM:                5,
+
+	STEP_4:              6,
+	STEP_8:              7,
+	STEP_12:             8,
+	STEP_16:             9,
+
+	FALL_SHORT:          10,
+	FALL_MEDIUM:         11,
+	FALL_FAR:            12,
+
+	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
+
+	JUMP:                14,
+	WATER_TOUCH:         15,                               // foot touches
+	WATER_LEAVE:         16,                               // foot leaves
+	WATER_UNDER:         17,                               // head touches
+	WATER_CLEAR:         18,                               // head leaves
+
+	ITEM_PICKUP:         19,                               // normal item pickups are predictable
+	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
+
+	NOAMMO:              21,
+	CHANGE_WEAPON:       22,
+	FIRE_WEAPON:         23,
+
+	USE_ITEM0:           24,
+	USE_ITEM1:           25,
+	USE_ITEM2:           26,
+	USE_ITEM3:           27,
+	USE_ITEM4:           28,
+	USE_ITEM5:           29,
+	USE_ITEM6:           30,
+	USE_ITEM7:           31,
+	USE_ITEM8:           32,
+	USE_ITEM9:           33,
+	USE_ITEM10:          34,
+	USE_ITEM11:          35,
+	USE_ITEM12:          36,
+	USE_ITEM13:          37,
+	USE_ITEM14:          38,
+	USE_ITEM15:          39,
+
+	ITEM_RESPAWN:        40,
+	ITEM_POP:            41,
+	PLAYER_TELEPORT_IN:  42,
+	PLAYER_TELEPORT_OUT: 43,
+
+	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
+
+	GENERAL_SOUND:       45,
+	GLOBAL_SOUND:        46,                               // no attenuation
+	GLOBAL_TEAM_SOUND:   47,
+
+	BULLET_HIT_FLESH:    48,
+	BULLET_HIT_WALL:     49,
+
+	MISSILE_HIT:         50,
+	MISSILE_MISS:        51,
+	MISSILE_MISS_METAL:  52,
+	RAILTRAIL:           53,
+	SHOTGUN:             54,
+	BULLET:              55,                               // otherEntity is the shooter
+
+	PAIN:                56,
+	DEATH1:              57,
+	DEATH2:              58,
+	DEATH3:              59,
+	OBITUARY:            60,
+
+	POWERUP_QUAD:        61,
+	POWERUP_BATTLESUIT:  62,
+	POWERUP_REGEN:       63,
+
+	GIB_PLAYER:          64,                               // gib a previously living player
+	SCOREPLUM:           65,                               // score plum
+
+	DEBUG_LINE:          66,
+	STOPLOOPINGSOUND:    67,
+	TAUNT:               68,
+	TAUNT_YES:           69,
+	TAUNT_NO:            70,
+	TAUNT_FOLLOWME:      71,
+	TAUNT_GETFLAG:       72,
+	TAUNT_GUARDBASE:     73,
+	TAUNT_PATROL:        74
+};
+
+/**
+ * Animations
+ */
+// Flip the togglebit every time an animation
+// changes so a restart of the same anim can be detected.
+var ANIM_TOGGLEBIT = 128;
+
+var ANIM = {
+	BOTH_DEATH1:         0,
+	BOTH_DEAD1:          1,
+	BOTH_DEATH2:         2,
+	BOTH_DEAD2:          3,
+	BOTH_DEATH3:         4,
+	BOTH_DEAD3:          5,
+
+	TORSO_GESTURE:       6,
+
+	TORSO_ATTACK:        7,
+	TORSO_ATTACK2:       8,
+
+	TORSO_DROP:          9,
+	TORSO_RAISE:         10,
+
+	TORSO_STAND:         11,
+	TORSO_STAND2:        12,
+
+	LEGS_WALKCR:         13,
+	LEGS_WALK:           14,
+	LEGS_RUN:            15,
+	LEGS_BACK:           16,
+	LEGS_SWIM:           17,
+
+	LEGS_JUMP:           18,
+	LEGS_LAND:           19,
+
+	LEGS_JUMPB:          20,
+	LEGS_LANDB:          21,
+
+	LEGS_IDLE:           22,
+	LEGS_IDLECR:         23,
+
+	LEGS_TURN:           24,
+
+	TORSO_GETFLAG:       25,
+	TORSO_GUARDBASE:     26,
+	TORSO_PATROL:        27,
+	TORSO_FOLLOWME:      28,
+	TORSO_AFFIRMATIVE:   29,
+	TORSO_NEGATIVE:      30,
+
+	MAX:                 31,
+
+	LEGS_BACKCR:         32,
+	LEGS_BACKWALK:       33,
+	FLAG_RUN:            34,
+	FLAG_STAND:          35,
+	FLAG_STAND2RUN:      36,
+
+	MAX_TOTALANIMATIONS: 37
+};
+
+// Means of death
+var MOD = {
+	UNKNOWN:        0,
+	SHOTGUN:        1,
+	GAUNTLET:       2,
+	MACHINEGUN:     3,
+	GRENADE:        4,
+	GRENADE_SPLASH: 5,
+	ROCKET:         6,
+	ROCKET_SPLASH:  7,
+	PLASMA:         8,
+	PLASMA_SPLASH:  9,
+	RAILGUN:        10,
+	LIGHTNING:      11,
+	BFG:            12,
+	BFG_SPLASH:     13,
+	WATER:          14,
+	SLIME:          15,
+	LAVA:           16,
+	CRUSH:          17,
+	TELEFRAG:       18,
+	FALLING:        19,
+	SUICIDE:        20,
+	TARGET_LASER:   21,
+	TRIGGER_HURT:   22,
+	GRAPPLE:        23
+};
+
+		var RT = {
+	MODEL:               0,
+	POLY:                1,
+	SPRITE:              2,
+	BEAM:                3,
+	RAIL_CORE:           4,
+	RAIL_RINGS:          5,
+	LIGHTNING:           6,
+	PORTALSURFACE:       7,                                // doesn't draw anything, just info for portals
+	MAX_REF_ENTITY_TYPE: 8
+};
+
+var RF = {
+	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
+	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
+	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
+	DEPTHHACK:       0x0008,                               // for view weapon Z crunching
+	NOSHADOW:        0x0040,                               // don't add stencil shadows
+	LIGHTING_ORIGIN: 0x0080,                               // use refEntity->lightingOrigin instead of refEntity->origin
+	                                                       // for lighting.  This allows entities to sink into the floor
+	                                                       // with their origin going solid, and allows all parts of a
+	                                                       // player to get the same lighting
+	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
+	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
+};
+
 		var DEFAULT_MODEL = 'sarge';
 
-var MAX_PREDICTED_EVENTS = 16;
 var MAX_LOCAL_ENTITIES   = 512;
 
 var FOOTSTEP = {
@@ -12314,8 +13664,6 @@ var ClientGame = function () {
 	this.predictedError        = [0, 0, 0];
 	this.predictedPlayerState  = new sh.PlayerState();
 	this.predictedPlayerEntity = new ClientEntity();
-	this.eventSequence         = 0;
-	this.predictableEvents     = new Array(MAX_PREDICTED_EVENTS);
 
 	// item resource info
 	this.itemInfo              = [];
@@ -12375,6 +13723,22 @@ var ClientGameStatic = function () {
  * When changing animation, set animationTime to frameTime + lerping time.
  * The current lerp will finish out, then it will lerp to the new animation.
 */
+var PlayerEntity = function () {
+	this.legs            = new LerpFrame();
+	this.torso           = new LerpFrame();
+	this.flag            = new LerpFrame();
+	this.paintTime       = 0;
+	this.painDirection   = 0;	// flip from 0 to 1
+	this.lightningFiring = false;
+
+	this.railFireTime    = 0;
+
+	// Machinegun spinning.
+	this.barrelAngle     = 0.0;
+	this.barrelTime      = 0;
+	this.barrelSpinning  = false;
+};
+
 var LerpFrame = function () {
 	this.oldFrame        = 0;
 	this.oldFrameTime    = 0;                              // time when ->oldFrame was exactly on
@@ -12394,55 +13758,38 @@ var LerpFrame = function () {
 	this.animationTime   = 0;
 };
 
-
-var PlayerEntity = function () {
-	this.legs            = new LerpFrame();
-	this.torso           = new LerpFrame();
-	this.flag            = new LerpFrame();
-	this.paintTime       = 0;
-	this.painDirection   = 0;	// flip from 0 to 1
-	this.lightningFiring = false;
-
-	this.railFireTime    = 0;
-
-	// Machinegun spinning.
-	this.barrelAngle     = 0.0;
-	this.barrelTime      = 0;
-	this.barrelSpinning  = false;
-};
-
 // ClientEntity have a direct corespondence with GameEntity in the game, but
 // only the EntityState is directly communicated to the cgame.
 var ClientEntity =  function () {
-	this.currentState = new sh.EntityState();              // from cg.frame
-	this.nextState    = new sh.EntityState();              // from cg.nextFrame, if available
-	this.interpolate  = false;                             // true if next is valid to interpolate to
-	this.currentValid = false;                             // true if cg.frame holds this entity
+	this.currentState  = new sh.EntityState();             // from cg.frame
+	this.nextState     = new sh.EntityState();             // from cg.nextFrame, if available
+	this.interpolate   = false;                            // true if next is valid to interpolate to
+	this.currentValid  = false;                            // true if cg.frame holds this entity
 
 	// int  muzzleFlashTime;  // move to playerEntity?
-	// int  previousEvent;
+	this.previousEvent = 0;
 	// int  teleportFlag;
 
-	this.trailTime    = 0;                                 // so missile trails can handle dropped initial packets
+	this.trailTime     = 0;                                // so missile trails can handle dropped initial packets
 	// int  dustTrailTime;
-	// int  miscTime;
+	this.miscTime      = 0;
 
-	this.snapshotTime = 0;                                 // last time this entity was found in a snapshot
+	this.snapshotTime  = 0;                                // last time this entity was found in a snapshot
 
-	this.pe           = new PlayerEntity();
+	this.pe            = new PlayerEntity();
 	/*
 	int    errorTime;  // decay the error from this time
 	vec3_t errorOrigin;
 	vec3_t errorAngles;
 	*/
 	
-	this.extrapolated = false;                             // false if origin / angles is an interpolation
-	this.rawOrigin    = [0, 0, 0];
-	this.rawAngles    = [0, 0, 0];
+	this.extrapolated  = false;                            // false if origin / angles is an interpolation
+	this.rawOrigin     = [0, 0, 0];
+	this.rawAngles     = [0, 0, 0];
 
-	// exact interpolated position of entity on this frame
-	this.lerpOrigin = [0, 0, 0];
-	this.lerpAngles = [0, 0, 0];
+	// Exact interpolated position of entity on this frame.
+	this.lerpOrigin    = [0, 0, 0];
+	this.lerpAngles    = [0, 0, 0];
 };
 
 
@@ -12673,6 +14020,7 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 			// The renderer uses our clipmap data to build the buffers.
 			imp.re_BuildCollisionBuffers();
 
+			RegisterSounds();
 			RegisterGraphics();
 			RegisterClients();
 			InitLocalEntities();
@@ -12758,6 +14106,13 @@ function Frame(serverTime) {
 }
 
 /**
+ * RegisterSounds
+ */
+function RegisterSounds() {
+	cgs.media.jumpPadSound = imp.snd_RegisterSound('sound/world/jumppad');
+}
+
+/**
  * RegisterGraphics
  */
 function RegisterGraphics() {
@@ -12769,6 +14124,8 @@ function RegisterGraphics() {
 	cgs.media.ringFlashModel = imp.re_RegisterModel('models/weaphits/ring02.md3');
 	cgs.media.dishFlashModel = imp.re_RegisterModel('models/weaphits/boom01.md3');
 	cgs.media.smokePuffShader = imp.re_RegisterShader('smokePuff');
+
+	cgs.media.bloodExplosionShader = imp.re_RegisterShader('bloodExplosion');
 }
 
 /**
@@ -13004,7 +14361,7 @@ function MakeExplosion(origin, dir, hModel, shader, msec, isSprite) {
 }
 
 /**
- * SmokePuf
+ * SmokePuff
  * 
  * Adds a smoke puff or blood trail localEntity.
  */
@@ -13057,6 +14414,34 @@ function SmokePuff(p, vel,
 	re.radius = le.radius;
 
 	return le;
+}
+
+/**
+ * Bleed
+ * 
+ * This is the spurt of blood when a character gets hit
+ */
+function Bleed(origin, entityNum) {
+	// if ( !cg_blood.integer ) {
+	// 	return;
+	// }
+
+	var le = AllocLocalEntity();
+	le.leType = LE.EXPLOSION;
+
+	le.startTime = cg.time;
+	le.endTime = le.startTime + 500;
+
+	vec3.set(origin, le.refent.origin);
+	le.refent.reType = RT.SPRITE;
+	le.refent.rotation = Math.floor(Math.random() * 360);
+	le.refent.radius = 24;
+	le.refent.customShader = cgs.media.bloodExplosionShader;
+
+	// Don't show player's own blood in view.
+	if (entityNum === cg.snap.ps.clientNum) {
+		le.refent.renderfx |= RF.THIRD_PERSON;
+	}
 }
 		/**
  * AddPacketEntities
@@ -13469,7 +14854,7 @@ function CheckEvents(cent) {
 	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, cent.lerpOrigin);
 
 	SetEntitySoundPosition(cent);
-	
+
 	AddEntityEvent(cent, cent.lerpOrigin);
 }
 
@@ -13510,6 +14895,22 @@ function AddEntityEvent(cent, position) {
 			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/player/footsteps/step' + Math.ceil(Math.random() * 4)));
 			break;
 			
+
+		case EV.JUMP_PAD:
+			var up = [0, 0, 1];
+			SmokePuff(cent.lerpOrigin, up,
+			          32,
+			          1, 1, 1, 0.33,
+			          1000,
+			          cg.time, 0,
+			          LEF.PUFF_DONT_SCALE,
+			          cgs.media.smokePuffShader);
+
+			// Boing sound at origin, jump sound on player.
+			imp.snd_StartSound(cent.lerpOrigin, -1, cgs.media.jumpPadSound);
+			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/player/sarge/jump1')/*CG_CustomSound(es.number, '*jump1.wav')*/);
+			break;
+
 		case EV.JUMP:
 			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/player/sarge/jump1'));
 			break;
@@ -13518,7 +14919,7 @@ function AddEntityEvent(cent, position) {
 			var item;
 			var index;
 			
-			index = es.eventParm;		// player predicted
+			index = es.eventParm;  // player predicted
 			
 			if (index < 0 || index >= bg.ItemList.length) {
 				break;
@@ -13526,16 +14927,16 @@ function AddEntityEvent(cent, position) {
 			
 			item = bg.ItemList[index];
 			
-			// powerups and team items will have a separate global sound, this one
-			// will be played at prediction time
-			if (item.giType == IT.POWERUP || item.giType == IT.TEAM) {
+			// Powerups and team items will have a separate global sound, this one
+			// will be played at prediction time.
+			if (item.giType === IT.POWERUP || item.giType === IT.TEAM) {
 // 				imp.snd_StartSound(null, es.number, cgs.media.n_healthSound);
 			} else {
 				imp.snd_StartSound(null, es.number, imp.snd_RegisterSound(item.pickupSound));
 			}
 			
-			// show icon and name on status bar
-			if (es.number == cg.snap.ps.clientNum) {
+			// Show icon and name on status bar.
+			if (es.number === cg.snap.ps.clientNum) {
 				ItemPickup(index);
 			}
 			
@@ -14776,7 +16177,7 @@ function PlayerAngles(cent, legs, torso, head) {
 
 	var headAngles = vec3.set(cent.lerpAngles, [0, 0, 0]);
 	var before = headAngles[qm.YAW];
-	headAngles[qm.YAW] = qm.AngleMod(headAngles[qm.YAW]);
+	headAngles[qm.YAW] = qm.AngleNormalize360(headAngles[qm.YAW]);
 
 	var torsoAngles = [0, 0, 0];
 	var legsAngles = [0, 0, 0];
@@ -14915,22 +16316,22 @@ function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
 			move = swing;
 			res.swinging = false;
 		}
-		res.angle = qm.AngleMod(res.angle + move);
+		res.angle = qm.AngleNormalize360(res.angle + move);
 	} else if ( swing < 0 ) {
 		move = cg.frameTime * scale * -speed;
 		if (move <= swing) {
 			move = swing;
 			res.swinging = false;
 		}
-		res.angle = qm.AngleMod(res.angle + move);
+		res.angle = qm.AngleNormalize360(res.angle + move);
 	}
 
 	// clamp to no more than tolerance
 	swing = qm.AngleSubtract(destination, res.angle);
 	if (swing > clampTolerance) {
-		res.angle = qm.AngleMod(destination - (clampTolerance - 1));
+		res.angle = qm.AngleNormalize360(destination - (clampTolerance - 1));
 	} else if ( swing < -clampTolerance ) {
-		res.angle = qm.AngleMod(destination + (clampTolerance - 1));
+		res.angle = qm.AngleNormalize360(destination + (clampTolerance - 1));
 	}
 }
 
@@ -15169,18 +16570,14 @@ function CheckPlayerstateEvents(ps, ops) {
 	cent = cg.predictedPlayerEntity;
 	// Go through the predictable events buffer.
 	for (var i = ps.eventSequence - MAX_PS_EVENTS; i < ps.eventSequence; i++) {
-		// If we have a new predictable event
+		// If we have a new predictable event.
 		if (i >= ops.eventSequence
 			// or the server told us to play another event instead of a predicted event we already issued
 			// or something the server told us changed our prediction causing a different event
-			|| (i > ops.eventSequence - MAX_PS_EVENTS && ps.events[i % MAX_PS_EVENTS] != ops.events[i % MAX_PS_EVENTS]) ) {
-			var event = ps.events[i % MAX_PS_EVENTS];
-			cent.currentState.event = event;
-			cent.currentState.eventParm = ps.eventParms[i % MAX_PS_EVENTS];
+			|| (i > ops.eventSequence - MAX_PS_EVENTS && ps.events[i & (MAX_PS_EVENTS - 1)] !== ops.events[i & (MAX_PS_EVENTS - 1)]) ) {
+			cent.currentState.event = ps.events[i & (MAX_PS_EVENTS - 1)];
+			cent.currentState.eventParm = ps.eventParms[i & (MAX_PS_EVENTS - 1)];
 			AddEntityEvent(cent, cent.lerpOrigin);
-
-			cg.predictableEvents[i % MAX_PREDICTED_EVENTS] = event;
-			cg.eventSequence++;
 		}
 	}
 }
@@ -15314,11 +16711,11 @@ function InterpolatePlayerState(grabAngles) {
 
 	var f = (cg.time - prev.serverTime) / (next.serverTime - prev.serverTime);
 
-	/*i = next->ps.bobCycle;
-	if ( i < prev->ps.bobCycle ) {
+	/*i = next.ps.bobCycle;
+	if ( i < prev.ps.bobCycle ) {
 		i += 256;		// handle wraparound
 	}
-	out->bobCycle = prev->ps.bobCycle + f * ( i - prev->ps.bobCycle );*/
+	out.bobCycle = prev.ps.bobCycle + f * ( i - prev.ps.bobCycle );*/
 
 	for (var i = 0; i < 3; i++) {
 		ps.origin[i] = prev.ps.origin[i] + f * (next.ps.origin[i] - prev.ps.origin[i]);
@@ -15395,7 +16792,7 @@ function PredictPlayerState() {
 	} else {
 		cg.pmove.tracemask = MASK.PLAYERSOLID;
 	}
-	// if (cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
+	// if (cg.snap.ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
 	// 	cg.pmove.tracemask &= ~CONTENTS.BODY;	// spectators can fly through bodies
 	// }
 	// cg.pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
@@ -15471,8 +16868,8 @@ function PredictPlayerState() {
 
 		moved = true;
 
-		// add push trigger movement effects
-		//CG_TouchTriggerPrediction();
+		// Add push trigger movement effects
+		TouchTriggerPrediction();
 	}
 
 	if (cg_showmiss() > 1) {
@@ -15481,7 +16878,7 @@ function PredictPlayerState() {
 
 	if (!moved) {
 		if (cg_showmiss()) {
-			log("not moved");
+			log('not moved');
 		}
 		return;
 	}
@@ -15499,14 +16896,118 @@ function PredictPlayerState() {
 
 	// Fire events and other transition triggered things
 	TransitionPlayerState(cg.predictedPlayerState, oldPlayerState);
-
-	// if (cg_showmiss()) {
-	// 	if (cg.eventSequence > cg.predictedPlayerState.eventSequence) {
-	// 		log('WARNING: double event');
-	// 		cg.eventSequence = cg.predictedPlayerState.eventSequence;
-	// 	}
-	// }
 }
+
+
+/**
+ * TouchTriggerPrediction
+ * 
+ * Predict push triggers and items
+ */
+function TouchTriggerPrediction() {
+	// Dead clients don't activate triggers.
+	if (cg.predictedPlayerState.pm_type === PM.DEAD) {
+		return;
+	}
+
+	var spectator = (cg.predictedPlayerState.pm_type === PM.SPECTATOR);
+	if (cg.predictedPlayerState.pm_type !== PM.NORMAL && !spectator) {
+		return;
+	}
+
+	for (var i = 0; i < cg.numTriggerEntities; i++) {
+		var cent = cg.triggerEntities[i];
+		var es = cent.currentState;
+
+		if (es.eType === ET.ITEM && !spectator) {
+			TouchItem(cent);
+			continue;
+		}
+
+		if (es.solid !== SOLID_BMODEL) {
+			continue;
+		}
+
+		var cmodel = imp.cm_InlineModel(es.modelIndex);
+		if (!cmodel) {
+			continue;
+		}
+
+		var trace = imp.cm_BoxTrace(cg.predictedPlayerState.origin, cg.predictedPlayerState.origin, 
+			cg.pmove.mins, cg.pmove.maxs, cmodel, -1);
+
+		if (!trace.startSolid) {
+			continue;
+		}
+
+		if (es.eType === ET.TELEPORT_TRIGGER) {
+			cg.hyperspace = true;
+		} else if (es.eType == ET.PUSH_TRIGGER) {
+			bg.TouchJumpPad(cg.predictedPlayerState, es);
+		}
+	}
+
+	// If we didn't touch a jump pad this pmove frame.
+	if (cg.predictedPlayerState.jumppad_frame != cg.predictedPlayerState.pmove_framecount) {
+		cg.predictedPlayerState.jumppad_frame = 0;
+		cg.predictedPlayerState.jumppad_ent = 0;
+	}
+}
+
+/**
+ * TouchItem
+ */
+function TouchItem(cent) {
+	// if (!cg_predictItems()) {
+	// 	return;
+	// }
+
+	if (!bg.PlayerTouchesItem(cg.predictedPlayerState, cent.currentState, cg.time)) {
+		return;
+	}
+
+	// Never pick an item up twice in a prediction.
+	if (cent.miscTime === cg.time) {
+		return;
+	}
+
+	if (!bg.CanItemBeGrabbed(null/*cgs.gametype*/, cent.currentState, cg.predictedPlayerState)) {
+		return;  // can't hold it
+	}
+
+	var item = bg.ItemList[cent.currentState.modelIndex];
+
+	// // Special case for flags.  
+	// // We don't predict touching our own flag.
+	// if (cgs.gametype === GT_CTF) {
+	// 	if (cg.predictedPlayerState.persistant[PERS_TEAM] == TEAM_RED &&
+	// 		item.giTag == PW_REDFLAG)
+	// 		return;
+	// 	if (cg.predictedPlayerState.persistant[PERS_TEAM] == TEAM_BLUE &&
+	// 		item.giTag == PW_BLUEFLAG)
+	// 		return;
+	// }
+
+
+	// Grab it.
+	bg.AddPredictableEventToPlayerstate(cg.predictedPlayerState, EV.ITEM_PICKUP, cent.currentState.modelIndex);
+
+	// Remove it from the frame so it won't be drawn.
+	cent.currentState.eFlags |= EF.NODRAW;
+
+	// Don't touch it again this prediction.
+	cent.miscTime = cg.time;
+
+	// If it's a weapon, give them some predicted ammo so the autoswitch will work.
+	if (item.giType === IT.WEAPON) {
+		cg.predictedPlayerState.stats[STAT.WEAPONS] |= 1 << item.giTag;
+		if (!cg.predictedPlayerState.ammo[item.giTag]) {
+			cg.predictedPlayerState.ammo[item.giTag] = 1;
+		}
+	}
+}
+
+
 		/**
  * ExecuteNewServerCommands
  *
@@ -15708,7 +17209,7 @@ function ReadNextSnapshot() {
 	}
 
 	while (cgs.processedSnapshotNum < cg.latestSnapshotNum) {
-		// try to read the snapshot from the client system
+		// Try to read the snapshot from the client system.
 		cgs.processedSnapshotNum++;
 		var snap = imp.cl_GetSnapshot(cgs.processedSnapshotNum);
 
@@ -15726,7 +17227,7 @@ function ReadNextSnapshot() {
 		// read them.
 	}
 
-	// nothing left to read
+	// Nothing left to read.
 	return null;
 }
 
@@ -16054,7 +17555,7 @@ function CmdNextWeapon() {
 		return;
 	}
 
-	//cg.weaponSelectTime = cg.time;
+	cg.weaponSelectTime = cg.time;
 	var original = cg.weaponSelect;
 
 	for (var i = 0; i < MAX_WEAPONS; i++) {
@@ -16601,7 +18102,7 @@ function MachinegunSpinAngle(cent) {
 
 	if (cent.pe.barrelSpinning == !(cent.currentState.eFlags & EF.FIRING)) {
 		cent.pe.barrelTime = cg.time;
-		cent.pe.barrelAngle = qm.AngleMod(angle);
+		cent.pe.barrelAngle = qm.AngleNormalize360(angle);
 		cent.pe.barrelSpinning = !!(cent.currentState.eFlags & EF.FIRING);
 	}
 
@@ -16847,7 +18348,7 @@ function MissileHitWall(weapon, clientNum, origin, dir, soundType) {
  * MissileHitPlayer
  */
 function MissileHitPlayer(weapon, origin, dir, entityNum) {
-	// CG_Bleed( origin, entityNum );
+	Bleed(origin, entityNum);
 
 	// Some weapons will make an explosion with the blood, while
 	// others will just make the blood.
@@ -16906,7 +18407,7 @@ function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
 	
 	// Impact splash and mark.
 	if (flesh) {
-	// 	CG_Bleed( end, fleshEntityNum );
+		Bleed(end, fleshEntityNum);
 	} else {
 		MissileHitWall(WP.MACHINEGUN, 0, end, normal, IMPACTSOUND.DEFAULT);
 	}
@@ -17097,9 +18598,148 @@ function RocketTrail(cent, weaponInfo) {
 define('clipmap/cm',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
-	// We don't want everyone who requires us to 
-	// have the same version of clipmap.
 	function ClipMap(imp) {
+		var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
 		var MAX_SUBMODELS        = 256;
 var BOX_MODEL_HANDLE     = 255;
 var CAPSULE_MODEL_HANDLE = 254;
@@ -17347,13 +18987,6 @@ function log() {
 }
 		var cm;
 
-// To allow boxes to be treated as brush models, we allocate
-// some extra indexes along with those needed by the map
-var BOX_BRUSHES = 1;
-var BOX_SIDES   = 6;
-var BOX_LEAFS   = 2;
-var BOX_PLANES  = 12;
-
 /**
  * LoadMap
  */
@@ -17427,7 +19060,7 @@ function LoadLeafs(buffer, leafLump) {
 	bb.index = leafLump.fileofs;
 
 	var numLeafs = leafLump.filelen / sh.dleaf_t.size;
-	var leafs = cm.leafs = new Array(numLeafs + BOX_LEAFS);
+	var leafs = cm.leafs = new Array(numLeafs);
 
 	for (var i = 0; i < numLeafs; i++) {
 		var leaf = leafs[i] = new cleaf_t();
@@ -17453,7 +19086,7 @@ function LoadLeafBrushes(buffer, leafBrushLump) {
 	bb.index = leafBrushLump.fileofs;
 
 	var numLeafBrushes = leafBrushLump.filelen / 4;
-	var leafBrushes = cm.leafBrushes = new Array(numLeafBrushes + BOX_BRUSHES);
+	var leafBrushes = cm.leafBrushes = new Array(numLeafBrushes);
 
 	for (var i = 0; i < leafBrushes.length; i++) {
 		leafBrushes[i] = bb.readInt();
@@ -17481,7 +19114,7 @@ function LoadPlanes(buffer, planeLump) {
 	bb.index = planeLump.fileofs;
 
 	var numPlanes = planeLump.filelen / sh.dplane_t.size;
-	var planes = cm.planes = new Array(numPlanes + BOX_PLANES);
+	var planes = cm.planes = new Array(numPlanes);
 
 	for (var i = 0; i < numPlanes; i++) {
 		var plane = planes[i] = new qm.Plane();
@@ -17503,7 +19136,7 @@ function LoadBrushSides(buffer, brushSideLump) {
 	bb.index = brushSideLump.fileofs;
 
 	var numBrushSides = brushSideLump.filelen / sh.dbrushside_t.size;
-	var brushSides = cm.brushSides = new Array(numBrushSides + BOX_SIDES);
+	var brushSides = cm.brushSides = new Array(numBrushSides);
 
 	for (var i = 0; i < numBrushSides; i++) {
 		var side = brushSides[i] = new cbrushside_t();
@@ -17528,7 +19161,7 @@ function LoadBrushes(buffer, brushLump) {
 	bb.index = brushLump.fileofs;
 
 	var numBrushes = brushLump.filelen / sh.dbrush_t.size;
-	var brushes = cm.brushes = new Array(numBrushes + BOX_BRUSHES);
+	var brushes = cm.brushes = new Array(numBrushes);
 
 	for (var i = 0; i < numBrushes; i++) {
 		var brush = brushes[i] = new cbrush_t();
@@ -17574,23 +19207,22 @@ function LoadSubmodels(buffer, modelLump) {
 		var numBrushes = bb.readInt();
 
 		if (i === 0) {
-			continue;	// world model doesn't need other info
+			continue;  // world model doesn't need other info
 		}
 
-		// // Make a "leaf" just to hold the model's brushes and surfaces.
-		// out->leaf.numLeafBrushes = LittleLong( in->numBrushes );
-		// indexes = Hunk_Alloc( out->leaf.numLeafBrushes * 4, h_high );
-		// out->leaf.firstLeafBrush = indexes - cm.leafbrushes;
-		// for ( j = 0 ; j < out->leaf.numLeafBrushes ; j++ ) {
-		// 	indexes[j] = LittleLong( in->firstBrush ) + j;
-		// }
+		// Make a "leaf" just to hold the model's brushes and surfaces.
+		var leaf = model.leaf;
+		leaf.numLeafBrushes = numBrushes;
+		leaf.firstLeafBrush = cm.leafBrushes.length;
+		for (var j = 0; j < numBrushes; j++) {
+			cm.leafBrushes.push(firstBrush + j);
+		}
 
-		// out->leaf.numLeafSurfaces = LittleLong( in->numSurfaces );
-		// indexes = Hunk_Alloc( out->leaf.numLeafSurfaces * 4, h_high );
-		// out->leaf.firstLeafSurface = indexes - cm.leafsurfaces;
-		// for ( j = 0 ; j < out->leaf.numLeafSurfaces ; j++ ) {
-		// 	indexes[j] = LittleLong( in->firstSurface ) + j;
-		// }
+		leaf.numLeafSurfaces = numSurfaces;
+		leaf.firstLeafSurface = cm.leafSurfaces.length;
+		for (var j = 0; j < numSurfaces; j++) {
+			cm.leafSurfaces.push(firstSurface + j);
+		}
 	}
 }
 
@@ -17749,31 +19381,38 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
  * Set up the planes and nodes so that the six floats of a bounding box
  * can just be stored out and get a proper clipping hull structure.
  */
-var box_planes = null;
-var box_brush = null;
+var BOX_BRUSHES = 1;
+var BOX_SIDES   = 6;
+var BOX_LEAFS   = 2;
+var BOX_PLANES  = 12;
+
 var box_model = null;
+var box_brush = null;
+var box_planes = null;
 
 function InitBoxHull() {
-	box_planes = new Array(BOX_PLANES);
-	for (var i = 0; i < BOX_PLANES; i++) {
-		box_planes[i] = cm.planes[cm.planes.length - BOX_PLANES + i] = new qm.Plane();
-	}
-
-	box_brush = cm.brushes[cm.brushes.length - BOX_BRUSHES] = new cbrush_t();
-	box_brush.firstSide = cm.brushSides.length - BOX_SIDES;
-	box_brush.numSides = BOX_SIDES;
-	box_brush.contents = CONTENTS.BODY;
-
 	box_model = new cmodel_t();
 	box_model.leaf.numLeafBrushes = 1;
-	box_model.leaf.firstLeafBrush = cm.leafBrushes.length - BOX_BRUSHES;
-	cm.leafBrushes[box_model.leaf.firstLeafBrush] = cm.brushes.length - BOX_BRUSHES;
+	box_model.leaf.firstLeafBrush = cm.leafBrushes.length;
+	cm.leafBrushes.push(cm.brushes.length);
+
+	box_brush = new cbrush_t();
+	box_brush.firstSide = cm.brushSides.length;
+	box_brush.numSides = BOX_SIDES;
+	box_brush.contents = CONTENTS.BODY;
+	cm.brushes.push(box_brush);
+
+	box_planes = new Array(BOX_PLANES);
+	for (var i = 0; i < BOX_PLANES; i++) {
+		var plane = box_planes[i] = new qm.Plane();
+		cm.planes.push(plane);
+	}
 
 	for (var i = 0; i < 6; i++) {
 		var side = i & 1;
 
 		// Brush sides.
-		var s = cm.brushSides[box_brush.firstSide + i] = new sh.dbrushside_t();
+		var s = new sh.dbrushside_t();
 		s.plane = box_planes[i * 2 + side];
 		s.surfaceFlags = 0;
 
@@ -17789,6 +19428,8 @@ function InitBoxHull() {
 		p.normal[0] = p.normal[1] = p.normal[2] = 0;
 		p.normal[i >> 1] = -1;
 		p.signbits = qm.GetPlaneSignbits(p.normal);
+
+		cm.brushSides.push(s);
 	}
 }
 
@@ -20125,14 +21766,14 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	if (!cm.checkcount) {
 		cm.checkcount = 0;
 	}
-	cm.checkcount++; // for multi-check avoidance
+	cm.checkcount++;  // for multi-check avoidance
 
 	// Set basic parms.
 	tw.contents = brushmask;
 
-	// adjust so that mins and maxs are always symetric, which
+	// Adjust so that mins and maxs are always symetric, which
 	// avoids some complications with plane expanding of rotated
-	// bmodels
+	// bmodels.
 	var offset = [0, 0, 0];
 	for (var i = 0 ; i < 3 ; i++) {
 		offset[i] = (mins[i] + maxs[i]) * 0.5;
@@ -20357,7 +21998,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		qm.AnglesToAxis(angles, matrix);
 		qm.RotatePoint(start_l, matrix);
 		qm.RotatePoint(end_l, matrix);
-		// rotated sphere offset for capsule
+		// Rotated sphere offset for capsule.
 		sphere.offset[0] = matrix[0][ 2 ] * t;
 		sphere.offset[1] = -matrix[1][ 2 ] * t;
 		sphere.offset[2] = matrix[2][ 2 ] * t;
@@ -20369,9 +22010,9 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 	// Sweep the box through the model
 	var trace = Trace(start_l, end_l, symetricSize[0], symetricSize[1], model, origin, brushmask, capsule, sphere);
 
-	// if the bmodel was rotated and there was a collision
+	// If the bmodel was rotated and there was a collision.
 	if (rotated && trace.fraction !== 1.0) {
-		// rotation of bmodel collision plane
+		// Rotation of bmodel collision plane.
 		TransposeMatrix(matrix, transpose);
 		qm.RotatePoint(trace.plane.normal, transpose);
 	}
@@ -20412,9 +22053,148 @@ define('renderer/re',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
 function (_, glmatrix, ByteBuffer, sh, qm) {
 	function Renderer(imp) {
-		var root = typeof(global) !== 'undefined' ? global : window;
+		var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
 
-root.RT = {
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
+		var RT = {
 	MODEL:               0,
 	POLY:                1,
 	SPRITE:              2,
@@ -20426,7 +22206,7 @@ root.RT = {
 	MAX_REF_ENTITY_TYPE: 8
 };
 
-root.RF = {
+var RF = {
 	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
 	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
 	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
@@ -25305,9 +27085,9 @@ function AddEntitySurfaces() {
 				// Self blood sprites, talk balloons, etc should not be drawn in the primary
 				// view. We can't just do this check for all entities, because md3
 				// entities may still want to cast shadows from them.
-				// if ((refent.renderfx & RF.THIRD_PERSON) && !tr.viewParms.isPortal) {
-				// 	continue;
-				// }
+				if ((refent.renderfx & RF.THIRD_PERSON)/* && !tr.viewParms.isPortal*/) {
+					continue;
+				}
 				var shader = GetShaderByHandle(refent.customShader);
 				AddDrawSurf(entitySurface, shader, refent.index);
 				break;
@@ -26018,6 +27798,147 @@ define('sound/snd',
 ['underscore'],
 function (_) {	
 	function Sound(imp) {
+		var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
 		var SoundLocals = function () {
 	this.ctx            = null;
 	this.volume_main    = null;
@@ -38281,6 +40202,8 @@ var UIView = Backbone.View.extend({
 		this._postRender();
 	},
 	_postRender: function () {
+		var self = this;
+		
 		this.$el.find('[data-image], [data-himage]').each(function () {
 			RegisterComponent(AsyncImage, this);
 		});
@@ -38290,7 +40213,7 @@ var UIView = Backbone.View.extend({
 			tab.show();
 
 			// Re-center after a tab is toggled.
-			UpdateCenteredElements($el);
+			UpdateCenteredElements(self.$el);
 		});
 
 		this.$el.find('.input-range').each(function () {
@@ -38749,7 +40672,147 @@ var UIView = Backbone.View.extend({
 define('client/cl',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath', 'cgame/cg', 'clipmap/cm', 'renderer/re', 'sound/snd', 'ui/ui'],
 function (_, glmatrix, ByteBuffer, sh, qm, cgame, clipmap, renderer, sound, uinterface) {
-	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
 
 /**
  * System events
@@ -38765,29 +40828,30 @@ var SE = {
 /**
  * Networking
  */
-var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
-                                                 // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
+var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
+                                                           // server for delta comrpession and ping estimation
+var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
 	bad:           0,
-	move:          1,                            // [[UserCmd]
-	moveNoDelta:   2,                            // [[UserCmd]
-	clientCommand: 3,                            // [string] message
+	move:          1,                                      // [[UserCmd]
+	moveNoDelta:   2,                                      // [[UserCmd]
+	clientCommand: 3,                                      // [string] message
 	EOF:           4
 };
 
 var SVM = {
 	bad:            0,
 	gamestate:      1,
-	configstring:   2,                           // [short] [string] only in gamestate messages
-	baseline:       3,                           // only in gamestate messages
-	serverCommand:  4,                           // [string] to be executed by client game module
+	configstring:   2,                                     // [short] [string] only in gamestate messages
+	baseline:       3,                                     // only in gamestate messages
+	serverCommand:  4,                                     // [string] to be executed by client game module
 	snapshot:       5,
 	EOF:            6
 };
+	
 	var RETRANSMIT_TIMEOUT = 3000;                             // time between connection packet retransmits
 
 // The parseEntities array must be large enough to hold PACKET_BACKUP frames of
@@ -38918,11 +40982,34 @@ var ClientSnapshot = function () {
 	this.ping             = 0;                             // time from when cmdNum-1 was sent to time packet was reeceived
 	this.areamask         = new Array(MAX_MAP_AREA_BYTES); // portalarea visibility bits
 	this.cmdNum           = 0;                             // the next cmdNum the server is expecting
-	this.ps               = new sh.PlayerState();             // complete information about the current player at this time
+	this.ps               = new sh.PlayerState();          // complete information about the current player at this time
 	this.numEntities      = 0;                             // all of the entities that need to be presented
 	this.parseEntitiesNum = 0;                             // at the time of this snapshot
 	this.serverCommandNum = 0;                             // execute all commands up to this before
 	                                                       // making the snapshot current
+};
+
+ClientSnapshot.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new ClientSnapshot();
+	}
+
+	to.valid            = this.valid;
+	to.snapFlags        = this.snapFlags;
+	to.serverTime       = this.serverTime;
+	to.messageNum       = this.messageNum;
+	to.deltaNum         = this.deltaNum;
+	to.ping             = this.ping;
+	for (var i = 0; i < MAX_MAP_AREA_BYTES; i++) {
+		to.areamask[i] = this.areamask[i];
+	}
+	to.cmdNum           = this.cmdNum;
+	this.ps.clone(to.ps);
+	to.numEntities      = this.numEntities;
+	to.parseEntitiesNum = this.parseEntitiesNum;
+	to.serverCommandNum = this.serverCommandNum;
+
+	return to;
 };
 
 var KeyState = function () {
@@ -38977,7 +41064,6 @@ function Init(sys_, com_) {
 	cl_showTimeDelta = com.AddCvar('cl_showTimeDelta', 0,              CVF.ARCHIVE);
 	
 	RegisterCommands();
-	RegisterDefaultBinds();
 	InitSubsystems();
 	
 	cls.initialized = true;
@@ -39644,9 +41730,9 @@ function SetCGameTime() {
 	// If we have gotten new snapshots, drift serverTimeDelta.
 	// Don't do this every frame, or a period of packet loss would
 	// make a huge adjustment.
-	//if (cl.newSnapshots) {
+	if (cl.newSnapshots) {
 		AdjustTimeDelta();
-	//}
+	}
 }
 
 /**
@@ -39699,15 +41785,17 @@ function GetSnapshot(snapshotNumber) {
 		return null;
 	}
 	
+	// Make a copy of the snapshot.
+	var result = snap.clone();
+
 	// TODO: Should split up cgame and client snapshot structures, adding this property to the
 	// cgame version.
-	snap.entities = new Array(snap.numEntities);
-
-	for (var i = 0; i < snap.numEntities; i++) {
-		snap.entities[i] = cl.parseEntities[(snap.parseEntitiesNum + i) % MAX_PARSE_ENTITIES];
+	result.entities = new Array(result.numEntities);
+	for (var i = 0; i < result.numEntities; i++) {
+		result.entities[i] = cl.parseEntities[(result.parseEntitiesNum + i) % MAX_PARSE_ENTITIES];
 	}
 
-	return snap;
+	return result;
 }
 	/**
  * RegisterCommands
@@ -39723,30 +41811,6 @@ function RegisterCommands() {
 	com.AddCmd('+back',     function () { cls.inBack       = cls.lastKey; });
 	com.AddCmd('+right',    function () { cls.inRight      = cls.lastKey; });
 	com.AddCmd('+jump',     function () { cls.inUp         = cls.lastKey; });
-}
-
-/**
- * RegisterDefaultBinds
- */
-function RegisterDefaultBinds() {
-	CmdBind('mouse0',     '+attack');
-	CmdBind('w',          '+forward');
-	CmdBind('a',          '+left');
-	CmdBind('s',          '+back');
-	CmdBind('d',          '+right');
-	CmdBind('space',      '+jump');
-	CmdBind('tab',        '+scores');
-	CmdBind('mwheelup',   'weapnext');
-	CmdBind('mwheeldown', 'weapprev');
-	CmdBind('1',          'weappon 1');
-	CmdBind('2',          'weappon 2');
-	CmdBind('3',          'weappon 3');
-	CmdBind('4',          'weappon 4');
-	CmdBind('5',          'weappon 5');
-	CmdBind('6',          'weappon 6');
-	CmdBind('7',          'weappon 7');
-	CmdBind('8',          'weappon 8');
-	CmdBind('9',          'weappon 9');
 }
 
 /**
@@ -40565,6 +42629,7 @@ function DeltaEntity(msg, newframe, newnum, oldstate, unchanged) {
 }
 
 	return {
+		ClientSnapshot:     ClientSnapshot,
 		Init:               Init,
 		InitCGame:          InitCGame,
 		ShutdownCGame:      ShutdownCGame,
@@ -40584,9 +42649,149 @@ function DeltaEntity(msg, newframe, newnum, oldstate, unchanged) {
 /*global vec3: true, mat4: true */
 
 define('server/sv',
-['underscore', 'ByteBuffer', 'common/sh', 'game/gm', 'client/cl', 'clipmap/cm'],
-function (_, ByteBuffer, sh, game, cl, clipmap) {
-	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
+['underscore', 'ByteBuffer', 'common/sh', 'common/qmath', 'game/gm', 'client/cl', 'clipmap/cm'],
+function (_, ByteBuffer, sh, qm, game, cl, clipmap) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
 
 /**
  * System events
@@ -40602,66 +42807,30 @@ var SE = {
 /**
  * Networking
  */
-var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
-                                                 // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
+var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
+                                                           // server for delta comrpession and ping estimation
+var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
 	bad:           0,
-	move:          1,                            // [[UserCmd]
-	moveNoDelta:   2,                            // [[UserCmd]
-	clientCommand: 3,                            // [string] message
+	move:          1,                                      // [[UserCmd]
+	moveNoDelta:   2,                                      // [[UserCmd]
+	clientCommand: 3,                                      // [string] message
 	EOF:           4
 };
 
 var SVM = {
 	bad:            0,
 	gamestate:      1,
-	configstring:   2,                           // [short] [string] only in gamestate messages
-	baseline:       3,                           // only in gamestate messages
-	serverCommand:  4,                           // [string] to be executed by client game module
+	configstring:   2,                                     // [short] [string] only in gamestate messages
+	baseline:       3,                                     // only in gamestate messages
+	serverCommand:  4,                                     // [string] to be executed by client game module
 	snapshot:       5,
 	EOF:            6
 };
-	var FRAMETIME = 100; // msec
-var CARNAGE_REWARD_TIME = 3000;
-var REWARD_SPRITE_TIME = 2000;
-
-var DAMAGE = {
-	RADIUS:        0x00000001,                             // damage was indirect
-	NO_ARMOR:      0x00000002,                             // armour does not protect from this damage
-	NO_KNOCKBACK:  0x00000004,                             // do not affect velocity, just view angles
-	NO_PROTECTION: 0x00000008                              // armor, shields, invulnerability, and godmode have no effect
-};
-
-// GameEntity flags
-var GFL = {
-	GODMODE:       0x00000010,
-	NOTARGET:      0x00000020,
-	TEAMSLAVE:     0x00000400,                             // not the first on the team
-	NO_KNOCKBACK:  0x00000800,
-	DROPPED_ITEM:  0x00001000,
-	NO_BOTS:       0x00002000,                             // spawn point not for bot use
-	NO_HUMANS:     0x00004000,                             // spawn point just for bots
-	FORCE_GESTURE: 0x00008000                              // force gesture on client
-};
-
-var LevelLocals = function () {
-	this.framenum     = 0;
-	this.previousTime = 0;
-	this.time         = 0;
-	this.startTime    = 0;
-	this.clients      = new Array(MAX_CLIENTS);
-	this.gentities    = new Array(MAX_GENTITIES);
-
-	for (var i = 0; i < MAX_GENTITIES; i++) {
-		this.gentities[i] = new GameEntity();
-	}
-};
-
-// The server does not know how to interpret most of the values
+	// The server does not know how to interpret most of the values
 // in entityStates (level eType), so the game must explicitly flag
 // special server behaviors.
 var SVF = {
@@ -40675,147 +42844,7 @@ var SVF = {
 	NOTSINGLECLIENT:    0x00000100                         // send entity to everyone but one client
 };
 
-var GameEntity = function () {
-	this.reset();
-};
 
-GameEntity.prototype.reset = function () {
-	//
-	// Shared by game and server.
-	//
-	this.s             = new sh.EntityState();
-	this.linked        = false;
-	// SVF_NOCLIENT, SVF_BROADCAST, etc.
-	this.svFlags       = 0;
-	// Only send to this client when SVF_SINGLECLIENT is set.
-	this.singleClient  = 0;
-	// If false, assume an explicit mins / maxs bounding box only set by trap_SetBrushModel.
-	this.bmodel        = false;
-	this.mins          = [0, 0, 0];
-	this.maxs          = [0, 0, 0];
-	// CONTENTS.TRIGGER, CONTENTS.SOLID, CONTENTS.BODY (non-solid ent should be 0)
-	this.contents      = 0;
-	// Derived from mins/maxs and origin + rotation.
-	this.absmin        = [0, 0, 0];
-	this.absmax        = [0, 0, 0];
-	// currentOrigin will be used for all collision detection and world linking.
-	// it will not necessarily be the same as the trajectory evaluation for the current
-	// time, because each entity must be moved one at a time after time is advanced
-	// to avoid simultanious collision issues.
-	this.currentOrigin = [0, 0, 0];
-	this.currentAngles = [0, 0, 0];
-	this.client        = null;
-	// When a trace call is made and passEntityNum != ENTITYNUM_NONE,
-	// an ent will be excluded from testing if:
-	// ent.s.number == passEntityNum                   (don't interact with self)
-	// ent.ownerNum == passEntityNum                   (don't interact with your own missiles)
-	// entity[ent.ownerNum].ownerNum == passEntityNum  (don't interact with other missiles from owner)
-	this.ownerNum      = ENTITYNUM_NONE;
-
-	//
-	// Game only
-	//
-	this.parent              = null;
-	this.inuse               = false;
-	this.classname           = 'noclass';
-	this.spawnflags          = 0;
-
-	this.freeTime            = 0;                          // level.time when the object was freed
-	this.eventTime           = 0;                          // events will be cleared EVENT_VALID_MSEC after set
-	this.freeAfterEvent      = false;
-	this.unlinkAfterEvent    = false;
-
-	this.model               = null;
-	this.model2              = null;
-	this.physicsObject       = false;                      // if true, it can be pushed by movers and fall off edges
-	                                                       // all game items are physicsObjects
-	this.physicsBounce       = 0;                          // 1.0 = continuous bounce, 0.0 = no bounce
-	this.clipmask            = 0;                          // brushes with this content value will be collided against
-	                                                       // when moving. items and corpses do not collide against
-	                                                       // players, for instance
-	// movers
-	this.moverState          = 0;
-	this.soundPos1           = 0;
-	this.sound1to2           = 0;
-	this.sound2to1           = 0;
-	this.soundPos2           = 0;
-	this.soundLoop           = 0;
-	this.nextTrain           = null;
-	this.prevTrain           = null;
-	this.pos1                = [0, 0, 0];
-	this.pos2                = [0, 0, 0];
-
-	this.target              = null;
-	this.targetName          = null;
-	this.team                = null;
-	this.targetShaderName    = null;
-	this.targetShaderNewName = null;
-	this.targetEnt           = null;
-
-	this.nextthink           = 0;
-	this.think               = null;
-
-	this.timestamp           = 0;                          // body queue sinking, etc
-
-	this.health              = 0;
-	this.takeDamage          = false;
-
-	this.damage              = 0;
-	this.splashDamage        = 0;                          // quad will increase this without increasing radius
-	this.splashRadius        = 0;
-	this.methodOfDeath       = 0;
-	this.splashMethodOfDeath = 0;
-
-	this.count               = 0;                          // items
-
-	this.chain               = null;
-	this.enemy               = null;
-	this.activator           = null;
-	this.teamchain           = null; // next entity in team
-	this.teammaster          = null; // master of the team
-
-}
-
-// This structure is cleared on each ClientSpawn(),
-// except for 'client->pers' and 'client->sess'.
-var GameClient = function () {
-	this.ps                = new sh.PlayerState();
-	this.pers              = new GameClientPersistant();
-
-	this.noclip            = false;
-
-	this.oldOrigin         = [0, 0, 0];
-
-	// Sum up damage over an entire frame, so
-	// shotgun blasts give a single big kick.
-	this.damage_armor      = 0;                            // damage absorbed by armor
-	this.damage_blood      = 0;                            // damage taken out of health
-	this.damage_knockback  = 0;                            // impact damage
-	this.damage_from       = [0, 0, 0];                    // origin for vector calculation
-	this.damage_fromWorld  = false;                        // if true, don't use the damage_from vector
-
-	// Awards
-	this.impressive_count  = 0;                            // for "impressive" reward sound
-	this.accuracy_shots    = 0;                            // total number of shots
-	this.accuracy_hits     = 0;                            // total number of hits
-
-	// Taunts
-	this.lastkilled_client = 0;                            // last client that this client killed
-	this.lasthurt_mod      = 0;                            // type of damage the client did
-
-	// Timers
-	this.respawnTime       = 0;                            // can respawn when time > this, force after g_forcerespwan
-	this.inactivityTime    = 0;                            // kick players when time > this
-	this.inactivityWarning = 0;                            // true if the five second warning has been given
-	this.rewardTime        = 0;                            // clear the EF.AWARD_IMPRESSIVE, etc when time > this
-};
-
-// Client data that stays across multiple respawns, but is cleared
-// on each level change or team change at ClientBegin()
-var GameClientPersistant = function () {
-	this.cmd     = new sh.UserCmd();
-	this.netname = null;
-};
 	var MAX_SNAPSHOT_ENTITIES = MAX_CLIENTS * PACKET_BACKUP * 64;
 
 // Persistent across all maps.
@@ -40966,10 +42995,10 @@ function Init(sys_, com_, isdedicated) {
 
 	RegisterCommands();
 
-	// // For dev purposes, simulate command line input.
-	// setTimeout(function () {
-	// 	CmdLoadMap('q3dm17');
-	// }, 50);
+	// For dev purposes, simulate command line input.
+	setTimeout(function () {
+		CmdLoadMap('q3dm17');
+	}, 50);
 }
 
 /**
@@ -40977,6 +43006,7 @@ function Init(sys_, com_, isdedicated) {
  */
 function GameExports() {
 	return {
+		EntityContact:     EntityContact,
 		LocateGameData:    LocateGameData,
 		GetUserCmd:        GetUserCmd,
 		GetConfigstring:   GetConfigstring,
@@ -41855,6 +43885,20 @@ function GentityForSvEntity(ent) {
 }
 
 /**
+ * EntityContact
+ */
+function EntityContact(mins, maxs, gent) {
+	// Check for exact collision.
+	var origin = gent.currentOrigin;
+	var angles = gent.currentAngles;
+
+	var ch = ClipHandleForEntity(gent);	
+	var trace = cm.TransformedBoxTrace(qm.vec3_origin, qm.vec3_origin, mins, maxs, ch, -1, origin, angles, false);
+
+	return trace.startSolid;
+}
+
+/**
  * LocateGameData
  */
 function LocateGameData(gameEntities, gameClients) {
@@ -42708,7 +44752,7 @@ function ClipMoveToEntities(clip) {
  * be returned, otherwise a custom box tree will be constructed.
  */
 function ClipHandleForEntity(ent) {
-	if (ent.bmodel ) {
+	if (ent.bmodel) {
 		// Explicit hulls in the BSP model.
 		return cm.InlineModel(ent.s.modelIndex);
 	}
@@ -42735,7 +44779,148 @@ function ClipHandleForEntity(ent) {
 define('common/com',
 ['underscore', 'ByteBuffer', 'common/sh', 'server/sv', 'client/cl'],
 function (_, ByteBuffer, sh, sv, cl) {
-	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
+	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
 
 /**
  * System events
@@ -42751,26 +44936,26 @@ var SE = {
 /**
  * Networking
  */
-var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
-                                                 // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
+var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
+                                                           // server for delta comrpession and ping estimation
+var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
 	bad:           0,
-	move:          1,                            // [[UserCmd]
-	moveNoDelta:   2,                            // [[UserCmd]
-	clientCommand: 3,                            // [string] message
+	move:          1,                                      // [[UserCmd]
+	moveNoDelta:   2,                                      // [[UserCmd]
+	clientCommand: 3,                                      // [string] message
 	EOF:           4
 };
 
 var SVM = {
 	bad:            0,
 	gamestate:      1,
-	configstring:   2,                           // [short] [string] only in gamestate messages
-	baseline:       3,                           // only in gamestate messages
-	serverCommand:  4,                           // [string] to be executed by client game module
+	configstring:   2,                                     // [short] [string] only in gamestate messages
+	baseline:       3,                                     // only in gamestate messages
+	serverCommand:  4,                                     // [string] to be executed by client game module
 	snapshot:       5,
 	EOF:            6
 };
@@ -42792,9 +44977,9 @@ var NetChan = function () {
 	var commands = {};
 
 /**
- * InitCmd
+ * RegisterCommands
  */
-function InitCmd() {
+function RegisterCommands() {
 	AddCmd('exec', CmdExec);
 	AddCmd('+debugtest', function () { window.debugtest = true; });
 	AddCmd('-debugtest', function () { window.debugtest = false; });
@@ -42816,12 +45001,17 @@ function GetCmd(cmd) {
 
 /**
  * CmdExec
+ *
+ * Callback is used by com-main to manually enforce
+ * the execution order of the default config files.
  */
-function CmdExec(filename) {
+function CmdExec(filename, callback) {
 	if (!filename) {
 		console.log('Enter a filename to execeute.')
 		return;
 	}
+
+	log('Executing', filename);
 
 	sys.ReadFile(filename, 'utf8', function (err, data) {
 		if (err) {
@@ -42837,6 +45027,10 @@ function CmdExec(filename) {
 
 		for (var i = 0; i < lines.length; i++) {
 			ExecuteBuffer(lines[i]);
+		}
+
+		if (callback) {
+			callback();
 		}
 	});
 }
@@ -42880,9 +45074,9 @@ var Cvar = function (defaultValue, flags) {
 };
 
 /**
- * InitCvar
+ * RegisterCvars
  */
-function InitCvar() {
+function RegisterCvars() {
 	AddCmd('set', CmdSet);
 	AddCmd('unset', CmdUnset);
 }
@@ -43046,6 +45240,7 @@ var events;
 var frameTime;
 var lastFrameTime;
 var initialized = false;
+var configsLoaded = false;
 
 /**
  * log
@@ -43078,21 +45273,18 @@ function Init(sysinterface, isdedicated) {
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
 
-	// Load the user's config.
-	LoadConfig();
-
-	// If any archived cvars are modified after this, we will trigger a
-	// writing of the config file.
-	cvarModifiedFlags &= ~CVF.ARCHIVE;
-
-	InitCvar();
-	InitCmd();
+	RegisterCvars();
+	RegisterCommands();
 	
 	sv.Init(sys, GetExports(), dedicated);
 
 	if (!dedicated) {
 		cl.Init(sys, GetExports());
 	}
+
+	// Load the default config files (after the base set
+	// and bind commands have been added from com and cl).
+	LoadConfig();
 
 	initialized = true;
 }
@@ -43301,7 +45493,7 @@ function ExecuteBuffer(buffer) {
  */
 function CheckSaveConfig() {
 	// Don't save anything until we're fully initialized.
-	if (!initialized) {
+	if (!initialized || !configsLoaded) {
 		return;
 	}
 
@@ -43319,14 +45511,22 @@ function CheckSaveConfig() {
  * LoadConfig
  */
 function LoadConfig() {
-	ExecuteBuffer('exec default.cfg');
+	CmdExec('default.cfg', function () {
+		CmdExec('q3config.cfg', function () {
+			configsLoaded = true;
+
+			// If any archived cvars are modified after this, we will trigger a
+			// writing of the config file.
+			cvarModifiedFlags &= ~CVF.ARCHIVE;
+		});
+	});
 }
 
 /**
  * SaveConfig
  */
 function SaveConfig(callback) {
-	var filename = 'default.cfg';
+	var filename = 'q3config.cfg';
 
 	var cfg = 'unbindall\n';
 	cfg = cl.WriteBindings(cfg);
@@ -43467,7 +45667,147 @@ function NetchanProcess(netchan, msg) {
 define('system/browser/sys',
 ['common/sh', 'common/com'],
 function (sh, com) {
-	var MAX_MAP_AREA_BYTES = 32;                     // bit vector of area visibility
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    0x0001,                                    // save to config file
+	USERINFO:   0x0002,                                    // sent to server on connect or change
+	SERVERINFO: 0x0004,                                    // sent in response to front end requests
+	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Playerstate
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
 
 /**
  * System events
@@ -43483,29 +45823,30 @@ var SE = {
 /**
  * Networking
  */
-var PACKET_BACKUP         = 32;                  // number of old messages that must be kept on client and
-                                                 // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                  // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                  // max string commands buffered for restransmit
+var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
+                                                           // server for delta comrpession and ping estimation
+var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
 	bad:           0,
-	move:          1,                            // [[UserCmd]
-	moveNoDelta:   2,                            // [[UserCmd]
-	clientCommand: 3,                            // [string] message
+	move:          1,                                      // [[UserCmd]
+	moveNoDelta:   2,                                      // [[UserCmd]
+	clientCommand: 3,                                      // [string] message
 	EOF:           4
 };
 
 var SVM = {
 	bad:            0,
 	gamestate:      1,
-	configstring:   2,                           // [short] [string] only in gamestate messages
-	baseline:       3,                           // only in gamestate messages
-	serverCommand:  4,                           // [string] to be executed by client game module
+	configstring:   2,                                     // [short] [string] only in gamestate messages
+	baseline:       3,                                     // only in gamestate messages
+	serverCommand:  4,                                     // [string] to be executed by client game module
 	snapshot:       5,
 	EOF:            6
 };
+	
 	var KbLocals = {
 	'us': {
 		'default': {
@@ -43698,7 +46039,7 @@ function GetMilliseconds() {
 }
 	var localFs;
 var localWhitelist = [
-	'default.cfg'
+	'q3config.cfg'
 ];
 
 // Cross-browser shim.
