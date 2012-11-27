@@ -12,9 +12,8 @@ ConvToOGG = Builder(
 env['BUILDERS']['ConvToOGG'] = ConvToOGG
 
 ConvToDXT = Builder(
-	action = 'crunch -file $SOURCE -rescalemode nearest -fileformat dds -dxt5 -outsamedir',
-	suffix = '.dds',
-	src_suffix = '.jpg')
+	action = 'crunch -file $SOURCE -rescalemode nearest -fileformat dds -outsamedir',
+	suffix = '.dds')
 env['BUILDERS']['ConvToDXT'] = ConvToDXT
 
 ConvToPNG = Builder(
