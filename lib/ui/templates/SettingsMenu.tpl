@@ -1,12 +1,12 @@
 <div class="background fullscreen">
 	<div class="dialog abscenter">
 		<div class="form-horizontal">
-			<h1>Settings</h1>
+			<h3>Settings</h3>
 			<div class="name control-group">
 				<div class="control-label">Name:</div><div name="name" class="control-input input-text"><%- name %></div>
 			</div>
 			
-			<h1>Controls</h1>
+			<h3>Controls</h3>
 			<ul class="nav-tabs">
 				<li class="active"><a href="#look" data-toggle="tab">Look</a></li>
 				<li><a href="#move" data-toggle="tab">Move</a></li>

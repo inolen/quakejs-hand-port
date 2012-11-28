@@ -8,8 +8,23 @@
 	font-style: normal;
 }
 
+h1, h2, h3, h4, h5, h6 {
+	margin: 0; padding: 0;
+	color: #E8E8E8;
+	font-family: "Georgia", "Times New Roman", serif;
+	font-weight: normal;
+}
+h1 { font-size: 46px; line-height: 50px; margin-bottom: 14px;}
+h2 { font-size: 35px; line-height: 40px; margin-bottom: 10px; }
+h3 { font-size: 28px; line-height: 34px; margin-bottom: 8px; }
+h4 { font-size: 21px; line-height: 30px; margin-bottom: 4px; }
+h5 { font-size: 17px; line-height: 24px; }
+h6 { font-size: 14px; line-height: 21px; }
+.subheader { color: #999; }
+
 #viewport-ui {
-	font-family: 'SourceCodeProSemibold', sans-serif;
+/*	font-family: 'SourceCodeProSemibold', sans-serif;*/
+	font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/**
 	 * Don't let people accidently highlight text.
 	 */
@@ -76,13 +91,13 @@
 .dialog .close.hover {
 	color: #bfbfbf;
 }
-
+/*
 .dialog h1 {
 	font-size: 1.2em;
 	padding-bottom: .2em;
 	border-bottom: 1px solid #222;
 }
-
+*/
 .dialog .menu-item {
 	margin-bottom: .5em;
 	padding: .5em;
@@ -315,6 +330,7 @@
  */
 #hud {
 	padding: 1em;
+	font-family: 'SourceCodeProSemibold', sans-serif;
 }
 
 #hud .crosshair {

@@ -1,6 +1,6 @@
 <div class="background fullscreen">
 	<div class="dialog abscenter">
-		<h1>Choose a level</h1>
+		<h3>Choose a level</h3>
 		<div class="level-select-wrapper">
 			<div class="preview">
 			<% _.each(levels, function (level, i) { %>
