@@ -1,1851 +1,4 @@
 
-/*global vec3: true, mat4: true */
-define('common/qmath', [], function () {
-
-var vec3_origin = [0, 0, 0];
-
-var bytedirs = [
-	[-0.525731, 0.000000, 0.850651], [-0.442863, 0.238856, 0.864188], 
-	[-0.295242, 0.000000, 0.955423], [-0.309017, 0.500000, 0.809017], 
-	[-0.162460, 0.262866, 0.951056], [0.000000, 0.000000, 1.000000], 
-	[0.000000, 0.850651, 0.525731], [-0.147621, 0.716567, 0.681718], 
-	[0.147621, 0.716567, 0.681718], [0.000000, 0.525731, 0.850651], 
-	[0.309017, 0.500000, 0.809017], [0.525731, 0.000000, 0.850651], 
-	[0.295242, 0.000000, 0.955423], [0.442863, 0.238856, 0.864188], 
-	[0.162460, 0.262866, 0.951056], [-0.681718, 0.147621, 0.716567], 
-	[-0.809017, 0.309017, 0.500000],[-0.587785, 0.425325, 0.688191], 
-	[-0.850651, 0.525731, 0.000000],[-0.864188, 0.442863, 0.238856], 
-	[-0.716567, 0.681718, 0.147621],[-0.688191, 0.587785, 0.425325], 
-	[-0.500000, 0.809017, 0.309017], [-0.238856, 0.864188, 0.442863], 
-	[-0.425325, 0.688191, 0.587785], [-0.716567, 0.681718, -0.147621], 
-	[-0.500000, 0.809017, -0.309017], [-0.525731, 0.850651, 0.000000], 
-	[0.000000, 0.850651, -0.525731], [-0.238856, 0.864188, -0.442863], 
-	[0.000000, 0.955423, -0.295242], [-0.262866, 0.951056, -0.162460], 
-	[0.000000, 1.000000, 0.000000], [0.000000, 0.955423, 0.295242], 
-	[-0.262866, 0.951056, 0.162460], [0.238856, 0.864188, 0.442863], 
-	[0.262866, 0.951056, 0.162460], [0.500000, 0.809017, 0.309017], 
-	[0.238856, 0.864188, -0.442863],[0.262866, 0.951056, -0.162460], 
-	[0.500000, 0.809017, -0.309017],[0.850651, 0.525731, 0.000000], 
-	[0.716567, 0.681718, 0.147621], [0.716567, 0.681718, -0.147621], 
-	[0.525731, 0.850651, 0.000000], [0.425325, 0.688191, 0.587785], 
-	[0.864188, 0.442863, 0.238856], [0.688191, 0.587785, 0.425325], 
-	[0.809017, 0.309017, 0.500000], [0.681718, 0.147621, 0.716567], 
-	[0.587785, 0.425325, 0.688191], [0.955423, 0.295242, 0.000000], 
-	[1.000000, 0.000000, 0.000000], [0.951056, 0.162460, 0.262866], 
-	[0.850651, -0.525731, 0.000000],[0.955423, -0.295242, 0.000000], 
-	[0.864188, -0.442863, 0.238856], [0.951056, -0.162460, 0.262866], 
-	[0.809017, -0.309017, 0.500000], [0.681718, -0.147621, 0.716567], 
-	[0.850651, 0.000000, 0.525731], [0.864188, 0.442863, -0.238856], 
-	[0.809017, 0.309017, -0.500000], [0.951056, 0.162460, -0.262866], 
-	[0.525731, 0.000000, -0.850651], [0.681718, 0.147621, -0.716567], 
-	[0.681718, -0.147621, -0.716567],[0.850651, 0.000000, -0.525731], 
-	[0.809017, -0.309017, -0.500000], [0.864188, -0.442863, -0.238856], 
-	[0.951056, -0.162460, -0.262866], [0.147621, 0.716567, -0.681718], 
-	[0.309017, 0.500000, -0.809017], [0.425325, 0.688191, -0.587785], 
-	[0.442863, 0.238856, -0.864188], [0.587785, 0.425325, -0.688191], 
-	[0.688191, 0.587785, -0.425325], [-0.147621, 0.716567, -0.681718], 
-	[-0.309017, 0.500000, -0.809017], [0.000000, 0.525731, -0.850651], 
-	[-0.525731, 0.000000, -0.850651], [-0.442863, 0.238856, -0.864188], 
-	[-0.295242, 0.000000, -0.955423], [-0.162460, 0.262866, -0.951056], 
-	[0.000000, 0.000000, -1.000000], [0.295242, 0.000000, -0.955423], 
-	[0.162460, 0.262866, -0.951056], [-0.442863, -0.238856, -0.864188], 
-	[-0.309017, -0.500000, -0.809017], [-0.162460, -0.262866, -0.951056], 
-	[0.000000, -0.850651, -0.525731], [-0.147621, -0.716567, -0.681718], 
-	[0.147621, -0.716567, -0.681718], [0.000000, -0.525731, -0.850651], 
-	[0.309017, -0.500000, -0.809017], [0.442863, -0.238856, -0.864188], 
-	[0.162460, -0.262866, -0.951056], [0.238856, -0.864188, -0.442863], 
-	[0.500000, -0.809017, -0.309017], [0.425325, -0.688191, -0.587785], 
-	[0.716567, -0.681718, -0.147621], [0.688191, -0.587785, -0.425325], 
-	[0.587785, -0.425325, -0.688191], [0.000000, -0.955423, -0.295242], 
-	[0.000000, -1.000000, 0.000000], [0.262866, -0.951056, -0.162460], 
-	[0.000000, -0.850651, 0.525731], [0.000000, -0.955423, 0.295242], 
-	[0.238856, -0.864188, 0.442863], [0.262866, -0.951056, 0.162460], 
-	[0.500000, -0.809017, 0.309017], [0.716567, -0.681718, 0.147621], 
-	[0.525731, -0.850651, 0.000000], [-0.238856, -0.864188, -0.442863], 
-	[-0.500000, -0.809017, -0.309017], [-0.262866, -0.951056, -0.162460], 
-	[-0.850651, -0.525731, 0.000000], [-0.716567, -0.681718, -0.147621], 
-	[-0.716567, -0.681718, 0.147621], [-0.525731, -0.850651, 0.000000], 
-	[-0.500000, -0.809017, 0.309017], [-0.238856, -0.864188, 0.442863], 
-	[-0.262866, -0.951056, 0.162460], [-0.864188, -0.442863, 0.238856], 
-	[-0.809017, -0.309017, 0.500000], [-0.688191, -0.587785, 0.425325], 
-	[-0.681718, -0.147621, 0.716567], [-0.442863, -0.238856, 0.864188], 
-	[-0.587785, -0.425325, 0.688191], [-0.309017, -0.500000, 0.809017], 
-	[-0.147621, -0.716567, 0.681718], [-0.425325, -0.688191, 0.587785], 
-	[-0.162460, -0.262866, 0.951056], [0.442863, -0.238856, 0.864188], 
-	[0.162460, -0.262866, 0.951056], [0.309017, -0.500000, 0.809017], 
-	[0.147621, -0.716567, 0.681718], [0.000000, -0.525731, 0.850651], 
-	[0.425325, -0.688191, 0.587785], [0.587785, -0.425325, 0.688191], 
-	[0.688191, -0.587785, 0.425325], [-0.955423, 0.295242, 0.000000], 
-	[-0.951056, 0.162460, 0.262866], [-1.000000, 0.000000, 0.000000], 
-	[-0.850651, 0.000000, 0.525731], [-0.955423, -0.295242, 0.000000], 
-	[-0.951056, -0.162460, 0.262866], [-0.864188, 0.442863, -0.238856], 
-	[-0.951056, 0.162460, -0.262866], [-0.809017, 0.309017, -0.500000], 
-	[-0.864188, -0.442863, -0.238856], [-0.951056, -0.162460, -0.262866], 
-	[-0.809017, -0.309017, -0.500000], [-0.681718, 0.147621, -0.716567], 
-	[-0.681718, -0.147621, -0.716567], [-0.850651, 0.000000, -0.525731], 
-	[-0.688191, 0.587785, -0.425325], [-0.587785, 0.425325, -0.688191], 
-	[-0.425325, 0.688191, -0.587785], [-0.425325, -0.688191, -0.587785], 
-	[-0.587785, -0.425325, -0.688191], [-0.688191, -0.587785, -0.425325]
-];
-
-function DirToByte(dir) {
-	if (!dir) {
-		return 0;
-	}
-
-	var best = 0;
-	var bestd = 0;
-	var d;
-	for (var i = 0, length = bytedirs.length; i < length; i++) {
-		d = vec3.dot(dir, bytedirs[i]);
-		if (d > bestd) {
-			bestd = d;
-			best = i;
-		}
-	}
-
-	return best;
-}
-
-function ByteToDir(b, dir) {
-	if (b < 0 || b >= bytedirs.length) {
-		vec3.set(dir, [0, 0, 0]);
-		return;
-	}
-	vec3.set(bytedirs[b], dir);
-}
-
-function ClampChar(i) {
-	if (i < -128) {
-		return -128;
-	}
-	if (i > 127) {
-		return 127;
-	}
-	return i;
-}
-
-function crandom() {
-	return 2.0 * (Math.random() - 0.5);
-}
-
-/**
- * PerpindicularVector
- */
-function PerpendicularVector(src, dst) {
-	// Find the smallest magnitude axially aligned vector.
-	var i, pos;
-	var minelem = 1;
-	for(var i = 0, pos = 0; i < 3; i++) {
-		if (Math.abs(src[i]) < minelem) {
-			pos = i;
-			minelem = Math.abs(src[i]);
-		}
-	}
-	var tempvec = [0, 0, 0];
-	tempvec[pos] = 1;
-
-	// Project the point onto the plane defined by src.
-	ProjectPointOnPlane(tempvec, src, dst);
-
-	// Normalize the result.
-	// vec3.normalize(dst);
-}
-
-
-/**
- * Angle consts
- */
-var PITCH = 0; // up / down
-var YAW   = 1; // left / right
-var ROLL  = 2; // fall over
-
-/**
- * AngleSubtract
- *
- * Always returns a value from -180 to 180
- */
-function AngleSubtract(a1, a2) {
-	var a = a1 - a2;
-	while (a > 180) {
-		a -= 360;
-	}
-	while (a < -180) {
-		a += 360;
-	}
-	return a;
-}
-
-/**
- * AnglesSubstract
- */
-function AnglesSubtract(v1, v2, v3) {
-	v3[0] = AngleSubtract(v1[0], v2[0]);
-	v3[1] = AngleSubtract(v1[1], v2[1]);
-	v3[2] = AngleSubtract(v1[2], v2[2]);
-}
-
-/**
- * LerpAngle
- */
-function LerpAngle(from, to, frac) {
-	if (to - from > 180) {
-		to -= 360;
-	}
-	if (to - from < -180) {
-		to += 360;
-	}
-
-	return from + frac * (to - from);
-}
-
-/**
- * AngleNormalize360
- *
- * Returns angle normalized to the range [0 <= angle < 360].
- */
-function AngleNormalize360(a) {
-	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
-	return a;
-}
-
-/**
- * AngleNormalize180
- *
- * Returns angle normalized to the range [-180 < angle <= 180].
- */
-function AngleNormalize180(a) {
-	a = AngleNormalize360(a);
-	if (a > 180.0) {
-		a -= 360.0;
-	}
-	return a;
-}
-
-
-/**
- * AnglesToVectors
- */
-function AnglesToVectors(angles, forward, right, up) {
-	var angle;
-	var sr, sp, sy, cr, cp, cy;
-
-	angle = angles[YAW] * (Math.PI*2 / 360);
-	sy = Math.sin(angle);
-	cy = Math.cos(angle);
-	angle = angles[PITCH] * (Math.PI*2 / 360);
-	sp = Math.sin(angle);
-	cp = Math.cos(angle);
-	angle = angles[ROLL] * (Math.PI*2 / 360);
-	sr = Math.sin(angle);
-	cr = Math.cos(angle);
-
-	if (forward) {
-		forward[0] = cp*cy;
-		forward[1] = cp*sy;
-		forward[2] = -sp;
-	}
-
-	if (right) {
-		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
-		right[1] = (-1*sr*sp*sy+-1*cr*cy);
-		right[2] = -1*sr*cp;
-	}
-
-	if (up) {
-		up[0] = (cr*sp*cy+-sr*-sy);
-		up[1] = (cr*sp*sy+-sr*cy);
-		up[2] = cr*cp;
-	}
-}
-
-/**
- * VectorToAngles
- */
-function VectorToAngles(value1, angles) {
-	var forward, yaw, pitch;
-
-	if (value1[1] === 0 && value1[0] === 0) {
-		yaw = 0;
-		pitch = value1[2] > 0 ? 90 : 270;
-	} else {
-		if (value1[0]) {
-			yaw = (Math.atan2(value1[1], value1[0]) * 180 / Math.PI);
-		} else if (value1[1] > 0) {
-			yaw = 90;
-		} else {
-			yaw = 270;
-		}
-
-		if (yaw < 0) {
-			yaw += 360;
-		}
-
-		forward = Math.sqrt(value1[0]*value1[0] + value1[1]*value1[1]);
-		pitch = (Math.atan2(value1[2], forward) * 180 / Math.PI);
-		if (pitch < 0) {
-			pitch += 360;
-		}
-	}
-
-	angles[PITCH] = -pitch;
-	angles[YAW] = yaw;
-	angles[ROLL] = 0;
-}
-
-/**
- * AngleToShort
- */
-function AngleToShort(x) {
-	return (((x)*65536/360) & 65535);
-};
-
-/**
- * ShortToAngle
- */
-function ShortToAngle(x) {
-	return ((x)*(360.0/65536));
-};
-
-/**
- * AxisClear
- */
-function AxisClear(axis) {
-	axis[0][0] = 1;
-	axis[0][1] = 0;
-	axis[0][2] = 0;
-	axis[1][0] = 0;
-	axis[1][1] = 1;
-	axis[1][2] = 0;
-	axis[2][0] = 0;
-	axis[2][1] = 0;
-	axis[2][2] = 1;
-}
-
-/**
- * AnglesToAxis
- */
-function AnglesToAxis(angles, axis) {
-	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
-	// angle vectors returns "right" instead of "y axis"
-	vec3.negate(axis[1]);
-}
-
-/**
- * AxisMultiply
- *
- * TODO Perhaps the functions using this should change the way they store
- * there axis, so we can re-use the mat3 lib calls.
- */
-function AxisMultiply(in1, in2, out) {
-	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
-	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
-	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
-
-	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
-	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
-	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
-
-	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
-	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
-	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
-}
-
-/**
- * RotatePoint
- */
-function RotatePoint(point, axis) {
-	var tvec = vec3.set(point, [0, 0, 0]);
-	point[0] = vec3.dot(axis[0], tvec);
-	point[1] = vec3.dot(axis[1], tvec);
-	point[2] = vec3.dot(axis[2], tvec);
-}
-
-// /**
-//  * RotateAroundDirection
-//  */
-// function RotateAroundDirection(axis, yaw) {
-// 	// Create an arbitrary axis[1].
-// 	PerpendicularVector(axis[0], axis[1]);
-
-// 	// Rotate it around axis[0] by yaw.
-// 	if (yaw) {
-// 		var temp = vec3.create(axis[1]);
-// 		RotatePointAroundVector(temp, axis[0], yaw, axis[1]);
-// 	}
-
-// 	// Cross to get axis[2].
-// 	vec3.cross(axis[0], axis[1], axis[2]);
-// }
-
-/**
- * Plane
- */
-var PLANE_X         = 0;
-var PLANE_Y         = 1;
-var PLANE_Z         = 2;
-var PLANE_NON_AXIAL = 3;
-
-var Plane = function () {
-	this.normal   = [0, 0, 0];
-	this.dist     = 0;
-	this.type     = 0;
-	this.signbits = 0;
-};
-
-Plane.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Plane();
-	}
-
-	vec3.set(this.normal, to.normal);
-	to.dist = this.dist;
-	to.type = this.type;
-	to.signbits = this.signbits;
-
-	return to;
-};
-
-/**
- * PlaneTypeForNormal
- */
-function PlaneTypeForNormal(x) {
-	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
-}
-
-/**
- * GetPlaneSignbits
- */
-function GetPlaneSignbits(normal) {
-	var bits = 0;
-
-	for (var i = 0; i < 3; i++) {
-		if (normal[i] < 0) {
-			bits |= 1 << i;
-		}
-	}
-
-	return bits;
-}
-
-/**
- * BoxOnPlaneSide
- *
- * Returns 1, 2, or 1 + 2.
- */
-function BoxOnPlaneSide(mins, maxs, p) {
-	// fast axial cases
-	if (p.type < PLANE_NON_AXIAL) {
-		if (p.dist <= mins[p.type]) {
-			return 1;
-		} else if (p.dist >= maxs[p.type]) {
-			return 2;
-		}
-		return 3;
-	}
-
-	// general case
-	var dist = [0, 0];
-	
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
-		for (var i = 0; i < 3; i++) {
-			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
-		}
-	}
-
-	var sides = 0;
-	if (dist[0] >= p.dist) {
-		sides = 1;
-	}
-	if (dist[1] < p.dist) {
-		sides |= 2;
-	}
-
-	return sides;
-}
-
-/**
- * ProjectPointOnPlane
- */
-function ProjectPointOnPlane(p, normal, dest) {
-	var n = vec3.scale(normal, vec3.dot(normal, p), [0, 0, 0]);
-	vec3.subtract(p, n, dest);
-}
-
-/**
- * RadiusFromBounds
- */
-function RadiusFromBounds(mins, maxs) {
-	var a, b;
-	var corner = [0, 0, 0];
-
-	for (var i = 0; i < 3; i++) {
-		a = Math.abs(mins[i]);
-		b = Math.abs(maxs[i]);
-		corner[i] = a > b ? a : b;
-	}
-
-	return vec3.length(corner);
-}
-
-/**
- * ClearBounds
- */
-function ClearBounds(mins, maxs) {
-	mins[0] = mins[1] = mins[2] = 99999;
-	maxs[0] = maxs[1] = maxs[2] = -99999;
-}
-
-/**
- * AddPointToBounds
- */
-function AddPointToBounds(v, mins, maxs) {
-	if (v[0] < mins[0]) {
-		mins[0] = v[0];
-	}
-	if (v[0] > maxs[0]) {
-		maxs[0] = v[0];
-	}
-
-	if (v[1] < mins[1]) {
-		mins[1] = v[1];
-	}
-	if (v[1] > maxs[1]) {
-		maxs[1] = v[1];
-	}
-
-	if (v[2] < mins[2]) {
-		mins[2] = v[2];
-	}
-	if (v[2] > maxs[2]) {
-		maxs[2] = v[2];
-	}
-}
-
-/**
- * BoundsIntersect
- */
-function BoundsIntersect(mins, maxs, mins2, maxs2, epsilon) {
-	epsilon = epsilon || 0;
-	
-	if (maxs[0] < mins2[0] - epsilon ||
-		maxs[1] < mins2[1] - epsilon ||
-		maxs[2] < mins2[2] - epsilon ||
-		mins[0] > maxs2[0] + epsilon ||
-		mins[1] > maxs2[1] + epsilon ||
-		mins[2] > maxs2[2] + epsilon) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
- * BoundsIntersectSphere
- */
-function BoundsIntersectSphere(mins, maxs, origin, radius) {
-	if (origin[0] - radius > maxs[0] ||
-		origin[0] + radius < mins[0] ||
-		origin[1] - radius > maxs[1] ||
-		origin[1] + radius < mins[1] ||
-		origin[2] - radius > maxs[2] ||
-		origin[2] + radius < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
- * BoundsIntersectPoint
- */
-function BoundsIntersectPoint(mins, maxs, origin) {
-	if (origin[0] > maxs[0] ||
-		origin[0] < mins[0] ||
-		origin[1] > maxs[1] ||
-		origin[1] < mins[1] ||
-		origin[2] > maxs[2] ||
-		origin[2] < mins[2]) {
-		return false;
-	}
-
-	return true;
-}
-
-/**
- * RadixSort
- *
- * Sort 32 bit ints into 8 bit buckets.
- * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
- */
-var _radixSort_0 = [
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-];
-
-function RadixSort(arr, prop, len) {
-	var cpy = new Array(len);
-	var c4 = [].concat(_radixSort_0); 
-	var c3 = [].concat(_radixSort_0); 
-	var c2 = [].concat(_radixSort_0);
-	var c1 = [].concat(_radixSort_0); 
-	var o4 = 0; var k4;
-	var o3 = 0; var k3;
-	var o2 = 0; var k2;
-	var o1 = 0; var k1;
-	var x;
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		k3 = (arr[x][prop] >> 8) & 0xFF;
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
-		c4[k4]++;
-		c3[k3]++;
-		c2[k2]++;
-		c1[k1]++;
-	}
-	for (x = 0; x < 256; x++) {
-		k4 = o4 + c4[x];
-		k3 = o3 + c3[x];
-		k2 = o2 + c2[x];
-		k1 = o1 + c1[x];
-		c4[x] = o4;
-		c3[x] = o3;
-		c2[x] = o2;
-		c1[x] = o1;
-		o4 = k4;
-		o3 = k3;
-		o2 = k2;
-		o1 = k1;
-	}
-	for (x = 0; x < len; x++) {
-		k4 = arr[x][prop] & 0xFF;
-		cpy[c4[k4]] = arr[x];
-		c4[k4]++;
-	}
-	for (x = 0; x < len; x++) {
-		k3 = (cpy[x][prop] >> 8) & 0xFF;
-		arr[c3[k3]] = cpy[x];
-		c3[k3]++;
-	}
-	for (x = 0; x < len; x++) {
-		k2 = (arr[x][prop] >> 16) & 0xFF;
-		cpy[c2[k2]] = arr[x];
-		c2[k2]++;
-	}
-	for (x = 0; x < len; x++) {
-		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
-		arr[c1[k1]] = cpy[x];
-		c1[k1]++;
-	}
-
-	return arr;
-}
-
-return {
-	vec3_origin:           vec3_origin,
-	
-	DirToByte:             DirToByte,
-	ByteToDir:             ByteToDir,
-	ClampChar:             ClampChar,
-	crandom:               crandom,
-
-	PerpendicularVector:   PerpendicularVector,
-
-	PITCH:                 PITCH,
-	YAW:                   YAW,
-	ROLL:                  ROLL,
-	AngleSubtract:         AngleSubtract,
-	AnglesSubtract:        AnglesSubtract,
-	LerpAngle:             LerpAngle,
-	AngleNormalize360:     AngleNormalize360,
-	AngleNormalize180:     AngleNormalize180,
-	AnglesToVectors:       AnglesToVectors,
-	VectorToAngles:        VectorToAngles,
-	AngleToShort:          AngleToShort,
-	ShortToAngle:          ShortToAngle,
-
-	AxisClear:             AxisClear,
-	AnglesToAxis:          AnglesToAxis,
-	AxisMultiply:          AxisMultiply,
-	RotatePoint:           RotatePoint,
-
-	PLANE_X:               PLANE_X,
-	PLANE_Y:               PLANE_Y,
-	PLANE_Z:               PLANE_Z,
-	PLANE_NON_AXIAL:       PLANE_NON_AXIAL,
-	Plane:                 Plane,
-	PlaneTypeForNormal:    PlaneTypeForNormal,
-	GetPlaneSignbits:      GetPlaneSignbits,
-	BoxOnPlaneSide:        BoxOnPlaneSide,
-	ProjectPointOnPlane:   ProjectPointOnPlane,
-
-	RadiusFromBounds:      RadiusFromBounds,
-	ClearBounds:           ClearBounds,
-	AddPointToBounds:      AddPointToBounds,
-	BoundsIntersect:       BoundsIntersect,
-	BoundsIntersectSphere: BoundsIntersectSphere,
-	BoundsIntersectPoint:  BoundsIntersectPoint,
-
-	RadixSort:             RadixSort
-};
-
-});
-
-define('common/sh', ['common/qmath'], function (qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-	// TODO Move to com
-var Err = {
-	FATAL:      0,                                         // exit the entire game with a popup window
-	DROP:       1,
-	DISCONNECT: 2,                                         // client disconnected from the server
-};
-
-/**
- * Communicated across the network
- */
-var NetAdrType = {
-	NAD:      0,
-	LOOPBACK: 1,
-	IP:       2
-};
-
-var NetSrc = {
-	CLIENT : 0,
-	SERVER: 1
-};
-
-var NetAdr = function (type, ip, port) {
-	this.type = type;
-	this.ip   = ip;
-	this.port = port;
-};
-
-var UserCmd = function () {
-	this.serverTime  = 0;
-	this.angles      = [0, 0, 0];
-	this.forwardmove = 0;
-	this.rightmove   = 0;
-	this.upmove      = 0;
-	this.buttons     = 0;
-	this.weapon      = 0;
-};
-
-UserCmd.prototype.clone = function (cmd) {
-	if (typeof(cmd) === 'undefined') {
-		cmd = new UserCmd();
-	}
-
-	cmd.serverTime = this.serverTime;
-	vec3.set(this.angles, cmd.angles);
-	cmd.forwardmove = this.forwardmove;
-	cmd.rightmove = this.rightmove;
-	cmd.upmove = this.upmove;
-	cmd.buttons = this.buttons;
-	cmd.weapon = this.weapon;
-
-	return cmd;
-};
-
-/**
- * Player state
- */
-var PlayerState = function () {
-	this.clientNum           = 0;                          // ranges from 0 to MAX_CLIENTS-1
-	this.commandTime         = 0;                          // cmd->serverTime of last executed command
-	this.pm_type             = 0;
-	this.pm_flags            = 0;                          // ducked, jump_held, etc
-	this.origin              = [0, 0, 0];
-	this.velocity            = [0, 0, 0];
-	this.viewangles          = [0, 0, 0];
-	this.delta_angles        = [0, 0, 0];                  // add to command angles to get view direction
-	                                                       // changed by spawns, rotating objects, and teleporters
-	this.speed               = 0;
-	this.gravity             = 0;
-	this.groundEntityNum     = ENTITYNUM_NONE;             // ENTITYNUM_NONE = in air
-	this.bobCycle            = 0;                          // for view bobbing and footstep generation
-
-	this.weapon              = 0;                          // copied to entityState_t->weapon
-	this.weaponState         = 0;
-	this.weaponTime          = 0;
-	this.legsTimer           = 0;                          // don't change low priority animations until this runs out
-	this.legsAnim            = 0;                          // mask off ANIM_TOGGLEBIT
-
-	this.torsoTimer          = 0;                          // don't change low priority animations until this runs out
-	this.torsoAnim           = 0;                          // mask off ANIM_TOGGLEBIT
-
-	this.movementDir         = 0;                          // a number 0 to 7 that represents the relative angle
-	                                                       // of movement to the view angle (axial and diagonals)
-	                                                       // when at rest, the value will remain unchanged
-	                                                       // used to twist the legs during strafing
-	this.stats               = new Array(MAX_STATS);
-	this.persistant          = new Array(MAX_PERSISTANT);  // stats that aren't cleared on death
-	this.powerups            = new Array(MAX_POWERUPS);    // level.time that the powerup runs out
-	this.ammo                = new Array(MAX_WEAPONS);
-
-	this.eFlags              = 0;                          // copied to entityState_t->eFlags
-	this.eventSequence       = 0;                          // pmove generated events
-	this.events              = new Array(MAX_PS_EVENTS);
-	this.eventParms          = new Array(MAX_PS_EVENTS);
-
-	this.externalEvent       = 0;                          // events set on player from another source
-	this.externalEventParm   = 0;
-	this.externalEventTime   = 0;
-
-	this.jumppad_ent         = 0;                          // jumppad entity hit this frame
-	this.jumppad_frame       = 0;
-	this.pmove_framecount    = 0;
-	this.entityEventSequence = 0;
-
-	for (var i = 0; i < MAX_STATS; i++) {
-		this.stats[i] = 0;
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		this.persistant[i] = 0;
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		this.powerups[i] = 0;
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		this.ammo[i] = 0;
-	}
-};
-
-// deep copy
-PlayerState.prototype.clone = function (ps) {
-	if (typeof(ps) === 'undefined') {
-		ps = new PlayerState();
-	}
-
-	ps.clientNum            = this.clientNum;
-	ps.commandTime          = this.commandTime;
-	ps.pm_type              = this.pm_type;
-	ps.pm_flags             = this.pm_flags;
-	vec3.set(this.origin, ps.origin);
-	vec3.set(this.velocity, ps.velocity);
-	vec3.set(this.viewangles, ps.viewangles);
-	vec3.set(this.delta_angles, ps.delta_angles);
-	ps.speed                = this.speed;
-	ps.gravity              = this.gravity;
-	ps.groundEntityNum      = this.groundEntityNum;
-	ps.bobCycle             = this.bobCycle;
-	ps.weapon               = this.weapon;
-	ps.weaponState          = this.weaponState;
-	ps.weaponTime           = this.weaponTime;
-	ps.legsTimer            = this.legsTimer;
-	ps.legsAnim             = this.legsAnim;
-	ps.torsoTimer           = this.torsoTimer;
-	ps.torsoAnim            = this.torsoAnim;
-	ps.movementDir          = this.movementDir;
-	for (var i = 0; i < MAX_STATS; i++) {
-		ps.stats[i] = this.stats[i];
-	}
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		ps.persistant[i] = this.persistant[i];
-	}
-	for (var i = 0; i < MAX_POWERUPS; i++) {
-		ps.powerups[i] = this.powerups[i];
-	}
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		ps.ammo[i] = this.ammo[i];
-	}
-	ps.eFlags               = this.eFlags;
-	ps.eventSequence        = this.eventSequence;
-	for (var i = 0; i < MAX_PS_EVENTS; i++) {
-		ps.events[i] = this.events[i];
-		ps.eventParms[i] = this.eventParms[i];
-	}
-	ps.jumppad_ent          = this.jumppad_ent;
-	ps.jumppad_frame        = this.jumppad_frame;
-	ps.pmove_framecount     = this.pmove_framecount;
-	ps.entityEventSequence  = this.entityEventSequence;
-
-	return ps;
-};
-
-var Trajectory = function () {
-	this.trType     = 0;
-	this.trTime     = 0;
-	this.trDuration = 0;
-	this.trBase     = [0, 0, 0];
-	this.trDelta    = [0, 0, 0];
-};
-
-Trajectory.prototype.clone = function (tr) {
-	if (typeof(tr) === 'undefined') {
-		tr = TrajectoryType();
-	}
-
-	tr.trType = this.trType;
-	tr.trTime = this.trTime;
-	tr.trDuration = this.trDuration;
-	vec3.set(this.trBase, tr.trBase);
-	vec3.set(this.trDelta, tr.trDelta);
-
-	return tr;
-};
-
-var Orientation = function () {
-	this.origin      = [0, 0, 0];                          // in world coordinates
-	this.axis        = [                                   // orientation in world
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	// Used by renderer.
-	this.viewOrigin  = [0, 0, 0];                          // viewParms->or.origin in local coordinates
-	this.modelMatrix = mat4.create();
-};
-
-Orientation.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new Orientation();
-	}
-
-	vec3.set(this.origin, to.origin);
-	vec3.set(this.axis[0], to.axis[0]);
-	vec3.set(this.axis[1], to.axis[1]);
-	vec3.set(this.axis[2], to.axis[2]);
-	vec3.set(this.viewOrigin, to.viewOrigin);
-	mat4.set(this.modelMatrix, to.modelMatrix);
-
-	return to;
-};
-
-/**********************************************************
- * EntityState is the information conveyed from the server
- * in an update message about entities that the client will
- * need to render in some way. Different eTypes may use the
- * information in different ways. The messages are delta
- * compressed, so it doesn't really matter if the structure
- * size is fairly large
- **********************************************************/
-var EntityState = function () {
-	this.reset();
-};
-
-EntityState.prototype.reset = function () {
-	this.number          = 0;                              // entity index
-	this.eType           = 0;                              // entityType_t
-	this.eFlags          = 0;
-	this.pos             = new Trajectory();               // for calculating position
-	this.apos            = new Trajectory();               // for calculating angles
-	this.time            = 0;
-	this.time2           = 0;
-	this.origin          = [0, 0, 0];
-	this.origin2         = [0, 0, 0];
-	this.angles          = [0, 0, 0];
-	this.angles2         = [0, 0, 0];
-	this.otherEntityNum  = 0;                              // shotgun sources, etc
-	this.otherEntityNum2 = 0;                              // shotgun sources, etc
-	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
-	this.constantLight   = 0;                              // r + (g<<8) + (b<<16) + (intensity<<24)
-	this.loopSound       = 0;                              // constantly loop this sound
-	this.modelIndex      = 0;
-	this.modelIndex2     = 0;
-	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
-	this.frame           = 0;
-	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
-	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
-	this.eventParm       = 0;
-	// For players.
-	this.powerups        = 0;                              // bit flags
-	this.weapon          = 0;                              // determines weapon and flash model, etc
-	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
-	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
-	this.generic1        = 0;
-};
-
-// deep copy
-EntityState.prototype.clone = function (es) {
-	if (typeof(es) === 'undefined') {
-		es = new EntityState();
-	}
-
-	es.number            = this.number;
-	es.eType             = this.eType;
-	es.eFlags            = this.eFlags;
-	this.pos.clone(es.pos);
-	this.apos.clone(es.apos);
-	es.time              = this.time;
-	es.time2             = this.time2;
-	vec3.set(this.origin,  es.origin);
-	vec3.set(this.origin2, es.origin2);
-	vec3.set(this.angles,  es.angles);
-	vec3.set(this.angles2, es.angles2);
-	es.otherEntityNum    = this.otherEntityNum;
-	es.otherEntityNum2   = this.otherEntityNum2;
-	es.groundEntityNum   = this.groundEntityNum;
-	es.constantLight     = this.constantLight;
-	es.loopSound         = this.loopSound;
-	es.modelIndex        = this.modelIndex;
-	es.modelIndex2       = this.modelIndex2;
-	es.clientNum         = this.clientNum;
-	es.frame             = this.frame;
-	es.solid             = this.solid;
-	es.event             = this.event;
-	es.eventParm         = this.eventParm;
-	es.powerups          = this.powerups;
-	es.weapon            = this.weapon;
-	es.legsAnim          = this.legsAnim;
-	es.torsoAnim         = this.torsoAnim;
-	es.generic1          = this.generic1;
-
-	return es;
-};
-
-/**
- * BSP Defines
- */
-var Lumps = {
-	ENTITIES:     0,
-	SHADERS:      1,
-	PLANES:       2,
-	NODES:        3,
-	LEAFS:        4,
-	LEAFSURFACES: 5,
-	LEAFBRUSHES:  6,
-	MODELS:       7,
-	BRUSHES:      8,
-	BRUSHSIDES:   9,
-	DRAWVERTS:    10,
-	DRAWINDEXES:  11,
-	FOGS:         12,
-	SURFACES:     13,
-	LIGHTMAPS:    14,
-	LIGHTGRID:    15,
-	VISIBILITY:   16,
-	NUM_LUMPS:    17
-};
-
-var MapSurfaceType = {
-	BAD:           0,
-	PLANAR:        1,
-	PATCH:         2,
-	TRIANGLE_SOUP: 3,
-	FLARE:         4
-};
-
-var lumps_t = function () {
-	this.fileofs  = 0;                           // int32
-	this.filelen = 0;                           // int32
-};
-
-var dheader_t = function () {
-	this.ident    = null;                        // byte * 4 (string)
-	this.version  = 0;                           // int32
-	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
-
-	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
-		this.lumps[i] = new lumps_t();
-	}
-};
-
-var dmodel_t = function () {
-	this.mins         = [0, 0, 0];               // float32 * 3
-	this.maxs         = [0, 0, 0];               // float32 * 3
-	this.firstSurface = 0;                       // int32
-	this.numSurfaces  = 0;                       // int32
-	this.firstBrush   = 0;                       // int32
-	this.numBrushes   = 0;                       // int32
-};
-dmodel_t.size = 40;
-
-var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
-};
-dshader_t.size = 72;
-
-var dplane_t = function () {
-	this.normal = [0, 0, 0];                     // float32 * 3
-	this.dist   = 0;                             // float32
-};
-dplane_t.size = 16;
-
-var dnode_t = function () {
-	this.planeNum    = 0;                        // int32
-	this.childrenNum = [0, 0];                   // int32 * 2
-	this.mins        = [0, 0, 0];                // int32 * 3
-	this.maxs        = [0, 0, 0];                // int32 * 3
-};
-dnode_t.size = 36;
-
-var dleaf_t = function () {
-	this.cluster          = 0;                   // int32
-	this.area             = 0;                   // int32
-	this.mins             = [0, 0, 0];           // int32 * 3
-	this.maxs             = [0, 0, 0];           // int32 * 3
-	this.firstLeafSurface = 0;                   // int32
-	this.numLeafSurfaces  = 0;                   // int32
-	this.firstLeafBrush   = 0;                   // int32
-	this.numLeafBrushes   = 0;                   // int32
-};
-dleaf_t.size = 48;
-
-var dbrushside_t = function () {
-	this.planeNum = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrushside_t.size = 8;
-
-var dbrush_t = function () {
-	this.side     = 0;                           // int32
-	this.numsides = 0;                           // int32
-	this.shader   = 0;                           // int32
-};
-dbrush_t.size = 12;
-
-var dfog_t = function () {
-	this.shader      = null;                     // byte * MAX_QPATH (string)
-	this.brushNum    = 0;                        // int32
-	this.visibleSide = 0;                        // int32
-};
-dfog_t.size = 72;
-
-var drawVert_t = function () {
-	this.pos      = [0, 0, 0];                   // float32 * 3
-	this.texCoord = [0, 0];                      // float32 * 2
-	this.lmCoord  = [0, 0];                      // float32 * 2
-	this.normal   = [0, 0, 0];                   // float32 * 3
-	this.color    = [0, 0, 0, 0];                // uint8 * 4
-};
-drawVert_t.size = 44;
-
-var dsurface_t = function () {
-	this.shaderNum     = 0;                      // int32
-	this.fogNum        = 0;                      // int32
-	this.surfaceType   = 0;                      // int32
-	this.vertex        = 0;                      // int32
-	this.vertCount     = 0;                      // int32
-	this.meshVert      = 0;                      // int32
-	this.meshVertCount = 0;                      // int32
-	this.lightmapNum   = 0;                      // int32
-	this.lmStart       = [0, 0];                 // int32 * 2
-	this.lmSize        = [0, 0];                 // int32 * 2
-	this.lmOrigin      = [0, 0, 0];              // float32 * 3
-	this.lmVecs        = [                       // float32 * 9
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.patchWidth    = 0;                      // int32
-	this.patchHeight   = 0;                      // int32
-};
-dsurface_t.size = 104;
-
-function atob64(arr) {
-	var limit = 1 << 16;
-	var length = arr.length;
-	var slice = arr.slice || arr.subarray;
-	var str;
-
-	if (length < limit) {
-		str = String.fromCharCode.apply(String, arr);
-	} else {
-		var chunks = [];
-		var i = 0;
-		while (i < length) {
-			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
-			i += limit;
-		}
-		str = chunks.join('');
-	}
-
-	return btoa(str);
-}
-	//
-// Helper functions to get/set object properties based on a string.
-//
-var FLOAT32 = 0;
-var UINT8   = 1;
-var UINT16  = 2;
-var UINT32  = 3;
-
-function FTA(fieldname) {
-	var m = fieldname.match(/([^\.\[\]]+)/g);
-	return m;
-}
-
-function AGET(obj, path) {
-	var i, len;
-
-	for (i = 0, len = path.length; i < len - 1; i++) {
-		obj = obj[path[i]];
-	}
-	
-	return obj[path[len - 1]];
-}
-
-function ASET(obj, path, val) {
-	var i, len;
-
-	for (i = 0, len = path.length; i < len - 1; i++) {
-		obj = obj[path[i]];
-	}
-
-	obj[path[len - 1]] = val;
-}
-
-function fnread(bits) {
-	switch (bits) {
-		case FLOAT32:
-			return 'readFloat';
-			break;
-		case UINT8:
-			return 'readUnsignedByte';
-			break;
-		case UINT16:
-			return 'readUnsignedShort';
-			break;
-		case UINT32:
-			return 'readUnsignedInt';
-			break;
-		default:
-			throw new Error('fnread: bad bit count ' + bits);
-	}
-}
-
-function fnwrite(bits) {
-	switch (bits) {
-		case FLOAT32:
-			return 'writeFloat';
-			break;
-		case UINT8:
-			return 'writeUnsignedByte';
-			break;
-		case UINT16:
-			return 'writeUnsignedShort';
-			break;
-		case UINT32:
-			return 'writeUnsignedInt';
-			break;
-		default:
-			throw new Error('fnwrite: bad bit count ' + bits);
-	}
-}
-
-/**********************************************************
- *
- * Playerstate communication
- *
- **********************************************************/
-
-var playerStateFields = [
-	{ path: FTA('commandTime'),       bits: UINT32  },
-	{ path: FTA('origin[0]'),         bits: FLOAT32 },
-	{ path: FTA('origin[1]'),         bits: FLOAT32 },
-	{ path: FTA('bobCycle'),          bits: UINT8   },
-	{ path: FTA('velocity[0]'),       bits: FLOAT32 },
-	{ path: FTA('velocity[1]'),       bits: FLOAT32 },
-	{ path: FTA('viewangles[1]'),     bits: FLOAT32 },
-	{ path: FTA('viewangles[0]'),     bits: FLOAT32 },
-	{ path: FTA('weaponTime'),        bits: UINT16  },
-	{ path: FTA('origin[2]'),         bits: FLOAT32 },
-	{ path: FTA('velocity[2]'),       bits: FLOAT32 },
-	{ path: FTA('legsTimer'),         bits: UINT8   },
-	{ path: FTA('pm_time'),           bits: UINT16  },
-	{ path: FTA('eventSequence'),     bits: UINT16  },
-	{ path: FTA('torsoAnim'),         bits: UINT8   },
-	{ path: FTA('movementDir'),       bits: UINT8   }, /*4*/
-	{ path: FTA('events[0]'),         bits: UINT8   },
-	{ path: FTA('legsAnim'),          bits: UINT8   },
-	{ path: FTA('events[1]'),         bits: UINT8   },
-	{ path: FTA('pm_flags'),          bits: UINT16  },
-	{ path: FTA('groundEntityNum'),   bits: UINT16  }, /*GENTITYNUM_BITS*/
-	{ path: FTA('weaponState'),       bits: UINT8   }, /*4*/
-	{ path: FTA('eFlags'),            bits: UINT16  },
-	{ path: FTA('externalEvent'),     bits: UINT16  }, /*10*/
-	{ path: FTA('gravity'),           bits: UINT16  },
-	{ path: FTA('speed'),             bits: UINT16  },
-	{ path: FTA('delta_angles[1]'),   bits: UINT16  },
-	{ path: FTA('externalEventParm'), bits: UINT8   },
-	// { path: FTA('viewheight'),        bits: UINT8   },
-	// { path: FTA('damageEvent'),       bits: UINT8   },
-	// { path: FTA('damageYaw'),         bits: UINT8   },
-	// { path: FTA('damagePitch'),       bits: UINT8   },
-	// { path: FTA('damageCount'),       bits: UINT8   },
-	// { path: FTA('generic1'),          bits: UINT8   },
-	{ path: FTA('pm_type'),           bits: UINT8   },
-	{ path: FTA('delta_angles[0]'),   bits: UINT16  },
-	{ path: FTA('delta_angles[2]'),   bits: UINT16  },
-	{ path: FTA('torsoTimer'),        bits: UINT16  }, /*12*/
-	{ path: FTA('eventParms[0]'),     bits: UINT8   },
-	{ path: FTA('eventParms[1]'),     bits: UINT8   },
-	{ path: FTA('clientNum'),         bits: UINT8   },
-	{ path: FTA('weapon'),            bits: UINT8   }, /*5*/
-	{ path: FTA('viewangles[2]'),     bits: FLOAT32 },
-	// { path: FTA('grapplePoint[0]'),   bits: FLOAT32 },
-	// { path: FTA('grapplePoint[1]'),   bits: FLOAT32 },
-	// { path: FTA('grapplePoint[2]'),   bits: FLOAT32 },
-	{ path: FTA('jumppad_ent'),       bits: UINT16  }, /*GENTITYNUM_BITS*/
-	// { path: FTA('loopSound'),         bits: UINT16  }
-];
-
-var dummyPlayerState = new PlayerState();
-
-/**
- * WriteDeltaPlayerState
- */
-function WriteDeltaPlayerState(msg, from, to) {
-	var i, changed;
-	var field, fromF, toF, func;
-
-	if (!from) {
-		from = dummyPlayerState;
-	}
-
-	// Figure out the number of fields that have changed.
-	changed = 0;
-	for (i = 0; i < playerStateFields.length; i++) {
-		field = playerStateFields[i];
-
-		fromF = AGET(from, field.path);
-		toF = AGET(to, field.path);
-
-		if (fromF !== toF) {
-			changed++;
-		}
-	}
-
-	msg.writeByte(changed);
-
-	// Write out each field that has changed, prefixing 
-	// the changed field with its indexed into the ps
-	// field array.
-	for (i = 0; i < playerStateFields.length; i++) {
-		field = playerStateFields[i];
-
-		fromF = AGET(from, field.path);
-		toF = AGET(to, field.path);
-		if (fromF === toF) {
-			continue;
-		}
-
-		func = fnwrite(field.bits);
-
-		// TODO Could write out a master bitmask describing
-		// the changed fields.
-		msg.writeByte(i);
-		msg[func](AGET(to, field.path));
-	}
-
-	// Write out the arrays. First we write a bit mask
-	// describing which arrays have changed, followed by
-	// a mask for each array describing which of its 
-	// elements have changed.
-
-	// Sanity check. Increase bitmask send length if changing
-	// these maxes is necessary
-	if (MAX_STATS > 16 || MAX_PERSISTANT > 16 || MAX_POWERUPS > 16 || MAX_WEAPONS > 16) {
-		throw new Error('Array maxes exceed bitmask length');
-	}
-
-	var statsbits      = 0,
-		persistantbits = 0,
-		powerupsbits   = 0,
-		ammobits       = 0;
-
-	for (i = 0; i < MAX_STATS; i++) {
-		if (to.stats[i] !== from.stats[i]) {
-			statsbits |= 1 << i;
-		}
-	}
-	for (i = 0; i < MAX_PERSISTANT; i++) {
-		if (to.persistant[i] !== from.persistant[i]) {
-			persistantbits |= 1 << i;
-		}
-	}
-	for (i = 0; i < MAX_POWERUPS; i++) {
-		if (to.powerups[i] !== from.powerups[i]) {
-			powerupsbits |= 1 << i;
-		}
-	}
-	for (i = 0; i < MAX_WEAPONS; i++) {
-		if (to.ammo[i] !== from.ammo[i]) {
-			ammobits |= 1 << i;
-		}
-	}
-
-	// Write out a byte explaining which arrays changed.
-	var arrbits = (statsbits ? 1 : 0) | (persistantbits ? 2 : 0) | (powerupsbits ? 4 : 0) | (ammobits ? 8 : 0);
-	msg.writeByte(arrbits);
-
-	if (statsbits) {
-		msg.writeShort(statsbits);
-		for (i = 0; i < MAX_STATS; i++) {
-			if (statsbits & (1 << i)) {
-				msg.writeShort(to.stats[i]);
-			}
-		}
-	}
-	if (persistantbits) {
-		msg.writeShort(persistantbits);
-		for (i = 0; i < MAX_PERSISTANT; i++) {
-			if (persistantbits & (1 << i)) {
-				msg.writeShort(to.persistant[i]);
-			}
-		}
-	}
-	if (powerupsbits) {
-		msg.writeShort(powerupsbits);
-		for (i = 0; i < MAX_POWERUPS; i++) {
-			if (powerupsbits & (1 << i)) {
-				msg.writeShort(to.powerups[i]);
-			}
-		}
-	}
-	if (ammobits) {
-		msg.writeShort(ammobits);
-		for (i = 0; i < MAX_WEAPONS; i++) {
-			if (ammobits & (1 << i)) {
-				msg.writeShort(to.ammo[i]);
-			}
-		}
-	}
-}
-
-function ReadDeltaPlayerState(msg, from, to) {
-	var i, changed;
-	var idx, field, fromF, toF, func;
-
-	if (!from) {
-		from = dummyPlayerState;
-	}
-	
-	// Clone the initial state.
-	from.clone(to);
-
-	// Get the number of fields changed.
-	changed = msg.readByte();
-
-	// Read all the changed fields.
-	for (i = 0; i < changed; i++) {
-		idx = msg.readByte();
-		field = playerStateFields[idx];
-		func = fnread(field.bits);
-
-		ASET(to, field.path, msg[func]());
-	}
-
-	var arrbits = msg.readByte();
-
-	if (arrbits & 1) {
-		var statsbits = msg.readShort();
-		for (i = 0; i < MAX_STATS; i++) {
-			if (statsbits & (1 << i)) {
-				to.stats[i] = msg.readShort();
-			}
-		}
-	}
-	if (arrbits & 2) {
-		var persistantbits = msg.readShort();
-		for (i = 0; i < MAX_PERSISTANT; i++) {
-			if (persistantbits & (1 << i)) {
-				to.persistant[i] = msg.readShort();
-			}
-		}
-	}
-
-	if (arrbits & 4) {
-		var powerupsbits = msg.readShort();
-		for (i = 0; i < MAX_POWERUPS; i++) {
-			if (powerupsbits & (1 << i)) {
-				to.powerups[i] = msg.readShort();
-			}
-		}
-	}
-
-	if (arrbits & 8) {
-		var ammobits = msg.readShort();
-		for (i = 0; i < MAX_WEAPONS; i++) {
-			if (ammobits & (1 << i)) {
-				to.ammo[i] = msg.readShort();
-			}
-		}
-	}
-}
-
-/**********************************************************
- *
- * Entitystate communication
- *
- **********************************************************/
-
-var entityStateFields = [
-	{ path: FTA('pos.trTime'),      bits: UINT32  },
-	{ path: FTA('pos.trBase[0]'),   bits: FLOAT32 },
-	{ path: FTA('pos.trBase[1]'),   bits: FLOAT32 },
-	{ path: FTA('pos.trDelta[0]'),  bits: FLOAT32 },
-	{ path: FTA('pos.trDelta[1]'),  bits: FLOAT32 },
-	{ path: FTA('pos.trBase[2]'),   bits: FLOAT32 },
-	{ path: FTA('apos.trBase[1]'),  bits: FLOAT32 },
-	{ path: FTA('pos.trDelta[2]'),  bits: FLOAT32 },
-	{ path: FTA('apos.trBase[0]'),  bits: FLOAT32 },
-	{ path: FTA('event'),           bits: UINT16  }, /*10*/
-	{ path: FTA('angles2[1]'),      bits: FLOAT32 },
-	{ path: FTA('eType'),           bits: UINT8   },
-	{ path: FTA('torsoAnim'),       bits: UINT8   },
-	{ path: FTA('eventParm'),       bits: UINT8   },
-	{ path: FTA('legsAnim'),        bits: UINT8   },
-	{ path: FTA('groundEntityNum'), bits: UINT16  }, /*GENTITYNUM_BITS*/
-	{ path: FTA('pos.trType'),      bits: UINT8   },
-	{ path: FTA('eFlags'),          bits: UINT32  }, /*19*/
-	{ path: FTA('otherEntityNum'),  bits: UINT16  }, /*GENTITYNUM_BITS*/
-	{ path: FTA('weapon'),          bits: UINT8   },
-	{ path: FTA('clientNum'),       bits: UINT8   },
-	{ path: FTA('angles[1]'),       bits: FLOAT32 },
-	{ path: FTA('pos.trDuration'),  bits: UINT32  },
-	{ path: FTA('apos.trType'),     bits: UINT8   },
-	{ path: FTA('origin[0]'),       bits: FLOAT32 },
-	{ path: FTA('origin[1]'),       bits: FLOAT32 },
-	{ path: FTA('origin[2]'),       bits: FLOAT32 },
-	{ path: FTA('solid'),           bits: UINT32  }, /*24*/
-	{ path: FTA('powerups'),        bits: UINT16  }, /*MAX_POWERUPS*/
-	{ path: FTA('modelIndex'),      bits: UINT8   },
-	{ path: FTA('otherEntityNum2'), bits: UINT16  }, /*GENTITYNUM_BITS*/
-	{ path: FTA('loopSound'),       bits: UINT8   },
-	{ path: FTA('generic1'),        bits: UINT8   },
-	{ path: FTA('origin2[2]'),      bits: FLOAT32 },
-	{ path: FTA('origin2[0]'),      bits: FLOAT32 },
-	{ path: FTA('origin2[1]'),      bits: FLOAT32 },
-	{ path: FTA('modelIndex2'),     bits: UINT8   },
-	{ path: FTA('angles[0]'),       bits: FLOAT32 },
-	{ path: FTA('time'),            bits: UINT32  },
-	{ path: FTA('apos.trTime'),     bits: UINT32  },
-	{ path: FTA('apos.trDuration'), bits: UINT32  },
-	{ path: FTA('apos.trBase[2]'),  bits: FLOAT32 },
-	{ path: FTA('apos.trDelta[0]'), bits: FLOAT32 },
-	{ path: FTA('apos.trDelta[1]'), bits: FLOAT32 },
-	{ path: FTA('apos.trDelta[2]'), bits: FLOAT32 },
-	{ path: FTA('time2'),           bits: UINT32  },
-	{ path: FTA('angles[2]'),       bits: FLOAT32 },
-	{ path: FTA('angles2[0]'),      bits: FLOAT32 },
-	{ path: FTA('angles2[2]'),      bits: FLOAT32 },
-	{ path: FTA('constantLight'),   bits: UINT32  },
-	{ path: FTA('frame'),           bits: UINT16  }
-];
-
-/**
- * WriteDeltaEntityState
- *
- * Writes part of a packetentities message, including the entity number.
- * Can delta from either a baseline or a previous packet_entity.
- * If to is NULL, a remove entity update will be sent.
- * If force is not set, then nothing at all will be generated if the entity is
- * identical, under the assumption that the in-order delta code will catch it.
- */
-function WriteDeltaEntityState(msg, from, to, force) {
-	var i, changed;
-	var field, fromF, toF, func;
-
-	// A null to is a delta remove message.
-	if (to === null) {
-		if (from === null) {
-			return;
-		}
-		msg.writeShort(from.number);  /* GENTITYNUM_BITS */
-		msg.writeByte(0 | 1);  // removed | no delta
-		return;
-	}
-
-	// Sanity check.
-	if (to.number < 0 || to.number >= MAX_GENTITIES) {
-		throw new Error('WriteDeltaEntityState: Bad entity number: ', to.number);
-	}
-
-	// Figure out the number of fields that have changed.
-	changed = 0;
-	for (i = 0; i < entityStateFields.length; i++) {
-		field = entityStateFields[i];
-
-		fromF = AGET(from, field.path);
-		toF = AGET(to, field.path);
-
-		if (fromF !== toF) {
-			changed++;
-		}
-	}
-
-	if (changed === 0) {
-		// Nothing at all changed.
-		if (!force) {
-			return;  // write nothing
-		}
-
-		msg.writeShort(to.number);  /* GENTITYNUM_BITS */
-		msg.writeByte(0);  // not removed | no delta
-		return;
-	}
-
-	msg.writeShort(to.number); /* GENTITYNUM_BITS */
-	msg.writeByte(0 | 2);  // not removed | we have a delta
-	msg.writeByte(changed); // number of fields changed
-
-	// Write out each field that has changed, prefixing 
-	// the changed field with its indexed into the ps
-	// field array.
-	for (i = 0; i < entityStateFields.length; i++) {
-		field = entityStateFields[i];
-
-		fromF = AGET(from, field.path);
-		toF = AGET(to, field.path);
-		if (fromF === toF) {
-			continue;
-		}
-
-		func = fnwrite(field.bits);
-
-		msg.writeByte(i);
-		msg[func](AGET(to, field.path));
-	}
-}
-
-/**
- * ReadDeltaEntityState
- *
- * The entity number has already been read from the message, which
- * is how the from state is identified.
- * 
- * If the delta removes the entity, entityState.number will be set to MAX_GENTITIES-1.
- * 
- * Can go from either a baseline or a previous packet entity.
- */
-function ReadDeltaEntityState(msg, from, to, number) {
-	var i, changed;
-	var idx, field, fromF, toF, func;
-
-	if (number < 0 || number >= MAX_GENTITIES) {
-		throw new Error('Bad delta entity number: ', number);
-	}
-
-	var opmask = msg.readByte();
-	var remove = opmask & 1;
-	var delta = opmask & 2;
-
-	// Check for a remove
-	if (remove) {
-		to.reset();
-		to.number = MAX_GENTITIES - 1;
-		return;
-	}
-
-	// Clone the initial state.
-	from.clone(to);
-	to.number = number;
-
-	// Check for no delta.
-	if (!delta) {
-		return;
-	}
-
-	// Get the number of fields changed.
-	changed = msg.readByte();
-
-	// Read all the changed fields.
-	for (i = 0; i < changed; i++) {
-		idx = msg.readByte();
-		field = entityStateFields[idx];
-		func = fnread(field.bits);
-
-		ASET(to, field.path, msg[func]());
-	}
-}
-
-
-	return {
-		Err:                   Err,
-
-		PlayerState:           PlayerState,
-		Trajectory:            Trajectory,
-		Orientation:           Orientation,
-		EntityState:           EntityState,
-
-		NetAdrType:            NetAdrType,
-		NetSrc:                NetSrc,
-		NetAdr:                NetAdr,
-		UserCmd:               UserCmd,
-
-		Lumps:                 Lumps,
-		MapSurfaceType:        MapSurfaceType,
-		lumps_t:               lumps_t,
-		dheader_t:             dheader_t,
-		dmodel_t:              dmodel_t,
-		dshader_t:             dshader_t,
-		dplane_t:              dplane_t,
-		dnode_t:               dnode_t,
-		dleaf_t:               dleaf_t,
-		dbrushside_t:          dbrushside_t,
-		dbrush_t:              dbrush_t,
-		dfog_t:                dfog_t,
-		drawVert_t:            drawVert_t,
-		dsurface_t:            dsurface_t,
-
-		atob64:                atob64,
-
-		WriteDeltaPlayerState: WriteDeltaPlayerState,
-		ReadDeltaPlayerState:  ReadDeltaPlayerState,
-		WriteDeltaEntityState: WriteDeltaEntityState,
-		ReadDeltaEntityState:  ReadDeltaEntityState
-	};
-});
-
 //     Underscore.js 1.4.1
 //     http://underscorejs.org
 //     (c) 2009-2012 Jeremy Ashkenas, DocumentCloud Inc.
@@ -3045,6 +1198,1899 @@ function ReadDeltaEntityState(msg, from, to, number) {
 
 }).call(this);
 
+
+/*global vec3: true, mat4: true */
+define('common/qmath', [], function () {
+
+var vec3_origin = [0, 0, 0];
+
+var bytedirs = [
+	[-0.525731, 0.000000, 0.850651], [-0.442863, 0.238856, 0.864188], 
+	[-0.295242, 0.000000, 0.955423], [-0.309017, 0.500000, 0.809017], 
+	[-0.162460, 0.262866, 0.951056], [0.000000, 0.000000, 1.000000], 
+	[0.000000, 0.850651, 0.525731], [-0.147621, 0.716567, 0.681718], 
+	[0.147621, 0.716567, 0.681718], [0.000000, 0.525731, 0.850651], 
+	[0.309017, 0.500000, 0.809017], [0.525731, 0.000000, 0.850651], 
+	[0.295242, 0.000000, 0.955423], [0.442863, 0.238856, 0.864188], 
+	[0.162460, 0.262866, 0.951056], [-0.681718, 0.147621, 0.716567], 
+	[-0.809017, 0.309017, 0.500000],[-0.587785, 0.425325, 0.688191], 
+	[-0.850651, 0.525731, 0.000000],[-0.864188, 0.442863, 0.238856], 
+	[-0.716567, 0.681718, 0.147621],[-0.688191, 0.587785, 0.425325], 
+	[-0.500000, 0.809017, 0.309017], [-0.238856, 0.864188, 0.442863], 
+	[-0.425325, 0.688191, 0.587785], [-0.716567, 0.681718, -0.147621], 
+	[-0.500000, 0.809017, -0.309017], [-0.525731, 0.850651, 0.000000], 
+	[0.000000, 0.850651, -0.525731], [-0.238856, 0.864188, -0.442863], 
+	[0.000000, 0.955423, -0.295242], [-0.262866, 0.951056, -0.162460], 
+	[0.000000, 1.000000, 0.000000], [0.000000, 0.955423, 0.295242], 
+	[-0.262866, 0.951056, 0.162460], [0.238856, 0.864188, 0.442863], 
+	[0.262866, 0.951056, 0.162460], [0.500000, 0.809017, 0.309017], 
+	[0.238856, 0.864188, -0.442863],[0.262866, 0.951056, -0.162460], 
+	[0.500000, 0.809017, -0.309017],[0.850651, 0.525731, 0.000000], 
+	[0.716567, 0.681718, 0.147621], [0.716567, 0.681718, -0.147621], 
+	[0.525731, 0.850651, 0.000000], [0.425325, 0.688191, 0.587785], 
+	[0.864188, 0.442863, 0.238856], [0.688191, 0.587785, 0.425325], 
+	[0.809017, 0.309017, 0.500000], [0.681718, 0.147621, 0.716567], 
+	[0.587785, 0.425325, 0.688191], [0.955423, 0.295242, 0.000000], 
+	[1.000000, 0.000000, 0.000000], [0.951056, 0.162460, 0.262866], 
+	[0.850651, -0.525731, 0.000000],[0.955423, -0.295242, 0.000000], 
+	[0.864188, -0.442863, 0.238856], [0.951056, -0.162460, 0.262866], 
+	[0.809017, -0.309017, 0.500000], [0.681718, -0.147621, 0.716567], 
+	[0.850651, 0.000000, 0.525731], [0.864188, 0.442863, -0.238856], 
+	[0.809017, 0.309017, -0.500000], [0.951056, 0.162460, -0.262866], 
+	[0.525731, 0.000000, -0.850651], [0.681718, 0.147621, -0.716567], 
+	[0.681718, -0.147621, -0.716567],[0.850651, 0.000000, -0.525731], 
+	[0.809017, -0.309017, -0.500000], [0.864188, -0.442863, -0.238856], 
+	[0.951056, -0.162460, -0.262866], [0.147621, 0.716567, -0.681718], 
+	[0.309017, 0.500000, -0.809017], [0.425325, 0.688191, -0.587785], 
+	[0.442863, 0.238856, -0.864188], [0.587785, 0.425325, -0.688191], 
+	[0.688191, 0.587785, -0.425325], [-0.147621, 0.716567, -0.681718], 
+	[-0.309017, 0.500000, -0.809017], [0.000000, 0.525731, -0.850651], 
+	[-0.525731, 0.000000, -0.850651], [-0.442863, 0.238856, -0.864188], 
+	[-0.295242, 0.000000, -0.955423], [-0.162460, 0.262866, -0.951056], 
+	[0.000000, 0.000000, -1.000000], [0.295242, 0.000000, -0.955423], 
+	[0.162460, 0.262866, -0.951056], [-0.442863, -0.238856, -0.864188], 
+	[-0.309017, -0.500000, -0.809017], [-0.162460, -0.262866, -0.951056], 
+	[0.000000, -0.850651, -0.525731], [-0.147621, -0.716567, -0.681718], 
+	[0.147621, -0.716567, -0.681718], [0.000000, -0.525731, -0.850651], 
+	[0.309017, -0.500000, -0.809017], [0.442863, -0.238856, -0.864188], 
+	[0.162460, -0.262866, -0.951056], [0.238856, -0.864188, -0.442863], 
+	[0.500000, -0.809017, -0.309017], [0.425325, -0.688191, -0.587785], 
+	[0.716567, -0.681718, -0.147621], [0.688191, -0.587785, -0.425325], 
+	[0.587785, -0.425325, -0.688191], [0.000000, -0.955423, -0.295242], 
+	[0.000000, -1.000000, 0.000000], [0.262866, -0.951056, -0.162460], 
+	[0.000000, -0.850651, 0.525731], [0.000000, -0.955423, 0.295242], 
+	[0.238856, -0.864188, 0.442863], [0.262866, -0.951056, 0.162460], 
+	[0.500000, -0.809017, 0.309017], [0.716567, -0.681718, 0.147621], 
+	[0.525731, -0.850651, 0.000000], [-0.238856, -0.864188, -0.442863], 
+	[-0.500000, -0.809017, -0.309017], [-0.262866, -0.951056, -0.162460], 
+	[-0.850651, -0.525731, 0.000000], [-0.716567, -0.681718, -0.147621], 
+	[-0.716567, -0.681718, 0.147621], [-0.525731, -0.850651, 0.000000], 
+	[-0.500000, -0.809017, 0.309017], [-0.238856, -0.864188, 0.442863], 
+	[-0.262866, -0.951056, 0.162460], [-0.864188, -0.442863, 0.238856], 
+	[-0.809017, -0.309017, 0.500000], [-0.688191, -0.587785, 0.425325], 
+	[-0.681718, -0.147621, 0.716567], [-0.442863, -0.238856, 0.864188], 
+	[-0.587785, -0.425325, 0.688191], [-0.309017, -0.500000, 0.809017], 
+	[-0.147621, -0.716567, 0.681718], [-0.425325, -0.688191, 0.587785], 
+	[-0.162460, -0.262866, 0.951056], [0.442863, -0.238856, 0.864188], 
+	[0.162460, -0.262866, 0.951056], [0.309017, -0.500000, 0.809017], 
+	[0.147621, -0.716567, 0.681718], [0.000000, -0.525731, 0.850651], 
+	[0.425325, -0.688191, 0.587785], [0.587785, -0.425325, 0.688191], 
+	[0.688191, -0.587785, 0.425325], [-0.955423, 0.295242, 0.000000], 
+	[-0.951056, 0.162460, 0.262866], [-1.000000, 0.000000, 0.000000], 
+	[-0.850651, 0.000000, 0.525731], [-0.955423, -0.295242, 0.000000], 
+	[-0.951056, -0.162460, 0.262866], [-0.864188, 0.442863, -0.238856], 
+	[-0.951056, 0.162460, -0.262866], [-0.809017, 0.309017, -0.500000], 
+	[-0.864188, -0.442863, -0.238856], [-0.951056, -0.162460, -0.262866], 
+	[-0.809017, -0.309017, -0.500000], [-0.681718, 0.147621, -0.716567], 
+	[-0.681718, -0.147621, -0.716567], [-0.850651, 0.000000, -0.525731], 
+	[-0.688191, 0.587785, -0.425325], [-0.587785, 0.425325, -0.688191], 
+	[-0.425325, 0.688191, -0.587785], [-0.425325, -0.688191, -0.587785], 
+	[-0.587785, -0.425325, -0.688191], [-0.688191, -0.587785, -0.425325]
+];
+
+function DirToByte(dir) {
+	if (!dir) {
+		return 0;
+	}
+
+	var best = 0;
+	var bestd = 0;
+	var d;
+	for (var i = 0, length = bytedirs.length; i < length; i++) {
+		d = vec3.dot(dir, bytedirs[i]);
+		if (d > bestd) {
+			bestd = d;
+			best = i;
+		}
+	}
+
+	return best;
+}
+
+function ByteToDir(b, dir) {
+	if (b < 0 || b >= bytedirs.length) {
+		vec3.set(dir, [0, 0, 0]);
+		return;
+	}
+	vec3.set(bytedirs[b], dir);
+}
+
+function ClampChar(i) {
+	if (i < -128) {
+		return -128;
+	}
+	if (i > 127) {
+		return 127;
+	}
+	return i;
+}
+
+function crandom() {
+	return 2.0 * (Math.random() - 0.5);
+}
+
+/**
+ * PerpindicularVector
+ */
+function PerpendicularVector(src, dst) {
+	// Find the smallest magnitude axially aligned vector.
+	var i, pos;
+	var minelem = 1;
+	for(var i = 0, pos = 0; i < 3; i++) {
+		if (Math.abs(src[i]) < minelem) {
+			pos = i;
+			minelem = Math.abs(src[i]);
+		}
+	}
+	var tempvec = [0, 0, 0];
+	tempvec[pos] = 1;
+
+	// Project the point onto the plane defined by src.
+	ProjectPointOnPlane(tempvec, src, dst);
+
+	// Normalize the result.
+	// vec3.normalize(dst);
+}
+
+
+/**
+ * Angle consts
+ */
+var PITCH = 0; // up / down
+var YAW   = 1; // left / right
+var ROLL  = 2; // fall over
+
+/**
+ * AngleSubtract
+ *
+ * Always returns a value from -180 to 180
+ */
+function AngleSubtract(a1, a2) {
+	var a = a1 - a2;
+	while (a > 180) {
+		a -= 360;
+	}
+	while (a < -180) {
+		a += 360;
+	}
+	return a;
+}
+
+/**
+ * AnglesSubtract
+ */
+function AnglesSubtract(v1, v2, v3) {
+	v3[0] = AngleSubtract(v1[0], v2[0]);
+	v3[1] = AngleSubtract(v1[1], v2[1]);
+	v3[2] = AngleSubtract(v1[2], v2[2]);
+}
+
+/**
+ * LerpAngle
+ */
+function LerpAngle(from, to, frac) {
+	if (to - from > 180) {
+		to -= 360;
+	}
+	if (to - from < -180) {
+		to += 360;
+	}
+
+	return from + frac * (to - from);
+}
+
+/**
+ * AngleNormalize360
+ *
+ * Returns angle normalized to the range [0 <= angle < 360].
+ */
+function AngleNormalize360(a) {
+	a = (360.0/65536) * (parseInt((a*(65536/360.0)), 10) & 65535);
+	return a;
+}
+
+/**
+ * AngleNormalize180
+ *
+ * Returns angle normalized to the range [-180 < angle <= 180].
+ */
+function AngleNormalize180(a) {
+	a = AngleNormalize360(a);
+	if (a > 180.0) {
+		a -= 360.0;
+	}
+	return a;
+}
+
+
+/**
+ * AnglesToVectors
+ */
+function AnglesToVectors(angles, forward, right, up) {
+	var angle;
+	var sr, sp, sy, cr, cp, cy;
+
+	angle = angles[YAW] * (Math.PI*2 / 360);
+	sy = Math.sin(angle);
+	cy = Math.cos(angle);
+	angle = angles[PITCH] * (Math.PI*2 / 360);
+	sp = Math.sin(angle);
+	cp = Math.cos(angle);
+	angle = angles[ROLL] * (Math.PI*2 / 360);
+	sr = Math.sin(angle);
+	cr = Math.cos(angle);
+
+	if (forward) {
+		forward[0] = cp*cy;
+		forward[1] = cp*sy;
+		forward[2] = -sp;
+	}
+
+	if (right) {
+		right[0] = (-1*sr*sp*cy+-1*cr*-sy);
+		right[1] = (-1*sr*sp*sy+-1*cr*cy);
+		right[2] = -1*sr*cp;
+	}
+
+	if (up) {
+		up[0] = (cr*sp*cy+-sr*-sy);
+		up[1] = (cr*sp*sy+-sr*cy);
+		up[2] = cr*cp;
+	}
+}
+
+/**
+ * VectorToAngles
+ */
+function VectorToAngles(value1, angles) {
+	var forward, yaw, pitch;
+
+	if (value1[1] === 0 && value1[0] === 0) {
+		yaw = 0;
+		pitch = value1[2] > 0 ? 90 : 270;
+	} else {
+		if (value1[0]) {
+			yaw = (Math.atan2(value1[1], value1[0]) * 180 / Math.PI);
+		} else if (value1[1] > 0) {
+			yaw = 90;
+		} else {
+			yaw = 270;
+		}
+
+		if (yaw < 0) {
+			yaw += 360;
+		}
+
+		forward = Math.sqrt(value1[0]*value1[0] + value1[1]*value1[1]);
+		pitch = (Math.atan2(value1[2], forward) * 180 / Math.PI);
+		if (pitch < 0) {
+			pitch += 360;
+		}
+	}
+
+	angles[PITCH] = -pitch;
+	angles[YAW] = yaw;
+	angles[ROLL] = 0;
+}
+
+/**
+ * AngleToShort
+ */
+function AngleToShort(x) {
+	return (((x)*65536/360) & 65535);
+};
+
+/**
+ * ShortToAngle
+ */
+function ShortToAngle(x) {
+	return ((x)*(360.0/65536));
+};
+
+/**
+ * AxisClear
+ */
+function AxisClear(axis) {
+	axis[0][0] = 1;
+	axis[0][1] = 0;
+	axis[0][2] = 0;
+	axis[1][0] = 0;
+	axis[1][1] = 1;
+	axis[1][2] = 0;
+	axis[2][0] = 0;
+	axis[2][1] = 0;
+	axis[2][2] = 1;
+}
+
+/**
+ * AnglesToAxis
+ */
+function AnglesToAxis(angles, axis) {
+	AnglesToVectors(angles, axis[0], axis[1], axis[2]);
+	// angle vectors returns "right" instead of "y axis"
+	vec3.negate(axis[1]);
+}
+
+/**
+ * AxisMultiply
+ *
+ * TODO Perhaps the functions using this should change the way they store
+ * there axis, so we can re-use the mat3 lib calls.
+ */
+function AxisMultiply(in1, in2, out) {
+	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
+	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
+	out[0][2] = in1[0][0] * in2[0][2] + in1[0][1] * in2[1][2] + in1[0][2] * in2[2][2];
+
+	out[1][0] = in1[1][0] * in2[0][0] + in1[1][1] * in2[1][0] + in1[1][2] * in2[2][0];
+	out[1][1] = in1[1][0] * in2[0][1] + in1[1][1] * in2[1][1] + in1[1][2] * in2[2][1];
+	out[1][2] = in1[1][0] * in2[0][2] + in1[1][1] * in2[1][2] + in1[1][2] * in2[2][2];
+
+	out[2][0] = in1[2][0] * in2[0][0] + in1[2][1] * in2[1][0] + in1[2][2] * in2[2][0];
+	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
+	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
+}
+
+/**
+ * RotatePoint
+ */
+function RotatePoint(point, axis) {
+	var tvec = vec3.set(point, [0, 0, 0]);
+	point[0] = vec3.dot(axis[0], tvec);
+	point[1] = vec3.dot(axis[1], tvec);
+	point[2] = vec3.dot(axis[2], tvec);
+}
+
+// /**
+//  * RotateAroundDirection
+//  */
+// function RotateAroundDirection(axis, yaw) {
+// 	// Create an arbitrary axis[1].
+// 	PerpendicularVector(axis[0], axis[1]);
+
+// 	// Rotate it around axis[0] by yaw.
+// 	if (yaw) {
+// 		var temp = vec3.create(axis[1]);
+// 		RotatePointAroundVector(temp, axis[0], yaw, axis[1]);
+// 	}
+
+// 	// Cross to get axis[2].
+// 	vec3.cross(axis[0], axis[1], axis[2]);
+// }
+
+/**
+ * Plane
+ */
+var PLANE_X         = 0;
+var PLANE_Y         = 1;
+var PLANE_Z         = 2;
+var PLANE_NON_AXIAL = 3;
+
+var Plane = function () {
+	this.normal   = [0, 0, 0];
+	this.dist     = 0;
+	this.type     = 0;
+	this.signbits = 0;
+};
+
+Plane.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new Plane();
+	}
+
+	vec3.set(this.normal, to.normal);
+	to.dist = this.dist;
+	to.type = this.type;
+	to.signbits = this.signbits;
+
+	return to;
+};
+
+/**
+ * PlaneTypeForNormal
+ */
+function PlaneTypeForNormal(x) {
+	return x[0] == 1.0 ? PLANE_X : (x[1] == 1.0 ? PLANE_Y : (x[2] == 1.0 ? PLANE_Z : PLANE_NON_AXIAL));
+}
+
+/**
+ * GetPlaneSignbits
+ */
+function GetPlaneSignbits(normal) {
+	var bits = 0;
+
+	for (var i = 0; i < 3; i++) {
+		if (normal[i] < 0) {
+			bits |= 1 << i;
+		}
+	}
+
+	return bits;
+}
+
+/**
+ * BoxOnPlaneSide
+ *
+ * Returns 1, 2, or 1 + 2.
+ */
+function BoxOnPlaneSide(mins, maxs, p) {
+	// fast axial cases
+	if (p.type < PLANE_NON_AXIAL) {
+		if (p.dist <= mins[p.type]) {
+			return 1;
+		} else if (p.dist >= maxs[p.type]) {
+			return 2;
+		}
+		return 3;
+	}
+
+	// general case
+	var dist = [0, 0];
+	
+	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
+		for (var i = 0; i < 3; i++) {
+			var b = (p.signbits >> i) & 1;
+			dist[b] += p.normal[i]*maxs[i];
+			dist[b^1] += p.normal[i]*mins[i];
+		}
+	}
+
+	var sides = 0;
+	if (dist[0] >= p.dist) {
+		sides = 1;
+	}
+	if (dist[1] < p.dist) {
+		sides |= 2;
+	}
+
+	return sides;
+}
+
+/**
+ * ProjectPointOnPlane
+ */
+function ProjectPointOnPlane(p, normal, dest) {
+	var n = vec3.scale(normal, vec3.dot(normal, p), [0, 0, 0]);
+	vec3.subtract(p, n, dest);
+}
+
+/**
+ * RadiusFromBounds
+ */
+function RadiusFromBounds(mins, maxs) {
+	var a, b;
+	var corner = [0, 0, 0];
+
+	for (var i = 0; i < 3; i++) {
+		a = Math.abs(mins[i]);
+		b = Math.abs(maxs[i]);
+		corner[i] = a > b ? a : b;
+	}
+
+	return vec3.length(corner);
+}
+
+/**
+ * ClearBounds
+ */
+function ClearBounds(mins, maxs) {
+	mins[0] = mins[1] = mins[2] = 99999;
+	maxs[0] = maxs[1] = maxs[2] = -99999;
+}
+
+/**
+ * AddPointToBounds
+ */
+function AddPointToBounds(v, mins, maxs) {
+	if (v[0] < mins[0]) {
+		mins[0] = v[0];
+	}
+	if (v[0] > maxs[0]) {
+		maxs[0] = v[0];
+	}
+
+	if (v[1] < mins[1]) {
+		mins[1] = v[1];
+	}
+	if (v[1] > maxs[1]) {
+		maxs[1] = v[1];
+	}
+
+	if (v[2] < mins[2]) {
+		mins[2] = v[2];
+	}
+	if (v[2] > maxs[2]) {
+		maxs[2] = v[2];
+	}
+}
+
+/**
+ * BoundsIntersect
+ */
+function BoundsIntersect(mins, maxs, mins2, maxs2, epsilon) {
+	epsilon = epsilon || 0;
+	
+	if (maxs[0] < mins2[0] - epsilon ||
+		maxs[1] < mins2[1] - epsilon ||
+		maxs[2] < mins2[2] - epsilon ||
+		mins[0] > maxs2[0] + epsilon ||
+		mins[1] > maxs2[1] + epsilon ||
+		mins[2] > maxs2[2] + epsilon) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * BoundsIntersectSphere
+ */
+function BoundsIntersectSphere(mins, maxs, origin, radius) {
+	if (origin[0] - radius > maxs[0] ||
+		origin[0] + radius < mins[0] ||
+		origin[1] - radius > maxs[1] ||
+		origin[1] + radius < mins[1] ||
+		origin[2] - radius > maxs[2] ||
+		origin[2] + radius < mins[2]) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * BoundsIntersectPoint
+ */
+function BoundsIntersectPoint(mins, maxs, origin) {
+	if (origin[0] > maxs[0] ||
+		origin[0] < mins[0] ||
+		origin[1] > maxs[1] ||
+		origin[1] < mins[1] ||
+		origin[2] > maxs[2] ||
+		origin[2] < mins[2]) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * RadixSort
+ *
+ * Sort 32 bit ints into 8 bit buckets.
+ * http://stackoverflow.com/questions/8082425/fastest-way-to-sort-32bit-signed-integer-arrays-in-javascript
+ */
+var _radixSort_0 = [
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+];
+
+function RadixSort(arr, prop, len) {
+	var cpy = new Array(len);
+	var c4 = [].concat(_radixSort_0); 
+	var c3 = [].concat(_radixSort_0); 
+	var c2 = [].concat(_radixSort_0);
+	var c1 = [].concat(_radixSort_0); 
+	var o4 = 0; var k4;
+	var o3 = 0; var k3;
+	var o2 = 0; var k2;
+	var o1 = 0; var k1;
+	var x;
+	for (x = 0; x < len; x++) {
+		k4 = arr[x][prop] & 0xFF;
+		k3 = (arr[x][prop] >> 8) & 0xFF;
+		k2 = (arr[x][prop] >> 16) & 0xFF;
+		k1 = (arr[x][prop] >> 24) & 0xFF ^ 0x80;
+		c4[k4]++;
+		c3[k3]++;
+		c2[k2]++;
+		c1[k1]++;
+	}
+	for (x = 0; x < 256; x++) {
+		k4 = o4 + c4[x];
+		k3 = o3 + c3[x];
+		k2 = o2 + c2[x];
+		k1 = o1 + c1[x];
+		c4[x] = o4;
+		c3[x] = o3;
+		c2[x] = o2;
+		c1[x] = o1;
+		o4 = k4;
+		o3 = k3;
+		o2 = k2;
+		o1 = k1;
+	}
+	for (x = 0; x < len; x++) {
+		k4 = arr[x][prop] & 0xFF;
+		cpy[c4[k4]] = arr[x];
+		c4[k4]++;
+	}
+	for (x = 0; x < len; x++) {
+		k3 = (cpy[x][prop] >> 8) & 0xFF;
+		arr[c3[k3]] = cpy[x];
+		c3[k3]++;
+	}
+	for (x = 0; x < len; x++) {
+		k2 = (arr[x][prop] >> 16) & 0xFF;
+		cpy[c2[k2]] = arr[x];
+		c2[k2]++;
+	}
+	for (x = 0; x < len; x++) {
+		k1 = (cpy[x][prop] >> 24) & 0xFF ^ 0x80;
+		arr[c1[k1]] = cpy[x];
+		c1[k1]++;
+	}
+
+	return arr;
+}
+
+return {
+	vec3_origin:           vec3_origin,
+	
+	DirToByte:             DirToByte,
+	ByteToDir:             ByteToDir,
+	ClampChar:             ClampChar,
+	crandom:               crandom,
+
+	PerpendicularVector:   PerpendicularVector,
+
+	PITCH:                 PITCH,
+	YAW:                   YAW,
+	ROLL:                  ROLL,
+	AngleSubtract:         AngleSubtract,
+	AnglesSubtract:        AnglesSubtract,
+	LerpAngle:             LerpAngle,
+	AngleNormalize360:     AngleNormalize360,
+	AngleNormalize180:     AngleNormalize180,
+	AnglesToVectors:       AnglesToVectors,
+	VectorToAngles:        VectorToAngles,
+	AngleToShort:          AngleToShort,
+	ShortToAngle:          ShortToAngle,
+
+	AxisClear:             AxisClear,
+	AnglesToAxis:          AnglesToAxis,
+	AxisMultiply:          AxisMultiply,
+	RotatePoint:           RotatePoint,
+
+	PLANE_X:               PLANE_X,
+	PLANE_Y:               PLANE_Y,
+	PLANE_Z:               PLANE_Z,
+	PLANE_NON_AXIAL:       PLANE_NON_AXIAL,
+	Plane:                 Plane,
+	PlaneTypeForNormal:    PlaneTypeForNormal,
+	GetPlaneSignbits:      GetPlaneSignbits,
+	BoxOnPlaneSide:        BoxOnPlaneSide,
+	ProjectPointOnPlane:   ProjectPointOnPlane,
+
+	RadiusFromBounds:      RadiusFromBounds,
+	ClearBounds:           ClearBounds,
+	AddPointToBounds:      AddPointToBounds,
+	BoundsIntersect:       BoundsIntersect,
+	BoundsIntersectSphere: BoundsIntersectSphere,
+	BoundsIntersectPoint:  BoundsIntersectPoint,
+
+	RadixSort:             RadixSort
+};
+
+});
+
+define('common/sh', ['common/qmath'], function (qm) {
+	var BASE_FOLDER = 'baseq3';
+var MAX_QPATH   = 64;
+var CMD_BACKUP  = 64;
+
+// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
+var SOLID_BMODEL = 0xffffff;
+
+/**
+ * Cvar flags
+ */
+var CVF = {
+	ARCHIVE:    1,                                     // save to config file
+	CHEAT:      2,                                     // save to config file
+	USERINFO:   4,                                     // sent to server on connect or change
+	SERVERINFO: 8,                                     // sent in response to front end requests
+	SYSTEMINFO: 16                                     // these cvars will be duplicated on all clients
+};
+
+/**
+ * Renderer (should be moved)
+ */
+var MAX_DRAWSURFS  = 0x10000;
+
+/**
+ * Snapshot flags
+ */
+var SNAPFLAG_RATE_DELAYED   = 1;
+var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
+var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
+
+/**
+ * MAX_* defines used to pre-alloc many structures
+ */
+var GENTITYNUM_BITS         = 10;
+var MAX_CLIENTS             = 32;                       // absolute limit
+var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
+var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
+var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
+
+/**
+ * Faux entity numbers
+ */
+var ENTITYNUM_NONE          = MAX_GENTITIES-1;
+var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
+var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
+	                                                       // then BUTTON_WALKING should be set
+
+/**
+ * Communicated across the network
+ */
+var NetAdrType = {
+	NAD:      0,
+	LOOPBACK: 1,
+	IP:       2
+};
+
+var NetSrc = {
+	CLIENT : 0,
+	SERVER: 1
+};
+
+var NetAdr = function (type, ip, port) {
+	this.type = type;
+	this.ip   = ip;
+	this.port = port;
+};
+
+var BUTTON = {
+	ATTACK:       1,
+	TALK:         2,                                       // displays talk balloon and disables actions
+	USE_HOLDABLE: 4,
+	GESTURE:      8,
+	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
+	                                                       // because a key pressed late in the frame will
+	                                                       // only generate a small move value for that frame
+	                                                       // walking will use different animations and
+	                                                       // won't generate footsteps
+	AFFIRMATIVE:  32,
+	NEGATIVE:     64,
+	GETFLAG:      128,
+	GUARDBASE:    256,
+	PATROL:       512,
+	FOLLOWME:     1024,
+	ANY:          2048                                     // any key whatsoever
+};
+
+var UserCmd = function () {
+	this.serverTime  = 0;
+	this.angles      = [0, 0, 0];
+	this.forwardmove = 0;
+	this.rightmove   = 0;
+	this.upmove      = 0;
+	this.buttons     = 0;
+	this.weapon      = 0;
+};
+
+UserCmd.prototype.clone = function (cmd) {
+	if (typeof(cmd) === 'undefined') {
+		cmd = new UserCmd();
+	}
+
+	cmd.serverTime = this.serverTime;
+	vec3.set(this.angles, cmd.angles);
+	cmd.forwardmove = this.forwardmove;
+	cmd.rightmove = this.rightmove;
+	cmd.upmove = this.upmove;
+	cmd.buttons = this.buttons;
+	cmd.weapon = this.weapon;
+
+	return cmd;
+};
+
+/**
+ * Player state
+ */
+var MAX_STATS               = 16;
+var MAX_PERSISTANT          = 16;
+var MAX_POWERUPS            = 16;
+var MAX_WEAPONS             = 16;
+var MAX_PS_EVENTS           = 2;
+var PMOVEFRAMECOUNTBITS     = 6;
+
+var PlayerState = function () {
+	this.clientNum           = 0;                          // ranges from 0 to MAX_CLIENTS-1
+	this.commandTime         = 0;                          // cmd->serverTime of last executed command
+	this.pm_type             = 0;
+	this.pm_flags            = 0;                          // ducked, jump_held, etc
+	this.origin              = [0, 0, 0];
+	this.velocity            = [0, 0, 0];
+	this.viewangles          = [0, 0, 0];
+	this.viewheight          = 0;
+	this.delta_angles        = [0, 0, 0];                  // add to command angles to get view direction
+	                                                       // changed by spawns, rotating objects, and teleporters
+	this.speed               = 0;
+	this.gravity             = 0;
+	this.groundEntityNum     = ENTITYNUM_NONE;             // ENTITYNUM_NONE = in air
+	this.bobCycle            = 0;                          // for view bobbing and footstep generation
+
+	this.weapon              = 0;                          // copied to entityState_t->weapon
+	this.weaponState         = 0;
+	this.weaponTime          = 0;
+	this.legsTimer           = 0;                          // don't change low priority animations until this runs out
+	this.legsAnim            = 0;                          // mask off ANIM_TOGGLEBIT
+
+	this.torsoTimer          = 0;                          // don't change low priority animations until this runs out
+	this.torsoAnim           = 0;                          // mask off ANIM_TOGGLEBIT
+
+	this.movementDir         = 0;                          // a number 0 to 7 that represents the relative angle
+	                                                       // of movement to the view angle (axial and diagonals)
+	                                                       // when at rest, the value will remain unchanged
+	                                                       // used to twist the legs during strafing
+	// Damage feedback.
+	this.damageEvent         = 0;                          // when it changes, latch the other parms
+	this.damageYaw           = 0;
+	this.damagePitch         = 0;
+	this.damageCount         = 0;
+
+	this.stats               = new Array(MAX_STATS);
+	this.persistant          = new Array(MAX_PERSISTANT);  // stats that aren't cleared on death
+	this.powerups            = new Array(MAX_POWERUPS);    // level.time that the powerup runs out
+	this.ammo                = new Array(MAX_WEAPONS);
+
+	this.eFlags              = 0;                          // copied to entityState_t->eFlags
+	this.eventSequence       = 0;                          // pmove generated events
+	this.events              = new Array(MAX_PS_EVENTS);
+	this.eventParms          = new Array(MAX_PS_EVENTS);
+
+	this.externalEvent       = 0;                          // events set on player from another source
+	this.externalEventParm   = 0;
+	this.externalEventTime   = 0;
+
+	this.jumppad_ent         = 0;                          // jumppad entity hit this frame
+	this.jumppad_frame       = 0;
+	this.pmove_framecount    = 0;
+	this.entityEventSequence = 0;
+
+	for (var i = 0; i < MAX_STATS; i++) {
+		this.stats[i] = 0;
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		this.persistant[i] = 0;
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		this.powerups[i] = 0;
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		this.ammo[i] = 0;
+	}
+};
+
+// deep copy
+PlayerState.prototype.clone = function (ps) {
+	if (typeof(ps) === 'undefined') {
+		ps = new PlayerState();
+	}
+
+	ps.clientNum            = this.clientNum;
+	ps.commandTime          = this.commandTime;
+	ps.pm_type              = this.pm_type;
+	ps.pm_flags             = this.pm_flags;
+	vec3.set(this.origin, ps.origin);
+	vec3.set(this.velocity, ps.velocity);
+	vec3.set(this.viewangles, ps.viewangles);
+	ps.viewheight           = this.viewheight;
+	vec3.set(this.delta_angles, ps.delta_angles);
+	ps.speed                = this.speed;
+	ps.gravity              = this.gravity;
+	ps.groundEntityNum      = this.groundEntityNum;
+	ps.bobCycle             = this.bobCycle;
+	ps.weapon               = this.weapon;
+	ps.weaponState          = this.weaponState;
+	ps.weaponTime           = this.weaponTime;
+	ps.legsTimer            = this.legsTimer;
+	ps.legsAnim             = this.legsAnim;
+	ps.torsoTimer           = this.torsoTimer;
+	ps.torsoAnim            = this.torsoAnim;
+	ps.movementDir          = this.movementDir;
+	ps.damageEvent          = this.damageEvent;
+	ps.damageYaw            = this.damageYaw;
+	ps.damagePitch          = this.damagePitch;
+	ps.damageCount          = this.damageCount;
+	for (var i = 0; i < MAX_STATS; i++) {
+		ps.stats[i] = this.stats[i];
+	}
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		ps.persistant[i] = this.persistant[i];
+	}
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		ps.powerups[i] = this.powerups[i];
+	}
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		ps.ammo[i] = this.ammo[i];
+	}
+	ps.eFlags               = this.eFlags;
+	ps.eventSequence        = this.eventSequence;
+	for (var i = 0; i < MAX_PS_EVENTS; i++) {
+		ps.events[i] = this.events[i];
+		ps.eventParms[i] = this.eventParms[i];
+	}
+	ps.externalEvent        = this.externalEvent;
+	ps.externalEventParm    = this.externalEventParm;
+	ps.externalEventTime    = this.externalEventTime;
+	ps.jumppad_ent          = this.jumppad_ent;
+	ps.jumppad_frame        = this.jumppad_frame;
+	ps.pmove_framecount     = this.pmove_framecount;
+	ps.entityEventSequence  = this.entityEventSequence;
+
+	return ps;
+};
+
+var TR = {
+	STATIONARY:  0,
+	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
+	LINEAR:      2,
+	LINEAR_STOP: 3,
+	SINE:        4,                              // value = base + sin( time / duration ) * delta
+	GRAVITY:     5
+};
+
+var Trajectory = function () {
+	this.trType     = 0;
+	this.trTime     = 0;
+	this.trDuration = 0;
+	this.trBase     = [0, 0, 0];
+	this.trDelta    = [0, 0, 0];
+};
+
+Trajectory.prototype.clone = function (tr) {
+	if (typeof(tr) === 'undefined') {
+		tr = TrajectoryType();
+	}
+
+	tr.trType = this.trType;
+	tr.trTime = this.trTime;
+	tr.trDuration = this.trDuration;
+	vec3.set(this.trBase, tr.trBase);
+	vec3.set(this.trDelta, tr.trDelta);
+
+	return tr;
+};
+
+var Orientation = function () {
+	this.origin      = [0, 0, 0];                          // in world coordinates
+	this.axis        = [                                   // orientation in world
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	// Used by renderer.
+	this.viewOrigin  = [0, 0, 0];                          // viewParms->or.origin in local coordinates
+	this.modelMatrix = mat4.create();
+};
+
+Orientation.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new Orientation();
+	}
+
+	vec3.set(this.origin, to.origin);
+	vec3.set(this.axis[0], to.axis[0]);
+	vec3.set(this.axis[1], to.axis[1]);
+	vec3.set(this.axis[2], to.axis[2]);
+	vec3.set(this.viewOrigin, to.viewOrigin);
+	mat4.set(this.modelMatrix, to.modelMatrix);
+
+	return to;
+};
+
+/**********************************************************
+ * EntityState is the information conveyed from the server
+ * in an update message about entities that the client will
+ * need to render in some way. Different eTypes may use the
+ * information in different ways. The messages are delta
+ * compressed, so it doesn't really matter if the structure
+ * size is fairly large
+ **********************************************************/
+var EntityState = function () {
+	this.reset();
+};
+
+EntityState.prototype.reset = function () {
+	this.number          = 0;                              // entity index
+	this.eType           = 0;                              // entityType_t
+	this.eFlags          = 0;
+	this.pos             = new Trajectory();               // for calculating position
+	this.apos            = new Trajectory();               // for calculating angles
+	this.time            = 0;
+	this.time2           = 0;
+	this.origin          = [0, 0, 0];
+	this.origin2         = [0, 0, 0];
+	this.angles          = [0, 0, 0];
+	this.angles2         = [0, 0, 0];
+	this.otherEntityNum  = 0;                              // shotgun sources, etc
+	this.otherEntityNum2 = 0;                              // shotgun sources, etc
+	this.groundEntityNum = ENTITYNUM_NONE;                 // ENTITYNUM_NONE = in air
+	this.constantLight   = 0;                              // r + (g<<8) + (b<<16) + (intensity<<24)
+	this.loopSound       = 0;                              // constantly loop this sound
+	this.modelIndex      = 0;
+	this.modelIndex2     = 0;
+	this.clientNum       = 0;                              // 0 to (MAX_CLIENTS - 1), for players and corpses
+	this.frame           = 0;
+	this.solid           = 0;                              // for client side prediction, trap_linkentity sets this properly
+	this.event           = 0;                              // impulse events -- muzzle flashes, footsteps, etc
+	this.eventParm       = 0;
+	// For players.
+	this.powerups        = 0;                              // bit flags
+	this.weapon          = 0;                              // determines weapon and flash model, etc
+	this.legsAnim        = 0;                              // mask off ANIM_TOGGLEBIT
+	this.torsoAnim       = 0;                              // mask off ANIM_TOGGLEBIT
+	this.generic1        = 0;
+};
+
+// deep copy
+EntityState.prototype.clone = function (es) {
+	if (typeof(es) === 'undefined') {
+		es = new EntityState();
+	}
+
+	es.number            = this.number;
+	es.eType             = this.eType;
+	es.eFlags            = this.eFlags;
+	this.pos.clone(es.pos);
+	this.apos.clone(es.apos);
+	es.time              = this.time;
+	es.time2             = this.time2;
+	vec3.set(this.origin,  es.origin);
+	vec3.set(this.origin2, es.origin2);
+	vec3.set(this.angles,  es.angles);
+	vec3.set(this.angles2, es.angles2);
+	es.otherEntityNum    = this.otherEntityNum;
+	es.otherEntityNum2   = this.otherEntityNum2;
+	es.groundEntityNum   = this.groundEntityNum;
+	es.constantLight     = this.constantLight;
+	es.loopSound         = this.loopSound;
+	es.modelIndex        = this.modelIndex;
+	es.modelIndex2       = this.modelIndex2;
+	es.clientNum         = this.clientNum;
+	es.frame             = this.frame;
+	es.solid             = this.solid;
+	es.event             = this.event;
+	es.eventParm         = this.eventParm;
+	es.powerups          = this.powerups;
+	es.weapon            = this.weapon;
+	es.legsAnim          = this.legsAnim;
+	es.torsoAnim         = this.torsoAnim;
+	es.generic1          = this.generic1;
+
+	return es;
+};
+
+/**
+ * BSP Defines
+ */
+var Lumps = {
+	ENTITIES:     0,
+	SHADERS:      1,
+	PLANES:       2,
+	NODES:        3,
+	LEAFS:        4,
+	LEAFSURFACES: 5,
+	LEAFBRUSHES:  6,
+	MODELS:       7,
+	BRUSHES:      8,
+	BRUSHSIDES:   9,
+	DRAWVERTS:    10,
+	DRAWINDEXES:  11,
+	FOGS:         12,
+	SURFACES:     13,
+	LIGHTMAPS:    14,
+	LIGHTGRID:    15,
+	VISIBILITY:   16,
+	NUM_LUMPS:    17
+};
+
+var MapSurfaceType = {
+	BAD:           0,
+	PLANAR:        1,
+	PATCH:         2,
+	TRIANGLE_SOUP: 3,
+	FLARE:         4
+};
+
+var lumps_t = function () {
+	this.fileofs  = 0;                           // int32
+	this.filelen = 0;                           // int32
+};
+
+var dheader_t = function () {
+	this.ident    = null;                        // byte * 4 (string)
+	this.version  = 0;                           // int32
+	this.lumps    = new Array(Lumps.NUM_LUMPS);  // lumps_t * Lumps.NUM_LUMPS
+
+	for (var i = 0; i < Lumps.NUM_LUMPS; i++) {
+		this.lumps[i] = new lumps_t();
+	}
+};
+
+var dmodel_t = function () {
+	this.mins         = [0, 0, 0];               // float32 * 3
+	this.maxs         = [0, 0, 0];               // float32 * 3
+	this.firstSurface = 0;                       // int32
+	this.numSurfaces  = 0;                       // int32
+	this.firstBrush   = 0;                       // int32
+	this.numBrushes   = 0;                       // int32
+};
+dmodel_t.size = 40;
+
+var dshader_t = function () {
+	this.shaderName = null;                      // byte * MAX_QPATH (string)
+	this.flags      = 0;                         // int32
+	this.contents   = 0;                         // int32
+};
+dshader_t.size = 72;
+
+var dplane_t = function () {
+	this.normal = [0, 0, 0];                     // float32 * 3
+	this.dist   = 0;                             // float32
+};
+dplane_t.size = 16;
+
+var dnode_t = function () {
+	this.planeNum    = 0;                        // int32
+	this.childrenNum = [0, 0];                   // int32 * 2
+	this.mins        = [0, 0, 0];                // int32 * 3
+	this.maxs        = [0, 0, 0];                // int32 * 3
+};
+dnode_t.size = 36;
+
+var dleaf_t = function () {
+	this.cluster          = 0;                   // int32
+	this.area             = 0;                   // int32
+	this.mins             = [0, 0, 0];           // int32 * 3
+	this.maxs             = [0, 0, 0];           // int32 * 3
+	this.firstLeafSurface = 0;                   // int32
+	this.numLeafSurfaces  = 0;                   // int32
+	this.firstLeafBrush   = 0;                   // int32
+	this.numLeafBrushes   = 0;                   // int32
+};
+dleaf_t.size = 48;
+
+var dbrushside_t = function () {
+	this.planeNum = 0;                           // int32
+	this.shader   = 0;                           // int32
+};
+dbrushside_t.size = 8;
+
+var dbrush_t = function () {
+	this.side     = 0;                           // int32
+	this.numsides = 0;                           // int32
+	this.shader   = 0;                           // int32
+};
+dbrush_t.size = 12;
+
+var dfog_t = function () {
+	this.shader      = null;                     // byte * MAX_QPATH (string)
+	this.brushNum    = 0;                        // int32
+	this.visibleSide = 0;                        // int32
+};
+dfog_t.size = 72;
+
+var drawVert_t = function () {
+	this.pos      = [0, 0, 0];                   // float32 * 3
+	this.texCoord = [0, 0];                      // float32 * 2
+	this.lmCoord  = [0, 0];                      // float32 * 2
+	this.normal   = [0, 0, 0];                   // float32 * 3
+	this.color    = [0, 0, 0, 0];                // uint8 * 4
+};
+drawVert_t.size = 44;
+
+var dsurface_t = function () {
+	this.shaderNum     = 0;                      // int32
+	this.fogNum        = 0;                      // int32
+	this.surfaceType   = 0;                      // int32
+	this.vertex        = 0;                      // int32
+	this.vertCount     = 0;                      // int32
+	this.meshVert      = 0;                      // int32
+	this.meshVertCount = 0;                      // int32
+	this.lightmapNum   = 0;                      // int32
+	this.lmStart       = [0, 0];                 // int32 * 2
+	this.lmSize        = [0, 0];                 // int32 * 2
+	this.lmOrigin      = [0, 0, 0];              // float32 * 3
+	this.lmVecs        = [                       // float32 * 9
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	this.patchWidth    = 0;                      // int32
+	this.patchHeight   = 0;                      // int32
+};
+dsurface_t.size = 104;
+
+/**
+ * Surface flags
+ */
+var SURF = {
+	NODAMAGE:    0x1,                            // never give falling damage
+	SLICK:       0x2,                            // effects game physics
+	SKY:         0x4,                            // lighting from environment map
+	LADDER:      0x8,
+	NOIMPACT:    0x10,                           // don't make missile explosions
+	NOMARKS:     0x20,                           // don't leave missile marks
+	FLESH:       0x40,                           // make flesh sounds and effects
+	NODRAW:      0x80,                           // don't generate a drawsurface at all
+	HINT:        0x100,                          // make a primary bsp splitter
+	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
+	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
+	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
+	METALSTEPS:  0x1000,                         // clanking footsteps
+	NOSTEPS:     0x2000,                         // no footstep sounds
+	NONSOLID:    0x4000,                         // don't collide against curves with this set
+	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
+	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
+	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
+	DUST:        0x40000                         // leave a dust trail when walking on this surface
+};
+
+var CONTENTS = {
+	SOLID:         1,                                      // an eye is never valid in a solid
+	LAVA:          8,
+	SLIME:         16,
+	WATER:         32,
+	FOG:           64,
+
+	NOTTEAM1:      0x0080,
+	NOTTEAM2:      0x0100,
+	NOBOTCLIP:     0x0200,
+
+	AREAPORTAL:    0x8000,
+
+	PLAYERCLIP:    0x10000,
+	MONSTERCLIP:   0x20000,
+	TELEPORTER:    0x40000,
+	JUMPPAD:       0x80000,
+	CLUSTERPORTAL: 0x100000,
+	DONOTENTER:    0x200000,
+	BOTCLIP:       0x400000,
+	MOVER:         0x800000,
+
+	ORIGIN:        0x1000000,                              // removed before bsping an entity
+
+	BODY:          0x2000000,                              // should never be on a brush, only in game
+	CORPSE:        0x4000000,
+	DETAIL:        0x8000000,                              // brushes not used for the bsp
+	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
+	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
+	TRIGGER:       0x40000000,
+	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
+};
+
+function atob64(arr) {
+	var limit = 1 << 16;
+	var length = arr.length;
+	var slice = arr.slice || arr.subarray;
+	var str;
+
+	if (length < limit) {
+		str = String.fromCharCode.apply(String, arr);
+	} else {
+		var chunks = [];
+		var i = 0;
+		while (i < length) {
+			chunks.push(String.fromCharCode.apply(String, slice.call(arr, i, i + limit)));
+			i += limit;
+		}
+		str = chunks.join('');
+	}
+
+	return btoa(str);
+}
+	//
+// Helper functions to get/set object properties based on a string.
+//
+var FLOAT32 = 0;
+var UINT8   = 1;
+var UINT16  = 2;
+var UINT32  = 3;
+
+function FTA(fieldname) {
+	var m = fieldname.match(/([^\.\[\]]+)/g);
+	return m;
+}
+
+function AGET(obj, path) {
+	var i, len;
+
+	for (i = 0, len = path.length; i < len - 1; i++) {
+		obj = obj[path[i]];
+	}
+	
+	return obj[path[len - 1]];
+}
+
+function ASET(obj, path, val) {
+	var i, len;
+
+	for (i = 0, len = path.length; i < len - 1; i++) {
+		obj = obj[path[i]];
+	}
+
+	obj[path[len - 1]] = val;
+}
+
+function fnread(bits) {
+	switch (bits) {
+		case FLOAT32:
+			return 'readFloat';
+			break;
+		case UINT8:
+			return 'readUnsignedByte';
+			break;
+		case UINT16:
+			return 'readUnsignedShort';
+			break;
+		case UINT32:
+			return 'readUnsignedInt';
+			break;
+		default:
+			throw new Error('fnread: bad bit count ' + bits);
+	}
+}
+
+function fnwrite(bits) {
+	switch (bits) {
+		case FLOAT32:
+			return 'writeFloat';
+			break;
+		case UINT8:
+			return 'writeUnsignedByte';
+			break;
+		case UINT16:
+			return 'writeUnsignedShort';
+			break;
+		case UINT32:
+			return 'writeUnsignedInt';
+			break;
+		default:
+			throw new Error('fnwrite: bad bit count ' + bits);
+	}
+}
+
+/**********************************************************
+ *
+ * Playerstate communication
+ *
+ **********************************************************/
+
+var playerStateFields = [
+	{ path: FTA('commandTime'),       bits: UINT32  },
+	{ path: FTA('origin[0]'),         bits: FLOAT32 },
+	{ path: FTA('origin[1]'),         bits: FLOAT32 },
+	{ path: FTA('bobCycle'),          bits: UINT8   },
+	{ path: FTA('velocity[0]'),       bits: FLOAT32 },
+	{ path: FTA('velocity[1]'),       bits: FLOAT32 },
+	{ path: FTA('viewangles[1]'),     bits: FLOAT32 },
+	{ path: FTA('viewangles[0]'),     bits: FLOAT32 },
+	{ path: FTA('weaponTime'),        bits: UINT16  },
+	{ path: FTA('origin[2]'),         bits: FLOAT32 },
+	{ path: FTA('velocity[2]'),       bits: FLOAT32 },
+	{ path: FTA('legsTimer'),         bits: UINT8   },
+	{ path: FTA('pm_time'),           bits: UINT16  },
+	{ path: FTA('eventSequence'),     bits: UINT16  },
+	{ path: FTA('torsoAnim'),         bits: UINT8   },
+	{ path: FTA('movementDir'),       bits: UINT8   }, /*4*/
+	{ path: FTA('events[0]'),         bits: UINT8   },
+	{ path: FTA('legsAnim'),          bits: UINT8   },
+	{ path: FTA('events[1]'),         bits: UINT8   },
+	{ path: FTA('pm_flags'),          bits: UINT16  },
+	{ path: FTA('groundEntityNum'),   bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('weaponState'),       bits: UINT8   }, /*4*/
+	{ path: FTA('eFlags'),            bits: UINT16  },
+	{ path: FTA('externalEvent'),     bits: UINT16  }, /*10*/
+	{ path: FTA('gravity'),           bits: UINT16  },
+	{ path: FTA('speed'),             bits: UINT16  },
+	{ path: FTA('delta_angles[1]'),   bits: UINT16  },
+	{ path: FTA('externalEventParm'), bits: UINT8   },
+	{ path: FTA('viewheight'),        bits: UINT8   },
+	{ path: FTA('damageEvent'),       bits: UINT8   },
+	{ path: FTA('damageYaw'),         bits: UINT8   },
+	{ path: FTA('damagePitch'),       bits: UINT8   },
+	{ path: FTA('damageCount'),       bits: UINT8   },
+	// { path: FTA('generic1'),          bits: UINT8   },
+	{ path: FTA('pm_type'),           bits: UINT8   },
+	{ path: FTA('delta_angles[0]'),   bits: UINT16  },
+	{ path: FTA('delta_angles[2]'),   bits: UINT16  },
+	{ path: FTA('torsoTimer'),        bits: UINT16  }, /*12*/
+	{ path: FTA('eventParms[0]'),     bits: UINT8   },
+	{ path: FTA('eventParms[1]'),     bits: UINT8   },
+	{ path: FTA('clientNum'),         bits: UINT8   },
+	{ path: FTA('weapon'),            bits: UINT8   }, /*5*/
+	{ path: FTA('viewangles[2]'),     bits: FLOAT32 },
+	// { path: FTA('grapplePoint[0]'),   bits: FLOAT32 },
+	// { path: FTA('grapplePoint[1]'),   bits: FLOAT32 },
+	// { path: FTA('grapplePoint[2]'),   bits: FLOAT32 },
+	{ path: FTA('jumppad_ent'),       bits: UINT16  }, /*GENTITYNUM_BITS*/
+	// { path: FTA('loopSound'),         bits: UINT16  }
+];
+
+var dummyPlayerState = new PlayerState();
+
+/**
+ * WriteDeltaPlayerState
+ */
+function WriteDeltaPlayerState(msg, from, to) {
+	var i, changed;
+	var field, fromF, toF, func;
+
+	if (!from) {
+		from = dummyPlayerState;
+	}
+
+	// Figure out the number of fields that have changed.
+	changed = 0;
+	for (i = 0; i < playerStateFields.length; i++) {
+		field = playerStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+
+		if (fromF !== toF) {
+			changed++;
+		}
+	}
+
+	msg.writeByte(changed);
+
+	// Write out each field that has changed, prefixing 
+	// the changed field with its indexed into the ps
+	// field array.
+	for (i = 0; i < playerStateFields.length; i++) {
+		field = playerStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+		if (fromF === toF) {
+			continue;
+		}
+
+		func = fnwrite(field.bits);
+
+		// TODO Could write out a master bitmask describing
+		// the changed fields.
+		msg.writeByte(i);
+		msg[func](AGET(to, field.path));
+	}
+
+	// Write out the arrays. First we write a bit mask
+	// describing which arrays have changed, followed by
+	// a mask for each array describing which of its 
+	// elements have changed.
+
+	// Sanity check. Increase bitmask send length if changing
+	// these maxes is necessary
+	if (MAX_STATS > 16 || MAX_PERSISTANT > 16 || MAX_POWERUPS > 16 || MAX_WEAPONS > 16) {
+		throw new Error('Array maxes exceed bitmask length');
+	}
+
+	var statsbits      = 0,
+		persistantbits = 0,
+		powerupsbits   = 0,
+		ammobits       = 0;
+
+	for (i = 0; i < MAX_STATS; i++) {
+		if (to.stats[i] !== from.stats[i]) {
+			statsbits |= 1 << i;
+		}
+	}
+	for (i = 0; i < MAX_PERSISTANT; i++) {
+		if (to.persistant[i] !== from.persistant[i]) {
+			persistantbits |= 1 << i;
+		}
+	}
+	for (i = 0; i < MAX_POWERUPS; i++) {
+		if (to.powerups[i] !== from.powerups[i]) {
+			powerupsbits |= 1 << i;
+		}
+	}
+	for (i = 0; i < MAX_WEAPONS; i++) {
+		if (to.ammo[i] !== from.ammo[i]) {
+			ammobits |= 1 << i;
+		}
+	}
+
+	// Write out a byte explaining which arrays changed.
+	var arrbits = (statsbits ? 1 : 0) | (persistantbits ? 2 : 0) | (powerupsbits ? 4 : 0) | (ammobits ? 8 : 0);
+	msg.writeByte(arrbits);
+
+	if (statsbits) {
+		msg.writeShort(statsbits);
+		for (i = 0; i < MAX_STATS; i++) {
+			if (statsbits & (1 << i)) {
+				msg.writeShort(to.stats[i]);
+			}
+		}
+	}
+	if (persistantbits) {
+		msg.writeShort(persistantbits);
+		for (i = 0; i < MAX_PERSISTANT; i++) {
+			if (persistantbits & (1 << i)) {
+				msg.writeShort(to.persistant[i]);
+			}
+		}
+	}
+	if (powerupsbits) {
+		msg.writeShort(powerupsbits);
+		for (i = 0; i < MAX_POWERUPS; i++) {
+			if (powerupsbits & (1 << i)) {
+				msg.writeShort(to.powerups[i]);
+			}
+		}
+	}
+	if (ammobits) {
+		msg.writeShort(ammobits);
+		for (i = 0; i < MAX_WEAPONS; i++) {
+			if (ammobits & (1 << i)) {
+				msg.writeShort(to.ammo[i]);
+			}
+		}
+	}
+}
+
+function ReadDeltaPlayerState(msg, from, to) {
+	var i, changed;
+	var idx, field, fromF, toF, func;
+
+	if (!from) {
+		from = dummyPlayerState;
+	}
+	
+	// Clone the initial state.
+	from.clone(to);
+
+	// Get the number of fields changed.
+	changed = msg.readByte();
+
+	// Read all the changed fields.
+	for (i = 0; i < changed; i++) {
+		idx = msg.readByte();
+		field = playerStateFields[idx];
+		func = fnread(field.bits);
+
+		ASET(to, field.path, msg[func]());
+	}
+
+	var arrbits = msg.readByte();
+
+	if (arrbits & 1) {
+		var statsbits = msg.readShort();
+		for (i = 0; i < MAX_STATS; i++) {
+			if (statsbits & (1 << i)) {
+				to.stats[i] = msg.readShort();
+			}
+		}
+	}
+	if (arrbits & 2) {
+		var persistantbits = msg.readShort();
+		for (i = 0; i < MAX_PERSISTANT; i++) {
+			if (persistantbits & (1 << i)) {
+				to.persistant[i] = msg.readShort();
+			}
+		}
+	}
+
+	if (arrbits & 4) {
+		var powerupsbits = msg.readShort();
+		for (i = 0; i < MAX_POWERUPS; i++) {
+			if (powerupsbits & (1 << i)) {
+				to.powerups[i] = msg.readShort();
+			}
+		}
+	}
+
+	if (arrbits & 8) {
+		var ammobits = msg.readShort();
+		for (i = 0; i < MAX_WEAPONS; i++) {
+			if (ammobits & (1 << i)) {
+				to.ammo[i] = msg.readShort();
+			}
+		}
+	}
+}
+
+/**********************************************************
+ *
+ * Entitystate communication
+ *
+ **********************************************************/
+
+var entityStateFields = [
+	{ path: FTA('pos.trTime'),      bits: UINT32  },
+	{ path: FTA('pos.trBase[0]'),   bits: FLOAT32 },
+	{ path: FTA('pos.trBase[1]'),   bits: FLOAT32 },
+	{ path: FTA('pos.trDelta[0]'),  bits: FLOAT32 },
+	{ path: FTA('pos.trDelta[1]'),  bits: FLOAT32 },
+	{ path: FTA('pos.trBase[2]'),   bits: FLOAT32 },
+	{ path: FTA('apos.trBase[1]'),  bits: FLOAT32 },
+	{ path: FTA('pos.trDelta[2]'),  bits: FLOAT32 },
+	{ path: FTA('apos.trBase[0]'),  bits: FLOAT32 },
+	{ path: FTA('event'),           bits: UINT16  }, /*10*/
+	{ path: FTA('angles2[1]'),      bits: FLOAT32 },
+	{ path: FTA('eType'),           bits: UINT8   },
+	{ path: FTA('torsoAnim'),       bits: UINT8   },
+	{ path: FTA('eventParm'),       bits: UINT8   },
+	{ path: FTA('legsAnim'),        bits: UINT8   },
+	{ path: FTA('groundEntityNum'), bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('pos.trType'),      bits: UINT8   },
+	{ path: FTA('eFlags'),          bits: UINT32  }, /*19*/
+	{ path: FTA('otherEntityNum'),  bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('weapon'),          bits: UINT8   },
+	{ path: FTA('clientNum'),       bits: UINT8   },
+	{ path: FTA('angles[1]'),       bits: FLOAT32 },
+	{ path: FTA('pos.trDuration'),  bits: UINT32  },
+	{ path: FTA('apos.trType'),     bits: UINT8   },
+	{ path: FTA('origin[0]'),       bits: FLOAT32 },
+	{ path: FTA('origin[1]'),       bits: FLOAT32 },
+	{ path: FTA('origin[2]'),       bits: FLOAT32 },
+	{ path: FTA('solid'),           bits: UINT32  }, /*24*/
+	{ path: FTA('powerups'),        bits: UINT16  }, /*MAX_POWERUPS*/
+	{ path: FTA('modelIndex'),      bits: UINT8   },
+	{ path: FTA('otherEntityNum2'), bits: UINT16  }, /*GENTITYNUM_BITS*/
+	{ path: FTA('loopSound'),       bits: UINT8   },
+	{ path: FTA('generic1'),        bits: UINT8   },
+	{ path: FTA('origin2[2]'),      bits: FLOAT32 },
+	{ path: FTA('origin2[0]'),      bits: FLOAT32 },
+	{ path: FTA('origin2[1]'),      bits: FLOAT32 },
+	{ path: FTA('modelIndex2'),     bits: UINT8   },
+	{ path: FTA('angles[0]'),       bits: FLOAT32 },
+	{ path: FTA('time'),            bits: UINT32  },
+	{ path: FTA('apos.trTime'),     bits: UINT32  },
+	{ path: FTA('apos.trDuration'), bits: UINT32  },
+	{ path: FTA('apos.trBase[2]'),  bits: FLOAT32 },
+	{ path: FTA('apos.trDelta[0]'), bits: FLOAT32 },
+	{ path: FTA('apos.trDelta[1]'), bits: FLOAT32 },
+	{ path: FTA('apos.trDelta[2]'), bits: FLOAT32 },
+	{ path: FTA('time2'),           bits: UINT32  },
+	{ path: FTA('angles[2]'),       bits: FLOAT32 },
+	{ path: FTA('angles2[0]'),      bits: FLOAT32 },
+	{ path: FTA('angles2[2]'),      bits: FLOAT32 },
+	{ path: FTA('constantLight'),   bits: UINT32  },
+	{ path: FTA('frame'),           bits: UINT16  }
+];
+
+/**
+ * WriteDeltaEntityState
+ *
+ * Writes part of a packetentities message, including the entity number.
+ * Can delta from either a baseline or a previous packet_entity.
+ * If to is NULL, a remove entity update will be sent.
+ * If force is not set, then nothing at all will be generated if the entity is
+ * identical, under the assumption that the in-order delta code will catch it.
+ */
+function WriteDeltaEntityState(msg, from, to, force) {
+	var i, changed;
+	var field, fromF, toF, func;
+
+	// A null to is a delta remove message.
+	if (to === null) {
+		if (from === null) {
+			return;
+		}
+		msg.writeShort(from.number);  /* GENTITYNUM_BITS */
+		msg.writeByte(0 | 1);  // removed | no delta
+		return;
+	}
+
+	// Sanity check.
+	if (to.number < 0 || to.number >= MAX_GENTITIES) {
+		throw new Error('WriteDeltaEntityState: Bad entity number: ', to.number);
+	}
+
+	// Figure out the number of fields that have changed.
+	changed = 0;
+	for (i = 0; i < entityStateFields.length; i++) {
+		field = entityStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+
+		if (fromF !== toF) {
+			changed++;
+		}
+	}
+
+	if (changed === 0) {
+		// Nothing at all changed.
+		if (!force) {
+			return;  // write nothing
+		}
+
+		msg.writeShort(to.number);  /* GENTITYNUM_BITS */
+		msg.writeByte(0);  // not removed | no delta
+		return;
+	}
+
+	msg.writeShort(to.number); /* GENTITYNUM_BITS */
+	msg.writeByte(0 | 2);  // not removed | we have a delta
+	msg.writeByte(changed); // number of fields changed
+
+	// Write out each field that has changed, prefixing 
+	// the changed field with its indexed into the ps
+	// field array.
+	for (i = 0; i < entityStateFields.length; i++) {
+		field = entityStateFields[i];
+
+		fromF = AGET(from, field.path);
+		toF = AGET(to, field.path);
+		if (fromF === toF) {
+			continue;
+		}
+
+		func = fnwrite(field.bits);
+
+		msg.writeByte(i);
+		msg[func](AGET(to, field.path));
+	}
+}
+
+/**
+ * ReadDeltaEntityState
+ *
+ * The entity number has already been read from the message, which
+ * is how the from state is identified.
+ * 
+ * If the delta removes the entity, entityState.number will be set to MAX_GENTITIES-1.
+ * 
+ * Can go from either a baseline or a previous packet entity.
+ */
+function ReadDeltaEntityState(msg, from, to, number) {
+	var i, changed;
+	var idx, field, fromF, toF, func;
+
+	if (number < 0 || number >= MAX_GENTITIES) {
+		throw new Error('Bad delta entity number: ', number);
+	}
+
+	var opmask = msg.readByte();
+	var remove = opmask & 1;
+	var delta = opmask & 2;
+
+	// Check for a remove
+	if (remove) {
+		to.reset();
+		to.number = MAX_GENTITIES - 1;
+		return;
+	}
+
+	// Clone the initial state.
+	from.clone(to);
+	to.number = number;
+
+	// Check for no delta.
+	if (!delta) {
+		return;
+	}
+
+	// Get the number of fields changed.
+	changed = msg.readByte();
+
+	// Read all the changed fields.
+	for (i = 0; i < changed; i++) {
+		idx = msg.readByte();
+		field = entityStateFields[idx];
+		func = fnread(field.bits);
+
+		ASET(to, field.path, msg[func]());
+	}
+}
+
+
+	return {
+		constants: {
+			BASE_FOLDER:           BASE_FOLDER,
+			MAX_QPATH:             MAX_QPATH,
+			CMD_BACKUP:            CMD_BACKUP,
+			SOLID_BMODEL:          SOLID_BMODEL,
+
+			SNAPFLAG_RATE_DELAYED: SNAPFLAG_RATE_DELAYED,
+			SNAPFLAG_NOT_ACTIVE:   SNAPFLAG_NOT_ACTIVE,
+			SNAPFLAG_SERVERCOUNT:  SNAPFLAG_SERVERCOUNT,
+
+			GENTITYNUM_BITS:       GENTITYNUM_BITS,
+			MAX_CLIENTS:           MAX_CLIENTS,
+			MAX_GENTITIES:         MAX_GENTITIES,
+			MAX_MODELS:            MAX_MODELS,
+			MAX_SOUNDS:            MAX_SOUNDS,
+
+			ENTITYNUM_NONE:        ENTITYNUM_NONE,
+			ENTITYNUM_WORLD:       ENTITYNUM_WORLD,
+			ENTITYNUM_MAX_NORMAL:  ENTITYNUM_MAX_NORMAL,
+
+			MOVE_RUN:              MOVE_RUN,
+
+			MAX_STATS:             MAX_STATS,
+			MAX_PERSISTANT:        MAX_PERSISTANT,
+			MAX_POWERUPS:          MAX_POWERUPS,
+			MAX_WEAPONS:           MAX_WEAPONS,
+			MAX_PS_EVENTS:         MAX_PS_EVENTS,
+			PMOVEFRAMECOUNTBITS:   PMOVEFRAMECOUNTBITS
+		},
+
+		enums: {
+			CVF:                   CVF,
+			BUTTON:                BUTTON,
+			TR:                    TR,
+			SURF:                  SURF,
+			CONTENTS:              CONTENTS
+		},
+
+		PlayerState:           PlayerState,
+		Trajectory:            Trajectory,
+		Orientation:           Orientation,
+		EntityState:           EntityState,
+
+		NetAdrType:            NetAdrType,
+		NetSrc:                NetSrc,
+		NetAdr:                NetAdr,
+		UserCmd:               UserCmd,
+
+		Lumps:                 Lumps,
+		MapSurfaceType:        MapSurfaceType,
+		lumps_t:               lumps_t,
+		dheader_t:             dheader_t,
+		dmodel_t:              dmodel_t,
+		dshader_t:             dshader_t,
+		dplane_t:              dplane_t,
+		dnode_t:               dnode_t,
+		dleaf_t:               dleaf_t,
+		dbrushside_t:          dbrushside_t,
+		dbrush_t:              dbrush_t,
+		dfog_t:                dfog_t,
+		drawVert_t:            drawVert_t,
+		dsurface_t:            dsurface_t,
+
+		atob64:                atob64,
+
+		WriteDeltaPlayerState: WriteDeltaPlayerState,
+		ReadDeltaPlayerState:  ReadDeltaPlayerState,
+		WriteDeltaEntityState: WriteDeltaEntityState,
+		ReadDeltaEntityState:  ReadDeltaEntityState
+	};
+});
 
 /**
  * ByteBuffer v0.0.1
@@ -7108,161 +7154,94 @@ else {
 /*global vec3: true, mat4: true */
 
 define('game/bg',
-['glmatrix', 'common/sh', 'common/qmath'],
-function (glmatrix, sh, qm) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+['glmatrix', 'common/qmath', 'common/sh'],
+function (glmatrix, QMath, sh) {
+	// Use the following namespaces.
+	var using = _.extend({},
+		sh.constants,
+		sh.enums
+	);
+	for (var key in using) {
+		if (using.hasOwnProperty(key)) {
+			eval('var ' + key + ' = using[key];');
+		}
+	}
 
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
-	var GIB_HEALTH = -40;
-var ARMOR_PROTECTION = 0.66;
+	var ARMOR_PROTECTION = 0.66;
 
 var DEFAULT_SHOTGUN_SPREAD = 700;
-var DEFAULT_SHOTGUN_COUNT = 11;
+var DEFAULT_SHOTGUN_COUNT  = 11;
 
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-var MINS_Z = -24;
+var MINS_Z             = -24;
 var DEFAULT_VIEWHEIGHT = 26;
-var CROUCH_VIEWHEIGHT = 12;
-var DEAD_VIEWHEIGHT = -16;
+var CROUCH_VIEWHEIGHT  = 12;
+var DEAD_VIEWHEIGHT    = -16;
+
+var PmoveLocals = function () {
+	this.reset();
+};
+
+PmoveLocals.prototype.reset = function () {
+	this.forward             = [0, 0, 0];
+	this.right               = [0, 0, 0];
+	this.up                  = [0, 0, 0];
+	
+	this.frameTime           = 0;
+	this.msec                = 0;
+
+	this.walking             = false;
+	this.groundPlane         = false;
+	this.groundTrace         = null; // TODO pre-alloc
+
+	this.impactSpeed         = 0;
+
+	this.previous_origin     = [0, 0, 0];
+	this.previous_velocity   = [0, 0, 0];
+	this.previous_waterlevel = 0;
+};
+
+var PmoveInfo = function () {
+	this.ps         = null;
+	this.cmd        = new sh.UserCmd();
+	this.mins       = [0, 0, 0];
+	this.maxs       = [0, 0, 0];
+	this.tracemask  = 0;                                   // collide against these surfaces
+	//this.framecount = 0;
+
+	// results (out)
+	//this.numtouch = 0;
+	//this.touchents = null; //[MAXTOUCH];
+	this.xyspeed    = 0;
+	this.watertype  = 0;
+	this.waterlevel = 0;
+
+	// callbacks to test the world
+	// these will be different functions during game and cgame
+	this.trace      = null;
+};
+
+var GameItemDesc = function (classname, pickupSound, models, icon, pickupName, quantity, giType, giTag, precache, sounds) {
+	this.classname   = classname;                           // spawning name
+	this.pickupSound = pickupSound;
+	this.models      = models;
+	this.icon        = icon;
+	this.pickupName  = pickupName;
+	this.quantity    = quantity;
+	this.giType      = giType;                              // IT_* flags
+	this.giTag       = giTag;
+	this.precache    = precache;
+	this.sounds      = sounds;
+};
+
+var Animation = function () {
+	this.firstFrame  = 0;
+	this.numFrames   = 0;
+	this.loopFrames  = 0;                                  // 0 to numFrames
+	this.frameLerp   = 0;                                  // msec between frames
+	this.initialLerp = 0;                                  // msec to get to first frame
+	this.reversed    = false;                              // true if animation is reversed
+	this.flipflop    = false;                              // true if animation should flipflop back to base
+};
 
 var PM = {
 	NORMAL:       0,                                       // can accelerate and turn
@@ -7364,6 +7343,14 @@ var PW = {
 	BLUEFLAG:     8,
 	NEUTRALFLAG:  9,
 	NUM_POWERUPS: 10
+};
+
+var TEAM = {
+	FREE:      0,
+	RED:       1,
+	BLUE:      2,
+	SPECTATOR: 3,
+	NUM_TEAMS: 4
 };
 
 // PlayerState.persistant[] indexes
@@ -7639,78 +7626,6 @@ var MOD = {
 	GRAPPLE:        23
 };
 
-	var DEFAULT_GRAVITY = 800;
-
-var JUMP_VELOCITY = 270;
-var MAX_CLIP_PLANES = 5;
-var MIN_WALK_NORMAL = 0.7;
-var STEPSIZE = 18;
-var OVERCLIP = 1.001;
-var DEFAULT_VIEWHEIGHT = 26;
-
-var PmoveLocals = function () {
-	this.reset();
-};
-
-PmoveLocals.prototype.reset = function () {
-	this.forward             = [0, 0, 0];
-	this.right               = [0, 0, 0];
-	this.up                  = [0, 0, 0];
-	
-	this.frameTime           = 0;
-	this.msec                = 0;
-
-	this.walking             = false;
-	this.groundPlane         = false;
-	this.groundTrace         = null; // TODO pre-alloc
-
-	this.impactSpeed         = 0;
-
-	this.previous_origin     = [0, 0, 0];
-	this.previous_velocity   = [0, 0, 0];
-	this.previous_waterlevel = 0;
-};
-
-var PmoveInfo = function () {
-	this.ps        = null;
-	this.cmd       = null;
-	this.mins      = [0, 0, 0];
-	this.maxs      = [0, 0, 0];
-	this.tracemask = 0;                                    // collide against these surfaces
-	//this.framecount = 0;
-
-	// results (out)
-	//this.numtouch = 0;
-	//this.touchents = null; //[MAXTOUCH];
-	this.xyspeed   = 0;
-
-	// callbacks to test the world
-	// these will be different functions during game and cgame
-	this.trace     = null;
-};
-
-var GameItemDesc = function (classname, pickupSound, models, icon, pickupName, quantity, giType, giTag, precache, sounds) {
-	this.classname   = classname;                           // spawning name
-	this.pickupSound = pickupSound;
-	this.models      = models;
-	this.icon        = icon;
-	this.pickupName  = pickupName;
-	this.quantity    = quantity;
-	this.giType      = giType;                              // IT_* flags
-	this.giTag       = giTag;
-	this.precache    = precache;
-	this.sounds      = sounds;
-};
-
-var Animation = function () {
-	this.firstFrame  = 0;
-	this.numFrames   = 0;
-	this.loopFrames  = 0;                                  // 0 to numFrames
-	this.frameLerp   = 0;                                  // msec between frames
-	this.initialLerp = 0;                                  // msec to get to first frame
-	this.reversed    = false;                              // true if animation is reversed
-	this.flipflop    = false;                              // true if animation should flipflop back to base
-};
 	/**
  * AddPredictableEventToPlayerstate
  *
@@ -7731,7 +7646,7 @@ function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {
 function PlayerStateToEntityState(ps, es) {
 	/*if (ps.pm_type === PM.INTERMISSION || ps.pm_type === PM.SPECTATOR) {
 		es.eType = ET.INVISIBLE;
-	} else if ( ps.stats[STAT_HEALTH] <= GIB_HEALTH ) {
+	} else if ( ps.stats[STAT.HEALTH] <= GIB_HEALTH ) {
 		es.eType = ET.INVISIBLE;
 	} else {
 		es.eType = ET.PLAYER;
@@ -7747,7 +7662,7 @@ function PlayerStateToEntityState(ps, es) {
 	es.apos.trType = TR.INTERPOLATE;
 	vec3.set(ps.viewangles, es.apos.trBase);
 
-	es.angles2[qm.YAW] = ps.movementDir;
+	es.angles2[QMath.YAW] = ps.movementDir;
 	es.legsAnim = ps.legsAnim;
 	es.torsoAnim = ps.torsoAnim;
 	es.clientNum = ps.clientNum;                  // ET_PLAYER looks here instead of at number
@@ -7826,7 +7741,7 @@ function EvaluateTrajectory(tr, atTime, result) {
 			result[2] -= 0.5 * DEFAULT_GRAVITY * deltaTime * deltaTime;  // FIXME: local gravity...
 			break;
 		default:
-			com.error(sh.Err.DROP, 'EvaluateTrajectory: unknown trType: ' + tr.trType);
+			com.error(ERR.DROP, 'EvaluateTrajectory: unknown trType: ' + tr.trType);
 			break;
 	}
 }
@@ -7867,7 +7782,7 @@ function EvaluateTrajectoryDelta(tr, atTime, result) {
 			result[2] -= DEFAULT_GRAVITY * deltaTime;  // FIXME: local gravity...
 			break;
 		default:
-			com.error(sh.Err.DROP, 'EvaluateTrajectoryDelta: unknown trType: ' + tr.trType);
+			com.error(ERR.DROP, 'EvaluateTrajectoryDelta: unknown trType: ' + tr.trType);
 			break;
 	}
 }
@@ -7890,9 +7805,9 @@ function TouchJumpPad(ps, jumppad) {
 	// then don't play the event sound again if we are in a fat trigger
 	if (ps.jumppad_ent !== jumppad.number) {
 		var angles = [0, 0, 0];
-		qm.VectorToAngles(jumppad.origin2, angles);
+		QMath.VectorToAngles(jumppad.origin2, angles);
 
-		var p = Math.abs(qm.AngleNormalize180(angles[qm.PITCH]));
+		var p = Math.abs(QMath.AngleNormalize180(angles[QMath.PITCH]));
 		var effectNum = p < 45 ? 0 : 1;
 
 		AddPredictableEventToPlayerstate(ps, EV.JUMP_PAD, effectNum);
@@ -7960,12 +7875,12 @@ function CanItemBeGrabbed(gametype, ent, ps) {
 	// 			// ent.modelIndex2 is non-zero on items if they are dropped
 	// 			// we need to know this because we can pick up our dropped flag (and return it)
 	// 			// but we can't pick up our flag at base
-	// 			if (ps.persistant[PERS_TEAM] == TEAM_RED) {
+	// 			if (ps.persistant[PERS.TEAM] == TEAM_RED) {
 	// 				if (item.giTag == PW_BLUEFLAG ||
 	// 					(item.giTag == PW_REDFLAG && ent.modelIndex2) ||
 	// 					(item.giTag == PW_REDFLAG && ps.powerups[PW_BLUEFLAG]) )
 	// 					return true;
-	// 			} else if (ps.persistant[PERS_TEAM] == TEAM_BLUE) {
+	// 			} else if (ps.persistant[PERS.TEAM] == TEAM_BLUE) {
 	// 				if (item.giTag == PW_REDFLAG ||
 	// 					(item.giTag == PW_BLUEFLAG && ent.modelIndex2) ||
 	// 					(item.giTag == PW_BLUEFLAG && ps.powerups[PW_REDFLAG]) )
@@ -8018,6 +7933,12 @@ function PlayerTouchesItem(ps, item, atTime) {
 	var pml = new PmoveLocals();
 var pm = null;  // current pmove
 
+var DEFAULT_GRAVITY = 800;
+var MAX_CLIP_PLANES = 5;
+var MIN_WALK_NORMAL = 0.7;
+var STEPSIZE = 18;
+var OVERCLIP = 1.001;
+
 // Movement parameters.
 var pm_stopspeed = 100;
 var pm_duckScale = 0.25;
@@ -8033,6 +7954,8 @@ var pm_waterfriction = 1.0;
 var pm_flightfriction = 3.0;
 var pm_spectatorfriction = 5.0;
 
+var pm_jumpvelocity = 270;
+
 /**
  * Pmove
  */
@@ -8040,21 +7963,30 @@ function Pmove(pmove) {
 	var ps = pmove.ps;
 	var cmd = pmove.cmd;
 
+	var finalTime = cmd.serverTime;
+
 	// TODO WHY DOES THIS HAPPEN
-	if (cmd.serverTime < ps.commandTime) {
-		//com.error(sh.Err.DROP, 'Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
+	if (finalTime < ps.commandTime) {
+		//com.error(ERR.DROP, 'Pmove: cmd.serverTime < ps.commandTime', cmd.serverTime, ps.commandTime);
 		return;  // should not happen
 	}
 
-	if (cmd.serverTime > ps.commandTime + 1000) {
-		ps.commandTime = cmd.serverTime - 1000;
+	if (finalTime > ps.commandTime + 1000) {
+		ps.commandTime = finalTime - 1000;
 	}
 
 	ps.pmove_framecount = (ps.pmove_framecount+1) & ((1<<PMOVEFRAMECOUNTBITS)-1);
 
 	// Chop the move up if it is too long, to prevent framerate
 	// dependent behavior.
-	while (ps.commandTime != cmd.serverTime) {
+	while (ps.commandTime !== cmd.serverTime) {
+		var msec = finalTime - ps.commandTime;
+		if ( msec > 66 ) {
+			msec = 66;
+		}
+
+		cmd.serverTime = ps.commandTime + msec;
+
 		PmoveSingle(pmove);
 
 		if (pmove.ps.pm_flags & PMF.JUMP_HELD) {
@@ -8075,12 +8007,15 @@ function PmoveSingle(pmove) {
 	// Clear all pmove local vars.
 	pml.reset();
 
+	// Determine the time.
 	pml.msec = cmd.serverTime - ps.commandTime;
 	if (pml.msec < 1) {
 		pml.msec = 1;
-	} else if (pml.msec > 66) {
-		pml.msec = 66;
+	} else if (pml.msec > 200) {
+		pml.msec = 200;
 	}
+	ps.commandTime = cmd.serverTime;
+	pml.frameTime = pml.msec * 0.001;
 
 	// Make sure walking button is clear if they are running, to avoid
 	// proxy no-footsteps cheats.
@@ -8102,13 +8037,9 @@ function PmoveSingle(pmove) {
 		ps.pm_flags &= ~PMF.RESPAWNED;
 	}
 
-	// Determine the time.
-	ps.commandTime = cmd.serverTime;
-	pml.frameTime = pml.msec * 0.001;
-
 	// Update our view angles.
 	UpdateViewAngles(ps, cmd);
-	qm.AnglesToVectors(ps.viewangles, pml.forward, pml.right, pml.up);
+	QMath.AnglesToVectors(ps.viewangles, pml.forward, pml.right, pml.up);
 
 	// Make sure walking button is clear if they are running, to avoid
 	// proxy no-footsteps cheats.
@@ -8134,30 +8065,30 @@ function PmoveSingle(pmove) {
 		cmd.upmove = 0;
 	}
 
-	// if ( pm->ps->pm_type == PM_SPECTATOR ) {
+	// if ( pm.ps.pm_type == PM_SPECTATOR ) {
 	// 	PM_CheckDuck ();
 	// 	PM_FlyMove ();
 	// 	PM_DropTimers ();
 	// 	return;
 	// }
 
-	// if ( pm->ps->pm_type == PM_NOCLIP ) {
+	// if ( pm.ps.pm_type == PM_NOCLIP ) {
 	// 	PM_NoclipMove ();
 	// 	PM_DropTimers ();
 	// 	return;
 	// }
 
-	// if (pm->ps->pm_type == PM_FREEZE) {
+	// if (pm.ps.pm_type == PM_FREEZE) {
 	// 	return;		// no movement at all
 	// }
 
-	// if ( pm->ps->pm_type == PM_INTERMISSION || pm->ps->pm_type == PM_SPINTERMISSION) {
+	// if ( pm.ps.pm_type == PM_INTERMISSION || pm.ps.pm_type == PM_SPINTERMISSION) {
 	// 	return;		// no movement at all
 	// }
 
 	// // set watertype, and waterlevel
 	// PM_SetWaterLevel();
-	// pml.previous_waterlevel = pmove->waterlevel;
+	// pml.previous_waterlevel = pmove.waterlevel;
 
 	// Set mins, maxs and viewheight.
 	CheckDuck();
@@ -8285,7 +8216,7 @@ function CheckJump() {
 	ps.pm_flags |= PMF.JUMP_HELD;
 
 	ps.groundEntityNum = ENTITYNUM_NONE;
-	ps.velocity[2] = JUMP_VELOCITY;
+	ps.velocity[2] = pm_jumpvelocity;
 	AddEvent(EV.JUMP);
 
 	if (pm.cmd.forwardmove >= 0) {
@@ -8945,7 +8876,7 @@ function UpdateViewAngles(ps, cmd) {
 			temp = temp - 0xFFFF;
 		}
 
-		if (i === qm.PITCH) {
+		if (i === QMath.PITCH) {
 			// Don't let the player look up or down more than 90 degrees.
 			if (temp > 16000) {
 				ps.delta_angles[i] = 16000 - cmd.angles[i];
@@ -8956,7 +8887,7 @@ function UpdateViewAngles(ps, cmd) {
 			}
 		}
 
-		ps.viewangles[i] = qm.ShortToAngle(temp);
+		ps.viewangles[i] = QMath.ShortToAngle(temp);
 	}
 }
 
@@ -8991,7 +8922,7 @@ function UpdateWeapon() {
 	}
 
 	// // ignore if spectator
-	// if ( pm->ps->persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
+	// if ( pm.ps.persistant[PERS.TEAM] == TEAM_SPECTATOR ) {
 	// 	return;
 	// }
 
@@ -9002,20 +8933,20 @@ function UpdateWeapon() {
 	}
 
 	// // check for item using
-	// if ( pm->cmd.buttons & BUTTON_USE_HOLDABLE ) {
-	// 	if ( ! ( pm->ps->pm_flags & PMF.USE_ITEM_HELD ) ) {
-	// 		if ( bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag == HI_MEDKIT
-	// 			&& pm->ps->stats[STAT_HEALTH] >= (pm->ps->stats[STAT_MAX_HEALTH] + 25) ) {
+	// if ( pm.cmd.buttons & BUTTON_USE_HOLDABLE ) {
+	// 	if ( ! ( pm.ps.pm_flags & PMF.USE_ITEM_HELD ) ) {
+	// 		if ( bg_itemlist[pm.ps.stats[STAT.HOLDABLE_ITEM]].giTag == HI_MEDKIT
+	// 			&& pm.ps.stats[STAT.HEALTH] >= (pm.ps.stats[STAT.MAX_HEALTH] + 25) ) {
 	// 			// don't use medkit if at max health
 	// 		} else {
-	// 			pm->ps->pm_flags |= PMF.USE_ITEM_HELD;
-	// 			PM_AddEvent( EV_USE_ITEM0 + bg_itemlist[pm->ps->stats[STAT_HOLDABLE_ITEM]].giTag );
-	// 			pm->ps->stats[STAT_HOLDABLE_ITEM] = 0;
+	// 			pm.ps.pm_flags |= PMF.USE_ITEM_HELD;
+	// 			PM_AddEvent( EV_USE_ITEM0 + bg_itemlist[pm.ps.stats[STAT.HOLDABLE_ITEM]].giTag );
+	// 			pm.ps.stats[STAT.HOLDABLE_ITEM] = 0;
 	// 		}
 	// 		return;
 	// 	}
 	// } else {
-	// 	pm->ps->pm_flags &= ~PMF.USE_ITEM_HELD;
+	// 	pm.ps.pm_flags &= ~PMF.USE_ITEM_HELD;
 	// }
 
 	// Make weapon function.
@@ -9712,6 +9643,37 @@ var itemList = [
 
 	
 	return {
+		constants: {
+			ARMOR_PROTECTION:       ARMOR_PROTECTION,
+			DEFAULT_SHOTGUN_SPREAD: DEFAULT_SHOTGUN_SPREAD,
+			DEFAULT_SHOTGUN_COUNT:  DEFAULT_SHOTGUN_COUNT,
+
+			ANIM_TOGGLEBIT:         ANIM_TOGGLEBIT,
+
+			EV_EVENT_BIT1:          EV_EVENT_BIT1,
+			EV_EVENT_BIT2:          EV_EVENT_BIT2,
+			EV_EVENT_BITS:          EV_EVENT_BITS,
+			EVENT_VALID_MSEC:       EVENT_VALID_MSEC
+		},
+
+		enums: {
+			PM:   PM,
+			PMF:  PMF,
+			WS:   WS,
+			IT:   IT,
+			MASK: MASK,
+			STAT: STAT,
+			WP:   WP,
+			PW:   PW,
+			TEAM: TEAM,
+			PERS: PERS,
+			ET:   ET,
+			EF:   EF,
+			EV:   EV,
+			ANIM: ANIM,
+			MOD:  MOD,
+		},
+
 		PmoveInfo:                        PmoveInfo,
 		Animation:                        Animation,
 
@@ -9731,555 +9693,33 @@ var itemList = [
 /*global vec3: true, mat4: true */
 
 define('game/gm',
-['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
-function (_, glmatrix, sh, qm, bg) {
-	function Game(com, sv) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-		var GIB_HEALTH = -40;
-var ARMOR_PROTECTION = 0.66;
-
-var DEFAULT_SHOTGUN_SPREAD = 700;
-var DEFAULT_SHOTGUN_COUNT = 11;
-
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-var MINS_Z = -24;
-var DEFAULT_VIEWHEIGHT = 26;
-var CROUCH_VIEWHEIGHT = 12;
-var DEAD_VIEWHEIGHT = -16;
-
-var PM = {
-	NORMAL:       0,                                       // can accelerate and turn
-	NOCLIP:       1,                                       // noclip movement
-	SPECTATOR:    2,                                       // still run into walls
-	DEAD:         3,                                       // no acceleration or turning, but free falling
-	FREEZE:       4,                                       // stuck in place with no control
-	INTERMISSION: 5                                        // no movement or status bar
-};
-
-var PMF = {
-	DUCKED:         1,
-	JUMP_HELD:      2,
-	BACKWARDS_JUMP: 8,                                     // go into backwards land
-	BACKWARDS_RUN:  16,                                    // coast down to backwards run
-	TIME_LAND:      32,                                    // pm_time is time before rejump
-	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
-	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
-	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
-	USE_ITEM_HELD:  1024,
-	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
-	FOLLOW:         4096,                                  // spectate following another player
-	SCOREBOARD:     8192,                                  // spectate as a scoreboard
-	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
-	ALL_TIMES:      (32|64|256)
-};
-
-// Weapon state.
-var WS = {
-	READY:    0,
-	RAISING:  1,
-	DROPPING: 2,
-	FIRING:   3
-};
-
-// Item types.
-var IT = {
-	BAD:                0,
-	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
-	AMMO:               2,                                 // EFX: rotate
-	ARMOR:              3,                                 // EFX: rotate + minlight
-	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
-	POWERUP:            5,                                 // instant on, timer based
-	                                                       // EFX: rotate + external ring that rotates
-	HOLDABLE:           6,                                 // single use, holdable item
-	                                                       // EFX: rotate + bob
-	PERSISTANT_POWERUP: 7,
-	TEAM:               8
-};
-
-var MASK = {
-	ALL:         -1,
-	SOLID:       CONTENTS.SOLID,
-	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
-	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
-	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
-	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
-	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
-};
-
-/**
- * Playerstate flags
- */
-var STAT = {
-	HEALTH:        0,
-	HOLDABLE_ITEM: 1,
-	WEAPONS:       2,
-	ARMOR:         3,
-	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
-	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	MAX_HEALTH:    6				// health / armor limit, changable by handicap
-};
-
-var WP = {
-	NONE:             0,
-	GAUNTLET:         1,
-	MACHINEGUN:       2,
-	SHOTGUN:          3,
-	GRENADE_LAUNCHER: 4,
-	ROCKET_LAUNCHER:  5,
-	LIGHTNING:        6,
-	RAILGUN:          7,
-	PLASMAGUN:        8,
-	BFG:              9,
-	GRAPPLING_HOOK:   10,
-	NUM_WEAPONS:      11
-};
-
-// NOTE: may not have more than 16
-var PW = {
-	NONE:         0,
-	QUAD:         1,
-	BATTLESUIT:   2,
-	HASTE:        3,
-	INVIS:        4,
-	REGEN:        5,
-	FLIGHT:       6,
-	REDFLAG:      7,
-	BLUEFLAG:     8,
-	NEUTRALFLAG:  9,
-	NUM_POWERUPS: 10
-};
-
-// PlayerState.persistant[] indexes
-// These fields are the only part of player_state that aren't
-// cleared on respawn.
-// NOTE: may not have more than 16
-var PERS = {
-	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
-	RANK:                 2,                               // player rank or team rank
-	TEAM:                 3,                               // player team
-	SPAWN_COUNT:          4,                               // incremented every respawn
-	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
-	ATTACKER:             6,                               // clientnum of last damage inflicter
-	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
-	KILLED:               8,                               // count of the number of times you died
-	// player awards tracking
-	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
-	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
-	DEFEND_COUNT:         11,                              // defend awards
-	ASSIST_COUNT:         12,                              // assist awards
-	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
-	CAPTURES:             14                               // captures
-};
-
-/**
- * Entitystate flags
- */
-// entityState_t->eType
-var ET = {
-	GENERAL:          0,
-	PLAYER:           1,
-	ITEM:             2,
-	MISSILE:          3,
-	MOVER:            4,
-	BEAM:             5,
-	PORTAL:           6,
-	SPEAKER:          7,
-	PUSH_TRIGGER:     8,
-	TELEPORT_TRIGGER: 9,
-	INVISIBLE:        10,
-	GRAPPLE:          11,                                  // grapple hooked on wall
-	TEAM:             12,
-	EVENTS:           13                                   // any of the EV_* events can be added freestanding
-	                                                       // by setting eType to ET_EVENTS + eventNum
-	                                                       // this avoids having to set eFlags and eventNum
-};
-
-// entityState_t->eFlags
-var EF = {
-	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
-	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
-	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
-	PLAYER_EVENT:     0x00000010,
-	BOUNCE:           0x00000010,                          // for missiles
-	BOUNCE_HALF:      0x00000020,                          // for missiles
-	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
-	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
-	FIRING:           0x00000100,                          // for lightning gun
-	KAMIKAZE:         0x00000200,
-	MOVER_STOP:       0x00000400,                          // will push otherwise
-	AWARD_CAP:        0x00000800,                          // draw the capture sprite
-	TALK:             0x00001000,                          // draw a talk balloon
-	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
-	VOTED:            0x00004000,                          // already cast a vote
-	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
-	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
-	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
-	AWARD_DENIED:     0x00040000,                          // denied
-	TEAMVOTED:        0x00080000                           // already cast a team vote
-};
-
-/**********************************************************
- * 
- * Entitystate events
- * 
- * Entity events are for effects that take place relative
- * to an existing entities origin. Very network efficient.
- *
- * Two bits at the top of the entityState->event field
- * will be incremented with each change in the event so
- * that an identical event started twice in a row can
- * be distinguished. And off the value with ~EV_EVENT_BITS
- * to retrieve the actual event number.
- *
- **********************************************************/
-var EV_EVENT_BIT1    = 0x00000100;
-var EV_EVENT_BIT2    = 0x00000200;
-var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
-var EVENT_VALID_MSEC = 300;
-
-var EV = {
-	NONE:                0,
-
-	FOOTSTEP:            1,
-	FOOTSTEP_METAL:      2,
-	FOOTSPLASH:          3,
-	FOOTWADE:            4,
-	SWIM:                5,
-
-	STEP_4:              6,
-	STEP_8:              7,
-	STEP_12:             8,
-	STEP_16:             9,
-
-	FALL_SHORT:          10,
-	FALL_MEDIUM:         11,
-	FALL_FAR:            12,
-
-	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
-
-	JUMP:                14,
-	WATER_TOUCH:         15,                               // foot touches
-	WATER_LEAVE:         16,                               // foot leaves
-	WATER_UNDER:         17,                               // head touches
-	WATER_CLEAR:         18,                               // head leaves
-
-	ITEM_PICKUP:         19,                               // normal item pickups are predictable
-	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
-
-	NOAMMO:              21,
-	CHANGE_WEAPON:       22,
-	FIRE_WEAPON:         23,
-
-	USE_ITEM0:           24,
-	USE_ITEM1:           25,
-	USE_ITEM2:           26,
-	USE_ITEM3:           27,
-	USE_ITEM4:           28,
-	USE_ITEM5:           29,
-	USE_ITEM6:           30,
-	USE_ITEM7:           31,
-	USE_ITEM8:           32,
-	USE_ITEM9:           33,
-	USE_ITEM10:          34,
-	USE_ITEM11:          35,
-	USE_ITEM12:          36,
-	USE_ITEM13:          37,
-	USE_ITEM14:          38,
-	USE_ITEM15:          39,
-
-	ITEM_RESPAWN:        40,
-	ITEM_POP:            41,
-	PLAYER_TELEPORT_IN:  42,
-	PLAYER_TELEPORT_OUT: 43,
-
-	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
-
-	GENERAL_SOUND:       45,
-	GLOBAL_SOUND:        46,                               // no attenuation
-	GLOBAL_TEAM_SOUND:   47,
-
-	BULLET_HIT_FLESH:    48,
-	BULLET_HIT_WALL:     49,
-
-	MISSILE_HIT:         50,
-	MISSILE_MISS:        51,
-	MISSILE_MISS_METAL:  52,
-	RAILTRAIL:           53,
-	SHOTGUN:             54,
-	BULLET:              55,                               // otherEntity is the shooter
-
-	PAIN:                56,
-	DEATH1:              57,
-	DEATH2:              58,
-	DEATH3:              59,
-	OBITUARY:            60,
-
-	POWERUP_QUAD:        61,
-	POWERUP_BATTLESUIT:  62,
-	POWERUP_REGEN:       63,
-
-	GIB_PLAYER:          64,                               // gib a previously living player
-	SCOREPLUM:           65,                               // score plum
-
-	DEBUG_LINE:          66,
-	STOPLOOPINGSOUND:    67,
-	TAUNT:               68,
-	TAUNT_YES:           69,
-	TAUNT_NO:            70,
-	TAUNT_FOLLOWME:      71,
-	TAUNT_GETFLAG:       72,
-	TAUNT_GUARDBASE:     73,
-	TAUNT_PATROL:        74
-};
-
-/**
- * Animations
- */
-// Flip the togglebit every time an animation
-// changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
-
-var ANIM = {
-	BOTH_DEATH1:         0,
-	BOTH_DEAD1:          1,
-	BOTH_DEATH2:         2,
-	BOTH_DEAD2:          3,
-	BOTH_DEATH3:         4,
-	BOTH_DEAD3:          5,
-
-	TORSO_GESTURE:       6,
-
-	TORSO_ATTACK:        7,
-	TORSO_ATTACK2:       8,
-
-	TORSO_DROP:          9,
-	TORSO_RAISE:         10,
-
-	TORSO_STAND:         11,
-	TORSO_STAND2:        12,
-
-	LEGS_WALKCR:         13,
-	LEGS_WALK:           14,
-	LEGS_RUN:            15,
-	LEGS_BACK:           16,
-	LEGS_SWIM:           17,
-
-	LEGS_JUMP:           18,
-	LEGS_LAND:           19,
-
-	LEGS_JUMPB:          20,
-	LEGS_LANDB:          21,
-
-	LEGS_IDLE:           22,
-	LEGS_IDLECR:         23,
-
-	LEGS_TURN:           24,
-
-	TORSO_GETFLAG:       25,
-	TORSO_GUARDBASE:     26,
-	TORSO_PATROL:        27,
-	TORSO_FOLLOWME:      28,
-	TORSO_AFFIRMATIVE:   29,
-	TORSO_NEGATIVE:      30,
-
-	MAX:                 31,
-
-	LEGS_BACKCR:         32,
-	LEGS_BACKWALK:       33,
-	FLAG_RUN:            34,
-	FLAG_STAND:          35,
-	FLAG_STAND2RUN:      36,
-
-	MAX_TOTALANIMATIONS: 37
-};
-
-// Means of death
-var MOD = {
-	UNKNOWN:        0,
-	SHOTGUN:        1,
-	GAUNTLET:       2,
-	MACHINEGUN:     3,
-	GRENADE:        4,
-	GRENADE_SPLASH: 5,
-	ROCKET:         6,
-	ROCKET_SPLASH:  7,
-	PLASMA:         8,
-	PLASMA_SPLASH:  9,
-	RAILGUN:        10,
-	LIGHTNING:      11,
-	BFG:            12,
-	BFG_SPLASH:     13,
-	WATER:          14,
-	SLIME:          15,
-	LAVA:           16,
-	CRUSH:          17,
-	TELEFRAG:       18,
-	FALLING:        19,
-	SUICIDE:        20,
-	TARGET_LASER:   21,
-	TRIGGER_HURT:   22,
-	GRAPPLE:        23
-};
-
-
-		// The server does not know how to interpret most of the values
-// in entityStates (level eType), so the game must explicitly flag
-// special server behaviors.
-var SVF = {
-	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
-	BOT:                0x00000002,                        // set if the entity is a bot
-	BROADCAST:          0x00000008,                        // send to all connected clients
-	PORTAL:             0x00000020,                        // merge a second pvs at origin2 into snapshots
-	USE_CURRENT_ORIGIN: 0x00000040,                        // entity->r.currentOrigin instead of entity->s.origin
-	                                                       // for link position (missiles and movers)
-	SINGLECLIENT:       0x00000080,                        // only send to a single client (entityShared_t->singleClient)
-	NOTSINGLECLIENT:    0x00000100                         // send entity to everyone but one client
-};
-
-		var FRAMETIME = 100; // msec
+['underscore', 'glmatrix', 'common/qmath', 'common/sh', 'game/bg'],
+function (_, glmatrix, QMath, sh, bg) {
+	function Game(imp) {
+		var sys = imp.sys;
+		var com = imp.com;
+		var sv  = imp.sv;
+
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums,
+			com.enums,
+			bg.constants,
+			bg.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
+
+		var FRAMETIME = 100;  // msec
+
+var GIB_HEALTH = -40;
+var ITEM_RADIUS = 15;
 var CARNAGE_REWARD_TIME = 3000;
-var REWARD_SPRITE_TIME = 2000;
+var REWARD_SPRITE_TIME  = 2000;
 
 var DAMAGE = {
 	RADIUS:        0x00000001,                             // damage was indirect
@@ -10311,6 +9751,20 @@ var LevelLocals = function () {
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		this.gentities[i] = new GameEntity();
 	}
+};
+
+// The server does not know how to interpret most of the values
+// in entityStates (level eType), so the game must explicitly flag
+// special server behaviors.
+var SVF = {
+	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
+	BOT:                0x00000002,                        // set if the entity is a bot
+	BROADCAST:          0x00000008,                        // send to all connected clients
+	PORTAL:             0x00000020,                        // merge a second pvs at origin2 into snapshots
+	USE_CURRENT_ORIGIN: 0x00000040,                        // entity->r.currentOrigin instead of entity->s.origin
+	                                                       // for link position (missiles and movers)
+	SINGLECLIENT:       0x00000080,                        // only send to a single client (entityShared_t->singleClient)
+	NOTSINGLECLIENT:    0x00000100                         // send entity to everyone but one client
 };
 
 var GameEntity = function () {
@@ -10395,6 +9849,9 @@ GameEntity.prototype.reset = function () {
 
 	this.timestamp           = 0;                          // body queue sinking, etc
 
+	this.painDebounceTime    = 0;
+	this.flyDebounceTime     = 0;                          // wind tunnel
+
 	this.health              = 0;
 	this.takeDamage          = false;
 
@@ -10422,6 +9879,10 @@ var GameClient = function () {
 
 	this.noclip            = false;
 
+	this.lastCmdTime       = 0;                            // level.time of last usercmd_t, for EF_CONNECTION
+	                                                       // we can't just use pers.lastCommand.time, because
+	                                                       // of the g_sycronousclients case
+
 	this.oldOrigin         = [0, 0, 0];
 
 	// Sum up damage over an entire frame, so
@@ -10446,6 +9907,9 @@ var GameClient = function () {
 	this.inactivityTime    = 0;                            // kick players when time > this
 	this.inactivityWarning = 0;                            // true if the five second warning has been given
 	this.rewardTime        = 0;                            // clear the EF.AWARD_IMPRESSIVE, etc when time > this
+
+	//
+	this.airOutTime        = 0;
 };
 
 // Client data that stays across multiple respawns, but is cleared
@@ -10456,7 +9920,8 @@ var GameClientPersistant = function () {
 };
 		var level;
 
-var g_speed,
+var g_synchronousClients,
+	g_speed,
 	g_gravity,
 	g_knockback,
 	g_quadfactor,
@@ -10466,7 +9931,6 @@ var g_speed,
 	g_inactivity,
 	g_debugMove,
 	g_debugDamage,
-	g_debugAlloc,
 	g_motd,
 	g_blood;
 
@@ -10483,7 +9947,7 @@ function log() {
  * error
  */
 function error(str) {
-	com.error(sh.Err.DROP, str);
+	com.error(ERR.DROP, str);
 }
 
 /**
@@ -10496,19 +9960,19 @@ function Init(levelTime) {
 	level.time = levelTime;
 	level.startTime = levelTime;
 	
-	g_speed             = com.AddCvar('g_speed',             320);
-	g_gravity           = com.AddCvar('g_gravity',           800);
-	g_knockback         = com.AddCvar('g_knockback',         1000);
-	g_quadfactor        = com.AddCvar('g_quadfactor',        3);
-	g_weaponRespawn     = com.AddCvar('g_weaponrespawn',     5);
-	g_weaponTeamRespawn = com.AddCvar('g_weaponTeamRespawn', 30);
-	g_forcerespawn      = com.AddCvar('g_forcerespawn',      20);
-	g_inactivity        = com.AddCvar('g_inactivity',        0);
-	g_debugMove         = com.AddCvar('g_debugMove',         0);
-	g_debugDamage       = com.AddCvar('g_debugDamage',       0);
-	g_debugAlloc        = com.AddCvar('g_debugAlloc',        0);
-	g_motd              = com.AddCvar('g_motd',              "");
-	g_blood             = com.AddCvar('g_blood',             1);
+	g_synchronousClients = com.AddCvar('g_synchronousClients', 0,     CVF.SYSTEMINFO)
+	g_speed              = com.AddCvar('g_speed',              320);
+	g_gravity            = com.AddCvar('g_gravity',            800);
+	g_knockback          = com.AddCvar('g_knockback',          1000);
+	g_quadfactor         = com.AddCvar('g_quadfactor',         3);
+	g_weaponRespawn      = com.AddCvar('g_weaponrespawn',      5);
+	g_weaponTeamRespawn  = com.AddCvar('g_weaponTeamRespawn',  30);
+	g_forcerespawn       = com.AddCvar('g_forcerespawn',       20);
+	g_inactivity         = com.AddCvar('g_inactivity',         0);
+	g_debugMove          = com.AddCvar('g_debugMove',          0);
+	g_debugDamage        = com.AddCvar('g_debugDamage',        0);
+	g_motd               = com.AddCvar('g_motd',               "");
+	g_blood              = com.AddCvar('g_blood',              1);
 	
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);
@@ -10562,22 +10026,479 @@ function Frame(levelTime) {
 		if (ent.freeAfterEvent) {
 			continue;
 		}
-		
-		/*if (i < MAX_CLIENTS) {
-			ClientThink(ent.client.number);
-			continue;
-		}*/
 
 		if (ent.s.eType == ET.MISSILE) {
-			MissileThink(ent);
+			RunMissile(ent);
+			continue;
+		}
+		
+		if (i < MAX_CLIENTS) {
+			RunClient(ent);
 			continue;
 		}
 
-		EntityThink(ent);
+		RunEntity(ent);
+	}
+
+	// Perform final fixups on the players.
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		var ent = level.gentities[i];
+		if (ent.inuse) {
+			ClientEndFrame(ent);
+		}
+	}
+}
+		/**
+ * RunClient
+ */
+function RunClient(ent) {
+	if (!g_synchronousClients()) {
+		return;
+	}
+
+	ent.client.pers.cmd.serverTime = level.time;
+	ClientThink_real(ent);
+}
+
+/**
+ * ClientThink
+ *
+ * A new command has arrived from the client.
+ */
+function ClientThink(clientNum) {
+	var ent = level.gentities[clientNum];
+
+	// Grab the latest command.
+	sv.GetUserCmd(clientNum, ent.client.pers.cmd);
+
+	// Mark the time we got info, so we can display the
+	// phone jack if they don't get any for a while.
+	ent.client.lastCmdTime = level.time;
+
+	// If we're running the synchronous ClientThink,
+	// early out after we have stored off the latest
+	// user cmd.
+	if (g_synchronousClients()) {
+		return;
+	}
+	
+	ClientThink_real(ent);
+}
+
+/**
+ * ClientThink_real
+ *
+ * This will be called once for each client frame, which will
+ * usually be a couple times for each server frame on fast clients.
+ *
+ * If "g_synchronousClients 1" is set, this will be called exactly
+ * once for each server frame, which makes for smooth demo recording.
+ */
+function ClientThink_real(ent) {
+	var client = ent.client;
+	var cmd = client.pers.cmd;
+
+	// Sanity check the command time to prevent speedup cheating.
+	if (cmd.serverTime > level.time + 200) {
+		cmd.serverTime = level.time + 200;
+	}
+	if (cmd.serverTime < level.time - 1000) {
+		cmd.serverTime = level.time - 1000;
+	}
+
+	// Following others may result in bad times, but we still want
+	// to check for follow toggles.
+	var msec = cmd.serverTime - client.ps.commandTime;
+	// console.log('ClientThink_real', msec);
+	if (msec < 1 /*&& client.sess.spectatorState != SPECTATOR_FOLLOW*/) {
+		return;
+	}
+
+	// // Check for exiting intermission.
+	// if (level.intermissiontime) {
+	// 	ClientIntermissionThink(client);
+	// 	return;
+	// }
+
+	// // Spectators don't do much.
+	// if (client.sess.sessionTeam === TEAM.SPECTATOR) {
+	// 	if (client.sess.spectatorState === SPECTATOR_SCOREBOARD) {
+	// 		return;
+	// 	}
+	// 	SpectatorThink(ent, cmd);
+	// 	return;
+	// }
+
+	// // Check for inactivity timer, but never drop the local client of a non-dedicated server.
+	// if (!ClientInactivityTimer(client)) {
+	// 	return;
+	// }
+
+	// Clear the rewards if time.
+	if (level.time > client.rewardTime) {
+		client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP);
+	}
+
+	// Set pmove type.
+	if (client.noclip) {
+		client.ps.pm_type = PM.NOCLIP;
+	} else if (client.ps.stats[STAT.HEALTH] <= 0) {
+		client.ps.pm_type = PM.DEAD;
+	} else {
+		client.ps.pm_type = PM.NORMAL;
+	}
+
+	client.ps.gravity = g_gravity();
+	client.ps.speed = g_speed();
+	if (client.ps.powerups[PW.HASTE]) {
+		client.ps.speed *= 1.3;
+	}
+
+	// Setup for pmove.
+	var oldEventSequence = client.ps.eventSequence;
+	var pm = new bg.PmoveInfo();
+	pm.ps = client.ps;
+	cmd.clone(pm.cmd);
+	pm.trace = sv.Trace;
+	if (pm.ps.pm_type === PM.DEAD) {
+		pm.tracemask = MASK.PLAYERSOLID & ~CONTENTS.BODY;
+	} else {
+		pm.tracemask = MASK.PLAYERSOLID;
+	}
+
+	// // Check for the hit-scan gauntlet, don't let the action
+	// // go through as an attack unless it actually hits something.
+	// if (client.ps.weapon === WP.GAUNTLET && !(cmd.buttons & BUTTON.TALK) &&
+	// 	(cmd.buttons & BUTTON.ATTACK) && client.ps.weaponTime <= 0) {
+	// 	pm.gauntletHit = CheckGauntletAttack(ent);
+	// }
+	// if (ent.flags & FL.FORCE_GESTURE) {
+	// 	ent.flags &= ~FL.FORCE_GESTURE;
+	// 	ent.client.pers.cmd.buttons |= BUTTON.GESTURE;
+	// }
+
+	// Copy off position before pmove.
+	vec3.set(client.ps.origin, client.oldOrigin);
+
+	bg.Pmove(pm);
+
+	// Save results of pmove.
+	if (ent.client.ps.eventSequence !== oldEventSequence) {
+		ent.eventTime = level.time;
+	}
+	bg.PlayerStateToEntityState(client.ps, ent.s);
+	// SendPendingPredictableEvents(client.ps);
+
+	// Update game entity info.
+	// Use the snapped origin for linking so it matches client predicted versions
+	vec3.set(ent.s.pos.trBase, ent.currentOrigin);
+	vec3.set(pm.mins, ent.mins);
+	vec3.set(pm.maxs, ent.maxs);
+	ent.waterlevel = pm.waterlevel;
+	ent.watertype = pm.watertype;
+
+	// Execute client events.
+	ClientEvents(ent, oldEventSequence);
+
+	// Link entity now, after any personal teleporters have been used.
+	sv.LinkEntity(ent);
+
+	if (!ent.client.noclip) {
+		TouchTriggers(ent);
+	}
+
+	// NOTE: Now copy the exact origin over otherwise clients can be snapped into solid.
+	vec3.set(client.ps.origin, ent.currentOrigin);
+
+	// // Touch other objects.
+	// ClientImpacts(ent, pm);
+
+	// // Save results of triggers and client events.
+	// if (ent.client.ps.eventSequence != oldEventSequence) {
+	// 	ent.eventTime = level.time;
+	// }
+
+	// // Swap and latch button actions.
+	// client.oldbuttons = client.buttons;
+	// client.buttons = ucmd.buttons;
+	// client.latched_buttons |= client.buttons & ~client.oldbuttons;
+
+	// Check for respawning.
+	if (client.ps.pm_type === PM.DEAD) {
+		// Wait for the attack button to be pressed.
+		if (level.time > client.respawnTime) {
+			// forcerespawn is to prevent users from waiting out powerups
+			if (g_forcerespawn() > 0 && 
+				(level.time - client.respawnTime ) > g_forcerespawn() * 1000) {
+				ClientRespawn(ent);
+				return;
+			}
+		
+			// Pressing attack or use is the normal respawn method
+			if (cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
+				ClientRespawn(ent);
+			}
+		}
+		return;
 	}
 }
 
-		/**
+/**
+ * ClientEvents
+ *
+ * Events will be passed on to the clients for presentation,
+ * but any server game effects are handled here.
+ */
+function ClientEvents(ent, oldEventSequence) {
+	var client = ent.client;
+
+	if (oldEventSequence < client.ps.eventSequence - MAX_PS_EVENTS) {
+		oldEventSequence = client.ps.eventSequence - MAX_PS_EVENTS;
+	}
+	for (var i = oldEventSequence; i < client.ps.eventSequence; i++) {
+		var event = client.ps.events[i & (MAX_PS_EVENTS - 1)];
+
+		switch (event) {
+			// case EV_FALL_MEDIUM:
+			// case EV_FALL_FAR:
+			// 	if ( ent.s.eType != ET_PLAYER ) {
+			// 		break;		// not in the player model
+			// 	}
+			// 	if ( g_dmflags.integer & DF_NO_FALLING ) {
+			// 		break;
+			// 	}
+			// 	if ( event == EV_FALL_FAR ) {
+			// 		damage = 10;
+			// 	} else {
+			// 		damage = 5;
+			// 	}
+			// 	ent.painDebounceTime = level.time + 200;	// no normal pain sound
+			// 	G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
+			// 	break;
+
+			case EV.FIRE_WEAPON:
+				FireWeapon(ent);
+				break;
+
+			// case EV_USE_ITEM1:  // teleporter
+			// 	// Drop flags in CTF.
+			// 	item = NULL;
+			// 	j = 0;
+
+			// 	if ( client.ps.powerups[ PW_REDFLAG ] ) {
+			// 		item = BG_FindItemForPowerup( PW_REDFLAG );
+			// 		j = PW_REDFLAG;
+			// 	} else if ( client.ps.powerups[ PW_BLUEFLAG ] ) {
+			// 		item = BG_FindItemForPowerup( PW_BLUEFLAG );
+			// 		j = PW_BLUEFLAG;
+			// 	} else if ( client.ps.powerups[ PW_NEUTRALFLAG ] ) {
+			// 		item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
+			// 		j = PW_NEUTRALFLAG;
+			// 	}
+
+			// 	if ( item ) {
+			// 		drop = Drop_Item( ent, item, 0 );
+			// 		// Decide how many seconds it has left.
+			// 		drop.count = ( client.ps.powerups[ j ] - level.time ) / 1000;
+			// 		if ( drop.count < 1 ) {
+			// 			drop.count = 1;
+			// 		}
+
+			// 		client.ps.powerups[ j ] = 0;
+			// 	}
+
+			// 	SelectSpawnPoint( client.ps.origin, origin, angles, qfalse );
+			// 	TeleportPlayer( ent, origin, angles );
+			// 	break;
+
+			// case EV_USE_ITEM2:  // medkit
+			// 	ent.health = client.ps.stats[STAT.MAX_HEALTH] + 25;
+			// 	break;
+
+			default:
+				break;
+		}
+	}
+}
+
+/**
+ * ClientEndFrame
+ *
+ * Called at the end of each server frame for each connected client
+ * A fast client will have multiple ClientThink for each ClientEndFrame,
+ * while a slow client may have multiple ClientEndFrame between ClientThink.
+ */
+function ClientEndFrame(ent) {
+	var client = ent.client;
+
+	// if (client.sess.sessionTeam == TEAM_SPECTATOR ) {
+	// 	SpectatorClientEndFrame( ent );
+	// 	return;
+	// }
+
+	// Turn off any expired powerups
+	for (var i = 0; i < MAX_POWERUPS; i++) {
+		if (client.ps.powerups[i] < level.time) {
+			client.ps.powerups[i] = 0;
+		}
+	}
+
+	// if (level.intermissiontime) {
+	// 	return;
+	// }
+
+	// Burn from lava, etc.
+	WorldEffects(ent);
+
+	// Apply all the damage taken this frame.
+	DamageFeedback(ent);
+
+	// Add the EF.CONNECTION flag if we haven't gotten commands recently.
+	if (level.time - client.lastCmdTime > 1000) {
+		client.ps.eFlags |= EF.CONNECTION;
+	} else {
+		client.ps.eFlags &= ~EF.CONNECTION;
+	}
+
+	client.ps.stats[STAT.HEALTH] = ent.health;  // FIXME: get rid of ent.health...
+
+	SetClientSound(ent);
+
+	bg.PlayerStateToEntityState(client.ps, ent.s);
+	// SendPendingPredictableEvents(client.ps);
+}
+
+/** 
+ * DamageFeedback
+ *
+ * Called just before a snapshot is sent to the given player.
+ * Totals up all damage and generates both the player_state_t
+ * damage values to that client for pain blends and kicks, and
+ * global pain sound events for all clients.
+ */
+function DamageFeedback(player) {
+	var client = player.client;
+	if (client.ps.pm_type === PM.DEAD) {
+		return;
+	}
+
+	// Total points of damage shot at the player this frame
+	var count = client.damage_blood + client.damage_armor;
+	if (count === 0) {
+		return;   // didn't take any damage
+	}
+	if (count > 255) {
+		count = 255;
+	}
+
+	// Send the information to the client.
+
+	// World damage (falling, slime, etc) uses a special code
+	// to make the blend blob centered instead of positional.
+	if (client.damage_fromWorld) {
+		client.ps.damagePitch = 255;
+		client.ps.damageYaw = 255;
+		client.damage_fromWorld = false;
+	} else {
+		var angles = [0, 0, 0];
+		QMath.VectorToAngles(client.damage_from, angles);
+		client.ps.damagePitch = angles[QMath.PITCH]/360.0 * 256;
+		client.ps.damageYaw = angles[QMath.YAW]/360.0 * 256;
+	}
+
+	// Play an apropriate pain sound.
+	if ((level.time > player.painDebounceTime) && !(player.flags & GFL.GODMODE)) {
+		player.painDebounceTime = level.time + 700;
+		AddEvent(player, EV.PAIN, player.health);
+		client.ps.damageEvent++;
+	}
+
+	client.ps.damageCount = count;
+
+	// Clear totals.
+	client.damage_blood = 0;
+	client.damage_armor = 0;
+	client.damage_knockback = 0;
+}
+
+/**
+ * WorldEffects
+ * 
+ * Check for lava / slime contents and drowning.
+ */
+function WorldEffects(ent) {
+	if (ent.client.noclip) {
+		ent.client.airOutTime = level.time + 12000;	// don't need air
+		return;
+	}
+
+	var waterlevel = ent.waterlevel;
+	var envirosuit = ent.client.ps.powerups[PW.BATTLESUIT] > level.time;
+
+	//
+	// Check for drowning.
+	//
+	if (waterlevel === 3) {
+		// Envirosuit gives air.
+		if (envirosuit) {
+			ent.client.airOutTime = level.time + 10000;
+		}
+
+		// If out of air, start drowning.
+		if (ent.client.airOutTime < level.time) {
+			// drown!
+			ent.client.airOutTime += 1000;
+			if (ent.health > 0) {
+				// Take more damage the longer underwater.
+				ent.damage += 2;
+				if (ent.damage > 15) {
+					ent.damage = 15;
+				}
+
+				// Don't play a normal pain sound.
+				ent.painDebounceTime = level.time + 200;
+
+				Damage(ent, null, null, null, null, ent.damage, DAMAGE.NO_ARMOR, MOD.WATER);
+			}
+		}
+	} else {
+		ent.client.airOutTime = level.time + 12000;
+		ent.damage = 2;
+	}
+
+	//
+	// Check for sizzle damage (move to pmove?).
+	//
+	if (waterlevel && 
+		(ent.watertype & (CONTENTS_LAVA|CONTENTS_SLIME))) {
+		if (ent.health > 0 && ent.painDebounceTime <= level.time) {
+			if (envirosuit) {
+				AddEvent( ent, EV.POWERUP_BATTLESUIT, 0);
+			} else {
+				if (ent.watertype & CONTENTS_LAVA) {
+					Damage(ent, null, null, null, null, 30*waterlevel, 0, MOD.LAVA);
+				}
+
+				if (ent.watertype & CONTENTS_SLIME) {
+					Damage(ent, null, null, null, null, 10*waterlevel, 0, MOD.SLIME);
+				}
+			}
+		}
+	}
+}
+
+/**
+ * SetClientSound
+ */
+function SetClientSound(ent) {
+	// if (ent.waterlevel && (ent.watertype & (CONTENTS_LAVA|CONTENTS_SLIME))) {
+	// 	ent.client.ps.loopSound = level.snd_fry;
+	// } else {
+	// 	ent.client.ps.loopSound = 0;
+	// }
+}
+
+/**
  * TouchTriggers
  *
  * Find all trigger entities that ent's current position touches.
@@ -10603,7 +10524,7 @@ function TouchTriggers(ent) {
 
 	var entityNums = sv.FindEntitiesInBox(mins, maxs);
 
-	// Can't use ent->absmin, because that has a one unit pad.
+	// Can't use ent.absmin, because that has a one unit pad.
 	vec3.add(ps.origin, ent.mins, mins);
 	vec3.add(ps.origin, ent.maxs, maxs);
 
@@ -10666,16 +10587,18 @@ function ClientConnect(clientNum, firstTime) {
 	var ent = level.gentities[clientNum] = new GameEntity();
 
 	ent.client = client;
+	ent.s.number = clientNum;
+	ent.inuse = true;
 	
 	/*client.pers.connected = CON_CONNECTING;
 
-	// read or initialize the session data
+	// Read or initialize the session data.
 	if (firstTime || level.newSession) {
 		G_InitSessionData( client, userinfo );
 	}
 	G_ReadSessionData( client );*/
 
-	// get and distribute relevent paramters
+	// Get and distribute relevent parameters.
 	log('ClientConnect ' + clientNum);
 	ClientUserinfoChanged(clientNum);
 
@@ -10722,182 +10645,6 @@ function ClientBegin(clientNum) {
 	ent.client.ps.clientNum = clientNum;
 
 	ClientSpawn(ent);
-}
-
-/**
- * ClientThink
- */
-function ClientThink(clientNum) {
-	var client = level.clients[clientNum];
-	var ent = level.gentities[clientNum];
-	var oldEventSequence = client.ps.eventSequence;
-
-	// Grab the latest command.
-	sv.GetUserCmd(clientNum, ent.client.pers.cmd);
-
-	var cmd = ent.client.pers.cmd;
-
-	// Sanity check the command time to prevent speedup cheating.
-	if (cmd.serverTime > level.time + 200) {
-		cmd.serverTime = level.time + 200;
-	}
-	if (cmd.serverTime < level.time - 1000) {
-		cmd.serverTime = level.time - 1000;
-	}
-
-	// Clear the rewards if time.
-	if ( level.time > client.rewardTime ) {
-		client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP);
-	}
-
-	// Set pmove type.
-	if (client.noclip) {
-		client.ps.pm_type = PM.NOCLIP;
-	} else if (client.ps.stats[STAT.HEALTH] <= 0) {
-		client.ps.pm_type = PM.DEAD;
-	} else {
-		client.ps.pm_type = PM.NORMAL;
-	}
-
-	client.ps.gravity = g_gravity();
-	client.ps.speed = g_speed();
-
-	// Copy off position before pmove.
-	vec3.set(client.ps.origin, client.oldOrigin);
-
-	// Setup for pmove.
-	var pm = new bg.PmoveInfo();
-	pm.ps = client.ps;
-	pm.cmd = cmd;
-	pm.tracemask = MASK.PLAYERSOLID;
-	pm.trace = sv.Trace;
-	pm.client = false;
-	bg.Pmove(pm);
-
-	// Save results of pmove.
-	bg.PlayerStateToEntityState(ent.client.ps, ent.s);
-	// SendPendingPredictableEvents(ent.client.ps);
-
-	// Update game entity info.
-	vec3.set(client.ps.origin, ent.currentOrigin);
-	vec3.set(pm.mins, ent.mins);
-	vec3.set(pm.maxs, ent.maxs);
-
-	// Execute client events.
-	ClientEvents(ent, oldEventSequence);
-
-	// Link entity now, after any personal teleporters have been used.
-	sv.LinkEntity(ent);
-
-	TouchTriggers(ent);
-
-	// NOTE: now copy the exact origin over otherwise clients can be snapped into solid
-	vec3.set(ent.client.ps.origin, ent.currentOrigin);
-
-	// Check for respawning.
-	if (client.ps.pm_type === PM.DEAD) {
-		// Wait for the attack button to be pressed.
-		if (level.time > client.respawnTime) {
-			// forcerespawn is to prevent users from waiting out powerups
-			if (g_forcerespawn() > 0 && 
-				(level.time - client.respawnTime ) > g_forcerespawn() * 1000) {
-				ClientRespawn(ent);
-				return;
-			}
-		
-			// Pressing attack or use is the normal respawn method
-			if (cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
-				ClientRespawn(ent);
-			}
-		}
-		return;
-	}
-}
-
-/**
- * ClientEvents
- *
- * Events will be passed on to the clients for presentation,
- * but any server game effects are handled here.
- */
-function ClientEvents(ent, oldEventSequence) {
-	var client = ent.client;
-
-	if (oldEventSequence < client.ps.eventSequence - MAX_PS_EVENTS) {
-		oldEventSequence = client.ps.eventSequence - MAX_PS_EVENTS;
-	}
-	for (var i = oldEventSequence; i < client.ps.eventSequence; i++) {
-		var event = client.ps.events[i & (MAX_PS_EVENTS - 1)];
-
-		switch (event) {
-			// case EV_FALL_MEDIUM:
-			// case EV_FALL_FAR:
-			// 	if ( ent->s.eType != ET_PLAYER ) {
-			// 		break;		// not in the player model
-			// 	}
-			// 	if ( g_dmflags.integer & DF_NO_FALLING ) {
-			// 		break;
-			// 	}
-			// 	if ( event == EV_FALL_FAR ) {
-			// 		damage = 10;
-			// 	} else {
-			// 		damage = 5;
-			// 	}
-			// 	ent->pain_debounce_time = level.time + 200;	// no normal pain sound
-			// 	G_Damage (ent, NULL, NULL, NULL, NULL, damage, 0, MOD_FALLING);
-			// 	break;
-
-			case EV.FIRE_WEAPON:
-				FireWeapon(ent);
-				break;
-
-			// case EV_USE_ITEM1:  // teleporter
-			// 	// Drop flags in CTF.
-			// 	item = NULL;
-			// 	j = 0;
-
-			// 	if ( ent->client->ps.powerups[ PW_REDFLAG ] ) {
-			// 		item = BG_FindItemForPowerup( PW_REDFLAG );
-			// 		j = PW_REDFLAG;
-			// 	} else if ( ent->client->ps.powerups[ PW_BLUEFLAG ] ) {
-			// 		item = BG_FindItemForPowerup( PW_BLUEFLAG );
-			// 		j = PW_BLUEFLAG;
-			// 	} else if ( ent->client->ps.powerups[ PW_NEUTRALFLAG ] ) {
-			// 		item = BG_FindItemForPowerup( PW_NEUTRALFLAG );
-			// 		j = PW_NEUTRALFLAG;
-			// 	}
-
-			// 	if ( item ) {
-			// 		drop = Drop_Item( ent, item, 0 );
-			// 		// Decide how many seconds it has left.
-			// 		drop->count = ( ent->client->ps.powerups[ j ] - level.time ) / 1000;
-			// 		if ( drop->count < 1 ) {
-			// 			drop->count = 1;
-			// 		}
-
-			// 		ent->client->ps.powerups[ j ] = 0;
-			// 	}
-
-			// 	SelectSpawnPoint( ent->client->ps.origin, origin, angles, qfalse );
-			// 	TeleportPlayer( ent, origin, angles );
-			// 	break;
-
-			// case EV_USE_ITEM2:  // medkit
-			// 	ent->health = ent->client->ps.stats[STAT_MAX_HEALTH] + 25;
-			// 	break;
-
-			default:
-				break;
-		}
-	}
-}
-
-/**
- * GetClientPlayerstate
- */
-function GetClientPlayerstate(clientNum) {
-	var client = level.clients[clientNum];
-	return client.ps;
 }
 
 /**
@@ -10964,8 +10711,8 @@ function ClientSpawn(ent) {
 	client.pers.cmd.serverTime = level.time;
 	ClientThink(client.ps.clientNum);
 
-	// // run the presend to set anything else
-	// ClientEndFrame(ent);
+	// Run the presend to set anything else.
+	ClientEndFrame(ent);
 
 	// Clear entity state values.
 	bg.PlayerStateToEntityState(client.ps, ent.s);
@@ -11001,7 +10748,7 @@ function ClientDisconnect(clientNum) {
 	ent.s.modelIndex = 0;
 	ent.classname = 'disconnected';
 	/*ent.client.pers.connected = CON_DISCONNECTED;
-	ent.client.ps.persistant[PERS_TEAM] = TEAM_FREE;
+	ent.client.ps.persistant[PERS.TEAM] = TEAM_FREE;
 	ent.client.sess.sessionTeam = TEAM_FREE;
 	trap_SetConfigstring( CS_PLAYERS + clientNum, "");*/
 }
@@ -11016,7 +10763,7 @@ function ClientDisconnect(clientNum) {
 function SetClientViewAngle(ent, angles) {
 	// Set the delta angle.
 	for (var i = 0; i < 3; i++) {
-		var cmdAngle = qm.AngleToShort(angles[i]);
+		var cmdAngle = QMath.AngleToShort(angles[i]);
 		ent.client.ps.delta_angles[i] = cmdAngle - ent.client.pers.cmd.angles[i];
 	}
 	vec3.set(angles, ent.s.angles);
@@ -11052,6 +10799,15 @@ function SelectRandomDeathmatchSpawnPoint() {
 	return spawnpoints[Math.floor(Math.random()*spawnpoints.length)];
 }
 
+/**
+ * GetClientPlayerstate
+ *
+ * Called by the server.
+ */
+function GetClientPlayerstate(clientNum) {
+	var client = level.clients[clientNum];
+	return client.ps;
+}
 		/**
  * Damage
  *
@@ -11101,7 +10857,7 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	// // Reduce damage by the attacker's handicap value
 	// // unless they are rocket jumping.
 	// if (attacker.client && attacker !== targ) {
-	// 	max = attacker.client.ps.stats[STAT_MAX_HEALTH];
+	// 	max = attacker.client.ps.stats[STAT.MAX_HEALTH];
 	// 	damage = damage * max / 100;
 	// }
 
@@ -11346,7 +11102,7 @@ function CanDamage(targ, origin) {
 	vec3.scale(midpoint, 0.5);
 
 	var dest = vec3.set(midpoint, [0, 0, 0]);
-	var tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	var tr = sv.Trace(origin, dest, QMath.vec3_origin, QMath.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
 	if (tr.fraction === 1.0 || tr.entityNum === targ.s.number) {
 		return true;
 	}
@@ -11356,7 +11112,7 @@ function CanDamage(targ, origin) {
 	vec3.set(midpoint, dest);
 	dest[0] += 15.0;
 	dest[1] += 15.0;
-	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	tr = sv.Trace(origin, dest, QMath.vec3_origin, QMath.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
 	if (tr.fraction === 1.0) {
 		return true;
 	}
@@ -11364,7 +11120,7 @@ function CanDamage(targ, origin) {
 	vec3.set(midpoint, dest);
 	dest[0] += 15.0;
 	dest[1] -= 15.0;
-	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	tr = sv.Trace(origin, dest, QMath.vec3_origin, QMath.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
 	if (tr.fraction === 1.0) {
 		return true;
 	}
@@ -11372,7 +11128,7 @@ function CanDamage(targ, origin) {
 	vec3.set(midpoint, dest);
 	dest[0] -= 15.0;
 	dest[1] += 15.0;
-	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	tr = sv.Trace(origin, dest, QMath.vec3_origin, QMath.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
 	if (tr.fraction === 1.0) {
 		return true;
 	}
@@ -11380,7 +11136,7 @@ function CanDamage(targ, origin) {
 	vec3.set(midpoint, dest);
 	dest[0] -= 15.0;
 	dest[1] -= 15.0;
-	tr = sv.Trace(origin, dest, qm.vec3_origin, qm.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
+	tr = sv.Trace(origin, dest, QMath.vec3_origin, QMath.vec3_origin, ENTITYNUM_NONE, MASK.SOLID);
 	if (tr.fraction === 1.0) {
 		return true;
 	}
@@ -11596,7 +11352,7 @@ function LookAtKiller(self, inflictor, attacker) {
 	} else if (inflictor && inflictor !== self) {
 		vec3.subtract(inflictor.s.pos.trBase, self.s.pos.trBase, dir);
 	} else {
-		self.client.ps.stats[STAT.DEAD_YAW] = self.s.angles[qm.YAW];
+		self.client.ps.stats[STAT.DEAD_YAW] = self.s.angles[QMath.YAW];
 		return;
 	}
 
@@ -11609,12 +11365,12 @@ function LookAtKiller(self, inflictor, attacker) {
 function VecToYaw(vec) {
 	var yaw;
 	
-	if (vec[qm.YAW] === 0 && vec[qm.PITCH] === 0) {
+	if (vec[QMath.YAW] === 0 && vec[QMath.PITCH] === 0) {
 		yaw = 0;
 	} else {
-		if (vec[qm.PITCH]) {
-			yaw = (Math.atan2(vec[qm.YAW], vec[qm.PITCH]) * 180 / Math.PI);
-		} else if (vec[qm.YAW] > 0) {
+		if (vec[QMath.PITCH]) {
+			yaw = (Math.atan2(vec[QMath.YAW], vec[QMath.PITCH]) * 180 / Math.PI);
+		} else if (vec[QMath.YAW] > 0) {
 			yaw = 90;
 		} else {
 			yaw = 270;
@@ -11785,9 +11541,9 @@ function FindEntity(key, value) {
 }
 
 /**
- * EntityThink
+ * RunEntity
  */
-function EntityThink(ent) {
+function RunEntity(ent) {
 	var thinktime = ent.nextthink;
 
 	if (thinktime <= 0) {
@@ -12409,7 +12165,7 @@ function TeleportPlayer(player, origin, angles) {
 
 	if (!noAngles) {
 		// spit the player out
-		qm.AnglesToVectors(angles, player.client.ps.velocity, null, null);
+		QMath.AnglesToVectors(angles, player.client.ps.velocity, null, null);
 		vec3.scale(player.client.ps.velocity, 400);
 		player.client.ps.pm_time = 160;  // hold time
 		player.client.ps.pm_flags |= PMF.TIME_KNOCKBACK;
@@ -12438,9 +12194,9 @@ function TeleportPlayer(player, origin, angles) {
 		var MISSILE_PRESTEP_TIME = 50;
 
 /**
- * MissileThink
+ * RunMissile
  */
-function MissileThink(ent) {
+function RunMissile(ent) {
 	// Get current position.
 	var origin = [0, 0, 0];
 	bg.EvaluateTrajectory(ent.s.pos, level.time, origin);
@@ -12476,7 +12232,7 @@ function MissileThink(ent) {
 	}
 
 	// Check think function after bouncing.
-	EntityThink(ent);
+	RunEntity(ent);
 }
 
 /**
@@ -12563,12 +12319,12 @@ function MissileImpact(ent, trace) {
 	// Is it cheaper in bandwidth to just remove this ent and create a new
 	// one, rather than changing the missile into the explosion?
 	if (other.takeDamage && other.client) {
-		AddEvent(ent, EV.MISSILE_HIT, qm.DirToByte(trace.plane.normal));
+		AddEvent(ent, EV.MISSILE_HIT, QMath.DirToByte(trace.plane.normal));
 		ent.s.otherEntityNum = other.s.number;
 	} else if (trace.surfaceFlags & SURF.METALSTEPS) {
-		AddEvent(ent, EV.MISSILE_MISS_METAL, qm.DirToByte(trace.plane.normal));
+		AddEvent(ent, EV.MISSILE_MISS_METAL, QMath.DirToByte(trace.plane.normal));
 	} else {
-		AddEvent(ent, EV.MISSILE_MISS, qm.DirToByte(trace.plane.normal));
+		AddEvent(ent, EV.MISSILE_MISS, QMath.DirToByte(trace.plane.normal));
 	}
 
 	ent.freeAfterEvent = true;
@@ -12710,7 +12466,7 @@ function FireWeapon(ent) {
 	// }
 
 	// Set aiming directions.
-	qm.AnglesToVectors(client.ps.viewangles, forward, right, up);
+	QMath.AnglesToVectors(client.ps.viewangles, forward, right, up);
 	CalcMuzzlePointOrigin(ent, client.oldOrigin, forward, right, up, muzzle);
 
 	// Fire the specific weapon.
@@ -12740,9 +12496,9 @@ function FireWeapon(ent) {
 		// case WP.PLASMAGUN:
 		// 	Weapon_Plasmagun_Fire( ent );
 		// 	break;
-		// case WP.RAILGUN:
-		// 	weapon_railgun_fire( ent );
-		// 	break;
+		case WP.RAILGUN:
+			RailgunFire(ent);
+		 	break;
 		// case WP.BFG:
 		// 	BFG_Fire( ent );
 		// 	break;
@@ -12784,7 +12540,7 @@ function ShotgunPellet(start, end, ent ) {
 // 			return false;
 // 		}
 // 		
-// 		if ( traceEnt.takedamage) {
+// 		if ( traceEnt.takeDamage) {
 // 			damage = DEFAULT_SHOTGUN_DAMAGE * s_quadFactor;
 // 			G_Damage( traceEnt, ent, ent, forward, tr.endpos, damage, 0, MOD.SHOTGUN);
 // 				if( LogAccuracyHit( traceEnt, ent ) ) {
@@ -12858,8 +12614,8 @@ function BulletFire(ent, spread, damage, mod) {
 	// damage *= s_quadFactor;
 
 	var r = Math.random() * Math.PI * 2;
-	var u = Math.sin(r) * qm.crandom() * spread * 16;
-	r = Math.cos(r) * qm.crandom() * spread * 16;
+	var u = Math.sin(r) * QMath.crandom() * spread * 16;
+	r = Math.cos(r) * QMath.crandom() * spread * 16;
 
 	var end = vec3.add(muzzle, vec3.scale(forward, 8192*16, [0, 0, 0]), [0, 0, 0]);
 	vec3.add(end, vec3.scale(right, r, [0, 0, 0]));
@@ -12888,7 +12644,7 @@ function BulletFire(ent, spread, damage, mod) {
 			}
 		} else {
 			var tent = TempEntity(tr.endPos, EV.BULLET_HIT_WALL);
-			tent.s.eventParm = qm.DirToByte(tr.plane.normal);
+			tent.s.eventParm = QMath.DirToByte(tr.plane.normal);
 		}
 		tent.s.otherEntityNum = ent.s.number;
 
@@ -12909,6 +12665,91 @@ function RocketLauncherFire(ent) {
 	// m.splashDamage *= s_quadFactor;
 }
 
+
+/**
+ * RailgunFire
+ */
+var MAX_RAIL_HITS = 4;
+function RailgunFire(ent) {
+	var damage = 100;// * s_quadFactor;
+	var passent = ent.s.number;
+	var unlinkedEntities = [];
+	var end = [0, 0, 0];
+	var hits = 0;
+
+	vec3.add(muzzle, vec3.scale(forward, 8192, [0, 0, 0]), end);
+
+	while (unlinkedEntities.length < MAX_RAIL_HITS) {
+		// Trace only against the solids, so the railgun will go through people.
+		var trace = sv.Trace(muzzle, end, null, null, passent, MASK.SHOT);
+		if (trace.entityNum >= ENTITYNUM_MAX_NORMAL) {
+			break;
+		}
+
+		var traceEnt = level.gentities[trace.entityNum];
+		if (traceEnt.takeDamage) {
+			if (LogAccuracyHit(traceEnt, ent)) {
+				hits++;
+			}
+			Damage(traceEnt, ent, ent, forward, trace.endPos, damage, 0, MOD.RAILGUN);
+		}
+
+		if (trace.contents & CONTENTS.SOLID) {
+			break;  // we hit something solid enough to stop the beam
+		}
+
+		// Unlink this entity, so the next trace will go past it.
+		sv.UnlinkEntity(traceEnt);
+		unlinkedEntities.push(traceEnt);
+	}
+
+	// Link back in any entities we unlinked.
+	for (var i = 0; i < unlinkedEntities.length; i++) {
+		sv.LinkEntity(unlinkedEntities[i]);
+	}
+
+	// The final trace endpos will be the terminal point of the rail trail.
+
+	// Snap the endpos to integers to save net bandwidth, but nudged towards the line.
+	// SnapVectorTowards( trace.endpos, muzzle );
+
+	// Send railgun beam effect.
+	var tent = TempEntity(trace.endPos, EV.RAILTRAIL);
+
+	// Set player number for custom colors on the railtrail.
+	tent.s.clientNum = ent.s.clientNum;
+	vec3.set(muzzle, tent.s.origin2);
+
+	// Move origin a bit to come closer to the drawn gun muzzle.
+	vec3.add(tent.s.origin2, vec3.scale(right, 4, [0, 0, 0]));
+	vec3.add(tent.s.origin2, vec3.scale(up, -1, [0, 0, 0]));
+
+	// No explosion at end if SURF.NOIMPACT, but still make the trail
+	if (trace.surfaceFlags & SURF.NOIMPACT) {
+		tent.s.eventParm = 255; // Don't make the explosion at the end.
+	} else {
+		tent.s.eventParm = QMath.DirToByte(trace.plane.normal);
+	}
+	tent.s.clientNum = ent.s.clientNum;
+
+	// Give the shooter a reward sound if they have made two railgun hits in a row.
+	if (hits === 0) {
+		// Complete miss.
+		ent.client.accurateCount = 0;
+	} else {
+		// Check for "impressive" reward sound.
+		ent.client.accurateCount += hits;
+		if (ent.client.accurateCount >= 2) {
+			ent.client.accurateCount -= 2;
+			ent.client.ps.persistant[PERS.IMPRESSIVE_COUNT]++;
+			// Add the sprite over the player's head.
+			ent.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+			ent.client.ps.eFlags |= EF.AWARD_IMPRESSIVE;
+			ent.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+		}
+		ent.client.accuracy_hits++;
+	}
+}
 		entityEvents['info_notnull'] = {
 	spawn: function (self) {
 		SetOrigin(self, self.s.origin);
@@ -13034,6 +12875,8 @@ function RocketLauncherFire(ent) {
 };
 
 		return {
+			SVF:                  SVF,
+			
 			Init:                 Init,
 			Shutdown:             Shutdown,
 			Frame:                Frame,
@@ -13046,5699 +12889,30 @@ function RocketLauncherFire(ent) {
 	}
 
 	return {
-		CreateInstance: function (com, sv) {
-			return new Game(com, sv);
-		}
-	};
-});
-
-/*global vec3: true, mat4: true */
-
-define('cgame/cg',
-['underscore', 'glmatrix', 'common/sh', 'common/qmath', 'game/bg'],
-function (_, glmatrix, sh, qm, bg) {	
-	function CGame(imp) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-		var GIB_HEALTH = -40;
-var ARMOR_PROTECTION = 0.66;
-
-var DEFAULT_SHOTGUN_SPREAD = 700;
-var DEFAULT_SHOTGUN_COUNT = 11;
-
-var ITEM_RADIUS = 15;                                      // item sizes are needed for client side pickup detection
-
-var MINS_Z = -24;
-var DEFAULT_VIEWHEIGHT = 26;
-var CROUCH_VIEWHEIGHT = 12;
-var DEAD_VIEWHEIGHT = -16;
-
-var PM = {
-	NORMAL:       0,                                       // can accelerate and turn
-	NOCLIP:       1,                                       // noclip movement
-	SPECTATOR:    2,                                       // still run into walls
-	DEAD:         3,                                       // no acceleration or turning, but free falling
-	FREEZE:       4,                                       // stuck in place with no control
-	INTERMISSION: 5                                        // no movement or status bar
-};
-
-var PMF = {
-	DUCKED:         1,
-	JUMP_HELD:      2,
-	BACKWARDS_JUMP: 8,                                     // go into backwards land
-	BACKWARDS_RUN:  16,                                    // coast down to backwards run
-	TIME_LAND:      32,                                    // pm_time is time before rejump
-	TIME_KNOCKBACK: 64,                                    // pm_time is an air-accelerate only time
-	TIME_WATERJUMP: 256,                                   // pm_time is waterjump
-	RESPAWNED:      512,                                   // clear after attack and jump buttons come up
-	USE_ITEM_HELD:  1024,
-	GRAPPLE_PULL:   2048,                                  // pull towards grapple location
-	FOLLOW:         4096,                                  // spectate following another player
-	SCOREBOARD:     8192,                                  // spectate as a scoreboard
-	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
-	ALL_TIMES:      (32|64|256)
-};
-
-// Weapon state.
-var WS = {
-	READY:    0,
-	RAISING:  1,
-	DROPPING: 2,
-	FIRING:   3
-};
-
-// Item types.
-var IT = {
-	BAD:                0,
-	WEAPON:             1,                                 // EFX: rotate + upscale + minlight
-	AMMO:               2,                                 // EFX: rotate
-	ARMOR:              3,                                 // EFX: rotate + minlight
-	HEALTH:             4,                                 // EFX: static external sphere + rotating internal
-	POWERUP:            5,                                 // instant on, timer based
-	                                                       // EFX: rotate + external ring that rotates
-	HOLDABLE:           6,                                 // single use, holdable item
-	                                                       // EFX: rotate + bob
-	PERSISTANT_POWERUP: 7,
-	TEAM:               8
-};
-
-var MASK = {
-	ALL:         -1,
-	SOLID:       CONTENTS.SOLID,
-	PLAYERSOLID: CONTENTS.SOLID | CONTENTS.PLAYERCLIP | CONTENTS.BODY,
-	DEADSOLID:   CONTENTS.SOLID | CONTENTS.PLAYERCLIP,
-	WATER:       CONTENTS.WATER | CONTENTS.LAVA | CONTENTS.SLIME,
-	OPAQUE:      CONTENTS.SOLID | CONTENTS.SLIME | CONTENTS.LAVA,
-	SHOT:        CONTENTS.SOLID | CONTENTS.BODY | CONTENTS.CORPSE
-};
-
-/**
- * Playerstate flags
- */
-var STAT = {
-	HEALTH:        0,
-	HOLDABLE_ITEM: 1,
-	WEAPONS:       2,
-	ARMOR:         3,
-	DEAD_YAW:      4,				// look this direction when dead (FIXME: get rid of?)
-	CLIENTS_READY: 5,				// bit mask of clients wishing to exit the intermission (FIXME: configstring?)
-	MAX_HEALTH:    6				// health / armor limit, changable by handicap
-};
-
-var WP = {
-	NONE:             0,
-	GAUNTLET:         1,
-	MACHINEGUN:       2,
-	SHOTGUN:          3,
-	GRENADE_LAUNCHER: 4,
-	ROCKET_LAUNCHER:  5,
-	LIGHTNING:        6,
-	RAILGUN:          7,
-	PLASMAGUN:        8,
-	BFG:              9,
-	GRAPPLING_HOOK:   10,
-	NUM_WEAPONS:      11
-};
-
-// NOTE: may not have more than 16
-var PW = {
-	NONE:         0,
-	QUAD:         1,
-	BATTLESUIT:   2,
-	HASTE:        3,
-	INVIS:        4,
-	REGEN:        5,
-	FLIGHT:       6,
-	REDFLAG:      7,
-	BLUEFLAG:     8,
-	NEUTRALFLAG:  9,
-	NUM_POWERUPS: 10
-};
-
-// PlayerState.persistant[] indexes
-// These fields are the only part of player_state that aren't
-// cleared on respawn.
-// NOTE: may not have more than 16
-var PERS = {
-	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
-	RANK:                 2,                               // player rank or team rank
-	TEAM:                 3,                               // player team
-	SPAWN_COUNT:          4,                               // incremented every respawn
-	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
-	ATTACKER:             6,                               // clientnum of last damage inflicter
-	ATTACKEE_ARMOR:       7,                               // health/armor of last person we attacked
-	KILLED:               8,                               // count of the number of times you died
-	// player awards tracking
-	IMPRESSIVE_COUNT:     9,                               // two railgun hits in a row
-	EXCELLENT_COUNT:      10,                              // two successive kills in a short amount of time
-	DEFEND_COUNT:         11,                              // defend awards
-	ASSIST_COUNT:         12,                              // assist awards
-	GAUNTLET_FRAG_COUNT:  13,                              // kills with the guantlet
-	CAPTURES:             14                               // captures
-};
-
-/**
- * Entitystate flags
- */
-// entityState_t->eType
-var ET = {
-	GENERAL:          0,
-	PLAYER:           1,
-	ITEM:             2,
-	MISSILE:          3,
-	MOVER:            4,
-	BEAM:             5,
-	PORTAL:           6,
-	SPEAKER:          7,
-	PUSH_TRIGGER:     8,
-	TELEPORT_TRIGGER: 9,
-	INVISIBLE:        10,
-	GRAPPLE:          11,                                  // grapple hooked on wall
-	TEAM:             12,
-	EVENTS:           13                                   // any of the EV_* events can be added freestanding
-	                                                       // by setting eType to ET_EVENTS + eventNum
-	                                                       // this avoids having to set eFlags and eventNum
-};
-
-// entityState_t->eFlags
-var EF = {
-	DEAD:             0x00000001,                          // don't draw a foe marker over players with EF_DEAD
-	TELEPORT_BIT:     0x00000004,                          // toggled every time the origin abruptly changes
-	AWARD_EXCELLENT:  0x00000008,                          // draw an excellent sprite
-	PLAYER_EVENT:     0x00000010,
-	BOUNCE:           0x00000010,                          // for missiles
-	BOUNCE_HALF:      0x00000020,                          // for missiles
-	AWARD_GAUNTLET:   0x00000040,                          // draw a gauntlet sprite
-	NODRAW:           0x00000080,                          // may have an event, but no model (unspawned items)
-	FIRING:           0x00000100,                          // for lightning gun
-	KAMIKAZE:         0x00000200,
-	MOVER_STOP:       0x00000400,                          // will push otherwise
-	AWARD_CAP:        0x00000800,                          // draw the capture sprite
-	TALK:             0x00001000,                          // draw a talk balloon
-	CONNECTION:       0x00002000,                          // draw a connection trouble sprite
-	VOTED:            0x00004000,                          // already cast a vote
-	AWARD_IMPRESSIVE: 0x00008000,                          // draw an impressive sprite
-	AWARD_DEFEND:     0x00010000,                          // draw a defend sprite
-	AWARD_ASSIST:     0x00020000,                          // draw an assist sprite
-	AWARD_DENIED:     0x00040000,                          // denied
-	TEAMVOTED:        0x00080000                           // already cast a team vote
-};
-
-/**********************************************************
- * 
- * Entitystate events
- * 
- * Entity events are for effects that take place relative
- * to an existing entities origin. Very network efficient.
- *
- * Two bits at the top of the entityState->event field
- * will be incremented with each change in the event so
- * that an identical event started twice in a row can
- * be distinguished. And off the value with ~EV_EVENT_BITS
- * to retrieve the actual event number.
- *
- **********************************************************/
-var EV_EVENT_BIT1    = 0x00000100;
-var EV_EVENT_BIT2    = 0x00000200;
-var EV_EVENT_BITS    = (EV_EVENT_BIT1|EV_EVENT_BIT2);
-var EVENT_VALID_MSEC = 300;
-
-var EV = {
-	NONE:                0,
-
-	FOOTSTEP:            1,
-	FOOTSTEP_METAL:      2,
-	FOOTSPLASH:          3,
-	FOOTWADE:            4,
-	SWIM:                5,
-
-	STEP_4:              6,
-	STEP_8:              7,
-	STEP_12:             8,
-	STEP_16:             9,
-
-	FALL_SHORT:          10,
-	FALL_MEDIUM:         11,
-	FALL_FAR:            12,
-
-	JUMP_PAD:            13,                               // boing sound at origin, jump sound on player
-
-	JUMP:                14,
-	WATER_TOUCH:         15,                               // foot touches
-	WATER_LEAVE:         16,                               // foot leaves
-	WATER_UNDER:         17,                               // head touches
-	WATER_CLEAR:         18,                               // head leaves
-
-	ITEM_PICKUP:         19,                               // normal item pickups are predictable
-	GLOBAL_ITEM_PICKUP:  20,                               // powerup / team sounds are broadcast to everyone
-
-	NOAMMO:              21,
-	CHANGE_WEAPON:       22,
-	FIRE_WEAPON:         23,
-
-	USE_ITEM0:           24,
-	USE_ITEM1:           25,
-	USE_ITEM2:           26,
-	USE_ITEM3:           27,
-	USE_ITEM4:           28,
-	USE_ITEM5:           29,
-	USE_ITEM6:           30,
-	USE_ITEM7:           31,
-	USE_ITEM8:           32,
-	USE_ITEM9:           33,
-	USE_ITEM10:          34,
-	USE_ITEM11:          35,
-	USE_ITEM12:          36,
-	USE_ITEM13:          37,
-	USE_ITEM14:          38,
-	USE_ITEM15:          39,
-
-	ITEM_RESPAWN:        40,
-	ITEM_POP:            41,
-	PLAYER_TELEPORT_IN:  42,
-	PLAYER_TELEPORT_OUT: 43,
-
-	GRENADE_BOUNCE:      44,                               // eventParm will be the soundindex
-
-	GENERAL_SOUND:       45,
-	GLOBAL_SOUND:        46,                               // no attenuation
-	GLOBAL_TEAM_SOUND:   47,
-
-	BULLET_HIT_FLESH:    48,
-	BULLET_HIT_WALL:     49,
-
-	MISSILE_HIT:         50,
-	MISSILE_MISS:        51,
-	MISSILE_MISS_METAL:  52,
-	RAILTRAIL:           53,
-	SHOTGUN:             54,
-	BULLET:              55,                               // otherEntity is the shooter
-
-	PAIN:                56,
-	DEATH1:              57,
-	DEATH2:              58,
-	DEATH3:              59,
-	OBITUARY:            60,
-
-	POWERUP_QUAD:        61,
-	POWERUP_BATTLESUIT:  62,
-	POWERUP_REGEN:       63,
-
-	GIB_PLAYER:          64,                               // gib a previously living player
-	SCOREPLUM:           65,                               // score plum
-
-	DEBUG_LINE:          66,
-	STOPLOOPINGSOUND:    67,
-	TAUNT:               68,
-	TAUNT_YES:           69,
-	TAUNT_NO:            70,
-	TAUNT_FOLLOWME:      71,
-	TAUNT_GETFLAG:       72,
-	TAUNT_GUARDBASE:     73,
-	TAUNT_PATROL:        74
-};
-
-/**
- * Animations
- */
-// Flip the togglebit every time an animation
-// changes so a restart of the same anim can be detected.
-var ANIM_TOGGLEBIT = 128;
-
-var ANIM = {
-	BOTH_DEATH1:         0,
-	BOTH_DEAD1:          1,
-	BOTH_DEATH2:         2,
-	BOTH_DEAD2:          3,
-	BOTH_DEATH3:         4,
-	BOTH_DEAD3:          5,
-
-	TORSO_GESTURE:       6,
-
-	TORSO_ATTACK:        7,
-	TORSO_ATTACK2:       8,
-
-	TORSO_DROP:          9,
-	TORSO_RAISE:         10,
-
-	TORSO_STAND:         11,
-	TORSO_STAND2:        12,
-
-	LEGS_WALKCR:         13,
-	LEGS_WALK:           14,
-	LEGS_RUN:            15,
-	LEGS_BACK:           16,
-	LEGS_SWIM:           17,
-
-	LEGS_JUMP:           18,
-	LEGS_LAND:           19,
-
-	LEGS_JUMPB:          20,
-	LEGS_LANDB:          21,
-
-	LEGS_IDLE:           22,
-	LEGS_IDLECR:         23,
-
-	LEGS_TURN:           24,
-
-	TORSO_GETFLAG:       25,
-	TORSO_GUARDBASE:     26,
-	TORSO_PATROL:        27,
-	TORSO_FOLLOWME:      28,
-	TORSO_AFFIRMATIVE:   29,
-	TORSO_NEGATIVE:      30,
-
-	MAX:                 31,
-
-	LEGS_BACKCR:         32,
-	LEGS_BACKWALK:       33,
-	FLAG_RUN:            34,
-	FLAG_STAND:          35,
-	FLAG_STAND2RUN:      36,
-
-	MAX_TOTALANIMATIONS: 37
-};
-
-// Means of death
-var MOD = {
-	UNKNOWN:        0,
-	SHOTGUN:        1,
-	GAUNTLET:       2,
-	MACHINEGUN:     3,
-	GRENADE:        4,
-	GRENADE_SPLASH: 5,
-	ROCKET:         6,
-	ROCKET_SPLASH:  7,
-	PLASMA:         8,
-	PLASMA_SPLASH:  9,
-	RAILGUN:        10,
-	LIGHTNING:      11,
-	BFG:            12,
-	BFG_SPLASH:     13,
-	WATER:          14,
-	SLIME:          15,
-	LAVA:           16,
-	CRUSH:          17,
-	TELEFRAG:       18,
-	FALLING:        19,
-	SUICIDE:        20,
-	TARGET_LASER:   21,
-	TRIGGER_HURT:   22,
-	GRAPPLE:        23
-};
-
-		var RT = {
-	MODEL:               0,
-	POLY:                1,
-	SPRITE:              2,
-	BEAM:                3,
-	RAIL_CORE:           4,
-	RAIL_RINGS:          5,
-	LIGHTNING:           6,
-	PORTALSURFACE:       7,                                // doesn't draw anything, just info for portals
-	MAX_REF_ENTITY_TYPE: 8
-};
-
-var RF = {
-	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
-	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
-	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
-	DEPTHHACK:       0x0008,                               // for view weapon Z crunching
-	NOSHADOW:        0x0040,                               // don't add stencil shadows
-	LIGHTING_ORIGIN: 0x0080,                               // use refEntity->lightingOrigin instead of refEntity->origin
-	                                                       // for lighting.  This allows entities to sink into the floor
-	                                                       // with their origin going solid, and allows all parts of a
-	                                                       // player to get the same lighting
-	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
-	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
-};
-
-		var DEFAULT_MODEL = 'sarge';
-
-var MAX_LOCAL_ENTITIES   = 512;
-
-var FOOTSTEP = {
-	NORMAL: 0,
-	BOOT:   1,
-	FLESH:  2,
-	MECH:   3,
-	ENERGY: 4,
-	METAL:  5,
-	SPLASH: 6,
-	TOTAL:  7
-};
-
-var IMPACTSOUND = {
-	DEFAULT: 0,
-	METAL:   1,
-	FLESH:   2
-};
-
-var ClientGame = function () {
-	this.initialized           = false;
-	this.frameInterpolation    = 0;                        // (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
-
-	this.renderingThirdPerson  = false;
-	this.thisFrameTeleport     = false;
-	this.nextFrameTeleport     = false;
-	this.time                  = 0;                        // this is the time value that the client is rendering at.
-	this.oldTime               = 0;                        // time at last frame, used for missile trails and prediction checking
-	this.frameTime             = 0;                        // cg.time - cg.oldTime
-	this.physicsTime           = 0;                        // either cg.snap->time or cg.nextSnap->time
-	this.latestSnapshotNum     = 0;                        // the number of snapshots the client system has received
-	this.latestSnapshotTime    = 0;                        // the time from latestSnapshotNum, so we don't need to read the snapshot yet
-	this.snap                  = null;                     // cg.snap->serverTime <= cg.time
-	this.nextSnap              = null;                     // cg.nextSnap->serverTime > cg.time, or NULL
-	this.entities              = new Array(MAX_GENTITIES);
-
-	//
-	this.pmove                 = new bg.PmoveInfo();
-	this.solidEntities         = [];
-	this.numSolidEntities      = 0;
-	this.triggerEntities       = [];
-	this.numTriggerEntities    = 0;
-	
-	// prediction state
-	this.hyperspace            = false;                    // true if prediction has hit a trigger_teleport
-	this.validPPS              = false;
-	this.predictedErrorTime    = 0;
-	this.predictedError        = [0, 0, 0];
-	this.predictedPlayerState  = new sh.PlayerState();
-	this.predictedPlayerEntity = new ClientEntity();
-
-	// item resource info
-	this.itemInfo              = [];
-	this.weaponInfo            = [];                       // indexed by weapon num
-
-	// input state sent to server
-	this.weaponSelect          = 0;
-
-	// auto rotating items
-	this.autoAngles            = [0, 0, 0];
-	this.autoAnglesFast        = [0, 0, 0];
-
-	// view rendering
-	this.refdef                = new re.RefDef();
-	this.refdefViewAngles      = [0, 0 ,0];                // will be converted to refdef.viewaxis
-
-	// scoreboard
-	this.showScores            = false;
-
-	// local entities
-	this.localEntities         = null;
-	this.activeLocalEntities   = null;                     // double linked list
-	this.freeLocalEntities     = null;                     // single linked list
-
-	// temp working variables for player view
-	this.bobCycle              = 0;
-	this.bobFracSin            = 0;
-	this.xyspeed               = 0;
-
-	for (var i = 0; i < MAX_GENTITIES; i++) {
-		this.entities[i] = new ClientEntity();
-	}
-};
-
-var ClientGameStatic = function () {
-	this.gameState            = null;
-	this.mapname              = null;
-	this.processedSnapshotNum = 0;               // the number of snapshots cgame has requested
-
-	// locally derived information from gamestate
-	this.clientinfo           = new Array(MAX_CLIENTS);
-	this.media                = {};
-
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		this.clientinfo[i] = new ClientInfo();
-	}
-};
-
-/**
- * Player entities need to track more information
- * than any other type of entity.
- *
- * Note that not every player entity is a client entity,
- * because corpses after respawn are outside the normal
- * client numbering range.
-
- * When changing animation, set animationTime to frameTime + lerping time.
- * The current lerp will finish out, then it will lerp to the new animation.
-*/
-var PlayerEntity = function () {
-	this.legs            = new LerpFrame();
-	this.torso           = new LerpFrame();
-	this.flag            = new LerpFrame();
-	this.paintTime       = 0;
-	this.painDirection   = 0;	// flip from 0 to 1
-	this.lightningFiring = false;
-
-	this.railFireTime    = 0;
-
-	// Machinegun spinning.
-	this.barrelAngle     = 0.0;
-	this.barrelTime      = 0;
-	this.barrelSpinning  = false;
-};
-
-var LerpFrame = function () {
-	this.oldFrame        = 0;
-	this.oldFrameTime    = 0;                              // time when ->oldFrame was exactly on
-
-	this.frame           = 0;
-	this.frameTime       = 0;                              // time when ->frame will be exactly on
-
-	this.backlerp        = 0.0;
-
-	this.yawAngle        = 0.0;
-	this.yawing          = false;
-	this.pitchAngle      = 0.0;
-	this.pitching        = false;
-
-	this.animationNumber = 0;
-	this.animation       = null;
-	this.animationTime   = 0;
-};
-
-// ClientEntity have a direct corespondence with GameEntity in the game, but
-// only the EntityState is directly communicated to the cgame.
-var ClientEntity =  function () {
-	this.currentState  = new sh.EntityState();             // from cg.frame
-	this.nextState     = new sh.EntityState();             // from cg.nextFrame, if available
-	this.interpolate   = false;                            // true if next is valid to interpolate to
-	this.currentValid  = false;                            // true if cg.frame holds this entity
-
-	// int  muzzleFlashTime;  // move to playerEntity?
-	this.previousEvent = 0;
-	// int  teleportFlag;
-
-	this.trailTime     = 0;                                // so missile trails can handle dropped initial packets
-	// int  dustTrailTime;
-	this.miscTime      = 0;
-
-	this.snapshotTime  = 0;                                // last time this entity was found in a snapshot
-
-	this.pe            = new PlayerEntity();
-	/*
-	int    errorTime;  // decay the error from this time
-	vec3_t errorOrigin;
-	vec3_t errorAngles;
-	*/
-	
-	this.extrapolated  = false;                            // false if origin / angles is an interpolation
-	this.rawOrigin     = [0, 0, 0];
-	this.rawAngles     = [0, 0, 0];
-
-	// Exact interpolated position of entity on this frame.
-	this.lerpOrigin    = [0, 0, 0];
-	this.lerpAngles    = [0, 0, 0];
-};
-
-
-/**********************************************************
- *
- * Local entities are created as a result of events or
- * predicted actions, and live independantly from all
- * server transmitted entities
- *
- **********************************************************/
-
-// typedef struct markPoly_s {
-// 	struct markPoly_s	*prevMark, *nextMark;
-// 	int			time;
-// 	qhandle_t	markShader;
-// 	qboolean	alphaFade;		// fade alpha instead of rgb
-// 	float		color[4];
-// 	poly_t		poly;
-// 	polyVert_t	verts[MAX_VERTS_ON_POLY];
-// } markPoly_t;
-
-var LE = {
-	MARK:             0,
-	EXPLOSION:        1,
-	SPRITE_EXPLOSION: 2,
-	FRAGMENT:         3,
-	MOVE_SCALE_FADE:  4,
-	FALL_SCALE_FADE:  5,
-	FADE_RGB:         6,
-	SCALE_FADE:       7,
-	SCOREPLUM:        8
-};
-
-var LEF = {
-	PUFF_DONT_SCALE: 0x0001,                               // do not scale size over time
-	TUMBLE:          0x0002,                               // tumble over time, used for ejecting shells
-	SOUND1:          0x0004,                               // sound 1 for kamikaze
-	SOUND2:          0x0008                                // sound 2 for kamikaze
-};
-
-// Fragment local entities can leave marks on walls.
-var LEMT = {
-	NONE:  0,
-	BURN:  1,
-	BLOOD: 2
-};
-
-// Fragment local entities can make sounds on impacts.
-var LEBS = {
-	NONE:  0,
-	BLOOD: 1,
-	BRASS: 2
-};
-
-var LocalEntity = function () {
-	this.reset();
-};
-
-LocalEntity.prototype.reset = function () {
-	this.prev              = null;
-	this.next              = null;
-	this.leType            = 0;
-	this.leFlags           = 0;
-
-	this.startTime         = 0;
-	this.endTime           = 0;
-	this.fadeInTime        = 0;
-
-	this.lifeRate          = 0;                            // 1.0 / (endTime - startTime)
-
-	this.pos               = new sh.Trajectory();
-	this.angles            = new sh.Trajectory();
-
-	this.bounceFactor      = 0;                            // 0.0 = no bounce, 1.0 = perfect
-	this.color             = [0, 0, 0, 0];
-	this.radius            = 0;
-	this.light             = 0;
-	this.lightColor        = [0, 0, 0];
-	this.leMarkType        = 0;                            // mark to leave on fragment impact
-	this.leBounceSoundType = 0;
-
-	this.refent            = new re.RefEntity();
-};
-
-/**********************************************************
- *
- * Entity info
- *
- **********************************************************/
-var ClientInfo = function () {
-	this.reset();
-};
-
-ClientInfo.prototype.reset = function () {
-	this.infoValid     = false;
-	this.name          = null;
-
-	// When clientinfo is changed, the loading of models/skins/sounds
-	// can be deferred until you are dead, to prevent hitches in
-	// gameplay.
-	this.modelName     = null;
-	this.skinName      = null;
-	this.headModelName = null;
-	this.headSkinName  = null;
-
-	this.fixedlegs     = false;		// true if legs yaw is always the same as torso yaw
-	this.fixedtorso    = false;		// true if torso never changes yaw
-
-	// footstep_t footsteps;
-	// gender_t gender;  // from model
-
-	this.legsModel     = -1;
-	this.legsSkin      = -1;
-
-	this.torsoModel    = -1;
-	this.torsoSkin     = -1;
-
-	this.headModel     = -1;
-	this.headSkin      = -1;
-
-	this.animations    = new bg.Animation(ANIM.MAX_TOTALANIMATIONS);
-
-	for (var i = 0; i < ANIM.MAX_TOTALANIMATIONS; i++) {
-		this.animations[i] = new bg.Animation();
-	}
-};
-
-var ItemInfo = function () {
-	this.modelHandles = [];
-	this.icon         = -1;
-};
-
-// Each WP.* weapon enum has an associated WeaponInfo that
-// contains media references necessary to present the
-// weapon and its effects.
-var WeaponInfo = function () {
-	//gitem_t			*item;
-
-	this.handsModel     = null;  // the hands don't actually draw, they just position the weapon
-	this.weaponModel    = null;
-	this.barrelModel    = null;
-	this.flashModel     = null;
-
-	this.weaponMidpoint = [0, 0, 0];		// so it will rotate centered instead of by tag
-
-	// this.flashDlight      = 0;
-	// this.flashDlightColor = [0, 0, 0];
-	this.flashSound     = [0, 0, 0, 0];		// fast firing weapons randomly choose
-
-	this.weaponIcon     = 0;
-	this.ammoIcon       = 0;
-
-	this.ammoModel      = 0;
-
-	this.missileModel   = 0;
-	this.missileSound   = 0;
-	this.missileTrailFunc   = null;
-	// this.missileDlight      = 0;
-	// this.missileDlightColor = [0, 0, 0];
-	// this.missileRenderfx    = 0;
-
-	// this.ejectBrassFunc     = null;
-
-	this.trailRadius        = 0;
-	this.trailTime        = 0;
-
-	this.readySound     = 0;
-	this.firingSound    = 0;
-};
-		var cg;
-var cgs;
-
-var cg_fov,
-	cg_errordecay,
-	cg_predict,
-	cg_showmiss,
-	cg_thirdPerson,
-	cg_thirdPersonAngle,
-	cg_thirdPersonRange;
-
-var cg_hud;
-
-/**
- * log
- */
-function log() {
-	var args = Array.prototype.slice.call(arguments);
-	args.splice(0, 0, 'CG:');
-	Function.apply.call(console.log, console, args);
-}
-
-/**
- * error
- */
-function error(str) {
-	imp.com_error(sh.Err.DROP, str);
-}
-
-/**
- * Init
- */
-function Init(serverMessageNum, serverCommandSequence, clientNum) {
-	log('Initializing', serverMessageNum, serverCommandSequence, clientNum);
-
-	cg  = new ClientGame();
-	cg.clientNum = clientNum;
-
-	cgs = new ClientGameStatic();
-	cgs.processedSnapshotNum = serverMessageNum;
-	cgs.serverCommandSequence = serverCommandSequence;
-	cgs.gameState = imp.cl_GetGameState();
-
-	cg_fov              = imp.com_AddCvar('cg_fov',              110, CVF.ARCHIVE);
-	cg_errordecay       = imp.com_AddCvar('cg_errordecay',       100, CVF.ARCHIVE);
-	cg_predict          = imp.com_AddCvar('cg_predict',          0,   CVF.ARCHIVE);
-	cg_showmiss         = imp.com_AddCvar('cg_showmiss',         1,   CVF.ARCHIVE);
-	cg_thirdPerson      = imp.com_AddCvar('cg_thirdPerson',      0,   CVF.ARCHIVE);
-	cg_thirdPersonAngle = imp.com_AddCvar('cg_thirdPersonAngle', 0);
-	cg_thirdPersonRange = imp.com_AddCvar('cg_thirdPersonRange', 100);
-
-	cg_hud = imp.ui_GetView('hud');
-
-	RegisterCommands();
-	ParseServerinfo();
-
-	imp.cm_LoadMap(cgs.mapname, function () {
-		imp.re_LoadMap(cgs.mapname, function () {
-			// The renderer uses our clipmap data to build the buffers.
-			imp.re_BuildCollisionBuffers();
-
-			RegisterSounds();
-			RegisterGraphics();
-			RegisterClients();
-			InitLocalEntities();
-			StartMusic();
-
-			cg.initialized = true;
-		});
-	});
-}
-
-/**
- * Shutdown
- */
-function Shutdown() {
-	log('Shutting down');
-}
-
-/**
- * Frame
- */
-function Frame(serverTime) {
-	if (!cg.initialized) {
-		return;
-	}
-	
-	cg.time = serverTime;
-	
-	ProcessSnapshots();
-
-	if (!cg.snap || (cg.snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
-		//CG_DrawInformation();
-		return;
-	}
-
-	// Let the client system know our weapon.
-	imp.cl_SetUserCmdValue('weapon', cg.weaponSelect);
-
-	// Predicate our local playerstate.
-	PredictPlayerState();
-
-	// Decide on third person view.
-	cg.renderingThirdPerson = cg_thirdPerson() || cg.snap.ps.pm_type === PM.DEAD;
-	
-	// Calculate view origin and axis.
-	CalcViewValues();
-	cg.refdef.time = cg.time;
-
-	// Add network and local entities to the scene.
-	if (!cg.hyperspace) {
-		AddPacketEntities();
-		AddLocalEntities();
-	}
-	AddViewWeapon(cg.predictedPlayerState);
-
-	// Update audio positions.
-	imp.snd_Respatialize(cg.snap.ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis/*, inwater*/);
-
-	cg.frameTime = cg.time - cg.oldTime;
-	if (cg.frametime < 0) {
-		cg.frametime = 0;
-	}
-	cg.oldTime = cg.time;
-	
-	// Issue rendering calls.
-	imp.re_RenderScene(cg.refdef);
-
-	// All Draw* calls just prep the cg_hud viewmodel,
-	// which is finally rendered with imp.ui_Render() in cl-main.
-	DrawRenderCounts();
-	DrawHealth();
-	DrawArmor();
-	DrawAmmo();
-	DrawWeaponSelect();
-	imp.ui_RenderView(cg_hud);
-
-	// if (cg.showScores === true) {
-	// 	var players = [
-	// 		{ name: 'Player 1' }
-	// 	];
-
-	// 	imp.ui_RenderView('scoreboard');
-	// }
-}
-
-/**
- * RegisterSounds
- */
-function RegisterSounds() {
-	cgs.media.jumpPadSound = imp.snd_RegisterSound('sound/world/jumppad');
-}
-
-/**
- * RegisterGraphics
- */
-function RegisterGraphics() {
-	for (var i = 0; i < bg.ItemList.length; i++) {
-		RegisterItemVisuals(i);
-	}
-
-	cgs.media.bulletFlashModel = imp.re_RegisterModel('models/weaphits/bullet.md3');
-	cgs.media.ringFlashModel = imp.re_RegisterModel('models/weaphits/ring02.md3');
-	cgs.media.dishFlashModel = imp.re_RegisterModel('models/weaphits/boom01.md3');
-	cgs.media.smokePuffShader = imp.re_RegisterShader('smokePuff');
-
-	cgs.media.bloodExplosionShader = imp.re_RegisterShader('bloodExplosion');
-}
-
-/**
- * RegisterItemVisuals
- */
-function RegisterItemVisuals(itemNum) {
-	var gitem = bg.ItemList[itemNum];
-	var itemInfo = cg.itemInfo[itemNum];
-
-	if (!gitem || itemInfo) {
-		return;
-	}
-
-	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
-
-	for (var i = 0; i < gitem.models.length; i++) {
-		itemInfo.modelHandles[i] = imp.re_RegisterModel(gitem.models[i]);
-	}
-	itemInfo.icon = imp.ui_RegisterImage(gitem.icon);
-
-	if (gitem.giType === IT.WEAPON) {
-		RegisterWeapon(gitem);
-	}
-}
-
-/**
- * RegisterClients
- */
-function RegisterClients() {
-	NewClientInfo(cg.clientNum);
-
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		if (cg.clientNum === i) {
-			continue;
-		}
-
-		var cs = ConfigString('player' + i);
-
-		if (!cs) {
-			continue;
-		}
-
-		NewClientInfo(i);
-	}
-}
-
-/**
- * ConfigString
- */
-function ConfigString(key) {
-	return cgs.gameState[key];
-}
-
-/**
- * StartMusic
- */
-function StartMusic() {
-	// // Start the background music.
-	// s = (char *)CG_ConfigString( CS_MUSIC );
-	// Q_strncpyz( parm1, COM_Parse( &s ), sizeof( parm1 ) );
-	// Q_strncpyz( parm2, COM_Parse( &s ), sizeof( parm2 ) );
-
-	imp.snd_StartBackgroundTrack(imp.snd_RegisterSound('music/sonic5'), true);
-}
-
-		/**
- * RegisterCommands
- */
-function RegisterCommands() {
-	imp.com_AddCmd('+scores',  CmdScoresDown);
-	imp.com_AddCmd('-scores',  CmdScoresUp);
-	imp.com_AddCmd('weapnext', CmdNextWeapon);
-	imp.com_AddCmd('weapprev', CmdPrevWeapon);
-	imp.com_AddCmd('weapon',   CmdWeapon);
-}
-
-/**
- * CmdScoresDown
- */
-function CmdScoresDown() {
-	cg.showScores = true;
-}
-
-/**
- * CmdScoresUp
- */
-function CmdScoresUp() {
-	cg.showScores = false;
-}
-		var FPS_FRAMES    = 4;
-var previousTimes = new Array(FPS_FRAMES);
-var previousTime  = 0;
-var previousIdx   = 0;
-
-/**
- * DrawRenderCounts
- */
-function DrawRenderCounts() {
-	// We calculate FPS on the client.
-	var t = imp.sys_GetMilliseconds();
-	var frameTime = t - previousTime;
-	previousTime = t;
-
-	previousTimes[previousIdx % FPS_FRAMES] = frameTime;
-	previousIdx++;
-
-	if (previousIdx > FPS_FRAMES) {
-		// Average multiple frames together to smooth changes out a bit.
-		var total = 0;
-
-		for (var i = 0; i < FPS_FRAMES; i++) {
-			total += previousTimes[i];
-		}
-
-		if (!total) {
-			total = 1;
-		}
-
-		cg_hud.setFPS(parseInt(1000 * FPS_FRAMES / total, 10));
-	}
-
-	// Grab everything else from the renderer.
-	var counts = imp.re_GetCounts();
-	cg_hud.setCounts({
-		shaders: counts.shaders,
-		vertexes: counts.vertexes,
-		indexes: counts.indexes,
-		culledFaces: counts.culledFaces,
-		culledModelOut: counts.culledModelOut,
-		culledModelIn: counts.culledModelIn,
-		culledModelClip: counts.culledModelClip
-	});
-}
-
-/**
- * DrawWeaponSelect
- */
-var currentWeaponInfo = [];
-function DrawWeaponSelect() {
-	var bits = cg.snap.ps.stats[STAT.WEAPONS];
-	
-	for (var i = 1; i < MAX_WEAPONS; i++) {
-		if (!(bits & (1 << i))) {
-			currentWeaponInfo[i] = null;
-			continue;
-		}
-
-		currentWeaponInfo[i] = cg.weaponInfo[i];
-	}
-
-	cg_hud.setWeapons(currentWeaponInfo, cg.weaponSelect);
-}
-
-/**
- * DrawAmmo
- */
-function DrawAmmo() {
-	
-	cg_hud.setAmmo(cg.snap.ps.ammo);
-}
-
-/**
- * DrawArmor
- */
-function DrawArmor() {
-	
-	cg_hud.setArmor(cg.snap.ps.stats[STAT.ARMOR]);
-}
-
-/**
- * DrawHealth
- */
-function DrawHealth() {
-	
-	cg_hud.setHealth(cg.snap.ps.stats[STAT.HEALTH]);
-}
-
-		/**
- * MakeExplosion
- */
-function MakeExplosion(origin, dir, hModel, shader, msec, isSprite) {
-	if (msec <= 0) {
-		error('MakeExplosion: msec = ', msec);
-	}
-
-	var le = AllocLocalEntity();
-	var newOrigin = [0, 0, 0];
-	// Skew the time a bit so they aren't all in sync.
-	var offset = Math.floor(Math.random()*64);
-
-	if (isSprite) {
-		le.leType = LE.SPRITE_EXPLOSION;
-
-		// Randomly rotate sprite orientation.
-		le.refent.rotation = Math.floor(Math.random()*360);
-		var tmpVec = vec3.scale(dir, 16, [0, 0, 0]);
-		vec3.add(tmpVec, origin, newOrigin);
-	} else {
-		le.leType = LE.EXPLOSION;
-		vec3.set(origin, newOrigin);
-
-		// Set axis with random rotate.
-		if (!dir) {
-			qm.AxisClear(le.refent.axis);
-		} else {
-			var axis = le.refent.axis;
-			vec3.set(dir, axis[0]);
-			qm.PerpendicularVector(axis[0], axis[1]);
-			vec3.cross(axis[0], axis[1], axis[2]);
-			// TODO Use this to generate axis[1] and axis[2]
-			// rotated by ang.
-			// var ang = Math.floor(Math.random()*360);
-			// RotateAroundDirection(le.refent.axis, ang);
-		}
-	}
-
-	le.startTime = cg.time - offset;
-	le.endTime = le.startTime + msec;
-
-	// Bias the time so all shader effects start correctly.
-	le.refent.shaderTime = le.startTime / 1000;
-
-	le.refent.hModel = hModel;
-	le.refent.customShader = shader;
-
-	// Set origin.
-	vec3.set(newOrigin, le.refent.origin);
-	vec3.set(newOrigin, le.refent.oldOrigin);
-
-	le.color[0] = le.color[1] = le.color[2] = 1.0;
-
-	return le;
-}
-
-/**
- * SmokePuff
- * 
- * Adds a smoke puff or blood trail localEntity.
- */
-function SmokePuff(p, vel,
-	               radius,
-	               r, g, b, a,
-	               duration,
-	               startTime,
-	               fadeInTime,
-	               leFlags,
-	               hShader) {
-	// static int	seed = 0x92;
-	var le = AllocLocalEntity();
-	le.leFlags = leFlags;
-	le.radius = radius;
-
-	var re = le.refent;
-	re.rotation = Math.random() * 360; //Q_random( &seed ) * 360;
-	re.radius = radius;
-	re.shaderTime = startTime / 1000;
-
-	le.leType = LE.SCALE_FADE;
-	le.startTime = startTime;
-	le.fadeInTime = fadeInTime;
-	le.endTime = startTime + duration;
-	if (fadeInTime > startTime) {
-		le.lifeRate = 1.0 / (le.endTime - le.fadeInTime);
-	} else {
-		le.lifeRate = 1.0 / (le.endTime - le.startTime);
-	}
-	le.color[0] = r;
-	le.color[1] = g; 
-	le.color[2] = b;
-	le.color[3] = a;
-
-	le.pos.trType = TR.LINEAR;
-	le.pos.trTime = startTime;
-	vec3.set(vel, le.pos.trDelta);
-	vec3.set(p, le.pos.trBase);
-
-	vec3.set(p, re.origin);
-	re.customShader = hShader;
-
-	re.shaderRGBA[0] = le.color[0] * 0xff;
-	re.shaderRGBA[1] = le.color[1] * 0xff;
-	re.shaderRGBA[2] = le.color[2] * 0xff;
-	re.shaderRGBA[3] = 0xff;
-
-	re.reType = RT.SPRITE;
-	re.radius = le.radius;
-
-	return le;
-}
-
-/**
- * Bleed
- * 
- * This is the spurt of blood when a character gets hit
- */
-function Bleed(origin, entityNum) {
-	// if ( !cg_blood.integer ) {
-	// 	return;
-	// }
-
-	var le = AllocLocalEntity();
-	le.leType = LE.EXPLOSION;
-
-	le.startTime = cg.time;
-	le.endTime = le.startTime + 500;
-
-	vec3.set(origin, le.refent.origin);
-	le.refent.reType = RT.SPRITE;
-	le.refent.rotation = Math.floor(Math.random() * 360);
-	le.refent.radius = 24;
-	le.refent.customShader = cgs.media.bloodExplosionShader;
-
-	// Don't show player's own blood in view.
-	if (entityNum === cg.snap.ps.clientNum) {
-		le.refent.renderfx |= RF.THIRD_PERSON;
-	}
-}
-		/**
- * AddPacketEntities
- */
-function AddPacketEntities() {
-	// set cg.frameInterpolation
-	if (cg.nextSnap) {
-		var delta = (cg.nextSnap.serverTime - cg.snap.serverTime);
-		if (delta === 0) {
-			cg.frameInterpolation = 0;
-		} else {
-			cg.frameInterpolation = (cg.time - cg.snap.serverTime) / delta;
-		}
-	} else {
-		cg.frameInterpolation = 0;  // actually, it should never be used, because 
-	                                // no entities should be marked as interpolating
-	}
-
-	// The auto-rotating items will all have the same axis.
-	cg.autoAngles[0] = 0;
-	cg.autoAngles[1] = ( cg.time & 2047 ) * 360 / 2048.0;
-	cg.autoAngles[2] = 0;
-
-	cg.autoAnglesFast[0] = 0;
-	cg.autoAnglesFast[1] = ( cg.time & 1023 ) * 360 / 1024.0;
-	cg.autoAnglesFast[2] = 0;
-
-	// Generate and add the entity from the playerstate.
-	var ps = cg.predictedPlayerState;
-	bg.PlayerStateToEntityState(ps, cg.predictedPlayerEntity.currentState);
-	AddCEntity(cg.predictedPlayerEntity);
-
-	// // Lerp the non-predicted value for lightning gun origins.
-	// CalcEntityLerpPositions( &cg_entities[ cg.snap.ps.clientNum ] );
-
-	// add each entity sent over by the server
-	for (var i = 0; i < cg.snap.numEntities; i++) {
-		var cent = cg.entities[cg.snap.entities[i].number];
-		AddCEntity(cent);
-	}
-}
-
-/**
- * AddCEntity
- */
-function AddCEntity(cent) {
-	// Event-only entities will have been dealt with already.
-	if (cent.currentState.eType >= ET.EVENTS) {
-		return;
-	}
-	
-	// Calculate the current origin.
-	CalcEntityLerpPositions(cent);
-
-	// Add automatic effects.
-	EntityEffects(cent);
-
-	switch (cent.currentState.eType) {
-		case ET.ITEM:
-			AddItem(cent);
-			break;
-
-		case ET.MISSILE:
-			AddMissile(cent);
-			break;
-
-		case ET.PLAYER:
-			AddPlayer(cent);
-			break;
-	}
-
-	/*switch ( cent.currentState.eType ) {
-	default:
-		CG_Error( "Bad entity type: %i", cent.currentState.eType );
-		break;
-	case ET.INVISIBLE:
-	case ET.PUSH_TRIGGER:
-	case ET.TELEPORT_TRIGGER:
-		break;
-	case ET.GENERAL:
-		CG_General( cent );
-		break;
-	case ET.PLAYER:
-		CG_Player( cent );
-		break;
-	case ET.ITEM:
-		CG_Item( cent );
-		break;
-	case ET.MISSILE:
-		CG_Missile( cent );
-		break;
-	case ET.MOVER:
-		CG_Mover( cent );
-		break;
-	case ET.BEAM:
-		CG_Beam( cent );
-		break;
-	case ET.PORTAL:
-		CG_Portal( cent );
-		break;
-	case ET.SPEAKER:
-		CG_Speaker( cent );
-		break;
-	case ET.GRAPPLE:
-		CG_Grapple( cent );
-		break;
-	case ET.TEAM:
-		CG_TeamBase( cent );
-		break;
-	}*/
-}
-
-/**
- * PositionEntityOnTag
- *
- * Modifies the entities position and axis by the given
- * tag location.
- */
-// function PositionEntityOnTag(refent, parent, parentModel, tagName) {
-// 	int				i;
-// 	orientation_t	lerped;
-	
-// 	// Lerp the tag.
-// 	trap_R_LerpTag( &lerped, parentModel, parent.oldframe, parent.frame,
-// 		1.0 - parent.backlerp, tagName );
-
-// 	// FIXME: allow origin offsets along tag?
-// 	VectorCopy( parent.origin, entity.origin );
-// 	for ( i = 0 ; i < 3 ; i++ ) {
-// 		VectorMA( entity.origin, lerped.origin[i], parent.axis[i], entity.origin );
-// 	}
-
-// 	// had to cast away the const to avoid compiler problems...
-// 	MatrixMultiply( lerped.axis, ((refEntity_t *)parent).axis, entity.axis );
-// 	entity.backlerp = parent.backlerp;
-// }
-
-/**
- * PositionRotatedEntityOnTag
- * 
- * Modifies the entities position and axis by the given
- * tag location.
- */
-function PositionRotatedEntityOnTag(refent, parent, parentModel, tagName) {
-	// Lerp the tag.
-	var lerped = new sh.Orientation();
-	imp.re_LerpTag(lerped, parentModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, tagName);
-
-	// FIXME: allow origin offsets along tag?
-	var t = [0, 0, 0];
-
-	vec3.set(parent.origin, refent.origin);
-	for (var i = 0; i < 3; i++) {
-		vec3.add(refent.origin, vec3.scale(parent.axis[i], lerped.origin[i], t));
-	}
-
-	// had to cast away the const to avoid compiler problems...
-	var tempAxis = [
-		[0, 0, 0],
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-
-	qm.AxisMultiply(refent.axis, lerped.axis, tempAxis);
-	qm.AxisMultiply(tempAxis, parent.axis, refent.axis);
-}
-
-/**
- * CalcEntityLerpPositions
- */
-function CalcEntityLerpPositions(cent) {
-	// Make sure the clients use TR.INTERPOLATE.
-	if (cent.currentState.number < MAX_CLIENTS) {
-		cent.currentState.pos.trType = TR.INTERPOLATE;
-		cent.nextState.pos.trType = TR.INTERPOLATE;
-	}
-
-	if (cent.interpolate && cent.currentState.pos.trType === TR.INTERPOLATE) {
-		InterpolateEntityPosition(cent);
-		return;
-	}
-
-	// First see if we can interpolate between two snaps for
-	// linear extrapolated clients
-	if (cent.interpolate &&
-		cent.currentState.pos.trType === TR.LINEAR_STOP &&
-		cent.currentState.number < MAX_CLIENTS) {
-		InterpolateEntityPosition(cent);
-		return;
-	}
-
-	// Just use the current frame and evaluate as best we can
-	bg.EvaluateTrajectory(cent.currentState.pos, cg.time, cent.lerpOrigin);
-	bg.EvaluateTrajectory(cent.currentState.apos, cg.time, cent.lerpAngles);
-
-	// adjust for riding a mover if it wasn't rolled into the predicted
-	// player state
-	/*if ( cent != &cg.predictedPlayerEntity ) {
-		CG_AdjustPositionForMover( cent.lerpOrigin, cent.currentState.groundEntityNum, 
-		cg.snap.serverTime, cg.time, cent.lerpOrigin, cent.qm.LerpAngles, cent.qm.LerpAngles);
-	}*/
-}
-
-/**
- * InterpolateEntityPosition
- */
-function InterpolateEntityPosition(cent) {
-	// It would be an internal error to find an entity that interpolates without
-	// a snapshot ahead of the current one
-	if (!cg.nextSnap) {
-		error('InterpoateEntityPosition: !cg.nextSnap');
-	}
-
-	var f = cg.frameInterpolation;
-
-	// This will linearize a sine or parabolic curve, but it is important
-	// to not extrapolate player positions if more recent data is available
-	var current = [0, 0, 0];
-	var next = [0, 0, 0];
-
-	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, current);
-	bg.EvaluateTrajectory(cent.nextState.pos, cg.nextSnap.serverTime, next);
-
-	cent.lerpOrigin[0] = current[0] + f * (next[0] - current[0]);
-	cent.lerpOrigin[1] = current[1] + f * (next[1] - current[1]);
-	cent.lerpOrigin[2] = current[2] + f * (next[2] - current[2]);
-
-	bg.EvaluateTrajectory(cent.currentState.apos, cg.snap.serverTime, current);
-	bg.EvaluateTrajectory(cent.nextState.apos, cg.nextSnap.serverTime, next);
-
-	cent.lerpAngles[0] = qm.LerpAngle(current[0], next[0], f);
-	cent.lerpAngles[1] = qm.LerpAngle(current[1], next[1], f);
-	cent.lerpAngles[2] = qm.LerpAngle(current[2], next[2], f);
-}
-
-/**
- * EntityEffects
- */
-function EntityEffects(cent) {
-	// Update sound origins.
-	SetEntitySoundPosition(cent);
-
-	// // Add looping sound.
-	// if ( cent->currentState.loopSound ) {
-	// 	if (cent->currentState.eType != ET_SPEAKER) {
-	// 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
-	// 			cgs.gameSounds[ cent->currentState.loopSound ] );
-	// 	} else {
-	// 		trap_S_AddRealLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
-	// 			cgs.gameSounds[ cent->currentState.loopSound ] );
-	// 	}
-	// }
-
-	// // Constant light glow.
-	// if (cent->currentState.constantLight) {
-	// 	int		cl;
-	// 	float		i, r, g, b;
-
-	// 	cl = cent->currentState.constantLight;
-	// 	r = (float) (cl & 0xFF) / 255.0;
-	// 	g = (float) ((cl >> 8) & 0xFF) / 255.0;
-	// 	b = (float) ((cl >> 16) & 0xFF) / 255.0;
-	// 	i = (float) ((cl >> 24) & 0xFF) * 4.0;
-	// 	trap_R_AddLightToScene(cent->lerpOrigin, i, r, g, b);
-	// }
-}
-
-/**
- * SetEntitySoundPosition
- */
-function SetEntitySoundPosition(cent) {
-	// if (cent.currentState.solid === SOLID.BMODEL) {
-	// 	vec3_t	origin;
-	// 	float	*v;
-
-	// 	v = cgs.inlineModelMidpoints[ cent->currentState.modelIndex ];
-	// 	VectorAdd( cent->lerpOrigin, v, origin );
-	// 	trap_S_UpdateEntityPosition( cent->currentState.number, origin );
-	// } else {
-		imp.snd_UpdateEntityPosition(cent.currentState.number, cent.lerpOrigin);
-	// }
-}
-
-/**
- * AddItem
- */
-function AddItem(cent) {
-	// TODO Pool these?
-	var refent = new re.RefEntity();
-	var item = bg.ItemList[cent.currentState.modelIndex];
-	var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
-
-	// Autorotate at one of two speeds.
-	if (item.giType === IT.HEALTH) {
-		vec3.set(cg.autoAnglesFast, cent.lerpAngles);
-	} else {
-		vec3.set(cg.autoAngles, cent.lerpAngles);
-	}
-
-	for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-		refent.reType = RT.MODEL;
-		vec3.set(cent.lerpOrigin, refent.origin);
-		qm.AnglesToAxis(cent.lerpAngles, refent.axis);
-		refent.hModel = itemInfo.modelHandles[i];
-		
-		imp.re_AddRefEntityToScene(refent);
-	}
-}
-
-/**
- * AddMissile
- */
-function AddMissile(cent) {	
-	var es = cent.currentState;
-	if (es.weapon >= WP.NUM_WEAPONS) {
-		es.weapon = 0;
-	}
-	var weaponInfo = cg.weaponInfo[es.weapon];
-
-	// Calculate the axis.
-	vec3.set(es.angles, cent.lerpAngles);
-
-	// Add trails.
-	if (weaponInfo.missileTrailFunc) {
-		weaponInfo.missileTrailFunc(cent, weaponInfo);
-	}
-
-	// Add dynamic light.
-	// if (weaponInfo.missileDlight) {
-	// 	trap_R_AddLightToScene(cent.lerpOrigin, weaponInfo.missileDlight, 
-	// 		weaponInfo.missileDlightColor[0], weaponInfo.missileDlightColor[1], weaponInfo.missileDlightColor[2] );
-	// }
-
-	// // Add missile sound.
-	// if (weaponInfo.missileSound) {
-	// 	var velocity = [0, 0, 0];
-
-	// 	bg.EvaluateTrajectoryDelta(cent.currentState.pos, cg.time, velocity);
-
-	// 	trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, velocity, weaponInfo.missileSound );
-	// }
-
-	// Create the render entity.
-	var refent = new re.RefEntity();
-	vec3.set(cent.lerpOrigin, refent.origin);
-	vec3.set(cent.lerpOrigin, refent.oldOrigin);
-
-	// if (cent.currentState.weapon == WP_PLASMAGUN) {
-	// 	ent.reType = RT_SPRITE;
-	// 	ent.radius = 16;
-	// 	ent.rotation = 0;
-	// 	ent.customShader = cgs.media.plasmaBallShader;
-	// 	trap_R_AddRefEntityToScene( &ent );
-	// 	return;
-	// }
-
-	// Flicker between two skins.
-	refent.skinNum = cg.clientFrame & 1;
-	refent.hModel = weaponInfo.missileModel;
-	refent.renderfx = weaponInfo.missileRenderfx | RF.NOSHADOW;
-
-	// Convert direction of travel into axis.
-	vec3.normalize(es.pos.trDelta, refent.axis[0]);
-	if (vec3.length(es.pos.trDelta) === 0) {
-		refent.axis[0][2] = 1;
-	}
-	// FIXME Until we make it spin.
-	qm.PerpendicularVector(refent.axis[0], refent.axis[1]);
-	vec3.cross(refent.axis[0], refent.axis[1], refent.axis[2]);
-
-	// Spin as it moves.
-	// if (espos.trType != TR.STATIONARY) {
-	// 	RotateAroundDirection(ent.axis, cg.time / 4);
-	// } else {
-	// 	RotateAroundDirection(ent.axis, es.time);
-	// }
-
-	// Add to refresh list, possibly with quad glow.
-	AddRefEntityWithPowerups(refent, es/*, TEAM_FREE*/);
-}
-		/**
- * CheckEvents
- */
-function CheckEvents(cent) {
-	// Check for event-only entities.
-	if (cent.currentState.eType > ET.EVENTS) {
-		if (cent.previousEvent) {
-			return;  // already fired
-		}
-
-		// If this is a player event set the entity number of the client entity number.
-		if (cent.currentState.eFlags & EF.PLAYER_EVENT) {
-			cent.currentState.number = cent.currentState.otherEntityNum;
-		}
-
-		cent.previousEvent = 1;
-		cent.currentState.event = cent.currentState.eType - ET.EVENTS;
-	} else {
-		// Check for events riding with another entity.
-		if (cent.currentState.event === cent.previousEvent) {
-			return;
-		}
-		cent.previousEvent = cent.currentState.event;
-		if ((cent.currentState.event & ~EV_EVENT_BITS) === 0) {
-			return;
-		}
-	}
-
-	// Calculate the position at exactly the frame time
-	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, cent.lerpOrigin);
-
-	SetEntitySoundPosition(cent);
-
-	AddEntityEvent(cent, cent.lerpOrigin);
-}
-
-/**
- * ItemPickup
- *
- * A new item was picked up this frame
- */
-function ItemPickup(itemNum) {
-	cg.itemPickup = itemNum;
-	cg.itemPickupTime = cg.time;
-	cg.itemPickupBlendTime = cg.time;
-	// See if it should be the grabbed weapon.
-	if ( bg.ItemList[itemNum].giType == IT.WEAPON ) {
-		// select it immediately
-		if ( /*cg_autoswitch.integer &&*/ bg.ItemList[itemNum].giTag != WP.MACHINEGUN ) {
-			cg.weaponSelectTime = cg.time;
-			cg.weaponSelect = bg.ItemList[itemNum].giTag;
-		}
-	}
-}
-
-/**
- * AddEntityEvent
- *
- * An entity has an event value
- * also called by CG_CheckPlayerstateEvents
- */
-function AddEntityEvent(cent, position) {
-	var es = cent.currentState;
-	var event = es.event & ~EV_EVENT_BITS;
-	var dir = [0, 0, 0];
-	
-	// log('EntityEvent', 'ent:', es.number, ', event: ', event);
-	
-	switch (event) {
-		case EV.FOOTSTEP:
-			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/player/footsteps/step' + Math.ceil(Math.random() * 4)));
-			break;
-			
-
-		case EV.JUMP_PAD:
-			var up = [0, 0, 1];
-			SmokePuff(cent.lerpOrigin, up,
-			          32,
-			          1, 1, 1, 0.33,
-			          1000,
-			          cg.time, 0,
-			          LEF.PUFF_DONT_SCALE,
-			          cgs.media.smokePuffShader);
-
-			// Boing sound at origin, jump sound on player.
-			imp.snd_StartSound(cent.lerpOrigin, -1, cgs.media.jumpPadSound);
-			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/player/sarge/jump1')/*CG_CustomSound(es.number, '*jump1.wav')*/);
-			break;
-
-		case EV.JUMP:
-			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/player/sarge/jump1'));
-			break;
-		
-		case EV.ITEM_PICKUP:
-			var item;
-			var index;
-			
-			index = es.eventParm;  // player predicted
-			
-			if (index < 0 || index >= bg.ItemList.length) {
-				break;
-			}
-			
-			item = bg.ItemList[index];
-			
-			// Powerups and team items will have a separate global sound, this one
-			// will be played at prediction time.
-			if (item.giType === IT.POWERUP || item.giType === IT.TEAM) {
-// 				imp.snd_StartSound(null, es.number, cgs.media.n_healthSound);
-			} else {
-				imp.snd_StartSound(null, es.number, imp.snd_RegisterSound(item.pickupSound));
-			}
-			
-			// Show icon and name on status bar.
-			if (es.number === cg.snap.ps.clientNum) {
-				ItemPickup(index);
-			}
-			
-			break;
-		
-		case EV.NOAMMO:
-			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/weapons/noammo'));
-			
-			if (es.number == cg.snap.ps.clientNum) {
-				OutOfAmmoChange();
-			}
-			
-			break;
-		
-		case EV.CHANGE_WEAPON:
-			imp.snd_StartSound(null, es.number, imp.snd_RegisterSound('sound/weapons/change'));
-			break;
-		
-		case EV.FIRE_WEAPON:
-			FireWeapon(cent);
-			break;
-		
-		//
-		// missile impacts
-		//
-		case EV.MISSILE_HIT:
-			qm.ByteToDir(es.eventParm, dir);
-			MissileHitPlayer(es.weapon, position, dir, es.otherEntityNum);
-			break;
-
-		case EV.MISSILE_MISS:
-			qm.ByteToDir(es.eventParm, dir);
-			MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.DEFAULT);
-			break;
-
-		case EV.MISSILE_MISS_METAL:
-			qm.ByteToDir(es.eventParm, dir);
-			MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.METAL);
-			break;
-
-		case EV.BULLET_HIT_FLESH:
-			BulletHit(es.pos.trBase, es.otherEntityNum, dir, true, es.eventParm);
-			break;
-
-		case EV.BULLET_HIT_WALL:
-			qm.ByteToDir(es.eventParm, dir);
-			BulletHit(es.pos.trBase, es.otherEntityNum, dir, false, ENTITYNUM_WORLD);
-			break;
-		
-		case EV.SHOTGUN:
-			log('EV.SHOTGUN');
-			ShotgunFire(es);
-			break;
-	}
-}
-
-		/**
- * InitLocalEntities
- *
- * This is called at startup and for tournement restarts.
- */
-function InitLocalEntities() {
-	cg.localEntities = new Array(MAX_LOCAL_ENTITIES);
-	for (var i = MAX_LOCAL_ENTITIES - 1; i >= 0; i--) {
-		cg.localEntities[i] = new LocalEntity();
-		cg.localEntities[i].idx = i;
-		cg.localEntities[i].next = i === MAX_LOCAL_ENTITIES - 1 ? null : cg.localEntities[i+1];
-	}
-
-	cg.activeLocalEntities = new LocalEntity();
-	cg.activeLocalEntities.next = cg.activeLocalEntities;
-	cg.activeLocalEntities.prev = cg.activeLocalEntities;
-	cg.freeLocalEntities = cg.localEntities[0];
-}
-
-/**
- * AllocLocalEntity
- * 
- * Will allways succeed, even if it requires freeing an old active entity.
- */
-function AllocLocalEntity() {
-	if (!cg.freeLocalEntities) {
-		// No free entities, so free the one at the end of the chain
-		// remove the oldest active entity
-		FreeLocalEntity(cg.activeLocalEntities.prev);
-	}
-
-	var le = cg.freeLocalEntities;
-	cg.freeLocalEntities = cg.freeLocalEntities.next;
-
-	le.reset();
-
-	// Link into the active list.
-	le.next = cg.activeLocalEntities.next;
-	le.prev = cg.activeLocalEntities;
-	cg.activeLocalEntities.next.prev = le;
-	cg.activeLocalEntities.next = le;
-	return le;
-}
-
-/**
- * FreeLocalEntity
- */
-function FreeLocalEntity(le) {
-	if (!le.prev) {
-		error('FreeLocalEntity: not active');
-	}
-
-	// Remove from the doubly linked active list.
-	le.prev.next = le.next;
-	le.next.prev = le.prev;
-
-	// The free list is only singly linked.
-	le.next = cg.freeLocalEntities;
-	cg.freeLocalEntities = le;
-}
-
-/**
- * AddLocalEntities
- */
-function AddLocalEntities() {
-	var le, next;
-
-	// Walk the list backwards, so any new local entities generated
-	// (trails, marks, etc) will be present this frame.
-	le = cg.activeLocalEntities.prev;
-	for (; le != cg.activeLocalEntities; le = next) {
-		// Grab next now, so if the local entity is freed we
-		// still have it.
-		next = le.prev;
-
-		if (cg.time >= le.endTime) {
-			FreeLocalEntity(le);
-			continue;
-		}
-
-		switch (le.leType) {
-			// default:
-			// 	error('Bad leType: ', le.leType);
-			// 	break;
-
-			// case LE.MARK:
-			// 	break;
-
-			case LE.SPRITE_EXPLOSION:
-				AddSpriteExplosion(le);
-				break;
-
-			case LE.EXPLOSION:
-				AddExplosion(le);
-				break;
-
-			// case LE.FRAGMENT:                 // gibs and brass
-			// 	AddFragment(le);
-			// 	break;
-
-			// case LE.MOVE_SCALE_FADE:          // water bubbles
-			// 	AddMoveScaleFade(le);
-			// 	break;
-
-			// case LE.FADE_RGB:                 // teleporters, railtrails
-			// 	AddFadeRGB(le);
-			// 	break;
-
-			// case LE.FALL_SCALE_FADE:          // gib blood trails
-			// 	AddFallScaleFade(le);
-			// 	break;
-
-			case LE.SCALE_FADE:               // rocket trails
-				AddScaleFade(le);
-				break;
-
-			// case LE.SCOREPLUM:
-			// 	AddScorePlum(le);
-			// 	break;
-		}
-	}
-}
-
-// /**********************************************************
-//  *
-//  * FRAGMENT PROCESSING
-//  * 
-//  * A fragment localentity interacts with the environment in some way (hitting walls),
-//  * or generates more localentities along a trail.
-//  *
-//  **********************************************************/
-
-// /**
-//  * BloodTrail
-//  * 
-//  * Leave expanding blood puffs behind gibs.
-//  */
-// function BloodTrail(le) {
-// 	int		t;
-// 	int		t2;
-// 	int		step;
-// 	vec3_t	newOrigin;
-// 	localEntity_t	*blood;
-
-// 	step = 150;
-// 	t = step * ( (cg.time - cg.frametime + step ) / step );
-// 	t2 = step * ( cg.time / step );
-
-// 	for ( ; t <= t2; t += step ) {
-// 		BG_EvaluateTrajectory( &le.pos, t, newOrigin );
-
-// 		blood = CG_SmokePuff( newOrigin, vec3_origin, 
-// 					  20,		// radius
-// 					  1, 1, 1, 1,	// color
-// 					  2000,		// trailTime
-// 					  t,		// startTime
-// 					  0,		// fadeInTime
-// 					  0,		// flags
-// 					  cgs.media.bloodTrailShader );
-// 		// use the optimized version
-// 		blood.leType = LE.FALL_SCALE_FADE;
-// 		// drop a total of 40 units over its lifetime
-// 		blood.pos.trDelta[2] = 40;
-// 	}
-// }
-
-// /**
-//  * FragmentBounceMark
-//  */
-// function FragmentBounceMark(le, trace) {
-// 	int			radius;
-
-// 	if ( le.leMarkType == LEMT_BLOOD ) {
-
-// 		radius = 16 + (rand()&31);
-// 		CG_ImpactMark( cgs.media.bloodMarkShader, trace.endpos, trace.plane.normal, random()*360,
-// 			1,1,1,1, qtrue, radius, qfalse );
-// 	} else if ( le.leMarkType == LEMT_BURN ) {
-
-// 		radius = 8 + (rand()&15);
-// 		CG_ImpactMark( cgs.media.burnMarkShader, trace.endpos, trace.plane.normal, random()*360,
-// 			1,1,1,1, qtrue, radius, qfalse );
-// 	}
-
-
-// 	// don't allow a fragment to make multiple marks, or they
-// 	// pile up while settling
-// 	le.leMarkType = LEMT_NONE;
-// }
-
-// /**
-//  * FragmentBounceSound
-//  */
-// function FragmentBounceSound(le, trace) {
-// 	if ( le.leBounceSoundType == LEBS_BLOOD ) {
-// 		// half the gibs will make splat sounds
-// 		if ( rand() & 1 ) {
-// 			int r = rand()&3;
-// 			sfxHandle_t	s;
-
-// 			if ( r == 0 ) {
-// 				s = cgs.media.gibBounce1Sound;
-// 			} else if ( r == 1 ) {
-// 				s = cgs.media.gibBounce2Sound;
-// 			} else {
-// 				s = cgs.media.gibBounce3Sound;
-// 			}
-// 			trap_S_StartSound( trace.endpos, ENTITYNUM_WORLD, CHAN_AUTO, s );
-// 		}
-// 	} else if ( le.leBounceSoundType == LEBS_BRASS ) {
-
-// 	}
-
-// 	// don't allow a fragment to make multiple bounce sounds,
-// 	// or it gets too noisy as they settle
-// 	le.leBounceSoundType = LEBS_NONE;
-// }
-
-
-// /**
-//  * ReflectVelocity
-//  */
-// function ReflectVelocity(le, trace) {
-// 	vec3_t	velocity;
-// 	float	dot;
-// 	int		hitTime;
-
-// 	// reflect the velocity on the trace plane
-// 	hitTime = cg.time - cg.frametime + cg.frametime * trace.fraction;
-// 	BG_EvaluateTrajectoryDelta( &le.pos, hitTime, velocity );
-// 	dot = DotProduct( velocity, trace.plane.normal );
-// 	VectorMA( velocity, -2*dot, trace.plane.normal, le.pos.trDelta );
-
-// 	VectorScale( le.pos.trDelta, le.bounceFactor, le.pos.trDelta );
-
-// 	VectorCopy( trace.endpos, le.pos.trBase );
-// 	le.pos.trTime = cg.time;
-
-
-// 	// check for stop, making sure that even on low FPS systems it doesn't bobble
-// 	if ( trace.allsolid || 
-// 		( trace.plane.normal[2] > 0 && 
-// 		( le.pos.trDelta[2] < 40 || le.pos.trDelta[2] < -cg.frametime * le.pos.trDelta[2] ) ) ) {
-// 		le.pos.trType = TR_STATIONARY;
-// 	} else {
-
-// 	}
-// }
-
-// /**
-//  * AddFragment
-//  */
-// function AddFragment(le) {
-// 	vec3_t	newOrigin;
-// 	trace_t	trace;
-
-// 	if ( le.pos.trType == TR_STATIONARY ) {
-// 		// sink into the ground if near the removal time
-// 		int		t;
-// 		float	oldZ;
-		
-// 		t = le.endTime - cg.time;
-// 		if ( t < SINK_TIME ) {
-// 			// we must use an explicit lighting origin, otherwise the
-// 			// lighting would be lost as soon as the origin went
-// 			// into the ground
-// 			VectorCopy( le.refEntity.origin, le.refEntity.lightingOrigin );
-// 			le.refEntity.renderfx |= RF_LIGHTING_ORIGIN;
-// 			oldZ = le.refEntity.origin[2];
-// 			le.refEntity.origin[2] -= 16 * ( 1.0 - (float)t / SINK_TIME );
-// 			trap_R_AddRefEntityToScene( &le.refEntity );
-// 			le.refEntity.origin[2] = oldZ;
-// 		} else {
-// 			trap_R_AddRefEntityToScene( &le.refEntity );
-// 		}
-
-// 		return;
-// 	}
-
-// 	// calculate new position
-// 	BG_EvaluateTrajectory( &le.pos, cg.time, newOrigin );
-
-// 	// trace a line from previous position to new position
-// 	CG_Trace( &trace, le.refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
-// 	if ( trace.fraction == 1.0 ) {
-// 		// still in free fall
-// 		VectorCopy( newOrigin, le.refEntity.origin );
-
-// 		if ( le.leFlags & LEF_TUMBLE ) {
-// 			vec3_t angles;
-
-// 			BG_EvaluateTrajectory( &le.angles, cg.time, angles );
-// 			qm.AnglesToAxis( angles, le.refEntity.axis );
-// 		}
-
-// 		trap_R_AddRefEntityToScene( &le.refEntity );
-
-// 		// add a blood trail
-// 		if ( le.leBounceSoundType == LEBS_BLOOD ) {
-// 			CG_BloodTrail( le );
-// 		}
-
-// 		return;
-// 	}
-
-// 	// if it is in a nodrop zone, remove it
-// 	// this keeps gibs from waiting at the bottom of pits of death
-// 	// and floating levels
-// 	if ( CG_PointContents( trace.endPos, 0 ) & CONTENTS_NODROP ) {
-// 		CG_FreeLocalEntity( le );
-// 		return;
-// 	}
-
-// 	// leave a mark
-// 	CG_FragmentBounceMark( le, &trace );
-
-// 	// do a bouncy sound
-// 	CG_FragmentBounceSound( le, &trace );
-
-// 	// reflect the velocity on the trace plane
-// 	CG_ReflectVelocity( le, &trace );
-
-// 	trap_R_AddRefEntityToScene( &le.refEntity );
-// }
-
-// /**********************************************************
-//  *
-//  * TRIVIAL LOCAL ENTITIES
-//  *
-//  * These only do simple scaling or modulation before passing to the renderer
-//  *
-//  **********************************************************/
-
-// /**
-//  * AddFadeRGB
-//  */
-// function AddFadeRGB(le) {
-// 	refEntity_t *re;
-// 	float c;
-
-// 	re = &le.refEntity;
-
-// 	c = ( le.endTime - cg.time ) * le.lifeRate;
-// 	c *= 0xff;
-
-// 	re.shaderRGBA[0] = le.color[0] * c;
-// 	re.shaderRGBA[1] = le.color[1] * c;
-// 	re.shaderRGBA[2] = le.color[2] * c;
-// 	re.shaderRGBA[3] = le.color[3] * c;
-
-// 	trap_R_AddRefEntityToScene( re );
-// }
-
-// /**
-//  * AddMoveScaleFade
-//  */
-// function AddMoveScaleFade(le) {
-// 	refEntity_t	*re;
-// 	float		c;
-// 	vec3_t		delta;
-// 	float		len;
-
-// 	re = &le.refEntity;
-
-// 	if ( le.fadeInTime > le.startTime && cg.time < le.fadeInTime ) {
-// 		// fade / grow time
-// 		c = 1.0 - (float) ( le.fadeInTime - cg.time ) / ( le.fadeInTime - le.startTime );
-// 	}
-// 	else {
-// 		// fade / grow time
-// 		c = ( le.endTime - cg.time ) * le.lifeRate;
-// 	}
-
-// 	re.shaderRGBA[3] = 0xff * c * le.color[3];
-
-// 	if ( !( le.leFlags & LEF_PUFF_DONT_SCALE ) ) {
-// 		re.radius = le.radius * ( 1.0 - c ) + 8;
-// 	}
-
-// 	BG_EvaluateTrajectory( &le.pos, cg.time, re.origin );
-
-// 	// if the view would be "inside" the sprite, kill the sprite
-// 	// so it doesn't add too much overdraw
-// 	VectorSubtract( re.origin, cg.refdef.vieworg, delta );
-// 	len = VectorLength( delta );
-// 	if ( len < le.radius ) {
-// 		CG_FreeLocalEntity( le );
-// 		return;
-// 	}
-
-// 	trap_R_AddRefEntityToScene( re );
-// }
-
-
-/**
- * AddScaleFade
- *
- * For rocket smokes that hang in place, fade out, and are
- * removed if the view passes through them.
- * There are often many of these, so it needs to be simple.
- */
-function AddScaleFade(le) {
-	var re = le.refent;
-
-	// fade / grow time
-	var c = (le.endTime - cg.time) * le.lifeRate;
-
-	re.shaderRGBA[3] = 0xff * c * le.color[3];
-	re.radius = le.radius * (1.0 - c) + 8;
-
-	// If the view would be "inside" the sprite, kill the sprite
-	// so it doesn't add too much overdraw.
-	var delta = vec3.subtract(re.origin, cg.refdef.vieworg, [0, 0, 0]);
-	var len = vec3.length(delta);
-
-	// if (len < le.radius) {
-	// 	FreeLocalEntity(le);
-	// 	return;
-	// }
-
-	imp.re_AddRefEntityToScene(re);
-}
-
-// /**
-//  * AddFallScaleFade
-//  * 
-//  * This is just an optimized CG_AddMoveScaleFade
-//  * For blood mists that drift down, fade out, and are
-//  * removed if the view passes through them.
-//  * There are often 100+ of these, so it needs to be simple.
-//  */
-// function AddFallScaleFade(le) {
-// 	refEntity_t	*re;
-// 	float		c;
-// 	vec3_t		delta;
-// 	float		len;
-
-// 	re = &le.refEntity;
-
-// 	// fade time
-// 	c = ( le.endTime - cg.time ) * le.lifeRate;
-
-// 	re.shaderRGBA[3] = 0xff * c * le.color[3];
-
-// 	re.origin[2] = le.pos.trBase[2] - ( 1.0 - c ) * le.pos.trDelta[2];
-
-// 	re.radius = le.radius * ( 1.0 - c ) + 16;
-
-// 	// if the view would be "inside" the sprite, kill the sprite
-// 	// so it doesn't add too much overdraw
-// 	VectorSubtract( re.origin, cg.refdef.vieworg, delta );
-// 	len = VectorLength( delta );
-// 	if ( len < le.radius ) {
-// 		CG_FreeLocalEntity( le );
-// 		return;
-// 	}
-
-// 	trap_R_AddRefEntityToScene( re );
-// }
-
-/**
- * AddExplosion
- */
-function AddExplosion(le) {
-	var refent = le.refent;
-
-	// Add the entity.
-	imp.re_AddRefEntityToScene(refent);
-
-	// Add the dlight.
-	// if (le.light) {
-	// 	float light;
-
-	// 	light = (float)( cg.time - ex.startTime ) / ( ex.endTime - ex.startTime );
-	// 	if ( light < 0.5 ) {
-	// 		light = 1.0;
-	// 	} else {
-	// 		light = 1.0 - ( light - 0.5 ) * 2;
-	// 	}
-	// 	light = ex.light * light;
-	// 	trap_R_AddLightToScene(ent.origin, light, ex.lightColor[0], ex.lightColor[1], ex.lightColor[2] );
-	// }
-}
-
-/**
- * AddSpriteExplosion
- */
-function AddSpriteExplosion(le) {
-	var refent = le.refent;
-
-	var c = (le.endTime - cg.time) / (le.endTime - le.startTime);
-	if (c > 1) {
-		c = 1.0;  // Can happen during connection problems.
-	}
-
-	refent.shaderRGBA[0] = 0xff;
-	refent.shaderRGBA[1] = 0xff;
-	refent.shaderRGBA[2] = 0xff;
-	refent.shaderRGBA[3] = 0xff * c * 0.33;
-
-	refent.reType = RT.SPRITE;
-	refent.radius = 42 * (1.0 - c) + 30;
-
-	imp.re_AddRefEntityToScene(refent);
-
-	// Add the dlight.
-	// if (le.light) {
-	// 	var light = (cg.time - le.startTime) / (le.endTime - le.startTime);
-	// 	if (light < 0.5) {
-	// 		light = 1.0;
-	// 	} else {
-	// 		light = 1.0 - (light - 0.5) * 2;
-	// 	}
-	// 	light = le.light * light;
-	// 	trap_R_AddLightToScene(imp.re_origin, light, le.lightColor[0], le.lightColor[1], le.lightColor[2] );
-	// }
-}
-
-// /**
-//  * AddScorePlum
-//  */
-// var NUMBER_SIZE = 8;
-
-// function AddScorePlum(le) {
-// 	refEntity_t	*re;
-// 	vec3_t		origin, delta, dir, vec, up = {0, 0, 1};
-// 	float		c, len;
-// 	int			i, score, digits[10], numdigits, negative;
-
-// 	re = &le.refEntity;
-
-// 	c = ( le.endTime - cg.time ) * le.lifeRate;
-
-// 	score = le.radius;
-// 	if (score < 0) {
-// 		re.shaderRGBA[0] = 0xff;
-// 		re.shaderRGBA[1] = 0x11;
-// 		re.shaderRGBA[2] = 0x11;
-// 	}
-// 	else {
-// 		re.shaderRGBA[0] = 0xff;
-// 		re.shaderRGBA[1] = 0xff;
-// 		re.shaderRGBA[2] = 0xff;
-// 		if (score >= 50) {
-// 			re.shaderRGBA[1] = 0;
-// 		} else if (score >= 20) {
-// 			re.shaderRGBA[0] = re.shaderRGBA[1] = 0;
-// 		} else if (score >= 10) {
-// 			re.shaderRGBA[2] = 0;
-// 		} else if (score >= 2) {
-// 			re.shaderRGBA[0] = re.shaderRGBA[2] = 0;
-// 		}
-
-// 	}
-// 	if (c < 0.25)
-// 		re.shaderRGBA[3] = 0xff * 4 * c;
-// 	else
-// 		re.shaderRGBA[3] = 0xff;
-
-// 	re.radius = NUMBER_SIZE / 2;
-
-// 	VectorCopy(le.pos.trBase, origin);
-// 	origin[2] += 110 - c * 100;
-
-// 	VectorSubtract(cg.refdef.vieworg, origin, dir);
-// 	CrossProduct(dir, up, vec);
-// 	VectorNormalize(vec);
-
-// 	VectorMA(origin, -10 + 20 * sin(c * 2 * M_PI), vec, origin);
-
-// 	// if the view would be "inside" the sprite, kill the sprite
-// 	// so it doesn't add too much overdraw
-// 	VectorSubtract( origin, cg.refdef.vieworg, delta );
-// 	len = VectorLength( delta );
-// 	if ( len < 20 ) {
-// 		CG_FreeLocalEntity( le );
-// 		return;
-// 	}
-
-// 	negative = qfalse;
-// 	if (score < 0) {
-// 		negative = qtrue;
-// 		score = -score;
-// 	}
-
-// 	for (numdigits = 0; !(numdigits && !score); numdigits++) {
-// 		digits[numdigits] = score % 10;
-// 		score = score / 10;
-// 	}
-
-// 	if (negative) {
-// 		digits[numdigits] = 10;
-// 		numdigits++;
-// 	}
-
-// 	for (i = 0; i < numdigits; i++) {
-// 		VectorMA(origin, (float) (((float) numdigits / 2) - i) * NUMBER_SIZE, vec, re.origin);
-// 		re.customShader = cgs.media.numberShaders[digits[numdigits-1-i]];
-// 		trap_R_AddRefEntityToScene( re );
-// 	}
-// }
-		/**
- * TextTokenizer
- */
-var TextTokenizer = function (src) {
-	// Strip out comments
-	src = src.replace(/\/\/.*$/mg, ''); // C++ style (//...)
-	src = src.replace(/\/\*[^*\/]*\*\//mg, ''); // C style (/*...*/) (Do the shaders even use these?)
-	this.tokens = src.match(/[^\s\n\r\"]+/mg);
-
-	this.offset = 0;
-};
-
-TextTokenizer.prototype.EOF = function() {
-	if (this.tokens === null) { return true; }
-	var token = this.tokens[this.offset];
-	while (token === '' && this.offset < this.tokens.length) {
-		this.offset++;
-		token = this.tokens[this.offset];
-	}
-	return this.offset >= this.tokens.length;
-};
-
-TextTokenizer.prototype.next = function() {
-	if (this.tokens === null) { return ; }
-	var token = '';
-	while (token === '' && this.offset < this.tokens.length) {
-		token = this.tokens[this.offset++];
-	}
-	return token;
-};
-
-TextTokenizer.prototype.prev = function() {
-	if (this.tokens === null) { return ; }
-	var token = '';
-	while (token === '' && this.offset >= 0) {
-		token = this.tokens[this.offset--];
-	}
-	return token;
-};
-
-/**
- * NewClientInfo
- */
-function NewClientInfo(clientNum) {
-	var ci = cgs.clientinfo[clientNum];
-	var cs = ConfigString('player' + clientNum);
-
-	if (!cs) {
-		return;  // player just left
-	}
-
-	// Isolate the player's name.
-	ci.name = cs['name'];
-
-	// // force the model
-	// char modelStr[
-
-	// trap_Cvar_VariableStringBuffer( "model", modelStr, sizeof( modelStr ) );
-	// if ( ( skin = strchr( modelStr, '/' ) ) == NULL) {
-	// 	skin = "default";
-	// } else {
-	// 	*skin++ = 0;
-	// }
-
-	// ci.skinName = skin;
-	// ci.modelName = modelStr;
-
-	// // scan for an existing clientinfo that matches this modelname
-	// // so we can avoid loading checks if possible
-	// if (!ScanForExistingClientInfo(ci)) {
-		LoadClientInfo(clientNum, ci);
-	// }
-
-	// Replace whatever was there with the new one.
-	ci.infoValid = true;
-}
-
-
-
-// /*
-// ======================
-// CG_ScanForExistingClientInfo
-// ======================
-// */
-// static qboolean CG_ScanForExistingClientInfo( clientinfo_t *ci ) {
-// 	int		i;
-// 	clientinfo_t	*match;
-
-// 	for ( i = 0 ; i < cgs.maxclients ; i++ ) {
-// 		match = &cgs.clientinfo[ i ];
-// 		if ( !match->infoValid ) {
-// 			continue;
-// 		}
-// 		if ( match->deferred ) {
-// 			continue;
-// 		}
-// 		if ( !Q_stricmp( ci->modelName, match->modelName )
-// 			&& !Q_stricmp( ci->skinName, match->skinName )
-// 			&& !Q_stricmp( ci->headModelName, match->headModelName )
-// 			&& !Q_stricmp( ci->headSkinName, match->headSkinName ) 
-// 			&& !Q_stricmp( ci->blueTeam, match->blueTeam ) 
-// 			&& !Q_stricmp( ci->redTeam, match->redTeam )
-// 			&& (cgs.gametype < GT_TEAM || ci->team == match->team) ) {
-// 			// this clientinfo is identical, so use its handles
-
-// 			ci->deferred = qfalse;
-
-// 			CG_CopyClientInfoModel( match, ci );
-
-// 			return qtrue;
-// 		}
-// 	}
-
-// 	// nothing matches, so defer the load
-// 	return qfalse;
-// }
-
-
-/**
- * LoadClientInfo
- * 
- * Load it now, taking the disk hits.
- * This will usually be deferred to a safe time
- */
-function LoadClientInfo(clientNum, ci) {
-	//if (!RegisterClientModelname(ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname)) {
-		RegisterClientModelname(ci, DEFAULT_MODEL, 'default', null, function (err) {
-			if (err) {
-				error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register.');
-			}
-		});
-	//}
-
-	// ci->newAnims = qfalse;
-	// if ( ci->torsoModel ) {
-	// 	orientation_t tag;
-	// 	// if the torso model has the "tag_flag"
-	// 	if ( trap_R_LerpTag( &tag, ci->torsoModel, 0, 0, 1, "tag_flag" ) ) {
-	// 		ci->newAnims = qtrue;
-	// 	}
-	// }
-
-	// ci->deferred = qfalse;
-
-	// // reset any existing players and bodies, because they might be in bad
-	// // frames for this new model
-	// for ( i = 0 ; i < MAX_GENTITIES ; i++ ) {
-	// 	if ( cg_entities[i].currentState.clientNum == clientNum
-	// 		&& cg_entities[i].currentState.eType == ET_PLAYER ) {
-	// 		CG_ResetPlayerEntity( &cg_entities[i] );
-	// 	}
-	// }
-}
-
-/**
- * RegisterClientModelname
- */
-function RegisterClientModelname(ci, modelName, skinName, teamName, callback) {
-	var filename = 'models/players/' + modelName + '/lower.md3';
-	ci.legsModel = imp.re_RegisterModel(filename);
-
-	filename = 'models/players/' + modelName + '/upper.md3';
-	ci.torsoModel = imp.re_RegisterModel(filename);
-
-	filename = 'models/players/' + modelName + '/head.md3';
-	ci.headModel = imp.re_RegisterModel(filename);
-
-	RegisterClientSkin(ci, modelName, skinName, teamName);
-
-	// 	if ( teamName && *teamName) {
-	// 		Com_Printf( "Failed to load skin file: %s : %s : %s, %s : %s\n", teamName, modelName, skinName, headName, headSkinName );
-	// 		if( ci->team == TEAM_BLUE ) {
-	// 			Com_sprintf(newTeamName, sizeof(newTeamName), "%s/", DEFAULT_BLUETEAM_NAME);
-	// 		}
-	// 		else {
-	// 			Com_sprintf(newTeamName, sizeof(newTeamName), "%s/", DEFAULT_REDTEAM_NAME);
-	// 		}
-	// 		if ( !CG_RegisterClientSkin( ci, newTeamName, modelName, skinName, headName, headSkinName ) ) {
-	// 			Com_Printf( "Failed to load skin file: %s : %s : %s, %s : %s\n", newTeamName, modelName, skinName, headName, headSkinName );
-	// 			return qfalse;
-	// 		}
-	// }
-
-	// if ( !ci->modelIcon ) {
-	// 	return qfalse;
-	// }
-
-	// load the animations
-	filename = 'models/players/' + modelName + '/animation.cfg';
-	ParseAnimationFile(filename, ci, function (err) {
-		if (err) return callback(err);
-		return callback(null);
-	});
-}
-
-function RegisterClientSkin(ci, modelName, skinName, teamName) {
-	teamName = teamName || 'default';
-
-	var filename = 'models/players/' + modelName + '/lower_' + teamName + '.skin';
-	ci.legsSkin = imp.re_RegisterSkin(filename);
-
-	filename = 'models/players/' + modelName + '/upper_' + teamName + '.skin';
-	ci.torsoSkin = imp.re_RegisterSkin(filename);
-
-	filename = 'models/players/' + modelName + '/head_' + teamName + '.skin';
-	ci.headSkin = imp.re_RegisterSkin(filename);
-
-}
-
-/**
- * ParseAnimationFile
- *
- * Read a configuration file containing animation coutns and rates
- * models/players/visor/animation.cfg, etc
- */
-function ParseAnimationFile(filename, ci, callback) {
-	var animations = ci.animations;
-	var skip = 0;
-
-	imp.sys_ReadFile(filename, 'utf8', function (err, data) {
-		if (err) return callback(err);
-
-		// ci->footsteps = FOOTSTEP_NORMAL;
-		// VectorClear( ci->headOffset );
-		// ci->gender = GENDER_MALE;
-		ci.fixedlegs = false;
-		ci.fixedtorso = false;
-
-		// read optional parameters
-		var tokens = new TextTokenizer(data);
-		var token;
-
-		while (!tokens.EOF()) {
-			token = tokens.next();
-			if (!token) {
-				break;
-			}
-
-			if (token === 'footsteps') {
-				token = tokens.next();
-				if (!token) {
-					break;
-				}
-
-				// if (token === 'default' || token === 'normal') {
-				// 	ci.footsteps = ANIM.FOOTSTEP_NORMAL;
-				// } else if (token === 'boot') {
-				// 	ci.footsteps = ANIM.FOOTSTEP_BOOT;
-				// } else if (token === 'flesh') {
-				// 	ci.footsteps = ANIM.FOOTSTEP_FLESH;
-				// } else if (token === 'mech') {
-				// 	ci.footsteps = ANIM.FOOTSTEP_MECH;
-				// } else if (token === 'energy') {
-				// 	ci.footsteps = ANIM.FOOTSTEP_ENERGY;
-				// } else {
-				// 	log('Bad footsteps parm in ' + filename + ': ' + token);
-				// }
-
-				continue;
-			} else if (token === 'headoffset') {
-				for (var i = 0; i < 3; i++) {
-					token = tokens.next();
-					if (!token) {
-						break;
-					}
-
-					//ci.headOffset[i] = parseFloat(token);
-				}
-				continue;
-			} else if (token === 'sex') {
-				token = tokens.next();
-				if (!token) {
-					break;
-				}
-
-				// if (token[0] === 'f' || token[0] == 'F') {
-				// 	ci.gender = GENDER_FEMALE;
-				// } else if (token[0] === 'n' || token[0] === 'N') {
-				// 	ci.gender = GENDER_NEUTER;
-				// } else {
-				// 	ci.gender = GENDER_MALE;
-				// }
-				continue;
-			} else if (token === 'fixedlegs') {
-				ci.fixedlegs = true;
-				continue;
-			} else if (token === 'fixedtorso') {
-				ci.fixedtorso = true;
-				continue;
-			}
-
-			// If it is a number, start parsing animations.
-			if (token.charAt(0) >= '0' && token.charAt(0) <= '9') {
-				tokens.prev();  // unget the token
-				break;
-			}
-
-			log('Unknown token \'' + token + '\' in ' + filename);
-		}
-
-		// read information for each frame
-		for (var i = 0; i < ANIM.MAX; i++) {
-			token = tokens.next();
-
-			if (!token) {
-				if (i >= ANIM.TORSO_GETFLAG && i <= ANIM.TORSO_NEGATIVE) {
-					animations[i].firstFrame = animations[ANIM.TORSO_GESTURE].firstFrame;
-					animations[i].frameLerp = animations[ANIM.TORSO_GESTURE].frameLerp;
-					animations[i].initialLerp = animations[ANIM.TORSO_GESTURE].initialLerp;
-					animations[i].loopFrames = animations[ANIM.TORSO_GESTURE].loopFrames;
-					animations[i].numFrames = animations[ANIM.TORSO_GESTURE].numFrames;
-					animations[i].reversed = false;
-					animations[i].flipflop = false;
-					continue;
-				}
-				break;
-			}
-
-			animations[i].firstFrame = parseInt(token, 10);
-			// leg only frames are adjusted to not count the upper body only frames
-			if (i === ANIM.LEGS_WALKCR) {
-				skip = animations[ANIM.LEGS_WALKCR].firstFrame - animations[ANIM.TORSO_GESTURE].firstFrame;
-			}
-			if (i >= ANIM.LEGS_WALKCR && i < ANIM.TORSO_GETFLAG) {
-				animations[i].firstFrame -= skip;
-			}
-
-			token = tokens.next();
-			if (!token) {
-				break;
-			}
-			animations[i].numFrames = parseInt(token, 10);
-			animations[i].reversed = false;
-			animations[i].flipflop = false;
-
-			// if NumFrames is negative the animation is reversed
-			if (animations[i].numFrames < 0) {
-				animations[i].numFrames = -animations[i].numFrames;
-				animations[i].reversed = true;
-			}
-
-			token = tokens.next();
-			if (!token) {
-				break;
-			}
-			animations[i].loopFrames = parseInt(token, 10);
-
-			token = tokens.next();
-			if (!token) {
-				break;
-			}
-			
-			var fps = parseInt(token, 10);
-			if (!fps) {
-				fps = 1;
-			}
-			animations[i].frameLerp = 1000 / fps;
-			animations[i].initialLerp = 1000 / fps;
-		}
-
-		if (i !== ANIM.MAX) {
-			return callback(new Error('Error parsing animation file: ' + filename));
-		}
-
-		// Crouch backward animation.
-		animations[ANIM.LEGS_BACKCR] = _.clone(animations[ANIM.LEGS_WALKCR]);
-		animations[ANIM.LEGS_BACKCR].reversed = true;
-
-		// Walk backward animation.
-		animations[ANIM.LEGS_BACKWALK] = _.clone(animations[ANIM.LEGS_WALK]);
-		animations[ANIM.LEGS_BACKWALK].reversed = true;
-
-		// Flag moving fast.
-		animations[ANIM.FLAG_RUN].firstFrame = 0;
-		animations[ANIM.FLAG_RUN].numFrames = 16;
-		animations[ANIM.FLAG_RUN].loopFrames = 16;
-		animations[ANIM.FLAG_RUN].frameLerp = 1000 / 15;
-		animations[ANIM.FLAG_RUN].initialLerp = 1000 / 15;
-		animations[ANIM.FLAG_RUN].reversed = false;
-
-		// Flag not moving or moving slowly.
-		animations[ANIM.FLAG_STAND].firstFrame = 16;
-		animations[ANIM.FLAG_STAND].numFrames = 5;
-		animations[ANIM.FLAG_STAND].loopFrames = 0;
-		animations[ANIM.FLAG_STAND].frameLerp = 1000 / 20;
-		animations[ANIM.FLAG_STAND].initialLerp = 1000 / 20;
-		animations[ANIM.FLAG_STAND].reversed = false;
-
-		// Flag speeding up.
-		animations[ANIM.FLAG_STAND2RUN].firstFrame = 16;
-		animations[ANIM.FLAG_STAND2RUN].numFrames = 5;
-		animations[ANIM.FLAG_STAND2RUN].loopFrames = 1;
-		animations[ANIM.FLAG_STAND2RUN].frameLerp = 1000 / 15;
-		animations[ANIM.FLAG_STAND2RUN].initialLerp = 1000 / 15;
-		animations[ANIM.FLAG_STAND2RUN].reversed = true;
-	});
-}
-
-/**********************************************************
- *
- * Player rendering
- *
- **********************************************************/
-
-/**
- * AddPlayer
- */
-function AddPlayer(cent) {
-	// The client number is stored in clientNum. It can't be derived
-	// from the entity number, because a single client may have
-	// multiple corpses on the level using the same clientinfo
-	var clientNum = cent.currentState.clientNum;
-	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		error('Bad clientNum on player entity');
-	}
-
-	var ci = cgs.clientinfo[clientNum];
-	// It is possible to see corpses from disconnected players that may
-	// not have valid clientinfo
-	if (!ci.infoValid) {
-		return;
-	}
-
-	var renderfx = 0;
-	if (cent.currentState.number === cg.snap.ps.clientNum) {
-		if (!cg.renderingThirdPerson) {
-			renderfx = RF.THIRD_PERSON;  // only draw in mirrors
-		}
-	}
-
-	// TODO Pool these?
-	var legs = new re.RefEntity();
-	var torso = new re.RefEntity();
-	var head = new re.RefEntity();
-
-	// Get the player model information
-	/*var renderfx = 0;
-	if ( cent->currentState.number == cg.snap->ps.clientNum) {
-		renderfx = RF_THIRD_PERSON;			// only draw in mirrors
-	}*/
-
-	// // get the rotation information
-	PlayerAngles(cent, legs.axis, torso.axis, head.axis);
-	
-	// // get the animation state (after rotation, to allow feet shuffle)
-	PlayerAnimation(cent, legs, torso);
-
-	// // add the talk baloon or disconnect icon
-	// CG_PlayerSprites( cent );
-
-	// // add the shadow
-	// shadow = CG_PlayerShadow( cent, &shadowPlane );
-
-	// // add a water splash if partially in and out of water
-	// CG_PlayerSplash( cent );
-
-	// if ( cg_shadows.integer == 3 && shadow ) {
-	// 	renderfx |= RF_SHADOW_PLANE;
-	// }
-	renderfx |= RF.LIGHTING_ORIGIN;  // use the same origin for all
-
-	//
-	// Add the legs
-	//
-	legs.reType = RT.MODEL;
-	legs.renderfx = renderfx;
-	legs.hModel = ci.legsModel;
-	legs.customSkin = ci.legsSkin;
-	vec3.set(cent.lerpOrigin, legs.origin);
-	vec3.set(cent.lerpOrigin, legs.lightingOrigin);
-	// legs.shadowPlane = shadowPlane;
-	legs.renderfx = renderfx;
-	vec3.set(legs.origin, legs.oldOrigin);  // don't positionally lerp at all
-	AddRefEntityWithPowerups(legs, cent.currentState/*, ci.team*/);
-
-	// if the model failed, allow the default nullmodel to be displayed
-	if (!legs.hModel) {
-		return;
-	}
-
-	//
-	// add the torso
-	//
-	torso.reType = RT.MODEL;
-	torso.renderfx = renderfx;
-	torso.hModel = ci.torsoModel;
-	if (!torso.hModel) {
-		return;
-	}
-	torso.customSkin = ci.torsoSkin;
-	PositionRotatedEntityOnTag(torso, legs, ci.legsModel, 'tag_torso');
-	vec3.set(cent.lerpOrigin, torso.lightingOrigin);
-	// torso.shadowPlane = shadowPlane;
-	torso.renderfx = renderfx;
-	AddRefEntityWithPowerups(torso, cent.currentState/*, ci.team*/);
-
-	//
-	// add the head
-	//
-	head.reType = RT.MODEL;
-	head.renderfx = renderfx;
-	head.hModel = ci.headModel;
-	if (!head.hModel) {
-		return;
-	}
-	head.customSkin = ci.headSkin;
-	PositionRotatedEntityOnTag(head, torso, ci.torsoModel, 'tag_head');
-	vec3.set(cent.lerpOrigin, head.lightingOrigin);
-	// head.shadowPlane = shadowPlane;
-	head.renderfx = renderfx;
-	AddRefEntityWithPowerups(head, cent.currentState/*, ci.team*/);
-
-	//
-	// add the gun / barrel / flash
-	//
-	AddPlayerWeapon(torso, null, cent/*, ci->team*/);
-
-	// add powerups floating behind the player
-	//CG_PlayerPowerups( cent, &torso );
-}
-
-/**
- * AddRefEntityWithPowerups
- *
- * Adds a piece with modifications or duplications for powerups
- * Also called by CG_Missile for quad rockets, but nobody can tell...
- */
-function AddRefEntityWithPowerups(refent, s/*, team*/) {
-	// if ( state->powerups & ( 1 << PW_INVIS ) ) {
-	// 	ent->customShader = cgs.media.invisShader;
-	// 	trap_R_AddRefEntityToScene( ent );
-	// } else {
-		imp.re_AddRefEntityToScene(refent);
-
-	// 	if ( state->powerups & ( 1 << PW_QUAD ) )
-	// 	{
-	// 		if (team == TEAM_RED)
-	// 			ent->customShader = cgs.media.redQuadShader;
-	// 		else
-	// 			ent->customShader = cgs.media.quadShader;
-	// 		trap_R_AddRefEntityToScene( ent );
-	// 	}
-	// 	if ( state->powerups & ( 1 << PW_REGEN ) ) {
-	// 		if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
-	// 			ent->customShader = cgs.media.regenShader;
-	// 			trap_R_AddRefEntityToScene( ent );
-	// 		}
-	// 	}
-	// 	if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
-	// 		ent->customShader = cgs.media.battleSuitShader;
-	// 		trap_R_AddRefEntityToScene( ent );
-	// 	}
-	// }
-}
-
-/**********************************************************
- *
- * Player angles
- *
- **********************************************************/
-
-/**
- * PlayerAngles
- * 
- * Handles seperate torso motion. 
- * Legs pivot based on direction of movement.
- * Head always looks exactly at cent->qm.LerpAngles.
- * 
- * If motion < 20 degrees, show in head only.
- * If < 45 degrees, also show in torso.
- */
-var swingSpeed = 0.3;
-var movementOffsets = [0, 22, 45, -22, 0, 22, -45, -22];
-function PlayerAngles(cent, legs, torso, head) {
-	var ci;
-
-	var clientNum = cent.currentState.clientNum;
-	if (clientNum >= 0 && clientNum < MAX_CLIENTS) {
-		ci = cgs.clientinfo[clientNum];
-	}
-
-	var headAngles = vec3.set(cent.lerpAngles, [0, 0, 0]);
-	var before = headAngles[qm.YAW];
-	headAngles[qm.YAW] = qm.AngleNormalize360(headAngles[qm.YAW]);
-
-	var torsoAngles = [0, 0, 0];
-	var legsAngles = [0, 0, 0];
-
-	// --------- yaw -------------
-
-	// Allow yaw to drift a bit
-	if ((cent.currentState.legsAnim & ~ANIM_TOGGLEBIT ) !== ANIM.LEGS_IDLE ||
-		((cent.currentState.torsoAnim & ~ANIM_TOGGLEBIT) !== ANIM.TORSO_STAND &&
-		(cent.currentState.torsoAnim & ~ANIM_TOGGLEBIT) !== ANIM.TORSO_STAND2)) {
-		// If not standing still, always point all in the same direction.
-		cent.pe.torso.yawing = true;    // always center
-		cent.pe.torso.pitching = true;  // always center
-		cent.pe.legs.yawing = true;     // always center
-	}
-
-	// Adjust legs for movement dir.
-	var dir;
-	if (cent.currentState.eFlags & EF.DEAD) {
-		// Don't let dead bodies twitch.
-		dir = 0;
-	} else {
-		dir = cent.currentState.angles2[qm.YAW];
-		if (dir < 0 || dir > 7) {
-			error('Bad player movement angle');
-		}
-	}
-	legsAngles[qm.YAW] = headAngles[qm.YAW] + movementOffsets[dir];
-	torsoAngles[qm.YAW] = headAngles[qm.YAW] + 0.25 * movementOffsets[dir];
-
-	// torso
-	var res = { angle: cent.pe.torso.yawAngle, swinging: cent.pe.torso.yawing };
-	SwingAngles(torsoAngles[qm.YAW], 25, 90, swingSpeed, res);
-	torsoAngles[qm.YAW] = cent.pe.torso.yawAngle = res.angle;
-	cent.pe.torso.yawing = res.swinging;
-
-	// legs
-	res = { angle: cent.pe.legs.yawAngle, swinging: cent.pe.legs.yawing };
-	SwingAngles(legsAngles[qm.YAW], 40, 90, swingSpeed, res);
-	legsAngles[qm.YAW] = cent.pe.legs.yawAngle = res.angle;
-	cent.pe.legs.yawing = res.swinging;
-
-
-	// --------- pitch -------------
-
-	// Only show a fraction of the pitch angle in the torso.
-	var dest;
-	if (headAngles[qm.PITCH] > 180) {
-		dest = (-360 + headAngles[qm.PITCH]) * 0.75;
-	} else {
-		dest = headAngles[qm.PITCH] * 0.75;
-	}
-	res = { angle: cent.pe.torso.pitchAngle, swinging: cent.pe.torso.pitching };
-	SwingAngles(dest, 15, 30, 0.1, res);
-	torsoAngles[qm.PITCH] = cent.pe.torso.pitchAngle = res.angle;
-	cent.pe.torso.pitching = res.swinging;
-
-	//
-	if (ci && ci.fixedtorso) {
-		torsoAngles[qm.PITCH] = 0;
-	}
-
-	// --------- roll -------------
-
-	// Lean towards the direction of travel.
-	var velocity = vec3.set(cent.currentState.pos.trDelta, [0, 0, 0]);
-	var speed = vec3.length(velocity);
-	vec3.normalize(velocity);
-
-	if (speed) {
-		speed *= 0.05;
-
-		var axis = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-
-		qm.AnglesToAxis(legsAngles, axis);
-
-		var side = speed * vec3.dot(velocity, axis[1]);
-		legsAngles[qm.ROLL] -= side;
-
-		side = speed * vec3.dot(velocity, axis[0]);
-		legsAngles[qm.PITCH] += side;
-	}
-
-	//
-	if (ci && ci.fixedlegs) {
-		legsAngles[qm.YAW] = torsoAngles[qm.YAW];
-		legsAngles[qm.PITCH] = 0.0;
-		legsAngles[qm.ROLL] = 0.0;
-	}
-
-	// // pain twitch
-	// AddPainTwitch( cent, torsoAngles );
-
-	// pull the angles back out of the hierarchial chain
-	qm.AnglesSubtract(headAngles, torsoAngles, headAngles);
-	qm.AnglesSubtract(torsoAngles, legsAngles, torsoAngles);
-	qm.AnglesToAxis(legsAngles, legs);
-	qm.AnglesToAxis(torsoAngles, torso);
-	qm.AnglesToAxis(headAngles, head);
-}
-
-/**
- * SwingAngles
- */
-function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
-	var swing, move, scale;
-
-	if (!res.swinging) {
-		// See if a swing should be started
-		swing = qm.AngleSubtract(res.angle, destination);
-		if (swing > swingTolerance || swing < -swingTolerance) {
-			res.swinging = true;
-		}
-	}
-
-	if (!res.swinging) {
-		return;
-	}
-	
-	// Modify the speed depending on the delta
-	// so it doesn't seem so linear
-	swing = qm.AngleSubtract(destination, res.angle);
-	scale = Math.abs(swing);
-	if (scale < swingTolerance * 0.5) {
-		scale = 0.5;
-	} else if (scale < swingTolerance) {
-		scale = 1.0;
-	} else {
-		scale = 2.0;
-	}
-
-	// Swing towards the destination angle
-	if (swing >= 0) {
-		move = cg.frameTime * scale * speed;
-		if (move >= swing) {
-			move = swing;
-			res.swinging = false;
-		}
-		res.angle = qm.AngleNormalize360(res.angle + move);
-	} else if ( swing < 0 ) {
-		move = cg.frameTime * scale * -speed;
-		if (move <= swing) {
-			move = swing;
-			res.swinging = false;
-		}
-		res.angle = qm.AngleNormalize360(res.angle + move);
-	}
-
-	// clamp to no more than tolerance
-	swing = qm.AngleSubtract(destination, res.angle);
-	if (swing > clampTolerance) {
-		res.angle = qm.AngleNormalize360(destination - (clampTolerance - 1));
-	} else if ( swing < -clampTolerance ) {
-		res.angle = qm.AngleNormalize360(destination + (clampTolerance - 1));
-	}
-}
-
-// /**
-//  * AddPainTwitch
-//  */
-// function AddPainTwitch(cent, torsoAngles) {
-// 	var t = cg.time - cent.pe.painTime;
-// 	if (t >= PAIN_TWITCH_TIME) {
-// 		return;
-// 	}
-
-// 	f = 1.0 - (t / PAIN_TWITCH_TIME);
-
-// 	if (cent.pe.painDirection) {
-// 		torsoAngles[qm.ROLL] += 20 * f;
-// 	} else {
-// 		torsoAngles[qm.ROLL] -= 20 * f;
-// 	}
-// }
-
-/**********************************************************
- *
- * Player animation
- *
- *********************************************************/
-
-/**
- * PlayerAnimation
- */
-function PlayerAnimation(cent, legs, torso) {
-	var clientNum = cent.currentState.clientNum;
-	var ci = cgs.clientinfo[clientNum];
-	var speedScale = 1;
-
-	// if ( cent->currentState.powerups & ( 1 << PW_HASTE ) ) {
-	// 	speedScale = 1.5;
-	// }
-
-	// Do the shuffle turn frames locally.
-	// if (cent->pe.legs.yawing && (cent.currentState.legsAnim & ~ANIM_TOGGLEBIT) === LEGS_IDLE) {
-	// 	RunLerpFrame( ci, &cent->pe.legs, LEGS_TURN, speedScale );
-	// } else {
-		RunLerpFrame(ci, cent.pe.legs, cent.currentState.legsAnim, speedScale);
-	// }
-
-	legs.oldFrame = cent.pe.legs.oldFrame;
-	legs.frame = cent.pe.legs.frame;
-	legs.backlerp = cent.pe.legs.backlerp;
-
-	RunLerpFrame(ci, cent.pe.torso, cent.currentState.torsoAnim, speedScale);
-
-	torso.oldFrame = cent.pe.torso.oldFrame;
-	torso.frame = cent.pe.torso.frame;
-	torso.backlerp = cent.pe.torso.backlerp;
-}
-
-
-/**
- * RunLerpFrame
- *
- * Sets cg.snap, cg.oldFrame, and cg.backlerp
- * cg.time should be between oldFrameTime and frameTime after exit
- */
-function RunLerpFrame(ci, lf, newAnimation, speedScale) {
-	// See if the animation sequence is switching.
-	if (newAnimation !== lf.animationNumber || !lf.animation) {
-		SetLerpFrameAnimation(ci, lf, newAnimation);
-	}
-
-	// If we have passed the current frame, move it to
-	// oldFrame and calculate a new frame.
-	if (cg.time >= lf.frameTime) {
-		lf.oldFrame = lf.frame;
-		lf.oldFrameTime = lf.frameTime;
-
-		// Get the next frame based on the animation.
-		var anim = lf.animation;
-		if (!anim.frameLerp) {
-			return;  // shouldn't happen
-		}
-
-		if (cg.time < lf.animationTime) {
-			lf.frameTime = lf.animationTime;  // initial lerp
-		} else {
-			lf.frameTime = lf.oldFrameTime + anim.frameLerp;
-		}
-
-		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale, 10);
-		var numFrames = anim.numFrames;
-		if (anim.flipflop) {
-			numFrames *= 2;
-		}
-
-		if (f >= numFrames) {
-			f -= numFrames;
-			if (anim.loopFrames) {
-				f %= anim.loopFrames;
-				f += anim.numFrames - anim.loopFrames;
-			} else {
-				f = numFrames - 1;
-				// The animation is stuck at the end, so it
-				// can immediately transition to another sequence
-				lf.frameTime = cg.time;
-			}
-		}
-
-		if (anim.reversed) {
-			lf.frame = anim.firstFrame + anim.numFrames - 1 - f;
-		} else if (anim.flipflop && f >= anim.numFrames) {
-			lf.frame = anim.firstFrame + anim.numFrames - 1 - (f % anim.numFrames);
-		} else {
-			lf.frame = anim.firstFrame + f;
-		}
-
-		if (cg.time > lf.frameTime) {
-			lf.frameTime = cg.time;
-		}
-	}
-
-	if (lf.frameTime > cg.time + 200) {
-		lf.frameTime = cg.time;
-	}
-
-	if (lf.oldFrameTime > cg.time) {
-		lf.oldFrameTime = cg.time;
-	}
-
-	// Calculate current lerp value.
-	if (lf.frameTime === lf.oldFrameTime) {
-		lf.backlerp = 0;
-	} else {
-		lf.backlerp = 1.0 - (cg.time - lf.oldFrameTime) / (lf.frameTime - lf.oldFrameTime);
-	}
-}
-
-/**
- * SetLerpFrameAnimation
- *
- * May include ANIM_TOGGLEBIT.
- */
-function SetLerpFrameAnimation(ci, lf, newAnimation) {
-	lf.animationNumber = newAnimation;
-	newAnimation &= ~ANIM_TOGGLEBIT;
-
-	if (newAnimation < 0 || newAnimation >= ANIM.MAX_TOTALANIMATIONS) {
-		error('Bad animation number: ' + newAnimation);
-	}
-
-	var anim = ci.animations[newAnimation];
-
-	lf.animation = anim;
-	lf.animationTime = lf.frameTime + anim.initialLerp;
-}
-
-/**
- * ClearLerpFrame
- */
-function ClearLerpFrame(ci, lf, animationNumber) {
-	lf.frameTime = lf.oldFrameTime = cg.time;
-	SetLerpFrameAnimation(ci, lf, animationNumber);
-	lf.oldFrame = lf.frame = lf.animation.firstFrame;
-}
-		/**
- * TransitionPlayerState
- */
-function TransitionPlayerState(ps, ops) {
-	// check for changing follow mode
-	/*if (ps.clientNum !== ops.clientNum) {
-		cg.thisFrameTeleport = qtrue;
-		// make sure we don't get any unwanted transition effects
-		*ops = *ps;
-	}*/
-
-	// damage events (player is getting wounded)
-	/*if ( ps->damageEvent != ops->damageEvent && ps->damageCount ) {
-		CG_DamageFeedback( ps->damageYaw, ps->damagePitch, ps->damageCount );
-	}*/
-
-	// Respawning.
-	if (ps.persistant[PERS.SPAWN_COUNT] != ops.persistant[PERS.SPAWN_COUNT] ) {
-		Respawn();
-	}
-
-	/*if ( cg.mapRestart ) {
-		CG_Respawn();
-		cg.mapRestart = qfalse;
-	}*/
-
-	/*if ( cg.snap->ps.pm_type != PM_INTERMISSION 
-		&& ps->persistant[PERS_TEAM] != TEAM_SPECTATOR ) {
-		CG_CheckLocalSounds( ps, ops );
-	}*/
-
-	// check for going low on ammo
-	//CG_CheckAmmo();
-
-	// Run events.
-	CheckPlayerstateEvents(ps, ops);
-
-	/*// smooth the ducking viewheight change
-	if ( ps->viewheight != ops->viewheight ) {
-		cg.duckChange = ps->viewheight - ops->viewheight;
-		cg.duckTime = cg.time;
-	}*/
-}
-
-/**
- * Respawn
- * 
- * A respawn happened this snapshot
- */
-function Respawn() {
-	// No error decay on player movement.
-	cg.thisFrameTeleport = true;
-
-	// Display weapons available.
-	//cg.weaponSelectTime = cg.time;
-
-	// Select the weapon the server says we are using.
-	cg.weaponSelect = cg.snap.ps.weapon;
-}
-
-/**
- * CheckPlayerstateEvents
- */
-function CheckPlayerstateEvents(ps, ops) {
-	var cent;
-	if (ps.externalEvent && ps.externalEvent != ops.externalEvent) {
-		cent = cg.entities[ps.clientNum];
-		cent.currentState.event = ps.externalEvent;
-		cent.currentState.eventParm = ps.externalEventParm;
-		AddEntityEvent(cent, cent.lerpOrigin);
-	}
-
-	cent = cg.predictedPlayerEntity;
-	// Go through the predictable events buffer.
-	for (var i = ps.eventSequence - MAX_PS_EVENTS; i < ps.eventSequence; i++) {
-		// If we have a new predictable event.
-		if (i >= ops.eventSequence
-			// or the server told us to play another event instead of a predicted event we already issued
-			// or something the server told us changed our prediction causing a different event
-			|| (i > ops.eventSequence - MAX_PS_EVENTS && ps.events[i & (MAX_PS_EVENTS - 1)] !== ops.events[i & (MAX_PS_EVENTS - 1)]) ) {
-			cent.currentState.event = ps.events[i & (MAX_PS_EVENTS - 1)];
-			cent.currentState.eventParm = ps.eventParms[i & (MAX_PS_EVENTS - 1)];
-			AddEntityEvent(cent, cent.lerpOrigin);
-		}
-	}
-}
-		/**
- * BuildSolidList
- *
- * When a new cg.snap has been set, this function builds a sublist
- * of the entities that are actually solid, to make for more
- * efficient collision detection.
- */
-function BuildSolidList() {
-	cg.numSolidEntities = 0;
-	cg.numTriggerEntities = 0;
-
-	var snap;
-
-	if (cg.nextSnap && !cg.nextFrameTeleport && !cg.thisFrameTeleport) {
-		snap = cg.nextSnap;
-	} else {
-		snap = cg.snap;
-	}
-
-	for (var i = 0; i < snap.numEntities; i++ ) {
-		var cent = cg.entities[snap.entities[i].number];
-		var es = cent.currentState;
-
-		if (es.eType === ET.ITEM || es.eType == ET.PUSH_TRIGGER || es.eType === ET.TELEPORT_TRIGGER) {
-			cg.triggerEntities[cg.numTriggerEntities++] = cent;
-			continue;
-		}
-
-		if (cent.nextState.solid) {
-			cg.solidEntities[cg.numSolidEntities++] = cent;
-			continue;
-		}
-	}
-}
-
-/**
- * Trace
- */
-function Trace(start, end, mins, maxs, skipNumber, mask) {
-	var trace = imp.cm_BoxTrace(start, end, mins, maxs, 0, mask);
-	trace.entityNum = trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
-
-	// Check all other solid models.
-	ClipMoveToEntities(trace, start, end, mins, maxs, skipNumber, mask);
-
-	return trace;
-}
-
-
-/**
- * ClipMoveToEntities
- */
-function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
-	var origin = [0, 0, 0];
-	var angles = [0, 0, 0];
-
-	for (var i = 0; i < cg.numSolidEntities; i++) {
-		var cent = cg.solidEntities[i];
-		var es = cent.currentState;
-
-		if (es.number === skipNumber) {
-			continue;
-		}
-
-		var cmodel;
-		if (es.solid === SOLID_BMODEL) {
-			// Special value for bmodel.
-			cmodel = imp.cm_InlineModel(es.modelIndex);
-			vec3.set(cent.lerpAngles, angles);
-			bg.EvaluateTrajectory(cent.currentState.pos, cg.physicsTime, origin);
-		} else {
-			// Encoded bbox.
-			var x = (es.solid & 255);
-			var zd = ((es.solid >> 8) & 255);
-			var zu = ((es.solid >> 16) & 255) - 32;
-
-			var bmins = [0, 0, 0];
-			var bmaxs = [0, 0, 0];
-
-			bmins[0] = bmins[1] = -x;
-			bmaxs[0] = bmaxs[1] = x;
-			bmins[2] = -zd;
-			bmaxs[2] = zu;
-
-			cmodel = imp.cm_TempBoxModel(bmins, bmaxs);
-			angles[0] = angles[1] = angles[2] = 0;
-			vec3.set(cent.lerpOrigin, origin);
-		}
-
-		var trace = imp.cm_TransformedBoxTrace(start, end, mins, maxs, cmodel, mask, origin, angles);
-
-		if (trace.allSolid || trace.fraction < tr.fraction) {
-			trace.entityNum = es.number;
-			trace.clone(tr);
-		} else if (trace.startSolid) {
-			tr.startSolid = true;
-		}
-
-		if (tr.allSolid) {
-			return;
-		}
-	}
-}
-
-/**
- * InterpolatePlayerState
- */
-function InterpolatePlayerState(grabAngles) {
-	var ps = cg.snap.ps.clone(cg.predictedPlayerState);
-	var prev = cg.snap;
-	var next = cg.nextSnap;
-
-	// If we are still allowing local input, short circuit the view angles.
-	if (grabAngles) {
-		var cmdNum = imp.cl_GetCurrentUserCmdNumber();
-		var cmd = imp.cl_GetUserCmd(cmdNum);
-		bg.UpdateViewAngles(ps, cmd);
-	}
-
-	// If the next frame is a teleport, we can't lerp to it.
-	if (cg.nextFrameTeleport) {
-		return;
-	}
-
-	if (!next || next.serverTime <= prev.serverTime) {
-		return;
-	}
-
-	var f = (cg.time - prev.serverTime) / (next.serverTime - prev.serverTime);
-
-	/*i = next.ps.bobCycle;
-	if ( i < prev.ps.bobCycle ) {
-		i += 256;		// handle wraparound
-	}
-	out.bobCycle = prev.ps.bobCycle + f * ( i - prev.ps.bobCycle );*/
-
-	for (var i = 0; i < 3; i++) {
-		ps.origin[i] = prev.ps.origin[i] + f * (next.ps.origin[i] - prev.ps.origin[i]);
-		if (!grabAngles) {
-			ps.viewangles[i] = qm.LerpAngle(prev.ps.viewangles[i], next.ps.viewangles[i], f);
-		}
-		ps.velocity[i] = prev.ps.velocity[i] + f * (next.ps.velocity[i] - prev.ps.velocity[i]);
-	}
-}
-
-/**
- * PredictPlayerState
- */
-function PredictPlayerState() {
-	cg.hyperspace = false;  // will be set if touching a trigger_teleport
-
-	// If this is the first frame we must guarantee predictedPlayerState 
-	// is valid even if there is some other error condition.
-	if (!cg.validPPS) {
-		cg.validPPS = true;
-		cg.snap.ps.clone(cg.predictedPlayerState);
-	}
-
-	// Just copy the moves when following.
-	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
-		InterpolatePlayerState(false);
-		return;
-	}
-
-	if (cg_predict()) {
-		InterpolatePlayerState(true);
-		return;
-	}
-
-	// Save the state before the pmove so we can detect transitions.
-	var oldPlayerState = cg.predictedPlayerState.clone();
-
-	// If we don't have the commands right after the snapshot, we
-	// can't accurately predict a current position, so just freeze at
-	// the last good position we had.
-	var latest = imp.cl_GetCurrentUserCmdNumber();
-	var oldest = latest - CMD_BACKUP + 1;
-	var oldestCmd = imp.cl_GetUserCmd(oldest);
-
-	// Special check for map_restart.
-	if (oldestCmd.serverTime > cg.snap.ps.commandTime && oldestCmd.serverTime < cg.time) {
-		if (cg_showmiss()) {
-			log('exceeded PACKET_BACKUP on commands');
-		}
-		return;
-	}
-
-	// Get the latest command so we can know which commands are from previous map_restarts.
-	var latestCmd = imp.cl_GetUserCmd(latest);
-
-	// Get the most recent information we have, even if the server time
-	// is beyond our current cg.time, because predicted player positions
-	// are going to be ahead of everything else anyway.
-	if (cg.nextSnap && !cg.nextFrameTeleport && !cg.thisFrameTeleport) {
-		cg.nextSnap.ps.clone(cg.predictedPlayerState);
-		cg.physicsTime = cg.nextSnap.serverTime;
-	} else {
-		cg.snap.ps.clone(cg.predictedPlayerState);
-		cg.physicsTime = cg.snap.serverTime;
-	}
-
-	// Prepare for pmove.
-	// TODO memset() this thing
-	cg.pmove.ps = cg.predictedPlayerState;
-	cg.pmove.trace = Trace;
-	// cg.pmove.pointcontents = CG_PointContents;
-	if (cg.pmove.ps.pm_type === PM.DEAD) {
-		cg.pmove.tracemask = MASK.PLAYERSOLID & ~CONTENTS.BODY;
-	} else {
-		cg.pmove.tracemask = MASK.PLAYERSOLID;
-	}
-	// if (cg.snap.ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
-	// 	cg.pmove.tracemask &= ~CONTENTS.BODY;	// spectators can fly through bodies
-	// }
-	// cg.pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
-
-	// Run cmds.
-	var moved = false;
-	for (var cmdNum = oldest; cmdNum <= latest; cmdNum++) {
-		// Get the command.
-		cg.pmove.cmd = imp.cl_GetUserCmd(cmdNum);
-
-		// Don't do anything if the time is before the snapshot player time.
-		if (cg.pmove.cmd.serverTime <= cg.predictedPlayerState.commandTime) {
-			continue;
-		}
-
-		// Don't do anything if the command was from a previous map_restart.
-		if (cg.pmove.cmd.serverTime > latestCmd.serverTime) {
-			continue;
-		}
-
-		// Check for a prediction error from last frame on a lan, this will often
-		// be the exact value from the snapshot, but on a wan we will have to
-		// predict several commands to get to the point we want to compaimp.re_
-		// if (cg.predictedPlayerState.commandTime === oldPlayerState.commandTime) {
-		// 	if (cg.thisFrameTeleport) {
-		// 		// A teleport will not cause an error decay
-		// 		cg.predictedError = [0, 0, 0];
-		// 		if (cg_showmiss()) {
-		// 			log('PredictionTeleport');
-		// 		}
-		// 		cg.thisFrameTeleport = false;
-		// 	} else {
-		// 		vec3_t adjusted, new_angles;
-		// 		CG_AdjustPositionForMover( cg.predictedPlayerState.origin, 
-		// 			cg.predictedPlayerState.groundEntityNum, cg.physicsTime, cg.oldTime, adjusted, cg.predictedPlayerState.viewangles, new_angles);
-
-		// 		if (cg_showmiss()) {
-		// 			if (oldPlayerState.origin[0] !== adjusted[0] ||
-		// 				oldPlayerState.origin[1] !== adjusted[1]
-		// 				oldPlayerState.origin[2] !== adjusted[2]) {
-		// 				log('Prediction error');
-		// 			}
-		// 		}
-		// 		var delta = vec3.subtract(oldPlayerState.origin, adjusted, [0, 0, 0]);
-		// 		var len = vec3.length(delta);
-		// 		if (len > 0.1) {
-		// 			if (cg_showmiss()) {
-		// 				log('Prediction miss: ' + len);
-		// 			}
-		// 			if (cg_errorDecay()) {
-		// 				var t = cg.time - cg.predictedErrorTime;
-		// 				var f = (cg_errorDecay() - t) / cg_errorDecay();
-		// 				if (f < 0) {
-		// 					f = 0;
-		// 				} else if (f > 0 && cg_showmiss()) {
-		// 					log('Double prediction decay: ' + f);
-		// 				}
-		// 				vec3.scale(cg.predictedError, f);
-		// 			} else {
-		// 				cg.predictedError = [0, 0, 0];
-		// 			}
-		// 			VectorAdd( delta, cg.predictedError, cg.predictedError );
-		// 			cg.predictedErrorTime = cg.oldTime;
-		// 		}
-		// 	}
-		// }
-
-		// don't predict gauntlet firing, which is only supposed to happen
-		// when it actually inflicts damage
-		//cg.pmove.gauntletHit = qfalse;
-		
-		bg.Pmove(cg.pmove);
-
-		moved = true;
-
-		// Add push trigger movement effects
-		TouchTriggerPrediction();
-	}
-
-	if (cg_showmiss() > 1) {
-		log('[' + cg.pmove.cmd.serverTime + ' : ' + cg.time + ']');
-	}
-
-	if (!moved) {
-		if (cg_showmiss()) {
-			log('not moved');
-		}
-		return;
-	}
-
-	// // adjust for the movement of the groundentity
-	// CG_AdjustPositionForMover( cg.predictedPlayerState.origin, 
-	// 	cg.predictedPlayerState.groundEntityNum, 
-	// 	cg.physicsTime, cg.time, cg.predictedPlayerState.origin, cg.predictedPlayerState.viewangles, cg.predictedPlayerState.viewangles);
-
-	// if (cg_showmiss()) {
-	// 	if (cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS) {
-	// 		CG_Printf("WARNING: dropped event\n");
-	// 	}
-	// }
-
-	// Fire events and other transition triggered things
-	TransitionPlayerState(cg.predictedPlayerState, oldPlayerState);
-}
-
-
-/**
- * TouchTriggerPrediction
- * 
- * Predict push triggers and items
- */
-function TouchTriggerPrediction() {
-	// Dead clients don't activate triggers.
-	if (cg.predictedPlayerState.pm_type === PM.DEAD) {
-		return;
-	}
-
-	var spectator = (cg.predictedPlayerState.pm_type === PM.SPECTATOR);
-	if (cg.predictedPlayerState.pm_type !== PM.NORMAL && !spectator) {
-		return;
-	}
-
-	for (var i = 0; i < cg.numTriggerEntities; i++) {
-		var cent = cg.triggerEntities[i];
-		var es = cent.currentState;
-
-		if (es.eType === ET.ITEM && !spectator) {
-			TouchItem(cent);
-			continue;
-		}
-
-		if (es.solid !== SOLID_BMODEL) {
-			continue;
-		}
-
-		var cmodel = imp.cm_InlineModel(es.modelIndex);
-		if (!cmodel) {
-			continue;
-		}
-
-		var trace = imp.cm_BoxTrace(cg.predictedPlayerState.origin, cg.predictedPlayerState.origin, 
-			cg.pmove.mins, cg.pmove.maxs, cmodel, -1);
-
-		if (!trace.startSolid) {
-			continue;
-		}
-
-		if (es.eType === ET.TELEPORT_TRIGGER) {
-			cg.hyperspace = true;
-		} else if (es.eType == ET.PUSH_TRIGGER) {
-			bg.TouchJumpPad(cg.predictedPlayerState, es);
-		}
-	}
-
-	// If we didn't touch a jump pad this pmove frame.
-	if (cg.predictedPlayerState.jumppad_frame != cg.predictedPlayerState.pmove_framecount) {
-		cg.predictedPlayerState.jumppad_frame = 0;
-		cg.predictedPlayerState.jumppad_ent = 0;
-	}
-}
-
-/**
- * TouchItem
- */
-function TouchItem(cent) {
-	// if (!cg_predictItems()) {
-	// 	return;
-	// }
-
-	if (!bg.PlayerTouchesItem(cg.predictedPlayerState, cent.currentState, cg.time)) {
-		return;
-	}
-
-	// Never pick an item up twice in a prediction.
-	if (cent.miscTime === cg.time) {
-		return;
-	}
-
-	if (!bg.CanItemBeGrabbed(null/*cgs.gametype*/, cent.currentState, cg.predictedPlayerState)) {
-		return;  // can't hold it
-	}
-
-	var item = bg.ItemList[cent.currentState.modelIndex];
-
-	// // Special case for flags.  
-	// // We don't predict touching our own flag.
-	// if (cgs.gametype === GT_CTF) {
-	// 	if (cg.predictedPlayerState.persistant[PERS_TEAM] == TEAM_RED &&
-	// 		item.giTag == PW_REDFLAG)
-	// 		return;
-	// 	if (cg.predictedPlayerState.persistant[PERS_TEAM] == TEAM_BLUE &&
-	// 		item.giTag == PW_BLUEFLAG)
-	// 		return;
-	// }
-
-
-	// Grab it.
-	bg.AddPredictableEventToPlayerstate(cg.predictedPlayerState, EV.ITEM_PICKUP, cent.currentState.modelIndex);
-
-	// Remove it from the frame so it won't be drawn.
-	cent.currentState.eFlags |= EF.NODRAW;
-
-	// Don't touch it again this prediction.
-	cent.miscTime = cg.time;
-
-	// If it's a weapon, give them some predicted ammo so the autoswitch will work.
-	if (item.giType === IT.WEAPON) {
-		cg.predictedPlayerState.stats[STAT.WEAPONS] |= 1 << item.giTag;
-		if (!cg.predictedPlayerState.ammo[item.giTag]) {
-			cg.predictedPlayerState.ammo[item.giTag] = 1;
-		}
-	}
-}
-
-
-		/**
- * ExecuteNewServerCommands
- *
- * Execute all of the server commands that were received along
- * with this this snapshot.
- */
-function ExecuteNewServerCommands(latestSequence) {
-	while (cgs.serverCommandSequence < latestSequence) {
-		var cmd;
-
-		if ((cmd = imp.cl_GetServerCommand(++cgs.serverCommandSequence))) {
-			ServerCommand(cmd);
-		}
-	}
-}
-
-/**
- * ServerCommand
- */
-function ServerCommand(cmd) {
-	if (cmd.type === 'cs') {
-		var key = cmd.value.k;
-		var val = cmd.value.v;
-		ConfigStringModified(key, val);
-		return;
-	}
-}
-
-/**
- * ConfigStringModified
- */
-function ConfigStringModified(key, val) {
-	// Get the gamestate from the client system, which will have the
-	// new configstring already integrated.
-	// trap_GetGameState( &cgs.gameState );
-
-	// Do something with it if necessary.
-	// if (key === 'music') {
-	// 	StartMusic();
-	// } else if (num == 'serverinfo') {
-	// 	ParseServerinfo();
-	// } else if (num == CS_WARMUP) {
-	// 	CG_ParseWarmup();
-	// } else if (num == CS_SCORES1) {
-	// 	cgs.scores1 = atoi( str );
-	// } else if (num == CS_SCORES2) {
-	// 	cgs.scores2 = atoi( str );
-	// } else if (num == CS_LEVEL_START_TIME) {
-	// 	cgs.levelStartTime = atoi( str );
-	// } else if (num == CS_VOTE_TIME) {
-	// 	cgs.voteTime = atoi( str );
-	// 	cgs.voteModified = qtrue;
-	// } else if (num == CS_VOTE_YES) {
-	// 	cgs.voteYes = atoi( str );
-	// 	cgs.voteModified = qtrue;
-	// } else if (num == CS_VOTE_NO) {
-	// 	cgs.voteNo = atoi( str );
-	// 	cgs.voteModified = qtrue;
-	// } else if (num == CS_VOTE_STRING) {
-	// 	Q_strncpyz( cgs.voteString, str, sizeof( cgs.voteString ) );
-	// } else if (num >= CS_TEAMVOTE_TIME && num <= CS_TEAMVOTE_TIME + 1) {
-	// 	cgs.teamVoteTime[num-CS_TEAMVOTE_TIME] = atoi( str );
-	// 	cgs.teamVoteModified[num-CS_TEAMVOTE_TIME] = qtrue;
-	// } else if (num >= CS_TEAMVOTE_YES && num <= CS_TEAMVOTE_YES + 1) {
-	// 	cgs.teamVoteYes[num-CS_TEAMVOTE_YES] = atoi( str );
-	// 	cgs.teamVoteModified[num-CS_TEAMVOTE_YES] = qtrue;
-	// } else if (num >= CS_TEAMVOTE_NO && num <= CS_TEAMVOTE_NO + 1) {
-	// 	cgs.teamVoteNo[num-CS_TEAMVOTE_NO] = atoi( str );
-	// 	cgs.teamVoteModified[num-CS_TEAMVOTE_NO] = qtrue;
-	// } else if (num >= CS_TEAMVOTE_STRING && num <= CS_TEAMVOTE_STRING + 1) {
-	// 	Q_strncpyz( cgs.teamVoteString[num-CS_TEAMVOTE_STRING], str, sizeof( cgs.teamVoteString ) );
-	// } else if (num == CS_INTERMISSION ) {
-	// 	cg.intermissionStarted = atoi( str );
-	// } else if (num >= CS_MODELS && num < CS_MODELS+MAX_MODELS) {
-	// 	cgs.gameModels[ num-CS_MODELS ] = trap_R_RegisterModel( str );
-	// } else if (num >= CS_SOUNDS && num < CS_SOUNDS+MAX_SOUNDS) {
-	// 	if ( str[0] != '*' ) {	// player specific sounds don't register here
-	// 		cgs.gameSounds[ num-CS_SOUNDS] = trap_S_RegisterSound( str, qfalse );
-	// 	}
-	if (key.indexOf('player') === 0) {
-		var clientNum = parseInt(key.substr(6), 10);
-		NewClientInfo(clientNum);
-		// BuildSpectatorString();
-	}
-	// else if (num == CS_FLAGSTATUS) {
-	// 	if( cgs.gametype == GT_CTF ) {
-	// 		// format is rb where its red/blue, 0 is at base, 1 is taken, 2 is dropped
-	// 		cgs.redflag = str[0] - '0';
-	// 		cgs.blueflag = str[1] - '0';
-	// 	}
-	// }
-	// else if (num == CS_SHADERSTATE) {
-	// 	CG_ShaderStateChanged();
-	// }
-}
-
-/**
- * ParseServerinfo
- *
- * This is called explicitly when the gamestate is first received,
- * and whenever the server updates any serverinfo flagged cvars
- */
-function ParseServerinfo() {
-	var serverInfo = ConfigString('serverInfo');
-
-	cgs.mapname = serverInfo['sv_mapname'];
-}
-		/**
- * ProcessSnapshots
- */
-function ProcessSnapshots() {
-	var snap;
-
-	// See what the latest snapshot the client system has is.
-	var info = imp.cl_GetCurrentSnapshotNumber();
-
-	cg.latestSnapshotTime = info.serverTime;
-
-	if (info.snapshotNumber !== cg.latestSnapshotNum) {
-		if (info.snapshotNumber < cg.latestSnapshotNum) {
-			// this should never happen
-			error('ProcessSnapshots: info.snapshotNumber < cg.latestSnapshotNum');
-		}
-
-		cg.latestSnapshotNum = info.snapshotNumber;
-	}
-
-	// If we have yet to receive a snapshot, check for it.
-	// Once we have gotten the first snapshot, cg.snap will
-	// always have valid data for the rest of the game.
-	while (!cg.snap) {
-		snap = ReadNextSnapshot();
-
-		if (!snap) {
-			// we can't continue until we get a snapshot
-			return;
-		}
-
-		if (!(snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
-			SetInitialSnapshot(snap);
-		}
-	}
-
-	// Loop until we either have a valid nextSnap with a serverTime
-	// greater than cg.time to interpolate towards, or we run
-	// out of available snapshots.
-	while (true) {
-		// If we don't have a nextframe, try and read a new one in.
-		if (!cg.nextSnap) {
-			snap = ReadNextSnapshot();
-
-			// If we still don't have a nextframe, we will just have to extrapolate.
-			if (!snap) {
-				break;
-			}
-
-			SetNextSnap(snap);
-
-			// If time went backwards, we have a level restart.
-			if (cg.nextSnap.serverTime < cg.snap.serverTime ) {
-				error('ProcessSnapshots: Server time went backwards');
-			}
-		}
-
-		// if our time is < nextFrame's, we have a nice interpolating state.
-		if (cg.time >= cg.snap.serverTime && cg.time < cg.nextSnap.serverTime) {
-			break;
-		}
-
-		// we have passed the transition from nextFrame to frame
-		TransitionSnapshot();
-	}
-
-	// Assert our valid conditions upon exiting
-	if (cg.snap === null) {
-		error('ProcessSnapshots: cg.snap == NULL');
-	}
-
-	if (cg.time < cg.snap.serverTime) {
-		// this can happen right after a vid_restart
-		cg.time = cg.snap.serverTime;
-	}
-
-	if (cg.nextSnap && cg.nextSnap.serverTime <= cg.time ) {
-		error('ProcessSnapshots: cg.nextSnap.serverTime <= cg.time');
-	}
-
-	/*if (!cg.nextSnap) {
-		log('ProcessSnapshots: No valid nextSnap.');
-	}*/
-}
-
-/**
- * ReadNextSnapshot
- */
-function ReadNextSnapshot() {
-	if (cg.latestSnapshotNum > cgs.processedSnapshotNum + 1000) {
-		console.warn('ReadNextSnapshot: way out of range, ' + cg.latestSnapshotNum + ' > ' + cgs.processedSnapshotNum);
-	}
-
-	while (cgs.processedSnapshotNum < cg.latestSnapshotNum) {
-		// Try to read the snapshot from the client system.
-		cgs.processedSnapshotNum++;
-		var snap = imp.cl_GetSnapshot(cgs.processedSnapshotNum);
-
-		// if it succeeded, return
-		if (snap) {
-			return snap;
-		}
-
-		// GetSnapshot will return failure if the snapshot
-		// never arrived, or  is so old that its entities
-		// have been shoved off the end of the circular
-		// buffer in the client system.
-
-		// If there are additional snapshots, continue trying to
-		// read them.
-	}
-
-	// Nothing left to read.
-	return null;
-}
-
-/**
- * SetInitialSnapshot
- */
-function SetInitialSnapshot(snap) {
-	cg.snap = snap;
-
-	log('Setting initial snapshot');
-
-	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].currentState);
-
-	// Sort out solid entities.
-	BuildSolidList();
-
-	ExecuteNewServerCommands(snap.serverCommandNum);
-
-	// Set our local weapon selection pointer t what the
-	// server has indicated the current weapon is.
-	Respawn();
-
-	for (var i = 0; i < snap.numEntities; i++) {
-		var state = snap.entities[i];
-		var cent = cg.entities[state.number];
-
-		state.clone(cent.currentState);
-
-		cent.interpolate = false;
-		cent.currentValid = true;
-
-		ResetEntity(cent);
-
-		// check for events
-		CheckEvents(cent);
-	}
-}
-
-/**
- * SetNextSnap
- */
-function SetNextSnap(snap) {
-	cg.nextSnap = snap;
-
-	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].nextState);
-	cg.entities[cg.snap.ps.clientNum].interpolate = true;
-
-	// Check for extrapolation errors.
-	for (var i = 0; i < snap.numEntities; i++) {
-		var state = snap.entities[i];
-		var cent = cg.entities[state.number];
-
-		state.clone(cent.nextState);
-
-		// If this frame is a teleport, or the entity wasn't in the previous frame, don't interpolate.
-		if (!cent.currentValid || ((cent.currentState.eFlags ^ state.eFlags) & EF.TELEPORT_BIT)) {
-			cent.interpolate = false;
-		} else {
-			cent.interpolate = true;
-		}
-	}
-
-	// If the next frame is a teleport for the playerstate, we can't interpolate.
-	if (cg.snap && ((snap.ps.eFlags ^ cg.snap.ps.eFlags) & EF.TELEPORT_BIT)) {
-		cg.nextFrameTeleport = true;
-	} else {
-		cg.nextFrameTeleport = false;
-	}
-
-	// If changing server restarts, don't interpolate.
-	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
-		cg.nextFrameTeleport = true;
-	}
-
-	BuildSolidList();
-}
-
-/**
- * TransitionSnapshot
- *
- * The transition point from snap to nextSnap has passed.
- */
-function TransitionSnapshot() {
-	if (!cg.snap) {
-		error('TransitionSnapshot: NULL cg.snap');
-	}
-	if (!cg.nextSnap) {
-		error('TransitionSnapshot: NULL cg.nextSnap');
-	}
-
-	// Execute any server string commands before transitioning entities.
-	ExecuteNewServerCommands(cg.nextSnap.serverCommandNum);
-
-	// Clear the currentValid flag for all entities in the existing snapshot.
-	for (var i = 0; i < cg.snap.numEntities; i++) {
-		var cent = cg.entities[cg.snap.entities[i].number];
-		cent.currentValid = false;
-	}
-
-	// Move nextSnap to snap and do the transitions.
-	var oldFrame = cg.snap;
-	cg.snap = cg.nextSnap;
-
-	bg.PlayerStateToEntityState(cg.snap.ps, cg.entities[cg.snap.ps.clientNum].currentState);
-	cg.entities[cg.snap.ps.clientNum].interpolate = false;
-
-	for (var i = 0; i < cg.snap.numEntities; i++) {
-		var cent = cg.entities[cg.snap.entities[i].number];
-		
-		TransitionEntity(cent);
-
-		// Remember time of snapshot this entity was last updated in.
-		cent.snapshotTime = cg.snap.serverTime;
-	}
-
-	cg.nextSnap = null;
-
-	// Check for playerstate transition events
-	if (oldFrame) {
-		var ops = oldFrame.ps;
-		var ps = cg.snap.ps;
-
-		// teleporting checks are irrespective of prediction
-		if ((ps.eFlags ^ ops.eFlags) & EF.TELEPORT_BIT) {
-			cg.thisFrameTeleport = true; // will be cleared by prediction code
-		}
-
-		// if we are not doing client side movement prediction for any
-		// reason, then the client events and view changes will be issued now
-		if ((cg.snap.ps.pm_flags & PMF.FOLLOW)) {
-			TransitionPlayerState(ps, ops);
-		}
-	}
-}
-
-/**
- * TransitionEntity
- *
- * cent->nextState is moved to cent->currentState and events are fired.
- */
-function TransitionEntity(cent) {
-	cent.nextState.clone(cent.currentState);
-	cent.currentValid = true;
-
-	// Reset if the entity wasn't in the last frame or was teleported.
-	if (!cent.interpolate) {
-		ResetEntity(cent);
-	}
-
-	// Clear the next state. It will be set by the next SetNextSnap.
-	cent.interpolate = false;
-
-	// check for events
-	CheckEvents(cent);
-}
-
-/**
- * ResetEntity
- */
-function ResetEntity(cent) {
-	// If the previous snapshot this entity was updated in is at least
-	// an event window back in time then we can reset the previous event.
-	if (cent.snapshotTime < cg.time - EVENT_VALID_MSEC) {
-		cent.previousEvent = 0;
-	}
-
-	cent.trailTime = cg.snap.serverTime;
-
-	vec3.set(cent.currentState.origin, cent.lerpOrigin);
-	vec3.set(cent.currentState.angles, cent.lerpAngles);
-
-	/*if (cent.currentState.eType === ET.PLAYER) {
-		ResetPlayerEntity(cent);
-	}*/
-}
-		/**
- * CalcViewValues
- */
-function CalcViewValues() {
-	var ps = cg.predictedPlayerState;
-
-	cg.refdef.x = 0;
-	cg.refdef.y = 0;
-	// TODO FIX THIS
-	// viewport is only resolving because it matches the dom ID and Chrome/FF auto make globals per-id
-	cg.refdef.width = viewport.width;
-	cg.refdef.height = viewport.height;
-
-	cg.bobCycle = (ps.bobCycle & 128 ) >> 7;
-	cg.bobFracSin = Math.abs(Math.sin((ps.bobCycle & 127) / 127 * Math.PI));
-	cg.xyspeed = Math.sqrt(ps.velocity[0] * ps.velocity[0] + ps.velocity[1] * ps.velocity[1] );
-
-	vec3.set(ps.origin, cg.refdef.vieworg);
-	vec3.set(ps.viewangles, cg.refdefViewAngles);
-
-	// Add error decay.
-	// if (cg_errorDecay() > 0) {
-	// 	var t = cg.time - cg.predictedErrorTime;
-	// 	var f = (cg_errorDecay() - t) / cg_errorDecay();
-	// 	if (f > 0 && f < 1) {
-	// 		VectorMA( cg.refdef.vieworg, f, cg.predictedError, cg.refdef.vieworg );
-	// 	} else {
-	// 		cg.predictedErrorTime = 0;
-	// 	}
-	// }
-
-	if (cg.renderingThirdPerson) {
-		OffsetThirdPersonView();
-	} else {
-		OffsetFirstPersonView();
-	}
-
-	qm.AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
-
-	CalcFov();
-}
-
-/**
- * OffsetFirstPersonView
- */
-function OffsetFirstPersonView() {
-	// Add view height.
-	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
-}
-
-/**
- * OffsetThirdPersonView
- */
-var FOCUS_DISTANCE = 512;
-var thirdPersonCameraMins = [-4, -4, -4];
-var thirdPersonCameraMaxs = [4, 4, 4];
-function OffsetThirdPersonView() {
-	var forward = [0, 0, 0];
-	var right = [0, 0, 0];
-	var up = [0, 0, 0];
-	var focusPoint = [0, 0, 0];
-	var focusAngles = vec3.set(cg.refdefViewAngles, [0, 0, 0]);
-
-	// If dead, look at killer.
-	if ( cg.predictedPlayerState.pm_type === PM.DEAD) {
-		focusAngles[qm.YAW] = cg.predictedPlayerState.stats[STAT.DEAD_YAW];
-		cg.refdefViewAngles[qm.YAW] = cg.predictedPlayerState.stats[STAT.DEAD_YAW];
-	}
-
-	if (focusAngles[qm.PITCH] > 45) {
-		focusAngles[qm.PITCH] = 45;  // don't go too far overhead
-	}
-
-	qm.AnglesToVectors(focusAngles, forward, null, null);
-
-	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
-	vec3.add(cg.refdef.vieworg, vec3.scale(forward, FOCUS_DISTANCE, [0, 0, 0]), focusPoint);
-
-	var view = vec3.set(cg.refdef.vieworg, [0, 0, 0]);
-	view[2] += 8;
-
-	cg.refdefViewAngles[qm.PITCH] *= 0.5;
-	qm.AnglesToVectors(cg.refdefViewAngles, forward, right, up);
-
-	var forwardScale = Math.cos( cg_thirdPersonAngle() / 180 * Math.PI);
-	var sideScale = Math.sin(cg_thirdPersonAngle() / 180 * Math.PI);
-
-	vec3.add(view, vec3.scale(forward, -cg_thirdPersonRange() * forwardScale, [0, 0, 0]));
-	vec3.add(view, vec3.scale(right, -cg_thirdPersonRange() * sideScale, [0, 0, 0]));
-
-	// Trace a ray from the origin to the viewpoint to make sure the view isn't
-	// in a solid block. Use an 8 by 8 block to prevent the view from near clipping anything.
-	var trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs, cg.predictedPlayerState.clientNum, MASK.SOLID);
-
-	if (trace.fraction !== 1.0) {
-		vec3.set(trace.endPos, view);
-		view[2] += (1.0 - trace.fraction) * 32;
-
-		// Try another trace to this position, because a tunnel may have the ceiling
-		// close enogh that this is poking out.
-		trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs, cg.predictedPlayerState.clientNum, MASK.SOLID);
-		vec3.set(trace.endPos, view);
-	}
-
-	vec3.set(view, cg.refdef.vieworg);
-
-	// Select pitch to look at focus point from viewer.
-	vec3.subtract(focusPoint, cg.refdef.vieworg);
-	var focusDist = Math.sqrt(focusPoint[0] * focusPoint[0] + focusPoint[1] * focusPoint[1]);
-	if (focusDist < 1) {
-		focusDist = 1;  // should never happen
-	}
-	cg.refdefViewAngles[qm.PITCH] = -180 / Math.PI * Math.atan2(focusPoint[2], focusDist);
-	cg.refdefViewAngles[qm.YAW] -= cg_thirdPersonAngle();
-}
-/**
- * CalcFov
- */
-function CalcFov() {
-	var fovX = cg_fov();
-	var x = cg.refdef.width / Math.tan(fovX / 360 * Math.PI);
-	var fovY = Math.atan2(cg.refdef.height, x) * 360 / Math.PI;
-
-	cg.refdef.fovX = fovX;
-	cg.refdef.fovY = fovY;
-}
-		/**
- * WeaponSelectable
- */
-function WeaponSelectable(i) {
-	if (!cg.snap.ps.ammo[i]) {
-		return false;
-	}
-	
-	if (!(cg.snap.ps.stats[STAT.WEAPONS] & (1 << i))) {
-		return false;
-	}
-	
-	return true;
-}
-
-/**
- * CmdNextWeapon
- */
-function CmdNextWeapon() {
-	if (!cg.snap) {
-		return;
-	}
-	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
-		return;
-	}
-
-	cg.weaponSelectTime = cg.time;
-	var original = cg.weaponSelect;
-
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		cg.weaponSelect++;
-		if (cg.weaponSelect === MAX_WEAPONS) {
-			cg.weaponSelect = 0;
-		}
-		if (cg.weaponSelect === WP.GAUNTLET) {
-			continue;  // never cycle to gauntlet
-		}
-		if (WeaponSelectable(cg.weaponSelect)) {
-			break;
-		}
-	}
-	if (i === MAX_WEAPONS) {
-		cg.weaponSelect = original;
-	}
-}
-
-/**
- * PrevWeapon
- */
-function CmdPrevWeapon() {
-	if (!cg.snap) {
-		return;
-	}
-	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
-		return;
-	}
-
-	// cg.weaponSelectTime = cg.time;
-	var original = cg.weaponSelect;
-
-	for (var i = 0; i < MAX_WEAPONS; i++) {
-		cg.weaponSelect--;
-		if (cg.weaponSelect === -1) {
-			cg.weaponSelect = MAX_WEAPONS - 1;
-		}
-		if (cg.weaponSelect === WP.GAUNTLET) {
-			continue;  // never cycle to gauntlet
-		}
-		if (WeaponSelectable(cg.weaponSelect)) {
-			break;
-		}
-	}
-	if (i === MAX_WEAPONS) {
-		cg.weaponSelect = original;
-	}
-}
-
-/**
- * CmdWeapon
- */
-function CmdWeapon(arg1) {
-	if (!cg.snap) {
-		return;
-	}
-	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
-		return;
-	}
-
-	var num = parseInt(arg1, 10);
-	if (num < 1 || num > MAX_WEAPONS-1) {
-		return;
-	}
-
-	// cg.weaponSelectTime = cg.time;
-
-	if (!(cg.snap.ps.stats[STAT.WEAPONS] & (1 << num))) {
-		return;  // don't have the weapon
-	}
-
-	cg.weaponSelect = num;
-}
-
-/**
- * RegisterWeapon
- */
-function RegisterWeapon(gitem) {
-	var weaponNum = gitem.giTag;
-	if (weaponNum === 0) {
-		return;
-	}
-
-	var weaponInfo = cg.weaponInfo[weaponNum];
-	if (weaponInfo) {
-		return;
-	}
-
-	weaponInfo = cg.weaponInfo[weaponNum] = new WeaponInfo();
-
-	weaponInfo.weaponModel = imp.re_RegisterModel(gitem.models[0]);
-
-	// // calc midpoint for rotation
-	// trap_R_ModelBounds( weaponInfo.weaponModel, mins, maxs );
-	// for ( i = 0 ; i < 3 ; i++ ) {
-	// 	weaponInfo.weaponMidpoint[i] = mins[i] + 0.5 * ( maxs[i] - mins[i] );
-	// }
-
-	weaponInfo.weaponIcon = imp.ui_RegisterImage(gitem.icon);
-	weaponInfo.ammoIcon = imp.ui_RegisterImage(gitem.icon);
-
-	// for ( ammo = bg_itemlist + 1 ; ammo.classname ; ammo++ ) {
-	// 	if ( ammo.giType == IT_AMMO && ammo.giTag == weaponNum ) {
-	// 		break;
-	// 	}
-	// }
-	// if ( ammo.classname && ammo.world_model[0] ) {
-	// 	weaponInfo.ammoModel = trap_R_RegisterModel( ammo.world_model[0] );
-	// }
-
-	// strcpy( path, item.world_model[0] );
-	// COM_StripExtension(path, path, sizeof(path));
-	// strcat( path, "_flash.md3" );
-	// weaponInfo.flashModel = trap_R_RegisterModel( path );
-
-	// TODO Move to GameItemDesc and search for it from that array?
-	if (weaponNum === WP.GAUNTLET || weaponNum === WP.MACHINEGUN || weaponNum === WP.BFG) {
-		var path = gitem.models[0].replace('.md3', '_barrel.md3');
-		weaponInfo.barrelModel = imp.re_RegisterModel(path);
-	}
-
-	var path = gitem.models[0].replace('.md3', '_hand.md3');
-	weaponInfo.handsModel = imp.re_RegisterModel(path);
-
-	// if ( !weaponInfo.handsModel ) {
-	// 	weaponInfo.handsModel = trap_R_RegisterModel( "models/weapons2/shotgun/shotgun_hand.md3" );
-	// }
-
-	switch (weaponNum) {
-		case WP.GAUNTLET:
-	//		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
-	//		weaponInfo.firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun", qfalse );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/melee/fstatck');
-			break;
-
-		case WP.MACHINEGUN:
-			// MAKERGB( weaponInfo.flashDlightColor, 1, 1, 0 );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf1b');
-			weaponInfo.flashSound[1] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf2b');
-			weaponInfo.flashSound[2] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf3b');
-			weaponInfo.flashSound[3] = imp.snd_RegisterSound('sound/weapons/machinegun/machgf4b');
-			cgs.media.sfx_ric1 = imp.snd_RegisterSound('sound/weapons/machinegun/ric1');
-			cgs.media.sfx_ric2 = imp.snd_RegisterSound('sound/weapons/machinegun/ric2');
-			cgs.media.sfx_ric3 = imp.snd_RegisterSound('sound/weapons/machinegun/ric3');
-			// weaponInfo.ejectBrassFunc = CG_MachineGunEjectBrass;
-			cgs.media.bulletExplosionShader = imp.re_RegisterShader('bulletExplosion');
-			break;
-
-		case WP.LIGHTNING:
-	//		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
-			weaponInfo.readySound = imp.snd_RegisterSound('sound/weapons/melee/fsthum');
-			weaponInfo.firingSound = imp.snd_RegisterSound('sound/weapons/lightning/lg_hum');
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/lightning/lg_fire');
-	//		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
-	//		cgs.media.lightningExplosionModel = trap_R_RegisterModel( "models/weaphits/crackle.md3" );
-	//		cgs.media.sfx_lghit1 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit", qfalse );
-	//		cgs.media.sfx_lghit2 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit2", qfalse );
-	//		cgs.media.sfx_lghit3 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit3", qfalse );
-			break;
-
-	//	case WP.GRAPPLING_HOOK:
-	//		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
-	//		weaponInfo.missileModel = trap_R_RegisterModel( "models/ammo/rocket/rocket.md3" );
-	//		weaponInfo.missileTrailFunc = CG_GrappleTrail;
-	//		weaponInfo.missileDlight = 200;
-	//		MAKERGB( weaponInfo.missileDlightColor, 1, 0.75f, 0 );
-	//		weaponInfo.readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum", qfalse );
-	//		weaponInfo.firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun", qfalse );
-	//		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
-	//		break;
-
-		case WP.SHOTGUN:
-	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 1, 0 );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/shotgun/sshotf1b');
-	// 		weaponInfo.ejectBrassFunc = CG_ShotgunEjectBrass;
-			break;
-
-		case WP.ROCKET_LAUNCHER:
-			weaponInfo.missileModel = imp.re_RegisterModel('models/ammo/rocket/rocket.md3');
-			weaponInfo.missileSound = imp.snd_RegisterSound('sound/weapons/rocket/rockfly');
-			weaponInfo.missileTrailFunc = RocketTrail;
-	// 		weaponInfo.missileDlight = 200;
-			weaponInfo.trailTime = 2000;
-			weaponInfo.trailRadius = 64;
-	// 		MAKERGB( weaponInfo.missileDlightColor, 1, 0.75f, 0 );
-	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.75f, 0 );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/rocket/rocklf1a');
-			cgs.media.rocketExplosionShader = imp.re_RegisterShader('rocketExplosion');
-			cgs.media.rocketExplosionSfx = imp.snd_RegisterSound ('sound/weapons/rocket/rocklx1a');
-			break;
-
-		case WP.GRENADE_LAUNCHER:
-	// 		weaponInfo.missileModel = trap_R_RegisterModel( "models/ammo/grenade1.md3" );
-	// 		weaponInfo.missileTrailFunc = CG_GrenadeTrail;
-	// 		weaponInfo.trailTime = 700;
-	// 		weaponInfo.trailRadius = 32;
-	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.70f, 0 );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/grenade/grenlf1a');
-	// 		cgs.media.grenadeExplosionShader = trap_R_RegisterShader( "grenadeExplosion" );
-			break;
-
-		case WP.PLASMAGUN:
-	//		weaponInfo.missileModel = cgs.media.invulnerabilityPowerupModel;
-	// 		weaponInfo.missileTrailFunc = CG_PlasmaTrail;
-	// 		weaponInfo.missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly", qfalse );
-	// 		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/plasma/hyprbf1a');
-	// 		cgs.media.plasmaExplosionShader = trap_R_RegisterShader( "plasmaExplosion" );
-	// 		cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
-			break;
-
-		case WP.RAILGUN:
-			weaponInfo.readySound = imp.snd_RegisterSound('sound/weapons/railgun/rg_hum');
-	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.5f, 0 );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/railgun/railgf1a');
-	// 		cgs.media.railExplosionShader = trap_R_RegisterShader( "railExplosion" );
-	// 		cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
-	// 		cgs.media.railCoreShader = trap_R_RegisterShader( "railCore" );
-	// 		break;
-
-		case WP.BFG:
-			weaponInfo.readySound = imp.snd_RegisterSound('sound/weapons/bfg/bfg_hum');
-	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.7f, 1 );
-			weaponInfo.flashSound[0] = imp.snd_RegisterSound('sound/weapons/bfg/bfg_fire');
-	// 		cgs.media.bfgExplosionShader = trap_R_RegisterShader( "bfgExplosion" );
-	// 		weaponInfo.missileModel = trap_R_RegisterModel( "models/weaphits/bfg.md3" );
-	// 		weaponInfo.missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly", qfalse );
-			break;
-
-		 default:
-			// MAKERGB( weaponInfo.flashDlightColor, 1, 1, 1 );
-			// weaponInfo.flashSound[0] = trap_S_RegisterSound( "sound/weapons/rocket/rocklf1a", qfalse );
-			break;
-	}
-}
-
-/**
- * AddPlayerWeapon
- *
- * Used for both the view weapon (ps is valid) and the world modelother character models (ps is NULL)
- * The main player will have this called for BOTH cases, so effects like light and
- * sound should only be done on the world model case.
- */
-function AddPlayerWeapon(parent, ps, cent/*, team*/) {
-	var weaponNum = cent.currentState.weapon;
-	var weapon = cg.weaponInfo[weaponNum];
-
-	// TODO remove this once we call RegisterWeapon
-	if (!weapon) {
-		return;
-	}
-
-	// add the weapon
-	var gun = new re.RefEntity();
-	vec3.set(parent.lightingOrigin, gun.lightingOrigin);
-	// gun.shadowPlane = parent.shadowPlane;
-	gun.renderfx = parent.renderfx;
-
-	// set custom shading for railgun refire rate
-	// if( weaponNum == WP_RAILGUN ) {
-	// 	clientInfo_t *ci = &cgs.clientinfo[cent.currentState.clientNum];
-	// 	if( cent.pe.railFireTime + 1500 > cg.time ) {
-	// 		int scale = 255 * ( cg.time - cent.pe.railFireTime ) / 1500;
-	// 		gun.shaderRGBA[0] = ( ci.c1RGBA[0] * scale ) >> 8;
-	// 		gun.shaderRGBA[1] = ( ci.c1RGBA[1] * scale ) >> 8;
-	// 		gun.shaderRGBA[2] = ( ci.c1RGBA[2] * scale ) >> 8;
-	// 		gun.shaderRGBA[3] = 255;
-	// 	}
-	// 	else {
-	// 		Byte4Copy( ci.c1RGBA, gun.shaderRGBA );
-	// 	}
-	// }
-
-	gun.hModel = weapon.weaponModel;
-	if (!gun.hModel) {
-		return;
-	}
-
-	if ( !ps ) {
-		// add weapon ready sound
-		cent.pe.lightningFiring = false;
-		if ( ( cent.currentState.eFlags & EF.FIRING ) && weapon.firingSound ) {
-			// lightning gun and guantlet make a different sound when fire is held down
-//			trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, vec3_origin, weapon.firingSound );
-			cent.pe.lightningFiring = true;
-		} else if ( weapon.readySound ) {
-//			trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, vec3_origin, weapon.readySound );
-		}
-	}
-	var lerped = new sh.Orientation();
-	imp.re_LerpTag(lerped, parent.hModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, 'tag_weapon');
-	vec3.set(parent.origin, gun.origin);
-	vec3.add(gun.origin, vec3.scale(parent.axis[0], lerped.origin[0], [0, 0, 0]));
-
-	// // Make weapon appear left-handed for 2 and centered for 3
-	// if(ps && cg_drawGun.integer == 2)
-	// 	VectorMA(gun.origin, -lerped.origin[1], parent.axis[1], gun.origin);
-	// else if(!ps || cg_drawGun.integer != 3)
-		vec3.add(gun.origin, vec3.scale(parent.axis[1], lerped.origin[1], [0, 0, 0]));
-
-	vec3.add(gun.origin, vec3.scale(parent.axis[2], lerped.origin[2], [0, 0, 0]));
-	qm.AxisMultiply(lerped.axis, parent.axis, gun.axis);
-	gun.backlerp = parent.backlerp;
-
-	AddWeaponWithPowerups(gun, cent.currentState.powerups);
-
-	// Add the spinning barrel
-	if (weapon.barrelModel) {
-		var barrel = new re.RefEntity();
-
-		vec3.set(parent.lightingOrigin, barrel.lightingOrigin);
-		// barrel.shadowPlane = parent.shadowPlane;
-		barrel.renderfx = parent.renderfx;
-
-		barrel.hModel = weapon.barrelModel;
-		var angles = [0, 0, 0];
-		angles[qm.YAW] = 0;
-		angles[qm.PITCH] = 0;
-		angles[qm.ROLL] = MachinegunSpinAngle(cent);
-		qm.AnglesToAxis(angles, barrel.axis);
-
-		PositionRotatedEntityOnTag(barrel, gun, weapon.weaponModel, 'tag_barrel');
-		AddWeaponWithPowerups(barrel, cent.currentState.powerups);
-	}
-
-	// // make sure we aren't looking at cg.predictedPlayerEntity for LG
-	// nonPredictedCent = &cg_entities[cent.currentState.clientNum];
-
-	// // add the flash
-	// if ( ( weaponNum == WP_LIGHTNING || weaponNum == WP_GAUNTLET || weaponNum == WP_GRAPPLING_HOOK )
-	// 	&& ( nonPredictedCent.currentState.eFlags & EF_FIRING ) ) 
-	// {
-	// 	// continuous flash
-	// } else {
-	// 	// impulse flash
-	// 	if ( cg.time - cent.muzzleFlashTime > MUZZLE_FLASH_TIME ) {
-	// 		return;
-	// 	}
-	// }
-
-	// memset( &flash, 0, sizeof( flash ) );
-	// VectorCopy( parent.lightingOrigin, flash.lightingOrigin );
-	// flash.shadowPlane = parent.shadowPlane;
-	// flash.renderfx = parent.renderfx;
-
-	// flash.hModel = weapon.flashModel;
-	// if (!flash.hModel) {
-	// 	return;
-	// }
-	// angles[qm.YAW] = 0;
-	// angles[qm.PITCH] = 0;
-	// angles[qm.ROLL] = crandom() * 10;
-	// qm.AnglesToAxis( angles, flash.axis );
-
-	// // colorize the railgun blast
-	// if ( weaponNum == WP_RAILGUN ) {
-	// 	clientInfo_t	*ci;
-
-	// 	ci = &cgs.clientinfo[ cent.currentState.clientNum ];
-	// 	flash.shaderRGBA[0] = 255 * ci.color1[0];
-	// 	flash.shaderRGBA[1] = 255 * ci.color1[1];
-	// 	flash.shaderRGBA[2] = 255 * ci.color1[2];
-	// }
-
-	// CG_PositionRotatedEntityOnTag( &flash, &gun, weapon.weaponModel, "tag_flash");
-	// trap_R_AddRefEntityToScene( &flash );
-
-	// if ( ps || cg.renderingThirdPerson ||
-	// 	cent.currentState.number != cg.predictedPlayerState.clientNum ) {
-	// 	// add lightning bolt
-	// 	CG_LightningBolt( nonPredictedCent, flash.origin );
-
-	// 	if ( weapon.flashDlightColor[0] || weapon.flashDlightColor[1] || weapon.flashDlightColor[2] ) {
-	// 		trap_R_AddLightToScene( flash.origin, 300 + (rand()&31), weapon.flashDlightColor[0],
-	// 			weapon.flashDlightColor[1], weapon.flashDlightColor[2] );
-	// 	}
-	// }
-}
-
-/**********************************************************
- *
- * View weapon
- *
- **********************************************************/
-
-/**
- * AddViewWeapon
- * 
- * Add the weapon, and flash for the player's view
- */
-function AddViewWeapon(ps) {
-	// if (ps.persistant[PERS_TEAM] == TEAM_SPECTATOR) {
-	// 	return;
-	// }
-
-	// if (ps.pm_type == PM_INTERMISSION) {
-	// 	return;
-	// }
-
-	// No gun if in third person view or a camera is active.
-	if (cg.renderingThirdPerson/* || cg.cameraMode*/) {
-		return;
-	}
-
-	// Allow the gun to be completely removed.
-	// if (!cg_drawGun()) {
-	// 	vec3_t		origin;
-
-	// 	if (cg.predictedPlayerState.eFlags & EF.FIRING) {
-	// 		// special hack for lightning gun...
-	// 		VectorCopy( cg.refdef.vieworg, origin );
-	// 		VectorMA( origin, -8, cg.refdef.viewaxis[2], origin );
-	// 		CG_LightningBolt( &cg_entities[ps.clientNum], origin );
-	// 	}
-	// 	return;
-	// }
-
-	// // Don't draw if testing a gun model.
-	// if (cg.testGun) {
-	// 	return;
-	// }
-
-	var weaponInfo = cg.weaponInfo[ps.weapon];
-	var hand = new re.RefEntity();
-
-	// Set up gun position.
-	var angles = [0, 0, 0];
-	CalculateWeaponPosition(hand.origin, angles);
-
-	// Drop gun lower at higher fov.
-	var fovOffset = 0;
-	if (cg_fov.integer > 90) {
-		fovOffset = -0.2 * (cg_fov.integer - 90);
-	}
-	vec3.add(hand.origin, vec3.scale(cg.refdef.viewaxis[2], fovOffset, [0, 0, 0]));
-
-	qm.AnglesToAxis(angles, hand.axis);
-
-	// Map torso animations to weapon animations.
-	// if (cg_gun_frame.integer) {
-	// 	// development tool
-	// 	hand.frame = hand.oldframe = cg_gun_frame.integer;
-	// 	hand.backlerp = 0;
-	// } else {
-		// Get clientinfo for animation map.
-		var cent = cg.predictedPlayerEntity;
-		var ci = cgs.clientinfo[cent.currentState.clientNum];
-		hand.frame = MapTorsoToWeaponFrame(ci, cent.pe.torso.frame);
-		hand.oldFrame = MapTorsoToWeaponFrame(ci, cent.pe.torso.oldFrame);
-		hand.backlerp = cent.pe.torso.backlerp;
-	// }
-
-	hand.hModel = weaponInfo.handsModel;
-	hand.renderfx = RF.DEPTHHACK | RF.FIRST_PERSON | RF.MINLIGHT;
-
-	// Add everything onto the hand.
-	AddPlayerWeapon(hand, ps, cg.predictedPlayerEntity/*, ps.persistant[PERS_TEAM]*/);
-}
-
-/**
- * CalculateWeaponPosition
- */
-function CalculateWeaponPosition(origin, angles) {
-	var scale, fracsin;	
-
-	vec3.set(cg.refdef.vieworg, origin);
-	vec3.set(cg.refdefViewAngles, angles);
-
-	// On odd legs, invert some angles.
-	if (cg.bobCycle & 1) {
-		scale = -cg.xyspeed;
-	} else {
-		scale = cg.xyspeed;
-	}
-
-	// Gun angles from bobbing.
-	angles[qm.ROLL] += scale * cg.bobFracSin * 0.005;
-	angles[qm.YAW] += scale * cg.bobFracSin * 0.01;
-	angles[qm.PITCH] += cg.xyspeed * cg.bobFracSin * 0.005;
-
-	// Drop the weapon when landing
-	// delta = cg.time - cg.landTime;
-	// if ( delta < LAND_DEFLECT_TIME ) {
-	// 	origin[2] += cg.landChange*0.25 * delta / LAND_DEFLECT_TIME;
-	// } else if ( delta < LAND_DEFLECT_TIME + LAND_RETURN_TIME ) {
-	// 	origin[2] += cg.landChange*0.25 * 
-	// 		(LAND_DEFLECT_TIME + LAND_RETURN_TIME - delta) / LAND_RETURN_TIME;
-	// }
-
-	// Idle drift.
-	scale = cg.xyspeed + 40;
-	fracsin = Math.sin(cg.time * 0.001);
-	angles[qm.ROLL] += scale * fracsin * 0.01;
-	angles[qm.YAW] += scale * fracsin * 0.01;
-	angles[qm.PITCH] += scale * fracsin * 0.01;
-}
-
-/**
- * MapTorsoToWeaponFrame
- */
-function MapTorsoToWeaponFrame(ci, frame) {
-	// Change weapon.
-	if (frame >= ci.animations[ANIM.TORSO_DROP].firstFrame &&
-		frame < ci.animations[ANIM.TORSO_DROP].firstFrame + 9) {
-		return frame - ci.animations[ANIM.TORSO_DROP].firstFrame + 6;
-	}
-
-	// Stand attack.
-	if (frame >= ci.animations[ANIM.TORSO_ATTACK].firstFrame &&
-		frame < ci.animations[ANIM.TORSO_ATTACK].firstFrame + 6) {
-		return 1 + frame - ci.animations[ANIM.TORSO_ATTACK].firstFrame;
-	}
-
-	// Stand attack 2.
-	if (frame >= ci.animations[ANIM.TORSO_ATTACK2].firstFrame &&
-		frame < ci.animations[ANIM.TORSO_ATTACK2].firstFrame + 6) {
-		return 1 + frame - ci.animations[ANIM.TORSO_ATTACK2].firstFrame;
-	}
-	
-	return 0;
-}
-
-/**
- * MachinegunSpinAngle
- */
-var SPIN_SPEED = 0.9;
-var COAST_TIME = 1000;
-
-function MachinegunSpinAngle(cent) {
-	var delta = cg.time - cent.pe.barrelTime;
-	var angle;
-
-	if (cent.pe.barrelSpinning) {
-		angle = cent.pe.barrelAngle + delta * SPIN_SPEED;
-	} else {
-		if (delta > COAST_TIME) {
-			delta = COAST_TIME;
-		}
-
-		var speed = 0.5 * (SPIN_SPEED + (COAST_TIME - delta) / COAST_TIME);
-		angle = cent.pe.barrelAngle + delta * speed;
-	}
-
-	if (cent.pe.barrelSpinning == !(cent.currentState.eFlags & EF.FIRING)) {
-		cent.pe.barrelTime = cg.time;
-		cent.pe.barrelAngle = qm.AngleNormalize360(angle);
-		cent.pe.barrelSpinning = !!(cent.currentState.eFlags & EF.FIRING);
-	}
-
-	return angle;
-}
-
-/**
- * AddWeaponWithPowerups
- */
-function AddWeaponWithPowerups(gun, powerups) {
-	// add powerup effects
-	// if (powerups & ( 1 << PW_INVIS ) ) {
-	// 	gun.customShader = cgs.media.invisShader;
-	// 	trap_R_AddRefEntityToScene( gun );
-	// } else {
-		imp.re_AddRefEntityToScene(gun);
-
-	// 	if ( powerups & ( 1 << PW_BATTLESUIT ) ) {
-	// 		gun.customShader = cgs.media.battleWeaponShader;
-	// 		trap_R_AddRefEntityToScene( gun );
-	// 	}
-	// 	if ( powerups & ( 1 << PW_QUAD ) ) {
-	// 		gun.customShader = cgs.media.quadWeaponShader;
-	// 		trap_R_AddRefEntityToScene( gun );
-	// 	}
-	// }
-}
-
-/**
- * OutOfAmmoChange
- *
- * The current weapon has just run out of ammo
- */
-function OutOfAmmoChange() {	
-	cg.weaponSelectTime = cg.time;
-	
-	for (var i = MAX_WEAPONS - 1; i > 0; i--) {
-		if (WeaponSelectable(i)) {
-			cg.weaponSelect = i;
-			break;
-		}
-	}
-}
-
-/**********************************************************
- *
- * Weapon events
- *
- **********************************************************/
-
-/**
- * FireWeapon
- *
- * Caused by an EV_FIRE_WEAPON event.
- */
-function FireWeapon(cent) {
-	var es = cent.currentState;
-	if (es.weapon === WP.NONE) {
-		return;
-	}
-	if (es.weapon >= WP.NUM_WEAPONS) {
-		error('FireWeapon: es.weapon >= WP.NUM_WEAPONS');
-		return;
-	}
-
-	var weaponInfo = cg.weaponInfo[es.weapon];
-
-	// Mark the entity as muzzle flashing, so when it is added it will
-	// append the flash to the weapon model.
-	// cent.muzzleFlashTime = cg.time;
-
-	// Lightning gun only does this this on initial press
-	if (es.weapon === WP.LIGHTNING) {
-		if (cent.pe.lightningFiring) {
-			return;
-		}
-	}
-	
-	// if (es.weapon === WP.RAILGUN ) {
-	// 	cent.pe.railFireTime = cg.time;
-	// }
-
-	// Play quad sound if needed.
-	// if (cent.currentState.powerups & (1 << PW_QUAD)) {
-	// 	trap_S_StartSound (NULL, cent.currentState.number, CHAN_ITEM, cgs.media.quadSound );
-	// }
-	
-	// Play a sound
-	for (var c = 0; c < 4; c++) {
-		if (!weaponInfo.flashSound[c]) {
-			break;
-		}
-	}
-	if (c > 0) {
-		c = Math.floor(Math.random() * c);
-		if (weaponInfo.flashSound[c]) {
-			imp.snd_StartSound(null, es.number, weaponInfo.flashSound[c]);
-		}
-	}
-	
-	// // Do brass ejection.
-	// if (weaponInfo.ejectBrassFunc && cg_brassTime.integer > 0) {
-	// 	weaponInfo.ejectBrassFunc(cent);
-	// }
-}
-
-/**
- * MissileHitWall
- * 
- * Caused by an EV_MISSILE_MISS event, or directly by local bullet tracing.
- */
-function MissileHitWall(weapon, clientNum, origin, dir, soundType) {
-	var mod = null;
-	var mark = 0;
-	var shader = 0;
-	var sfx = 0;
-	var radius = 32;
-	var light = 0;
-	var lightColor = [0, 0, 0];
-	var isSprite = false;
-	var duration = 600;
-
-	switch (weapon) {
-		// default:
-		// case WP_LIGHTNING:
-		// 	// no explosion at LG impact, it is added with the beam
-		// 	r = rand() & 3;
-		// 	if ( r < 2 ) {
-		// 		sfx = cgs.media.sfx_lghit2;
-		// 	} else if ( r == 2 ) {
-		// 		sfx = cgs.media.sfx_lghit1;
-		// 	} else {
-		// 		sfx = cgs.media.sfx_lghit3;
-		// 	}
-		// 	mark = cgs.media.holeMarkShader;
-		// 	radius = 12;
-		// 	break;
-		// case WP_GRENADE_LAUNCHER:
-		// 	mod = cgs.media.dishFlashModel;
-		// 	shader = cgs.media.grenadeExplosionShader;
-		// 	sfx = cgs.media.sfx_rockexp;
-		// 	mark = cgs.media.burnMarkShader;
-		// 	radius = 64;
-		// 	light = 300;
-		// 	isSprite = qtrue;
-		// 	break;
-		case WP.ROCKET_LAUNCHER:
-			mod = cgs.media.dishFlashModel;
-			shader = cgs.media.rocketExplosionShader;
-			sfx = cgs.media.rocketExplosionSfx;
-			// mark = cgs.media.burnMarkShader;
-			radius = 64;
-			light = 300;
-			isSprite = true;
-			duration = 1000;
-			// lightColor[0] = 1;
-			// lightColor[1] = 0.75;
-			// lightColor[2] = 0.0;
-			break;
-		// case WP_RAILGUN:
-		// 	mod = cgs.media.ringFlashModel;
-		// 	shader = cgs.media.railExplosionShader;
-		// 	//sfx = cgs.media.sfx_railg;
-		// 	sfx = cgs.media.sfx_plasmaexp;
-		// 	mark = cgs.media.energyMarkShader;
-		// 	radius = 24;
-		// 	break;
-		// case WP_PLASMAGUN:
-		// 	mod = cgs.media.ringFlashModel;
-		// 	shader = cgs.media.plasmaExplosionShader;
-		// 	sfx = cgs.media.sfx_plasmaexp;
-		// 	mark = cgs.media.energyMarkShader;
-		// 	radius = 16;
-		// 	break;
-		// case WP_BFG:
-		// 	mod = cgs.media.dishFlashModel;
-		// 	shader = cgs.media.bfgExplosionShader;
-		// 	sfx = cgs.media.sfx_rockexp;
-		// 	mark = cgs.media.burnMarkShader;
-		// 	radius = 32;
-		// 	isSprite = qtrue;
-		// 	break;
-		case WP.SHOTGUN:
-			mod = cgs.media.bulletFlashModel;
-			shader = cgs.media.bulletExplosionShader;
-		// 	mark = cgs.media.bulletMarkShader;
-			sfx = 0;
-			radius = 4;
-			break;
-		case WP.MACHINEGUN:
-			mod = cgs.media.bulletFlashModel;
-			shader = cgs.media.bulletExplosionShader;
-			// mark = cgs.media.bulletMarkShader;
-			r = Math.floor(Math.random() * 3);
-			if (r === 0) {
-				sfx = cgs.media.sfx_ric1;
-			} else if (r == 1) {
-				sfx = cgs.media.sfx_ric2;
-			} else {
-				sfx = cgs.media.sfx_ric3;
-			}
-			// radius = 8;
-			break;
-	}
-
-	if (sfx) {
-		imp.snd_StartSound(origin, -1/*ENTITYNUM_WORLD*/, sfx);
-	}
-
-	//
-	// Create the explosion.
-	//
-	if (mod) {
-		var le = MakeExplosion(origin, dir, mod, shader, duration, isSprite);
-		// le.light = light;
-		// vec3.set(lightColor, le.lightColor);
-		// if ( weapon == WP_RAILGUN ) {
-		// 	// colorize with client color
-		// 	VectorCopy( cgs.clientinfo[clientNum].color1, le.color );
-		// 	le.refEntity.shaderRGBA[0] = le.color[0] * 0xff;
-		// 	le.refEntity.shaderRGBA[1] = le.color[1] * 0xff;
-		// 	le.refEntity.shaderRGBA[2] = le.color[2] * 0xff;
-		// 	le.refEntity.shaderRGBA[3] = 0xff;
-		// }
-	}
-
-	//
-	// Create the mpact mark.
-	//
-	// alphaFade = (mark == cgs.media.energyMarkShader);	// plasma fades alpha, all others fade color
-	// if ( weapon == WP_RAILGUN ) {
-	// 	float	*color;
-
-	// 	// colorize with client color
-	// 	color = cgs.clientinfo[clientNum].color1;
-	// 	CG_ImpactMark( mark, origin, dir, random()*360, color[0],color[1], color[2],1, alphaFade, radius, qfalse );
-	// } else {
-	// 	CG_ImpactMark( mark, origin, dir, random()*360, 1,1,1,1, alphaFade, radius, qfalse );
-	// }
-}
-
-/**
- * MissileHitPlayer
- */
-function MissileHitPlayer(weapon, origin, dir, entityNum) {
-	Bleed(origin, entityNum);
-
-	// Some weapons will make an explosion with the blood, while
-	// others will just make the blood.
-	switch (weapon) {
-		case WP.GRENADE_LAUNCHER:
-		case WP.ROCKET_LAUNCHER:
-		case WP.PLASMAGUN:
-		case WP.BFG:
-			MissileHitWall(weapon, 0, origin, dir, IMPACTSOUND.FLESH);
-			break;
-		default:
-			break;
-	}
-}
-
-/**********************************************************
- *
- * Bullets
- *
- **********************************************************/
-
-/**
- * BulletHit
- *
- * Renders bullet effects.
- */
-function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
-	// // If the shooter is currently valid, calc a source point and possibly
-	// // do trail effects.
-	// if ( sourceEntityNum >= 0 && cg_tracerChance.value > 0 ) {
-	// 	if ( CG_CalcMuzzlePoint( sourceEntityNum, start ) ) {
-	// 		sourceContentType = CG_PointContents( start, 0 );
-	// 		destContentType = CG_PointContents( end, 0 );
-	
-	// 		// do a complete bubble trail if necessary
-	// 		if ( ( sourceContentType == destContentType ) && ( sourceContentType & CONTENTS_WATER ) ) {
-	// 			CG_BubbleTrail( start, end, 32 );
-	// 		}
-	// 		// bubble trail from water into air
-	// 		else if ( ( sourceContentType & CONTENTS_WATER ) ) {
-	// 			trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
-	// 			CG_BubbleTrail( start, trace.endPos, 32 );
-	// 		}
-	// 		// bubble trail from air into water
-	// 		else if ( ( destContentType & CONTENTS_WATER ) ) {
-	// 			trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
-	// 			CG_BubbleTrail( trace.endPos, end, 32 );
-	// 		}
-	
-	// 		// draw a tracer
-	// 		if ( random() < cg_tracerChance.value ) {
-	// 			CG_Tracer( start, end );
-	// 		}
-	// 	}
-	// }
-	
-	// Impact splash and mark.
-	if (flesh) {
-		Bleed(end, fleshEntityNum);
-	} else {
-		MissileHitWall(WP.MACHINEGUN, 0, end, normal, IMPACTSOUND.DEFAULT);
-	}
-}
-
-/*
-============================================================================
-
-SHOTGUN TRACING
-
-============================================================================
-*/
-
-/**
- * ShotgunPellet
- */
-function ShotgunPellet(start, end, skipNum) {
-	var tr;
-	var sourceContentType, destContentType;
-	
-	
-// 	CG_Trace( tr, start, NULL, NULL, end, skipNum, MASK_SHOT );
-// 
-// 	sourceContentType = CG_PointContents( start, 0 );
-// 	destContentType = CG_PointContents( tr.endpos, 0 );
-// 
-// 	// FIXME: should probably move this cruft into CG_BubbleTrail
-// 	if ( sourceContentType == destContentType ) {
-// 		if ( sourceContentType & CONTENTS_WATER ) {
-// 			CG_BubbleTrail( start, tr.endpos, 32 );
-// 		}
-// 	} else if ( sourceContentType & CONTENTS_WATER ) {
-// 		trace_t trace;
-// 		
-// 		trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
-// 		CG_BubbleTrail( start, trace.endpos, 32 );
-// 	} else if ( destContentType & CONTENTS_WATER ) {
-// 		trace_t trace;
-// 		
-// 		trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
-// 		CG_BubbleTrail( tr.endpos, trace.endpos, 32 );
-// 	}
-// 
-// 	if (  tr.surfaceFlags & SURF_NOIMPACT ) {
-// 		return;
-// 	}
-// 
-// 	if ( cg_entities[tr.entityNum].currentState.eType == ET_PLAYER ) {
-// 		MissileHitPlayer( WP.SHOTGUN, tr.endpos, tr.plane.normal, tr.entityNum );
-// 	} else {
-// 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
-// 			// SURF_NOIMPACT will not make a flame puff or a mark
-// 			return;
-// 		}
-// 		if ( tr.surfaceFlags & SURF_METALSTEPS ) {
-// 			MissileHitWall( WP.SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND.METAL );
-// 		} else {
-// 			MissileHitWall(WP.SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND.DEFAULT);
-// 		}
-// 	}
-}
-
-/**
- * ShotgunPattern
- * 
- * Perform the same traces the server did to locate the 
- * hit splashes
- */
-function ShotgunPattern(origin, origin2, seed, otherEntNum) {
-	var i;
-	var r, u;
-	var end     = [0, 0, 0];
-	var forward = [0, 0, 0],
-		right   = [0, 0, 0],
-		up      = [0, 0, 0];
-	
-	// derive the right and up vectors from the forward vector, because
-	// the client won't have any other information
-	vec3.normalize(origin2, forward);
-	qm.PerpendicularVector(right, forward);
-	vec3.cross(forward, right, up);
-	
-	// generate the "random" spread pattern
-	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
-		r = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
-		u = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
-		vec3.add(origin, vec3.scale(forward, 8192 * 16, [0, 0, 0]), end);
-		vec3.add(end, vec3.scale(right, r, [0, 0, 0]));
-		vec3.add(end, vec3.scale(up, u, [0, 0, 0]));
-		
-		ShotgunPellet(origin, end, otherEntNum);
-	}
-}
-
-/**
- * ShotgunFire
- */
-function ShotgunFire(es) {
-	var v = [0, 0, 0];
-	var contents;
-	
-	vec3.subtract( es.origin2, es.pos.trBase, v );
-	vec3.normalize( v );
-	vec3.scale( v, 32, v );
-	vec3.add( es.pos.trBase, v, v );
-	
-	var up = [0, 0, 0];
-// 
-// 	contents = CG_PointContents( es.pos.trBase, 0 );
-// 	if ( !( contents & CONTENTS_WATER ) ) {
-		vec3.set( up, [0, 0, 8] );
-// 		SmokePuff( v, up, 32, 1, 1, 1, 0.33f, 900, cg.time, 0, LEF_PUFF_DONT_SCALE, cgs.media.shotgunSmokePuffShader );
-// 	}
-// 	
-	ShotgunPattern(es.pos.trBase, es.origin2, es.eventParm, es.otherEntityNum);
-}
-
-/**********************************************************
- *
- * Weapon special fx
- *
- **********************************************************/
-function RocketTrail(cent, weaponInfo) {
-	// if (cg_noProjectileTrail.integer) {
-	// 	return;
-	// }
-
-	var up = [0, 0, 0];
-	var origin = [0, 0, 0];
-	var lastPos = [0, 0, 0];
-	var step = 50;
-	var es = cent.currentState;
-	var startTime = cent.trailTime;
-
-	cent.trailTime = cg.time;
-
-	bg.EvaluateTrajectory(es.pos, cg.time, origin);
-	//var contents = CG_PointContents( origin, -1 );
-
-	// If object (e.g. grenade) is stationary, don't toss up smoke.
-	if (es.pos.trType === TR.STATIONARY) {
-		return;
-	}
-
-	bg.EvaluateTrajectory(es.pos, cent.trailTime, lastPos);
-	//var lastContents = CG_PointContents( lastPos, -1 );
-
-	// if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
-	// 	if ( contents & lastContents & CONTENTS_WATER ) {
-	// 		CG_BubbleTrail( lastPos, origin, 8 );
-	// 	}
-	// 	return;
-	// }
-
-	var t = step * Math.floor((startTime + step) / step);
-	for (; t <= cent.trailTime; t += step) {
-		bg.EvaluateTrajectory(es.pos, t, lastPos);
-
-		SmokePuff(lastPos, up, 
-		          weaponInfo.trailRadius, 
-		          1, 1, 1, 0.33,
-		          weaponInfo.trailTime, 
-		          t,
-		          0,
-		          0, 
-		          cgs.media.smokePuffShader);
-	}
-
-}
-
-		return {
-			Init: Init,
-			Shutdown: Shutdown,
-			Frame: Frame
-		};
-	}
-
-	return {
 		CreateInstance: function (imp) {
-			return new CGame(imp);
+			return new Game(imp);
 		}
 	};
 });
-
 
 /*global vec3: true, mat4: true */
 
 define('clipmap/cm',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
-function (_, glmatrix, ByteBuffer, sh, qm) {
+function (_, glmatrix, ByteBuffer, sh, QMath) {
 	function ClipMap(imp) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+		var sys = imp.sys;
 
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
 
 		var MAX_SUBMODELS        = 256;
 var BOX_MODEL_HANDLE     = 255;
@@ -18906,7 +13080,7 @@ var TraceResults = function () {
 	this.startSolid = false;                               // if true, the initial point was in a solid area
 	this.fraction   = 1.0;                                 // time completed, 1.0 = didn't hit anything
 	this.endPos     = [0, 0, 0];                           // final position
-	this.plane      = new qm.Plane();                      // surface normal at impact, transformed to world space
+	this.plane      = new QMath.Plane();                      // surface normal at impact, transformed to world space
 };
 
 TraceResults.prototype.clone = function (to) {
@@ -18996,7 +13170,7 @@ function LoadMap(mapName, callback) {
 
 	cm = new ClipMapLocals();
 
-	imp.sys_ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
+	sys.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
 		if (err) throw err;
 		
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
@@ -19117,12 +13291,12 @@ function LoadPlanes(buffer, planeLump) {
 	var planes = cm.planes = new Array(numPlanes);
 
 	for (var i = 0; i < numPlanes; i++) {
-		var plane = planes[i] = new qm.Plane();
+		var plane = planes[i] = new QMath.Plane();
 
 		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
 		plane.dist = bb.readFloat();
-		plane.signbits = qm.GetPlaneSignbits(plane.normal);
-		plane.type = qm.PlaneTypeForNormal(plane.normal);
+		plane.signbits = QMath.GetPlaneSignbits(plane.normal);
+		plane.type = QMath.PlaneTypeForNormal(plane.normal);
 	}
 }
 
@@ -19356,7 +13530,7 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
 		c = width * height;
 
 		if (c > MAX_PATCH_VERTS) {
-			com.error(sh.Err.DROP, 'ParseMesh: MAX_PATCH_VERTS');
+			com.error(ERR.DROP, 'ParseMesh: MAX_PATCH_VERTS');
 		}
 
 		for (var j = 0; j < c ; j++) {
@@ -19404,7 +13578,7 @@ function InitBoxHull() {
 
 	box_planes = new Array(BOX_PLANES);
 	for (var i = 0; i < BOX_PLANES; i++) {
-		var plane = box_planes[i] = new qm.Plane();
+		var plane = box_planes[i] = new QMath.Plane();
 		cm.planes.push(plane);
 	}
 
@@ -19427,7 +13601,7 @@ function InitBoxHull() {
 		p.type = 3 + (i >> 1);
 		p.normal[0] = p.normal[1] = p.normal[2] = 0;
 		p.normal[i >> 1] = -1;
-		p.signbits = qm.GetPlaneSignbits(p.normal);
+		p.signbits = QMath.GetPlaneSignbits(p.normal);
 
 		cm.brushSides.push(s);
 	}
@@ -19438,7 +13612,7 @@ function InitBoxHull() {
  */
 function InlineModel(num) {
 	if (num < 0 || num >= cm.models.length) {
-		com.error(sh.Err.DROP, 'GetInlineModel: bad number');
+		com.error(ERR.DROP, 'GetInlineModel: bad number');
 	}
 
 	return num;
@@ -19492,7 +13666,7 @@ function ModelBounds(model, mins, maxs) {
  */
 function ClipHandleToModel(handle) {
 	if (handle < 0) {
-		com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + handle);
+		com.error(ERR.DROP, 'ClipHandleToModel: bad handle ' + handle);
 	}
 	if (handle < cm.models.length) {
 		return cm.models[handle];
@@ -19501,7 +13675,7 @@ function ClipHandleToModel(handle) {
 		return box_model;
 	}
 	
-	com.error(sh.Err.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
+	com.error(ERR.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
 }
 		// int	c_totalPatchBlocks;
 // int	c_totalPatchSurfaces;
@@ -19578,15 +13752,15 @@ function PlaneFromPoints(plane, a, b, c) {
  */
 function GeneratePatchCollide(width, height, points) {
 	if (width <= 2 || height <= 2 || !points) {
-		com.error(sh.Err.DROP, 'GeneratePatchFacets: bad parameters');
+		com.error(ERR.DROP, 'GeneratePatchFacets: bad parameters');
 	}
 
 	if (!(width & 1) || !(height & 1)) {
-		com.error(sh.Err.DROP, 'GeneratePatchFacets: even sizes are invalid for quadratic meshes');
+		com.error(ERR.DROP, 'GeneratePatchFacets: even sizes are invalid for quadratic meshes');
 	}
 
 	if (width > MAX_GRID_SIZE || height > MAX_GRID_SIZE) {
-		com.error(sh.Err.DROP, 'GeneratePatchFacets: source is > MAX_GRID_SIZE');
+		com.error(ERR.DROP, 'GeneratePatchFacets: source is > MAX_GRID_SIZE');
 	}
 
 	// Build a grid.
@@ -19617,11 +13791,11 @@ function GeneratePatchCollide(width, height, points) {
 	// collided against.
 	var pc = new pcollide_t();
 
-	qm.ClearBounds(pc.bounds[0], pc.bounds[1]);
+	QMath.ClearBounds(pc.bounds[0], pc.bounds[1]);
 
 	for (var i = 0; i < grid.width; i++) {
 		for (var j = 0; j < grid.height; j++) {
-			qm.AddPointToBounds(grid.points[i][j], pc.bounds[0], pc.bounds[1]);
+			QMath.AddPointToBounds(grid.points[i][j], pc.bounds[0], pc.bounds[1]);
 		}
 	}
 
@@ -19978,7 +14152,7 @@ function PatchCollideFromGrid(grid, pc) {
 			}
 
 			if (pc.facets.length >= MAX_FACETS) {
-				com.error(sh.Err.DROP, 'MAX_FACETS');
+				com.error(ERR.DROP, 'MAX_FACETS');
 			}
 
 			var facet = new pfacet_t();
@@ -20024,7 +14198,7 @@ function PatchCollideFromGrid(grid, pc) {
 				}
 
 				if (pc.facets.length >= MAX_FACETS) {
-					com.error(sh.Err.DROP, 'MAX_FACETS');
+					com.error(ERR.DROP, 'MAX_FACETS');
 				}
 
 				facet = facet = new pfacet_t();
@@ -20092,7 +14266,7 @@ function FindPlane(pc, p1, p2, p3) {
 
 	// Add a new plane.
 	if (pc.planes.length >= MAX_PATCH_PLANES) {
-		com.error(sh.Err.DROP, 'MAX_PATCH_PLANES');
+		com.error(ERR.DROP, 'MAX_PATCH_PLANES');
 	}
 
 	// TODO Convert to using Plane struct?
@@ -20100,7 +14274,7 @@ function FindPlane(pc, p1, p2, p3) {
 
 	var pp = new pplane_t();
 	Vector4Copy(plane, pp.plane);
-	pp.signbits = qm.GetPlaneSignbits(plane);
+	pp.signbits = QMath.GetPlaneSignbits(plane);
 	pc.planes.push(pp);
 
 	return index;
@@ -20165,7 +14339,7 @@ function EdgePlaneNum(pc, grid, gridPlanes, i, j, k) {
 			return FindPlane(pc, p1, p2, up);
 	}
 
-	com.error(sh.Err.DROP, 'EdgePlaneNum: bad k');
+	com.error(ERR.DROP, 'EdgePlaneNum: bad k');
 	return -1;
 }
 
@@ -20216,7 +14390,7 @@ function SetBorderInward(pc, facet, grid, gridPlanes, i, j, which) {
 			numPoints = 3;
 			break;
 		default:
-			com.error(sh.Err.FATAL, 'SetBorderInward: bad parameter');
+			com.error(ERR.FATAL, 'SetBorderInward: bad parameter');
 			numPoints = 0;
 			break;
 	}
@@ -20566,14 +14740,14 @@ function FindPlane2(pc, plane, flipped) {
 
 	// Add a new plane.
 	if (pc.planes.length === MAX_PATCH_PLANES) {
-		com.error(sh.Err.DROP, 'MAX_PATCH_PLANES');
+		com.error(ERR.DROP, 'MAX_PATCH_PLANES');
 	}
 
 	var index = pc.planes.length;
 
 	var pp = new pplane_t();
 	Vector4Copy(plane, pp.plane);
-	pp.signbits = qm.GetPlaneSignbits(plane);
+	pp.signbits = QMath.GetPlaneSignbits(plane);
 	pc.planes.push(pp);
 
 	flipped[0] = false;
@@ -20598,7 +14772,7 @@ function TraceThroughPatchCollide(tw, pc) {
 	var startp = [0, 0, 0];
 	var endp = [0, 0, 0];
 
-	if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1], SURFACE_CLIP_EPSILON)) {
+	if (!QMath.BoundsIntersect(tw.bounds[0], tw.bounds[1], pc.bounds[0], pc.bounds[1], SURFACE_CLIP_EPSILON)) {
 		return;
 	}
 
@@ -21050,7 +15224,7 @@ function BaseWindingForPlane(normal, dist) {
 	}
 
 	if (x === -1) {
-		com.error(sh.Err.DROP, 'BaseWindingForPlane: no axis found');
+		com.error(ERR.DROP, 'BaseWindingForPlane: no axis found');
 	}
 		
 	var vup = [0, 0, 0];
@@ -21196,11 +15370,11 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 	}
 
 	if (f.p.length > maxpts) {
-		com.error(sh.Err.DROP, 'ClipWinding: points exceeded estimate');
+		com.error(ERR.DROP, 'ClipWinding: points exceeded estimate');
 	}
 
 	if (f.p.length > MAX_POINTS_ON_WINDING) {
-		com.error(sh.Err.DROP, 'ClipWinding: MAX_POINTS_ON_WINDING');
+		com.error(ERR.DROP, 'ClipWinding: MAX_POINTS_ON_WINDING');
 	}
 
 	f.clone(inout);
@@ -21229,7 +15403,7 @@ function BoxLeafnums_r(ll, mins, maxs, nodenum) {
 		}
 	
 		var node = cm.nodes[nodenum];
-		var s = qm.BoxOnPlaneSide(mins, maxs, cm.planes[node.planeNum]);
+		var s = QMath.BoxOnPlaneSide(mins, maxs, cm.planes[node.planeNum]);
 
 		if (s === 1) {
 			nodenum = node.childrenNum[0];
@@ -21544,7 +15718,7 @@ function TraceThroughLeaf(tw, leaf) {
 			continue;
 		}
 
-		if (!qm.BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1], SURFACE_CLIP_EPSILON)) {
+		if (!QMath.BoundsIntersect(tw.bounds[0], tw.bounds[1], brush.bounds[0], brush.bounds[1], SURFACE_CLIP_EPSILON)) {
 			continue;
 		}
 
@@ -21911,7 +16085,7 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 	// If fraction == 1.0, we never hit anything, and thus the plane is not valid.
 	// Otherwise, the normal on the plane should have unit length.
 	if (!tw.trace.allSolid && tw.trace.fraction !== 1.0 && vec3.squaredLength(tw.trace.plane.normal) <= 0.9999) {
-		com.error(sh.Err.DROP, 'Invalid trace result');
+		com.error(ERR.DROP, 'Invalid trace result');
 	}
 
 	return trace;
@@ -21995,9 +16169,9 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 		//		 the bounding box or the bmodel because that would make all the brush
 		//		 bevels invalid.
 		//		 However this is correct for capsules since a capsule itself is rotated too.
-		qm.AnglesToAxis(angles, matrix);
-		qm.RotatePoint(start_l, matrix);
-		qm.RotatePoint(end_l, matrix);
+		QMath.AnglesToAxis(angles, matrix);
+		QMath.RotatePoint(start_l, matrix);
+		QMath.RotatePoint(end_l, matrix);
 		// Rotated sphere offset for capsule.
 		sphere.offset[0] = matrix[0][ 2 ] * t;
 		sphere.offset[1] = -matrix[1][ 2 ] * t;
@@ -22014,7 +16188,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 	if (rotated && trace.fraction !== 1.0) {
 		// Rotation of bmodel collision plane.
 		TransposeMatrix(matrix, transpose);
-		qm.RotatePoint(trace.plane.normal, transpose);
+		QMath.RotatePoint(trace.plane.normal, transpose);
 	}
 
 	// Re-calculate the end position of the trace because the trace.endPos
@@ -22049,177 +16223,7419 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 
 /*global vec3: true, mat4: true */
 
+define('server/sv',
+['underscore', 'ByteBuffer', 'common/qmath', 'common/sh', 'game/gm', 'clipmap/cm'],
+function (_, ByteBuffer, QMath, sh, gm_mod, cm_mod) {
+	function Server(imp) {
+		var sys = imp.sys;
+		var com = imp.com;
+
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums,
+			com.constants,
+			com.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
+		
+		var MAX_SNAPSHOT_ENTITIES = MAX_CLIENTS * PACKET_BACKUP * 64;
+
+// Persistent across all maps.
+var ServerStatic = function () {
+	this.initialized          = false;
+	this.time                 = 0;
+	this.snapFlagServerBit    = 0;                         // ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
+	this.clients              = new Array(MAX_CLIENTS);
+	this.nextSnapshotEntities = 0;                         // next snapshotEntities to use
+	this.snapshotEntities     = new Array(MAX_SNAPSHOT_ENTITIES);
+	this.msgBuffer            = new ArrayBuffer(MAX_MSGLEN);
+
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		this.clients[i] = new ServerClient();
+	}
+
+	for (var i = 0; i < MAX_SNAPSHOT_ENTITIES; i++) {
+		this.snapshotEntities[i] = new sh.EntityState();
+	}
+};
+
+// Reset for each map.
+var ServerState = {
+	DEAD:    0,                                            // no map loaded
+	LOADING: 1,                                            // spawning level entities
+	GAME:    2                                             // actively running
+};
+
+var ServerLocals = function () {
+	this.state           = ServerState.DEAD;
+	this.restarting      = false;                          // if true, send configstring changes during SS_LOADING
+	this.serverId        = 0;                              // changes each server start
+	this.snapshotCounter = 0;                              // incremented for each snapshot built
+	this.time            = 0;
+	this.timeResidual    = 0;                              // <= 1000 / sv_frame->value
+	this.configstrings   = {};
+	this.svEntities      = new Array(MAX_GENTITIES);
+	this.gameEntities    = null;
+	this.gameClients     = null;
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		this.svEntities[i] = new ServerEntity();
+	}
+};
+
+var ServerEntity = function () {
+	this.worldSector     = null;
+	this.baseline        = new sh.EntityState();
+	this.snapshotCounter = 0;
+};
+
+var CS = {
+	FREE:      0,                                          // can be reused for a new connection
+	ZOMBIE:    1,                                          // client has been disconnected, but don't reuse
+	                                                       // connection for a couple seconds
+	CONNECTED: 2,                                          // has been assigned to a client_t, but no gamestate yet
+	PRIMED:    3,                                          // gamestate has been sent, but client hasn't sent a usercmd
+	ACTIVE:    4                                           // client is fully in game
+};
+
+var ServerClient = function () {
+	this.reset();
+};
+
+ServerClient.prototype.reset = function () {
+	this.state                   = CS.FREE;
+	this.userinfo                = {};
+
+	this.messageAcknowledge      = 0;
+	this.reliableCommands        = new Array(MAX_RELIABLE_COMMANDS);
+	this.reliableSequence        = 0;                      // last added reliable message, not necesarily sent or acknowledged yet
+	this.reliableAcknowledge     = 0;                      // last acknowledged reliable message
+
+	this.gamestateMessageNum     = -1;
+
+	this.lastUserCmd             = new sh.UserCmd();
+	this.lastMessageNum          = 0;                      // for delta compression
+	this.lastClientCommand       = 0;                      // reliable client message sequence
+	this.lastClientCommandString = null;
+	this.name                    = null;                   // extracted from userinfo, high bits masked
+
+	this.deltaMessage            = -1;                     // frame last client usercmd message
+	this.nextReliableTime        = 0;                      // svs.time when another reliable command will be allowed
+	this.lastSnapshotTime        = 0;
+	this.snapshotMsec            = 0;                      // requests a snapshot every snapshotMsec unless rate choked
+	this.frames                  = new Array(PACKET_BACKUP);
+	
+	this.netchan                 = null;
+	this.oldServerTime           = 0;
+	this.csUpdated               = {};
+	
+	for (var i = 0; i < PACKET_BACKUP; i++) {
+		this.frames[i] = new ClientSnapshot();
+	}
+};
+
+var ClientSnapshot = function () {
+	this.ps          = new sh.PlayerState();
+	this.numEntities = 0;
+	this.firstEntity = 0;                                  // index into the circular sv_packet_entities[]
+	                                                       // the entities MUST be in increasing state number
+	                                                       // order, otherwise the delta compression will fail
+};
+		var dedicated;
+
+var cl,
+	cm,
+	gm;
+
+var sv,
+	svs;
+
+var sv_serverid,
+	sv_mapname,
+	sv_fps,
+	sv_timeout,
+	sv_zombietime;
+
+/**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'SV:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
+ * Init
+ */
+function Init(clInstance, isDedicated) {
+	log('Initializing');
+	
+	dedicated = isDedicated;
+
+	cl  = clInstance;
+	cm  = cm_mod.CreateInstance(ClipmapExports());
+	gm  = gm_mod.CreateInstance(GameExports());
+
+	sv  = new ServerLocals();
+	svs = new ServerStatic();
+	
+	sv_serverid   = com.AddCvar('sv_serverid',   0,       CVF.SYSTEMINFO);
+	sv_mapname    = com.AddCvar('sv_mapname',    'nomap', CVF.SERVERINFO);
+	// TODO We need to run clientthink outside of our main Frame() think loop.
+	sv_fps        = com.AddCvar('sv_fps',        20);   // time rate for running non-clients
+	sv_timeout    = com.AddCvar('sv_timeout',    200);  // seconds without any message
+	sv_zombietime = com.AddCvar('sv_zombietime', 2);    // seconds to sink messages after disconnect
+
+	RegisterCommands();
+
+	// For dev purposes, simulate command line input.
+	setTimeout(function () {
+		CmdLoadMap('q3dm17');
+	}, 50);
+}
+
+/**
+ * FrameMsec
+ * 
+ * Calculate the # of milliseconds for a single frame.
+ */
+function FrameMsec() {
+	var fps = sv_fps();
+	var frameMsec = 1000 / fps;
+
+	if (frameMsec < 1) {
+		frameMsec = 1;
+	}
+
+	return frameMsec;
+}
+
+/**
+ * Frame
+ */
+function Frame(msec) {
+	if (!svs.initialized) {
+		return;
+	}
+
+	var frameMsec = FrameMsec();
+	sv.timeResidual += msec;
+
+	// Run the game simulation in chunks.
+	var frames = 0;
+	while (sv.timeResidual >= frameMsec) {
+		sv.timeResidual -= frameMsec;
+		svs.time += frameMsec;
+		sv.time += frameMsec;
+
+		// Let everything in the world think and move.
+		gm.Frame(sv.time);
+		frames++;
+	}
+
+	CheckTimeouts();
+
+	// Don't send out duplicate snapshots if we didn't run any gameframes.
+	if (frames > 0) {
+		SendClientMessages();
+	}
+}
+
+/**
+ * CheckTimeouts
+ * 
+ * If a packet has not been received from a client for timeout->integer 
+ * seconds, drop the conneciton. Server time is used instead of
+ * realtime to avoid dropping the local client while debugging.
+ * 
+ * When a client is normally dropped, the client_t goes into a zombie state
+ * for a few seconds to make sure any final reliable message gets resent
+ * if necessary
+ */
+function CheckTimeouts() {
+	var droppoint = svs.time - 1000 * sv_timeout();
+	var zombiepoint = svs.time - 1000 * sv_zombietime();
+
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		var client = svs.clients[i];
+		if (client.state === CS.FREE) {
+			continue;
+		}
+
+		// Message times may be wrong across a changelevel.
+		if (client.lastPacketTime > svs.time) {
+			client.lastPacketTime = svs.time;
+		}
+
+		if (client.state === CS.ZOMBIE && client.lastPacketTime < zombiepoint) {
+			log('Going from CS_ZOMBIE to CS_FREE for client', i);
+			client.state = CS.FREE;  // can now be reused
+			continue;
+		}
+
+		if (client.state >= CS.CONNECTED && client.lastPacketTime < droppoint) {
+			DropClient(client, 'timed out'); 
+			client.state = CS.FREE;  // don't bother with zombie state
+		}
+	}
+}
+
+/**
+ * PacketEvent
+ */
+function PacketEvent(socket, buffer) {	
+	if (!svs.initialized) {
+		return;
+	}
+
+	var msg = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+
+	// Peek in and see if this is a string message.
+	if (buffer.byteLength > 4 && msg.view.getInt32(0, !!ByteBuffer.LITTLE_ENDIAN) === -1) {
+		ConnectionlessPacket(socket, msg);
+		return;
+	}
+
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (client.state === CS.FREE) {
+			continue;
+		}
+
+		if (client.netchan.socket !== socket) {
+			continue;
+		}
+
+		if (com.NetchanProcess(client, msg)) {
+			client.lastPacketTime = svs.time;  // don't timeout
+			ExecuteClientMessage(client, msg);
+		}
+		return;
+	}
+}
+
+/**
+ * ConnectionlessPacket
+ */
+function ConnectionlessPacket(socket, msg) {
+	msg.readInt();  // Skip the -1.
+
+	var str = msg.readCString();
+
+	if (str.indexOf('connect') === 0) {
+		AcceptClient(socket, str.substr(8));
+	}
+}
+
+/**
+ * SpawnServer
+ */
+function SpawnServer(mapName) {
+	log('Spawning new server for', mapName, 'at', com.frameTime);
+
+	svs.initialized = false;
+	
+	// Shutdown the game.
+	gm.Shutdown();
+	
+	if (!dedicated) {
+		// Update the local client's screen.
+		cl.MapLoading();
+
+		// Make sure all the client stuff is unloaded.
+		cl.ShutdownSubsystems();
+		cl.ShutdownCGame();
+
+		// Restart renderer and sound systems.
+		cl.InitSubsystems();
+	}
+
+	// Toggle the server bit so clients can detect that a server has changed.
+	svs.snapFlagServerBit ^= SNAPFLAG_SERVERCOUNT;
+
+	// Wipe the entire per-level structure.
+	var oldServerTime = sv.time;
+	sv = new ServerLocals();
+
+	// Load the collision map.
+	cm.LoadMap(mapName, function () {
+		sv_mapname(mapName);
+		// serverid should be different each time.
+		sv_serverid(com.frameTime);
+
+		// Clear physics interaction links.
+		ClearWorld();
+
+		// Media configstring setting should be done during
+		// the loading stage, so connected clients don't have
+		// to load during actual gameplay.
+		sv.state = ServerState.LOADING;
+
+		// Initialize the game.
+		gm.Init(sv.time);
+
+		// Run a few frames to allow everything to settle.
+		for (var i = 0; i < 3; i++) {
+			gm.Frame(sv.time);
+			sv.time += 100;
+			svs.time += 100;
+		}
+
+		CreateBaselines();
+
+		// Send the new gamestate to all connected clients.
+		for (var i = 0; i < MAX_CLIENTS; i++) {
+			var client = svs.clients[i];
+
+			if (!client || client.state < CS.CONNECTED) {
+				continue;
+			}
+			
+			// Clear gentity pointer to prevent bad snapshots from building.
+			client.gentity = null;
+
+			// Reconnect.
+			var denied = gm.ClientConnect(i, false);
+
+			if (denied) {
+				DropClient(client, denied);
+			}
+
+			// When we get the next packet from a connected client,
+			// the new gamestate will be sent.
+			client.state = CS.CONNECTED;
+		}	
+
+		/*// Run another frame to allow things to look at all the players.
+		gm.Frame(sv.time);
+		sv.time += 100;
+		svs.time += 100;*/
+
+		SetConfigstring('systemInfo', com.GetCvarValues(CVF.SYSTEMINFO));
+		SetConfigstring('serverInfo', com.GetCvarValues(CVF.SERVERINFO));
+
+		// Any media configstring setting now should issue a warning
+		// and any configstring changes should be reliably transmitted
+		// to all clients.
+		sv.state = ServerState.GAME;
+
+		svs.initialized = true;
+	});
+}
+
+/**
+ * CreateBaselines
+ * 
+ * Entity baselines are used to compress non-delta messages
+ * to the clients -- only the fields that differ from the
+ * baseline will be transmitted.
+ */
+function CreateBaselines() {
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		var svent = sv.svEntities[i];
+		var gent = GentityForSvEntity(svent);
+		if (!gent.linked) {
+			continue;
+		}
+
+		// Take current state as baseline.
+		gent.s.clone(sv.svEntities[i].baseline);
+	}
+}
+
+/**
+ * GetConfigstring
+ */
+function GetConfigstring(key) {
+	return sv.configstrings[key];
+}
+
+/**
+ * SetConfigstring
+ */
+function SetConfigstring(key, val) {
+	// Don't bother broadcasting an update if no change.
+	if (_.isEqual(val, sv.configstrings[key])) {
+		return;
+	}
+
+	// Change the string.
+	sv.configstrings[key] = val;
+
+	// Send it to all the clients if we aren't spawning a new server.
+	if (sv.state === ServerState.GAME || sv.restarting) {
+		// Send the data to all relevent clients.
+		for (var i = 0; i < MAX_CLIENTS; i++) {
+			var client = svs.clients[i];
+
+			if (client.state < CS.ACTIVE) {
+				if (client.state === CS.PRIMED) {
+					client.csUpdated[key] = true;
+				}
+				continue;
+			}
+		
+			SendConfigstring(client, key);
+		}
+	}
+}
+
+/**
+ * SendConfigString
+ *
+ * Creates and sends the server command necessary to update the CS index for the
+ * given client.
+ */
+function SendConfigstring(client, key) {
+	SendServerCommand(client, 'cs', { k: key, v: sv.configstrings[key] });
+}
+
+/**
+ * UpdateConfigstrings
+ * 
+ * Called when a client goes from CS.PRIMED to CS.ACTIVE. Updates all
+ * Configstring indexes that have changed while the client was in CS.PRIMED.
+ */
+function UpdateConfigstrings(client) {
+	for (var key in sv.configstrings) {
+		if (!sv.configstrings.hasOwnProperty(key)) {
+			continue;
+		}
+
+		// If the CS hasn't changed since we went to CS.PRIMED, ignore.
+		if (!client.csUpdated[key]) {
+			continue;
+		}
+
+		SendConfigstring(client, key);
+		client.csUpdated[key] = false;
+	}
+}
+
+/**
+ * GetUserInfo
+ */
+function GetUserinfo(clientNum) {
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		com.error(ERR.DROP, 'GetUserinfo: bad index ' + clientNum);
+	}
+
+	return svs.clients[clientNum].userinfo;
+}
+
+/**********************************************************
+ *
+ * Event messages
+ *
+ **********************************************************/
+
+/**
+ * SendServerCommand
+ * 
+ * Sends a reliable command string to be interpreted by 
+ * the client game module: "cp", "print", "chat", etc
+ * A NULL client will broadcast to all clients
+ */
+function SendServerCommand(client, type, msg) {
+	if (client !== null) {
+		AddServerCommand(client, type, msg);
+		return;
+	}
+
+	// // Hack to echo broadcast prints to console.
+	// if ( com_dedicated->integer && !strncmp( (char *)message, "print", 5) ) {
+	// 	Com_Printf ("broadcast: %s\n", SV_ExpandNewlines((char *)message) );
+	// }
+
+	// Send the data to all relevent clients.
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		AddServerCommand(client, type, msg);
+	}
+}
+
+/**
+ * AddServerCommand
+ *  
+ * The given command will be transmitted to the client, and is guaranteed to
+ * not have future snapshot_t executed before it is executed.
+ */
+function AddServerCommand(client, type, msg) {
+	// Do not send commands until the gamestate has been sent.
+	if (client.state < CS.PRIMED) {
+		return;
+	}
+
+	client.reliableSequence++;
+
+	var cmd = { type: type, value: msg };
+
+	// If we would be losing an old command that hasn't been acknowledged,
+	// we must drop the connection.
+	// We check == instead of >= so a broadcast print added by SV_DropClient()
+	// doesn't cause a recursive drop client.
+	if (client.reliableSequence - client.reliableAcknowledge === MAX_RELIABLE_COMMANDS + 1 ) {
+		log('----- pending server commands -----');
+		for (var i = client.reliableAcknowledge + 1; i <= client.reliableSequence; i++) {
+			log('cmd', i, client.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
+		}
+		log('cmd', i, cmd);
+		DropClient(client, 'Server command overflow');
+		return;
+	}
+
+	// Copy the command off.
+	client.reliableCommands[client.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
+}
+
+/**
+ * ClientExports
+ */
+function ClientExports() {
+	return {
+		sys: sys,
+		com: com
+	}
+}
+
+/**
+ * ClipmapExports
+ */
+function ClipmapExports() {
+	return {
+		sys: {
+			ReadFile: sys.ReadFile
+		}
+	};
+}
+
+/**
+ * GameExports
+ */
+function GameExports() {
+	return {
+		sys: {
+			GetMilliseconds: sys.GetMilliseconds,
+			ReadFile:        sys.ReadFile,
+		},
+		com: {
+			enums:   com.enums,
+			error:   com.error,
+			AddCmd:  com.AddCmd,
+			AddCvar: com.AddCvar
+		},
+		sv: {
+			EntityContact:     EntityContact,
+			LocateGameData:    LocateGameData,
+			GetUserCmd:        GetUserCmd,
+			GetConfigstring:   GetConfigstring,
+			SetConfigstring:   SetConfigstring,
+			GetUserinfo:       GetUserinfo,
+			SetBrushModel:     SetBrushModel,
+			LinkEntity:        LinkEntity,
+			UnlinkEntity:      UnlinkEntity,
+			FindEntitiesInBox: FindEntitiesInBox,
+			GetEntityDefs:     cm.EntityDefs,
+			SnapVector:        cm.SnapVector,
+			Trace:             Trace
+		}
+	};
+}
+		/**
+ * SocketClosed
+ */
+function SocketClosed(socket) {	
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (client.state === CS.FREE) {
+			continue;
+		}
+
+		if (client.netchan.socket === socket) {
+			DropClient(client, 'disconnected');
+			return;
+		}
+	}
+}
+
+/**
+ * AcceptClient
+ */
+function AcceptClient(socket, infostr) {
+	if (!svs.initialized) {
+		return;
+	}
+
+	log('A client is connecting');
+
+	// Find a slot for the client.
+	var clientNum;
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		if (svs.clients[i].state === CS.FREE) {
+			clientNum = i;
+			break;
+		}
+	}
+	if (clientNum === undefined) {
+		//NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is full.\n" );
+		log('Rejected a connection.');
+		return
+	}
+
+	// Create the client.
+	var newcl = svs.clients[clientNum];
+	newcl.reset();
+
+	newcl.netchan = com.NetchanSetup(sh.NetSrc.SERVER, socket);
+	newcl.userinfo = JSON.parse(infostr);
+
+	// Give the game a chance to reject this connection or modify the userinfo.
+	var denied = gm.ClientConnect(clientNum, true);
+
+	if (denied) {
+		//NET_OutOfBandPrint( NS_SERVER, from, "print\n%s\n", str );
+		//Com_DPrintf ("Game rejected a connection: %s.\n", str);
+		return;
+	}
+	
+	UserinfoChanged(newcl);
+
+	log('Going from CS_FREE to CS_CONNECTED for ', clientNum);
+
+	newcl.state = CS.CONNECTED;
+	newcl.lastSnapshotTime = svs.time;
+	newcl.lastPacketTime = svs.time;
+
+	// Let the client know we've accepted them.
+	com.NetchanPrint(newcl.netchan, 'connectResponse');
+
+	// When we receive the first packet from the client, we will
+	// notice that it is from a different serverid and that the
+	// gamestate message was not just sent, forcing a retransmit.
+	newcl.gamestateMessageNum = -1;
+}
+
+/**
+ * DropClient
+ *
+ * Called when the player is totally leaving the server, either willingly
+ * or unwillingly.
+ */
+function DropClient(client, reason) {
+	if (client.state === CS.ZOMBIE) {
+		return;  // already dropped
+	}
+
+	/*// see if we already have a challenge for this ip
+	challenge = &svs.challenges[0];
+
+	for (var i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
+	{
+		if(NET_CompareAdr(drop->netchan.remoteAddress, challenge->adr))
+		{
+			Com_Memset(challenge, 0, sizeof(*challenge));
+			break;
+		}
+	}*/
+
+	// tell everyone why they got dropped
+	//SV_SendServerCommand( NULL, "print \"%s" S_COLOR_WHITE " %s\n\"", drop->name, reason );
+
+	// Call the game function for removing a client
+	// this will remove the body, among other things.
+	var clientNum = GetClientNum(client);
+	gm.ClientDisconnect(clientNum);
+
+	// add the disconnect command
+	//SV_SendServerCommand( drop, "disconnect \"%s\"", reason);
+
+	// nuke user info
+	//SV_SetUserinfo( drop - svs.clients, "" );
+	
+	//Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
+	client.state = CS.ZOMBIE;           // become free in a few seconds
+}
+
+/**
+ * ClientEnterWorld
+ */
+function ClientEnterWorld(client) {
+	var clientNum = svs.clients.indexOf(client);
+
+	client.state = CS.ACTIVE;
+
+	// Resend all configstrings using the cs commands since these are
+	// no longer sent when the client is CS_PRIMED.
+	UpdateConfigstrings(client);
+
+	gm.ClientBegin(clientNum);
+
+	// The entity is initialized inside of ClientBegin.
+	client.gentity = GentityForNum(clientNum);
+}
+
+/**
+ * UserMove
+ */
+function UserMove(client, msg, delta) {
+	if (delta) {
+		client.deltaMessage = client.messageAcknowledge;
+	} else {
+		client.deltaMessage = -1;
+	}
+
+	var cmd = new sh.UserCmd();
+	cmd.serverTime = msg.readInt();
+	cmd.angles[0] = msg.readUnsignedShort();
+	cmd.angles[1] = msg.readUnsignedShort();
+	cmd.angles[2] = msg.readUnsignedShort();
+	cmd.forwardmove = msg.readByte();
+	cmd.rightmove = msg.readByte();
+	cmd.upmove = msg.readByte();
+	cmd.buttons = msg.readByte();
+	cmd.weapon = msg.readByte();
+
+	// If this is the first usercmd we have received
+	// this gamestate, put the client into the world.
+	if (client.state === CS.PRIMED) {
+		ClientEnterWorld(client);
+		// now moves can be processed normaly
+	}
+
+	if (client.state !== CS.ACTIVE) {
+		client.deltaMessage = -1;
+		return; // shouldn't happen
+	}
+
+	// Don't execute if this is an old cmd which is already executed
+	// these old cmds are included when cl_packetdup > 0
+	if (cmd.serverTime <= client.lastUserCmd.serverTime) {
+		return; // continue;
+	}
+
+	ClientThink(client, cmd);
+}
+
+/**
+ * ClientThink
+ */
+function ClientThink(client, cmd) {
+	var clientNum = GetClientNum(client);
+	
+	cmd.clone(client.lastUserCmd);
+
+	gm.ClientThink(clientNum);
+}
+
+/**
+ * SendClientGameState
+ */
+function SendClientGameState(client) {
+	client.state = CS.PRIMED;
+	// When we receive the first packet from the client, we will
+	// notice that it is from a different serverid and that the
+	// gamestate message was not just sent, forcing a retransmit.
+	client.gamestateMessageNum = client.netchan.outgoingSequence;
+
+	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
+
+	msg.writeInt(client.lastClientCommand);
+
+	msg.writeByte(SVM.gamestate);
+	msg.writeInt(client.reliableSequence);
+
+	// Write the configstrings.
+	for (var key in sv.configstrings) {
+		if (!sv.configstrings.hasOwnProperty(key)) {
+			continue;
+		}
+
+		msg.writeByte(SVM.configstring);
+		msg.writeCString(JSON.stringify({ k: key, v: sv.configstrings[key] }));
+	}
+
+	// Write the baselines.
+	var nullstate = new sh.EntityState();
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		var base = sv.svEntities[i].baseline;
+		if (!base.number) {
+			continue;
+		}
+		msg.writeByte(SVM.baseline);
+		sh.WriteDeltaEntityState(msg, nullstate, base, true);
+	}
+
+	msg.writeByte(SVM.EOF);
+
+	msg.writeInt(GetClientNum(client));
+
+	com.NetchanSend(client.netchan, msg.buffer, msg.index);
+}
+
+/**
+ * UserinfoChanged
+ *
+ * Pull specific info from a newly changed userinfo string 
+ * into a more C friendly form.
+ */
+function UserinfoChanged(client) {
+	client.name = client.userinfo['name'];
+
+	// Snaps command.
+	var snaps = 20;
+
+	if (snaps < 1) {
+		snaps = 1;
+	} else if(snaps > sv_fps()) {
+		snaps = sv_fps();
+	}
+
+	snaps = 1000 / snaps;
+
+	if (snaps != client.snapshotMsec) {
+		// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time.
+		client.lastSnapshotTime = 0;
+		client.snapshotMsec = snaps;
+	}
+}
+
+/**
+ * GetClientNum
+ */
+function GetClientNum(client) {
+	return svs.clients.indexOf(client);
+}
+
+/** 
+ * UpdateUserinfo
+ */
+function UpdateUserinfo(client, infostr) {
+	client.userinfo = JSON.parse(infostr);
+	UserinfoChanged(client);
+
+	// call prog code to allow overrides
+	var clientNum = GetClientNum(client);
+	gm.ClientUserinfoChanged(clientNum);
+}
+
+/**
+ * Disconnect
+ */
+function Disconnect(client) {
+	DropClient(client, 'disconnected');
+}
+
+/**********************************************************
+ *
+ * User message/command processing
+ *
+ **********************************************************/
+
+/**
+ * ExecuteClientMessage
+ */
+function ExecuteClientMessage(client, msg) {
+	var serverid = msg.readInt();
+
+	client.messageAcknowledge = msg.readInt();
+	if (client.messageAcknowledge < 0) {
+		// Usually only hackers create messages like this
+		// it is more annoying for them to let them hanging.
+		return;
+	}
+
+	client.reliableAcknowledge = msg.readInt();
+	// NOTE: when the client message is fux0red the acknowledgement numbers
+	// can be out of range, this could cause the server to send thousands of server
+	// commands which the server thinks are not yet acknowledged in SV_UpdateServerCommandsToClient
+	if (client.reliableAcknowledge < client.reliableSequence - MAX_RELIABLE_COMMANDS) {
+		// Usually only hackers create messages like this
+		// it is more annoying for them to let them hanging.
+		client.reliableAcknowledge = client.reliableSequence;
+		return;
+	}
+
+	// If we can tell that the client has dropped the last
+	// gamestate we sent them, resend it.
+	if (serverid !== sv_serverid()) {
+		if (client.messageAcknowledge > client.gamestateMessageNum) {
+			SendClientGameState(client);
+		}
+		return;
+	}
+
+	// This client has acknowledged the new gamestate so it's
+	// safe to start sending it the real time again.
+	if (client.oldServerTime && serverid === sv_serverid()) {
+		client.oldServerTime = 0;
+	}
+
+	// Read optional clientCommand strings.
+	var type;
+
+	while (true) {
+		type = msg.readUnsignedByte();
+
+		if (type === CLM.EOF) {
+			break;
+		}
+
+		if (type !== CLM.clientCommand) {
+			break;
+		}
+
+		if (!ClientCommand(client, msg)) {
+			return;  // we couldn't execute it because of the flood protection
+		}
+
+		if (client.state === CS.ZOMBIE) {
+			return;  // disconnect command
+		}
+	}
+
+	// Read the usercmd_t.
+	switch (type) {
+		case CLM.move:
+			UserMove(client, msg, true);
+			break;
+		case CLM.moveNoDelta:
+			UserMove(client, msg, false);
+			break;
+	}
+}
+
+/**
+ * ClientCommand
+ */
+function ClientCommand(client, msg) {
+	var sequence = msg.readInt();
+	var str = msg.readCString();
+
+	// See if we have already executed it.
+	if (client.lastClientCommand >= sequence) {
+		return true;
+	}
+
+	// drop the connection if we have somehow lost commands
+	if (sequence > client.lastClientCommand + 1 ) {
+		//Com_Printf( "Client %s lost %i clientCommands\n", cl->name,  seq - cl->lastClientCommand + 1 );
+		DropClient(client, 'Lost reliable commands');
+		return false;
+	}
+
+	// don't allow another command for one second
+	client.nextReliableTime = svs.time + 1000;
+
+	ExecuteClientCommand(client, str);
+
+	client.lastClientCommand = sequence;
+	client.lastClientCommandString = str;
+
+	return true; // continue procesing
+}
+
+/**
+ * ExecuteClientCommand
+ */
+function ExecuteClientCommand(client, str) {
+	// see if it is a server level command
+	/*for (u=ucmds ; u->name ; u++) {
+		if (!strcmp (Cmd_Argv(0), u->name) ) {
+			u->func( cl );
+			bProcessed = qtrue;
+			break;
+		}
+	}*/
+	if (str.indexOf('userinfo') === 0) {
+		UpdateUserInfo(client, str.substr(9));
+	} else if (str === 'disconnect') {
+		Disconnect(client);
+	}
+
+	/*// Pass unknown strings to the game.
+	if (!u->name && sv.state == SS_GAME && (cl->state == CS_ACTIVE || cl->state == CS_PRIMED)) {
+		Cmd_Args_Sanitize();
+		VM_Call( gvm, GAME_CLIENT_COMMAND, cl - svs.clients );
+	}*/
+}
+		/**
+ * RegisterCommands
+ */
+function RegisterCommands() {
+	com.AddCmd('map', CmdLoadMap);
+	com.AddCmd('sectorlist', CmdSectorList);
+}
+
+/**
+ * CmdLoadMap
+ */
+function CmdLoadMap(mapName) {
+	SpawnServer(mapName);
+}
+		/**
+ * GentityForNum
+ */
+function GentityForNum(num) {
+	return sv.gameEntities[num];
+}
+
+/**
+ * SvEntityForGentity
+ */
+function SvEntityForGentity(gent) {
+	var num = gent.s.number;
+
+	if (!gent || num < 0 || num >= MAX_GENTITIES) {
+		com.error(ERR.DROP, 'SvEntityForSharedEntity: bad game entity');
+	}
+
+	return sv.svEntities[num];
+}
+
+/**
+ * GentityForSvEntity
+ */
+function GentityForSvEntity(ent) {
+	var num = sv.svEntities.indexOf(ent);
+
+	if (!ent || num < 0 || num >= MAX_GENTITIES) {
+		com.error(ERR.DROP, 'SharedEntityForSvEntity: bad sv entity');
+	}
+
+	return GentityForNum(num);
+}
+
+/**
+ * EntityContact
+ */
+function EntityContact(mins, maxs, gent) {
+	// Check for exact collision.
+	var origin = gent.currentOrigin;
+	var angles = gent.currentAngles;
+
+	var ch = ClipHandleForEntity(gent);	
+	var trace = cm.TransformedBoxTrace(QMath.vec3_origin, QMath.vec3_origin, mins, maxs, ch, -1, origin, angles, false);
+
+	return trace.startSolid;
+}
+
+/**
+ * LocateGameData
+ */
+function LocateGameData(gameEntities, gameClients) {
+	sv.gameEntities = gameEntities;
+	sv.gameClients = gameClients;
+}
+
+/**
+ * GetUserCmd
+ */
+function GetUserCmd(clientNum, cmd) {
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		com.error(ERR.DROP, 'GetUsercmd: bad clientNum: ' + clientNum);
+	}
+
+	svs.clients[clientNum].lastUserCmd.clone(cmd);
+}
+
+/**
+ * SetBrushModel
+ */
+function SetBrushModel(gent, name) {
+	if (!name) {
+		com.error(ERR.DROP, 'SV: SetBrushModel: null');
+	}
+
+	if (name.charAt(0) !== '*') {
+		com.error(ERR.DROP, 'SV: SetBrushModel: ' + name + 'isn\'t a brush model');
+	}
+
+	gent.s.modelIndex = parseInt(name.substr(1), 10);
+
+	var h = cm.InlineModel(gent.s.modelIndex);
+	cm.ModelBounds(h, gent.mins, gent.maxs);
+	gent.bmodel = true;
+
+	// we don't know exactly what is in the brushes
+	gent.contents = -1;
+}
+		/**
+ * BuildClientSnapshot
+ * 
+ * Decides which entities are going to be visible to the client, and
+ * copies off the playerstate and areabits.
+ */
+function BuildClientSnapshot(client, msg) {
+	var clent = client.gentity;
+	if (!clent || client.state === CS.ZOMBIE) {
+		return false; // Client hasn't entered world yet.
+	}
+
+	// Bump the counter used to prevent double adding.
+	sv.snapshotCounter++;
+
+	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
+	var clientNum = GetClientNum(client);
+	var ps = gm.GetClientPlayerstate(clientNum);
+
+	// Copy the current PlayerState off.
+	ps.clone(frame.ps);
+
+	// Never send client's own entity, because it can
+	// be regenerated from the playerstate.
+	var clientNum = frame.ps.clientNum;
+	var svEnt = sv.svEntities[clientNum];
+	svEnt.snapshotCounter = sv.snapshotCounter;
+
+	var entityNumbers = [];
+	AddEntitiesVisibleFromPoint(frame.ps.origin, frame, entityNumbers, false);
+
+	frame.numEntities = 0;
+	frame.firstEntity = svs.nextSnapshotEntities;
+
+	// Copy the entity states out.
+	for (var i = 0; i < entityNumbers.length; i++) {
+		var ent = GentityForNum(entityNumbers[i]);
+		var state = svs.snapshotEntities[svs.nextSnapshotEntities % MAX_SNAPSHOT_ENTITIES];
+
+		ent.s.clone(state);
+		svs.nextSnapshotEntities++;
+		frame.numEntities++;
+	}
+
+	return true;
+}
+
+/**
+ * AddEntitiesVisibleFromPoint
+ */
+function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
+	/*leafnum = cm.PointLeafnum (origin);
+	clientarea = cm.LeafArea (leafnum);
+	clientcluster = cm.LeafCluster (leafnum);
+
+	// calculate the visible areas
+	frame->areabytes =cm.WriteAreaBits( frame->areabits, clientarea );
+
+	clientpvs = cm.ClusterPVS (clientcluster);*/
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		var ent = GentityForNum(i);
+
+		// Never send entities that aren't linked in.
+		if (!ent || !ent.linked) {
+			continue;
+		}
+
+		if (ent.s.number !== i) {
+			com.error(ERR.DROP, 'Entity number does not match.. WTF');
+			/*log('FIXING ENT->S.NUMBER!!!');
+			ent.s.number = e;*/
+		}
+
+		// Entities can be flagged to explicitly not be sent to the client.
+		if (ent.svFlags & gm.SVF.NOCLIENT) {
+			continue;
+		}
+
+		// Entities can be flagged to be sent to only one client.
+		if (ent.svFlags & gm.SVF.SINGLECLIENT) {
+			if (ent.singleClient != frame.ps.clientNum) {
+				continue;
+			}
+		}
+		// Entities can be flagged to be sent to everyone but one client.
+		if (ent.svFlags & gm.SVF.NOTSINGLECLIENT) {
+			if (ent.singleClient === frame.ps.clientNum) {
+				continue;
+			}
+		}
+
+		var svEnt = SvEntityForGentity(ent);
+
+		// Don't double add an entity through portals.
+		if (svEnt.snapshotCounter === sv.snapshotCounter) {
+			continue;
+		}
+
+		// Broadcast entities are always sent.
+		if (ent.svFlags & gm.SVF.BROADCAST) {
+			AddEntToSnapshot(svEnt, ent, eNums);
+			continue;
+		}
+
+		// // Ignore if not touching a PV leaf.
+		// // Check area.
+		// if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
+		// 	// doors can legally straddle two areas, so
+		// 	// we may need to check another one
+		// 	if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
+		// 		continue;		// blocked by a door
+		// 	}
+		// }
+
+		// bitvector = clientpvs;
+
+		// // Check individual leafs.
+		// if ( !svEnt->numClusters ) {
+		// 	continue;
+		// }
+		// l = 0;
+		// for ( i=0 ; i < svEnt->numClusters ; i++ ) {
+		// 	l = svEnt->clusternums[i];
+		// 	if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+		// 		break;
+		// 	}
+		// }
+
+		// // If we haven't found it to be visible,
+		// // check overflow clusters that coudln't be stored.
+		// if ( i == svEnt->numClusters ) {
+		// 	if ( svEnt->lastCluster ) {
+		// 		for ( ; l <= svEnt->lastCluster ; l++ ) {
+		// 			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
+		// 				break;
+		// 			}
+		// 		}
+		// 		if ( l == svEnt->lastCluster ) {
+		// 			continue;	// not visible
+		// 		}
+		// 	} else {
+		// 		continue;
+		// 	}
+		// }
+
+		// Add it.
+		AddEntToSnapshot(svEnt, ent, eNums);
+
+		// // If it's a portal entity, add everything visible from its camera position.
+		// if (ent.r.svFlags & SVF_PORTAL) {
+		// 	if (ent.s.generic1) {
+		// 		var dir = vec3.subtract(ent.s.origin, origin, [0, 0, 0]);
+
+		// 		if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1) {
+		// 			continue;
+		// 		}
+		// 	}
+			
+		// 	AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
+		// }
+	}
+}
+
+/**
+ * AddEntToSnapshot
+ */
+function AddEntToSnapshot(svEnt, gEnt, eNums) {
+	// If we have already added this entity to this snapshot, don't add again.
+	if (svEnt.snapshotCounter === sv.snapshotCounter) {
+		return;
+	}
+
+	svEnt.snapshotCounter = sv.snapshotCounter;
+
+	eNums.push(gEnt.s.number);
+}
+
+/**
+ * SendClientSnapshot
+ */
+function SendClientSnapshot(client) {
+	// Build the snapshot.
+	if (!BuildClientSnapshot(client)) {
+		return;
+	}
+
+	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
+
+	msg.writeInt(client.lastClientCommand);
+
+	// Send any reliable server commands.
+	UpdateServerCommandsToClient(client, msg);
+
+	// Send over all the relevant player and entity states.
+	WriteSnapshotToClient(client, msg);
+
+	com.NetchanSend(client.netchan, msg.buffer, msg.index);
+}
+
+/**
+ * UpdateServerCommandsToClient
+ *
+ * (re)send all server commands the client hasn't acknowledged yet.
+ */
+function UpdateServerCommandsToClient(client, msg) {
+	// Write any unacknowledged serverCommands.
+	for (var i = client.reliableAcknowledge + 1; i <= client.reliableSequence; i++) {
+		var cmd = client.reliableCommands[i % MAX_RELIABLE_COMMANDS];
+		
+		msg.writeByte(SVM.serverCommand);
+		msg.writeInt(i);
+		msg.writeCString(cmd.type);
+		msg.writeCString(JSON.stringify(cmd.value));
+	}
+}
+
+/**
+ * WriteSnapshotToClient
+ */
+function WriteSnapshotToClient(client, msg) {
+	// This is the snapshot we are creating.
+	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
+	var oldframe = null;
+	var lastframe = 0;
+
+	// Try to use a previous frame as the source for delta compressing the snapshot.
+	if (client.deltaMessage <= 0 || client.state !== CS.ACTIVE) {
+		// Client is asking for a retransmit.
+		oldframe = null;
+		lastframe = 0;
+	} else if (client.netchan.outgoingSequence - client.deltaMessage >= (PACKET_BACKUP - 3)) {
+		// Client hasn't gotten a good message through in a long time.
+		log(client.name, ': Delta request from out of date packet.');
+		oldframe = null;
+		lastframe = 0;
+	} else {
+		// We have a valid snapshot to delta from
+		oldframe = client.frames[client.deltaMessage % PACKET_BACKUP];
+		lastframe = client.netchan.outgoingSequence - client.deltaMessage;
+
+		// The snapshot's entities may still have rolled off the buffer, though.
+		if (oldframe.firstEntity <= svs.nextSnapshotEntities - svs.numSnapshotEntities) {
+			log(client.name, ': Delta request from out of date entities.');
+			oldframe = null;
+			lastframe = 0;
+		}
+	}
+	
+	msg.writeUnsignedByte(SVM.snapshot);
+
+	// Send over the current server time so the client can drift
+	// its view of time to try to match.
+	var serverTime = sv.time;
+	if (client.oldServerTime) {
+		// The server has not yet got an acknowledgement of the
+		// new gamestate from this client, so continue to send it
+		// a time as if the server has not restarted. Note from
+		// the client's perspective this time is strictly speaking
+		// incorrect, but since it'll be busy loading a map at
+		// the time it doesn't really matter.
+		serverTime = sv.time + client.oldServerTime;
+	}
+	msg.writeInt(serverTime);
+
+	// What we're delta'ing from.
+	msg.writeByte(lastframe);
+
+	var snapFlags = svs.snapFlagServerBit;
+	if (client.state !== CS.ACTIVE) {
+		snapFlags |= SNAPFLAG_NOT_ACTIVE;
+	}
+	msg.writeInt(snapFlags);
+
+	// Delta encode the playerstate.
+	sh.WriteDeltaPlayerState(msg, oldframe ? oldframe.ps : null, frame.ps);
+
+	// Delta encode the entities.
+	WriteSnapshotEntities(msg, oldframe, frame);
+}
+
+/**
+ * WriteSnapshotEntities
+ */
+function WriteSnapshotEntities(msg, from, to) {
+	var oldent, newent;
+	var oldindex, newindex;
+	var oldnum, newnum;
+	var fromNumEntities
+
+	// Generate the delta update.
+	fromNumEntities = !from ? 0 : from.numEntities;
+
+	oldent = null;
+	newent = null;
+	oldindex = 0;
+	newindex = 0;
+
+	while (newindex < to.numEntities || oldindex < fromNumEntities) {
+		if (newindex >= to.numEntities) {
+			newnum = 9999;
+		} else {
+			newent = svs.snapshotEntities[(to.firstEntity + newindex) % MAX_SNAPSHOT_ENTITIES];
+			newnum = newent.number;
+		}
+
+		if (oldindex >= fromNumEntities) {
+			oldnum = 9999;
+		} else {
+			oldent = svs.snapshotEntities[(from.firstEntity + oldindex) % MAX_SNAPSHOT_ENTITIES];
+			oldnum = oldent.number;
+		}
+
+		if (newnum === oldnum) {
+			// Delta update from old position.
+			// Because the force parm is false, this will not result
+			// in any bytes being emited if the entity has not changed at all.
+			sh.WriteDeltaEntityState(msg, oldent, newent, false);
+			oldindex++;
+			newindex++;
+			continue;
+		}
+		
+		if (newnum < oldnum) {
+			// This is a new entity, send it from the baseline.
+			sh.WriteDeltaEntityState(msg, sv.svEntities[newnum].baseline, newent, true);
+			newindex++;
+			continue;
+		}
+
+		if (newnum > oldnum) {
+			// The old entity isn't present in the new message.
+			sh.WriteDeltaEntityState(msg, oldent, null, true);
+			oldindex++;
+			continue;
+		}
+	}
+
+	msg.writeShort(MAX_GENTITIES-1);
+}
+
+/**
+ * SendClientMessages
+ */
+function SendClientMessages() {
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (!client) {
+			continue;
+		}
+		
+		if (!client.state) {
+			continue; // not connected
+		}
+
+		if (svs.time - client.lastSnapshotTime < client.snapshotMsec) {
+			continue; // it's not time yet
+		}
+
+		SendClientSnapshot(client);
+		client.lastSnapshotTime = svs.time;
+	}
+}
+		/**
+ * ENTITY CHECKING
+ *
+ * To avoid linearly searching through lists of entities during environment testing,
+ * the world is carved up with an evenly spaced, axially aligned bsp tree.  Entities
+ * are kept in chains either at the final leafs, or at the first node that splits
+ * them, which prevents having to deal with multiple fragments of a single entity.
+ */
+
+var AREA_DEPTH = 4;
+var worldSectors;
+
+var WorldSector = function () {
+	this.axis = 0; // -1 = leaf node
+	this.dist = 0;
+	this.children = [null, null];
+	this.entities = {};
+};
+
+/**
+ * CmdSectorList
+ */
+function CmdSectorList() {
+	for (var i = 0; i < worldSectors.length; i++) {
+		var node = worldSectors[i];
+		log('sector ' + i + ': ' + _.keys(node.entities).length + ' entities');
+	}
+}
+
+/**
+ * ClearWorld
+ */
+function ClearWorld() {
+	worldSectors = [];
+
+	// get world map bounds
+	var worldModel = cm.InlineModel(0);
+	var mins = [0, 0, 0];
+	var maxs = [0, 0, 0];
+	cm.ModelBounds(worldModel, mins, maxs);
+
+	CreateWorldSector(0, mins, maxs);
+}
+
+/**
+ * CreateWorldSector
+ *
+ * Builds a uniformly subdivided tree for the given world size
+ */
+function CreateWorldSector(depth, mins, maxs) {
+	var node = worldSectors[worldSectors.length] = new WorldSector();
+
+	if (depth === AREA_DEPTH) {
+		node.axis = -1;
+		node.children[0] = node.children[1] = null;
+		return node;
+	}
+	
+	var size = vec3.subtract(maxs, mins, [0, 0, 0]);
+	if (size[0] > size[1]) {
+		node.axis = 0;
+	} else {
+		node.axis = 1;
+	}
+
+	var mins1 = vec3.set(mins, [0, 0, 0]);
+	var mins2 = vec3.set(mins, [0, 0, 0]);
+	var maxs1 = vec3.set(maxs, [0, 0, 0]);
+	var maxs2 = vec3.set(maxs, [0, 0, 0]);
+
+	node.dist = 0.5 * (maxs[node.axis] + mins[node.axis]);
+	maxs1[node.axis] = mins2[node.axis] = node.dist;
+	
+	node.children[0] = CreateWorldSector(depth+1, mins2, maxs2);
+	node.children[1] = CreateWorldSector(depth+1, mins1, maxs1);
+
+	return node;
+}
+
+/**
+ * LinkEntity
+ */
+function LinkEntity(gent) {
+	var ent = SvEntityForGentity(gent);
+
+	if (ent.worldSector) {
+		UnlinkEntity(gent);  // unlink from old position
+	}
+
+	// Encode the size into the entityState for client prediction.
+	if (gent.bmodel) {
+		gent.s.solid = SOLID_BMODEL; // a solid_box will never create this value
+	} else if (gent.contents & (CONTENTS.SOLID | CONTENTS.BODY)) {
+		// Assume that x/y are equal and symetric.
+		var i = gent.maxs[0];
+		if (i < 1) {
+			i = 1;
+		} else if (i > 255) {
+			i = 255;
+		}
+
+		// z is not symetric.
+		var j = (-gent.mins[2]);
+		if (j < 1) {
+			j = 1;
+		} else if (j > 255) {
+			j = 255;
+		}
+
+		// And z maxs can be negative...
+		var k = (gent.maxs[2] + 32);
+		if (k < 1) {
+			k = 1;
+		} else if (k > 255) {
+			k = 255;
+		}
+
+		gent.s.solid = (k << 16) | (j << 8) | i;
+	} else {
+		gent.s.solid = 0;
+	}
+
+	// Get the position.
+	var origin = gent.currentOrigin;
+	var angles = gent.currentAngles;
+
+	// Set the abs box.
+	if (gent.bmodel && (angles[0] || angles[1] || angles[2])) {
+		var max = QMath.RadiusFromBounds(gent.mins, gent.maxs);
+		for (var i = 0; i < 3; i++) {
+			gent.absmin[i] = origin[i] - max;
+			gent.absmax[i] = origin[i] + max;
+		}
+	} else {
+		// Normal
+		vec3.add(origin, gent.mins, gent.absmin);
+		vec3.add(origin, gent.maxs, gent.absmax);
+	}
+
+	// Because movement is clipped an epsilon away from an actual edge,
+	// we must fully check even when bounding boxes don't quite touch.
+	gent.absmin[0] -= 1;
+	gent.absmin[1] -= 1;
+	gent.absmin[2] -= 1;
+	gent.absmax[0] += 1;
+	gent.absmax[1] += 1;
+	gent.absmax[2] += 1;
+
+	/*// link to PVS leafs
+	ent.numClusters = 0;
+	ent.lastCluster = 0;
+	ent.areanum = -1;
+	ent.areanum2 = -1;
+
+	// get all leafs, including solids
+	num_leafs = CM_BoxLeafnums( gent.r.absmin, gent.r.absmax,
+		leafs, MAX_TOTAL_ENT_LEAFS, &lastLeaf );
+
+	// if none of the leafs were inside the map, the
+	// entity is outside the world and can be considered unlinked
+	if (!num_leafs) {
+		return;
+	}
+
+	// set areas, even from clusters that don't fit in the entity array
+	for (var i = 0; i < num_leafs; i++) {
+		var area = CM_LeafArea(leafs[i]);
+
+		if (area === -1) {
+			continue;
+		}
+
+		// doors may legally straggle two areas,
+		// but nothing should ever need more than that
+		if (ent.areanum !== -1 && ent.areanum != area) {
+			ent.areanum2 = area;
+		} else {
+			ent.areanum = area;
+		}
+	}
+
+	// store as many explicit clusters as we can
+	ent.numClusters = 0;
+
+	for (var i = 0; i < num_leafs; i++) {
+		var cluster = CM_LeafCluster(leafs[i]);
+
+		if (cluster === -1) {
+			continue;
+		}
+
+		ent.clusternums[ent.numClusters++] = cluster;
+
+		if (ent.numClusters == MAX_ENT_CLUSTERS) {
+			break;
+		}
+	}
+
+	// store off a last cluster if we need to
+	if (i !== num_leafs) {
+		ent.lastCluster = CM_LeafCluster( lastLeaf );
+	}*/
+
+	// Find the first world sector node that the ent's box crosses.
+	var node = worldSectors[0];
+
+	while (1) {
+		if (node.axis == -1) {
+			break;
+		}
+
+		if (gent.absmin[node.axis] > node.dist) {
+			node = node.children[0];
+		}
+		else if (gent.absmax[node.axis] < node.dist) {
+			node = node.children[1];
+		}
+		else {
+			break; // crosses the node
+		}
+	}
+	
+	// Link it in.
+	gent.linked = true;
+	ent.worldSector = node;
+	node.entities[gent.s.number] = ent;
+}
+
+/**
+ * UnlinkEntity
+ */
+function UnlinkEntity(gent) {
+	var ent = SvEntityForGentity(gent);
+	var node = ent.worldSector;
+
+	if (!node) {
+		return;  // not linked in anywhere
+	}
+
+	// Unlink.
+	gent.linked = false;
+	delete node.entities[gent.s.number];
+	ent.worldSector = null;
+}
+
+/**********************************************************
+ *
+ * Area query
+ *
+ * Fills in a list of all entities who's absmin / absmax
+ * intersects the given bounds. This does NOT mean that
+ * they actually touch in the case of bmodels.
+ *
+ **********************************************************/
+
+/**
+ * FindEntitiesInBox
+ */
+function FindEntitiesInBox(mins, maxs) {
+	var entityNums = [];
+
+	var FindEntitiesInBox_r = function (node) {
+		for (var num in node.entities) {
+			if (!node.entities.hasOwnProperty(num)) {
+				continue;
+			}
+
+			var ent = node.entities[num];
+			var gent = GentityForSvEntity(ent);
+			
+			if (gent.absmin[0] > maxs[0] ||
+				gent.absmin[1] > maxs[1] ||
+				gent.absmin[2] > maxs[2] ||
+				gent.absmax[0] < mins[0] ||
+				gent.absmax[1] < mins[1] ||
+				gent.absmax[2] < mins[2]) {
+				continue;
+			}
+
+			entityNums.push(gent.s.number);
+		}
+		
+		if (node.axis == -1) {
+			return; // terminal node
+		}
+
+		// Recurse down both sides.
+		if (maxs[node.axis] > node.dist) {
+			FindEntitiesInBox_r(node.children[0]);
+		}
+		if (mins[node.axis] < node.dist ) {
+			FindEntitiesInBox_r(node.children[1]);
+		}
+	};
+
+	FindEntitiesInBox_r(worldSectors[0]);
+
+	return entityNums;
+}
+
+/**********************************************************
+ *
+ * Trace through the world and entities
+ *
+ **********************************************************/
+var moveclip = function () {
+	this.boxmins       = [0, 0, 0];                        // enclose the test object along entire move
+	this.boxmaxs       = [0, 0, 0];
+	this.mins          = [0, 0, 0];
+	this.maxs          = [0, 0, 0];
+	this.start         = [0, 0, 0];
+	this.end           = [0, 0, 0];
+	this.trace         = null;
+	this.passEntityNum = 0;
+	this.contentmask   = 0;
+	this.capsule       = 0;
+};
+var clip = new moveclip();
+
+/**
+ * Trace
+ *
+ * Moves the given mins/maxs volume through the world from start to end.
+ * passEntityNum and entities owned by passEntityNum are explicitly not checked.
+ */
+function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
+	if (!mins) {
+		mins = [0, 0, 0];
+	}
+	if (!maxs) {
+		maxs = [0, 0, 0];
+	}
+
+	// Clip to world.
+	clip.trace = cm.BoxTrace(start, end, mins, maxs, 0, contentmask, capsule);
+	clip.trace.entityNum = clip.trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+	if (clip.trace.fraction === 0) {
+		return clip.trace;  // blocked immediately by the world
+	}
+
+	clip.contentmask = contentmask;
+	vec3.set(start, clip.start);
+	vec3.set(end, clip.end);
+	vec3.set(mins, clip.mins);
+	vec3.set(maxs, clip.maxs);
+	clip.passEntityNum = passEntityNum;
+	clip.capsule = capsule;
+
+	// Create the bounding box of the entire move.
+	// We can limit it to the part of the move not
+	// already clipped off by the world, which can be
+	// a significant savings for line of sight and shot traces.
+	for (var i = 0; i < 3; i++) {
+		if (end[i] > start[i]) {
+			clip.boxmins[i] = clip.start[i] + clip.mins[i] - 1;
+			clip.boxmaxs[i] = clip.end[i] + clip.maxs[i] + 1;
+		} else {
+			clip.boxmins[i] = clip.end[i] + clip.mins[i] - 1;
+			clip.boxmaxs[i] = clip.start[i] + clip.maxs[i] + 1;
+		}
+	}
+
+	// Clip to other solid entities.
+	ClipMoveToEntities(clip);
+
+	return clip.trace;
+}
+
+/**
+ * ClipMoveToEntities
+ */
+function ClipMoveToEntities(clip) {
+	var origin = [0, 0, 0];
+	var angles = [0, 0, 0];
+	var passOwnerNum = -1;
+
+	var touchlist = FindEntitiesInBox(clip.boxmins, clip.boxmaxs);
+
+	if (clip.passEntityNum !== ENTITYNUM_NONE) {
+		passOwnerNum = (GentityForNum(clip.passEntityNum)).ownerNum;
+		if (passOwnerNum === ENTITYNUM_NONE) {
+			passOwnerNum = -1;
+		}
+	}
+
+	for (var i = 0; i < touchlist.length; i++) {
+		if (clip.trace.allSolid) {
+			return;
+		}
+
+		var touch = GentityForNum(touchlist[i]);
+
+		// See if we should ignore this entity.
+		if (clip.passEntityNum !== ENTITYNUM_NONE) {
+			if (touchlist[i] === clip.passEntityNum) {
+				continue;  // don't clip against the pass entity
+			}
+			if (touch.ownerNum === clip.passEntityNum) {
+				continue;  // don't clip against own missiles
+			}
+			if (touch.ownerNum === passOwnerNum) {
+				continue;  // don't clip against other missiles from our owner
+			}
+		}
+
+		// If it doesn't have any brushes of a type we
+		// are looking for, ignore it.
+		if (!(clip.contentmask & touch.contents)) {
+			continue;
+		}
+
+		// Might intersect, so do an exact clip.
+		var clipHandle = ClipHandleForEntity(touch);
+
+		vec3.set(touch.currentOrigin, origin);
+		vec3.set(touch.currentAngles, angles);
+		if (!touch.bmodel) {
+			angles[0] = angles[1] = angles[2] = 0;  // boxes don't rotate
+		}
+
+		var trace = cm.TransformedBoxTrace(clip.start, clip.end, clip.mins, clip.maxs,
+			clipHandle, clip.contentmask, origin, angles, clip.capsule);
+
+		if (trace.allSolid) {
+			clip.trace.allSolid = true;
+			trace.entityNum = touch.s.number;
+		} else if (trace.startSolid) {
+			clip.trace.startSolid = true;
+			trace.entityNum = touch.s.number;
+		}
+
+		if (trace.fraction < clip.trace.fraction) {
+			// Make sure we keep a startSolid from a previous trace.
+			var oldStart = clip.trace.startSolid;
+
+			trace.entityNum = touch.s.number;
+			clip.trace = trace;
+			clip.trace.startSolid |= oldStart;
+		}
+	}
+}
+
+/**
+ * ClipHandleForEntity
+ *
+ * Returns a headnode that can be used for testing or clipping to a
+ * given entity. If the entity is a bsp model, the headnode will
+ * be returned, otherwise a custom box tree will be constructed.
+ */
+function ClipHandleForEntity(ent) {
+	if (ent.bmodel) {
+		// Explicit hulls in the BSP model.
+		return cm.InlineModel(ent.s.modelIndex);
+	}
+	// if (ent.svFlags & gm.SVF.CAPSULE) {
+	// 	// Create a temp capsule from bounding box sizes.
+	// 	return cm.TempBoxModel(ent.mins, ent.maxs, true);
+	// }
+
+	// Create a temp tree from bounding box sizes.
+	return cm.TempBoxModel(ent.mins, ent.maxs, false);
+}
+
+
+		return {
+			Init:             Init,
+			Frame:            Frame,
+			PacketEvent:      PacketEvent,
+			SocketClosed:     SocketClosed
+		};
+	}
+
+	return {
+		CreateInstance: function (imp) {
+			return new Server(imp);
+		}
+	};
+});
+
+/*global vec3: true, mat4: true */
+
+define('cgame/cg',
+['underscore', 'glmatrix', 'common/qmath', 'common/sh', 'game/bg'],
+function (_, glmatrix, QMath, sh, bg) {
+	function CGame(imp) {
+		var sys = imp.sys;
+		var com = imp.com;
+		var cl  = imp.cl;
+		var re  = imp.re;
+		var snd = imp.snd;
+		var ui  = imp.ui;
+
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums,
+			com.enums,
+			bg.constants,
+			bg.enums,
+			re.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
+
+		var DEFAULT_MODEL = 'sarge';
+
+var MAX_LOCAL_ENTITIES   = 512;
+
+var PAIN_TWITCH_TIME = 200;
+
+var FOOTSTEP = {
+	NORMAL: 0,
+	BOOT:   1,
+	FLESH:  2,
+	MECH:   3,
+	ENERGY: 4,
+	METAL:  5,
+	SPLASH: 6,
+	TOTAL:  7
+};
+
+var IMPACTSOUND = {
+	DEFAULT: 0,
+	METAL:   1,
+	FLESH:   2
+};
+
+var ClientGame = function () {
+	this.initialized           = false;
+	this.frameInterpolation    = 0;                        // (float)( cg.time - cg.frame->serverTime ) / (cg.nextFrame->serverTime - cg.frame->serverTime)
+
+	this.renderingThirdPerson  = false;
+	this.thisFrameTeleport     = false;
+	this.nextFrameTeleport     = false;
+	this.time                  = 0;                        // this is the time value that the client is rendering at.
+	this.oldTime               = 0;                        // time at last frame, used for missile trails and prediction checking
+	this.frameTime             = 0;                        // cg.time - cg.oldTime
+	this.physicsTime           = 0;                        // either cg.snap->time or cg.nextSnap->time
+	this.latestSnapshotNum     = 0;                        // the number of snapshots the client system has received
+	this.latestSnapshotTime    = 0;                        // the time from latestSnapshotNum, so we don't need to read the snapshot yet
+	this.snap                  = null;                     // cg.snap->serverTime <= cg.time
+	this.nextSnap              = null;                     // cg.nextSnap->serverTime > cg.time, or NULL
+	this.entities              = new Array(MAX_GENTITIES);
+
+	//
+	this.pmove                 = new bg.PmoveInfo();
+	this.solidEntities         = [];
+	this.numSolidEntities      = 0;
+	this.triggerEntities       = [];
+	this.numTriggerEntities    = 0;
+	
+	// prediction state
+	this.hyperspace            = false;                    // true if prediction has hit a trigger_teleport
+	this.validPPS              = false;
+	this.predictedErrorTime    = 0;
+	this.predictedError        = [0, 0, 0];
+	this.predictedPlayerState  = new sh.PlayerState();
+	this.predictedPlayerEntity = new ClientEntity();
+
+	// item resource info
+	this.itemInfo              = [];
+	this.weaponInfo            = [];                       // indexed by weapon num
+
+	// input state sent to server
+	this.weaponSelect          = 0;
+
+	// auto rotating items
+	this.autoAngles            = [0, 0, 0];
+	this.autoAnglesFast        = [0, 0, 0];
+
+	// view rendering
+	this.refdef                = new re.RefDef();
+	this.refdefViewAngles      = [0, 0 ,0];                // will be converted to refdef.viewaxis
+
+	// scoreboard
+	this.showScores            = false;
+
+	// local entities
+	this.localEntities         = null;
+	this.activeLocalEntities   = null;                     // double linked list
+	this.freeLocalEntities     = null;                     // single linked list
+
+	// temp working variables for player view
+	this.bobCycle              = 0;
+	this.bobFracSin            = 0;
+	this.xyspeed               = 0;
+
+	for (var i = 0; i < MAX_GENTITIES; i++) {
+		this.entities[i] = new ClientEntity();
+	}
+};
+
+var ClientGameStatic = function () {
+	this.gameState            = null;
+	this.mapname              = null;
+	this.processedSnapshotNum = 0;               // the number of snapshots cgame has requested
+
+	// locally derived information from gamestate
+	this.clientinfo           = new Array(MAX_CLIENTS);
+	this.media                = {};
+
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		this.clientinfo[i] = new ClientInfo();
+	}
+};
+
+/**
+ * Player entities need to track more information
+ * than any other type of entity.
+ *
+ * Note that not every player entity is a client entity,
+ * because corpses after respawn are outside the normal
+ * client numbering range.
+
+ * When changing animation, set animationTime to frameTime + lerping time.
+ * The current lerp will finish out, then it will lerp to the new animation.
+*/
+var PlayerEntity = function () {
+	this.legs            = new LerpFrame();
+	this.torso           = new LerpFrame();
+	this.flag            = new LerpFrame();
+	this.painTime        = 0;
+	this.painDirection   = 0;                              // flip from 0 to 1
+	this.lightningFiring = false;
+
+	this.railFireTime    = 0;
+
+	// Machinegun spinning.
+	this.barrelAngle     = 0.0;
+	this.barrelTime      = 0;
+	this.barrelSpinning  = false;
+};
+
+var LerpFrame = function () {
+	this.oldFrame        = 0;
+	this.oldFrameTime    = 0;                              // time when ->oldFrame was exactly on
+
+	this.frame           = 0;
+	this.frameTime       = 0;                              // time when ->frame will be exactly on
+
+	this.backlerp        = 0.0;
+
+	this.yawAngle        = 0.0;
+	this.yawing          = false;
+	this.pitchAngle      = 0.0;
+	this.pitching        = false;
+
+	this.animationNumber = 0;
+	this.animation       = null;
+	this.animationTime   = 0;
+};
+
+// ClientEntity have a direct corespondence with GameEntity in the game, but
+// only the EntityState is directly communicated to the cgame.
+var ClientEntity =  function () {
+	this.currentState  = new sh.EntityState();             // from cg.frame
+	this.nextState     = new sh.EntityState();             // from cg.nextFrame, if available
+	this.interpolate   = false;                            // true if next is valid to interpolate to
+	this.currentValid  = false;                            // true if cg.frame holds this entity
+
+	// int  muzzleFlashTime;  // move to playerEntity?
+	this.previousEvent = 0;
+	// int  teleportFlag;
+
+	this.trailTime     = 0;                                // so missile trails can handle dropped initial packets
+	// int  dustTrailTime;
+	this.miscTime      = 0;
+
+	this.snapshotTime  = 0;                                // last time this entity was found in a snapshot
+
+	this.pe            = new PlayerEntity();
+	/*
+	int    errorTime;  // decay the error from this time
+	vec3_t errorOrigin;
+	vec3_t errorAngles;
+	*/
+	
+	this.extrapolated  = false;                            // false if origin / angles is an interpolation
+	this.rawOrigin     = [0, 0, 0];
+	this.rawAngles     = [0, 0, 0];
+
+	// Exact interpolated position of entity on this frame.
+	this.lerpOrigin    = [0, 0, 0];
+	this.lerpAngles    = [0, 0, 0];
+};
+
+
+/**********************************************************
+ *
+ * Local entities are created as a result of events or
+ * predicted actions, and live independantly from all
+ * server transmitted entities
+ *
+ **********************************************************/
+
+// typedef struct markPoly_s {
+// 	struct markPoly_s	*prevMark, *nextMark;
+// 	int			time;
+// 	qhandle_t	markShader;
+// 	qboolean	alphaFade;		// fade alpha instead of rgb
+// 	float		color[4];
+// 	poly_t		poly;
+// 	polyVert_t	verts[MAX_VERTS_ON_POLY];
+// } markPoly_t;
+
+var LE = {
+	MARK:             0,
+	EXPLOSION:        1,
+	SPRITE_EXPLOSION: 2,
+	FRAGMENT:         3,
+	MOVE_SCALE_FADE:  4,
+	FALL_SCALE_FADE:  5,
+	FADE_RGB:         6,
+	SCALE_FADE:       7,
+	SCOREPLUM:        8
+};
+
+var LEF = {
+	PUFF_DONT_SCALE: 0x0001,                               // do not scale size over time
+	TUMBLE:          0x0002,                               // tumble over time, used for ejecting shells
+	SOUND1:          0x0004,                               // sound 1 for kamikaze
+	SOUND2:          0x0008                                // sound 2 for kamikaze
+};
+
+// Fragment local entities can leave marks on walls.
+var LEMT = {
+	NONE:  0,
+	BURN:  1,
+	BLOOD: 2
+};
+
+// Fragment local entities can make sounds on impacts.
+var LEBS = {
+	NONE:  0,
+	BLOOD: 1,
+	BRASS: 2
+};
+
+var LocalEntity = function () {
+	this.reset();
+};
+
+LocalEntity.prototype.reset = function () {
+	this.prev              = null;
+	this.next              = null;
+	this.leType            = 0;
+	this.leFlags           = 0;
+
+	this.startTime         = 0;
+	this.endTime           = 0;
+	this.fadeInTime        = 0;
+
+	this.lifeRate          = 0;                            // 1.0 / (endTime - startTime)
+
+	this.pos               = new sh.Trajectory();
+	this.angles            = new sh.Trajectory();
+
+	this.bounceFactor      = 0;                            // 0.0 = no bounce, 1.0 = perfect
+	this.color             = [0, 0, 0, 0];
+	this.radius            = 0;
+	this.light             = 0;
+	this.lightColor        = [0, 0, 0];
+	this.leMarkType        = 0;                            // mark to leave on fragment impact
+	this.leBounceSoundType = 0;
+
+	this.refent            = new re.RefEntity();
+};
+
+/**********************************************************
+ *
+ * Entity info
+ *
+ **********************************************************/
+var ClientInfo = function () {
+	this.reset();
+};
+
+ClientInfo.prototype.reset = function () {
+	this.infoValid     = false;
+	this.name          = null;
+
+	// When clientinfo is changed, the loading of models/skins/sounds
+	// can be deferred until you are dead, to prevent hitches in
+	// gameplay.
+	this.modelName     = null;
+	this.skinName      = null;
+	this.headModelName = null;
+	this.headSkinName  = null;
+
+	this.fixedlegs     = false;		// true if legs yaw is always the same as torso yaw
+	this.fixedtorso    = false;		// true if torso never changes yaw
+
+	// footstep_t footsteps;
+	// gender_t gender;  // from model
+
+	this.legsModel     = -1;
+	this.legsSkin      = -1;
+
+	this.torsoModel    = -1;
+	this.torsoSkin     = -1;
+
+	this.headModel     = -1;
+	this.headSkin      = -1;
+
+	this.animations    = new Array(ANIM.MAX_TOTALANIMATIONS);
+	this.sounds        = new Array(customSoundNames.length);
+
+	for (var i = 0; i < ANIM.MAX_TOTALANIMATIONS; i++) {
+		this.animations[i] = new bg.Animation();
+	}
+};
+
+var ItemInfo = function () {
+	this.modelHandles = [];
+	this.icon         = -1;
+};
+
+// Each WP.* weapon enum has an associated WeaponInfo that
+// contains media references necessary to present the
+// weapon and its effects.
+var WeaponInfo = function () {
+	//gitem_t			*item;
+
+	this.handsModel     = null;  // the hands don't actually draw, they just position the weapon
+	this.weaponModel    = null;
+	this.barrelModel    = null;
+	this.flashModel     = null;
+
+	this.weaponMidpoint = [0, 0, 0];		// so it will rotate centered instead of by tag
+
+	// this.flashDlight      = 0;
+	// this.flashDlightColor = [0, 0, 0];
+	this.flashSound     = [0, 0, 0, 0];		// fast firing weapons randomly choose
+
+	this.weaponIcon     = 0;
+	this.ammoIcon       = 0;
+
+	this.ammoModel      = 0;
+
+	this.missileModel   = 0;
+	this.missileSound   = 0;
+	this.missileTrailFunc   = null;
+	// this.missileDlight      = 0;
+	// this.missileDlightColor = [0, 0, 0];
+	// this.missileRenderfx    = 0;
+
+	// this.ejectBrassFunc     = null;
+
+	this.trailRadius        = 0;
+	this.trailTime        = 0;
+
+	this.readySound     = 0;
+	this.firingSound    = 0;
+};
+		var cg,
+	cgs,
+	cg_hud;
+
+var cg_fov,
+	cg_errordecay,
+	cg_nopredict,
+	cg_showmiss,
+	cg_thirdPerson,
+	cg_thirdPersonAngle,
+	cg_thirdPersonRange,
+	cg_railTrailTime;
+
+/**
+ * log
+ */
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, 'CG:');
+	Function.apply.call(console.log, console, args);
+}
+
+/**
+ * error
+ */
+function error(str) {
+	com.error(ERR.DROP, str);
+}
+
+/**
+ * Init
+ */
+function Init(serverMessageNum, serverCommandSequence, clientNum) {
+	log('Initializing', serverMessageNum, serverCommandSequence, clientNum);
+
+	cg  = new ClientGame();
+	cg.clientNum = clientNum;
+
+	cgs = new ClientGameStatic();
+	cgs.processedSnapshotNum = serverMessageNum;
+	cgs.serverCommandSequence = serverCommandSequence;
+	cgs.gameState = cl.GetGameState();
+
+	cg_fov              = com.AddCvar('cg_fov',              110, CVF.ARCHIVE);
+	cg_errordecay       = com.AddCvar('cg_errordecay',       100, CVF.ARCHIVE);
+	cg_nopredict        = com.AddCvar('cg_nopredict',        0,   CVF.ARCHIVE);
+	cg_showmiss         = com.AddCvar('cg_showmiss',         1,   CVF.ARCHIVE);
+	cg_thirdPerson      = com.AddCvar('cg_thirdPerson',      0,   CVF.ARCHIVE);
+	cg_thirdPersonAngle = com.AddCvar('cg_thirdPersonAngle', 0);
+	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
+	cg_railTrailTime    = com.AddCvar('cg_railTrailTime',    1000, CVF.CHEAT);
+
+	cg_hud = ui.GetView('hud');
+
+	RegisterCommands();
+	ParseServerinfo();
+
+	cm.LoadMap(cgs.mapname, function () {
+		re.LoadMap(cgs.mapname, function () {
+			// The renderer uses our clipmap data to build the buffers.
+			re.BuildCollisionBuffers();
+
+			RegisterSounds();
+			RegisterGraphics();
+			RegisterClients();
+			InitLocalEntities();
+			StartMusic();
+
+			cg.initialized = true;
+		});
+	});
+}
+
+/**
+ * Shutdown
+ */
+function Shutdown() {
+	log('Shutting down');
+}
+
+/**
+ * Frame
+ */
+function Frame(serverTime) {
+	if (!cg.initialized) {
+		return;
+	}
+	
+	cg.time = serverTime;
+	
+	ProcessSnapshots();
+
+	if (!cg.snap || (cg.snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
+		//CG_DrawInformation();
+		return;
+	}
+
+	// Let the client system know our weapon.
+	cl.SetUserCmdValue('weapon', cg.weaponSelect);
+
+	// Predicate our local playerstate.
+	PredictPlayerState();
+
+	// Decide on third person view.
+	cg.renderingThirdPerson = cg_thirdPerson() || cg.snap.ps.pm_type === PM.DEAD;
+	
+	// Calculate view origin and axis.
+	CalcViewValues();
+	cg.refdef.time = cg.time;
+
+	// Add network and local entities to the scene.
+	if (!cg.hyperspace) {
+		AddPacketEntities();
+		AddLocalEntities();
+	}
+	AddViewWeapon(cg.predictedPlayerState);
+
+	// Update audio positions.
+	snd.Respatialize(cg.snap.ps.clientNum, cg.refdef.vieworg, cg.refdef.viewaxis/*, inwater*/);
+
+	cg.frameTime = cg.time - cg.oldTime;
+	if (cg.frametime < 0) {
+		cg.frametime = 0;
+	}
+	cg.oldTime = cg.time;
+	
+	// Issue rendering calls.
+	re.RenderScene(cg.refdef);
+
+	// All Draw* calls just prep the cg_hud viewmodel,
+	// which is finally rendered with ui.Render() in cl-main.
+	DrawRenderCounts();
+	DrawHealth();
+	DrawArmor();
+	DrawAmmo();
+	DrawWeaponSelect();
+	ui.RenderView(cg_hud);
+
+	// if (cg.showScores === true) {
+	// 	var players = [
+	// 		{ name: 'Player 1' }
+	// 	];
+
+	// 	ui.RenderView('scoreboard');
+	// }
+}
+
+/**
+ * RegisterSounds
+ */
+function RegisterSounds() {
+	cgs.media.jumpPadSound = snd.RegisterSound('sound/world/jumppad');
+}
+
+/**
+ * RegisterGraphics
+ */
+function RegisterGraphics() {
+	for (var i = 0; i < bg.ItemList.length; i++) {
+		RegisterItemVisuals(i);
+	}
+
+	cgs.media.bulletFlashModel = re.RegisterModel('models/weaphits/bullet.md3');
+	cgs.media.ringFlashModel = re.RegisterModel('models/weaphits/ring02.md3');
+	cgs.media.dishFlashModel = re.RegisterModel('models/weaphits/boom01.md3');
+	cgs.media.smokePuffShader = re.RegisterShader('smokePuff');
+
+	cgs.media.bloodExplosionShader = re.RegisterShader('bloodExplosion');
+}
+
+/**
+ * RegisterItemVisuals
+ */
+function RegisterItemVisuals(itemNum) {
+	var gitem = bg.ItemList[itemNum];
+	var itemInfo = cg.itemInfo[itemNum];
+
+	if (!gitem || itemInfo) {
+		return;
+	}
+
+	itemInfo = cg.itemInfo[itemNum] = new ItemInfo();
+
+	for (var i = 0; i < gitem.models.length; i++) {
+		itemInfo.modelHandles[i] = re.RegisterModel(gitem.models[i]);
+	}
+	itemInfo.icon = ui.RegisterImage(gitem.icon);
+
+	if (gitem.giType === IT.WEAPON) {
+		RegisterWeapon(gitem);
+	}
+}
+
+/**
+ * RegisterClients
+ */
+function RegisterClients() {
+	NewClientInfo(cg.clientNum);
+
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		if (cg.clientNum === i) {
+			continue;
+		}
+
+		var cs = ConfigString('player' + i);
+
+		if (!cs) {
+			continue;
+		}
+
+		NewClientInfo(i);
+	}
+}
+
+/**
+ * ConfigString
+ */
+function ConfigString(key) {
+	return cgs.gameState[key];
+}
+
+/**
+ * StartMusic
+ */
+function StartMusic() {
+	// // Start the background music.
+	// s = (char *)CG_ConfigString( CS_MUSIC );
+	// Q_strncpyz( parm1, COM_Parse( &s ), sizeof( parm1 ) );
+	// Q_strncpyz( parm2, COM_Parse( &s ), sizeof( parm2 ) );
+
+	snd.StartBackgroundTrack(snd.RegisterSound('music/sonic5'), true);
+}
+
+		/**
+ * RegisterCommands
+ */
+function RegisterCommands() {
+	com.AddCmd('+scores',  CmdScoresDown);
+	com.AddCmd('-scores',  CmdScoresUp);
+	com.AddCmd('weapnext', CmdNextWeapon);
+	com.AddCmd('weapprev', CmdPrevWeapon);
+	com.AddCmd('weapon',   CmdWeapon);
+}
+
+/**
+ * CmdScoresDown
+ */
+function CmdScoresDown() {
+	cg.showScores = true;
+}
+
+/**
+ * CmdScoresUp
+ */
+function CmdScoresUp() {
+	cg.showScores = false;
+}
+		var FPS_FRAMES    = 4;
+var previousTimes = new Array(FPS_FRAMES);
+var previousTime  = 0;
+var previousIdx   = 0;
+
+/**
+ * DrawRenderCounts
+ */
+function DrawRenderCounts() {
+	// We calculate FPS on the client.
+	var t = sys.GetMilliseconds();
+	var frameTime = t - previousTime;
+	previousTime = t;
+
+	previousTimes[previousIdx % FPS_FRAMES] = frameTime;
+	previousIdx++;
+
+	if (previousIdx > FPS_FRAMES) {
+		// Average multiple frames together to smooth changes out a bit.
+		var total = 0;
+
+		for (var i = 0; i < FPS_FRAMES; i++) {
+			total += previousTimes[i];
+		}
+
+		if (!total) {
+			total = 1;
+		}
+
+		cg_hud.setFPS(parseInt(1000 * FPS_FRAMES / total, 10));
+	}
+
+	// Grab everything else from the renderer.
+	var counts = re.GetCounts();
+	cg_hud.setCounts({
+		shaders: counts.shaders,
+		vertexes: counts.vertexes,
+		indexes: counts.indexes,
+		culledFaces: counts.culledFaces,
+		culledModelOut: counts.culledModelOut,
+		culledModelIn: counts.culledModelIn,
+		culledModelClip: counts.culledModelClip
+	});
+}
+
+/**
+ * DrawWeaponSelect
+ */
+var currentWeaponInfo = [];
+function DrawWeaponSelect() {
+	var bits = cg.snap.ps.stats[STAT.WEAPONS];
+	
+	for (var i = 1; i < MAX_WEAPONS; i++) {
+		if (!(bits & (1 << i))) {
+			currentWeaponInfo[i] = null;
+			continue;
+		}
+
+		currentWeaponInfo[i] = cg.weaponInfo[i];
+	}
+
+	cg_hud.setWeapons(currentWeaponInfo, cg.weaponSelect);
+}
+
+/**
+ * DrawAmmo
+ */
+function DrawAmmo() {
+	
+	cg_hud.setAmmo(cg.snap.ps.ammo);
+}
+
+/**
+ * DrawArmor
+ */
+function DrawArmor() {
+	
+	cg_hud.setArmor(cg.snap.ps.stats[STAT.ARMOR]);
+}
+
+/**
+ * DrawHealth
+ */
+function DrawHealth() {
+	
+	cg_hud.setHealth(cg.snap.ps.stats[STAT.HEALTH]);
+}
+
+		/**
+ * MakeExplosion
+ */
+function MakeExplosion(origin, dir, hModel, shader, msec, isSprite) {
+	if (msec <= 0) {
+		error('MakeExplosion: msec = ', msec);
+	}
+
+	var le = AllocLocalEntity();
+	var newOrigin = [0, 0, 0];
+	// Skew the time a bit so they aren't all in sync.
+	var offset = Math.floor(Math.random()*64);
+
+	if (isSprite) {
+		le.leType = LE.SPRITE_EXPLOSION;
+
+		// Randomly rotate sprite orientation.
+		le.refent.rotation = Math.floor(Math.random()*360);
+		var tmpVec = vec3.scale(dir, 16, [0, 0, 0]);
+		vec3.add(tmpVec, origin, newOrigin);
+	} else {
+		le.leType = LE.EXPLOSION;
+		vec3.set(origin, newOrigin);
+
+		// Set axis with random rotate.
+		if (!dir) {
+			QMath.AxisClear(le.refent.axis);
+		} else {
+			var axis = le.refent.axis;
+			vec3.set(dir, axis[0]);
+			QMath.PerpendicularVector(axis[0], axis[1]);
+			vec3.cross(axis[0], axis[1], axis[2]);
+			// TODO Use this to generate axis[1] and axis[2]
+			// rotated by ang.
+			// var ang = Math.floor(Math.random()*360);
+			// RotateAroundDirection(le.refent.axis, ang);
+		}
+	}
+
+	le.startTime = cg.time - offset;
+	le.endTime = le.startTime + msec;
+
+	// Bias the time so all shader effects start correctly.
+	le.refent.shaderTime = le.startTime / 1000;
+
+	le.refent.hModel = hModel;
+	le.refent.customShader = shader;
+
+	// Set origin.
+	vec3.set(newOrigin, le.refent.origin);
+	vec3.set(newOrigin, le.refent.oldOrigin);
+
+	le.color[0] = le.color[1] = le.color[2] = 1.0;
+
+	return le;
+}
+
+/**
+ * SmokePuff
+ * 
+ * Adds a smoke puff or blood trail localEntity.
+ */
+function SmokePuff(p, vel,
+	               radius,
+	               r, g, b, a,
+	               duration,
+	               startTime,
+	               fadeInTime,
+	               leFlags,
+	               hShader) {
+	// static int	seed = 0x92;
+	var le = AllocLocalEntity();
+	le.leFlags = leFlags;
+	le.radius = radius;
+
+	var refent = le.refent;
+	refent.rotation = Math.random() * 360; //Q_random( &seed ) * 360;
+	refent.radius = radius;
+	refent.shaderTime = startTime / 1000;
+
+	le.leType = LE.SCALE_FADE;
+	le.startTime = startTime;
+	le.fadeInTime = fadeInTime;
+	le.endTime = startTime + duration;
+	if (fadeInTime > startTime) {
+		le.lifeRate = 1.0 / (le.endTime - le.fadeInTime);
+	} else {
+		le.lifeRate = 1.0 / (le.endTime - le.startTime);
+	}
+	le.color[0] = r;
+	le.color[1] = g; 
+	le.color[2] = b;
+	le.color[3] = a;
+
+	le.pos.trType = TR.LINEAR;
+	le.pos.trTime = startTime;
+	vec3.set(vel, le.pos.trDelta);
+	vec3.set(p, le.pos.trBase);
+
+	vec3.set(p, refent.origin);
+	refent.customShader = hShader;
+
+	refent.shaderRGBA[0] = le.color[0] * 0xff;
+	refent.shaderRGBA[1] = le.color[1] * 0xff;
+	refent.shaderRGBA[2] = le.color[2] * 0xff;
+	refent.shaderRGBA[3] = 0xff;
+
+	refent.reType = RT.SPRITE;
+	refent.radius = le.radius;
+
+	return le;
+}
+
+/**
+ * Bleed
+ * 
+ * This is the spurt of blood when a character gets hit
+ */
+function Bleed(origin, entityNum) {
+	// if ( !cg_blood.integer ) {
+	// 	return;
+	// }
+
+	var le = AllocLocalEntity();
+	le.leType = LE.EXPLOSION;
+
+	le.startTime = cg.time;
+	le.endTime = le.startTime + 500;
+
+	vec3.set(origin, le.refent.origin);
+	le.refent.reType = RT.SPRITE;
+	le.refent.rotation = Math.floor(Math.random() * 360);
+	le.refent.radius = 24;
+	le.refent.customShader = cgs.media.bloodExplosionShader;
+
+	// Don't show player's own blood in view.
+	if (entityNum === cg.snap.ps.clientNum) {
+		le.refent.renderfx |= RF.THIRD_PERSON;
+	}
+}
+		/**
+ * AddPacketEntities
+ */
+function AddPacketEntities() {
+	// Set cg.frameInterpolation.
+	if (cg.nextSnap) {
+		var delta = (cg.nextSnap.serverTime - cg.snap.serverTime);
+		if (delta === 0) {
+			cg.frameInterpolation = 0;
+		} else {
+			cg.frameInterpolation = (cg.time - cg.snap.serverTime) / delta;
+		}
+	} else {
+		cg.frameInterpolation = 0;  // actually, it should never be used, because 
+		                            // no entities should be marked as interpolating
+	}
+
+	// The auto-rotating items will all have the same axis.
+	cg.autoAngles[0] = 0;
+	cg.autoAngles[1] = ( cg.time & 2047 ) * 360 / 2048.0;
+	cg.autoAngles[2] = 0;
+
+	cg.autoAnglesFast[0] = 0;
+	cg.autoAnglesFast[1] = ( cg.time & 1023 ) * 360 / 1024.0;
+	cg.autoAnglesFast[2] = 0;
+
+	// Generate and add the entity from the playerstate.
+	var ps = cg.predictedPlayerState;
+	bg.PlayerStateToEntityState(ps, cg.predictedPlayerEntity.currentState);
+	AddCEntity(cg.predictedPlayerEntity);
+
+	// Lerp the non-predicted value for lightning gun origins.
+	CalcEntityLerpPositions(cg.entities[cg.snap.ps.clientNum]);
+
+	// add each entity sent over by the server
+	for (var i = 0; i < cg.snap.numEntities; i++) {
+		var cent = cg.entities[cg.snap.entities[i].number];
+		AddCEntity(cent);
+	}
+}
+
+/**
+ * AddCEntity
+ */
+function AddCEntity(cent) {
+	// Event-only entities will have been dealt with already.
+	if (cent.currentState.eType >= ET.EVENTS) {
+		return;
+	}
+	
+	// Calculate the current origin.
+	CalcEntityLerpPositions(cent);
+
+	// Add automatic effects.
+	EntityEffects(cent);
+
+	switch (cent.currentState.eType) {
+		case ET.ITEM:
+			AddItem(cent);
+			break;
+
+		case ET.MISSILE:
+			AddMissile(cent);
+			break;
+
+		case ET.PLAYER:
+			AddPlayer(cent);
+			break;
+	}
+
+	/*switch ( cent.currentState.eType ) {
+	default:
+		CG_Error( "Bad entity type: %i", cent.currentState.eType );
+		break;
+	case ET.INVISIBLE:
+	case ET.PUSH_TRIGGER:
+	case ET.TELEPORT_TRIGGER:
+		break;
+	case ET.GENERAL:
+		CG_General( cent );
+		break;
+	case ET.PLAYER:
+		CG_Player( cent );
+		break;
+	case ET.ITEM:
+		CG_Item( cent );
+		break;
+	case ET.MISSILE:
+		CG_Missile( cent );
+		break;
+	case ET.MOVER:
+		CG_Mover( cent );
+		break;
+	case ET.BEAM:
+		CG_Beam( cent );
+		break;
+	case ET.PORTAL:
+		CG_Portal( cent );
+		break;
+	case ET.SPEAKER:
+		CG_Speaker( cent );
+		break;
+	case ET.GRAPPLE:
+		CG_Grapple( cent );
+		break;
+	case ET.TEAM:
+		CG_TeamBase( cent );
+		break;
+	}*/
+}
+
+/**
+ * PositionEntityOnTag
+ *
+ * Modifies the entities position and axis by the given
+ * tag location.
+ */
+// function PositionEntityOnTag(refent, parent, parentModel, tagName) {
+// 	int				i;
+// 	orientation_t	lerped;
+	
+// 	// Lerp the tag.
+// 	trap_R_LerpTag( &lerped, parentModel, parent.oldframe, parent.frame,
+// 		1.0 - parent.backlerp, tagName );
+
+// 	// FIXME: allow origin offsets along tag?
+// 	VectorCopy( parent.origin, entity.origin );
+// 	for ( i = 0 ; i < 3 ; i++ ) {
+// 		VectorMA( entity.origin, lerped.origin[i], parent.axis[i], entity.origin );
+// 	}
+
+// 	// had to cast away the const to avoid compiler problems...
+// 	MatrixMultiply( lerped.axis, ((refEntity_t *)parent).axis, entity.axis );
+// 	entity.backlerp = parent.backlerp;
+// }
+
+/**
+ * PositionRotatedEntityOnTag
+ * 
+ * Modifies the entities position and axis by the given
+ * tag location.
+ */
+function PositionRotatedEntityOnTag(refent, parent, parentModel, tagName) {
+	// Lerp the tag.
+	var lerped = new sh.Orientation();
+	re.LerpTag(lerped, parentModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, tagName);
+
+	// FIXME: allow origin offsets along tag?
+	var t = [0, 0, 0];
+
+	vec3.set(parent.origin, refent.origin);
+	for (var i = 0; i < 3; i++) {
+		vec3.add(refent.origin, vec3.scale(parent.axis[i], lerped.origin[i], t));
+	}
+
+	// had to cast away the const to avoid compiler problems...
+	var tempAxis = [
+		[0, 0, 0],
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+
+	QMath.AxisMultiply(refent.axis, lerped.axis, tempAxis);
+	QMath.AxisMultiply(tempAxis, parent.axis, refent.axis);
+}
+
+/**
+ * CalcEntityLerpPositions
+ */
+function CalcEntityLerpPositions(cent) {
+	// Make sure the clients use TR.INTERPOLATE.
+	if (cent.currentState.number < MAX_CLIENTS) {
+		cent.currentState.pos.trType = TR.INTERPOLATE;
+		cent.nextState.pos.trType = TR.INTERPOLATE;
+	}
+
+	if (cent.interpolate && cent.currentState.pos.trType === TR.INTERPOLATE) {
+		InterpolateEntityPosition(cent);
+		return;
+	}
+
+	// First see if we can interpolate between two snaps for
+	// linear extrapolated clients
+	if (cent.interpolate &&
+		cent.currentState.pos.trType === TR.LINEAR_STOP &&
+		cent.currentState.number < MAX_CLIENTS) {
+		InterpolateEntityPosition(cent);
+		return;
+	}
+
+	// Just use the current frame and evaluate as best we can
+	bg.EvaluateTrajectory(cent.currentState.pos, cg.time, cent.lerpOrigin);
+	bg.EvaluateTrajectory(cent.currentState.apos, cg.time, cent.lerpAngles);
+
+	// adjust for riding a mover if it wasn't rolled into the predicted
+	// player state
+	/*if ( cent != &cg.predictedPlayerEntity ) {
+		CG_AdjustPositionForMover( cent.lerpOrigin, cent.currentState.groundEntityNum, 
+		cg.snap.serverTime, cg.time, cent.lerpOrigin, cent.QMath.LerpAngles, cent.QMath.LerpAngles);
+	}*/
+}
+
+/**
+ * InterpolateEntityPosition
+ */
+function InterpolateEntityPosition(cent) {
+	// It would be an internal error to find an entity that interpolates without
+	// a snapshot ahead of the current one
+	if (!cg.nextSnap) {
+		error('InterpoateEntityPosition: !cg.nextSnap');
+	}
+
+	var f = cg.frameInterpolation;
+
+	// This will linearize a sine or parabolic curve, but it is important
+	// to not extrapolate player positions if more recent data is available
+	var current = [0, 0, 0];
+	var next = [0, 0, 0];
+
+	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, current);
+	bg.EvaluateTrajectory(cent.nextState.pos, cg.nextSnap.serverTime, next);
+
+	cent.lerpOrigin[0] = current[0] + f * (next[0] - current[0]);
+	cent.lerpOrigin[1] = current[1] + f * (next[1] - current[1]);
+	cent.lerpOrigin[2] = current[2] + f * (next[2] - current[2]);
+
+	bg.EvaluateTrajectory(cent.currentState.apos, cg.snap.serverTime, current);
+	bg.EvaluateTrajectory(cent.nextState.apos, cg.nextSnap.serverTime, next);
+
+	cent.lerpAngles[0] = QMath.LerpAngle(current[0], next[0], f);
+	cent.lerpAngles[1] = QMath.LerpAngle(current[1], next[1], f);
+	cent.lerpAngles[2] = QMath.LerpAngle(current[2], next[2], f);
+}
+
+/**
+ * EntityEffects
+ */
+function EntityEffects(cent) {
+	// Update sound origins.
+	SetEntitySoundPosition(cent);
+
+	// // Add looping sound.
+	// if ( cent->currentState.loopSound ) {
+	// 	if (cent->currentState.eType != ET_SPEAKER) {
+	// 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
+	// 			cgs.gameSounds[ cent->currentState.loopSound ] );
+	// 	} else {
+	// 		trap_S_AddRealLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
+	// 			cgs.gameSounds[ cent->currentState.loopSound ] );
+	// 	}
+	// }
+
+	// // Constant light glow.
+	// if (cent->currentState.constantLight) {
+	// 	int		cl;
+	// 	float		i, r, g, b;
+
+	// 	cl = cent->currentState.constantLight;
+	// 	r = (float) (cl & 0xFF) / 255.0;
+	// 	g = (float) ((cl >> 8) & 0xFF) / 255.0;
+	// 	b = (float) ((cl >> 16) & 0xFF) / 255.0;
+	// 	i = (float) ((cl >> 24) & 0xFF) * 4.0;
+	// 	trap_R_AddLightToScene(cent->lerpOrigin, i, r, g, b);
+	// }
+}
+
+/**
+ * SetEntitySoundPosition
+ */
+function SetEntitySoundPosition(cent) {
+	// if (cent.currentState.solid === SOLID.BMODEL) {
+	// 	vec3_t	origin;
+	// 	float	*v;
+
+	// 	v = cgs.inlineModelMidpoints[ cent->currentState.modelIndex ];
+	// 	VectorAdd( cent->lerpOrigin, v, origin );
+	// 	trap_S_UpdateEntityPosition( cent->currentState.number, origin );
+	// } else {
+		snd.UpdateEntityPosition(cent.currentState.number, cent.lerpOrigin);
+	// }
+}
+
+/**
+ * AddItem
+ */
+function AddItem(cent) {
+	// TODO Pool these?
+	var refent = new re.RefEntity();
+	var item = bg.ItemList[cent.currentState.modelIndex];
+	var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
+
+	// Autorotate at one of two speeds.
+	if (item.giType === IT.HEALTH) {
+		vec3.set(cg.autoAnglesFast, cent.lerpAngles);
+	} else {
+		vec3.set(cg.autoAngles, cent.lerpAngles);
+	}
+
+	for (var i = 0; i < itemInfo.modelHandles.length; i++) {
+		refent.reType = RT.MODEL;
+		vec3.set(cent.lerpOrigin, refent.origin);
+		QMath.AnglesToAxis(cent.lerpAngles, refent.axis);
+		refent.hModel = itemInfo.modelHandles[i];
+		
+		re.AddRefEntityToScene(refent);
+	}
+}
+
+/**
+ * AddMissile
+ */
+function AddMissile(cent) {	
+	var es = cent.currentState;
+	if (es.weapon >= WP.NUM_WEAPONS) {
+		es.weapon = 0;
+	}
+	var weaponInfo = cg.weaponInfo[es.weapon];
+
+	// Calculate the axis.
+	vec3.set(es.angles, cent.lerpAngles);
+
+	// Add trails.
+	if (weaponInfo.missileTrailFunc) {
+		weaponInfo.missileTrailFunc(cent, weaponInfo);
+	}
+
+	// Add dynamic light.
+	// if (weaponInfo.missileDlight) {
+	// 	trap_R_AddLightToScene(cent.lerpOrigin, weaponInfo.missileDlight, 
+	// 		weaponInfo.missileDlightColor[0], weaponInfo.missileDlightColor[1], weaponInfo.missileDlightColor[2] );
+	// }
+
+	// // Add missile sound.
+	// if (weaponInfo.missileSound) {
+	// 	var velocity = [0, 0, 0];
+
+	// 	bg.EvaluateTrajectoryDelta(cent.currentState.pos, cg.time, velocity);
+
+	// 	trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, velocity, weaponInfo.missileSound );
+	// }
+
+	// Create the render entity.
+	var refent = new re.RefEntity();
+	vec3.set(cent.lerpOrigin, refent.origin);
+	vec3.set(cent.lerpOrigin, refent.oldOrigin);
+
+	// if (cent.currentState.weapon == WP_PLASMAGUN) {
+	// 	ent.reType = RT_SPRITE;
+	// 	ent.radius = 16;
+	// 	ent.rotation = 0;
+	// 	ent.customShader = cgs.media.plasmaBallShader;
+	// 	trap_R_AddRefEntityToScene( &ent );
+	// 	return;
+	// }
+
+	// Flicker between two skins.
+	refent.skinNum = cg.clientFrame & 1;
+	refent.hModel = weaponInfo.missileModel;
+	refent.renderfx = weaponInfo.missileRenderfx | RF.NOSHADOW;
+
+	// Convert direction of travel into axis.
+	vec3.normalize(es.pos.trDelta, refent.axis[0]);
+	if (vec3.length(es.pos.trDelta) === 0) {
+		refent.axis[0][2] = 1;
+	}
+	// FIXME Until we make it spin.
+	QMath.PerpendicularVector(refent.axis[0], refent.axis[1]);
+	vec3.cross(refent.axis[0], refent.axis[1], refent.axis[2]);
+
+	// Spin as it moves.
+	// if (espos.trType != TR.STATIONARY) {
+	// 	RotateAroundDirection(ent.axis, cg.time / 4);
+	// } else {
+	// 	RotateAroundDirection(ent.axis, es.time);
+	// }
+
+	// Add to refresh list, possibly with quad glow.
+	AddRefEntityWithPowerups(refent, es/*, TEAM_FREE*/);
+}
+		/**
+ * CheckEvents
+ */
+function CheckEvents(cent) {
+	// Check for event-only entities.
+	if (cent.currentState.eType > ET.EVENTS) {
+		if (cent.previousEvent) {
+			return;  // already fired
+		}
+
+		// If this is a player event set the entity number of the client entity number.
+		if (cent.currentState.eFlags & EF.PLAYER_EVENT) {
+			cent.currentState.number = cent.currentState.otherEntityNum;
+		}
+
+		cent.previousEvent = 1;
+		cent.currentState.event = cent.currentState.eType - ET.EVENTS;
+	} else {
+		// Check for events riding with another entity.
+		if (cent.currentState.event === cent.previousEvent) {
+			return;
+		}
+		cent.previousEvent = cent.currentState.event;
+		if ((cent.currentState.event & ~EV_EVENT_BITS) === 0) {
+			return;
+		}
+	}
+
+	// Calculate the position at exactly the frame time
+	bg.EvaluateTrajectory(cent.currentState.pos, cg.snap.serverTime, cent.lerpOrigin);
+
+	SetEntitySoundPosition(cent);
+
+	AddEntityEvent(cent, cent.lerpOrigin);
+}
+
+/**
+ * ItemPickup
+ *
+ * A new item was picked up this frame
+ */
+function ItemPickup(itemNum) {
+	cg.itemPickup = itemNum;
+	cg.itemPickupTime = cg.time;
+	cg.itemPickupBlendTime = cg.time;
+	// See if it should be the grabbed weapon.
+	if ( bg.ItemList[itemNum].giType == IT.WEAPON ) {
+		// select it immediately
+		if ( /*cg_autoswitch.integer &&*/ bg.ItemList[itemNum].giTag != WP.MACHINEGUN ) {
+			cg.weaponSelectTime = cg.time;
+			cg.weaponSelect = bg.ItemList[itemNum].giTag;
+		}
+	}
+}
+
+/**
+ * AddEntityEvent
+ *
+ * An entity has an event value
+ * also called by CG_CheckPlayerstateEvents
+ */
+function AddEntityEvent(cent, position) {
+	var es = cent.currentState;
+	var ci = cgs.clientinfo[es.clientNum];
+
+	var event = es.event & ~EV_EVENT_BITS;
+	var dir = [0, 0, 0];
+	
+	// log('EntityEvent', 'ent:', es.number, ', event: ', event);
+	
+	switch (event) {
+		case EV.FOOTSTEP:
+			snd.StartSound(null, es.number, snd.RegisterSound('sound/player/footsteps/step' + Math.ceil(Math.random() * 4)));
+			break;
+
+		case EV.JUMP_PAD:
+			var up = [0, 0, 1];
+			SmokePuff(cent.lerpOrigin, up,
+			          32,
+			          1, 1, 1, 0.33,
+			          1000,
+			          cg.time, 0,
+			          LEF.PUFF_DONT_SCALE,
+			          cgs.media.smokePuffShader);
+
+			// Boing sound at origin, jump sound on player.
+			snd.StartSound(cent.lerpOrigin, -1, cgs.media.jumpPadSound);
+			snd.StartSound(null, es.number, CustomSound(es.number, '*jump1'));
+			break;
+
+		case EV.JUMP:
+			snd.StartSound(null, es.number, CustomSound(es.number, '*jump1'));
+			break;
+		
+		case EV.ITEM_PICKUP:
+			var item;
+			var index;
+			
+			index = es.eventParm;  // player predicted
+			
+			if (index < 0 || index >= bg.ItemList.length) {
+				break;
+			}
+			
+			item = bg.ItemList[index];
+			
+			// Powerups and team items will have a separate global sound, this one
+			// will be played at prediction time.
+			if (item.giType === IT.POWERUP || item.giType === IT.TEAM) {
+// 				snd.StartSound(null, es.number, cgs.media.n_healthSound);
+			} else {
+				snd.StartSound(null, es.number, snd.RegisterSound(item.pickupSound));
+			}
+			
+			// Show icon and name on status bar.
+			if (es.number === cg.snap.ps.clientNum) {
+				ItemPickup(index);
+			}
+			
+			break;
+		
+		case EV.NOAMMO:
+			snd.StartSound(null, es.number, snd.RegisterSound('sound/weapons/noammo'));
+			
+			if (es.number === cg.snap.ps.clientNum) {
+				OutOfAmmoChange();
+			}
+			
+			break;
+		
+		case EV.CHANGE_WEAPON:
+			snd.StartSound(null, es.number, snd.RegisterSound('sound/weapons/change'));
+			break;
+		
+		case EV.FIRE_WEAPON:
+			FireWeapon(cent);
+			break;
+		
+		//
+		// missile impacts
+		//
+		case EV.MISSILE_HIT:
+			QMath.ByteToDir(es.eventParm, dir);
+			MissileHitPlayer(es.weapon, position, dir, es.otherEntityNum);
+			break;
+
+		case EV.MISSILE_MISS:
+			QMath.ByteToDir(es.eventParm, dir);
+			MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.DEFAULT);
+			break;
+
+		case EV.MISSILE_MISS_METAL:
+			QMath.ByteToDir(es.eventParm, dir);
+			MissileHitWall(es.weapon, 0, position, dir, IMPACTSOUND.METAL);
+			break;
+
+		case EV.RAILTRAIL:
+			cent.currentState.weapon = WP.RAILGUN;
+			
+			if (es.clientNum === cg.snap.ps.clientNum && !cg.renderingThirdPerson) {
+				// if (cg_drawGun.integer == 2)
+				// 	VectorMA(es.origin2, 8, cg.refdef.viewaxis[1], es.origin2);
+				// else if(cg_drawGun.integer == 3)
+				// 	VectorMA(es.origin2, 4, cg.refdef.viewaxis[1], es.origin2);
+			}
+
+			RailTrail(ci, es.origin2, es.pos.trBase);
+
+			// If the end was on a nomark surface, don't make an explosion
+			if (es.eventParm !== 255) {
+				QMath.ByteToDir(es.eventParm, dir);
+				MissileHitWall(es.weapon, es.clientNum, position, dir, IMPACTSOUND.DEFAULT);
+			}
+			break;
+
+		case EV.BULLET_HIT_FLESH:
+			BulletHit(es.pos.trBase, es.otherEntityNum, dir, true, es.eventParm);
+			break;
+
+		case EV.BULLET_HIT_WALL:
+			QMath.ByteToDir(es.eventParm, dir);
+			BulletHit(es.pos.trBase, es.otherEntityNum, dir, false, ENTITYNUM_WORLD);
+			break;
+		
+		case EV.SHOTGUN:
+			log('EV.SHOTGUN');
+			ShotgunFire(es);
+			break;
+
+		case EV.PAIN:
+			// Local player sounds are triggered in CheckLocalSounds,
+			// so ignore events on the player.
+			if (cent.currentState.number !== cg.snap.ps.clientNum) {
+				PainEvent(cent, es.eventParm);
+			}
+			break;
+	}
+}
+
+/**
+ * PainEvent
+ * 
+ * Also called by playerstate transition.
+ */
+function PainEvent(cent, health) {
+	// Don't do more than two pain sounds a second.
+	if (cg.time - cent.pe.painTime < 500) {
+		return;
+	}
+
+	var sound;
+	if (health < 25 ) {
+		sound = '*pain25_1';
+	} else if ( health < 50 ) {
+		sound = '*pain50_1';
+	} else if ( health < 75 ) {
+		sound = '*pain75_1';
+	} else {
+		sound = '*pain100_1';
+	}
+
+	// // Play a gurp sound instead of a normal pain sound.
+	// if (WaterLevel(cent) >= 1) {
+	// 	if (rand()&1) {
+	// 		trap_S_StartSound(NULL, cent.currentState.number, CHAN_VOICE, CG_CustomSound(cent.currentState.number, "sound/player/gurp1.wav"));
+	// 	} else {
+	// 		trap_S_StartSound(NULL, cent.currentState.number, CHAN_VOICE, CG_CustomSound(cent.currentState.number, "sound/player/gurp2.wav"));
+	// 	}
+	// } else {
+		snd.StartSound(null, cent.currentState.number, /*CHAN_VOICE,*/ CustomSound(cent.currentState.number, sound));
+	// }
+
+	// Save pain time for programitic twitch animation.
+	cent.pe.painTime = cg.time;
+	cent.pe.painDirection ^= 1;
+}
+		/**
+ * InitLocalEntities
+ *
+ * This is called at startup and for tournement restarts.
+ */
+function InitLocalEntities() {
+	cg.localEntities = new Array(MAX_LOCAL_ENTITIES);
+	for (var i = MAX_LOCAL_ENTITIES - 1; i >= 0; i--) {
+		cg.localEntities[i] = new LocalEntity();
+		cg.localEntities[i].idx = i;
+		cg.localEntities[i].next = i === MAX_LOCAL_ENTITIES - 1 ? null : cg.localEntities[i+1];
+	}
+
+	cg.activeLocalEntities = new LocalEntity();
+	cg.activeLocalEntities.next = cg.activeLocalEntities;
+	cg.activeLocalEntities.prev = cg.activeLocalEntities;
+	cg.freeLocalEntities = cg.localEntities[0];
+}
+
+/**
+ * AllocLocalEntity
+ * 
+ * Will allways succeed, even if it requires freeing an old active entity.
+ */
+function AllocLocalEntity() {
+	if (!cg.freeLocalEntities) {
+		// No free entities, so free the one at the end of the chain
+		// remove the oldest active entity
+		FreeLocalEntity(cg.activeLocalEntities.prev);
+	}
+
+	var le = cg.freeLocalEntities;
+	cg.freeLocalEntities = cg.freeLocalEntities.next;
+
+	le.reset();
+
+	// Link into the active list.
+	le.next = cg.activeLocalEntities.next;
+	le.prev = cg.activeLocalEntities;
+	cg.activeLocalEntities.next.prev = le;
+	cg.activeLocalEntities.next = le;
+	return le;
+}
+
+/**
+ * FreeLocalEntity
+ */
+function FreeLocalEntity(le) {
+	if (!le.prev) {
+		error('FreeLocalEntity: not active');
+	}
+
+	// Remove from the doubly linked active list.
+	le.prev.next = le.next;
+	le.next.prev = le.prev;
+
+	// The free list is only singly linked.
+	le.next = cg.freeLocalEntities;
+	cg.freeLocalEntities = le;
+}
+
+/**
+ * AddLocalEntities
+ */
+function AddLocalEntities() {
+	var le, next;
+
+	// Walk the list backwards, so any new local entities generated
+	// (trails, marks, etc) will be present this frame.
+	le = cg.activeLocalEntities.prev;
+	for (; le != cg.activeLocalEntities; le = next) {
+		// Grab next now, so if the local entity is freed we
+		// still have it.
+		next = le.prev;
+
+		if (cg.time >= le.endTime) {
+			FreeLocalEntity(le);
+			continue;
+		}
+
+		switch (le.leType) {
+			// default:
+			// 	error('Bad leType: ', le.leType);
+			// 	break;
+
+			// case LE.MARK:
+			// 	break;
+
+			case LE.SPRITE_EXPLOSION:
+				AddSpriteExplosion(le);
+				break;
+
+			case LE.EXPLOSION:
+				AddExplosion(le);
+				break;
+
+			// case LE.FRAGMENT:                 // gibs and brass
+			// 	AddFragment(le);
+			// 	break;
+
+			// case LE.MOVE_SCALE_FADE:          // water bubbles
+			// 	AddMoveScaleFade(le);
+			// 	break;
+
+			case LE.FADE_RGB:                 // teleporters, railtrails
+				AddFadeRGB(le);
+				break;
+
+			// case LE.FALL_SCALE_FADE:          // gib blood trails
+			// 	AddFallScaleFade(le);
+			// 	break;
+
+			case LE.SCALE_FADE:               // rocket trails
+				AddScaleFade(le);
+				break;
+
+			// case LE.SCOREPLUM:
+			// 	AddScorePlum(le);
+			// 	break;
+		}
+	}
+}
+
+// /**********************************************************
+//  *
+//  * FRAGMENT PROCESSING
+//  * 
+//  * A fragment localentity interacts with the environment in some way (hitting walls),
+//  * or generates more localentities along a trail.
+//  *
+//  **********************************************************/
+
+// /**
+//  * BloodTrail
+//  * 
+//  * Leave expanding blood puffs behind gibs.
+//  */
+// function BloodTrail(le) {
+// 	int		t;
+// 	int		t2;
+// 	int		step;
+// 	vec3_t	newOrigin;
+// 	localEntity_t	*blood;
+
+// 	step = 150;
+// 	t = step * ( (cg.time - cg.frametime + step ) / step );
+// 	t2 = step * ( cg.time / step );
+
+// 	for ( ; t <= t2; t += step ) {
+// 		BG_EvaluateTrajectory( &le.pos, t, newOrigin );
+
+// 		blood = CG_SmokePuff( newOrigin, vec3_origin, 
+// 					  20,		// radius
+// 					  1, 1, 1, 1,	// color
+// 					  2000,		// trailTime
+// 					  t,		// startTime
+// 					  0,		// fadeInTime
+// 					  0,		// flags
+// 					  cgs.media.bloodTrailShader );
+// 		// use the optimized version
+// 		blood.leType = LE.FALL_SCALE_FADE;
+// 		// drop a total of 40 units over its lifetime
+// 		blood.pos.trDelta[2] = 40;
+// 	}
+// }
+
+// /**
+//  * FragmentBounceMark
+//  */
+// function FragmentBounceMark(le, trace) {
+// 	int			radius;
+
+// 	if ( le.leMarkType == LEMT_BLOOD ) {
+
+// 		radius = 16 + (rand()&31);
+// 		CG_ImpactMark( cgs.media.bloodMarkShader, trace.endpos, trace.plane.normal, random()*360,
+// 			1,1,1,1, qtrue, radius, qfalse );
+// 	} else if ( le.leMarkType == LEMT_BURN ) {
+
+// 		radius = 8 + (rand()&15);
+// 		CG_ImpactMark( cgs.media.burnMarkShader, trace.endpos, trace.plane.normal, random()*360,
+// 			1,1,1,1, qtrue, radius, qfalse );
+// 	}
+
+
+// 	// don't allow a fragment to make multiple marks, or they
+// 	// pile up while settling
+// 	le.leMarkType = LEMT_NONE;
+// }
+
+// /**
+//  * FragmentBounceSound
+//  */
+// function FragmentBounceSound(le, trace) {
+// 	if ( le.leBounceSoundType == LEBS_BLOOD ) {
+// 		// half the gibs will make splat sounds
+// 		if ( rand() & 1 ) {
+// 			int r = rand()&3;
+// 			sfxHandle_t	s;
+
+// 			if ( r == 0 ) {
+// 				s = cgs.media.gibBounce1Sound;
+// 			} else if ( r == 1 ) {
+// 				s = cgs.media.gibBounce2Sound;
+// 			} else {
+// 				s = cgs.media.gibBounce3Sound;
+// 			}
+// 			trap_S_StartSound( trace.endpos, ENTITYNUM_WORLD, CHAN_AUTO, s );
+// 		}
+// 	} else if ( le.leBounceSoundType == LEBS_BRASS ) {
+
+// 	}
+
+// 	// don't allow a fragment to make multiple bounce sounds,
+// 	// or it gets too noisy as they settle
+// 	le.leBounceSoundType = LEBS_NONE;
+// }
+
+
+// /**
+//  * ReflectVelocity
+//  */
+// function ReflectVelocity(le, trace) {
+// 	vec3_t	velocity;
+// 	float	dot;
+// 	int		hitTime;
+
+// 	// reflect the velocity on the trace plane
+// 	hitTime = cg.time - cg.frametime + cg.frametime * trace.fraction;
+// 	BG_EvaluateTrajectoryDelta( &le.pos, hitTime, velocity );
+// 	dot = DotProduct( velocity, trace.plane.normal );
+// 	VectorMA( velocity, -2*dot, trace.plane.normal, le.pos.trDelta );
+
+// 	VectorScale( le.pos.trDelta, le.bounceFactor, le.pos.trDelta );
+
+// 	VectorCopy( trace.endpos, le.pos.trBase );
+// 	le.pos.trTime = cg.time;
+
+
+// 	// check for stop, making sure that even on low FPS systems it doesn't bobble
+// 	if ( trace.allsolid || 
+// 		( trace.plane.normal[2] > 0 && 
+// 		( le.pos.trDelta[2] < 40 || le.pos.trDelta[2] < -cg.frametime * le.pos.trDelta[2] ) ) ) {
+// 		le.pos.trType = TR_STATIONARY;
+// 	} else {
+
+// 	}
+// }
+
+// /**
+//  * AddFragment
+//  */
+// function AddFragment(le) {
+// 	vec3_t	newOrigin;
+// 	trace_t	trace;
+
+// 	if ( le.pos.trType == TR_STATIONARY ) {
+// 		// sink into the ground if near the removal time
+// 		int		t;
+// 		float	oldZ;
+		
+// 		t = le.endTime - cg.time;
+// 		if ( t < SINK_TIME ) {
+// 			// we must use an explicit lighting origin, otherwise the
+// 			// lighting would be lost as soon as the origin went
+// 			// into the ground
+// 			VectorCopy( le.refEntity.origin, le.refEntity.lightingOrigin );
+// 			le.refEntity.renderfx |= RF_LIGHTING_ORIGIN;
+// 			oldZ = le.refEntity.origin[2];
+// 			le.refEntity.origin[2] -= 16 * ( 1.0 - (float)t / SINK_TIME );
+// 			trap_R_AddRefEntityToScene( &le.refEntity );
+// 			le.refEntity.origin[2] = oldZ;
+// 		} else {
+// 			trap_R_AddRefEntityToScene( &le.refEntity );
+// 		}
+
+// 		return;
+// 	}
+
+// 	// calculate new position
+// 	BG_EvaluateTrajectory( &le.pos, cg.time, newOrigin );
+
+// 	// trace a line from previous position to new position
+// 	CG_Trace( &trace, le.refEntity.origin, NULL, NULL, newOrigin, -1, CONTENTS_SOLID );
+// 	if ( trace.fraction == 1.0 ) {
+// 		// still in free fall
+// 		VectorCopy( newOrigin, le.refEntity.origin );
+
+// 		if ( le.leFlags & LEF_TUMBLE ) {
+// 			vec3_t angles;
+
+// 			BG_EvaluateTrajectory( &le.angles, cg.time, angles );
+// 			QMath.AnglesToAxis( angles, le.refEntity.axis );
+// 		}
+
+// 		trap_R_AddRefEntityToScene( &le.refEntity );
+
+// 		// add a blood trail
+// 		if ( le.leBounceSoundType == LEBS_BLOOD ) {
+// 			CG_BloodTrail( le );
+// 		}
+
+// 		return;
+// 	}
+
+// 	// if it is in a nodrop zone, remove it
+// 	// this keeps gibs from waiting at the bottom of pits of death
+// 	// and floating levels
+// 	if ( CG_PointContents( trace.endPos, 0 ) & CONTENTS_NODROP ) {
+// 		CG_FreeLocalEntity( le );
+// 		return;
+// 	}
+
+// 	// leave a mark
+// 	CG_FragmentBounceMark( le, &trace );
+
+// 	// do a bouncy sound
+// 	CG_FragmentBounceSound( le, &trace );
+
+// 	// reflect the velocity on the trace plane
+// 	CG_ReflectVelocity( le, &trace );
+
+// 	trap_R_AddRefEntityToScene( &le.refEntity );
+// }
+
+// /**********************************************************
+//  *
+//  * TRIVIAL LOCAL ENTITIES
+//  *
+//  * These only do simple scaling or modulation before passing to the renderer
+//  *
+//  **********************************************************/
+
+/**
+ * AddFadeRGB
+ */
+function AddFadeRGB(le) {
+	var refent = le.refent;
+
+	var c = (le.endTime - cg.time) * le.lifeRate;
+	c *= 0xff;
+
+	refent.shaderRGBA[0] = le.color[0] * c;
+	refent.shaderRGBA[1] = le.color[1] * c;
+	refent.shaderRGBA[2] = le.color[2] * c;
+	refent.shaderRGBA[3] = le.color[3] * c;
+
+	re.AddRefEntityToScene(refent);
+}
+
+// /**
+//  * AddMoveScaleFade
+//  */
+// function AddMoveScaleFade(le) {
+// 	refEntity_t	*re;
+// 	float		c;
+// 	vec3_t		delta;
+// 	float		len;
+
+// 	re = &le.refEntity;
+
+// 	if ( le.fadeInTime > le.startTime && cg.time < le.fadeInTime ) {
+// 		// fade / grow time
+// 		c = 1.0 - (float) ( le.fadeInTime - cg.time ) / ( le.fadeInTime - le.startTime );
+// 	}
+// 	else {
+// 		// fade / grow time
+// 		c = ( le.endTime - cg.time ) * le.lifeRate;
+// 	}
+
+// 	re.shaderRGBA[3] = 0xff * c * le.color[3];
+
+// 	if ( !( le.leFlags & LEF_PUFF_DONT_SCALE ) ) {
+// 		re.radius = le.radius * ( 1.0 - c ) + 8;
+// 	}
+
+// 	BG_EvaluateTrajectory( &le.pos, cg.time, re.origin );
+
+// 	// if the view would be "inside" the sprite, kill the sprite
+// 	// so it doesn't add too much overdraw
+// 	VectorSubtract( re.origin, cg.refdef.vieworg, delta );
+// 	len = VectorLength( delta );
+// 	if ( len < le.radius ) {
+// 		CG_FreeLocalEntity( le );
+// 		return;
+// 	}
+
+// 	trap_R_AddRefEntityToScene( re );
+// }
+
+
+/**
+ * AddScaleFade
+ *
+ * For rocket smokes that hang in place, fade out, and are
+ * removed if the view passes through them.
+ * There are often many of these, so it needs to be simple.
+ */
+function AddScaleFade(le) {
+	var refent = le.refent;
+
+	// fade / grow time
+	var c = (le.endTime - cg.time) * le.lifeRate;
+
+	refent.shaderRGBA[3] = 0xff * c * le.color[3];
+	refent.radius = le.radius * (1.0 - c) + 8;
+
+	// If the view would be "inside" the sprite, kill the sprite
+	// so it doesn't add too much overdraw.
+	var delta = vec3.subtract(refent.origin, cg.refdef.vieworg, [0, 0, 0]);
+	var len = vec3.length(delta);
+
+	// if (len < le.radius) {
+	// 	FreeLocalEntity(le);
+	// 	return;
+	// }
+
+	re.AddRefEntityToScene(refent);
+}
+
+// /**
+//  * AddFallScaleFade
+//  * 
+//  * This is just an optimized CG_AddMoveScaleFade
+//  * For blood mists that drift down, fade out, and are
+//  * removed if the view passes through them.
+//  * There are often 100+ of these, so it needs to be simple.
+//  */
+// function AddFallScaleFade(le) {
+// 	refEntity_t	*re;
+// 	float		c;
+// 	vec3_t		delta;
+// 	float		len;
+
+// 	re = &le.refEntity;
+
+// 	// fade time
+// 	c = ( le.endTime - cg.time ) * le.lifeRate;
+
+// 	re.shaderRGBA[3] = 0xff * c * le.color[3];
+
+// 	re.origin[2] = le.pos.trBase[2] - ( 1.0 - c ) * le.pos.trDelta[2];
+
+// 	re.radius = le.radius * ( 1.0 - c ) + 16;
+
+// 	// if the view would be "inside" the sprite, kill the sprite
+// 	// so it doesn't add too much overdraw
+// 	VectorSubtract( re.origin, cg.refdef.vieworg, delta );
+// 	len = VectorLength( delta );
+// 	if ( len < le.radius ) {
+// 		CG_FreeLocalEntity( le );
+// 		return;
+// 	}
+
+// 	trap_R_AddRefEntityToScene( re );
+// }
+
+/**
+ * AddExplosion
+ */
+function AddExplosion(le) {
+	var refent = le.refent;
+
+	// Add the entity.
+	re.AddRefEntityToScene(refent);
+
+	// Add the dlight.
+	// if (le.light) {
+	// 	float light;
+
+	// 	light = (float)( cg.time - ex.startTime ) / ( ex.endTime - ex.startTime );
+	// 	if ( light < 0.5 ) {
+	// 		light = 1.0;
+	// 	} else {
+	// 		light = 1.0 - ( light - 0.5 ) * 2;
+	// 	}
+	// 	light = ex.light * light;
+	// 	trap_R_AddLightToScene(ent.origin, light, ex.lightColor[0], ex.lightColor[1], ex.lightColor[2] );
+	// }
+}
+
+/**
+ * AddSpriteExplosion
+ */
+function AddSpriteExplosion(le) {
+	var refent = le.refent;
+
+	var c = (le.endTime - cg.time) / (le.endTime - le.startTime);
+	if (c > 1) {
+		c = 1.0;  // Can happen during connection problems.
+	}
+
+	refent.shaderRGBA[0] = 0xff;
+	refent.shaderRGBA[1] = 0xff;
+	refent.shaderRGBA[2] = 0xff;
+	refent.shaderRGBA[3] = 0xff * c * 0.33;
+
+	refent.reType = RT.SPRITE;
+	refent.radius = 42 * (1.0 - c) + 30;
+
+	re.AddRefEntityToScene(refent);
+
+	// Add the dlight.
+	// if (le.light) {
+	// 	var light = (cg.time - le.startTime) / (le.endTime - le.startTime);
+	// 	if (light < 0.5) {
+	// 		light = 1.0;
+	// 	} else {
+	// 		light = 1.0 - (light - 0.5) * 2;
+	// 	}
+	// 	light = le.light * light;
+	// 	trap_R_AddLightToScene(re.origin, light, le.lightColor[0], le.lightColor[1], le.lightColor[2] );
+	// }
+}
+
+// /**
+//  * AddScorePlum
+//  */
+// var NUMBER_SIZE = 8;
+
+// function AddScorePlum(le) {
+// 	refEntity_t	*re;
+// 	vec3_t		origin, delta, dir, vec, up = {0, 0, 1};
+// 	float		c, len;
+// 	int			i, score, digits[10], numdigits, negative;
+
+// 	re = &le.refEntity;
+
+// 	c = ( le.endTime - cg.time ) * le.lifeRate;
+
+// 	score = le.radius;
+// 	if (score < 0) {
+// 		re.shaderRGBA[0] = 0xff;
+// 		re.shaderRGBA[1] = 0x11;
+// 		re.shaderRGBA[2] = 0x11;
+// 	}
+// 	else {
+// 		re.shaderRGBA[0] = 0xff;
+// 		re.shaderRGBA[1] = 0xff;
+// 		re.shaderRGBA[2] = 0xff;
+// 		if (score >= 50) {
+// 			re.shaderRGBA[1] = 0;
+// 		} else if (score >= 20) {
+// 			re.shaderRGBA[0] = re.shaderRGBA[1] = 0;
+// 		} else if (score >= 10) {
+// 			re.shaderRGBA[2] = 0;
+// 		} else if (score >= 2) {
+// 			re.shaderRGBA[0] = re.shaderRGBA[2] = 0;
+// 		}
+
+// 	}
+// 	if (c < 0.25)
+// 		re.shaderRGBA[3] = 0xff * 4 * c;
+// 	else
+// 		re.shaderRGBA[3] = 0xff;
+
+// 	re.radius = NUMBER_SIZE / 2;
+
+// 	VectorCopy(le.pos.trBase, origin);
+// 	origin[2] += 110 - c * 100;
+
+// 	VectorSubtract(cg.refdef.vieworg, origin, dir);
+// 	CrossProduct(dir, up, vec);
+// 	VectorNormalize(vec);
+
+// 	VectorMA(origin, -10 + 20 * sin(c * 2 * M_PI), vec, origin);
+
+// 	// if the view would be "inside" the sprite, kill the sprite
+// 	// so it doesn't add too much overdraw
+// 	VectorSubtract( origin, cg.refdef.vieworg, delta );
+// 	len = VectorLength( delta );
+// 	if ( len < 20 ) {
+// 		CG_FreeLocalEntity( le );
+// 		return;
+// 	}
+
+// 	negative = qfalse;
+// 	if (score < 0) {
+// 		negative = qtrue;
+// 		score = -score;
+// 	}
+
+// 	for (numdigits = 0; !(numdigits && !score); numdigits++) {
+// 		digits[numdigits] = score % 10;
+// 		score = score / 10;
+// 	}
+
+// 	if (negative) {
+// 		digits[numdigits] = 10;
+// 		numdigits++;
+// 	}
+
+// 	for (i = 0; i < numdigits; i++) {
+// 		VectorMA(origin, (float) (((float) numdigits / 2) - i) * NUMBER_SIZE, vec, re.origin);
+// 		re.customShader = cgs.media.numberShaders[digits[numdigits-1-i]];
+// 		trap_R_AddRefEntityToScene( re );
+// 	}
+// }
+		/**
+ * TextTokenizer
+ */
+var TextTokenizer = function (src) {
+	// Strip out comments
+	src = src.replace(/\/\/.*$/mg, ''); // C++ style (//...)
+	src = src.replace(/\/\*[^*\/]*\*\//mg, ''); // C style (/*...*/) (Do the shaders even use these?)
+	this.tokens = src.match(/[^\s\n\r\"]+/mg);
+
+	this.offset = 0;
+};
+
+TextTokenizer.prototype.EOF = function() {
+	if (this.tokens === null) { return true; }
+	var token = this.tokens[this.offset];
+	while (token === '' && this.offset < this.tokens.length) {
+		this.offset++;
+		token = this.tokens[this.offset];
+	}
+	return this.offset >= this.tokens.length;
+};
+
+TextTokenizer.prototype.next = function() {
+	if (this.tokens === null) { return ; }
+	var token = '';
+	while (token === '' && this.offset < this.tokens.length) {
+		token = this.tokens[this.offset++];
+	}
+	return token;
+};
+
+TextTokenizer.prototype.prev = function() {
+	if (this.tokens === null) { return ; }
+	var token = '';
+	while (token === '' && this.offset >= 0) {
+		token = this.tokens[this.offset--];
+	}
+	return token;
+};
+
+/**
+ * NewClientInfo
+ */
+function NewClientInfo(clientNum) {
+	var ci = cgs.clientinfo[clientNum];
+	var cs = ConfigString('player' + clientNum);
+
+	if (!cs) {
+		return;  // player just left
+	}
+
+	// Isolate the player's name.
+	ci.name = cs['name'];
+
+	// // force the model
+	// char modelStr[
+
+	// trap_Cvar_VariableStringBuffer( "model", modelStr, sizeof( modelStr ) );
+	// if ( ( skin = strchr( modelStr, '/' ) ) == NULL) {
+	// 	skin = "default";
+	// } else {
+	// 	*skin++ = 0;
+	// }
+
+	// ci.skinName = skin;
+	// ci.modelName = modelStr;
+
+	// // scan for an existing clientinfo that matches this modelname
+	// // so we can avoid loading checks if possible
+	// if (!ScanForExistingClientInfo(ci)) {
+		LoadClientInfo(clientNum, ci);
+	// }
+}
+
+
+
+// /*
+// ======================
+// CG_ScanForExistingClientInfo
+// ======================
+// */
+// static qboolean CG_ScanForExistingClientInfo( clientinfo_t *ci ) {
+// 	int		i;
+// 	clientinfo_t	*match;
+
+// 	for ( i = 0 ; i < cgs.maxclients ; i++ ) {
+// 		match = &cgs.clientinfo[ i ];
+// 		if ( !match->infoValid ) {
+// 			continue;
+// 		}
+// 		if ( match->deferred ) {
+// 			continue;
+// 		}
+// 		if ( !Q_stricmp( ci->modelName, match->modelName )
+// 			&& !Q_stricmp( ci->skinName, match->skinName )
+// 			&& !Q_stricmp( ci->headModelName, match->headModelName )
+// 			&& !Q_stricmp( ci->headSkinName, match->headSkinName ) 
+// 			&& !Q_stricmp( ci->blueTeam, match->blueTeam ) 
+// 			&& !Q_stricmp( ci->redTeam, match->redTeam )
+// 			&& (cgs.gametype < GT_TEAM || ci->team == match->team) ) {
+// 			// this clientinfo is identical, so use its handles
+
+// 			ci->deferred = qfalse;
+
+// 			CG_CopyClientInfoModel( match, ci );
+
+// 			return qtrue;
+// 		}
+// 	}
+
+// 	// nothing matches, so defer the load
+// 	return qfalse;
+// }
+
+
+/**
+ * LoadClientInfo
+ * 
+ * Load it now, taking the disk hits.
+ * This will usually be deferred to a safe time
+ */
+function LoadClientInfo(clientNum, ci) {
+	//if (!RegisterClientModelname(ci, ci->modelName, ci->skinName, ci->headModelName, ci->headSkinName, teamname)) {
+		RegisterClientModelname(ci, DEFAULT_MODEL, 'default', null, function (err) {
+			if (err) {
+				error('DEFAULT_MODEL (' + DEFAULT_MODEL + ') failed to register.');
+			}
+
+			// TODO Is any other part of the ci async loaded?
+			ci.infoValid = true;
+		});
+	//}
+
+	// ci->newAnims = qfalse;
+	// if ( ci->torsoModel ) {
+	// 	orientation_t tag;
+	// 	// if the torso model has the "tag_flag"
+	// 	if ( trap_R_LerpTag( &tag, ci->torsoModel, 0, 0, 1, "tag_flag" ) ) {
+	// 		ci->newAnims = qtrue;
+	// 	}
+	// }
+
+	// Load sounds.
+	var dir = DEFAULT_MODEL;// ci.modelName;
+	// fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
+
+	for (var i = 0; i < customSoundNames.length; i++) {
+		var s = customSoundNames[i];
+
+		ci.sounds[i] = 0;
+
+		// If the model didn't load use the sounds of the default model.
+		// if (modelloaded) {
+			ci.sounds[i] = snd.RegisterSound('sound/player/' + dir + '/' + s.substr(1));
+		// }
+		// if (!ci->sounds[i]) {
+		// 	ci.sounds[i] = trap_S_RegisterSound( va("sound/player/%s/%s", fallback, s + 1), qfalse );
+		// }
+	}
+
+	// ci->deferred = qfalse;
+
+	// // reset any existing players and bodies, because they might be in bad
+	// // frames for this new model
+	// for ( i = 0 ; i < MAX_GENTITIES ; i++ ) {
+	// 	if ( cg_entities[i].currentState.clientNum == clientNum
+	// 		&& cg_entities[i].currentState.eType == ET_PLAYER ) {
+	// 		CG_ResetPlayerEntity( &cg_entities[i] );
+	// 	}
+	// }
+}
+
+/**
+ * RegisterClientModelname
+ */
+function RegisterClientModelname(ci, modelName, skinName, teamName, callback) {
+	var filename = 'models/players/' + modelName + '/lower.md3';
+	ci.legsModel = re.RegisterModel(filename);
+
+	filename = 'models/players/' + modelName + '/upper.md3';
+	ci.torsoModel = re.RegisterModel(filename);
+
+	filename = 'models/players/' + modelName + '/head.md3';
+	ci.headModel = re.RegisterModel(filename);
+
+	RegisterClientSkin(ci, modelName, skinName, teamName);
+
+	// 	if ( teamName && *teamName) {
+	// 		Com_Printf( "Failed to load skin file: %s : %s : %s, %s : %s\n", teamName, modelName, skinName, headName, headSkinName );
+	// 		if( ci->team == TEAM_BLUE ) {
+	// 			Com_sprintf(newTeamName, sizeof(newTeamName), "%s/", DEFAULT_BLUETEAM_NAME);
+	// 		}
+	// 		else {
+	// 			Com_sprintf(newTeamName, sizeof(newTeamName), "%s/", DEFAULT_REDTEAM_NAME);
+	// 		}
+	// 		if ( !CG_RegisterClientSkin( ci, newTeamName, modelName, skinName, headName, headSkinName ) ) {
+	// 			Com_Printf( "Failed to load skin file: %s : %s : %s, %s : %s\n", newTeamName, modelName, skinName, headName, headSkinName );
+	// 			return qfalse;
+	// 		}
+	// }
+
+	// if ( !ci->modelIcon ) {
+	// 	return qfalse;
+	// }
+
+	// Load the animations.
+	filename = 'models/players/' + modelName + '/animation.cfg';
+	ParseAnimationFile(filename, ci, callback);
+}
+
+/**
+ * RegisterClientSkin
+ */
+function RegisterClientSkin(ci, modelName, skinName, teamName) {
+	teamName = teamName || 'default';
+
+	var filename = 'models/players/' + modelName + '/lower_' + teamName + '.skin';
+	ci.legsSkin = re.RegisterSkin(filename);
+
+	filename = 'models/players/' + modelName + '/upper_' + teamName + '.skin';
+	ci.torsoSkin = re.RegisterSkin(filename);
+
+	filename = 'models/players/' + modelName + '/head_' + teamName + '.skin';
+	ci.headSkin = re.RegisterSkin(filename);
+}
+
+/**
+ * ParseAnimationFile
+ *
+ * Read a configuration file containing animation coutns and rates
+ * models/players/visor/animation.cfg, etc
+ */
+function ParseAnimationFile(filename, ci, callback) {
+	var animations = ci.animations;
+	var skip = 0;
+
+	sys.ReadFile(filename, 'utf8', function (err, data) {
+		if (err) return callback(err);
+
+		// ci->footsteps = FOOTSTEP_NORMAL;
+		// VectorClear( ci->headOffset );
+		// ci->gender = GENDER_MALE;
+		ci.fixedlegs = false;
+		ci.fixedtorso = false;
+
+		// read optional parameters
+		var tokens = new TextTokenizer(data);
+		var token;
+
+		while (!tokens.EOF()) {
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+
+			if (token === 'footsteps') {
+				token = tokens.next();
+				if (!token) {
+					break;
+				}
+
+				// if (token === 'default' || token === 'normal') {
+				// 	ci.footsteps = ANIM.FOOTSTEP_NORMAL;
+				// } else if (token === 'boot') {
+				// 	ci.footsteps = ANIM.FOOTSTEP_BOOT;
+				// } else if (token === 'flesh') {
+				// 	ci.footsteps = ANIM.FOOTSTEP_FLESH;
+				// } else if (token === 'mech') {
+				// 	ci.footsteps = ANIM.FOOTSTEP_MECH;
+				// } else if (token === 'energy') {
+				// 	ci.footsteps = ANIM.FOOTSTEP_ENERGY;
+				// } else {
+				// 	log('Bad footsteps parm in ' + filename + ': ' + token);
+				// }
+
+				continue;
+			} else if (token === 'headoffset') {
+				for (var i = 0; i < 3; i++) {
+					token = tokens.next();
+					if (!token) {
+						break;
+					}
+
+					//ci.headOffset[i] = parseFloat(token);
+				}
+				continue;
+			} else if (token === 'sex') {
+				token = tokens.next();
+				if (!token) {
+					break;
+				}
+
+				// if (token[0] === 'f' || token[0] == 'F') {
+				// 	ci.gender = GENDER_FEMALE;
+				// } else if (token[0] === 'n' || token[0] === 'N') {
+				// 	ci.gender = GENDER_NEUTER;
+				// } else {
+				// 	ci.gender = GENDER_MALE;
+				// }
+				continue;
+			} else if (token === 'fixedlegs') {
+				ci.fixedlegs = true;
+				continue;
+			} else if (token === 'fixedtorso') {
+				ci.fixedtorso = true;
+				continue;
+			}
+
+			// If it is a number, start parsing animations.
+			if (token.charAt(0) >= '0' && token.charAt(0) <= '9') {
+				tokens.prev();  // unget the token
+				break;
+			}
+
+			log('Unknown token \'' + token + '\' in ' + filename);
+		}
+
+		// Read information for each frame.
+		for (var i = 0; i < ANIM.MAX; i++) {
+			token = tokens.next();
+
+			if (!token) {
+				if (i >= ANIM.TORSO_GETFLAG && i <= ANIM.TORSO_NEGATIVE) {
+					animations[i].firstFrame = animations[ANIM.TORSO_GESTURE].firstFrame;
+					animations[i].frameLerp = animations[ANIM.TORSO_GESTURE].frameLerp;
+					animations[i].initialLerp = animations[ANIM.TORSO_GESTURE].initialLerp;
+					animations[i].loopFrames = animations[ANIM.TORSO_GESTURE].loopFrames;
+					animations[i].numFrames = animations[ANIM.TORSO_GESTURE].numFrames;
+					animations[i].reversed = false;
+					animations[i].flipflop = false;
+					continue;
+				}
+				break;
+			}
+
+			animations[i].firstFrame = parseInt(token, 10);
+			// leg only frames are adjusted to not count the upper body only frames
+			if (i === ANIM.LEGS_WALKCR) {
+				skip = animations[ANIM.LEGS_WALKCR].firstFrame - animations[ANIM.TORSO_GESTURE].firstFrame;
+			}
+			if (i >= ANIM.LEGS_WALKCR && i < ANIM.TORSO_GETFLAG) {
+				animations[i].firstFrame -= skip;
+			}
+
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+			animations[i].numFrames = parseInt(token, 10);
+			animations[i].reversed = false;
+			animations[i].flipflop = false;
+
+			// if NumFrames is negative the animation is reversed
+			if (animations[i].numFrames < 0) {
+				animations[i].numFrames = -animations[i].numFrames;
+				animations[i].reversed = true;
+			}
+
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+			animations[i].loopFrames = parseInt(token, 10);
+
+			token = tokens.next();
+			if (!token) {
+				break;
+			}
+			
+			var fps = parseInt(token, 10);
+			if (!fps) {
+				fps = 1;
+			}
+			animations[i].frameLerp = 1000 / fps;
+			animations[i].initialLerp = 1000 / fps;
+		}
+
+		if (i !== ANIM.MAX) {
+			return callback(new Error('Error parsing animation file: ' + filename));
+		}
+
+		// Crouch backward animation.
+		animations[ANIM.LEGS_BACKCR] = _.clone(animations[ANIM.LEGS_WALKCR]);
+		animations[ANIM.LEGS_BACKCR].reversed = true;
+
+		// Walk backward animation.
+		animations[ANIM.LEGS_BACKWALK] = _.clone(animations[ANIM.LEGS_WALK]);
+		animations[ANIM.LEGS_BACKWALK].reversed = true;
+
+		// Flag moving fast.
+		animations[ANIM.FLAG_RUN].firstFrame = 0;
+		animations[ANIM.FLAG_RUN].numFrames = 16;
+		animations[ANIM.FLAG_RUN].loopFrames = 16;
+		animations[ANIM.FLAG_RUN].frameLerp = 1000 / 15;
+		animations[ANIM.FLAG_RUN].initialLerp = 1000 / 15;
+		animations[ANIM.FLAG_RUN].reversed = false;
+
+		// Flag not moving or moving slowly.
+		animations[ANIM.FLAG_STAND].firstFrame = 16;
+		animations[ANIM.FLAG_STAND].numFrames = 5;
+		animations[ANIM.FLAG_STAND].loopFrames = 0;
+		animations[ANIM.FLAG_STAND].frameLerp = 1000 / 20;
+		animations[ANIM.FLAG_STAND].initialLerp = 1000 / 20;
+		animations[ANIM.FLAG_STAND].reversed = false;
+
+		// Flag speeding up.
+		animations[ANIM.FLAG_STAND2RUN].firstFrame = 16;
+		animations[ANIM.FLAG_STAND2RUN].numFrames = 5;
+		animations[ANIM.FLAG_STAND2RUN].loopFrames = 1;
+		animations[ANIM.FLAG_STAND2RUN].frameLerp = 1000 / 15;
+		animations[ANIM.FLAG_STAND2RUN].initialLerp = 1000 / 15;
+		animations[ANIM.FLAG_STAND2RUN].reversed = true;
+
+		return callback(null);
+	});
+}
+
+/**********************************************************
+ *
+ * Player rendering
+ *
+ **********************************************************/
+
+/**
+ * AddPlayer
+ */
+function AddPlayer(cent) {
+	// The client number is stored in clientNum. It can't be derived
+	// from the entity number, because a single client may have
+	// multiple corpses on the level using the same clientinfo
+	var clientNum = cent.currentState.clientNum;
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		error('Bad clientNum on player entity');
+	}
+
+	var ci = cgs.clientinfo[clientNum];
+	// It is possible to see corpses from disconnected players that may
+	// not have valid clientinfo
+	if (!ci.infoValid) {
+		return;
+	}
+
+	var renderfx = 0;
+	if (cent.currentState.number === cg.snap.ps.clientNum) {
+		if (!cg.renderingThirdPerson) {
+			renderfx = RF.THIRD_PERSON;  // only draw in mirrors
+		}
+	}
+
+	// TODO Pool these?
+	var legs = new re.RefEntity();
+	var torso = new re.RefEntity();
+	var head = new re.RefEntity();
+
+	// Get the player model information
+	/*var renderfx = 0;
+	if ( cent->currentState.number == cg.snap->ps.clientNum) {
+		renderfx = RF_THIRD_PERSON;			// only draw in mirrors
+	}*/
+
+	// // get the rotation information
+	PlayerAngles(cent, legs.axis, torso.axis, head.axis);
+	
+	// // get the animation state (after rotation, to allow feet shuffle)
+	PlayerAnimation(cent, legs, torso);
+
+	// // add the talk baloon or disconnect icon
+	// CG_PlayerSprites( cent );
+
+	// // add the shadow
+	// shadow = CG_PlayerShadow( cent, &shadowPlane );
+
+	// // add a water splash if partially in and out of water
+	// CG_PlayerSplash( cent );
+
+	// if ( cg_shadows.integer == 3 && shadow ) {
+	// 	renderfx |= RF_SHADOW_PLANE;
+	// }
+	renderfx |= RF.LIGHTING_ORIGIN;  // use the same origin for all
+
+	//
+	// Add the legs
+	//
+	legs.reType = RT.MODEL;
+	legs.renderfx = renderfx;
+	legs.hModel = ci.legsModel;
+	legs.customSkin = ci.legsSkin;
+	vec3.set(cent.lerpOrigin, legs.origin);
+	vec3.set(cent.lerpOrigin, legs.lightingOrigin);
+	// legs.shadowPlane = shadowPlane;
+	legs.renderfx = renderfx;
+	vec3.set(legs.origin, legs.oldOrigin);  // don't positionally lerp at all
+	AddRefEntityWithPowerups(legs, cent.currentState/*, ci.team*/);
+
+	// if the model failed, allow the default nullmodel to be displayed
+	if (!legs.hModel) {
+		return;
+	}
+
+	//
+	// add the torso
+	//
+	torso.reType = RT.MODEL;
+	torso.renderfx = renderfx;
+	torso.hModel = ci.torsoModel;
+	if (!torso.hModel) {
+		return;
+	}
+	torso.customSkin = ci.torsoSkin;
+	PositionRotatedEntityOnTag(torso, legs, ci.legsModel, 'tag_torso');
+	vec3.set(cent.lerpOrigin, torso.lightingOrigin);
+	// torso.shadowPlane = shadowPlane;
+	torso.renderfx = renderfx;
+	AddRefEntityWithPowerups(torso, cent.currentState/*, ci.team*/);
+
+	//
+	// add the head
+	//
+	head.reType = RT.MODEL;
+	head.renderfx = renderfx;
+	head.hModel = ci.headModel;
+	if (!head.hModel) {
+		return;
+	}
+	head.customSkin = ci.headSkin;
+	PositionRotatedEntityOnTag(head, torso, ci.torsoModel, 'tag_head');
+	vec3.set(cent.lerpOrigin, head.lightingOrigin);
+	// head.shadowPlane = shadowPlane;
+	head.renderfx = renderfx;
+	AddRefEntityWithPowerups(head, cent.currentState/*, ci.team*/);
+
+	//
+	// add the gun / barrel / flash
+	//
+	AddPlayerWeapon(torso, null, cent/*, ci->team*/);
+
+	// add powerups floating behind the player
+	//CG_PlayerPowerups( cent, &torso );
+}
+
+/**
+ * AddRefEntityWithPowerups
+ *
+ * Adds a piece with modifications or duplications for powerups
+ * Also called by CG_Missile for quad rockets, but nobody can tell...
+ */
+function AddRefEntityWithPowerups(refent, s/*, team*/) {
+	// if ( state->powerups & ( 1 << PW_INVIS ) ) {
+	// 	ent->customShader = cgs.media.invisShader;
+	// 	trap_R_AddRefEntityToScene( ent );
+	// } else {
+		re.AddRefEntityToScene(refent);
+
+	// 	if ( state->powerups & ( 1 << PW_QUAD ) )
+	// 	{
+	// 		if (team == TEAM_RED)
+	// 			ent->customShader = cgs.media.redQuadShader;
+	// 		else
+	// 			ent->customShader = cgs.media.quadShader;
+	// 		trap_R_AddRefEntityToScene( ent );
+	// 	}
+	// 	if ( state->powerups & ( 1 << PW_REGEN ) ) {
+	// 		if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
+	// 			ent->customShader = cgs.media.regenShader;
+	// 			trap_R_AddRefEntityToScene( ent );
+	// 		}
+	// 	}
+	// 	if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
+	// 		ent->customShader = cgs.media.battleSuitShader;
+	// 		trap_R_AddRefEntityToScene( ent );
+	// 	}
+	// }
+}
+
+/**********************************************************
+ *
+ * Player angles
+ *
+ **********************************************************/
+
+/**
+ * PlayerAngles
+ * 
+ * Handles seperate torso motion. 
+ * Legs pivot based on direction of movement.
+ * Head always looks exactly at cent->QMath.LerpAngles.
+ * 
+ * If motion < 20 degrees, show in head only.
+ * If < 45 degrees, also show in torso.
+ */
+var swingSpeed = 0.3;
+var movementOffsets = [0, 22, 45, -22, 0, 22, -45, -22];
+function PlayerAngles(cent, legs, torso, head) {
+	var ci;
+
+	var clientNum = cent.currentState.clientNum;
+	if (clientNum >= 0 && clientNum < MAX_CLIENTS) {
+		ci = cgs.clientinfo[clientNum];
+	}
+
+	var headAngles = vec3.set(cent.lerpAngles, [0, 0, 0]);
+	var before = headAngles[QMath.YAW];
+	headAngles[QMath.YAW] = QMath.AngleNormalize360(headAngles[QMath.YAW]);
+
+	var torsoAngles = [0, 0, 0];
+	var legsAngles = [0, 0, 0];
+
+	// --------- yaw -------------
+
+	// Allow yaw to drift a bit
+	if ((cent.currentState.legsAnim & ~ANIM_TOGGLEBIT) !== ANIM.LEGS_IDLE ||
+		((cent.currentState.torsoAnim & ~ANIM_TOGGLEBIT) !== ANIM.TORSO_STAND &&
+		(cent.currentState.torsoAnim & ~ANIM_TOGGLEBIT) !== ANIM.TORSO_STAND2)) {
+		// If not standing still, always point all in the same direction.
+		cent.pe.torso.yawing = true;    // always center
+		cent.pe.torso.pitching = true;  // always center
+		cent.pe.legs.yawing = true;     // always center
+	}
+
+	// Adjust legs for movement dir.
+	var dir;
+	if (cent.currentState.eFlags & EF.DEAD) {
+		// Don't let dead bodies twitch.
+		dir = 0;
+	} else {
+		dir = cent.currentState.angles2[QMath.YAW];
+		if (dir < 0 || dir > 7) {
+			error('Bad player movement angle');
+		}
+	}
+	legsAngles[QMath.YAW] = headAngles[QMath.YAW] + movementOffsets[dir];
+	torsoAngles[QMath.YAW] = headAngles[QMath.YAW] + 0.25 * movementOffsets[dir];
+
+	// torso
+	var res = { angle: cent.pe.torso.yawAngle, swinging: cent.pe.torso.yawing };
+	SwingAngles(torsoAngles[QMath.YAW], 25, 90, swingSpeed, res);
+	torsoAngles[QMath.YAW] = cent.pe.torso.yawAngle = res.angle;
+	cent.pe.torso.yawing = res.swinging;
+
+	// legs
+	res = { angle: cent.pe.legs.yawAngle, swinging: cent.pe.legs.yawing };
+	SwingAngles(legsAngles[QMath.YAW], 40, 90, swingSpeed, res);
+	legsAngles[QMath.YAW] = cent.pe.legs.yawAngle = res.angle;
+	cent.pe.legs.yawing = res.swinging;
+
+
+	// --------- pitch -------------
+
+	// Only show a fraction of the pitch angle in the torso.
+	var dest;
+	if (headAngles[QMath.PITCH] > 180) {
+		dest = (-360 + headAngles[QMath.PITCH]) * 0.75;
+	} else {
+		dest = headAngles[QMath.PITCH] * 0.75;
+	}
+	res = { angle: cent.pe.torso.pitchAngle, swinging: cent.pe.torso.pitching };
+	SwingAngles(dest, 15, 30, 0.1, res);
+	torsoAngles[QMath.PITCH] = cent.pe.torso.pitchAngle = res.angle;
+	cent.pe.torso.pitching = res.swinging;
+
+	//
+	if (ci && ci.fixedtorso) {
+		torsoAngles[QMath.PITCH] = 0;
+	}
+
+	// --------- roll -------------
+
+	// Lean towards the direction of travel.
+	var velocity = vec3.set(cent.currentState.pos.trDelta, [0, 0, 0]);
+	var speed = vec3.length(velocity);
+	vec3.normalize(velocity);
+
+	if (speed) {
+		speed *= 0.05;
+
+		var axis = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+
+		QMath.AnglesToAxis(legsAngles, axis);
+
+		var side = speed * vec3.dot(velocity, axis[1]);
+		legsAngles[QMath.ROLL] -= side;
+
+		side = speed * vec3.dot(velocity, axis[0]);
+		legsAngles[QMath.PITCH] += side;
+	}
+
+	//
+	if (ci && ci.fixedlegs) {
+		legsAngles[QMath.YAW] = torsoAngles[QMath.YAW];
+		legsAngles[QMath.PITCH] = 0.0;
+		legsAngles[QMath.ROLL] = 0.0;
+	}
+
+	// Pain twitch.
+	AddPainTwitch(cent, torsoAngles);
+
+	// Pull the angles back out of the hierarchial chain.
+	QMath.AnglesSubtract(headAngles, torsoAngles, headAngles);
+	QMath.AnglesSubtract(torsoAngles, legsAngles, torsoAngles);
+	QMath.AnglesToAxis(legsAngles, legs);
+	QMath.AnglesToAxis(torsoAngles, torso);
+	QMath.AnglesToAxis(headAngles, head);
+}
+
+/**
+ * SwingAngles
+ */
+function SwingAngles(destination, swingTolerance, clampTolerance, speed, res) {
+	var swing, move, scale;
+
+	if (!res.swinging) {
+		// See if a swing should be started
+		swing = QMath.AngleSubtract(res.angle, destination);
+		if (swing > swingTolerance || swing < -swingTolerance) {
+			res.swinging = true;
+		}
+	}
+
+	if (!res.swinging) {
+		return;
+	}
+	
+	// Modify the speed depending on the delta
+	// so it doesn't seem so linear
+	swing = QMath.AngleSubtract(destination, res.angle);
+	scale = Math.abs(swing);
+	if (scale < swingTolerance * 0.5) {
+		scale = 0.5;
+	} else if (scale < swingTolerance) {
+		scale = 1.0;
+	} else {
+		scale = 2.0;
+	}
+
+	// Swing towards the destination angle
+	if (swing >= 0) {
+		move = cg.frameTime * scale * speed;
+		if (move >= swing) {
+			move = swing;
+			res.swinging = false;
+		}
+		res.angle = QMath.AngleNormalize360(res.angle + move);
+	} else if ( swing < 0 ) {
+		move = cg.frameTime * scale * -speed;
+		if (move <= swing) {
+			move = swing;
+			res.swinging = false;
+		}
+		res.angle = QMath.AngleNormalize360(res.angle + move);
+	}
+
+	// clamp to no more than tolerance
+	swing = QMath.AngleSubtract(destination, res.angle);
+	if (swing > clampTolerance) {
+		res.angle = QMath.AngleNormalize360(destination - (clampTolerance - 1));
+	} else if ( swing < -clampTolerance ) {
+		res.angle = QMath.AngleNormalize360(destination + (clampTolerance - 1));
+	}
+}
+
+/**
+ * AddPainTwitch
+ */
+function AddPainTwitch(cent, torsoAngles) {
+	var t = cg.time - cent.pe.painTime;
+	if (t >= PAIN_TWITCH_TIME) {
+		return;
+	}
+
+	var f = 1.0 - (t / PAIN_TWITCH_TIME);
+	if (cent.pe.painDirection) {
+		torsoAngles[QMath.ROLL] += 20 * f;
+	} else {
+		torsoAngles[QMath.ROLL] -= 20 * f;
+	}
+}
+
+/**********************************************************
+ *
+ * Player animation
+ *
+ *********************************************************/
+
+/**
+ * PlayerAnimation
+ */
+function PlayerAnimation(cent, legs, torso) {
+	var clientNum = cent.currentState.clientNum;
+	var ci = cgs.clientinfo[clientNum];
+	var speedScale = 1;
+
+	if (cent.currentState.powerups & (1 << PW.HASTE)) {
+		speedScale = 1.5;
+	}
+
+	// Do the shuffle turn frames locally.
+	if (cent.pe.legs.yawing && (cent.currentState.legsAnim & ~ANIM_TOGGLEBIT) === ANIM.LEGS_IDLE) {
+		RunLerpFrame(ci, cent.pe.legs, ANIM.LEGS_TURN, speedScale);
+	} else {
+		RunLerpFrame(ci, cent.pe.legs, cent.currentState.legsAnim, speedScale);
+	}
+
+	legs.oldFrame = cent.pe.legs.oldFrame;
+	legs.frame = cent.pe.legs.frame;
+	legs.backlerp = cent.pe.legs.backlerp;
+
+	RunLerpFrame(ci, cent.pe.torso, cent.currentState.torsoAnim, speedScale);
+
+	torso.oldFrame = cent.pe.torso.oldFrame;
+	torso.frame = cent.pe.torso.frame;
+	torso.backlerp = cent.pe.torso.backlerp;
+}
+
+
+/**
+ * RunLerpFrame
+ *
+ * Sets cg.snap, cg.oldFrame, and cg.backlerp
+ * cg.time should be between oldFrameTime and frameTime after exit
+ */
+function RunLerpFrame(ci, lf, newAnimation, speedScale) {
+	// See if the animation sequence is switching.
+	if (newAnimation !== lf.animationNumber || !lf.animation) {
+		SetLerpFrameAnimation(ci, lf, newAnimation);
+	}
+
+	// If we have passed the current frame, move it to
+	// oldFrame and calculate a new frame.
+	if (cg.time >= lf.frameTime) {
+		lf.oldFrame = lf.frame;
+		lf.oldFrameTime = lf.frameTime;
+
+		// Get the next frame based on the animation.
+		var anim = lf.animation;
+		if (!anim.frameLerp) {
+			return;  // shouldn't happen
+		}
+
+		if (cg.time < lf.animationTime) {
+			lf.frameTime = lf.animationTime;  // initial lerp
+		} else {
+			lf.frameTime = lf.oldFrameTime + anim.frameLerp;
+		}
+
+		var f = parseInt(((lf.frameTime - lf.animationTime) / anim.frameLerp) * speedScale, 10);
+		var numFrames = anim.numFrames;
+		if (anim.flipflop) {
+			numFrames *= 2;
+		}
+
+		if (f >= numFrames) {
+			f -= numFrames;
+			if (anim.loopFrames) {
+				f %= anim.loopFrames;
+				f += anim.numFrames - anim.loopFrames;
+			} else {
+				f = numFrames - 1;
+				// The animation is stuck at the end, so it
+				// can immediately transition to another sequence
+				lf.frameTime = cg.time;
+			}
+		}
+
+		if (anim.reversed) {
+			lf.frame = anim.firstFrame + anim.numFrames - 1 - f;
+		} else if (anim.flipflop && f >= anim.numFrames) {
+			lf.frame = anim.firstFrame + anim.numFrames - 1 - (f % anim.numFrames);
+		} else {
+			lf.frame = anim.firstFrame + f;
+		}
+
+		if (cg.time > lf.frameTime) {
+			lf.frameTime = cg.time;
+		}
+	}
+
+	if (lf.frameTime > cg.time + 200) {
+		lf.frameTime = cg.time;
+	}
+
+	if (lf.oldFrameTime > cg.time) {
+		lf.oldFrameTime = cg.time;
+	}
+
+	// Calculate current lerp value.
+	if (lf.frameTime === lf.oldFrameTime) {
+		lf.backlerp = 0;
+	} else {
+		lf.backlerp = 1.0 - (cg.time - lf.oldFrameTime) / (lf.frameTime - lf.oldFrameTime);
+	}
+}
+
+/**
+ * SetLerpFrameAnimation
+ *
+ * May include ANIM_TOGGLEBIT.
+ */
+function SetLerpFrameAnimation(ci, lf, newAnimation) {
+	lf.animationNumber = newAnimation;
+	newAnimation &= ~ANIM_TOGGLEBIT;
+
+	if (newAnimation < 0 || newAnimation >= ANIM.MAX_TOTALANIMATIONS) {
+		error('Bad animation number: ' + newAnimation);
+	}
+
+	var anim = ci.animations[newAnimation];
+
+	lf.animation = anim;
+	lf.animationTime = lf.frameTime + anim.initialLerp;
+}
+
+/**
+ * ClearLerpFrame
+ */
+function ClearLerpFrame(ci, lf, animationNumber) {
+	lf.frameTime = lf.oldFrameTime = cg.time;
+	SetLerpFrameAnimation(ci, lf, animationNumber);
+	lf.oldFrame = lf.frame = lf.animation.firstFrame;
+}
+
+/**********************************************************
+ *
+ * Player sounds
+ *
+ **********************************************************/
+var customSoundNames = [
+	'*death1',
+	'*death2',
+	'*death3',
+	'*jump1',
+	'*pain25_1',
+	'*pain50_1',
+	'*pain75_1',
+	'*pain100_1',
+	'*falling1',
+	'*gasp',
+	'*drown',
+	'*fall1',
+	'*taunt'
+];
+
+/**
+ * CustomSound
+ */
+function CustomSound(clientNum, soundName) {
+	if (soundName.charAt(0) !== '*') {
+		return snd.RegisterSound(soundName);
+	}
+
+	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
+		clientNum = 0;
+	}
+
+	var ci = cgs.clientinfo[clientNum];
+
+	for (var i = 0; i < customSoundNames.length; i++) {
+		if (customSoundNames[i] === soundName) {
+			return ci.sounds[i];
+		}
+	}
+
+	error('Unknown custom sound:', soundName);
+	return 0;
+}
+
+		/**
+ * TransitionPlayerState
+ */
+function TransitionPlayerState(ps, ops) {
+	// Check for changing follow mode.
+	/*if (ps.clientNum !== ops.clientNum) {
+		cg.thisFrameTeleport = qtrue;
+		// make sure we don't get any unwanted transition effects
+		*ops = *ps;
+	}*/
+
+	// Damage events (player is getting wounded).
+	/*if ( ps.damageEvent != ops.damageEvent && ps.damageCount ) {
+		CG_DamageFeedback( ps.damageYaw, ps.damagePitch, ps.damageCount );
+	}*/
+
+	// Respawning.
+	if (ps.persistant[PERS.SPAWN_COUNT] != ops.persistant[PERS.SPAWN_COUNT] ) {
+		Respawn();
+	}
+
+	/*if ( cg.mapRestart ) {
+		CG_Respawn();
+		cg.mapRestart = qfalse;
+	}*/
+
+	if (cg.snap.ps.pm_type !== PM.INTERMISSION 
+		&& ps.persistant[PERS.TEAM] !== TEAM.SPECTATOR) {
+		CheckLocalSounds(ps, ops);
+	}
+
+	// check for going low on ammo
+	//CG_CheckAmmo();
+
+	// Run events.
+	CheckPlayerstateEvents(ps, ops);
+
+	/*// smooth the ducking viewheight change
+	if ( ps.viewheight != ops.viewheight ) {
+		cg.duckChange = ps.viewheight - ops.viewheight;
+		cg.duckTime = cg.time;
+	}*/
+}
+
+/**
+ * CheckLocalSounds
+ */
+function CheckLocalSounds(ps, ops) {
+	// Don't play the sounds if the player just changed teams.
+	if (ps.persistant[PERS.TEAM] != ops.persistant[PERS.TEAM]) {
+		return;
+	}
+
+	// Hit changes.
+	if (ps.persistant[PERS.HITS] > ops.persistant[PERS.HITS]) {
+		snd.StartLocalSound(cgs.media.hitSound/*, CHAN_LOCAL_SOUND*/);
+	} else if ( ps.persistant[PERS.HITS] < ops.persistant[PERS.HITS] ) {
+		snd.StartLocalSound(cgs.media.hitTeamSound/*, CHAN_LOCAL_SOUND*/);
+	}
+
+	// Health changes of more than -1 should make pain sounds.
+	if (ps.stats[STAT.HEALTH] < ops.stats[STAT.HEALTH] - 1) {
+		if (ps.stats[STAT.HEALTH] > 0) {
+			PainEvent(cg.predictedPlayerEntity, ps.stats[STAT.HEALTH]);
+		}
+	}
+
+	// // If we are going into the intermission, don't start any voices.
+	// if (cg.intermissionStarted) {
+	// 	return;
+	// }
+
+	// // reward sounds
+	// reward = qfalse;
+	// if (ps.persistant[PERS.CAPTURES] != ops.persistant[PERS.CAPTURES]) {
+	// 	pushReward(cgs.media.captureAwardSound, cgs.media.medalCapture, ps.persistant[PERS.CAPTURES]);
+	// 	reward = qtrue;
+	// 	//Com_Printf("capture\n");
+	// }
+	// if (ps.persistant[PERS.IMPRESSIVE_COUNT] != ops.persistant[PERS.IMPRESSIVE_COUNT]) {
+	// 	sfx = cgs.media.impressiveSound;
+	// 	pushReward(sfx, cgs.media.medalImpressive, ps.persistant[PERS.IMPRESSIVE_COUNT]);
+	// 	reward = qtrue;
+	// 	//Com_Printf("impressive\n");
+	// }
+	// if (ps.persistant[PERS.EXCELLENT_COUNT] != ops.persistant[PERS.EXCELLENT_COUNT]) {
+	// 	sfx = cgs.media.excellentSound;
+	// 	pushReward(sfx, cgs.media.medalExcellent, ps.persistant[PERS.EXCELLENT_COUNT]);
+	// 	reward = qtrue;
+	// 	//Com_Printf("excellent\n");
+	// }
+	// if (ps.persistant[PERS.GAUNTLET_FRAG_COUNT] != ops.persistant[PERS.GAUNTLET_FRAG_COUNT]) {
+	// 	sfx = cgs.media.humiliationSound;
+	// 	pushReward(sfx, cgs.media.medalGauntlet, ps.persistant[PERS.GAUNTLET_FRAG_COUNT]);
+	// 	reward = qtrue;
+	// 	//Com_Printf("guantlet frag\n");
+	// }
+	// if (ps.persistant[PERS.DEFEND_COUNT] != ops.persistant[PERS.DEFEND_COUNT]) {
+	// 	pushReward(cgs.media.defendSound, cgs.media.medalDefend, ps.persistant[PERS.DEFEND_COUNT]);
+	// 	reward = qtrue;
+	// 	//Com_Printf("defend\n");
+	// }
+	// if (ps.persistant[PERS.ASSIST_COUNT] != ops.persistant[PERS.ASSIST_COUNT]) {
+	// 	pushReward(cgs.media.assistSound, cgs.media.medalAssist, ps.persistant[PERS.ASSIST_COUNT]);
+	// 	reward = qtrue;
+	// 	//Com_Printf("assist\n");
+	// }
+	// // if any of the player event bits changed
+	// if (ps.persistant[PERS.PLAYEREVENTS] != ops.persistant[PERS.PLAYEREVENTS]) {
+	// 	if ((ps.persistant[PERS.PLAYEREVENTS] & PLAYEREVENT_DENIEDREWARD) !=
+	// 			(ops.persistant[PERS.PLAYEREVENTS] & PLAYEREVENT_DENIEDREWARD)) {
+	// 		trap_S_StartLocalSound( cgs.media.deniedSound, CHAN_ANNOUNCER );
+	// 	}
+	// 	else if ((ps.persistant[PERS.PLAYEREVENTS] & PLAYEREVENT_GAUNTLETREWARD) !=
+	// 			(ops.persistant[PERS.PLAYEREVENTS] & PLAYEREVENT_GAUNTLETREWARD)) {
+	// 		trap_S_StartLocalSound( cgs.media.humiliationSound, CHAN_ANNOUNCER );
+	// 	}
+	// 	else if ((ps.persistant[PERS.PLAYEREVENTS] & PLAYEREVENT_HOLYSHIT) !=
+	// 			(ops.persistant[PERS.PLAYEREVENTS] & PLAYEREVENT_HOLYSHIT)) {
+	// 		trap_S_StartLocalSound( cgs.media.holyShitSound, CHAN_ANNOUNCER );
+	// 	}
+	// 	reward = qtrue;
+	// }
+
+	// // check for flag pickup
+	// if ( cgs.gametype > GT_TEAM ) {
+	// 	if ((ps.powerups[PW_REDFLAG] != ops.powerups[PW_REDFLAG] && ps.powerups[PW_REDFLAG]) ||
+	// 		(ps.powerups[PW_BLUEFLAG] != ops.powerups[PW_BLUEFLAG] && ps.powerups[PW_BLUEFLAG]) ||
+	// 		(ps.powerups[PW_NEUTRALFLAG] != ops.powerups[PW_NEUTRALFLAG] && ps.powerups[PW_NEUTRALFLAG]) )
+	// 	{
+	// 		trap_S_StartLocalSound( cgs.media.youHaveFlagSound, CHAN_ANNOUNCER );
+	// 	}
+	// }
+
+	// // lead changes
+	// if (!reward) {
+	// 	//
+	// 	if ( !cg.warmup ) {
+	// 		// never play lead changes during warmup
+	// 		if ( ps.persistant[PERS.RANK] != ops.persistant[PERS.RANK] ) {
+	// 			if ( cgs.gametype < GT_TEAM) {
+	// 				if (  ps.persistant[PERS.RANK] == 0 ) {
+	// 					CG_AddBufferedSound(cgs.media.takenLeadSound);
+	// 				} else if ( ps.persistant[PERS.RANK] == RANK_TIED_FLAG ) {
+	// 					CG_AddBufferedSound(cgs.media.tiedLeadSound);
+	// 				} else if ( ( ops.persistant[PERS.RANK] & ~RANK_TIED_FLAG ) == 0 ) {
+	// 					CG_AddBufferedSound(cgs.media.lostLeadSound);
+	// 				}
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	// // timelimit warnings
+	// if ( cgs.timelimit > 0 ) {
+	// 	int		msec;
+
+	// 	msec = cg.time - cgs.levelStartTime;
+	// 	if ( !( cg.timelimitWarnings & 4 ) && msec > ( cgs.timelimit * 60 + 2 ) * 1000 ) {
+	// 		cg.timelimitWarnings |= 1 | 2 | 4;
+	// 		trap_S_StartLocalSound( cgs.media.suddenDeathSound, CHAN_ANNOUNCER );
+	// 	}
+	// 	else if ( !( cg.timelimitWarnings & 2 ) && msec > (cgs.timelimit - 1) * 60 * 1000 ) {
+	// 		cg.timelimitWarnings |= 1 | 2;
+	// 		trap_S_StartLocalSound( cgs.media.oneMinuteSound, CHAN_ANNOUNCER );
+	// 	}
+	// 	else if ( cgs.timelimit > 5 && !( cg.timelimitWarnings & 1 ) && msec > (cgs.timelimit - 5) * 60 * 1000 ) {
+	// 		cg.timelimitWarnings |= 1;
+	// 		trap_S_StartLocalSound( cgs.media.fiveMinuteSound, CHAN_ANNOUNCER );
+	// 	}
+	// }
+
+	// // fraglimit warnings
+	// if ( cgs.fraglimit > 0 && cgs.gametype < GT_CTF) {
+	// 	highScore = cgs.scores1;
+
+	// 	if (cgs.gametype == GT_TEAM && cgs.scores2 > highScore) {
+	// 		highScore = cgs.scores2;
+	// 	}
+
+	// 	if ( !( cg.fraglimitWarnings & 4 ) && highScore == (cgs.fraglimit - 1) ) {
+	// 		cg.fraglimitWarnings |= 1 | 2 | 4;
+	// 		CG_AddBufferedSound(cgs.media.oneFragSound);
+	// 	}
+	// 	else if ( cgs.fraglimit > 2 && !( cg.fraglimitWarnings & 2 ) && highScore == (cgs.fraglimit - 2) ) {
+	// 		cg.fraglimitWarnings |= 1 | 2;
+	// 		CG_AddBufferedSound(cgs.media.twoFragSound);
+	// 	}
+	// 	else if ( cgs.fraglimit > 3 && !( cg.fraglimitWarnings & 1 ) && highScore == (cgs.fraglimit - 3) ) {
+	// 		cg.fraglimitWarnings |= 1;
+	// 		CG_AddBufferedSound(cgs.media.threeFragSound);
+	// 	}
+	// }
+}
+
+/**
+ * CheckPlayerstateEvents
+ */
+function CheckPlayerstateEvents(ps, ops) {
+	var cent;
+	if (ps.externalEvent && ps.externalEvent != ops.externalEvent) {
+		cent = cg.entities[ps.clientNum];
+		cent.currentState.event = ps.externalEvent;
+		cent.currentState.eventParm = ps.externalEventParm;
+		AddEntityEvent(cent, cent.lerpOrigin);
+	}
+
+	cent = cg.predictedPlayerEntity;
+	// Go through the predictable events buffer.
+	for (var i = ps.eventSequence - MAX_PS_EVENTS; i < ps.eventSequence; i++) {
+		// If we have a new predictable event.
+		if (i >= ops.eventSequence
+			// or the server told us to play another event instead of a predicted event we already issued
+			// or something the server told us changed our prediction causing a different event
+			|| (i > ops.eventSequence - MAX_PS_EVENTS && ps.events[i & (MAX_PS_EVENTS - 1)] !== ops.events[i & (MAX_PS_EVENTS - 1)]) ) {
+			cent.currentState.event = ps.events[i & (MAX_PS_EVENTS - 1)];
+			cent.currentState.eventParm = ps.eventParms[i & (MAX_PS_EVENTS - 1)];
+			AddEntityEvent(cent, cent.lerpOrigin);
+		}
+	}
+}
+
+/**
+ * Respawn
+ * 
+ * A respawn happened this snapshot
+ */
+function Respawn() {
+	// No error decay on player movement.
+	cg.thisFrameTeleport = true;
+
+	// Display weapons available.
+	//cg.weaponSelectTime = cg.time;
+
+	// Select the weapon the server says we are using.
+	cg.weaponSelect = cg.snap.ps.weapon;
+}
+
+		/**
+ * BuildSolidList
+ *
+ * When a new cg.snap has been set, this function builds a sublist
+ * of the entities that are actually solid, to make for more
+ * efficient collision detection.
+ */
+function BuildSolidList() {
+	cg.numSolidEntities = 0;
+	cg.numTriggerEntities = 0;
+
+	var snap;
+
+	if (cg.nextSnap && !cg.nextFrameTeleport && !cg.thisFrameTeleport) {
+		snap = cg.nextSnap;
+	} else {
+		snap = cg.snap;
+	}
+
+	for (var i = 0; i < snap.numEntities; i++ ) {
+		var cent = cg.entities[snap.entities[i].number];
+		var es = cent.currentState;
+
+		if (es.eType === ET.ITEM || es.eType == ET.PUSH_TRIGGER || es.eType === ET.TELEPORT_TRIGGER) {
+			cg.triggerEntities[cg.numTriggerEntities++] = cent;
+			continue;
+		}
+
+		if (cent.nextState.solid) {
+			cg.solidEntities[cg.numSolidEntities++] = cent;
+			continue;
+		}
+	}
+}
+
+/**
+ * Trace
+ */
+function Trace(start, end, mins, maxs, skipNumber, mask) {
+	var trace = cm.BoxTrace(start, end, mins, maxs, 0, mask);
+	trace.entityNum = trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
+
+	// Check all other solid models.
+	ClipMoveToEntities(trace, start, end, mins, maxs, skipNumber, mask);
+
+	return trace;
+}
+
+
+/**
+ * ClipMoveToEntities
+ */
+function ClipMoveToEntities(tr, start, end, mins, maxs, skipNumber, mask) {
+	var origin = [0, 0, 0];
+	var angles = [0, 0, 0];
+
+	for (var i = 0; i < cg.numSolidEntities; i++) {
+		var cent = cg.solidEntities[i];
+		var es = cent.currentState;
+
+		if (es.number === skipNumber) {
+			continue;
+		}
+
+		var cmodel;
+		if (es.solid === SOLID_BMODEL) {
+			// Special value for bmodel.
+			cmodel = cm.InlineModel(es.modelIndex);
+			vec3.set(cent.lerpAngles, angles);
+			bg.EvaluateTrajectory(cent.currentState.pos, cg.physicsTime, origin);
+		} else {
+			// Encoded bbox.
+			var x = (es.solid & 255);
+			var zd = ((es.solid >> 8) & 255);
+			var zu = ((es.solid >> 16) & 255) - 32;
+
+			var bmins = [0, 0, 0];
+			var bmaxs = [0, 0, 0];
+
+			bmins[0] = bmins[1] = -x;
+			bmaxs[0] = bmaxs[1] = x;
+			bmins[2] = -zd;
+			bmaxs[2] = zu;
+
+			cmodel = cm.TempBoxModel(bmins, bmaxs);
+			angles[0] = angles[1] = angles[2] = 0;
+			vec3.set(cent.lerpOrigin, origin);
+		}
+
+		var trace = cm.TransformedBoxTrace(start, end, mins, maxs, cmodel, mask, origin, angles);
+
+		if (trace.allSolid || trace.fraction < tr.fraction) {
+			trace.entityNum = es.number;
+			trace.clone(tr);
+		} else if (trace.startSolid) {
+			tr.startSolid = true;
+		}
+
+		if (tr.allSolid) {
+			return;
+		}
+	}
+}
+
+/**
+ * InterpolatePlayerState
+ */
+function InterpolatePlayerState(grabAngles) {
+	var ps = cg.snap.ps.clone(cg.predictedPlayerState);
+	var prev = cg.snap;
+	var next = cg.nextSnap;
+
+	// If we are still allowing local input, short circuit the view angles.
+	if (grabAngles) {
+		var cmd = new sh.UserCmd();
+		var cmdNum = cl.GetCurrentUserCmdNumber();
+		cl.GetUserCmd(cmdNum, cmd);
+		bg.UpdateViewAngles(ps, cmd);
+	}
+
+	// If the next frame is a teleport, we can't lerp to it.
+	if (cg.nextFrameTeleport) {
+		return;
+	}
+
+	if (!next || next.serverTime <= prev.serverTime) {
+		return;
+	}
+
+	var f = (cg.time - prev.serverTime) / (next.serverTime - prev.serverTime);
+
+	/*i = next.ps.bobCycle;
+	if ( i < prev.ps.bobCycle ) {
+		i += 256;		// handle wraparound
+	}
+	out.bobCycle = prev.ps.bobCycle + f * ( i - prev.ps.bobCycle );*/
+
+	for (var i = 0; i < 3; i++) {
+		ps.origin[i] = prev.ps.origin[i] + f * (next.ps.origin[i] - prev.ps.origin[i]);
+		if (!grabAngles) {
+			ps.viewangles[i] = QMath.LerpAngle(prev.ps.viewangles[i], next.ps.viewangles[i], f);
+		}
+		ps.velocity[i] = prev.ps.velocity[i] + f * (next.ps.velocity[i] - prev.ps.velocity[i]);
+	}
+}
+
+/**
+ * PredictPlayerState
+ */
+function PredictPlayerState() {
+	cg.hyperspace = false;  // will be set if touching a trigger_teleport
+
+	// If this is the first frame we must guarantee predictedPlayerState 
+	// is valid even if there is some other error condition.
+	if (!cg.validPPS) {
+		cg.validPPS = true;
+		cg.snap.ps.clone(cg.predictedPlayerState);
+	}
+
+	// Just copy the moves when following.
+	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
+		InterpolatePlayerState(false);
+		return;
+	}
+
+	if (cg_nopredict()) {
+		InterpolatePlayerState(true);
+		return;
+	}
+
+	// Save the state before the pmove so we can detect transitions.
+	var oldPlayerState = cg.predictedPlayerState.clone();
+
+	// If we don't have the commands right after the snapshot, we
+	// can't accurately predict a current position, so just freeze at
+	// the last good position we had.
+	var latest = cl.GetCurrentUserCmdNumber();
+	var oldest = latest - CMD_BACKUP + 1;
+	var oldestCmd = new sh.UserCmd();
+	cl.GetUserCmd(oldest, oldestCmd);
+
+	// Special check for map_restart.
+	if (oldestCmd.serverTime > cg.snap.ps.commandTime && oldestCmd.serverTime < cg.time) {
+		if (cg_showmiss()) {
+			log('exceeded PACKET_BACKUP on commands');
+		}
+		return;
+	}
+
+	// Get the latest command so we can know which commands are from previous map_restarts.
+	var latestCmd = new sh.UserCmd();
+	cl.GetUserCmd(latest, latestCmd);
+
+	// Get the most recent information we have, even if the server time
+	// is beyond our current cg.time, because predicted player positions
+	// are going to be ahead of everything else anyway.
+	if (cg.nextSnap && !cg.nextFrameTeleport && !cg.thisFrameTeleport) {
+		cg.nextSnap.ps.clone(cg.predictedPlayerState);
+		cg.physicsTime = cg.nextSnap.serverTime;
+	} else {
+		cg.snap.ps.clone(cg.predictedPlayerState);
+		cg.physicsTime = cg.snap.serverTime;
+	}
+
+	// Prepare for pmove.
+	// TODO memset() this thing
+	cg.pmove.ps = cg.predictedPlayerState;
+	cg.pmove.trace = Trace;
+	// cg.pmove.pointcontents = CG_PointContents;
+	if (cg.pmove.ps.pm_type === PM.DEAD) {
+		cg.pmove.tracemask = MASK.PLAYERSOLID & ~CONTENTS.BODY;
+	} else {
+		cg.pmove.tracemask = MASK.PLAYERSOLID;
+	}
+	// if (cg.snap.ps.persistant[PERS.TEAM] == TEAM_SPECTATOR) {
+	// 	cg.pmove.tracemask &= ~CONTENTS.BODY;	// spectators can fly through bodies
+	// }
+	// cg.pmove.noFootsteps = ( cgs.dmflags & DF_NO_FOOTSTEPS ) > 0;
+
+	// Run cmds.
+	var moved = false;
+	for (var cmdNum = oldest; cmdNum <= latest; cmdNum++) {
+		// Get the command.
+		cl.GetUserCmd(cmdNum, cg.pmove.cmd);
+
+		// Don't do anything if the time is before the snapshot player time.
+		if (cg.pmove.cmd.serverTime <= cg.predictedPlayerState.commandTime) {
+			continue;
+		}
+
+		// Don't do anything if the command was from a previous map_restart.
+		if (cg.pmove.cmd.serverTime > latestCmd.serverTime) {
+			continue;
+		}
+
+		// Check for a prediction error from last frame on a lan, this will often
+		// be the exact value from the snapshot, but on a wan we will have to
+		// predict several commands to get to the point we want to compare.
+		// if (cg.predictedPlayerState.commandTime === oldPlayerState.commandTime) {
+		// 	if (cg.thisFrameTeleport) {
+		// 		// A teleport will not cause an error decay
+		// 		cg.predictedError = [0, 0, 0];
+		// 		if (cg_showmiss()) {
+		// 			log('PredictionTeleport');
+		// 		}
+		// 		cg.thisFrameTeleport = false;
+		// 	} else {
+		// 		vec3_t adjusted, new_angles;
+		// 		CG_AdjustPositionForMover( cg.predictedPlayerState.origin, 
+		// 			cg.predictedPlayerState.groundEntityNum, cg.physicsTime, cg.oldTime, adjusted, cg.predictedPlayerState.viewangles, new_angles);
+
+		// 		if (cg_showmiss()) {
+		// 			if (oldPlayerState.origin[0] !== adjusted[0] ||
+		// 				oldPlayerState.origin[1] !== adjusted[1]
+		// 				oldPlayerState.origin[2] !== adjusted[2]) {
+		// 				log('Prediction error');
+		// 			}
+		// 		}
+		// 		var delta = vec3.subtract(oldPlayerState.origin, adjusted, [0, 0, 0]);
+		// 		var len = vec3.length(delta);
+		// 		if (len > 0.1) {
+		// 			if (cg_showmiss()) {
+		// 				log('Prediction miss: ' + len);
+		// 			}
+		// 			if (cg_errorDecay()) {
+		// 				var t = cg.time - cg.predictedErrorTime;
+		// 				var f = (cg_errorDecay() - t) / cg_errorDecay();
+		// 				if (f < 0) {
+		// 					f = 0;
+		// 				} else if (f > 0 && cg_showmiss()) {
+		// 					log('Double prediction decay: ' + f);
+		// 				}
+		// 				vec3.scale(cg.predictedError, f);
+		// 			} else {
+		// 				cg.predictedError = [0, 0, 0];
+		// 			}
+		// 			VectorAdd( delta, cg.predictedError, cg.predictedError );
+		// 			cg.predictedErrorTime = cg.oldTime;
+		// 		}
+		// 	}
+		// }
+
+		// Don't predict gauntlet firing, which is only supposed to happen
+		// when it actually inflicts damage.
+		cg.pmove.gauntletHit = false;
+		
+		bg.Pmove(cg.pmove);
+
+		moved = true;
+
+		// Add push trigger movement effects
+		TouchTriggerPrediction();
+	}
+
+	if (cg_showmiss() > 1) {
+		log('[' + cg.pmove.cmd.serverTime + ' : ' + cg.time + ']');
+	}
+
+	if (!moved) {
+		if (cg_showmiss()) {
+			log('not moved');
+		}
+		return;
+	}
+
+	// // adjust for the movement of the groundentity
+	// CG_AdjustPositionForMover( cg.predictedPlayerState.origin, 
+	// 	cg.predictedPlayerState.groundEntityNum, 
+	// 	cg.physicsTime, cg.time, cg.predictedPlayerState.origin, cg.predictedPlayerState.viewangles, cg.predictedPlayerState.viewangles);
+
+	// if (cg_showmiss()) {
+	// 	if (cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS) {
+	// 		CG_Printf("WARNING: dropped event\n");
+	// 	}
+	// }
+
+	// Fire events and other transition triggered things
+	TransitionPlayerState(cg.predictedPlayerState, oldPlayerState);
+}
+
+
+/**
+ * TouchTriggerPrediction
+ * 
+ * Predict push triggers and items
+ */
+function TouchTriggerPrediction() {
+	// Dead clients don't activate triggers.
+	if (cg.predictedPlayerState.pm_type === PM.DEAD) {
+		return;
+	}
+
+	var spectator = (cg.predictedPlayerState.pm_type === PM.SPECTATOR);
+	if (cg.predictedPlayerState.pm_type !== PM.NORMAL && !spectator) {
+		return;
+	}
+
+	for (var i = 0; i < cg.numTriggerEntities; i++) {
+		var cent = cg.triggerEntities[i];
+		var es = cent.currentState;
+
+		if (es.eType === ET.ITEM && !spectator) {
+			TouchItem(cent);
+			continue;
+		}
+
+		if (es.solid !== SOLID_BMODEL) {
+			continue;
+		}
+
+		var cmodel = cm.InlineModel(es.modelIndex);
+		if (!cmodel) {
+			continue;
+		}
+
+		var trace = cm.BoxTrace(cg.predictedPlayerState.origin, cg.predictedPlayerState.origin, 
+			cg.pmove.mins, cg.pmove.maxs, cmodel, -1);
+
+		if (!trace.startSolid) {
+			continue;
+		}
+
+		if (es.eType === ET.TELEPORT_TRIGGER) {
+			cg.hyperspace = true;
+		} else if (es.eType == ET.PUSH_TRIGGER) {
+			bg.TouchJumpPad(cg.predictedPlayerState, es);
+		}
+	}
+
+	// If we didn't touch a jump pad this pmove frame.
+	if (cg.predictedPlayerState.jumppad_frame != cg.predictedPlayerState.pmove_framecount) {
+		cg.predictedPlayerState.jumppad_frame = 0;
+		cg.predictedPlayerState.jumppad_ent = 0;
+	}
+}
+
+/**
+ * TouchItem
+ */
+function TouchItem(cent) {
+	// if (!cg_predictItems()) {
+	// 	return;
+	// }
+
+	if (!bg.PlayerTouchesItem(cg.predictedPlayerState, cent.currentState, cg.time)) {
+		return;
+	}
+
+	// Never pick an item up twice in a prediction.
+	if (cent.miscTime === cg.time) {
+		return;
+	}
+
+	if (!bg.CanItemBeGrabbed(null/*cgs.gametype*/, cent.currentState, cg.predictedPlayerState)) {
+		return;  // can't hold it
+	}
+
+	var item = bg.ItemList[cent.currentState.modelIndex];
+
+	// // Special case for flags.  
+	// // We don't predict touching our own flag.
+	// if (cgs.gametype === GT_CTF) {
+	// 	if (cg.predictedPlayerState.persistant[PERS.TEAM] == TEAM_RED &&
+	// 		item.giTag == PW_REDFLAG)
+	// 		return;
+	// 	if (cg.predictedPlayerState.persistant[PERS.TEAM] == TEAM_BLUE &&
+	// 		item.giTag == PW_BLUEFLAG)
+	// 		return;
+	// }
+
+
+	// Grab it.
+	bg.AddPredictableEventToPlayerstate(cg.predictedPlayerState, EV.ITEM_PICKUP, cent.currentState.modelIndex);
+
+	// Remove it from the frame so it won't be drawn.
+	cent.currentState.eFlags |= EF.NODRAW;
+
+	// Don't touch it again this prediction.
+	cent.miscTime = cg.time;
+
+	// If it's a weapon, give them some predicted ammo so the autoswitch will work.
+	if (item.giType === IT.WEAPON) {
+		cg.predictedPlayerState.stats[STAT.WEAPONS] |= 1 << item.giTag;
+		if (!cg.predictedPlayerState.ammo[item.giTag]) {
+			cg.predictedPlayerState.ammo[item.giTag] = 1;
+		}
+	}
+}
+
+
+		/**
+ * ExecuteNewServerCommands
+ *
+ * Execute all of the server commands that were received along
+ * with this this snapshot.
+ */
+function ExecuteNewServerCommands(latestSequence) {
+	while (cgs.serverCommandSequence < latestSequence) {
+		var cmd;
+
+		if ((cmd = cl.GetServerCommand(++cgs.serverCommandSequence))) {
+			ServerCommand(cmd);
+		}
+	}
+}
+
+/**
+ * ServerCommand
+ */
+function ServerCommand(cmd) {
+	if (cmd.type === 'cs') {
+		var key = cmd.value.k;
+		var val = cmd.value.v;
+		ConfigStringModified(key, val);
+		return;
+	}
+}
+
+/**
+ * ConfigStringModified
+ */
+function ConfigStringModified(key, val) {
+	// Get the gamestate from the client system, which will have the
+	// new configstring already integrated.
+	// trap_GetGameState( &cgs.gameState );
+
+	// Do something with it if necessary.
+	// if (key === 'music') {
+	// 	StartMusic();
+	// } else if (num == 'serverinfo') {
+	// 	ParseServerinfo();
+	// } else if (num == CS_WARMUP) {
+	// 	CG_ParseWarmup();
+	// } else if (num == CS_SCORES1) {
+	// 	cgs.scores1 = atoi( str );
+	// } else if (num == CS_SCORES2) {
+	// 	cgs.scores2 = atoi( str );
+	// } else if (num == CS_LEVEL_START_TIME) {
+	// 	cgs.levelStartTime = atoi( str );
+	// } else if (num == CS_VOTE_TIME) {
+	// 	cgs.voteTime = atoi( str );
+	// 	cgs.voteModified = qtrue;
+	// } else if (num == CS_VOTE_YES) {
+	// 	cgs.voteYes = atoi( str );
+	// 	cgs.voteModified = qtrue;
+	// } else if (num == CS_VOTE_NO) {
+	// 	cgs.voteNo = atoi( str );
+	// 	cgs.voteModified = qtrue;
+	// } else if (num == CS_VOTE_STRING) {
+	// 	Q_strncpyz( cgs.voteString, str, sizeof( cgs.voteString ) );
+	// } else if (num >= CS_TEAMVOTE_TIME && num <= CS_TEAMVOTE_TIME + 1) {
+	// 	cgs.teamVoteTime[num-CS_TEAMVOTE_TIME] = atoi( str );
+	// 	cgs.teamVoteModified[num-CS_TEAMVOTE_TIME] = qtrue;
+	// } else if (num >= CS_TEAMVOTE_YES && num <= CS_TEAMVOTE_YES + 1) {
+	// 	cgs.teamVoteYes[num-CS_TEAMVOTE_YES] = atoi( str );
+	// 	cgs.teamVoteModified[num-CS_TEAMVOTE_YES] = qtrue;
+	// } else if (num >= CS_TEAMVOTE_NO && num <= CS_TEAMVOTE_NO + 1) {
+	// 	cgs.teamVoteNo[num-CS_TEAMVOTE_NO] = atoi( str );
+	// 	cgs.teamVoteModified[num-CS_TEAMVOTE_NO] = qtrue;
+	// } else if (num >= CS_TEAMVOTE_STRING && num <= CS_TEAMVOTE_STRING + 1) {
+	// 	Q_strncpyz( cgs.teamVoteString[num-CS_TEAMVOTE_STRING], str, sizeof( cgs.teamVoteString ) );
+	// } else if (num == CS_INTERMISSION ) {
+	// 	cg.intermissionStarted = atoi( str );
+	// } else if (num >= CS_MODELS && num < CS_MODELS+MAX_MODELS) {
+	// 	cgs.gameModels[ num-CS_MODELS ] = trap_R_RegisterModel( str );
+	// } else if (num >= CS_SOUNDS && num < CS_SOUNDS+MAX_SOUNDS) {
+	// 	if ( str[0] != '*' ) {	// player specific sounds don't register here
+	// 		cgs.gameSounds[ num-CS_SOUNDS] = trap_S_RegisterSound( str, qfalse );
+	// 	}
+	if (key.indexOf('player') === 0) {
+		var clientNum = parseInt(key.substr(6), 10);
+		NewClientInfo(clientNum);
+		// BuildSpectatorString();
+	}
+	// else if (num == CS_FLAGSTATUS) {
+	// 	if( cgs.gametype == GT_CTF ) {
+	// 		// format is rb where its red/blue, 0 is at base, 1 is taken, 2 is dropped
+	// 		cgs.redflag = str[0] - '0';
+	// 		cgs.blueflag = str[1] - '0';
+	// 	}
+	// }
+	// else if (num == CS_SHADERSTATE) {
+	// 	CG_ShaderStateChanged();
+	// }
+}
+
+/**
+ * ParseServerinfo
+ *
+ * This is called explicitly when the gamestate is first received,
+ * and whenever the server updates any serverinfo flagged cvars
+ */
+function ParseServerinfo() {
+	var serverInfo = ConfigString('serverInfo');
+
+	cgs.mapname = serverInfo['sv_mapname'];
+}
+		/**
+ * ProcessSnapshots
+ */
+function ProcessSnapshots() {
+	var snap;
+
+	// See what the latest snapshot the client system has is.
+	var info = cl.GetCurrentSnapshotNumber();
+
+	cg.latestSnapshotTime = info.serverTime;
+
+	if (info.snapshotNumber !== cg.latestSnapshotNum) {
+		if (info.snapshotNumber < cg.latestSnapshotNum) {
+			// this should never happen
+			error('ProcessSnapshots: info.snapshotNumber < cg.latestSnapshotNum');
+		}
+
+		cg.latestSnapshotNum = info.snapshotNumber;
+	}
+
+	// If we have yet to receive a snapshot, check for it.
+	// Once we have gotten the first snapshot, cg.snap will
+	// always have valid data for the rest of the game.
+	while (!cg.snap) {
+		snap = ReadNextSnapshot();
+
+		if (!snap) {
+			// we can't continue until we get a snapshot
+			return;
+		}
+
+		if (!(snap.snapFlags & SNAPFLAG_NOT_ACTIVE)) {
+			SetInitialSnapshot(snap);
+		}
+	}
+
+	// Loop until we either have a valid nextSnap with a serverTime
+	// greater than cg.time to interpolate towards, or we run
+	// out of available snapshots.
+	while (true) {
+		// If we don't have a nextframe, try and read a new one in.
+		if (!cg.nextSnap) {
+			snap = ReadNextSnapshot();
+
+			// If we still don't have a nextframe, we will just have to extrapolate.
+			if (!snap) {
+				break;
+			}
+
+			SetNextSnap(snap);
+
+			// If time went backwards, we have a level restart.
+			if (cg.nextSnap.serverTime < cg.snap.serverTime ) {
+				error('ProcessSnapshots: Server time went backwards');
+			}
+		}
+
+		// if our time is < nextFrame's, we have a nice interpolating state.
+		if (cg.time >= cg.snap.serverTime && cg.time < cg.nextSnap.serverTime) {
+			break;
+		}
+
+		// we have passed the transition from nextFrame to frame
+		TransitionSnapshot();
+	}
+
+	// Assert our valid conditions upon exiting
+	if (cg.snap === null) {
+		error('ProcessSnapshots: cg.snap == NULL');
+	}
+
+	if (cg.time < cg.snap.serverTime) {
+		// this can happen right after a vid_restart
+		cg.time = cg.snap.serverTime;
+	}
+
+	if (cg.nextSnap && cg.nextSnap.serverTime <= cg.time ) {
+		error('ProcessSnapshots: cg.nextSnap.serverTime <= cg.time');
+	}
+
+	/*if (!cg.nextSnap) {
+		log('ProcessSnapshots: No valid nextSnap.');
+	}*/
+}
+
+/**
+ * ReadNextSnapshot
+ */
+function ReadNextSnapshot() {
+	if (cg.latestSnapshotNum > cgs.processedSnapshotNum + 1000) {
+		console.warn('ReadNextSnapshot: way out of range, ' + cg.latestSnapshotNum + ' > ' + cgs.processedSnapshotNum);
+	}
+
+	while (cgs.processedSnapshotNum < cg.latestSnapshotNum) {
+		// Try to read the snapshot from the client system.
+		cgs.processedSnapshotNum++;
+		var snap = cl.GetSnapshot(cgs.processedSnapshotNum);
+
+		// if it succeeded, return
+		if (snap) {
+			return snap;
+		}
+
+		// GetSnapshot will return failure if the snapshot
+		// never arrived, or  is so old that its entities
+		// have been shoved off the end of the circular
+		// buffer in the client system.
+
+		// If there are additional snapshots, continue trying to
+		// read them.
+	}
+
+	// Nothing left to read.
+	return null;
+}
+
+/**
+ * SetInitialSnapshot
+ */
+function SetInitialSnapshot(snap) {
+	cg.snap = snap;
+
+	log('Setting initial snapshot');
+
+	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].currentState);
+
+	// Sort out solid entities.
+	BuildSolidList();
+
+	ExecuteNewServerCommands(snap.serverCommandNum);
+
+	// Set our local weapon selection pointer t what the
+	// server has indicated the current weapon is.
+	Respawn();
+
+	for (var i = 0; i < snap.numEntities; i++) {
+		var state = snap.entities[i];
+		var cent = cg.entities[state.number];
+
+		state.clone(cent.currentState);
+
+		cent.interpolate = false;
+		cent.currentValid = true;
+
+		ResetEntity(cent);
+
+		// check for events
+		CheckEvents(cent);
+	}
+}
+
+/**
+ * SetNextSnap
+ */
+function SetNextSnap(snap) {
+	cg.nextSnap = snap;
+
+	bg.PlayerStateToEntityState(snap.ps, cg.entities[snap.ps.clientNum].nextState);
+	cg.entities[cg.snap.ps.clientNum].interpolate = true;
+
+	// Check for extrapolation errors.
+	for (var i = 0; i < snap.numEntities; i++) {
+		var state = snap.entities[i];
+		var cent = cg.entities[state.number];
+
+		state.clone(cent.nextState);
+
+		// If this frame is a teleport, or the entity wasn't in the previous frame, don't interpolate.
+		if (!cent.currentValid || ((cent.currentState.eFlags ^ state.eFlags) & EF.TELEPORT_BIT)) {
+			cent.interpolate = false;
+		} else {
+			cent.interpolate = true;
+		}
+	}
+
+	// If the next frame is a teleport for the playerstate, we can't interpolate.
+	if (cg.snap && ((snap.ps.eFlags ^ cg.snap.ps.eFlags) & EF.TELEPORT_BIT)) {
+		cg.nextFrameTeleport = true;
+	} else {
+		cg.nextFrameTeleport = false;
+	}
+
+	// If changing server restarts, don't interpolate.
+	if ((cg.nextSnap.snapFlags ^ cg.snap.snapFlags) & SNAPFLAG_SERVERCOUNT) {
+		cg.nextFrameTeleport = true;
+	}
+
+	BuildSolidList();
+}
+
+/**
+ * TransitionSnapshot
+ *
+ * The transition point from snap to nextSnap has passed.
+ */
+function TransitionSnapshot() {
+	if (!cg.snap) {
+		error('TransitionSnapshot: NULL cg.snap');
+	}
+	if (!cg.nextSnap) {
+		error('TransitionSnapshot: NULL cg.nextSnap');
+	}
+
+	// Execute any server string commands before transitioning entities.
+	ExecuteNewServerCommands(cg.nextSnap.serverCommandNum);
+
+	// Clear the currentValid flag for all entities in the existing snapshot.
+	for (var i = 0; i < cg.snap.numEntities; i++) {
+		var cent = cg.entities[cg.snap.entities[i].number];
+		cent.currentValid = false;
+	}
+
+	// Move nextSnap to snap and do the transitions.
+	var oldFrame = cg.snap;
+	cg.snap = cg.nextSnap;
+
+	bg.PlayerStateToEntityState(cg.snap.ps, cg.entities[cg.snap.ps.clientNum].currentState);
+	cg.entities[cg.snap.ps.clientNum].interpolate = false;
+
+	for (var i = 0; i < cg.snap.numEntities; i++) {
+		var cent = cg.entities[cg.snap.entities[i].number];
+		
+		TransitionEntity(cent);
+
+		// Remember time of snapshot this entity was last updated in.
+		cent.snapshotTime = cg.snap.serverTime;
+	}
+
+	cg.nextSnap = null;
+
+	// Check for playerstate transition events
+	if (oldFrame) {
+		var ops = oldFrame.ps;
+		var ps = cg.snap.ps;
+
+		// teleporting checks are irrespective of prediction
+		if ((ps.eFlags ^ ops.eFlags) & EF.TELEPORT_BIT) {
+			cg.thisFrameTeleport = true; // will be cleared by prediction code
+		}
+
+		// if we are not doing client side movement prediction for any
+		// reason, then the client events and view changes will be issued now
+		if ((cg.snap.ps.pm_flags & PMF.FOLLOW)) {
+			TransitionPlayerState(ps, ops);
+		}
+	}
+}
+
+/**
+ * TransitionEntity
+ *
+ * cent->nextState is moved to cent->currentState and events are fired.
+ */
+function TransitionEntity(cent) {
+	cent.nextState.clone(cent.currentState);
+	cent.currentValid = true;
+
+	// Reset if the entity wasn't in the last frame or was teleported.
+	if (!cent.interpolate) {
+		ResetEntity(cent);
+	}
+
+	// Clear the next state. It will be set by the next SetNextSnap.
+	cent.interpolate = false;
+
+	// check for events
+	CheckEvents(cent);
+}
+
+/**
+ * ResetEntity
+ */
+function ResetEntity(cent) {
+	// If the previous snapshot this entity was updated in is at least
+	// an event window back in time then we can reset the previous event.
+	if (cent.snapshotTime < cg.time - EVENT_VALID_MSEC) {
+		cent.previousEvent = 0;
+	}
+
+	cent.trailTime = cg.snap.serverTime;
+
+	vec3.set(cent.currentState.origin, cent.lerpOrigin);
+	vec3.set(cent.currentState.angles, cent.lerpAngles);
+
+	/*if (cent.currentState.eType === ET.PLAYER) {
+		ResetPlayerEntity(cent);
+	}*/
+}
+		/**
+ * CalcViewValues
+ */
+function CalcViewValues() {
+	var ps = cg.predictedPlayerState;
+
+	cg.refdef.x = 0;
+	cg.refdef.y = 0;
+	// TODO FIX THIS
+	// viewport is only resolving because it matches the dom ID and Chrome/FF auto make globals per-id
+	cg.refdef.width = viewport.width;
+	cg.refdef.height = viewport.height;
+
+	cg.bobCycle = (ps.bobCycle & 128 ) >> 7;
+	cg.bobFracSin = Math.abs(Math.sin((ps.bobCycle & 127) / 127 * Math.PI));
+	cg.xyspeed = Math.sqrt(ps.velocity[0] * ps.velocity[0] + ps.velocity[1] * ps.velocity[1] );
+
+	vec3.set(ps.origin, cg.refdef.vieworg);
+	vec3.set(ps.viewangles, cg.refdefViewAngles);
+
+	// Add error decay.
+	// if (cg_errorDecay() > 0) {
+	// 	var t = cg.time - cg.predictedErrorTime;
+	// 	var f = (cg_errorDecay() - t) / cg_errorDecay();
+	// 	if (f > 0 && f < 1) {
+	// 		VectorMA( cg.refdef.vieworg, f, cg.predictedError, cg.refdef.vieworg );
+	// 	} else {
+	// 		cg.predictedErrorTime = 0;
+	// 	}
+	// }
+
+	if (cg.renderingThirdPerson) {
+		OffsetThirdPersonView();
+	} else {
+		OffsetFirstPersonView();
+	}
+
+	QMath.AnglesToAxis(cg.refdefViewAngles, cg.refdef.viewaxis);
+
+	CalcFov();
+}
+
+/**
+ * OffsetFirstPersonView
+ */
+function OffsetFirstPersonView() {
+	// Add view height.
+	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
+}
+
+/**
+ * OffsetThirdPersonView
+ */
+var FOCUS_DISTANCE = 512;
+var thirdPersonCameraMins = [-4, -4, -4];
+var thirdPersonCameraMaxs = [4, 4, 4];
+function OffsetThirdPersonView() {
+	var forward = [0, 0, 0];
+	var right = [0, 0, 0];
+	var up = [0, 0, 0];
+	var focusPoint = [0, 0, 0];
+	var focusAngles = vec3.set(cg.refdefViewAngles, [0, 0, 0]);
+
+	// If dead, look at killer.
+	if ( cg.predictedPlayerState.pm_type === PM.DEAD) {
+		focusAngles[QMath.YAW] = cg.predictedPlayerState.stats[STAT.DEAD_YAW];
+		cg.refdefViewAngles[QMath.YAW] = cg.predictedPlayerState.stats[STAT.DEAD_YAW];
+	}
+
+	if (focusAngles[QMath.PITCH] > 45) {
+		focusAngles[QMath.PITCH] = 45;  // don't go too far overhead
+	}
+
+	QMath.AnglesToVectors(focusAngles, forward, null, null);
+
+	cg.refdef.vieworg[2] += cg.predictedPlayerState.viewheight;
+	vec3.add(cg.refdef.vieworg, vec3.scale(forward, FOCUS_DISTANCE, [0, 0, 0]), focusPoint);
+
+	var view = vec3.set(cg.refdef.vieworg, [0, 0, 0]);
+	view[2] += 8;
+
+	cg.refdefViewAngles[QMath.PITCH] *= 0.5;
+	QMath.AnglesToVectors(cg.refdefViewAngles, forward, right, up);
+
+	var forwardScale = Math.cos( cg_thirdPersonAngle() / 180 * Math.PI);
+	var sideScale = Math.sin(cg_thirdPersonAngle() / 180 * Math.PI);
+
+	vec3.add(view, vec3.scale(forward, -cg_thirdPersonRange() * forwardScale, [0, 0, 0]));
+	vec3.add(view, vec3.scale(right, -cg_thirdPersonRange() * sideScale, [0, 0, 0]));
+
+	// Trace a ray from the origin to the viewpoint to make sure the view isn't
+	// in a solid block. Use an 8 by 8 block to prevent the view from near clipping anything.
+	var trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs, cg.predictedPlayerState.clientNum, MASK.SOLID);
+
+	if (trace.fraction !== 1.0) {
+		vec3.set(trace.endPos, view);
+		view[2] += (1.0 - trace.fraction) * 32;
+
+		// Try another trace to this position, because a tunnel may have the ceiling
+		// close enogh that this is poking out.
+		trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs, cg.predictedPlayerState.clientNum, MASK.SOLID);
+		vec3.set(trace.endPos, view);
+	}
+
+	vec3.set(view, cg.refdef.vieworg);
+
+	// Select pitch to look at focus point from viewer.
+	vec3.subtract(focusPoint, cg.refdef.vieworg);
+	var focusDist = Math.sqrt(focusPoint[0] * focusPoint[0] + focusPoint[1] * focusPoint[1]);
+	if (focusDist < 1) {
+		focusDist = 1;  // should never happen
+	}
+	cg.refdefViewAngles[QMath.PITCH] = -180 / Math.PI * Math.atan2(focusPoint[2], focusDist);
+	cg.refdefViewAngles[QMath.YAW] -= cg_thirdPersonAngle();
+}
+/**
+ * CalcFov
+ */
+function CalcFov() {
+	var fovX = cg_fov();
+	var x = cg.refdef.width / Math.tan(fovX / 360 * Math.PI);
+	var fovY = Math.atan2(cg.refdef.height, x) * 360 / Math.PI;
+
+	cg.refdef.fovX = fovX;
+	cg.refdef.fovY = fovY;
+}
+		/**
+ * WeaponSelectable
+ */
+function WeaponSelectable(i) {
+	if (!cg.snap.ps.ammo[i]) {
+		return false;
+	}
+	
+	if (!(cg.snap.ps.stats[STAT.WEAPONS] & (1 << i))) {
+		return false;
+	}
+	
+	return true;
+}
+
+/**
+ * CmdNextWeapon
+ */
+function CmdNextWeapon() {
+	if (!cg.snap) {
+		return;
+	}
+	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
+		return;
+	}
+
+	cg.weaponSelectTime = cg.time;
+	var original = cg.weaponSelect;
+
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		cg.weaponSelect++;
+		if (cg.weaponSelect === MAX_WEAPONS) {
+			cg.weaponSelect = 0;
+		}
+		if (cg.weaponSelect === WP.GAUNTLET) {
+			continue;  // never cycle to gauntlet
+		}
+		if (WeaponSelectable(cg.weaponSelect)) {
+			break;
+		}
+	}
+	if (i === MAX_WEAPONS) {
+		cg.weaponSelect = original;
+	}
+}
+
+/**
+ * PrevWeapon
+ */
+function CmdPrevWeapon() {
+	if (!cg.snap) {
+		return;
+	}
+	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
+		return;
+	}
+
+	// cg.weaponSelectTime = cg.time;
+	var original = cg.weaponSelect;
+
+	for (var i = 0; i < MAX_WEAPONS; i++) {
+		cg.weaponSelect--;
+		if (cg.weaponSelect === -1) {
+			cg.weaponSelect = MAX_WEAPONS - 1;
+		}
+		if (cg.weaponSelect === WP.GAUNTLET) {
+			continue;  // never cycle to gauntlet
+		}
+		if (WeaponSelectable(cg.weaponSelect)) {
+			break;
+		}
+	}
+	if (i === MAX_WEAPONS) {
+		cg.weaponSelect = original;
+	}
+}
+
+/**
+ * CmdWeapon
+ */
+function CmdWeapon(arg1) {
+	if (!cg.snap) {
+		return;
+	}
+	if (cg.snap.ps.pm_flags & PMF.FOLLOW) {
+		return;
+	}
+
+	var num = parseInt(arg1, 10);
+	if (num < 1 || num > MAX_WEAPONS-1) {
+		return;
+	}
+
+	// cg.weaponSelectTime = cg.time;
+
+	if (!(cg.snap.ps.stats[STAT.WEAPONS] & (1 << num))) {
+		return;  // don't have the weapon
+	}
+
+	cg.weaponSelect = num;
+}
+
+/**
+ * RegisterWeapon
+ */
+function RegisterWeapon(gitem) {
+	var weaponNum = gitem.giTag;
+	if (weaponNum === 0) {
+		return;
+	}
+
+	var weaponInfo = cg.weaponInfo[weaponNum];
+	if (weaponInfo) {
+		return;
+	}
+
+	weaponInfo = cg.weaponInfo[weaponNum] = new WeaponInfo();
+
+	weaponInfo.weaponModel = re.RegisterModel(gitem.models[0]);
+
+	// // calc midpoint for rotation
+	// trap_R_ModelBounds( weaponInfo.weaponModel, mins, maxs );
+	// for ( i = 0 ; i < 3 ; i++ ) {
+	// 	weaponInfo.weaponMidpoint[i] = mins[i] + 0.5 * ( maxs[i] - mins[i] );
+	// }
+
+	weaponInfo.weaponIcon = ui.RegisterImage(gitem.icon);
+	weaponInfo.ammoIcon = ui.RegisterImage(gitem.icon);
+
+	// for ( ammo = bg_itemlist + 1 ; ammo.classname ; ammo++ ) {
+	// 	if ( ammo.giType == IT_AMMO && ammo.giTag == weaponNum ) {
+	// 		break;
+	// 	}
+	// }
+	// if ( ammo.classname && ammo.world_model[0] ) {
+	// 	weaponInfo.ammoModel = trap_R_RegisterModel( ammo.world_model[0] );
+	// }
+
+	// strcpy( path, item.world_model[0] );
+	// COM_StripExtension(path, path, sizeof(path));
+	// strcat( path, "_flash.md3" );
+	// weaponInfo.flashModel = trap_R_RegisterModel( path );
+
+	// TODO Move to GameItemDesc and search for it from that array?
+	if (weaponNum === WP.GAUNTLET || weaponNum === WP.MACHINEGUN || weaponNum === WP.BFG) {
+		var path = gitem.models[0].replace('.md3', '_barrel.md3');
+		weaponInfo.barrelModel = re.RegisterModel(path);
+	}
+
+	var path = gitem.models[0].replace('.md3', '_hand.md3');
+	weaponInfo.handsModel = re.RegisterModel(path);
+
+	// if ( !weaponInfo.handsModel ) {
+	// 	weaponInfo.handsModel = trap_R_RegisterModel( "models/weapons2/shotgun/shotgun_hand.md3" );
+	// }
+
+	switch (weaponNum) {
+		case WP.GAUNTLET:
+	//		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
+	//		weaponInfo.firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun", qfalse );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/melee/fstatck');
+			break;
+
+		case WP.MACHINEGUN:
+			// MAKERGB( weaponInfo.flashDlightColor, 1, 1, 0 );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/machinegun/machgf1b');
+			weaponInfo.flashSound[1] = snd.RegisterSound('sound/weapons/machinegun/machgf2b');
+			weaponInfo.flashSound[2] = snd.RegisterSound('sound/weapons/machinegun/machgf3b');
+			weaponInfo.flashSound[3] = snd.RegisterSound('sound/weapons/machinegun/machgf4b');
+			cgs.media.sfx_ric1 = snd.RegisterSound('sound/weapons/machinegun/ric1');
+			cgs.media.sfx_ric2 = snd.RegisterSound('sound/weapons/machinegun/ric2');
+			cgs.media.sfx_ric3 = snd.RegisterSound('sound/weapons/machinegun/ric3');
+			// weaponInfo.ejectBrassFunc = CG_MachineGunEjectBrass;
+			cgs.media.bulletExplosionShader = re.RegisterShader('bulletExplosion');
+			break;
+
+		case WP.LIGHTNING:
+	//		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
+			weaponInfo.readySound = snd.RegisterSound('sound/weapons/melee/fsthum');
+			weaponInfo.firingSound = snd.RegisterSound('sound/weapons/lightning/lg_hum');
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/lightning/lg_fire');
+	//		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
+	//		cgs.media.lightningExplosionModel = trap_R_RegisterModel( "models/weaphits/crackle.md3" );
+	//		cgs.media.sfx_lghit1 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit", qfalse );
+	//		cgs.media.sfx_lghit2 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit2", qfalse );
+	//		cgs.media.sfx_lghit3 = trap_S_RegisterSound( "sound/weapons/lightning/lg_hit3", qfalse );
+			break;
+
+	//	case WP.GRAPPLING_HOOK:
+	//		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
+	//		weaponInfo.missileModel = trap_R_RegisterModel( "models/ammo/rocket/rocket.md3" );
+	//		weaponInfo.missileTrailFunc = CG_GrappleTrail;
+	//		weaponInfo.missileDlight = 200;
+	//		MAKERGB( weaponInfo.missileDlightColor, 1, 0.75f, 0 );
+	//		weaponInfo.readySound = trap_S_RegisterSound( "sound/weapons/melee/fsthum", qfalse );
+	//		weaponInfo.firingSound = trap_S_RegisterSound( "sound/weapons/melee/fstrun", qfalse );
+	//		cgs.media.lightningShader = trap_R_RegisterShader( "lightningBoltNew");
+	//		break;
+
+		case WP.SHOTGUN:
+	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 1, 0 );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/shotgun/sshotf1b');
+	// 		weaponInfo.ejectBrassFunc = CG_ShotgunEjectBrass;
+			break;
+
+		case WP.ROCKET_LAUNCHER:
+			weaponInfo.missileModel = re.RegisterModel('models/ammo/rocket/rocket.md3');
+			weaponInfo.missileSound = snd.RegisterSound('sound/weapons/rocket/rockfly');
+			weaponInfo.missileTrailFunc = RocketTrail;
+	// 		weaponInfo.missileDlight = 200;
+			weaponInfo.trailTime = 2000;
+			weaponInfo.trailRadius = 64;
+	// 		MAKERGB( weaponInfo.missileDlightColor, 1, 0.75f, 0 );
+	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.75f, 0 );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/rocket/rocklf1a');
+			cgs.media.rocketExplosionShader = re.RegisterShader('rocketExplosion');
+			cgs.media.rocketExplosionSfx = snd.RegisterSound ('sound/weapons/rocket/rocklx1a');
+			break;
+
+		case WP.GRENADE_LAUNCHER:
+	// 		weaponInfo.missileModel = trap_R_RegisterModel( "models/ammo/grenade1.md3" );
+	// 		weaponInfo.missileTrailFunc = CG_GrenadeTrail;
+	// 		weaponInfo.trailTime = 700;
+	// 		weaponInfo.trailRadius = 32;
+	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.70f, 0 );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/grenade/grenlf1a');
+	// 		cgs.media.grenadeExplosionShader = trap_R_RegisterShader( "grenadeExplosion" );
+			break;
+
+		case WP.PLASMAGUN:
+	//		weaponInfo.missileModel = cgs.media.invulnerabilityPowerupModel;
+	// 		weaponInfo.missileTrailFunc = CG_PlasmaTrail;
+	// 		weaponInfo.missileSound = trap_S_RegisterSound( "sound/weapons/plasma/lasfly", qfalse );
+	// 		MAKERGB( weaponInfo.flashDlightColor, 0.6f, 0.6f, 1.0f );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/plasma/hyprbf1a');
+	// 		cgs.media.plasmaExplosionShader = trap_R_RegisterShader( "plasmaExplosion" );
+	// 		cgs.media.railRingsShader = trap_R_RegisterShader( "railDisc" );
+			cgs.media.plasmaExpSfx = snd.RegisterSound('sound/weapons/plasma/plasmx1a');
+			break;
+
+		case WP.RAILGUN:
+			weaponInfo.readySound = snd.RegisterSound('sound/weapons/railgun/rg_hum');
+	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.5f, 0 );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/railgun/railgf1a');
+			cgs.media.railExplosionShader = re.RegisterShader('railExplosion');
+			cgs.media.railRingsShader = re.RegisterShader('railDisc');
+			cgs.media.railCoreShader = re.RegisterShader('railCore');
+			break;
+
+		case WP.BFG:
+			weaponInfo.readySound = snd.RegisterSound('sound/weapons/bfg/bfg_hum');
+	// 		MAKERGB( weaponInfo.flashDlightColor, 1, 0.7f, 1 );
+			weaponInfo.flashSound[0] = snd.RegisterSound('sound/weapons/bfg/bfg_fire');
+	// 		cgs.media.bfgExplosionShader = trap_R_RegisterShader( "bfgExplosion" );
+	// 		weaponInfo.missileModel = trap_R_RegisterModel( "models/weaphits/bfg.md3" );
+	// 		weaponInfo.missileSound = trap_S_RegisterSound( "sound/weapons/rocket/rockfly", qfalse );
+			break;
+
+		 default:
+			// MAKERGB( weaponInfo.flashDlightColor, 1, 1, 1 );
+			// weaponInfo.flashSound[0] = trap_S_RegisterSound( "sound/weapons/rocket/rocklf1a", qfalse );
+			break;
+	}
+}
+
+/**
+ * AddPlayerWeapon
+ *
+ * Used for both the view weapon (ps is valid) and the world modelother character models (ps is NULL)
+ * The main player will have this called for BOTH cases, so effects like light and
+ * sound should only be done on the world model case.
+ */
+function AddPlayerWeapon(parent, ps, cent/*, team*/) {
+	var weaponNum = cent.currentState.weapon;
+	var weapon = cg.weaponInfo[weaponNum];
+
+	// TODO remove this once we call RegisterWeapon
+	if (!weapon) {
+		return;
+	}
+
+	// add the weapon
+	var gun = new re.RefEntity();
+	vec3.set(parent.lightingOrigin, gun.lightingOrigin);
+	// gun.shadowPlane = parent.shadowPlane;
+	gun.renderfx = parent.renderfx;
+
+	// set custom shading for railgun refire rate
+	// if( weaponNum == WP_RAILGUN ) {
+	// 	clientInfo_t *ci = &cgs.clientinfo[cent.currentState.clientNum];
+	// 	if( cent.pe.railFireTime + 1500 > cg.time ) {
+	// 		int scale = 255 * ( cg.time - cent.pe.railFireTime ) / 1500;
+	// 		gun.shaderRGBA[0] = ( ci.c1RGBA[0] * scale ) >> 8;
+	// 		gun.shaderRGBA[1] = ( ci.c1RGBA[1] * scale ) >> 8;
+	// 		gun.shaderRGBA[2] = ( ci.c1RGBA[2] * scale ) >> 8;
+	// 		gun.shaderRGBA[3] = 255;
+	// 	}
+	// 	else {
+	// 		Byte4Copy( ci.c1RGBA, gun.shaderRGBA );
+	// 	}
+	// }
+
+	gun.hModel = weapon.weaponModel;
+	if (!gun.hModel) {
+		return;
+	}
+
+	if ( !ps ) {
+		// add weapon ready sound
+		cent.pe.lightningFiring = false;
+		if ( ( cent.currentState.eFlags & EF.FIRING ) && weapon.firingSound ) {
+			// lightning gun and guantlet make a different sound when fire is held down
+//			trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, vec3_origin, weapon.firingSound );
+			cent.pe.lightningFiring = true;
+		} else if ( weapon.readySound ) {
+//			trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, vec3_origin, weapon.readySound );
+		}
+	}
+	var lerped = new sh.Orientation();
+	re.LerpTag(lerped, parent.hModel, parent.oldFrame, parent.frame, 1.0 - parent.backlerp, 'tag_weapon');
+	vec3.set(parent.origin, gun.origin);
+	vec3.add(gun.origin, vec3.scale(parent.axis[0], lerped.origin[0], [0, 0, 0]));
+
+	// // Make weapon appear left-handed for 2 and centered for 3
+	// if(ps && cg_drawGun.integer == 2)
+	// 	VectorMA(gun.origin, -lerped.origin[1], parent.axis[1], gun.origin);
+	// else if(!ps || cg_drawGun.integer != 3)
+		vec3.add(gun.origin, vec3.scale(parent.axis[1], lerped.origin[1], [0, 0, 0]));
+
+	vec3.add(gun.origin, vec3.scale(parent.axis[2], lerped.origin[2], [0, 0, 0]));
+	QMath.AxisMultiply(lerped.axis, parent.axis, gun.axis);
+	gun.backlerp = parent.backlerp;
+
+	AddWeaponWithPowerups(gun, cent.currentState.powerups);
+
+	// Add the spinning barrel
+	if (weapon.barrelModel) {
+		var barrel = new re.RefEntity();
+
+		vec3.set(parent.lightingOrigin, barrel.lightingOrigin);
+		// barrel.shadowPlane = parent.shadowPlane;
+		barrel.renderfx = parent.renderfx;
+
+		barrel.hModel = weapon.barrelModel;
+		var angles = [0, 0, 0];
+		angles[QMath.YAW] = 0;
+		angles[QMath.PITCH] = 0;
+		angles[QMath.ROLL] = MachinegunSpinAngle(cent);
+		QMath.AnglesToAxis(angles, barrel.axis);
+
+		PositionRotatedEntityOnTag(barrel, gun, weapon.weaponModel, 'tag_barrel');
+		AddWeaponWithPowerups(barrel, cent.currentState.powerups);
+	}
+
+	// // make sure we aren't looking at cg.predictedPlayerEntity for LG
+	// nonPredictedCent = &cg_entities[cent.currentState.clientNum];
+
+	// // add the flash
+	// if ( ( weaponNum == WP_LIGHTNING || weaponNum == WP_GAUNTLET || weaponNum == WP_GRAPPLING_HOOK )
+	// 	&& ( nonPredictedCent.currentState.eFlags & EF_FIRING ) ) 
+	// {
+	// 	// continuous flash
+	// } else {
+	// 	// impulse flash
+	// 	if ( cg.time - cent.muzzleFlashTime > MUZZLE_FLASH_TIME ) {
+	// 		return;
+	// 	}
+	// }
+
+	// memset( &flash, 0, sizeof( flash ) );
+	// VectorCopy( parent.lightingOrigin, flash.lightingOrigin );
+	// flash.shadowPlane = parent.shadowPlane;
+	// flash.renderfx = parent.renderfx;
+
+	// flash.hModel = weapon.flashModel;
+	// if (!flash.hModel) {
+	// 	return;
+	// }
+	// angles[QMath.YAW] = 0;
+	// angles[QMath.PITCH] = 0;
+	// angles[QMath.ROLL] = crandom() * 10;
+	// QMath.AnglesToAxis( angles, flash.axis );
+
+	// // colorize the railgun blast
+	// if ( weaponNum == WP_RAILGUN ) {
+	// 	clientInfo_t	*ci;
+
+	// 	ci = &cgs.clientinfo[ cent.currentState.clientNum ];
+	// 	flash.shaderRGBA[0] = 255 * ci.color1[0];
+	// 	flash.shaderRGBA[1] = 255 * ci.color1[1];
+	// 	flash.shaderRGBA[2] = 255 * ci.color1[2];
+	// }
+
+	// CG_PositionRotatedEntityOnTag( &flash, &gun, weapon.weaponModel, "tag_flash");
+	// trap_R_AddRefEntityToScene( &flash );
+
+	// if ( ps || cg.renderingThirdPerson ||
+	// 	cent.currentState.number != cg.predictedPlayerState.clientNum ) {
+	// 	// add lightning bolt
+	// 	CG_LightningBolt( nonPredictedCent, flash.origin );
+
+	// 	if ( weapon.flashDlightColor[0] || weapon.flashDlightColor[1] || weapon.flashDlightColor[2] ) {
+	// 		trap_R_AddLightToScene( flash.origin, 300 + (rand()&31), weapon.flashDlightColor[0],
+	// 			weapon.flashDlightColor[1], weapon.flashDlightColor[2] );
+	// 	}
+	// }
+}
+
+/**********************************************************
+ *
+ * View weapon
+ *
+ **********************************************************/
+
+/**
+ * AddViewWeapon
+ * 
+ * Add the weapon, and flash for the player's view
+ */
+function AddViewWeapon(ps) {
+	// if (ps.persistant[PERS.TEAM] == TEAM_SPECTATOR) {
+	// 	return;
+	// }
+
+	// if (ps.pm_type == PM_INTERMISSION) {
+	// 	return;
+	// }
+
+	// No gun if in third person view or a camera is active.
+	if (cg.renderingThirdPerson/* || cg.cameraMode*/) {
+		return;
+	}
+
+	// Allow the gun to be completely removed.
+	// if (!cg_drawGun()) {
+	// 	vec3_t		origin;
+
+	// 	if (cg.predictedPlayerState.eFlags & EF.FIRING) {
+	// 		// special hack for lightning gun...
+	// 		VectorCopy( cg.refdef.vieworg, origin );
+	// 		VectorMA( origin, -8, cg.refdef.viewaxis[2], origin );
+	// 		CG_LightningBolt( &cg_entities[ps.clientNum], origin );
+	// 	}
+	// 	return;
+	// }
+
+	// // Don't draw if testing a gun model.
+	// if (cg.testGun) {
+	// 	return;
+	// }
+
+	var cent = cg.predictedPlayerEntity;
+	var ci = cgs.clientinfo[cent.currentState.clientNum];
+	if (!ci.infoValid) {
+		return;
+	}
+
+	var hand = new re.RefEntity();
+	var weaponInfo = cg.weaponInfo[ps.weapon];
+
+	// Set up gun position.
+	var angles = [0, 0, 0];
+	CalculateWeaponPosition(hand.origin, angles);
+
+	// Drop gun lower at higher fov.
+	var fovOffset = 0;
+	if (cg_fov.integer > 90) {
+		fovOffset = -0.2 * (cg_fov.integer - 90);
+	}
+	vec3.add(hand.origin, vec3.scale(cg.refdef.viewaxis[2], fovOffset, [0, 0, 0]));
+
+	QMath.AnglesToAxis(angles, hand.axis);
+
+	// Map torso animations to weapon animations.
+	// if (cg_gun_frame.integer) {
+	// 	// development tool
+	// 	hand.frame = hand.oldframe = cg_gun_frame.integer;
+	// 	hand.backlerp = 0;
+	// } else {
+		// Get clientinfo for animation map.
+		hand.frame = MapTorsoToWeaponFrame(ci, cent.pe.torso.frame);
+		hand.oldFrame = MapTorsoToWeaponFrame(ci, cent.pe.torso.oldFrame);
+		hand.backlerp = cent.pe.torso.backlerp;
+	// }
+
+	hand.hModel = weaponInfo.handsModel;
+	hand.renderfx = RF.DEPTHHACK | RF.FIRST_PERSON | RF.MINLIGHT;
+
+	// Add everything onto the hand.
+	AddPlayerWeapon(hand, ps, cg.predictedPlayerEntity/*, ps.persistant[PERS.TEAM]*/);
+}
+
+/**
+ * CalculateWeaponPosition
+ */
+function CalculateWeaponPosition(origin, angles) {
+	var scale, fracsin;	
+
+	vec3.set(cg.refdef.vieworg, origin);
+	vec3.set(cg.refdefViewAngles, angles);
+
+	// On odd legs, invert some angles.
+	if (cg.bobCycle & 1) {
+		scale = -cg.xyspeed;
+	} else {
+		scale = cg.xyspeed;
+	}
+
+	// Gun angles from bobbing.
+	angles[QMath.ROLL] += scale * cg.bobFracSin * 0.005;
+	angles[QMath.YAW] += scale * cg.bobFracSin * 0.01;
+	angles[QMath.PITCH] += cg.xyspeed * cg.bobFracSin * 0.005;
+
+	// Drop the weapon when landing
+	// delta = cg.time - cg.landTime;
+	// if ( delta < LAND_DEFLECT_TIME ) {
+	// 	origin[2] += cg.landChange*0.25 * delta / LAND_DEFLECT_TIME;
+	// } else if ( delta < LAND_DEFLECT_TIME + LAND_RETURN_TIME ) {
+	// 	origin[2] += cg.landChange*0.25 * 
+	// 		(LAND_DEFLECT_TIME + LAND_RETURN_TIME - delta) / LAND_RETURN_TIME;
+	// }
+
+	// Idle drift.
+	scale = cg.xyspeed + 40;
+	fracsin = Math.sin(cg.time * 0.001);
+	angles[QMath.ROLL] += scale * fracsin * 0.01;
+	angles[QMath.YAW] += scale * fracsin * 0.01;
+	angles[QMath.PITCH] += scale * fracsin * 0.01;
+}
+
+/**
+ * MapTorsoToWeaponFrame
+ */
+function MapTorsoToWeaponFrame(ci, frame) {
+	// Change weapon.
+	if (frame >= ci.animations[ANIM.TORSO_DROP].firstFrame &&
+		frame < ci.animations[ANIM.TORSO_DROP].firstFrame + 9) {
+		return frame - ci.animations[ANIM.TORSO_DROP].firstFrame + 6;
+	}
+
+	// Stand attack.
+	if (frame >= ci.animations[ANIM.TORSO_ATTACK].firstFrame &&
+		frame < ci.animations[ANIM.TORSO_ATTACK].firstFrame + 6) {
+		return 1 + frame - ci.animations[ANIM.TORSO_ATTACK].firstFrame;
+	}
+
+	// Stand attack 2.
+	if (frame >= ci.animations[ANIM.TORSO_ATTACK2].firstFrame &&
+		frame < ci.animations[ANIM.TORSO_ATTACK2].firstFrame + 6) {
+		return 1 + frame - ci.animations[ANIM.TORSO_ATTACK2].firstFrame;
+	}
+	
+	return 0;
+}
+
+/**
+ * MachinegunSpinAngle
+ */
+var SPIN_SPEED = 0.9;
+var COAST_TIME = 1000;
+
+function MachinegunSpinAngle(cent) {
+	var delta = cg.time - cent.pe.barrelTime;
+	var angle;
+
+	if (cent.pe.barrelSpinning) {
+		angle = cent.pe.barrelAngle + delta * SPIN_SPEED;
+	} else {
+		if (delta > COAST_TIME) {
+			delta = COAST_TIME;
+		}
+
+		var speed = 0.5 * (SPIN_SPEED + (COAST_TIME - delta) / COAST_TIME);
+		angle = cent.pe.barrelAngle + delta * speed;
+	}
+
+	if (cent.pe.barrelSpinning == !(cent.currentState.eFlags & EF.FIRING)) {
+		cent.pe.barrelTime = cg.time;
+		cent.pe.barrelAngle = QMath.AngleNormalize360(angle);
+		cent.pe.barrelSpinning = !!(cent.currentState.eFlags & EF.FIRING);
+	}
+
+	return angle;
+}
+
+/**
+ * AddWeaponWithPowerups
+ */
+function AddWeaponWithPowerups(gun, powerups) {
+	// add powerup effects
+	// if (powerups & ( 1 << PW_INVIS ) ) {
+	// 	gun.customShader = cgs.media.invisShader;
+	// 	trap_R_AddRefEntityToScene( gun );
+	// } else {
+		re.AddRefEntityToScene(gun);
+
+	// 	if ( powerups & ( 1 << PW_BATTLESUIT ) ) {
+	// 		gun.customShader = cgs.media.battleWeaponShader;
+	// 		trap_R_AddRefEntityToScene( gun );
+	// 	}
+	// 	if ( powerups & ( 1 << PW_QUAD ) ) {
+	// 		gun.customShader = cgs.media.quadWeaponShader;
+	// 		trap_R_AddRefEntityToScene( gun );
+	// 	}
+	// }
+}
+
+/**
+ * OutOfAmmoChange
+ *
+ * The current weapon has just run out of ammo
+ */
+function OutOfAmmoChange() {	
+	cg.weaponSelectTime = cg.time;
+	
+	for (var i = MAX_WEAPONS - 1; i > 0; i--) {
+		if (WeaponSelectable(i)) {
+			cg.weaponSelect = i;
+			break;
+		}
+	}
+}
+
+/**********************************************************
+ *
+ * Weapon events
+ *
+ **********************************************************/
+
+/**
+ * FireWeapon
+ *
+ * Caused by an EV_FIRE_WEAPON event.
+ */
+function FireWeapon(cent) {
+	var es = cent.currentState;
+	if (es.weapon === WP.NONE) {
+		return;
+	}
+	if (es.weapon >= WP.NUM_WEAPONS) {
+		error('FireWeapon: es.weapon >= WP.NUM_WEAPONS');
+		return;
+	}
+
+	var weaponInfo = cg.weaponInfo[es.weapon];
+
+	// Mark the entity as muzzle flashing, so when it is added it will
+	// append the flash to the weapon model.
+	// cent.muzzleFlashTime = cg.time;
+
+	// Lightning gun only does this this on initial press
+	if (es.weapon === WP.LIGHTNING) {
+		if (cent.pe.lightningFiring) {
+			return;
+		}
+	}
+	
+	// if (es.weapon === WP.RAILGUN ) {
+	// 	cent.pe.railFireTime = cg.time;
+	// }
+
+	// Play quad sound if needed.
+	// if (cent.currentState.powerups & (1 << PW_QUAD)) {
+	// 	trap_S_StartSound (NULL, cent.currentState.number, CHAN_ITEM, cgs.media.quadSound );
+	// }
+	
+	// Play a sound
+	for (var c = 0; c < 4; c++) {
+		if (!weaponInfo.flashSound[c]) {
+			break;
+		}
+	}
+	if (c > 0) {
+		c = Math.floor(Math.random() * c);
+		if (weaponInfo.flashSound[c]) {
+			snd.StartSound(null, es.number, weaponInfo.flashSound[c]);
+		}
+	}
+	
+	// // Do brass ejection.
+	// if (weaponInfo.ejectBrassFunc && cg_brassTime.integer > 0) {
+	// 	weaponInfo.ejectBrassFunc(cent);
+	// }
+}
+
+/**
+ * MissileHitWall
+ * 
+ * Caused by an EV_MISSILE_MISS event, or directly by local bullet tracing.
+ */
+function MissileHitWall(weapon, clientNum, origin, dir, soundType) {
+	var mod = null;
+	var mark = 0;
+	var shader = 0;
+	var sfx = 0;
+	var radius = 32;
+	var light = 0;
+	var lightColor = [0, 0, 0];
+	var isSprite = false;
+	var duration = 600;
+
+	switch (weapon) {
+		// default:
+		// case WP_LIGHTNING:
+		// 	// no explosion at LG impact, it is added with the beam
+		// 	r = rand() & 3;
+		// 	if ( r < 2 ) {
+		// 		sfx = cgs.media.sfx_lghit2;
+		// 	} else if ( r == 2 ) {
+		// 		sfx = cgs.media.sfx_lghit1;
+		// 	} else {
+		// 		sfx = cgs.media.sfx_lghit3;
+		// 	}
+		// 	mark = cgs.media.holeMarkShader;
+		// 	radius = 12;
+		// 	break;
+		// case WP_GRENADE_LAUNCHER:
+		// 	mod = cgs.media.dishFlashModel;
+		// 	shader = cgs.media.grenadeExplosionShader;
+		// 	sfx = cgs.media.sfx_rockexp;
+		// 	mark = cgs.media.burnMarkShader;
+		// 	radius = 64;
+		// 	light = 300;
+		// 	isSprite = qtrue;
+		// 	break;
+		case WP.ROCKET_LAUNCHER:
+			mod = cgs.media.dishFlashModel;
+			shader = cgs.media.rocketExplosionShader;
+			sfx = cgs.media.rocketExplosionSfx;
+			// mark = cgs.media.burnMarkShader;
+			radius = 64;
+			light = 300;
+			isSprite = true;
+			duration = 1000;
+			// lightColor[0] = 1;
+			// lightColor[1] = 0.75;
+			// lightColor[2] = 0.0;
+			break;
+		case WP.RAILGUN:
+			mod = cgs.media.ringFlashModel;
+			shader = cgs.media.railExplosionShader;
+			sfx = cgs.media.plasmaExpSfx;
+			// mark = cgs.media.energyMarkShader;
+			radius = 24;
+			break;
+		// case WP_PLASMAGUN:
+		// 	mod = cgs.media.ringFlashModel;
+		// 	shader = cgs.media.plasmaExplosionShader;
+		// 	sfx = cgs.media.sfx_plasmaexp;
+		// 	mark = cgs.media.energyMarkShader;
+		// 	radius = 16;
+		// 	break;
+		// case WP_BFG:
+		// 	mod = cgs.media.dishFlashModel;
+		// 	shader = cgs.media.bfgExplosionShader;
+		// 	sfx = cgs.media.sfx_rockexp;
+		// 	mark = cgs.media.burnMarkShader;
+		// 	radius = 32;
+		// 	isSprite = qtrue;
+		// 	break;
+		case WP.SHOTGUN:
+			mod = cgs.media.bulletFlashModel;
+			shader = cgs.media.bulletExplosionShader;
+		// 	mark = cgs.media.bulletMarkShader;
+			sfx = 0;
+			radius = 4;
+			break;
+		case WP.MACHINEGUN:
+			mod = cgs.media.bulletFlashModel;
+			shader = cgs.media.bulletExplosionShader;
+			// mark = cgs.media.bulletMarkShader;
+			r = Math.floor(Math.random() * 3);
+			if (r === 0) {
+				sfx = cgs.media.sfx_ric1;
+			} else if (r == 1) {
+				sfx = cgs.media.sfx_ric2;
+			} else {
+				sfx = cgs.media.sfx_ric3;
+			}
+			// radius = 8;
+			break;
+	}
+
+	if (sfx) {
+		snd.StartSound(origin, -1/*ENTITYNUM_WORLD*/, sfx);
+	}
+
+	//
+	// Create the explosion.
+	//
+	if (mod) {
+		var le = MakeExplosion(origin, dir, mod, shader, duration, isSprite);
+		// le.light = light;
+		// vec3.set(lightColor, le.lightColor);
+		// if ( weapon == WP_RAILGUN ) {
+		// 	// colorize with client color
+		// 	VectorCopy( cgs.clientinfo[clientNum].color1, le.color );
+		// 	le.refEntity.shaderRGBA[0] = le.color[0] * 0xff;
+		// 	le.refEntity.shaderRGBA[1] = le.color[1] * 0xff;
+		// 	le.refEntity.shaderRGBA[2] = le.color[2] * 0xff;
+		// 	le.refEntity.shaderRGBA[3] = 0xff;
+		// }
+	}
+
+	//
+	// Create the impact mark.
+	//
+	// alphaFade = (mark == cgs.media.energyMarkShader);	// plasma fades alpha, all others fade color
+	// if ( weapon == WP_RAILGUN ) {
+	// 	float	*color;
+
+	// 	// colorize with client color
+	// 	color = cgs.clientinfo[clientNum].color1;
+	// 	CG_ImpactMark( mark, origin, dir, random()*360, color[0],color[1], color[2],1, alphaFade, radius, qfalse );
+	// } else {
+	// 	CG_ImpactMark( mark, origin, dir, random()*360, 1,1,1,1, alphaFade, radius, qfalse );
+	// }
+}
+
+/**
+ * MissileHitPlayer
+ */
+function MissileHitPlayer(weapon, origin, dir, entityNum) {
+	Bleed(origin, entityNum);
+
+	// Some weapons will make an explosion with the blood, while
+	// others will just make the blood.
+	switch (weapon) {
+		case WP.GRENADE_LAUNCHER:
+		case WP.ROCKET_LAUNCHER:
+		case WP.PLASMAGUN:
+		case WP.BFG:
+			MissileHitWall(weapon, 0, origin, dir, IMPACTSOUND.FLESH);
+			break;
+		default:
+			break;
+	}
+}
+
+/**********************************************************
+ *
+ * Bullets
+ *
+ **********************************************************/
+
+/**
+ * BulletHit
+ *
+ * Renders bullet effects.
+ */
+function BulletHit(end, sourceEntityNum, normal, flesh, fleshEntityNum) {
+	// // If the shooter is currently valid, calc a source point and possibly
+	// // do trail effects.
+	// if ( sourceEntityNum >= 0 && cg_tracerChance.value > 0 ) {
+	// 	if ( CG_CalcMuzzlePoint( sourceEntityNum, start ) ) {
+	// 		sourceContentType = CG_PointContents( start, 0 );
+	// 		destContentType = CG_PointContents( end, 0 );
+	
+	// 		// do a complete bubble trail if necessary
+	// 		if ( ( sourceContentType == destContentType ) && ( sourceContentType & CONTENTS_WATER ) ) {
+	// 			CG_BubbleTrail( start, end, 32 );
+	// 		}
+	// 		// bubble trail from water into air
+	// 		else if ( ( sourceContentType & CONTENTS_WATER ) ) {
+	// 			trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
+	// 			CG_BubbleTrail( start, trace.endPos, 32 );
+	// 		}
+	// 		// bubble trail from air into water
+	// 		else if ( ( destContentType & CONTENTS_WATER ) ) {
+	// 			trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
+	// 			CG_BubbleTrail( trace.endPos, end, 32 );
+	// 		}
+	
+	// 		// draw a tracer
+	// 		if ( random() < cg_tracerChance.value ) {
+	// 			CG_Tracer( start, end );
+	// 		}
+	// 	}
+	// }
+	
+	// Impact splash and mark.
+	if (flesh) {
+		Bleed(end, fleshEntityNum);
+	} else {
+		MissileHitWall(WP.MACHINEGUN, 0, end, normal, IMPACTSOUND.DEFAULT);
+	}
+}
+
+/*
+============================================================================
+
+SHOTGUN TRACING
+
+============================================================================
+*/
+
+/**
+ * ShotgunPellet
+ */
+function ShotgunPellet(start, end, skipNum) {
+	var tr;
+	var sourceContentType, destContentType;
+	
+	
+// 	CG_Trace( tr, start, NULL, NULL, end, skipNum, MASK_SHOT );
+// 
+// 	sourceContentType = CG_PointContents( start, 0 );
+// 	destContentType = CG_PointContents( tr.endpos, 0 );
+// 
+// 	// FIXME: should probably move this cruft into CG_BubbleTrail
+// 	if ( sourceContentType == destContentType ) {
+// 		if ( sourceContentType & CONTENTS_WATER ) {
+// 			CG_BubbleTrail( start, tr.endpos, 32 );
+// 		}
+// 	} else if ( sourceContentType & CONTENTS_WATER ) {
+// 		trace_t trace;
+// 		
+// 		trap_CM_BoxTrace( &trace, end, start, NULL, NULL, 0, CONTENTS_WATER );
+// 		CG_BubbleTrail( start, trace.endpos, 32 );
+// 	} else if ( destContentType & CONTENTS_WATER ) {
+// 		trace_t trace;
+// 		
+// 		trap_CM_BoxTrace( &trace, start, end, NULL, NULL, 0, CONTENTS_WATER );
+// 		CG_BubbleTrail( tr.endpos, trace.endpos, 32 );
+// 	}
+// 
+// 	if (  tr.surfaceFlags & SURF_NOIMPACT ) {
+// 		return;
+// 	}
+// 
+// 	if ( cg_entities[tr.entityNum].currentState.eType == ET_PLAYER ) {
+// 		MissileHitPlayer( WP.SHOTGUN, tr.endpos, tr.plane.normal, tr.entityNum );
+// 	} else {
+// 		if ( tr.surfaceFlags & SURF_NOIMPACT ) {
+// 			// SURF_NOIMPACT will not make a flame puff or a mark
+// 			return;
+// 		}
+// 		if ( tr.surfaceFlags & SURF_METALSTEPS ) {
+// 			MissileHitWall( WP.SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND.METAL );
+// 		} else {
+// 			MissileHitWall(WP.SHOTGUN, 0, tr.endpos, tr.plane.normal, IMPACTSOUND.DEFAULT);
+// 		}
+// 	}
+}
+
+/**
+ * ShotgunPattern
+ * 
+ * Perform the same traces the server did to locate the 
+ * hit splashes
+ */
+function ShotgunPattern(origin, origin2, seed, otherEntNum) {
+	var i;
+	var r, u;
+	var end     = [0, 0, 0];
+	var forward = [0, 0, 0],
+		right   = [0, 0, 0],
+		up      = [0, 0, 0];
+	
+	// derive the right and up vectors from the forward vector, because
+	// the client won't have any other information
+	vec3.normalize(origin2, forward);
+	QMath.PerpendicularVector(right, forward);
+	vec3.cross(forward, right, up);
+	
+	// generate the "random" spread pattern
+	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
+		r = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+		u = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
+		vec3.add(origin, vec3.scale(forward, 8192 * 16, [0, 0, 0]), end);
+		vec3.add(end, vec3.scale(right, r, [0, 0, 0]));
+		vec3.add(end, vec3.scale(up, u, [0, 0, 0]));
+		
+		ShotgunPellet(origin, end, otherEntNum);
+	}
+}
+
+/**
+ * ShotgunFire
+ */
+function ShotgunFire(es) {
+	var v = [0, 0, 0];
+	var contents;
+	
+	vec3.subtract( es.origin2, es.pos.trBase, v );
+	vec3.normalize( v );
+	vec3.scale( v, 32, v );
+	vec3.add( es.pos.trBase, v, v );
+	
+	var up = [0, 0, 0];
+// 
+// 	contents = CG_PointContents( es.pos.trBase, 0 );
+// 	if ( !( contents & CONTENTS_WATER ) ) {
+		vec3.set( up, [0, 0, 8] );
+// 		SmokePuff( v, up, 32, 1, 1, 1, 0.33f, 900, cg.time, 0, LEF_PUFF_DONT_SCALE, cgs.media.shotgunSmokePuffShader );
+// 	}
+// 	
+	ShotgunPattern(es.pos.trBase, es.origin2, es.eventParm, es.otherEntityNum);
+}
+
+/**********************************************************
+ *
+ * Weapon special fx
+ *
+ **********************************************************/
+function RocketTrail(cent, weaponInfo) {
+	// if (cg_noProjectileTrail.integer) {
+	// 	return;
+	// }
+
+	var up = [0, 0, 0];
+	var origin = [0, 0, 0];
+	var lastPos = [0, 0, 0];
+	var step = 50;
+	var es = cent.currentState;
+	var startTime = cent.trailTime;
+
+	cent.trailTime = cg.time;
+
+	bg.EvaluateTrajectory(es.pos, cg.time, origin);
+	//var contents = CG_PointContents( origin, -1 );
+
+	// If object (e.g. grenade) is stationary, don't toss up smoke.
+	if (es.pos.trType === TR.STATIONARY) {
+		return;
+	}
+
+	bg.EvaluateTrajectory(es.pos, cent.trailTime, lastPos);
+	//var lastContents = CG_PointContents( lastPos, -1 );
+
+	// if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ) {
+	// 	if ( contents & lastContents & CONTENTS_WATER ) {
+	// 		CG_BubbleTrail( lastPos, origin, 8 );
+	// 	}
+	// 	return;
+	// }
+
+	var t = step * Math.floor((startTime + step) / step);
+	for (; t <= cent.trailTime; t += step) {
+		bg.EvaluateTrajectory(es.pos, t, lastPos);
+
+		SmokePuff(lastPos, up, 
+		          weaponInfo.trailRadius, 
+		          1, 1, 1, 0.33,
+		          weaponInfo.trailTime, 
+		          t,
+		          0,
+		          0, 
+		          cgs.media.smokePuffShader);
+	}
+
+}
+
+/**
+ * RailTrail
+ */
+var RADIUS = 4;
+var ROTATION = 1;
+var SPACING = 5;
+
+function RailTrail(ci, start, end) {
+	var le = AllocLocalEntity();
+	var refent = le.refent;
+
+	start[2] -= 4;
+
+	le.leType = LE.FADE_RGB;
+	le.startTime = cg.time;
+	le.endTime = cg.time + cg_railTrailTime();
+	le.lifeRate = 1.0 / (le.endTime - le.startTime);
+
+	refent.shaderTime = cg.time / 1000;
+	refent.reType = RT.RAIL_CORE;
+	refent.customShader = cgs.media.railCoreShader;
+
+	vec3.set(start, refent.origin);
+	vec3.set(end, refent.oldOrigin);
+
+	refent.shaderRGBA[0] = 1/*ci.color1[0]*/ * 255;
+	refent.shaderRGBA[1] = 0/*ci.color1[1]*/ * 255;
+	refent.shaderRGBA[2] = 0/*ci.color1[2]*/ * 255;
+	refent.shaderRGBA[3] = 255;
+
+	le.color[0] = 1/*ci.color1[0]*/ * 0.75;
+	le.color[1] = 0/*ci.color1[1]*/ * 0.75;
+	le.color[2] = 0/*ci.color1[2]*/ * 0.75;
+	le.color[3] = 1.0;
+
+	QMath.AxisClear(refent.axis);
+
+	// if (cg_oldRail.integer) {
+		// nudge down a bit so it isn't exactly in center
+		refent.origin[2] -= 8;
+		refent.oldOrigin[2] -= 8;
+	// 	return;
+	// }
+
+	// VectorCopy (start, move);
+	// VectorSubtract (end, start, vec);
+	// len = VectorNormalize (vec);
+	// PerpendicularVector(temp, vec);
+	// for (i = 0 ; i < 36; i++)
+	// {
+	// 	RotatePointAroundVector(axis[i], vec, temp, i * 10);//banshee 2.4 was 10
+	// }
+
+	// VectorMA(move, 20, vec, move);
+	// VectorScale (vec, SPACING, vec);
+
+	// skip = -1;
+ 
+	// j = 18;
+	// for (i = 0; i < len; i += SPACING)
+	// {
+	// 	if (i != skip)
+	// 	{
+	// 		skip = i + SPACING;
+	// 		le = CG_AllocLocalEntity();
+	// 		re = &le.refEntity;
+	// 		le.leFlags = LEF_PUFF_DONT_SCALE;
+	// 		le.leType = LE_MOVE_SCALE_FADE;
+	// 		le.startTime = cg.time;
+	// 		le.endTime = cg.time + (i>>1) + 600;
+	// 		le.lifeRate = 1.0 / (le.endTime - le.startTime);
+
+	// 		refent.shaderTime = cg.time / 1000.0f;
+	// 		refent.reType = RT_SPRITE;
+	// 		refent.radius = 1.1f;
+	// 		refent.customShader = cgs.media.railRingsShader;
+
+	// 		refent.shaderRGBA[0] = ci.color2[0] * 255;
+	// 		refent.shaderRGBA[1] = ci.color2[1] * 255;
+	// 		refent.shaderRGBA[2] = ci.color2[2] * 255;
+	// 		refent.shaderRGBA[3] = 255;
+
+	// 		le.color[0] = ci.color2[0] * 0.75;
+	// 		le.color[1] = ci.color2[1] * 0.75;
+	// 		le.color[2] = ci.color2[2] * 0.75;
+	// 		le.color[3] = 1.0f;
+
+	// 		le.pos.trType = TR_LINEAR;
+	// 		le.pos.trTime = cg.time;
+
+	// 		VectorCopy( move, move2);
+	// 		VectorMA(move2, RADIUS , axis[j], move2);
+	// 		VectorCopy(move2, le.pos.trBase);
+
+	// 		le.pos.trDelta[0] = axis[j][0]*6;
+	// 		le.pos.trDelta[1] = axis[j][1]*6;
+	// 		le.pos.trDelta[2] = axis[j][2]*6;
+	// 	}
+
+	// 	VectorAdd (move, vec, move);
+
+	// 	j = (j + ROTATION) % 36;
+	// }
+}
+
+		return {
+			Init: Init,
+			Shutdown: Shutdown,
+			Frame: Frame
+		};
+	}
+
+	return {
+		CreateInstance: function (imp) {
+			return new CGame(imp);
+		}
+	};
+});
+
+
+/*global vec3: true, mat4: true */
+
 define('renderer/re',
 ['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath'],
-function (_, glmatrix, ByteBuffer, sh, qm) {
+function (_, glmatrix, ByteBuffer, sh, QMath) {
 	function Renderer(imp) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+		var sys = imp.sys;
+		var com = imp.com;
+		var cm  = imp.cm;
 
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
 
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
+		var MAX_DRAWSURFS  = 0x10000;
 
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
-		var RT = {
-	MODEL:               0,
-	POLY:                1,
-	SPRITE:              2,
-	BEAM:                3,
-	RAIL_CORE:           4,
-	RAIL_RINGS:          5,
-	LIGHTNING:           6,
-	PORTALSURFACE:       7,                                // doesn't draw anything, just info for portals
-	MAX_REF_ENTITY_TYPE: 8
-};
-
-var RF = {
-	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
-	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
-	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
-	DEPTHHACK:       0x0008,                               // for view weapon Z crunching
-	NOSHADOW:        0x0040,                               // don't add stencil shadows
-	LIGHTING_ORIGIN: 0x0080,                               // use refEntity->lightingOrigin instead of refEntity->origin
-	                                                       // for lighting.  This allows entities to sink into the floor
-	                                                       // with their origin going solid, and allows all parts of a
-	                                                       // player to get the same lighting
-	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
-	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
-};
-		// Surface geometry should not exceed these limits
+// Surface geometry should not exceed these limits
 // TODO How does Q3 stay so low? Their limit is 1000, we can fit under 2000 in most cases, but q3ctf2 is ~4300.
 var SHADER_MAX_VERTEXES = 3000;
 var SHADER_MAX_INDEXES  = 6 * SHADER_MAX_VERTEXES;
@@ -22242,7 +23658,7 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + GENTITYNUM_BITS;
 // can't be increased without changing bit packing for drawsurfs
 // see QSORT_SHADERNUM_SHIFT
 var SHADERNUM_BITS       = 14;
-var MAX_SHADERS          = (1<<SHADERNUM_BITS);
+var MAX_SHADERS          = (1 << SHADERNUM_BITS);
 
 var Cull = {
 	IN:   0,                                               // completely unclipped
@@ -22392,6 +23808,89 @@ RefDef.prototype.clone = function (to) {
 	return to;
 };
 
+var ViewParms = function () {
+	this.or               = new sh.Orientation();
+	// this.world            = new sh.Orientation();
+	this.pvsOrigin        = [0, 0, 0];                     // may be different than or.origin for portals
+	this.x                = 0;
+	this.y                = 0;
+	this.width            = 0;
+	this.height           = 0;
+	this.fovX             = 0;
+	this.fovY             = 0;
+	this.frustum          = [
+		new QMath.Plane(),
+		new QMath.Plane(),
+		new QMath.Plane(),
+		new QMath.Plane()
+	];
+	this.visBounds        = [
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+	this.zFar             = 0;
+	this.projectionMatrix = mat4.create();
+	this.frameSceneNum    = 0;
+	this.frameCount       = 0;
+};
+
+ViewParms.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new ViewParms();
+	}
+
+	this.or.clone(to.or);
+	// this.world.clone(to.world);
+	vec3.set(this.pvsOrigin, to.pvsOrigin);
+	to.x = this.x;
+	to.y = this.y;
+	to.width = this.width;
+	to.height = this.height;
+	to.fovX = this.fovX;
+	to.fovY = this.fovY;
+	this.frustum[0].clone(to.frustum[0]);
+	this.frustum[1].clone(to.frustum[1]);
+	this.frustum[2].clone(to.frustum[2]);
+	this.frustum[3].clone(to.frustum[3]);
+	vec3.set(this.visBounds[0], to.visBounds[0]);
+	vec3.set(this.visBounds[1], to.visBounds[1]);
+	to.zFar = this.zFar;
+	mat4.set(this.projectionMatrix, to.projectionMatrix);
+	to.frameSceneNum = this.frameSceneNum;
+	to.frameCount = this.frameCount;
+
+	return to;
+};
+
+/**
+ * Ref entities
+ */
+var RT = {
+	MODEL:               0,
+	POLY:                1,
+	SPRITE:              2,
+	BEAM:                3,
+	RAIL_CORE:           4,
+	RAIL_RINGS:          5,
+	LIGHTNING:           6,
+	PORTALSURFACE:       7,                                // doesn't draw anything, just info for portals
+	MAX_REF_ENTITY_TYPE: 8
+};
+
+var RF = {
+	MINLIGHT:        0x0001,                               // allways have some light (viewmodel, some items)
+	THIRD_PERSON:    0x0002,                               // don't draw through eyes, only mirrors (player bodies, chat sprites)
+	FIRST_PERSON:    0x0004,                               // only draw through eyes (view weapon, damage blood blob)
+	DEPTHHACK:       0x0008,                               // for view weapon Z crunching
+	NOSHADOW:        0x0040,                               // don't add stencil shadows
+	LIGHTING_ORIGIN: 0x0080,                               // use refEntity->lightingOrigin instead of refEntity->origin
+	                                                       // for lighting.  This allows entities to sink into the floor
+	                                                       // with their origin going solid, and allows all parts of a
+	                                                       // player to get the same lighting
+	SHADOW_PLANE:    0x0100,                               // use refEntity->shadowPlane
+	WRAP_FRAMES:     0x0200                                // mod the model frames by the maxframes to allow continuous
+};
+
 var RefEntity = function () {
 	this.index              = 0;                           // internal use only
 	this.reType             = 0;
@@ -22423,8 +23922,8 @@ var RefEntity = function () {
 	this.shaderTime         = 0;                           // subtracted from refdef time to control effect start times
 
 	// Extra sprite information.
-	this.radius = 0;
-	this.rotation = 0;
+	this.radius             = 0;
+	this.rotation           = 0;
 
 	// Internal use only.
 	this.lightingCalculated = false;
@@ -22469,60 +23968,6 @@ RefEntity.prototype.clone = function (refent) {
 	vec3.set(this.directedLight, refent.directedLight);
 
 	return refent;
-};
-
-var ViewParms = function () {
-	this.or               = new sh.Orientation();
-	// this.world            = new sh.Orientation();
-	this.pvsOrigin        = [0, 0, 0];                     // may be different than or.origin for portals
-	this.x                = 0;
-	this.y                = 0;
-	this.width            = 0;
-	this.height           = 0;
-	this.fovX             = 0;
-	this.fovY             = 0;
-	this.frustum          = [
-		new qm.Plane(),
-		new qm.Plane(),
-		new qm.Plane(),
-		new qm.Plane()
-	];
-	this.visBounds        = [
-		[0, 0, 0],
-		[0, 0, 0]
-	];
-	this.zFar             = 0;
-	this.projectionMatrix = mat4.create();
-	this.frameSceneNum    = 0;
-	this.frameCount       = 0;
-};
-
-ViewParms.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new ViewParms();
-	}
-
-	this.or.clone(to.or);
-	// this.world.clone(to.world);
-	vec3.set(this.pvsOrigin, to.pvsOrigin);
-	to.x = this.x;
-	to.y = this.y;
-	to.width = this.width;
-	to.height = this.height;
-	to.fovX = this.fovX;
-	to.fovY = this.fovY;
-	this.frustum[0].clone(to.frustum[0]);
-	this.frustum[1].clone(to.frustum[1]);
-	this.frustum[2].clone(to.frustum[2]);
-	this.frustum[3].clone(to.frustum[3]);
-	vec3.set(this.visBounds[0], to.visBounds[0]);
-	vec3.set(this.visBounds[1], to.visBounds[1]);
-	to.zFar = this.zFar;
-	mat4.set(this.projectionMatrix, to.projectionMatrix);
-	to.frameSceneNum = this.frameSceneNum;
-	to.frameCount = this.frameCount;
-
-	return to;
 };
 
 /**
@@ -22759,7 +24204,7 @@ var msurface_t = function () {
 	this.patchHeight   = 0;
 
 	// normal faces
-	this.plane         = new qm.Plane();
+	this.plane         = new QMath.Plane();
 
 	// links this surface to its drawSurf parent
 	this.drawSurf      = null;
@@ -22912,7 +24357,8 @@ var r_cull,
 	r_directedScale,
 	r_showtris,
 	r_shownormals,
-	r_showcollision;
+	r_showcollision,
+	r_railCoreWidth;
 
 var flipMatrix = mat4.create([
 	0, 0, -1, 0,
@@ -22938,21 +24384,22 @@ function Init() {
 	
 	re      = new RenderLocals();
 	backend = new BackendLocals();
-	gl      = imp.sys_GetGLContext();
+	gl      = sys.GetGLContext();
 
-	r_cull              = imp.com_AddCvar('r_cull',              1);
-	r_subdivisions      = imp.com_AddCvar('r_subdivisions',      4);
-	r_znear             = imp.com_AddCvar('r_znear',             4);
-	r_zproj             = imp.com_AddCvar('r_zproj',             64);
-	r_overBrightBits    = imp.com_AddCvar('r_overBrightBits',    0, CVF.ARCHIVE);
-	r_mapOverBrightBits = imp.com_AddCvar('r_mapOverBrightBits', 2, CVF.ARCHIVE);
-	r_ambientScale      = imp.com_AddCvar('r_ambientScale',      0.6);
-	r_directedScale     = imp.com_AddCvar('r_directedScale',     1);
-	r_showtris          = imp.com_AddCvar('r_showtris',          0);
-	r_shownormals       = imp.com_AddCvar('r_shownormals',       0);
-	r_showcollision     = imp.com_AddCvar('r_showcollision',     0);
+	r_cull              = com.AddCvar('r_cull',              1);
+	r_subdivisions      = com.AddCvar('r_subdivisions',      4);
+	r_znear             = com.AddCvar('r_znear',             4);
+	r_zproj             = com.AddCvar('r_zproj',             64);
+	r_overBrightBits    = com.AddCvar('r_overBrightBits',    0, CVF.ARCHIVE);
+	r_mapOverBrightBits = com.AddCvar('r_mapOverBrightBits', 2, CVF.ARCHIVE);
+	r_ambientScale      = com.AddCvar('r_ambientScale',      0.6);
+	r_directedScale     = com.AddCvar('r_directedScale',     1);
+	r_showtris          = com.AddCvar('r_showtris',          0);
+	r_shownormals       = com.AddCvar('r_shownormals',       0);
+	r_showcollision     = com.AddCvar('r_showcollision',     0);
+	r_railCoreWidth     = com.AddCvar('r_railCoreWidth',     6, CVF.ARCHIVE);
 
-	imp.com_AddCmd('showcluster', CmdShowCluster);
+	com.AddCmd('showcluster', CmdShowCluster);
 
 	InitImages();
 	InitShaders();
@@ -23195,7 +24642,7 @@ function RotateForEntity(refent, or) {
 	// }
 
 	vec3.set(delta, or.viewOrigin);
-	qm.RotatePoint(delta, or.axis); // scale axis by axisLength
+	QMath.RotatePoint(delta, or.axis); // scale axis by axisLength
 }
 
 /**
@@ -23262,9 +24709,9 @@ function SetupFrustum(parms, xmin, xmax, ymax, zProj) {
 	vec3.add(parms.frustum[3].normal, vec3.scale(parms.or.axis[2], -adjleg, [0, 0, 0]));
 
 	for (var i = 0; i < 4; i++) {
-		parms.frustum[i].type = qm.PLANE_NON_AXIAL;
+		parms.frustum[i].type = QMath.PLANE_NON_AXIAL;
 		parms.frustum[i].dist = vec3.dot(ofsorigin, parms.frustum[i].normal);
-		parms.frustum[i].signbits = qm.GetPlaneSignbits(parms.frustum[i].normal);
+		parms.frustum[i].signbits = QMath.GetPlaneSignbits(parms.frustum[i].normal);
 	}
 }
 
@@ -23360,6 +24807,7 @@ function RenderView(parms) {
  */
 function GenerateDrawSurfs() {
 	AddWorldSurfaces();
+	// AddPolygonSurfaces();
 	AddEntitySurfaces();
 
 	// AddWorldSurfaces will setup the min/max visibility bounds.
@@ -23387,7 +24835,241 @@ function AddDrawSurf(face, shader, entityNum/*, fogIndex, dlightMap*/) {
  * SortDrawSurfaces
  */
 function SortDrawSurfaces() {
-	qm.RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
+	QMath.RadixSort(re.refdef.drawSurfs, 'sort', re.refdef.numDrawSurfs);
+}
+
+/**
+ * AddEntitySurfaces
+ */
+var entitySurface = new EntitySurface();
+function AddEntitySurfaces() {
+	for (var i = 0; i < re.refdef.numRefEntities; i++) {
+		var refent = re.refdef.refEntities[i];
+
+		// preshift the value we are going to OR into the drawsurf sort
+		//tr.shiftedEntityNum = tr.currentEntityNum << QSORT_ENTITYNUM_SHIFT;
+
+		//
+		// the weapon model must be handled special --
+		// we don't want the hacked weapon position showing in 
+		// mirrors, because the true body position will already be drawn
+		//
+		/*if ( (ent->e.renderfx & RF_FIRST_PERSON) && tr.viewParms.isPortal) {
+			continue;
+		}*/
+
+		// simple generated models, like sprites and beams, are not culled
+		switch (refent.reType) {
+			case RT.SPRITE:
+			case RT.RAIL_CORE:
+				// Self blood sprites, talk balloons, etc should not be drawn in the primary
+				// view. We can't just do this check for all entities, because md3
+				// entities may still want to cast shadows from them.
+				if ((refent.renderfx & RF.THIRD_PERSON)/* && !tr.viewParms.isPortal*/) {
+					continue;
+				}
+				var shader = GetShaderByHandle(refent.customShader);
+				AddDrawSurf(entitySurface, shader, refent.index);
+				break;
+
+			case RT.MODEL:
+				// We must set up parts of tr.or for model culling.
+				RotateForEntity(refent, re.or);
+				AddModelSurfaces(refent);
+				break;
+
+			default:
+				com.error(ERR.DROP, 'AddEntitySurfaces: Bad reType');
+		}
+	}
+}
+
+/**
+ * AddModelSurfaces
+ */
+function AddModelSurfaces(refent) {
+	var mod = GetModelByHandle(refent.hModel);
+
+	if (mod.type === ModelType.BAD) {
+		return;  // probably still async loading
+	}
+
+	// Don't add third_person objects if not in a portal.
+	var personalModel = (refent.renderfx & RF.THIRD_PERSON);// && !tr.viewParms.isPortal;
+
+	/*if (ent->e.renderfx & RF_WRAP_FRAMES) {
+		ent->e.frame %= tr.currentModel->md3[0]->numFrames;
+		ent->e.oldframe %= tr.currentModel->md3[0]->numFrames;
+	}*/
+
+	// Validate the frames so there is no chance of a crash.
+	// This will write directly into the entity structure, so
+	// when the surfaces are rendered, they don't need to be
+	// range checked again.
+	/*if ((ent->e.frame >= tr.currentModel->md3[0]->numFrames) 
+		|| (ent->e.frame < 0)
+		|| (ent->e.oldframe >= tr.currentModel->md3[0]->numFrames)
+		|| (ent->e.oldframe < 0)) {
+			ri.Printf( PRINT_DEVELOPER, "R_AddMD3Surfaces: no such frame %d to %d for '%s'\n",
+				ent->e.oldframe, ent->e.frame,
+				tr.currentModel->name );
+			ent->e.frame = 0;
+			ent->e.oldframe = 0;
+	}*/
+
+	// compute LOD
+	//lod = R_ComputeLOD( ent );
+	var lod = 0;
+	var header = mod.md3[lod];
+
+	// Cull the entire model if merged bounding box of both frames
+	// is outside the view frustum.
+	var cull = CullModel(header, refent);
+	if (cull === Cull.OUT ) {
+		return;
+	}
+
+	// set up lighting now that we know we aren't culled
+	if (!personalModel) {
+		SetupEntityLighting(refent);
+	}
+
+	// see if we are in a fog volume
+	//fogNum = R_ComputeFogNum( header, ent );
+
+	//
+	// draw all surfaces
+	//
+	var md3 = mod.md3[0];
+
+	// not loaded yet
+	if (!md3) {
+		return;
+	}
+
+	for (var i = 0; i < md3.surfaces.length; i++) {
+		var face = md3.surfaces[i];
+
+		var shader;
+
+		if (refent.customShader) {
+			shader = GetShaderByHandle(refent.customShader);
+		} else if (refent.customSkin) {
+			var skin = GetSkinByHandle(refent.customSkin);
+
+			// Match the surface name to something in the skin file.
+			shader = re.defaultShader;
+
+			for (var j = 0; j < skin.surfaces.length; j++) {
+				// The names have both been lowercased.
+				if (skin.surfaces[j].name === face.name) {
+					shader = skin.surfaces[j].shader;
+					break;
+				}
+			}
+		} else if (face.shaders.length <= 0) {
+			shader = re.defaultShader;
+		} else {
+			shader = face.shaders[refent.skinNum % face.shaders.length].shader;
+		}
+		
+		// we will add shadows even if the main object isn't visible in the view
+
+		// stencil shadows can't do personal models unless I polyhedron clip
+		/*if ( !personalModel
+			&& r_shadows->integer == 2 
+			&& fogNum == 0
+			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
+			&& shader->sort == SS_OPAQUE ) {
+			R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, qfalse );
+		}
+
+		// projection shadows work fine with personal models
+		if ( r_shadows->integer == 3
+			&& fogNum == 0
+			&& (ent->e.renderfx & RF_SHADOW_PLANE )
+			&& shader->sort == SS_OPAQUE ) {
+			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
+		}*/
+
+		// Don't add third_person objects if not viewing through a portal.
+		if (!personalModel) {
+			AddDrawSurf(face, shader, refent.index);
+		}
+	}
+}
+
+/**
+ * CullModel
+ */
+function CullModel(md3, refent) {
+	var newFrame = md3.frames[refent.frame];
+	var oldFrame = md3.frames[refent.oldFrame];
+
+	// Cull bounding sphere ONLY if this is not an upscaled entity.
+	// if (!ent->e.nonNormalizedAxes) {
+		if (refent.frame === refent.oldframe) {
+			switch (CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius)) {
+				case Cull.OUT:
+					re.counts.culledModelOut++;
+					return Cull.OUT;
+
+				case Cull.IN:
+					re.counts.culledModelIn++;
+					return Cull.IN;
+
+				case Cull.CLIP:
+					re.counts.culledModelClip++;
+					break;
+			}
+		} else {
+			var sphereCull  = CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius);
+			var sphereCullB;
+
+			if ( newFrame === oldFrame ) {
+				sphereCullB = sphereCull;
+			} else {
+				sphereCullB = CullLocalPointAndRadius(oldFrame.localOrigin, oldFrame.radius);
+			}
+
+			if (sphereCull === sphereCullB) {
+				if (sphereCull === Cull.OUT) {
+					re.counts.culledModelOut++;
+					return Cull.OUT;
+				} else if (sphereCull === Cull.IN) {
+					re.counts.culledModelIn++;
+					return Cull.IN;
+				} else {
+					re.counts.culledModelClip++;
+				}
+			}
+		}
+	// }
+	
+	// Calculate a bounding box in the current coordinate system.
+	var bounds = [
+		[0, 0, 0],
+		[0, 0, 0]
+	];
+
+	for (var i = 0 ; i < 3 ; i++) {
+		bounds[0][i] = oldFrame.bounds[0][i] < newFrame.bounds[0][i] ? oldFrame.bounds[0][i] : newFrame.bounds[0][i];
+		bounds[1][i] = oldFrame.bounds[1][i] > newFrame.bounds[1][i] ? oldFrame.bounds[1][i] : newFrame.bounds[1][i];
+	}
+
+	switch (CullLocalBox(bounds)) {
+		case Cull.OUT:
+			re.counts.culledModelOut++;
+			return Cull.OUT;
+		case Cull.IN:
+			re.counts.culledModelIn++;
+			return Cull.IN;
+		case Cull.CLIP:
+			re.counts.culledModelClip++;
+			return Cull.CLIP;
+		default:
+			com.error(ERR.DROP, 'Invalid cull result');
+	}
 }
 		/**
  * InitBackend
@@ -23482,10 +25164,15 @@ function RenderDrawSurfaces() {
 			if (entityNum !== ENTITYNUM_WORLD) {
 				backend.currentEntity = refdef.refEntities[entityNum];
 				backend.refdef.time = originalTime - backend.currentEntity.shaderTime;
+				// We have to reset the shaderTime as well otherwise image animations start
+				// from the wrong frame.
+				backend.tess.shaderTime = backend.refdef.time;
+
 				RotateForEntity(backend.currentEntity, backend.or);
 			} else {
 				backend.currentEntity = null;
 				backend.refdef.time = originalTime;
+				backend.tess.shaderTime = backend.refdef.time;
 				parms.or.clone(backend.or);
 			}
 
@@ -23599,7 +25286,7 @@ function DrawTris() {
 	var tess = backend.tess;
 
 	if (!tess.xyz) {
-		imp.com_error(sh.Err.DROP, 'Can\'t draw triangles without xyz.');  // shouldn't happen
+		com.error(ERR.DROP, 'Can\'t draw triangles without xyz.');  // shouldn't happen
 	}
 
 	SetShaderStage(re.debugShader, re.debugShader.stages[0]);
@@ -23616,7 +25303,7 @@ function DrawNormals() {
 	var tess = backend.tess;
 
 	if (!tess.xyz || !tess.normal) {
-		imp.com_error(sh.Err.DROP, 'Can\'t draw normal without xyz and normal.');  // shouldn't happen
+		com.error(ERR.DROP, 'Can\'t draw normal without xyz and normal.');  // shouldn't happen
 	}
 
 	// Build up new index and vertex buffer.
@@ -23782,7 +25469,7 @@ function SetShaderStage(shader, stage) {
 
 	// Sanity check after being burned so many times by this.
 	if (isNaN(tess.shaderTime)) {
-		imp.com_error(sh.Err.DROP, 'Invalid time for shader');
+		com.error(ERR.DROP, 'Invalid time for shader');
 	}
 	
 	gl.blendFunc(stage.blendSrc, stage.blendDest);
@@ -23830,264 +25517,6 @@ function SetShaderStage(shader, stage) {
 		gl.uniform1f(program.uniform.time, tess.shaderTime);
 	}
 }
-
-/**
- * TesselateFace
- */
-function TesselateFace(worldSurface) {
-	var tess = backend.tess;
-
-	tess.numIndexes = worldSurface.elementCount;
-	tess.indexOffset = worldSurface.indexOffset;
-
-	tess.index = re.world.buffers.index;
-	tess.xyz = re.world.buffers.xyz;
-	tess.normal = re.world.buffers.normal;
-	tess.texCoord = re.world.buffers.texCoord;
-	tess.lightCoord = re.world.buffers.lightCoord;
-	tess.color = re.world.buffers.color;
-}
-
-/**
- * TesselateMd3
- */
-function TesselateMd3(face) {
-	var tess = backend.tess;
-	var refent = backend.currentEntity;
-	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
-	var numVerts = face.header.numVerts;
-	var oldXyz = [0, 0, 0];
-	var newXyz = [0, 0, 0];
-	var oldNormal = [0, 0, 0];
-	var newNormal = [0, 0, 0];
-	var newColor = [0, 0, 0, 0];
-
-	//
-	// Update the scratch vertex buffers.
-	//
-	var bxyz = backend.scratchBuffers.xyz;
-	var bnormal = backend.scratchBuffers.normal;
-	var btexCoord = backend.scratchBuffers.texCoord;
-	var bcolor = backend.scratchBuffers.color;
-	var indexOffset = bxyz.elementCount;
-
-	for (var i = 0; i < numVerts; i++) {
-		var oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
-		var newXyzNormal = face.xyzNormals[refent.frame * numVerts + i];
-
-		// Lerp xyz / normal.
-		vec3.scale(oldXyzNormal.xyz, MD3_XYZ_SCALE, oldXyz);
-		vec3.set(oldXyzNormal.normal, oldNormal);
-
-		vec3.scale(newXyzNormal.xyz, MD3_XYZ_SCALE, newXyz);
-		vec3.set(newXyzNormal.normal, newNormal);
-
-		if (backlerp !== 0.0) {
-			for (var j = 0; j < 3; j++) {
-				newXyz[j] = newXyz[j] + backlerp * (oldXyz[j] - newXyz[j]);
-				newNormal[j] = newNormal[j] + backlerp * (oldNormal[j] - newNormal[j]);
-			}
-		}
-
-		// 
-		CalcDiffuseColor(refent, newNormal, newColor);
-
-		bxyz.data[bxyz.offset++] = newXyz[0];
-		bxyz.data[bxyz.offset++] = newXyz[1];
-		bxyz.data[bxyz.offset++] = newXyz[2];
-
-		bnormal.data[bnormal.offset++] = newNormal[0];
-		bnormal.data[bnormal.offset++] = newNormal[1];
-		bnormal.data[bnormal.offset++] = newNormal[2];
-
-		btexCoord.data[btexCoord.offset++] = face.st[i].st[0];
-		btexCoord.data[btexCoord.offset++] = face.st[i].st[1];
-
-		bcolor.data[bcolor.offset++] = newColor[0];
-		bcolor.data[bcolor.offset++] = newColor[1];
-		bcolor.data[bcolor.offset++] = newColor[2];
-		bcolor.data[bcolor.offset++] = newColor[3];
-	}
-
-	bxyz.modified = true;
-	bnormal.modified = true;
-	btexCoord.modified = true;
-	bcolor.modified = true;
-
-	//
-	// Update the scratch index buffer.
-	//
-	var bindex = backend.scratchBuffers.index;
-
-	for (var i = 0; i < face.triangles.length; i++) {
-		var tri = face.triangles[i];
-
-		bindex.data[bindex.offset++] = indexOffset + tri.indexes[0];
-		bindex.data[bindex.offset++] = indexOffset + tri.indexes[1];
-		bindex.data[bindex.offset++] = indexOffset + tri.indexes[2];
-	}
-
-	bindex.modified = true;
-
-	tess.index = bindex;
-	tess.xyz = bxyz;
-	tess.normal = bnormal;
-	tess.texCoord = btexCoord;
-	tess.color = bcolor;
-}
-
-/**
- * TesselateEntity
- */
-function TesselateEntity(face) {
-	switch (backend.currentEntity.reType) {
-		case RT.SPRITE:
-			TesselateSprite();
-			break;
-	}
-}
-
-/**
- * TesselateSprite
- */
-function TesselateSprite() {
-	var tess = backend.tess;
-	var refent = backend.currentEntity;
-	var radius = refent.radius;
-	var left = [0, 0, 0];
-	var up = [0, 0, 0];
-
-	// Calculate the xyz locations for the four corners
-	if (refent.rotation === 0) {
-		vec3.scale(backend.viewParms.or.axis[1], radius, left);
-		vec3.scale(backend.viewParms.or.axis[2], radius, up);
-	} else {
-		var ang = Math.PI * refent.rotation / 180;
-		var s = Math.sin(ang);
-		var c = Math.cos(ang);
-
-		vec3.scale(backend.viewParms.or.axis[1], c * radius, left);
-		vec3.add(left, vec3.scale(backend.viewParms.or.axis[2], -s * radius, [0, 0, 0]), left);
-
-		vec3.scale(backend.viewParms.or.axis[2], c * radius, up);
-		vec3.add(up, vec3.scale(backend.viewParms.or.axis[1], s * radius, [0, 0, 0]), up);
-	}
-
-	// if (backend.viewParms.isMirror) {
-	// 	vec3.negate(left);
-	// }
-
-	AddQuadStamp(refent.origin, left, up, refent.shaderRGBA);
-
-	tess.index = backend.scratchBuffers.index;
-	tess.xyz = backend.scratchBuffers.xyz;
-	tess.normal = backend.scratchBuffers.normal;
-	tess.texCoord = backend.scratchBuffers.texCoord;
-	tess.color = backend.scratchBuffers.color;
-}
-
-/**
- * AddQuadStamp
- */
-function AddQuadStamp(origin, left, up, color) {
-	AddQuadStampExt(origin, left, up, color, 0, 0, 1, 1);
-}
-
-/**
- * AddQuadStampExt
- */
-function AddQuadStampExt(origin, left, up, color, s1, t1, s2, t2) {
-	var bindex = backend.scratchBuffers.index;
-	var bxyz = backend.scratchBuffers.xyz;
-	var bnormal = backend.scratchBuffers.normal;
-	var btexCoord = backend.scratchBuffers.texCoord;
-	var bcolor = backend.scratchBuffers.color;
-	var indexOffset = bxyz.elementCount;
-
-	// Triangle indexes for a simple quad.
-	bindex.data[bindex.offset++] = indexOffset;
-	bindex.data[bindex.offset++] = indexOffset + 1;
-	bindex.data[bindex.offset++] = indexOffset + 3;
-
-	bindex.data[bindex.offset++] = indexOffset + 3;
-	bindex.data[bindex.offset++] = indexOffset + 1;
-	bindex.data[bindex.offset++] = indexOffset + 2;
-
-	bxyz.data[bxyz.offset++] = origin[0] + left[0] + up[0];
-	bxyz.data[bxyz.offset++] = origin[1] + left[1] + up[1];
-	bxyz.data[bxyz.offset++] = origin[2] + left[2] + up[2];
-
-	bxyz.data[bxyz.offset++] = origin[0] - left[0] + up[0];
-	bxyz.data[bxyz.offset++] = origin[1] - left[1] + up[1];
-	bxyz.data[bxyz.offset++] = origin[2] - left[2] + up[2];
-
-	bxyz.data[bxyz.offset++] = origin[0] - left[0] - up[0];
-	bxyz.data[bxyz.offset++] = origin[1] - left[1] - up[1];
-	bxyz.data[bxyz.offset++] = origin[2] - left[2] - up[2];
-
-	bxyz.data[bxyz.offset++] = origin[0] + left[0] - up[0];
-	bxyz.data[bxyz.offset++] = origin[1] + left[1] - up[1];
-	bxyz.data[bxyz.offset++] = origin[2] + left[2] - up[2];
-
-	// Constant normal all the way around.
-	var normal = vec3.negate(backend.viewParms.or.axis[0], [0, 0, 0]);
-
-	bnormal.data[bnormal.offset++] = normal[0];
-	bnormal.data[bnormal.offset++] = normal[1];
-	bnormal.data[bnormal.offset++] = normal[2];
-
-	bnormal.data[bnormal.offset++] = normal[0];
-	bnormal.data[bnormal.offset++] = normal[1];
-	bnormal.data[bnormal.offset++] = normal[2];
-
-	bnormal.data[bnormal.offset++] = normal[0];
-	bnormal.data[bnormal.offset++] = normal[1];
-	bnormal.data[bnormal.offset++] = normal[2];
-
-	bnormal.data[bnormal.offset++] = normal[0];
-	bnormal.data[bnormal.offset++] = normal[1];
-	bnormal.data[bnormal.offset++] = normal[2];
-
-	// Standard square texture coordinates.
-	btexCoord.data[btexCoord.offset++] = s1;
-	btexCoord.data[btexCoord.offset++] = t1;
-
-	btexCoord.data[btexCoord.offset++] = s2;
-	btexCoord.data[btexCoord.offset++] = t1;
-
-	btexCoord.data[btexCoord.offset++] = s2;
-	btexCoord.data[btexCoord.offset++] = t2;
-
-	btexCoord.data[btexCoord.offset++] = s1;
-	btexCoord.data[btexCoord.offset++] = t2;
-
-	// Constant color all the way around.
-	bcolor.data[bcolor.offset++] = color[0] / 255;
-	bcolor.data[bcolor.offset++] = color[1] / 255;
-	bcolor.data[bcolor.offset++] = color[2] / 255;
-	bcolor.data[bcolor.offset++] = color[3] / 255;
-
-	bcolor.data[bcolor.offset++] = color[0] / 255;
-	bcolor.data[bcolor.offset++] = color[1] / 255;
-	bcolor.data[bcolor.offset++] = color[2] / 255;
-	bcolor.data[bcolor.offset++] = color[3] / 255;
-
-	bcolor.data[bcolor.offset++] = color[0] / 255;
-	bcolor.data[bcolor.offset++] = color[1] / 255;
-	bcolor.data[bcolor.offset++] = color[2] / 255;
-	bcolor.data[bcolor.offset++] = color[3] / 255;
-
-	bcolor.data[bcolor.offset++] = color[0] / 255;
-	bcolor.data[bcolor.offset++] = color[1] / 255;
-	bcolor.data[bcolor.offset++] = color[2] / 255;
-	bcolor.data[bcolor.offset++] = color[3] / 255;
-
-	bindex.modified = true;
-	bxyz.modified = true;
-	bnormal.modified = true;
-	btexCoord.modified = true;
-	bcolor.modified = true;
-}
 		/**
  * LoadMap
  */
@@ -24096,7 +25525,7 @@ function LoadMap(mapName, callback) {
 
 	log('Loading map for', mapName);
 
-	imp.sys_ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
+	sys.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
 		if (err) throw err;
 		
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
@@ -24174,7 +25603,7 @@ function ColorShiftLightingBytes(color, offset) {
 function ShaderForShaderNum(shaderNum, lightmapNum) {
 	var shaders = re.world.shaders;
 	if (shaderNum < 0 || shaderNum >= shaders.length) {
-		imp.com_error(sh.Err.DROP, 'ShaderForShaderNum: bad num ' + shaderNum);
+		com.error(ERR.DROP, 'ShaderForShaderNum: bad num ' + shaderNum);
 	}
 	var dsh = shaders[shaderNum];
 	var shader = FindShaderByName(dsh.shaderName, lightmapNum);
@@ -24445,8 +25874,8 @@ function ParseFace(dface, face) {
 	// Take the plane information from the lightmap vector
 	face.plane.normal = vec3.set(dface.lmVecs[2], [0, 0, 0]);
 	face.plane.dist = vec3.dot(verts[face.vertex].pos, face.plane.normal);
-	face.plane.signbits = qm.GetPlaneSignbits(face.plane.normal);
-	face.plane.type = qm.PlaneTypeForNormal(face.plane.normal);
+	face.plane.signbits = QMath.GetPlaneSignbits(face.plane.normal);
+	face.plane.type = QMath.PlaneTypeForNormal(face.plane.normal);
 }
 
 /**
@@ -24466,12 +25895,12 @@ function LoadPlanes(buffer, planeLump) {
 	var planes = re.world.planes = new Array(planeLump.filelen / sh.dplane_t.size);
 
 	for (var i = 0; i < planes.length; i++) {
-		var plane = planes[i] = new qm.Plane();
+		var plane = planes[i] = new QMath.Plane();
 
 		plane.normal = [bb.readFloat(), bb.readFloat(), bb.readFloat()];
 		plane.dist = bb.readFloat();
-		plane.signbits = qm.GetPlaneSignbits(plane.normal);
-		plane.type = qm.PlaneTypeForNormal(plane.normal);
+		plane.signbits = QMath.GetPlaneSignbits(plane.normal);
+		plane.type = QMath.PlaneTypeForNormal(plane.normal);
 	}
 }
 
@@ -24746,7 +26175,7 @@ function FindImageByName(name, clamp) {
 		image.texnum = re.defaultTexture.texnum;
 	}
 
-	imp.sys_ReadFile(name, 'binary', function (err, data) {
+	sys.ReadFile(name, 'binary', function (err, data) {
 		if (err) {
 			console.warn(err.message);
 			return;
@@ -25090,7 +26519,7 @@ function RegisterSkin(filename) {
 	log('Loading skin', filename);
 
 	// Load and parse the skin file
-	imp.sys_ReadFile(filename, 'utf8', function (err, data) {
+	sys.ReadFile(filename, 'utf8', function (err, data) {
 		// Trim before we split.
 		var lines = data.replace(/^\s+|\s+$/g,'').split(/\r\n/);
 
@@ -25451,7 +26880,7 @@ function RegisterMd3(mod, name, callback) {
  * LoadMd3
  */
 function LoadMd3(mod, filename, callback) {
-	imp.sys_ReadFile(filename, 'binary', function (err, data) {
+	sys.ReadFile(filename, 'binary', function (err, data) {
 		if (err) return callback(err);
 	
 		var bb = new ByteBuffer(data, ByteBuffer.LITTLE_ENDIAN);
@@ -25666,7 +27095,7 @@ function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	}
 
 	if (!model.md3[0] ) {
-		qm.AxisClear(or.axis);
+		QMath.AxisClear(or.axis);
 		vec3.set(or.origin, [0, 0, 0]);
 		return false;
 	}
@@ -25675,7 +27104,7 @@ function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	var end = GetTag(model.md3[0], endFrame, tagName);
 
 	if (!start || !end) {
-		qm.AxisClear(or.axis);
+		QMath.AxisClear(or.axis);
 		vec3.set(or.origin, [0, 0, 0]);
 		return false;
 	}
@@ -25905,7 +27334,7 @@ function SubdividePatchToGrid(points, width, height, subdivisions) {
  */
 function RenderScene(fd) {
 	if (!re.world) {
-		imp.com_error(sh.Err.DROP, 'RenderScene: NULL worldmodel');
+		com.error(ERR.DROP, 'RenderScene: NULL worldmodel');
 		return;
 	}
 	
@@ -25954,7 +27383,7 @@ function RenderScene(fd) {
  */
 function AddRefEntityToScene(refent) {
 	if (refent.reType < 0 || refent.reType >= RT.MAX_REF_ENTITY_TYPE) {
-		imp.com_error(sh.Err.DROP, 'AddRefEntityToScene: bad reType ' + refent.reType);
+		com.error(ERR.DROP, 'AddRefEntityToScene: bad reType ' + refent.reType);
 	}
 
 	var newRefent = re.refdef.refEntities[re.refdef.numRefEntities];
@@ -25966,6 +27395,87 @@ function AddRefEntityToScene(refent) {
 	re.refdef.numRefEntities++;
 }
 
+// /**
+//  * AddPolyToScene
+//  */
+// function AddPolyToScene( qhandle_t hShader, int numVerts, const polyVert_t *verts, int numPolys ) {
+// 	srfPoly_t	*poly;
+// 	int			i, j;
+// 	int			fogIndex;
+// 	fog_t		*fog;
+// 	vec3_t		bounds[2];
+
+// 	if ( !tr.registered ) {
+// 		return;
+// 	}
+
+// 	if ( !hShader ) {
+// 		ri.Printf( PRINT_WARNING, "WARNING: RE_AddPolyToScene: NULL poly shader\n");
+// 		return;
+// 	}
+
+// 	for ( j = 0; j < numPolys; j++ ) {
+// 		if ( r_numpolyverts + numVerts > max_polyverts || r_numpolys >= max_polys ) {
+//       /*
+//       NOTE TTimo this was initially a PRINT_WARNING
+//       but it happens a lot with high fighting scenes and particles
+//       since we don't plan on changing the const and making for room for those effects
+//       simply cut this message to developer only
+//       */
+// 			ri.Printf( PRINT_DEVELOPER, "WARNING: RE_AddPolyToScene: r_max_polys or r_max_polyverts reached\n");
+// 			return;
+// 		}
+
+// 		poly = &backEndData[tr.smpFrame]->polys[r_numpolys];
+// 		poly->surfaceType = SF_POLY;
+// 		poly->hShader = hShader;
+// 		poly->numVerts = numVerts;
+// 		poly->verts = &backEndData[tr.smpFrame]->polyVerts[r_numpolyverts];
+		
+// 		Com_Memcpy( poly->verts, &verts[numVerts*j], numVerts * sizeof( *verts ) );
+
+// 		if ( glConfig.hardwareType == GLHW_RAGEPRO ) {
+// 			poly->verts->modulate[0] = 255;
+// 			poly->verts->modulate[1] = 255;
+// 			poly->verts->modulate[2] = 255;
+// 			poly->verts->modulate[3] = 255;
+// 		}
+// 		// done.
+// 		r_numpolys++;
+// 		r_numpolyverts += numVerts;
+
+// 		// if no world is loaded
+// 		if ( tr.world == NULL ) {
+// 			fogIndex = 0;
+// 		}
+// 		// see if it is in a fog volume
+// 		else if ( tr.world->numfogs == 1 ) {
+// 			fogIndex = 0;
+// 		} else {
+// 			// find which fog volume the poly is in
+// 			VectorCopy( poly->verts[0].xyz, bounds[0] );
+// 			VectorCopy( poly->verts[0].xyz, bounds[1] );
+// 			for ( i = 1 ; i < poly->numVerts ; i++ ) {
+// 				AddPointToBounds( poly->verts[i].xyz, bounds[0], bounds[1] );
+// 			}
+// 			for ( fogIndex = 1 ; fogIndex < tr.world->numfogs ; fogIndex++ ) {
+// 				fog = &tr.world->fogs[fogIndex]; 
+// 				if ( bounds[1][0] >= fog->bounds[0][0]
+// 					&& bounds[1][1] >= fog->bounds[0][1]
+// 					&& bounds[1][2] >= fog->bounds[0][2]
+// 					&& bounds[0][0] <= fog->bounds[1][0]
+// 					&& bounds[0][1] <= fog->bounds[1][1]
+// 					&& bounds[0][2] <= fog->bounds[1][2] ) {
+// 					break;
+// 				}
+// 			}
+// 			if ( fogIndex == tr.world->numfogs ) {
+// 				fogIndex = 0;
+// 			}
+// 		}
+// 		poly->fogIndex = fogIndex;
+// 	}
+// }
 		/**
  * InitShaders
  */
@@ -26158,7 +27668,7 @@ function ScanAndLoadShaderScripts(callback) {
  * LoadShaderScript
  */
 function LoadShaderScript(path, callback) {
-	imp.sys_ReadFile(path, 'utf8', function (err, data) {
+	sys.ReadFile(path, 'utf8', function (err, data) {
 		if (err) throw err;
 
 		// Tokenize the file and spit out the shader names / bodies
@@ -26216,7 +27726,7 @@ function ScanAndLoadShaderPrograms(callback) {
  * LoadShaderProgram
  */
 function LoadShaderProgram(path, callback) {
-	imp.sys_ReadFile(path, 'utf8', function (err, data) {
+	sys.ReadFile(path, 'utf8', function (err, data) {
 		if (err) throw err;
 		
 		// Use basename as name.
@@ -26434,7 +27944,7 @@ function ParseShaderStage(shader, tokens) {
 			case 'map':
 				stage.map = tokens.next();
 				if (!stage.map) {
-					imp.com_error(sh.Err.DROP, 'WARNING: missing parameter for \'map\' keyword in shader \'' + shader.name + '\'');
+					com.error(ERR.DROP, 'WARNING: missing parameter for \'map\' keyword in shader \'' + shader.name + '\'');
 				}
 				if (stage.map === '$whiteimage') {
 					stage.texture = FindImageByName('*white');
@@ -26847,7 +28357,8 @@ function GenerateFragmentShader(q3shader, stage) {
 			builder.addLines(['float alpha = texColor.a * vColor.a;']);
 			break;
 		case 'wave':
-			builder.addWaveform('alpha', stage.alphaWaveform);
+			builder.addWaveform('alphaWave', stage.alphaWaveform);
+			builder.addLines(['float alpha = texColor.a * alphaWave;']);
 			break;
 		case 'lightingspecular':
 			// For now this is VERY special cased. May not work well with all instances of lightingSpecular
@@ -27058,239 +28569,351 @@ ShaderTokenizer.prototype.prev = function() {
 	}
 	return token;
 };
-		var entitySurface = new EntitySurface();
+		/**
+ * TesselateFace
+ */
+function TesselateFace(worldSurface) {
+	var tess = backend.tess;
+
+	tess.numIndexes = worldSurface.elementCount;
+	tess.indexOffset = worldSurface.indexOffset;
+
+	tess.index = re.world.buffers.index;
+	tess.xyz = re.world.buffers.xyz;
+	tess.normal = re.world.buffers.normal;
+	tess.texCoord = re.world.buffers.texCoord;
+	tess.lightCoord = re.world.buffers.lightCoord;
+	tess.color = re.world.buffers.color;
+}
 
 /**
- * AddEntitySurfaces
+ * TesselateMd3
  */
-function AddEntitySurfaces() {
-	for (var i = 0; i < re.refdef.numRefEntities; i++) {
-		var refent = re.refdef.refEntities[i];
+function TesselateMd3(face) {
+	var tess = backend.tess;
+	var refent = backend.currentEntity;
+	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
+	var numVerts = face.header.numVerts;
+	var oldXyz = [0, 0, 0];
+	var newXyz = [0, 0, 0];
+	var oldNormal = [0, 0, 0];
+	var newNormal = [0, 0, 0];
+	var newColor = [0, 0, 0, 0];
 
-		// preshift the value we are going to OR into the drawsurf sort
-		//tr.shiftedEntityNum = tr.currentEntityNum << QSORT_ENTITYNUM_SHIFT;
+	//
+	// Update the scratch vertex buffers.
+	//
+	var bxyz = backend.scratchBuffers.xyz;
+	var bnormal = backend.scratchBuffers.normal;
+	var btexCoord = backend.scratchBuffers.texCoord;
+	var bcolor = backend.scratchBuffers.color;
+	var indexOffset = bxyz.elementCount;
 
-		//
-		// the weapon model must be handled special --
-		// we don't want the hacked weapon position showing in 
-		// mirrors, because the true body position will already be drawn
-		//
-		/*if ( (ent->e.renderfx & RF_FIRST_PERSON) && tr.viewParms.isPortal) {
-			continue;
-		}*/
+	for (var i = 0; i < numVerts; i++) {
+		var oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
+		var newXyzNormal = face.xyzNormals[refent.frame * numVerts + i];
 
-		// simple generated models, like sprites and beams, are not culled
-		switch (refent.reType) {
-			case RT.SPRITE:
-				// Self blood sprites, talk balloons, etc should not be drawn in the primary
-				// view. We can't just do this check for all entities, because md3
-				// entities may still want to cast shadows from them.
-				if ((refent.renderfx & RF.THIRD_PERSON)/* && !tr.viewParms.isPortal*/) {
-					continue;
-				}
-				var shader = GetShaderByHandle(refent.customShader);
-				AddDrawSurf(entitySurface, shader, refent.index);
-				break;
+		// Lerp xyz / normal.
+		vec3.scale(oldXyzNormal.xyz, MD3_XYZ_SCALE, oldXyz);
+		vec3.set(oldXyzNormal.normal, oldNormal);
 
-			case RT.MODEL:
-				// We must set up parts of tr.or for model culling.
-				RotateForEntity(refent, re.or);
-				AddModelSurfaces(refent);
-				break;
+		vec3.scale(newXyzNormal.xyz, MD3_XYZ_SCALE, newXyz);
+		vec3.set(newXyzNormal.normal, newNormal);
 
-			default:
-				imp.com_error(sh.Err.DROP, 'AddEntitySurfaces: Bad reType');
+		if (backlerp !== 0.0) {
+			for (var j = 0; j < 3; j++) {
+				newXyz[j] = newXyz[j] + backlerp * (oldXyz[j] - newXyz[j]);
+				newNormal[j] = newNormal[j] + backlerp * (oldNormal[j] - newNormal[j]);
+			}
 		}
+
+		// 
+		CalcDiffuseColor(refent, newNormal, newColor);
+
+		bxyz.data[bxyz.offset++] = newXyz[0];
+		bxyz.data[bxyz.offset++] = newXyz[1];
+		bxyz.data[bxyz.offset++] = newXyz[2];
+
+		bnormal.data[bnormal.offset++] = newNormal[0];
+		bnormal.data[bnormal.offset++] = newNormal[1];
+		bnormal.data[bnormal.offset++] = newNormal[2];
+
+		btexCoord.data[btexCoord.offset++] = face.st[i].st[0];
+		btexCoord.data[btexCoord.offset++] = face.st[i].st[1];
+
+		bcolor.data[bcolor.offset++] = newColor[0];
+		bcolor.data[bcolor.offset++] = newColor[1];
+		bcolor.data[bcolor.offset++] = newColor[2];
+		bcolor.data[bcolor.offset++] = newColor[3];
+	}
+
+	bxyz.modified = true;
+	bnormal.modified = true;
+	btexCoord.modified = true;
+	bcolor.modified = true;
+
+	//
+	// Update the scratch index buffer.
+	//
+	var bindex = backend.scratchBuffers.index;
+
+	for (var i = 0; i < face.triangles.length; i++) {
+		var tri = face.triangles[i];
+
+		bindex.data[bindex.offset++] = indexOffset + tri.indexes[0];
+		bindex.data[bindex.offset++] = indexOffset + tri.indexes[1];
+		bindex.data[bindex.offset++] = indexOffset + tri.indexes[2];
+	}
+
+	bindex.modified = true;
+
+	tess.index = bindex;
+	tess.xyz = bxyz;
+	tess.normal = bnormal;
+	tess.texCoord = btexCoord;
+	tess.color = bcolor;
+}
+
+/**
+ * TesselateEntity
+ */
+function TesselateEntity(face) {
+	switch (backend.currentEntity.reType) {
+		case RT.SPRITE:
+			TesselateSprite();
+			break;
+
+		case RT.RAIL_CORE:
+			TesselateRailCore();
+			break;
 	}
 }
 
 /**
- * AddModelSurfaces
+ * TesselateSprite
  */
-function AddModelSurfaces(refent) {
-	var mod = GetModelByHandle(refent.hModel);
+function TesselateSprite() {
+	var tess = backend.tess;
+	var refent = backend.currentEntity;
+	var radius = refent.radius;
+	var left = [0, 0, 0];
+	var up = [0, 0, 0];
 
-	if (mod.type === ModelType.BAD) {
-		return;  // probably still async loading
+	// Calculate the xyz locations for the four corners
+	if (refent.rotation === 0) {
+		vec3.scale(backend.viewParms.or.axis[1], radius, left);
+		vec3.scale(backend.viewParms.or.axis[2], radius, up);
+	} else {
+		var ang = Math.PI * refent.rotation / 180;
+		var s = Math.sin(ang);
+		var c = Math.cos(ang);
+
+		vec3.scale(backend.viewParms.or.axis[1], c * radius, left);
+		vec3.add(left, vec3.scale(backend.viewParms.or.axis[2], -s * radius, [0, 0, 0]), left);
+
+		vec3.scale(backend.viewParms.or.axis[2], c * radius, up);
+		vec3.add(up, vec3.scale(backend.viewParms.or.axis[1], s * radius, [0, 0, 0]), up);
 	}
 
-	// Don't add third_person objects if not in a portal.
-	var personalModel = (refent.renderfx & RF.THIRD_PERSON);// && !tr.viewParms.isPortal;
-
-	/*if (ent->e.renderfx & RF_WRAP_FRAMES) {
-		ent->e.frame %= tr.currentModel->md3[0]->numFrames;
-		ent->e.oldframe %= tr.currentModel->md3[0]->numFrames;
-	}*/
-
-	// Validate the frames so there is no chance of a crash.
-	// This will write directly into the entity structure, so
-	// when the surfaces are rendered, they don't need to be
-	// range checked again.
-	/*if ((ent->e.frame >= tr.currentModel->md3[0]->numFrames) 
-		|| (ent->e.frame < 0)
-		|| (ent->e.oldframe >= tr.currentModel->md3[0]->numFrames)
-		|| (ent->e.oldframe < 0)) {
-			ri.Printf( PRINT_DEVELOPER, "R_AddMD3Surfaces: no such frame %d to %d for '%s'\n",
-				ent->e.oldframe, ent->e.frame,
-				tr.currentModel->name );
-			ent->e.frame = 0;
-			ent->e.oldframe = 0;
-	}*/
-
-	// compute LOD
-	//lod = R_ComputeLOD( ent );
-	var lod = 0;
-	var header = mod.md3[lod];
-
-	// Cull the entire model if merged bounding box of both frames
-	// is outside the view frustum.
-	var cull = CullModel(header, refent);
-	if (cull === Cull.OUT ) {
-		return;
-	}
-
-	// set up lighting now that we know we aren't culled
-	if (!personalModel) {
-		SetupEntityLighting(refent);
-	}
-
-	// see if we are in a fog volume
-	//fogNum = R_ComputeFogNum( header, ent );
-
-	//
-	// draw all surfaces
-	//
-	var md3 = mod.md3[0];
-
-	// not loaded yet
-	if (!md3) {
-		return;
-	}
-
-	for (var i = 0; i < md3.surfaces.length; i++) {
-		var face = md3.surfaces[i];
-
-		var shader;
-
-		if (refent.customShader) {
-			shader = GetShaderByHandle(refent.customShader);
-		} else if (refent.customSkin) {
-			var skin = GetSkinByHandle(refent.customSkin);
-
-			// Match the surface name to something in the skin file.
-			shader = re.defaultShader;
-
-			for (var j = 0; j < skin.surfaces.length; j++) {
-				// The names have both been lowercased.
-				if (skin.surfaces[j].name === face.name) {
-					shader = skin.surfaces[j].shader;
-					break;
-				}
-			}
-		} else if (face.shaders.length <= 0) {
-			shader = re.defaultShader;
-		} else {
-			shader = face.shaders[refent.skinNum % face.shaders.length].shader;
-		}
-		
-		// we will add shadows even if the main object isn't visible in the view
-
-		// stencil shadows can't do personal models unless I polyhedron clip
-		/*if ( !personalModel
-			&& r_shadows->integer == 2 
-			&& fogNum == 0
-			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
-			&& shader->sort == SS_OPAQUE ) {
-			R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, qfalse );
-		}
-
-		// projection shadows work fine with personal models
-		if ( r_shadows->integer == 3
-			&& fogNum == 0
-			&& (ent->e.renderfx & RF_SHADOW_PLANE )
-			&& shader->sort == SS_OPAQUE ) {
-			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
-		}*/
-
-		// Don't add third_person objects if not viewing through a portal.
-		if (!personalModel) {
-			AddDrawSurf(face, shader, refent.index);
-		}
-	}
-}
-
-
-/**
- * CullModel
- */
-function CullModel(md3, refent) {
-	var newFrame = md3.frames[refent.frame];
-	var oldFrame = md3.frames[refent.oldFrame];
-
-	// Cull bounding sphere ONLY if this is not an upscaled entity.
-	// if (!ent->e.nonNormalizedAxes) {
-		if (refent.frame === refent.oldframe) {
-			switch (CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius)) {
-				case Cull.OUT:
-					re.counts.culledModelOut++;
-					return Cull.OUT;
-
-				case Cull.IN:
-					re.counts.culledModelIn++;
-					return Cull.IN;
-
-				case Cull.CLIP:
-					re.counts.culledModelClip++;
-					break;
-			}
-		} else {
-			var sphereCull  = CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius);
-			var sphereCullB;
-
-			if ( newFrame === oldFrame ) {
-				sphereCullB = sphereCull;
-			} else {
-				sphereCullB = CullLocalPointAndRadius(oldFrame.localOrigin, oldFrame.radius);
-			}
-
-			if (sphereCull === sphereCullB) {
-				if (sphereCull === Cull.OUT) {
-					re.counts.culledModelOut++;
-					return Cull.OUT;
-				} else if (sphereCull === Cull.IN) {
-					re.counts.culledModelIn++;
-					return Cull.IN;
-				} else {
-					re.counts.culledModelClip++;
-				}
-			}
-		}
+	// if (backend.viewParms.isMirror) {
+	// 	vec3.negate(left);
 	// }
-	
-	// Calculate a bounding box in the current coordinate system.
-	var bounds = [
-		[0, 0, 0],
-		[0, 0, 0]
-	];
 
-	for (var i = 0 ; i < 3 ; i++) {
-		bounds[0][i] = oldFrame.bounds[0][i] < newFrame.bounds[0][i] ? oldFrame.bounds[0][i] : newFrame.bounds[0][i];
-		bounds[1][i] = oldFrame.bounds[1][i] > newFrame.bounds[1][i] ? oldFrame.bounds[1][i] : newFrame.bounds[1][i];
-	}
+	AddQuadStamp(refent.origin, left, up, refent.shaderRGBA);
 
-	switch (CullLocalBox(bounds)) {
-		case Cull.OUT:
-			re.counts.culledModelOut++;
-			return Cull.OUT;
-		case Cull.IN:
-			re.counts.culledModelIn++;
-			return Cull.IN;
-		case Cull.CLIP:
-			re.counts.culledModelClip++;
-			return Cull.CLIP;
-		default:
-			imp.com_error(sh.Err.DROP, 'Invalid cull result');
-	}
+	tess.index = backend.scratchBuffers.index;
+	tess.xyz = backend.scratchBuffers.xyz;
+	tess.normal = backend.scratchBuffers.normal;
+	tess.texCoord = backend.scratchBuffers.texCoord;
+	tess.color = backend.scratchBuffers.color;
+}
+
+/**
+ * TesselateRailCore
+ */
+function TesselateRailCore() {
+	var tess = backend.tess;
+	var refent = backend.currentEntity;
+
+	var start = vec3.set(refent.oldOrigin, [0, 0, 0]);
+	var end = vec3.set(refent.origin, [0, 0, 0]);
+
+	// Compute side vector.
+	var v1 = vec3.subtract(start, backend.viewParms.or.origin, [0, 0, 0]);
+	vec3.normalize(v1);
+	var v2 = vec3.subtract(end, backend.viewParms.or.origin, [0, 0, 0]);
+	vec3.normalize(v2);
+	var right = vec3.cross(v1, v2, [0, 0, 0]);
+	vec3.normalize(right);
+
+	DoRailCore(start, end, right, r_railCoreWidth(), refent.shaderRGBA);
+
+	tess.index = backend.scratchBuffers.index;
+	tess.xyz = backend.scratchBuffers.xyz;
+	tess.normal = backend.scratchBuffers.normal;
+	tess.texCoord = backend.scratchBuffers.texCoord;
+	tess.color = backend.scratchBuffers.color;
+}
+
+function DoRailCore(start, end, right, spanWidth, color) {
+	var left = vec3.scale(right, spanWidth, [0, 0, 0]);
+	var up = vec3.subtract(end, start, [0, 0, 0]);
+	var t = vec3.length(up) / 256;
+	AddQuadStampExt(start, left, up, color, 0, 0, t, 1);
+
+	// float		spanWidth2;
+	// int			vbase;
+	// float		t = len / 256.0f;
+
+	// vbase = tess.numVertexes;
+
+	// spanWidth2 = -spanWidth;
+
+	// // FIXME: use quad stamp?
+	// VectorMA( start, spanWidth, up, tess.xyz[tess.numVertexes] );
+	// tess.texCoords[tess.numVertexes][0][0] = 0;
+	// tess.texCoords[tess.numVertexes][0][1] = 0;
+	// tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0] * 0.25;
+	// tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1] * 0.25;
+	// tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2] * 0.25;
+	// tess.numVertexes++;
+
+	// VectorMA( start, spanWidth2, up, tess.xyz[tess.numVertexes] );
+	// tess.texCoords[tess.numVertexes][0][0] = 0;
+	// tess.texCoords[tess.numVertexes][0][1] = 1;
+	// tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
+	// tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
+	// tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
+	// tess.numVertexes++;
+
+	// VectorMA( end, spanWidth, up, tess.xyz[tess.numVertexes] );
+
+	// tess.texCoords[tess.numVertexes][0][0] = t;
+	// tess.texCoords[tess.numVertexes][0][1] = 0;
+	// tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
+	// tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
+	// tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
+	// tess.numVertexes++;
+
+	// VectorMA( end, spanWidth2, up, tess.xyz[tess.numVertexes] );
+	// tess.texCoords[tess.numVertexes][0][0] = t;
+	// tess.texCoords[tess.numVertexes][0][1] = 1;
+	// tess.vertexColors[tess.numVertexes][0] = backEnd.currentEntity->e.shaderRGBA[0];
+	// tess.vertexColors[tess.numVertexes][1] = backEnd.currentEntity->e.shaderRGBA[1];
+	// tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
+	// tess.numVertexes++;
+
+	// tess.indexes[tess.numIndexes++] = vbase;
+	// tess.indexes[tess.numIndexes++] = vbase + 1;
+	// tess.indexes[tess.numIndexes++] = vbase + 2;
+
+	// tess.indexes[tess.numIndexes++] = vbase + 2;
+	// tess.indexes[tess.numIndexes++] = vbase + 1;
+	// tess.indexes[tess.numIndexes++] = vbase + 3;
+}
+
+
+/**
+ * AddQuadStamp
+ */
+function AddQuadStamp(origin, left, up, color) {
+	AddQuadStampExt(origin, left, up, color, 0, 0, 1, 1);
+}
+
+/**
+ * AddQuadStampExt
+ */
+function AddQuadStampExt(origin, left, up, color, s1, t1, s2, t2) {
+	var bindex = backend.scratchBuffers.index;
+	var bxyz = backend.scratchBuffers.xyz;
+	var bnormal = backend.scratchBuffers.normal;
+	var btexCoord = backend.scratchBuffers.texCoord;
+	var bcolor = backend.scratchBuffers.color;
+	var indexOffset = bxyz.elementCount;
+
+	// Triangle indexes for a simple quad.
+	bindex.data[bindex.offset++] = indexOffset;
+	bindex.data[bindex.offset++] = indexOffset + 1;
+	bindex.data[bindex.offset++] = indexOffset + 3;
+
+	bindex.data[bindex.offset++] = indexOffset + 3;
+	bindex.data[bindex.offset++] = indexOffset + 1;
+	bindex.data[bindex.offset++] = indexOffset + 2;
+
+	bxyz.data[bxyz.offset++] = origin[0] + left[0] + up[0];
+	bxyz.data[bxyz.offset++] = origin[1] + left[1] + up[1];
+	bxyz.data[bxyz.offset++] = origin[2] + left[2] + up[2];
+
+	bxyz.data[bxyz.offset++] = origin[0] - left[0] + up[0];
+	bxyz.data[bxyz.offset++] = origin[1] - left[1] + up[1];
+	bxyz.data[bxyz.offset++] = origin[2] - left[2] + up[2];
+
+	bxyz.data[bxyz.offset++] = origin[0] - left[0] - up[0];
+	bxyz.data[bxyz.offset++] = origin[1] - left[1] - up[1];
+	bxyz.data[bxyz.offset++] = origin[2] - left[2] - up[2];
+
+	bxyz.data[bxyz.offset++] = origin[0] + left[0] - up[0];
+	bxyz.data[bxyz.offset++] = origin[1] + left[1] - up[1];
+	bxyz.data[bxyz.offset++] = origin[2] + left[2] - up[2];
+
+	// Constant normal all the way around.
+	var normal = vec3.negate(backend.viewParms.or.axis[0], [0, 0, 0]);
+
+	bnormal.data[bnormal.offset++] = normal[0];
+	bnormal.data[bnormal.offset++] = normal[1];
+	bnormal.data[bnormal.offset++] = normal[2];
+
+	bnormal.data[bnormal.offset++] = normal[0];
+	bnormal.data[bnormal.offset++] = normal[1];
+	bnormal.data[bnormal.offset++] = normal[2];
+
+	bnormal.data[bnormal.offset++] = normal[0];
+	bnormal.data[bnormal.offset++] = normal[1];
+	bnormal.data[bnormal.offset++] = normal[2];
+
+	bnormal.data[bnormal.offset++] = normal[0];
+	bnormal.data[bnormal.offset++] = normal[1];
+	bnormal.data[bnormal.offset++] = normal[2];
+
+	// Standard square texture coordinates.
+	btexCoord.data[btexCoord.offset++] = s1;
+	btexCoord.data[btexCoord.offset++] = t1;
+
+	btexCoord.data[btexCoord.offset++] = s2;
+	btexCoord.data[btexCoord.offset++] = t1;
+
+	btexCoord.data[btexCoord.offset++] = s2;
+	btexCoord.data[btexCoord.offset++] = t2;
+
+	btexCoord.data[btexCoord.offset++] = s1;
+	btexCoord.data[btexCoord.offset++] = t2;
+
+	// Constant color all the way around.
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
+
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
+
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
+
+	bcolor.data[bcolor.offset++] = color[0] / 255;
+	bcolor.data[bcolor.offset++] = color[1] / 255;
+	bcolor.data[bcolor.offset++] = color[2] / 255;
+	bcolor.data[bcolor.offset++] = color[3] / 255;
+
+	bindex.modified = true;
+	bxyz.modified = true;
+	bnormal.modified = true;
+	btexCoord.modified = true;
+	bcolor.modified = true;
 }
 		
 		/**
@@ -27446,7 +29069,7 @@ function BuildCollisionBuffers() {
 	bxyz.modified = true;
 	bindex.modified = true;
 
-	imp.cm_EmitCollisionSurfaces(tessFn);
+	cm.EmitCollisionSurfaces(tessFn);
 }
 
 /**
@@ -27458,44 +29081,11 @@ function CmdShowCluster() {
 }
 
 /**
- * PointInLeaf
+ * AddWorldSurfaces
  */
-function PointInLeaf(p) {
-	if (!re.world) {
-		imp.com_error(sh.Err.DROP, 'PointInLeaf: bad model');
-	}
-
-	var node = re.world.nodes[0];
-
-	while (1) {		
-		if (!node.children) {
-			break;
-		}
-		var plane = node.plane;
-		var d = vec3.dot(p, plane.normal) - plane.dist;
-
-		if (d > 0) {
-			node = node.children[0];
-		} else {
-			node = node.children[1];
-		}
-	}
-	
-	return node;
-}
-
-/**
- * ClusterVisible
- */
-function ClusterVisible(current, test) {
-	var world = re.world;
-
-	if (!world || !world.vis || current === test || current == -1) {
-		return true;
-	}
-
-	var offset = current * world.clusterBytes;
-	return (world.vis[offset + (test >> 3)] & (1 << (test & 7))) !== 0;
+function AddWorldSurfaces(map) {
+	MarkLeaves();
+	RecursiveWorldNode(re.world.nodes[0], 15);
 }
 
 /**
@@ -27556,81 +29146,45 @@ function MarkLeaves() {
 	}
 }
 
-function AddWorldSurface(face/*, dlightBits*/) {
-	if (face.surfaceType === SF.BAD) {
-		return;
+/**
+ * PointInLeaf
+ */
+function PointInLeaf(p) {
+	if (!re.world) {
+		com.error(ERR.DROP, 'PointInLeaf: bad model');
 	}
 
-	if (face.drawSurf.viewCount === re.viewCount) {
-		return;  // already in this view
+	var node = re.world.nodes[0];
+
+	while (1) {		
+		if (!node.children) {
+			break;
+		}
+		var plane = node.plane;
+		var d = vec3.dot(p, plane.normal) - plane.dist;
+
+		if (d > 0) {
+			node = node.children[0];
+		} else {
+			node = node.children[1];
+		}
 	}
-
-	// TODO Probably shouldn't cull world surfaces as they're
-	// grouped by shader and checking this when we're going batch
-	// render if only one is visible probably isn't efficient.
-	// Try to cull before dlighting or adding.
-	if (CullSurface(face, face.shader)) {
-		re.counts.culledFaces++;
-		return;
-	}
-
-	face.drawSurf.viewCount = re.viewCount;
-
-	// check for dlighting
-	/*if (dlightBits ) {
-		dlightBits = DlightSurface(surf, dlightBits);
-		dlightBits = (dlightBits !== 0);
-	}*/
-
-	AddDrawSurf(face.drawSurf, face.shader, ENTITYNUM_WORLD);
+	
+	return node;
 }
 
 /**
- * CullSurface
- * 
- * Tries to back face cull surfaces before they are lighted or
- * added to the sorting list.
- *
- * This will also allow mirrors on both sides of a model without recursion.
+ * ClusterVisible
  */
-function CullSurface(surface, shader) {
-	if (!r_cull()) {
-		return false;
+function ClusterVisible(current, test) {
+	var world = re.world;
+
+	if (!world || !world.vis || current === test || current == -1) {
+		return true;
 	}
 
-	if (surface.surfaceType === SF.GRID/*SF.GRID*/) {
-		//return R_CullGrid( (srfGridMesh_t *)surface );
-		return false;
-	}
-
-	/*if ( *surface == SF_TRIANGLES ) {
-		return R_CullTriSurf( (srfTriangles_t *)surface );
-	}*/
-
-	if (surface.surfaceType !== SF.FACE) {
-		return false;
-	}
-
-	if (!shader.cull) {
-		return false;
-	}
-
-	var d = vec3.dot(re.viewParms.or.viewOrigin, surface.plane.normal);
-
-	// Don't cull exactly on the plane, because there are levels of rounding
-	// through the BSP, ICD, and hardware that may cause pixel gaps if an
-	// epsilon isn't allowed here.
-	if (shader.cull === gl.FRONT) {
-		if (d < surface.plane.dist - 8) {
-			return true;
-		}
-	} else {
-		if (d > surface.plane.dist + 8) {
-			return true;
-		}
-	}
-
-	return false;
+	var offset = current * world.clusterBytes;
+	return (world.vis[offset + (test >> 3)] & (1 << (test & 7))) !== 0;
 }
 
 /**
@@ -27649,7 +29203,7 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 			var r;
 
 			if (planeBits & 1) {
-				r = qm.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[0]);
+				r = QMath.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[0]);
 				if (r === 2) {
 					return;                      // culled
 				} else if (r === 1) {
@@ -27658,7 +29212,7 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 			}
 
 			if (planeBits & 2) {
-				r = qm.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[1]);
+				r = QMath.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[1]);
 				if (r === 2) {
 					return;                      // culled
 				} else if (r === 1) {
@@ -27667,7 +29221,7 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 			}
 
 			if (planeBits & 4) {
-				r = qm.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[2]);
+				r = QMath.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[2]);
 				if (r === 2) {
 					return;                      // culled
 				} else if (r == 1) {
@@ -27676,7 +29230,7 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 			}
 
 			if (planeBits & 8) {
-				r = qm.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[3]);
+				r = QMath.BoxOnPlaneSide(node.mins, node.maxs, re.viewParms.frustum[3]);
 				if (r === 2) {
 					return;                      // culled
 				} else if (r === 1 ) {
@@ -27759,17 +29313,94 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 }
 
 /**
- * AddWorldSurfaces
+ * AddWorldSurface
  */
-function AddWorldSurfaces(map) {
-	MarkLeaves();
-	RecursiveWorldNode(re.world.nodes[0], 15);
+function AddWorldSurface(face/*, dlightBits*/) {
+	if (face.surfaceType === SF.BAD) {
+		return;
+	}
+
+	if (face.drawSurf.viewCount === re.viewCount) {
+		return;  // already in this view
+	}
+
+	// TODO Probably shouldn't cull world surfaces as they're
+	// grouped by shader and checking this when we're going batch
+	// render if only one is visible probably isn't efficient.
+	// Try to cull before dlighting or adding.
+	if (CullSurface(face, face.shader)) {
+		re.counts.culledFaces++;
+		return;
+	}
+
+	face.drawSurf.viewCount = re.viewCount;
+
+	// check for dlighting
+	/*if (dlightBits ) {
+		dlightBits = DlightSurface(surf, dlightBits);
+		dlightBits = (dlightBits !== 0);
+	}*/
+
+	AddDrawSurf(face.drawSurf, face.shader, ENTITYNUM_WORLD);
+}
+
+/**
+ * CullSurface
+ * 
+ * Tries to back face cull surfaces before they are lighted or
+ * added to the sorting list.
+ *
+ * This will also allow mirrors on both sides of a model without recursion.
+ */
+function CullSurface(surface, shader) {
+	if (!r_cull()) {
+		return false;
+	}
+
+	if (surface.surfaceType === SF.GRID/*SF.GRID*/) {
+		//return R_CullGrid( (srfGridMesh_t *)surface );
+		return false;
+	}
+
+	/*if ( *surface == SF_TRIANGLES ) {
+		return R_CullTriSurf( (srfTriangles_t *)surface );
+	}*/
+
+	if (surface.surfaceType !== SF.FACE) {
+		return false;
+	}
+
+	if (!shader.cull) {
+		return false;
+	}
+
+	var d = vec3.dot(re.viewParms.or.viewOrigin, surface.plane.normal);
+
+	// Don't cull exactly on the plane, because there are levels of rounding
+	// through the BSP, ICD, and hardware that may cause pixel gaps if an
+	// epsilon isn't allowed here.
+	if (shader.cull === gl.FRONT) {
+		if (d < surface.plane.dist - 8) {
+			return true;
+		}
+	} else {
+		if (d > surface.plane.dist + 8) {
+			return true;
+		}
+	}
+
+	return false;
 }
 
 		return {
+			enums: {
+				RT: RT,
+				RF: RF
+			},
+
 			RefDef:                RefDef,
-			RefEntity:             RefEntity,
 			ViewParms:             ViewParms,
+			RefEntity:             RefEntity,
 
 			Init:                  Init,
 			Shutdown:              Shutdown,
@@ -27795,149 +29426,22 @@ function AddWorldSurfaces(map) {
 /*global vec3: true, mat4: true */
 
 define('sound/snd',
-['underscore'],
-function (_) {	
+['underscore', 'common/sh'],
+function (_, sh) {	
 	function Sound(imp) {
-		var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+		var sys = imp.sys;
+		var com = imp.com;
 
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
 
 		var SoundLocals = function () {
 	this.ctx            = null;
@@ -28053,12 +29557,12 @@ function Init () {
  * RegisterCvars
  */
 function RegisterCvars() {
-	s_gain          = imp.com_AddCvar('s_gain',          1.0,  0);
-	s_graceDistance = imp.com_AddCvar('s_graceDistance', 512,  0);
-	s_maxDistance   = imp.com_AddCvar('s_maxDistance',   1024, 0);
-	s_rolloff       = imp.com_AddCvar('s_rolloff',       2,    0);
-	s_volume        = imp.com_AddCvar('s_volume',        0.7,  CVF.ARCHIVE);
-	s_musicVolume   = imp.com_AddCvar('s_musicVolume',   0.5,  CVF.ARCHIVE);
+	s_gain          = com.AddCvar('s_gain',          1.0,  0);
+	s_graceDistance = com.AddCvar('s_graceDistance', 512,  0);
+	s_maxDistance   = com.AddCvar('s_maxDistance',   1024, 0);
+	s_rolloff       = com.AddCvar('s_rolloff',       2,    0);
+	s_volume        = com.AddCvar('s_volume',        0.7,  CVF.ARCHIVE);
+	s_musicVolume   = com.AddCvar('s_musicVolume',   0.5,  CVF.ARCHIVE);
 }
 
 /**
@@ -28158,7 +29662,7 @@ function RegisterSound(name) {
 	// Used to help queue up events while loading.
 	sound.loading = true;
 
-	imp.sys_ReadFile(name + '.ogg', 'binary', function (err, data) {
+	sys.ReadFile(name + '.ogg', 'binary', function (err, data) {
 		sound.loading = false;
 
 		if (err) {
@@ -39251,6 +40755,11 @@ define('ui/ui',
 ['underscore', 'jquery', 'backbone', 'common/sh'],
 function (_, $, Backbone, sh) {
 	function UserInterface(imp) {
+		var sys = imp.sys;
+		var com = imp.com;
+		var cl  = imp.cl;
+		var snd = imp.snd;
+		
 		var UILocals = function () {
 	this.frameCount    = 0;
 	this.views         = {};
@@ -39649,7 +41158,7 @@ function Init() {
 	window.addEventListener('resize', ScaleElements);
 
 	//
-	var context = imp.sys_GetUIContext();
+	var context = sys.GetUIContext();
 	$viewportUI = $(context);
 
 	// Reset the UI container.
@@ -39772,7 +41281,7 @@ function FindImageByName(name) {
 	img.name = name;
 
 	// Start loading the image.
-	imp.sys_ReadFile(name, 'binary', function (err, data) {
+	sys.ReadFile(name, 'binary', function (err, data) {
 		if (err) {
 			log('Failed to load image \'' + name + '\'');
 			return;
@@ -39861,7 +41370,7 @@ function PeekMenu() {
 function PushMenu(name) {
 	if (!uil.activeMenus.length) {
 		$viewportUI.addClass('active');
-		imp.cl_CaptureInput(KeyPressEvent, MouseMoveEvent);
+		cl.CaptureInput(KeyPressEvent, MouseMoveEvent);
 	}
 
 	uil.activeMenus.push(GetView(name));
@@ -39878,7 +41387,7 @@ function PopMenu() {
 
 	if (!uil.activeMenus.length) {
 		$viewportUI.removeClass('active');
-		imp.cl_CaptureInput(null, null);
+		cl.CaptureInput(null, null);
 	}
 }
 
@@ -40390,7 +41899,7 @@ var UIView = Backbone.View.extend({
 		PushMenu('settings');
 	},
 	exitGame: function () {
-		imp.cl_Disconnect();
+		cl.Disconnect();
 	},
 	closeMenu: function () {
 		PopAllMenus();
@@ -40446,7 +41955,7 @@ var UIView = Backbone.View.extend({
 	},
 	connect: function () {
 		var address = this.$address.text();
-		imp.com_ExecuteBuffer('connect ' + address);
+		com.ExecuteBuffer('connect ' + address);
 	},
 	goBack: function () {
 		PopMenu();
@@ -40548,7 +42057,7 @@ var UIView = Backbone.View.extend({
 			var cvar = this.cvars[name];
 			var value = this.model[name];
 
-			imp.com_SetCvarVal(cvar, value);
+			com.SetCvarVal(cvar, value);
 		}
 
 		for (var name in this.cmds) {
@@ -40561,7 +42070,7 @@ var UIView = Backbone.View.extend({
 			var key = this.model[name];
 
 			if (key !== '') {
-				imp.cl_Bind(key, cmd);
+				cl.Bind(key, cmd);
 			}
 		}
 	},
@@ -40572,7 +42081,7 @@ var UIView = Backbone.View.extend({
 			}
 
 			var cvar = this.cvars[name];
-			this.model[name] = imp.com_GetCvarVal(cvar);
+			this.model[name] = com.GetCvarVal(cvar);
 		}
 
 		for (var name in this.cmds) {
@@ -40581,7 +42090,7 @@ var UIView = Backbone.View.extend({
 			}
 
 			var cmd = this.cmds[name];
-			var keys = imp.cl_GetKeyNamesForCmd(cmd);
+			var keys = cl.GetKeyNamesForCmd(cmd);
 			this.model[name] = keys.length ? keys[0] : '';
 		}
 	},
@@ -40634,7 +42143,7 @@ var UIView = Backbone.View.extend({
 		var idx = $li.index();
 		var level = this.model.levels[idx];
 
-		imp.com_ExecuteBuffer('map ' + level.name);
+		com.ExecuteBuffer('map ' + level.name);
 	},
 	goBack: function () {
 		PopMenu();
@@ -40670,189 +42179,26 @@ var UIView = Backbone.View.extend({
 /*global vec3: true, mat4: true */
 
 define('client/cl',
-['underscore', 'glmatrix', 'ByteBuffer', 'common/sh', 'common/qmath', 'cgame/cg', 'clipmap/cm', 'renderer/re', 'sound/snd', 'ui/ui'],
-function (_, glmatrix, ByteBuffer, sh, qm, cgame, clipmap, renderer, sound, uinterface) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+['underscore', 'glmatrix', 'ByteBuffer', 'common/qmath', 'common/sh', 'cgame/cg', 'clipmap/cm', 'renderer/re', 'sound/snd', 'ui/ui'],
+function (_, glmatrix, ByteBuffer, QMath, sh, cg_mod, cm_mod, re_mod, snd_mod, ui_mod) {
+	function Client(imp) {
+		var sys = imp.sys;
+		var com = imp.com;
 
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
+		// Use the following namespaces.
+		var using = _.extend({},
+			sh.constants,
+			sh.enums,
+			com.constants,
+			com.enums
+		);
+		for (var key in using) {
+			if (using.hasOwnProperty(key)) {
+				eval('var ' + key + ' = using[key];');
+			}
+		}
 
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
-
-/**
- * System events
- */
-var SE = {
-	CLMSG:       0,
-	SVMSG:       1,
-	SVSOCKCLOSE: 2,
-	KEY:         3,
-	MOUSE:       4
-};
-
-/**
- * Networking
- */
-var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
-                                                           // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
-var MAX_MSGLEN            = 16384;
-
-var CLM = {
-	bad:           0,
-	move:          1,                                      // [[UserCmd]
-	moveNoDelta:   2,                                      // [[UserCmd]
-	clientCommand: 3,                                      // [string] message
-	EOF:           4
-};
-
-var SVM = {
-	bad:            0,
-	gamestate:      1,
-	configstring:   2,                                     // [short] [string] only in gamestate messages
-	baseline:       3,                                     // only in gamestate messages
-	serverCommand:  4,                                     // [string] to be executed by client game module
-	snapshot:       5,
-	EOF:            6
-};
-	
-	var RETRANSMIT_TIMEOUT = 3000;                             // time between connection packet retransmits
+		var RETRANSMIT_TIMEOUT = 3000;                             // time between connection packet retransmits
 
 // The parseEntities array must be large enough to hold PACKET_BACKUP frames of
 // entities, so that when a delta compressed message arives from the server
@@ -41020,9 +42366,9 @@ var KeyState = function () {
 	this.partial    = 0;
 	this.binding    = null;
 };
-	var cl;
-var clc;
-var cls;
+		var cl,
+	cls,
+	clc;
 
 var cl_name,
 	cl_model,
@@ -41041,19 +42387,16 @@ function log() {
 /**
  * Init
  */
-function Init(sys_, com_) {
+function Init() {
 	log('Initializing');
 
-	sys = sys_;
-	com = com_;
-
-	cm  = clipmap.CreateInstance(ClipmapExports());
-	re  = renderer.CreateInstance(RendererExports());
-	snd = sound.CreateInstance(SoundExports());
-	ui  = uinterface.CreateInstance(UIExports());
-	cg  = cgame.CreateInstance(CGameExports());
+	cm  = cm_mod.CreateInstance(ClipmapExports());
+	re  = re_mod.CreateInstance(RendererExports());
+	snd = snd_mod.CreateInstance(SoundExports());
+	ui  = ui_mod.CreateInstance(UIExports());
+	cg  = cg_mod.CreateInstance(CGameExports());
 	
-	cl = new ClientLocals();
+	cl  = new ClientLocals();
 	clc = new ClientConnection();
 	cls = new ClientStatic();
 	cls.realtime = 0;
@@ -41067,117 +42410,6 @@ function Init(sys_, com_) {
 	InitSubsystems();
 	
 	cls.initialized = true;
-}
-
-/**
- * ClipmapExports
- */
-function ClipmapExports() {
-	return {
-		sys_ReadFile: sys.ReadFile
-	};
-}
-
-/**
- * RendererExports
- */
-function RendererExports() {
-	return {
-		sys_GetGLContext:         sys.GetGLContext,
-		sys_GetMilliseconds:      sys.GetMillisecnds,
-		sys_ReadFile:             sys.ReadFile,
-		
-		com_AddCvar:              com.AddCvar,
-		com_AddCmd:               com.AddCmd,
-		
-		cm_EmitCollisionSurfaces: cm.EmitCollisionSurfaces
-	};
-}
-
-/**
- * SoundExports
- */
-function SoundExports() {
-	return {
-		sys_ReadFile: sys.ReadFile,
-
-		com_AddCvar:  com.AddCvar
-	};
-}
-
-/**
- * UIExports
- */
-function UIExports() {
-	return {
-		sys_GetMilliseconds:  sys.GetMillisecnds,
-		sys_ReadFile:         sys.ReadFile,
-		sys_GetUIContext:     sys.GetUIContext,
-
-		com_GetCvarVal:       com.GetCvarVal,
-		com_SetCvarVal:       com.SetCvarVal,
-		com_LoadConfig:       com.LoadConfig,
-		com_SaveConfig:       com.SaveConfig,
-		com_ExecuteBuffer:    com.ExecuteBuffer,
-
-		cl_Bind:              CmdBind,
-		cl_UnbindAll:         CmdUnbindAll,
-		cl_GetKeyNamesForCmd: GetKeyNamesForCmd,
-		cl_CaptureInput:      CaptureInput,
-		cl_Disconnect:        Disconnect,
-
-		snd_StartSound:       snd.StartSound
-	};
-}
-
-/**
- * CGameExports
- */
-function CGameExports() {
-	return {
-		sys_GetMilliseconds:         sys.GetMilliseconds,
-		sys_ReadFile:                sys.ReadFile,
-
-		com_AddCmd:                  com.AddCmd,
-		com_AddCvar:                 com.AddCvar,
-		com_Error:                   com.error,
-
-		cl_GetGameState:             function () { return cl.gameState; },
-		cl_GetServerCommand:         GetServerCommand,
-		cl_GetCurrentUserCmdNumber:  GetCurrentUserCmdNumber,
-		cl_GetUserCmd:               GetUserCmd,
-		cl_SetUserCmdValue:          SetUserCmdValue,
-		cl_GetCurrentSnapshotNumber: GetCurrentSnapshotNumber,
-		cl_GetSnapshot:              GetSnapshot,
-
-		cm_LoadMap:                  cm.LoadMap,
-		cm_InlineModel:              cm.InlineModel,
-		cm_TempBoxModel:             cm.TempBoxModel,
-		cm_TransformedBoxTrace:      cm.TransformedBoxTrace,
-		cm_BoxTrace:                 cm.BoxTrace,
-
-		re_LoadMap:                  re.LoadMap,
-		re_RegisterShader:           re.RegisterShader,
-		re_RegisterModel:            re.RegisterModel,
-		re_RegisterSkin:             re.RegisterSkin,
-		re_AddRefEntityToScene:      re.AddRefEntityToScene,
-		re_LerpTag:                  re.LerpTag,
-		re_RenderScene:              re.RenderScene,
-		re_GetCounts:                re.GetCounts,
-		// TODO remove.
-		re_BuildCollisionBuffers:    re.BuildCollisionBuffers,
-
-		snd_RegisterSound:           snd.RegisterSound,
-		snd_StartSound:              snd.StartSound,
-		snd_StartBackgroundTrack:    snd.StartBackgroundTrack,
-		snd_Respatialize:            snd.Respatialize,
-		snd_UpdateEntityPosition:    snd.UpdateEntityPosition,
-
-		ui_RegisterImage:            ui.RegisterImage,
-		ui_GetView:                  ui.GetView,
-		ui_RenderView:               ui.RenderView,
-		ui_Render:                   ui.Render
-	};
 }
 
 /**
@@ -41326,7 +42558,7 @@ function CheckForResend() {
 			break;
 
 		default:
-			error(sh.Err.FATAL, 'CheckForResend: bad clc.state');
+			error(ERR.FATAL, 'CheckForResend: bad clc.state');
 	}
 }
 
@@ -41435,7 +42667,7 @@ function AddReliableCommand(cmd/*, isDisconnectCmd*/) {
 		if (com_errorEntered) {
 			return;
 		} else {
-			com.error(sh.Err.DROP, 'Client command overflow');
+			com.error(ERR.DROP, 'Client command overflow');
 		}
 	}*/
 	clc.reliableCommands[++clc.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
@@ -41502,18 +42734,153 @@ function ConnectionlessPacket(msg) {
 	}
 }
 
-	/**
+/**
+ * ClipmapExports
+ */
+function ClipmapExports() {
+	return {
+		sys: {
+			ReadFile: sys.ReadFile
+		}
+	};
+}
+
+/**
+ * RendererExports
+ */
+function RendererExports() {
+	return {
+		sys: {
+			GetGLContext:          sys.GetGLContext,
+			GetMilliseconds:       sys.GetMillisecnds,
+			ReadFile:              sys.ReadFile
+		},
+		com: {
+			AddCvar:               com.AddCvar,
+			AddCmd:                com.AddCmd
+		},
+		cm: {
+			EmitCollisionSurfaces: cm.EmitCollisionSurfaces
+		}
+	};
+}
+
+/**
+ * SoundExports
+ */
+function SoundExports() {
+	return {
+		sys: {
+			ReadFile: sys.ReadFile
+		},
+		com: {
+			AddCvar:  com.AddCvar
+		}
+	};
+}
+
+/**
+ * UIExports
+ */
+function UIExports() {
+	return {
+		sys: {
+			GetMilliseconds:  sys.GetMillisecnds,
+			ReadFile:         sys.ReadFile,
+			GetUIContext:     sys.GetUIContext
+		},
+		com: {
+			GetCvarVal:       com.GetCvarVal,
+			SetCvarVal:       com.SetCvarVal,
+			LoadConfig:       com.LoadConfig,
+			SaveConfig:       com.SaveConfig,
+			ExecuteBuffer:    com.ExecuteBuffer
+		},
+		cl: {
+			Bind:              CmdBind,
+			UnbindAll:         CmdUnbindAll,
+			GetKeyNamesForCmd: GetKeyNamesForCmd,
+			CaptureInput:      CaptureInput,
+			Disconnect:        Disconnect,
+		}
+	};
+}
+
+/**
+ * CGameExports
+ */
+function CGameExports() {
+	return {
+		sys: {
+			GetMilliseconds: sys.GetMilliseconds,
+			ReadFile:        sys.ReadFile,
+		},
+		com: {
+			enums:   com.enums,
+
+			error:   com.error,
+			AddCmd:  com.AddCmd,
+			AddCvar: com.AddCvar
+		},
+		cl: {
+			GetGameState:             function () { return cl.gameState; },
+			GetServerCommand:         GetServerCommand,
+			GetCurrentUserCmdNumber:  GetCurrentUserCmdNumber,
+			GetUserCmd:               GetUserCmd,
+			SetUserCmdValue:          SetUserCmdValue,
+			GetCurrentSnapshotNumber: GetCurrentSnapshotNumber,
+			GetSnapshot:              GetSnapshot
+		},
+		cm: {
+			LoadMap:                  cm.LoadMap,
+			InlineModel:              cm.InlineModel,
+			TempBoxModel:             cm.TempBoxModel,
+			TransformedBoxTrace:      cm.TransformedBoxTrace,
+			BoxTrace:                 cm.BoxTrace
+		},
+		re: {
+			enums:                    re.enums,
+
+			RefDef:                   re.RefDef,
+			RefEntity:                re.RefEntity,
+
+			LoadMap:                  re.LoadMap,
+			RegisterShader:           re.RegisterShader,
+			RegisterModel:            re.RegisterModel,
+			RegisterSkin:             re.RegisterSkin,
+			AddRefEntityToScene:      re.AddRefEntityToScene,
+			LerpTag:                  re.LerpTag,
+			RenderScene:              re.RenderScene,
+			GetCounts:                re.GetCounts,
+			BuildCollisionBuffers:    re.BuildCollisionBuffers,
+		},
+		snd: {
+			RegisterSound:           snd.RegisterSound,
+			StartSound:              snd.StartSound,
+			StartBackgroundTrack:    snd.StartBackgroundTrack,
+			Respatialize:            snd.Respatialize,
+			UpdateEntityPosition:    snd.UpdateEntityPosition
+		},
+		ui: {
+			RegisterImage:            ui.RegisterImage,
+			GetView:                  ui.GetView,
+			RenderView:               ui.RenderView,
+			Render:                   ui.Render
+		}
+	};
+}
+		/**
  * GetServerCommand
  */
 function GetServerCommand(serverCommandNum) {
 	// If we have irretrievably lost a reliable command, drop the connection.
 	if (serverCommandNum <= clc.serverCommandSequence - MAX_RELIABLE_COMMANDS) {
-		com.error(Err.DROP, 'GetServerCommand: a reliable command was cycled out');
+		com.error(ERR.DROP, 'GetServerCommand: a reliable command was cycled out');
 		return null;
 	}
 
 	if (serverCommandNum > clc.serverCommandSequence) {
-		com.error(Err.DROP, 'GetServerCommand: requested a command not received');
+		com.error(ERR.DROP, 'GetServerCommand: requested a command not received');
 		return null;
 	}
 
@@ -41525,9 +42892,9 @@ function GetServerCommand(serverCommandNum) {
 	if (cmd.type === 'disconnect') {
 		// Allow server to indicate why they were disconnected.
 		// if (argc >= 2) {
-		// 	com.error(Err.DISCONNECT, 'Server disconnected', reason);
+		// 	com.error(ERR.DISCONNECT, 'Server disconnected', reason);
 		// } else {
-			com.error(Err.DISCONNECT, 'Server disconnected');
+			com.error(ERR.DISCONNECT, 'Server disconnected');
 		// }
 	}
 
@@ -41593,12 +42960,12 @@ function GetCurrentUserCmdNumber() {
 /**
  * GetUserCmd
  */
-function GetUserCmd(cmdNumber) {
+function GetUserCmd(cmdNumber, dest) {
 	// cmds[cmdNumber] is the last properly generated command.
 
 	// Can't return anything that we haven't created yet.
 	if (cmdNumber > cl.cmdNumber) {
-		com.error(sh.Err.DROP, 'GetUserCmd: ' + cmdNumber + ' >= ' + cl.cmdNumber);
+		com.error(ERR.DROP, 'GetUserCmd: ' + cmdNumber + ' >= ' + cl.cmdNumber);
 	}
 
 	// The usercmd has been overwritten in the wrapping
@@ -41607,7 +42974,7 @@ function GetUserCmd(cmdNumber) {
 		return null;
 	}
 
-	return cl.cmds[cmdNumber & (CMD_BACKUP-1)];
+	cl.cmds[cmdNumber & (CMD_BACKUP-1)].clone(dest);
 }
 
 /**
@@ -41703,11 +43070,11 @@ function SetCGameTime() {
 
 	// If we have gotten to this point, cl.snap is guaranteed to be valid.
 	if (!cl.snap.valid) {
-		com.error(sh.Err.DROP, 'SetCGameTime: !cl.snap.valid');
+		com.error(ERR.DROP, 'SetCGameTime: !cl.snap.valid');
 	}
 
 	if (cl.snap.serverTime < cl.oldFrameServerTime) {
-		com.error(sh.Err.DROP, 'cl.snap.serverTime < cl.oldFrameServerTime');
+		com.error(ERR.DROP, 'cl.snap.serverTime < cl.oldFrameServerTime');
 	}
 	cl.oldFrameServerTime = cl.snap.serverTime;
 
@@ -41723,7 +43090,7 @@ function SetCGameTime() {
 
 	// If we are almost past the latest frame (without timeNudge), we will
 	// try and adjust back a bit when the next snapshot arrives.
-	if ( cls.realTime + cl.serverTimeDelta >= cl.snap.serverTime - 5 ) {
+	if ( cls.realTime + cl.serverTimeDelta >= cl.snap.serverTime - 5) {
 		cl.extrapolatedSnapshot = true;
 	}
 
@@ -41766,7 +43133,7 @@ function GetCurrentSnapshotNumber() {
  */
 function GetSnapshot(snapshotNumber) {
 	if (snapshotNumber > cl.snap.messageNum) {
-		com.error(sh.Err.DROP, 'GetSnapshot: snapshotNumber > cl.snapshot.messageNum');
+		com.error(ERR.DROP, 'GetSnapshot: snapshotNumber > cl.snapshot.messageNum');
 	}
 
 	// If the frame has fallen out of the circular buffer, we can't return it.
@@ -41797,7 +43164,7 @@ function GetSnapshot(snapshotNumber) {
 
 	return result;
 }
-	/**
+		/**
  * RegisterCommands
  */
 function RegisterCommands() {
@@ -41889,7 +43256,7 @@ function StringToAddr(str) {
 	return addr;
 }
 
-	/**
+		/**
  * CaptureInput
  *
  * Enables another module to capture the client's input.
@@ -42057,7 +43424,7 @@ function WriteBindings(str) {
 
 	return str;
 }
-	/**********************************************************
+		/**********************************************************
  *
  * CLIENT -> SERVER
  *
@@ -42164,8 +43531,8 @@ function KeyMove(cmd) {
 	// TODO Add crouching.
 	//if (cls.inDown) up -= movespeed * GetKeyState(cls.inDown);
 
-	cmd.forwardmove = qm.ClampChar(forward);
-	cmd.rightmove = qm.ClampChar(side);
+	cmd.forwardmove = QMath.ClampChar(forward);
+	cmd.rightmove = QMath.ClampChar(side);
 	cmd.upmove = up;
 }
 
@@ -42177,22 +43544,22 @@ function MouseMove(cmd) {
 	var mx = cl.mouseX * cl_sensitivity();
 	var my = cl.mouseY * cl_sensitivity();
 
-	cl.viewangles[qm.YAW] -= mx * 0.022;
-	cl.viewangles[qm.PITCH] += my * 0.022;
+	cl.viewangles[QMath.YAW] -= mx * 0.022;
+	cl.viewangles[QMath.PITCH] += my * 0.022;
 
-	if (cl.viewangles[qm.PITCH] - oldAngles[qm.PITCH] > 90) {
-		cl.viewangles[qm.PITCH] = oldAngles[qm.PITCH] + 90;
-	} else if (oldAngles[qm.PITCH] - cl.viewangles[qm.PITCH] > 90) {
-		cl.viewangles[qm.PITCH] = oldAngles[qm.PITCH] - 90;
+	if (cl.viewangles[QMath.PITCH] - oldAngles[QMath.PITCH] > 90) {
+		cl.viewangles[QMath.PITCH] = oldAngles[QMath.PITCH] + 90;
+	} else if (oldAngles[QMath.PITCH] - cl.viewangles[QMath.PITCH] > 90) {
+		cl.viewangles[QMath.PITCH] = oldAngles[QMath.PITCH] - 90;
 	}
 
 	// reset
 	cl.mouseX = 0;
 	cl.mouseY = 0;
 
-	cmd.angles[0] = qm.AngleToShort(cl.viewangles[0]);
-	cmd.angles[1] = qm.AngleToShort(cl.viewangles[1]);
-	cmd.angles[2] = qm.AngleToShort(cl.viewangles[2]);
+	cmd.angles[0] = QMath.AngleToShort(cl.viewangles[0]);
+	cmd.angles[1] = QMath.AngleToShort(cl.viewangles[1]);
+	cmd.angles[2] = QMath.AngleToShort(cl.viewangles[2]);
 }
 
 /**
@@ -42280,7 +43647,7 @@ function ParseServerMessage(msg) {
 	} else if (cmd === SVM.snapshot) {
 		ParseSnapshot(msg);
 	} else {
-		com.error(Err.DROP, 'Bad message type', cmd);
+		com.error(ERR.DROP, 'Bad message type', cmd);
 	}
 }
 
@@ -42331,12 +43698,12 @@ function ParseGameState(msg) {
 		} else if (cmd === SVM.baseline) {
 			var newnum = msg.readShort(); /* GENTITYNUM_BITS */
 			if (newnum < 0 || newnum >= MAX_GENTITIES) {
-				com.error(Err.DROP, 'Baseline number out of range:', newnum);
+				com.error(ERR.DROP, 'Baseline number out of range:', newnum);
 			}
 			var es = cl.entityBaselines[newnum];
 			sh.ReadDeltaEntityState(msg, nullstate, es, newnum);
 		} else {
-			com.error(sh.Err.DROP, 'ParseGamestate: bad command byte');
+			com.error(ERR.DROP, 'ParseGamestate: bad command byte');
 		}
 	}
 
@@ -42628,2299 +43995,58 @@ function DeltaEntity(msg, newframe, newnum, oldstate, unchanged) {
 	newframe.numEntities++;
 }
 
+		return {
+			ClientSnapshot:     ClientSnapshot,
+			Init:               Init,
+			InitCGame:          InitCGame,
+			ShutdownCGame:      ShutdownCGame,
+			InitSubsystems:     InitSubsystems,
+			ShutdownSubsystems: ShutdownSubsystems,
+			Frame:              Frame,
+			MapLoading:         MapLoading,
+			PacketEvent:        PacketEvent,
+			KeyDownEvent:       KeyDownEvent,
+			KeyUpEvent:         KeyUpEvent,
+			MouseMoveEvent:     MouseMoveEvent,
+			WriteBindings:      WriteBindings
+		};
+	}
+
 	return {
-		ClientSnapshot:     ClientSnapshot,
-		Init:               Init,
-		InitCGame:          InitCGame,
-		ShutdownCGame:      ShutdownCGame,
-		InitSubsystems:     InitSubsystems,
-		ShutdownSubsystems: ShutdownSubsystems,
-		Frame:              Frame,
-		MapLoading:         MapLoading,
-		PacketEvent:        PacketEvent,
-		KeyDownEvent:       KeyDownEvent,
-		KeyUpEvent:         KeyUpEvent,
-		MouseMoveEvent:     MouseMoveEvent,
-		WriteBindings:      WriteBindings
+		CreateInstance: function (imp) {
+			return new Client(imp);
+		}
 	};
 });
 
-
-/*global vec3: true, mat4: true */
-
-define('server/sv',
-['underscore', 'ByteBuffer', 'common/sh', 'common/qmath', 'game/gm', 'client/cl', 'clipmap/cm'],
-function (_, ByteBuffer, sh, qm, game, cl, clipmap) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
-
-/**
- * System events
- */
-var SE = {
-	CLMSG:       0,
-	SVMSG:       1,
-	SVSOCKCLOSE: 2,
-	KEY:         3,
-	MOUSE:       4
-};
-
-/**
- * Networking
- */
-var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
-                                                           // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
-var MAX_MSGLEN            = 16384;
-
-var CLM = {
-	bad:           0,
-	move:          1,                                      // [[UserCmd]
-	moveNoDelta:   2,                                      // [[UserCmd]
-	clientCommand: 3,                                      // [string] message
-	EOF:           4
-};
-
-var SVM = {
-	bad:            0,
-	gamestate:      1,
-	configstring:   2,                                     // [short] [string] only in gamestate messages
-	baseline:       3,                                     // only in gamestate messages
-	serverCommand:  4,                                     // [string] to be executed by client game module
-	snapshot:       5,
-	EOF:            6
-};
-	// The server does not know how to interpret most of the values
-// in entityStates (level eType), so the game must explicitly flag
-// special server behaviors.
-var SVF = {
-	NOCLIENT:           0x00000001,                        // don't send entity to clients, even if it has effects
-	BOT:                0x00000002,                        // set if the entity is a bot
-	BROADCAST:          0x00000008,                        // send to all connected clients
-	PORTAL:             0x00000020,                        // merge a second pvs at origin2 into snapshots
-	USE_CURRENT_ORIGIN: 0x00000040,                        // entity->r.currentOrigin instead of entity->s.origin
-	                                                       // for link position (missiles and movers)
-	SINGLECLIENT:       0x00000080,                        // only send to a single client (entityShared_t->singleClient)
-	NOTSINGLECLIENT:    0x00000100                         // send entity to everyone but one client
-};
-
-
-	var MAX_SNAPSHOT_ENTITIES = MAX_CLIENTS * PACKET_BACKUP * 64;
-
-// Persistent across all maps.
-var ServerStatic = function () {
-	this.initialized          = false;
-	this.time                 = 0;
-	this.snapFlagServerBit    = 0;                         // ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
-	this.clients              = new Array(MAX_CLIENTS);
-	this.nextSnapshotEntities = 0;                         // next snapshotEntities to use
-	this.snapshotEntities     = new Array(MAX_SNAPSHOT_ENTITIES);
-	this.msgBuffer            = new ArrayBuffer(MAX_MSGLEN);
-
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		this.clients[i] = new ServerClient();
-	}
-
-	for (var i = 0; i < MAX_SNAPSHOT_ENTITIES; i++) {
-		this.snapshotEntities[i] = new sh.EntityState();
-	}
-};
-
-// Reset for each map.
-var ServerState = {
-	DEAD:    0,                                            // no map loaded
-	LOADING: 1,                                            // spawning level entities
-	GAME:    2                                             // actively running
-};
-
-var ServerLocals = function () {
-	this.state           = ServerState.DEAD;
-	this.restarting      = false;                          // if true, send configstring changes during SS_LOADING
-	this.serverId        = 0;                              // changes each server start
-	this.snapshotCounter = 0;                              // incremented for each snapshot built
-	this.time            = 0;
-	this.timeResidual    = 0;                              // <= 1000 / sv_frame->value
-	this.configstrings   = {};
-	this.svEntities      = new Array(MAX_GENTITIES);
-	this.gameEntities    = null;
-	this.gameClients     = null;
-
-	for (var i = 0; i < MAX_GENTITIES; i++) {
-		this.svEntities[i] = new ServerEntity();
-	}
-};
-
-var ServerEntity = function () {
-	this.worldSector     = null;
-	this.baseline        = new sh.EntityState();
-	this.snapshotCounter = 0;
-};
-
-var CS = {
-	FREE:      0,                                          // can be reused for a new connection
-	ZOMBIE:    1,                                          // client has been disconnected, but don't reuse
-	                                                       // connection for a couple seconds
-	CONNECTED: 2,                                          // has been assigned to a client_t, but no gamestate yet
-	PRIMED:    3,                                          // gamestate has been sent, but client hasn't sent a usercmd
-	ACTIVE:    4                                           // client is fully in game
-};
-
-var ServerClient = function () {
-	this.reset();
-};
-
-ServerClient.prototype.reset = function () {
-	this.state                   = CS.FREE;
-	this.userinfo                = {};
-
-	this.messageAcknowledge      = 0;
-	this.reliableCommands        = new Array(MAX_RELIABLE_COMMANDS);
-	this.reliableSequence        = 0;                      // last added reliable message, not necesarily sent or acknowledged yet
-	this.reliableAcknowledge     = 0;                      // last acknowledged reliable message
-
-	this.gamestateMessageNum     = -1;
-
-	this.lastUserCmd             = new sh.UserCmd();
-	this.lastMessageNum          = 0;                      // for delta compression
-	this.lastClientCommand       = 0;                      // reliable client message sequence
-	this.lastClientCommandString = null;
-	this.name                    = null;                   // extracted from userinfo, high bits masked
-
-	this.deltaMessage            = -1;                     // frame last client usercmd message
-	this.nextReliableTime        = 0;                      // svs.time when another reliable command will be allowed
-	this.lastSnapshotTime        = 0;
-	this.snapshotMsec            = 0;                      // requests a snapshot every snapshotMsec unless rate choked
-	this.frames                  = new Array(PACKET_BACKUP);
-	
-	this.netchan                 = null;
-	this.oldServerTime           = 0;
-	this.csUpdated               = {};
-	
-	for (var i = 0; i < PACKET_BACKUP; i++) {
-		this.frames[i] = new ClientSnapshot();
-	}
-};
-
-var ClientSnapshot = function () {
-	this.ps          = new sh.PlayerState();
-	this.numEntities = 0;
-	this.firstEntity = 0;                                  // index into the circular sv_packet_entities[]
-	                                                       // the entities MUST be in increasing state number
-	                                                       // order, otherwise the delta compression will fail
-};
-	var sys;
-var com;
-var dedicated;
-
-var sv;
-var svs;
-var cm;
-
-var sv_serverid,
-	sv_mapname,
-	sv_fps,
-	sv_timeout,
-	sv_zombietime;
-
-/**
- * log
- */
-function log() {
-	var args = Array.prototype.slice.call(arguments);
-	args.splice(0, 0, 'SV:');
-	Function.apply.call(console.log, console, args);
-}
-
-/**
- * Init
- */
-function Init(sys_, com_, isdedicated) {
-	log('Initializing');
-	
-	sys = sys_;
-	com = com_;
-	dedicated = isdedicated;
-
-	sv  = new ServerLocals();
-	svs = new ServerStatic();
-	cm  = clipmap.CreateInstance(ClipmapExports());
-	gm  = game.CreateInstance(com, GameExports());
-	
-	sv_serverid   = com.AddCvar('sv_serverid',   0,       CVF.SYSTEMINFO);
-	sv_mapname    = com.AddCvar('sv_mapname',    'nomap', CVF.SERVERINFO);
-	// TODO We need to run clientthink outside of our main Frame() think loop.
-	sv_fps        = com.AddCvar('sv_fps',        20);   // time rate for running non-clients
-	sv_timeout    = com.AddCvar('sv_timeout',    200);  // seconds without any message
-	sv_zombietime = com.AddCvar('sv_zombietime', 2);    // seconds to sink messages after disconnect
-
-	RegisterCommands();
-
-	// For dev purposes, simulate command line input.
-	setTimeout(function () {
-		CmdLoadMap('q3dm17');
-	}, 50);
-}
-
-/**
- * GameExports
- */
-function GameExports() {
-	return {
-		EntityContact:     EntityContact,
-		LocateGameData:    LocateGameData,
-		GetUserCmd:        GetUserCmd,
-		GetConfigstring:   GetConfigstring,
-		SetConfigstring:   SetConfigstring,
-		GetUserinfo:       GetUserinfo,
-		SetBrushModel:     SetBrushModel,
-		LinkEntity:        LinkEntity,
-		UnlinkEntity:      UnlinkEntity,
-		FindEntitiesInBox: FindEntitiesInBox,
-		GetEntityDefs:     cm.EntityDefs,
-		SnapVector:        cm.SnapVector,
-		Trace:             Trace
-	};
-}
-
-/**
- * ClipmapExports
- */
-function ClipmapExports() {
-	return {
-		sys_ReadFile: sys.ReadFile
-	};
-}
-
-/**
- * FrameMsec
- * 
- * Calculate the # of milliseconds for a single frame.
- */
-function FrameMsec() {
-	var fps = sv_fps();
-	var frameMsec = 1000 / fps;
-
-	if (frameMsec < 1) {
-		frameMsec = 1;
-	}
-
-	return frameMsec;
-}
-
-/**
- * Frame
- */
-function Frame(msec) {
-	if (!svs.initialized) {
-		return;
-	}
-
-	var frameMsec = FrameMsec();
-	sv.timeResidual += msec;
-
-	// Run the game simulation in chunks.
-	var frames = 0;
-	while (sv.timeResidual >= frameMsec) {
-		sv.timeResidual -= frameMsec;
-		svs.time += frameMsec;
-		sv.time += frameMsec;
-
-		// Let everything in the world think and move.
-		gm.Frame(sv.time);
-		frames++;
-	}
-
-	CheckTimeouts();
-
-	// Don't send out duplicate snapshots if we didn't run any gameframes.
-	if (frames > 0) {
-		SendClientMessages();
-	}
-}
-
-/**
- * CheckTimeouts
- * 
- * If a packet has not been received from a client for timeout->integer 
- * seconds, drop the conneciton. Server time is used instead of
- * realtime to avoid dropping the local client while debugging.
- * 
- * When a client is normally dropped, the client_t goes into a zombie state
- * for a few seconds to make sure any final reliable message gets resent
- * if necessary
- */
-function CheckTimeouts() {
-	var droppoint = svs.time - 1000 * sv_timeout();
-	var zombiepoint = svs.time - 1000 * sv_zombietime();
-
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		var client = svs.clients[i];
-		if (client.state === CS.FREE) {
-			continue;
-		}
-
-		// Message times may be wrong across a changelevel.
-		if (client.lastPacketTime > svs.time) {
-			client.lastPacketTime = svs.time;
-		}
-
-		if (client.state === CS.ZOMBIE && client.lastPacketTime < zombiepoint) {
-			log('Going from CS_ZOMBIE to CS_FREE for client', i);
-			client.state = CS.FREE;  // can now be reused
-			continue;
-		}
-
-		if (client.state >= CS.CONNECTED && client.lastPacketTime < droppoint) {
-			DropClient(client, 'timed out'); 
-			client.state = CS.FREE;  // don't bother with zombie state
-		}
-	}
-}
-
-/**
- * PacketEvent
- */
-function PacketEvent(socket, buffer) {	
-	if (!svs.initialized) {
-		return;
-	}
-
-	var msg = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
-
-	// Peek in and see if this is a string message.
-	if (buffer.byteLength > 4 && msg.view.getInt32(0, !!ByteBuffer.LITTLE_ENDIAN) === -1) {
-		ConnectionlessPacket(socket, msg);
-		return;
-	}
-
-	for (var i = 0; i < svs.clients.length; i++) {
-		var client = svs.clients[i];
-
-		if (client.state === CS.FREE) {
-			continue;
-		}
-
-		if (client.netchan.socket !== socket) {
-			continue;
-		}
-
-		if (com.NetchanProcess(client, msg)) {
-			client.lastPacketTime = svs.time;  // don't timeout
-			ExecuteClientMessage(client, msg);
-		}
-		return;
-	}
-}
-
-/**
- * ConnectionlessPacket
- */
-function ConnectionlessPacket(socket, msg) {
-	msg.readInt();  // Skip the -1.
-
-	var str = msg.readCString();
-
-	if (str.indexOf('connect') === 0) {
-		AcceptClient(socket, str.substr(8));
-	}
-}
-
-/**
- * SpawnServer
- */
-function SpawnServer(mapName) {
-	log('Spawning new server for', mapName, 'at', com.frameTime);
-
-	svs.initialized = false;
-	
-	// Shutdown the game.
-	gm.Shutdown();
-	
-	if (!dedicated) {
-		// Update the local client's screen.
-		cl.MapLoading();
-
-		// Make sure all the client stuff is unloaded.
-		cl.ShutdownSubsystems();
-		cl.ShutdownCGame();
-
-		// Restart renderer and sound systems.
-		cl.InitSubsystems();
-	}
-
-	// Toggle the server bit so clients can detect that a server has changed.
-	svs.snapFlagServerBit ^= SNAPFLAG_SERVERCOUNT;
-
-	// Wipe the entire per-level structure.
-	var oldServerTime = sv.time;
-	sv = new ServerLocals();
-
-	// Load the collision map.
-	cm.LoadMap(mapName, function () {
-		sv_mapname(mapName);
-		// serverid should be different each time.
-		sv_serverid(com.frameTime);
-
-		// Clear physics interaction links.
-		ClearWorld();
-
-		// Media configstring setting should be done during
-		// the loading stage, so connected clients don't have
-		// to load during actual gameplay.
-		sv.state = ServerState.LOADING;
-
-		// Initialize the game.
-		gm.Init(sv.time);
-
-		// Run a few frames to allow everything to settle.
-		for (var i = 0; i < 3; i++) {
-			gm.Frame(sv.time);
-			sv.time += 100;
-			svs.time += 100;
-		}
-
-		CreateBaselines();
-
-		// Send the new gamestate to all connected clients.
-		for (var i = 0; i < MAX_CLIENTS; i++) {
-			var client = svs.clients[i];
-
-			if (!client || client.state < CS.CONNECTED) {
-				continue;
-			}
-			
-			// Clear gentity pointer to prevent bad snapshots from building.
-			client.gentity = null;
-
-			// Reconnect.
-			var denied = gm.ClientConnect(i, false);
-
-			if (denied) {
-				DropClient(client, denied);
-			}
-
-			// When we get the next packet from a connected client,
-			// the new gamestate will be sent.
-			client.state = CS.CONNECTED;
-		}	
-
-		/*// Run another frame to allow things to look at all the players.
-		gm.Frame(sv.time);
-		sv.time += 100;
-		svs.time += 100;*/
-
-		SetConfigstring('systemInfo', com.GetCvarValues(CVF.SYSTEMINFO));
-		SetConfigstring('serverInfo', com.GetCvarValues(CVF.SERVERINFO));
-
-		// Any media configstring setting now should issue a warning
-		// and any configstring changes should be reliably transmitted
-		// to all clients.
-		sv.state = ServerState.GAME;
-
-		svs.initialized = true;
-	});
-}
-
-/**
- * CreateBaselines
- * 
- * Entity baselines are used to compress non-delta messages
- * to the clients -- only the fields that differ from the
- * baseline will be transmitted.
- */
-function CreateBaselines() {
-	for (var i = 0; i < MAX_GENTITIES; i++) {
-		var svent = sv.svEntities[i];
-		var gent = GentityForSvEntity(svent);
-		if (!gent.linked) {
-			continue;
-		}
-
-		// Take current state as baseline.
-		gent.s.clone(sv.svEntities[i].baseline);
-	}
-}
-
-/**
- * GetConfigstring
- */
-function GetConfigstring(key) {
-	return sv.configstrings[key];
-}
-
-/**
- * SetConfigstring
- */
-function SetConfigstring(key, val) {
-	// Don't bother broadcasting an update if no change.
-	if (_.isEqual(val, sv.configstrings[key])) {
-		return;
-	}
-
-	// Change the string.
-	sv.configstrings[key] = val;
-
-	// Send it to all the clients if we aren't spawning a new server.
-	if (sv.state === ServerState.GAME || sv.restarting) {
-		// Send the data to all relevent clients.
-		for (var i = 0; i < MAX_CLIENTS; i++) {
-			var client = svs.clients[i];
-
-			if (client.state < CS.ACTIVE) {
-				if (client.state === CS.PRIMED) {
-					client.csUpdated[key] = true;
-				}
-				continue;
-			}
-		
-			SendConfigstring(client, key);
-		}
-	}
-}
-
-/**
- * SendConfigString
- *
- * Creates and sends the server command necessary to update the CS index for the
- * given client.
- */
-function SendConfigstring(client, key) {
-	SendServerCommand(client, 'cs', { k: key, v: sv.configstrings[key] });
-}
-
-/**
- * UpdateConfigstrings
- * 
- * Called when a client goes from CS.PRIMED to CS.ACTIVE. Updates all
- * Configstring indexes that have changed while the client was in CS.PRIMED.
- */
-function UpdateConfigstrings(client) {
-	for (var key in sv.configstrings) {
-		if (!sv.configstrings.hasOwnProperty(key)) {
-			continue;
-		}
-
-		// If the CS hasn't changed since we went to CS.PRIMED, ignore.
-		if (!client.csUpdated[key]) {
-			continue;
-		}
-
-		SendConfigstring(client, key);
-		client.csUpdated[key] = false;
-	}
-}
-
-/**
- * GetUserInfo
- */
-function GetUserinfo(clientNum) {
-	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		com.error(sh.Err.DROP, 'GetUserinfo: bad index ' + clientNum);
-	}
-
-	return svs.clients[clientNum].userinfo;
-}
-
-/**********************************************************
- *
- * Event messages
- *
- **********************************************************/
-
-/**
- * SendServerCommand
- * 
- * Sends a reliable command string to be interpreted by 
- * the client game module: "cp", "print", "chat", etc
- * A NULL client will broadcast to all clients
- */
-function SendServerCommand(client, type, msg) {
-	if (client !== null) {
-		AddServerCommand(client, type, msg);
-		return;
-	}
-
-	// // Hack to echo broadcast prints to console.
-	// if ( com_dedicated->integer && !strncmp( (char *)message, "print", 5) ) {
-	// 	Com_Printf ("broadcast: %s\n", SV_ExpandNewlines((char *)message) );
-	// }
-
-	// Send the data to all relevent clients.
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		AddServerCommand(client, type, msg);
-	}
-}
-
-/**
- * AddServerCommand
- *  
- * The given command will be transmitted to the client, and is guaranteed to
- * not have future snapshot_t executed before it is executed.
- */
-function AddServerCommand(client, type, msg) {
-	// Do not send commands until the gamestate has been sent.
-	if (client.state < CS.PRIMED) {
-		return;
-	}
-
-	client.reliableSequence++;
-
-	var cmd = { type: type, value: msg };
-
-	// If we would be losing an old command that hasn't been acknowledged,
-	// we must drop the connection.
-	// We check == instead of >= so a broadcast print added by SV_DropClient()
-	// doesn't cause a recursive drop client.
-	if (client.reliableSequence - client.reliableAcknowledge === MAX_RELIABLE_COMMANDS + 1 ) {
-		log('----- pending server commands -----');
-		for (var i = client.reliableAcknowledge + 1; i <= client.reliableSequence; i++) {
-			log('cmd', i, client.reliableCommands[i % MAX_RELIABLE_COMMANDS]);
-		}
-		log('cmd', i, cmd);
-		DropClient(client, 'Server command overflow');
-		return;
-	}
-
-	// Copy the command off.
-	client.reliableCommands[client.reliableSequence % MAX_RELIABLE_COMMANDS] = cmd;
-}
-
-	/**
- * SocketClosed
- */
-function SocketClosed(socket) {	
-	for (var i = 0; i < svs.clients.length; i++) {
-		var client = svs.clients[i];
-
-		if (client.state === CS.FREE) {
-			continue;
-		}
-
-		if (client.netchan.socket === socket) {
-			DropClient(client, 'disconnected');
-			return;
-		}
-	}
-}
-
-/**
- * AcceptClient
- */
-function AcceptClient(socket, infostr) {
-	if (!svs.initialized) {
-		return;
-	}
-
-	log('A client is connecting');
-
-	// Find a slot for the client.
-	var clientNum;
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		if (svs.clients[i].state === CS.FREE) {
-			clientNum = i;
-			break;
-		}
-	}
-	if (clientNum === undefined) {
-		//NET_OutOfBandPrint( NS_SERVER, from, "print\nServer is full.\n" );
-		log('Rejected a connection.');
-		return
-	}
-
-	// Create the client.
-	var newcl = svs.clients[clientNum];
-	newcl.reset();
-
-	newcl.netchan = com.NetchanSetup(sh.NetSrc.SERVER, socket);
-	newcl.userinfo = JSON.parse(infostr);
-
-	// Give the game a chance to reject this connection or modify the userinfo.
-	var denied = gm.ClientConnect(clientNum, true);
-
-	if (denied) {
-		//NET_OutOfBandPrint( NS_SERVER, from, "print\n%s\n", str );
-		//Com_DPrintf ("Game rejected a connection: %s.\n", str);
-		return;
-	}
-	
-	UserinfoChanged(newcl);
-
-	log('Going from CS_FREE to CS_CONNECTED for ', clientNum);
-
-	newcl.state = CS.CONNECTED;
-	newcl.lastSnapshotTime = svs.time;
-	newcl.lastPacketTime = svs.time;
-
-	// Let the client know we've accepted them.
-	com.NetchanPrint(newcl.netchan, 'connectResponse');
-
-	// When we receive the first packet from the client, we will
-	// notice that it is from a different serverid and that the
-	// gamestate message was not just sent, forcing a retransmit.
-	newcl.gamestateMessageNum = -1;
-}
-
-/**
- * DropClient
- *
- * Called when the player is totally leaving the server, either willingly
- * or unwillingly.
- */
-function DropClient(client, reason) {
-	if (client.state === CS.ZOMBIE) {
-		return;  // already dropped
-	}
-
-	/*// see if we already have a challenge for this ip
-	challenge = &svs.challenges[0];
-
-	for (var i = 0 ; i < MAX_CHALLENGES ; i++, challenge++)
-	{
-		if(NET_CompareAdr(drop->netchan.remoteAddress, challenge->adr))
-		{
-			Com_Memset(challenge, 0, sizeof(*challenge));
-			break;
-		}
-	}*/
-
-	// tell everyone why they got dropped
-	//SV_SendServerCommand( NULL, "print \"%s" S_COLOR_WHITE " %s\n\"", drop->name, reason );
-
-	// Call the game function for removing a client
-	// this will remove the body, among other things.
-	var clientNum = GetClientNum(client);
-	gm.ClientDisconnect(clientNum);
-
-	// add the disconnect command
-	//SV_SendServerCommand( drop, "disconnect \"%s\"", reason);
-
-	// nuke user info
-	//SV_SetUserinfo( drop - svs.clients, "" );
-	
-	//Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
-	client.state = CS.ZOMBIE;           // become free in a few seconds
-}
-
-/**
- * ClientEnterWorld
- */
-function ClientEnterWorld(client) {
-	var clientNum = svs.clients.indexOf(client);
-
-	client.state = CS.ACTIVE;
-
-	// Resend all configstrings using the cs commands since these are
-	// no longer sent when the client is CS_PRIMED.
-	UpdateConfigstrings(client);
-
-	gm.ClientBegin(clientNum);
-
-	// The entity is initialized inside of ClientBegin.
-	client.gentity = GentityForNum(clientNum);
-}
-
-/**
- * UserMove
- */
-function UserMove(client, msg, delta) {
-	if (delta) {
-		client.deltaMessage = client.messageAcknowledge;
-	} else {
-		client.deltaMessage = -1;
-	}
-
-	var cmd = new sh.UserCmd();
-	cmd.serverTime = msg.readInt();
-	cmd.angles[0] = msg.readUnsignedShort();
-	cmd.angles[1] = msg.readUnsignedShort();
-	cmd.angles[2] = msg.readUnsignedShort();
-	cmd.forwardmove = msg.readByte();
-	cmd.rightmove = msg.readByte();
-	cmd.upmove = msg.readByte();
-	cmd.buttons = msg.readByte();
-	cmd.weapon = msg.readByte();
-
-	// If this is the first usercmd we have received
-	// this gamestate, put the client into the world.
-	if (client.state === CS.PRIMED) {
-		ClientEnterWorld(client);
-		// now moves can be processed normaly
-	}
-
-	if (client.state !== CS.ACTIVE) {
-		client.deltaMessage = -1;
-		return; // shouldn't happen
-	}
-
-	ClientThink(client, cmd);
-}
-
-/**
- * ClientThink
- */
-function ClientThink(client, cmd) {
-	var clientNum = GetClientNum(client);
-	
-	cmd.clone(client.lastUserCmd);
-
-	gm.ClientThink(clientNum);
-}
-
-/**
- * SendClientGameState
- */
-function SendClientGameState(client) {
-	client.state = CS.PRIMED;
-	// When we receive the first packet from the client, we will
-	// notice that it is from a different serverid and that the
-	// gamestate message was not just sent, forcing a retransmit.
-	client.gamestateMessageNum = client.netchan.outgoingSequence;
-
-	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
-
-	msg.writeInt(client.lastClientCommand);
-
-	msg.writeByte(SVM.gamestate);
-	msg.writeInt(client.reliableSequence);
-
-	// Write the configstrings.
-	for (var key in sv.configstrings) {
-		if (!sv.configstrings.hasOwnProperty(key)) {
-			continue;
-		}
-
-		msg.writeByte(SVM.configstring);
-		msg.writeCString(JSON.stringify({ k: key, v: sv.configstrings[key] }));
-	}
-
-	// Write the baselines.
-	var nullstate = new sh.EntityState();
-	for (var i = 0; i < MAX_GENTITIES; i++) {
-		var base = sv.svEntities[i].baseline;
-		if (!base.number) {
-			continue;
-		}
-		msg.writeByte(SVM.baseline);
-		sh.WriteDeltaEntityState(msg, nullstate, base, true);
-	}
-
-	msg.writeByte(SVM.EOF);
-
-	msg.writeInt(GetClientNum(client));
-
-	com.NetchanSend(client.netchan, msg.buffer, msg.index);
-}
-
-/**
- * UserinfoChanged
- *
- * Pull specific info from a newly changed userinfo string 
- * into a more C friendly form.
- */
-function UserinfoChanged(client) {
-	client.name = client.userinfo['name'];
-
-	// Snaps command.
-	var snaps = 20;
-
-	if (snaps < 1) {
-		snaps = 1;
-	} else if(snaps > sv_fps()) {
-		snaps = sv_fps();
-	}
-
-	snaps = 1000 / snaps;
-
-	if (snaps != client.snapshotMsec) {
-		// Reset last sent snapshot so we avoid desync between server frame time and snapshot send time.
-		client.lastSnapshotTime = 0;
-		client.snapshotMsec = snaps;
-	}
-}
-
-/**
- * GetClientNum
- */
-function GetClientNum(client) {
-	return svs.clients.indexOf(client);
-}
-
-/** 
- * UpdateUserinfo
- */
-function UpdateUserinfo(client, infostr) {
-	client.userinfo = JSON.parse(infostr);
-	UserinfoChanged(client);
-
-	// call prog code to allow overrides
-	var clientNum = GetClientNum(client);
-	gm.ClientUserinfoChanged(clientNum);
-}
-
-/**
- * Disconnect
- */
-function Disconnect(client) {
-	DropClient(client, 'disconnected');
-}
-
-/**********************************************************
- *
- * User message/command processing
- *
- **********************************************************/
-
-/**
- * ExecuteClientMessage
- */
-function ExecuteClientMessage(client, msg) {
-	var serverid = msg.readInt();
-
-	client.messageAcknowledge = msg.readInt();
-	if (client.messageAcknowledge < 0) {
-		// Usually only hackers create messages like this
-		// it is more annoying for them to let them hanging.
-		return;
-	}
-
-	client.reliableAcknowledge = msg.readInt();
-	// NOTE: when the client message is fux0red the acknowledgement numbers
-	// can be out of range, this could cause the server to send thousands of server
-	// commands which the server thinks are not yet acknowledged in SV_UpdateServerCommandsToClient
-	if (client.reliableAcknowledge < client.reliableSequence - MAX_RELIABLE_COMMANDS) {
-		// Usually only hackers create messages like this
-		// it is more annoying for them to let them hanging.
-		client.reliableAcknowledge = client.reliableSequence;
-		return;
-	}
-
-	// If we can tell that the client has dropped the last
-	// gamestate we sent them, resend it.
-	if (serverid !== sv_serverid()) {
-		if (client.messageAcknowledge > client.gamestateMessageNum) {
-			SendClientGameState(client);
-		}
-		return;
-	}
-
-	// This client has acknowledged the new gamestate so it's
-	// safe to start sending it the real time again.
-	if (client.oldServerTime && serverid === sv_serverid()) {
-		client.oldServerTime = 0;
-	}
-
-	// Read optional clientCommand strings.
-	var type;
-
-	while (true) {
-		type = msg.readUnsignedByte();
-
-		if (type === CLM.EOF) {
-			break;
-		}
-
-		if (type !== CLM.clientCommand) {
-			break;
-		}
-
-		if (!ClientCommand(client, msg)) {
-			return;  // we couldn't execute it because of the flood protection
-		}
-
-		if (client.state === CS.ZOMBIE) {
-			return;  // disconnect command
-		}
-	}
-
-	// Read the usercmd_t.
-	switch (type) {
-		case CLM.move:
-			UserMove(client, msg, true);
-			break;
-		case CLM.moveNoDelta:
-			UserMove(client, msg, false);
-			break;
-	}
-}
-
-/**
- * ClientCommand
- */
-function ClientCommand(client, msg) {
-	var sequence = msg.readInt();
-	var str = msg.readCString();
-
-	// See if we have already executed it.
-	if (client.lastClientCommand >= sequence) {
-		return true;
-	}
-
-	// drop the connection if we have somehow lost commands
-	if (sequence > client.lastClientCommand + 1 ) {
-		//Com_Printf( "Client %s lost %i clientCommands\n", cl->name,  seq - cl->lastClientCommand + 1 );
-		DropClient(client, 'Lost reliable commands');
-		return false;
-	}
-
-	// don't allow another command for one second
-	client.nextReliableTime = svs.time + 1000;
-
-	ExecuteClientCommand(client, str);
-
-	client.lastClientCommand = sequence;
-	client.lastClientCommandString = str;
-
-	return true; // continue procesing
-}
-
-/**
- * ExecuteClientCommand
- */
-function ExecuteClientCommand(client, str) {
-	// see if it is a server level command
-	/*for (u=ucmds ; u->name ; u++) {
-		if (!strcmp (Cmd_Argv(0), u->name) ) {
-			u->func( cl );
-			bProcessed = qtrue;
-			break;
-		}
-	}*/
-	if (str.indexOf('userinfo') === 0) {
-		UpdateUserInfo(client, str.substr(9));
-	} else if (str === 'disconnect') {
-		Disconnect(client);
-	}
-
-	/*// Pass unknown strings to the game.
-	if (!u->name && sv.state == SS_GAME && (cl->state == CS_ACTIVE || cl->state == CS_PRIMED)) {
-		Cmd_Args_Sanitize();
-		VM_Call( gvm, GAME_CLIENT_COMMAND, cl - svs.clients );
-	}*/
-}
-	/**
- * RegisterCommands
- */
-function RegisterCommands() {
-	com.AddCmd('map', CmdLoadMap);
-	com.AddCmd('sectorlist', CmdSectorList);
-}
-
-/**
- * CmdLoadMap
- */
-function CmdLoadMap(mapName) {
-	SpawnServer(mapName);
-}
-	/**
- * GentityForNum
- */
-function GentityForNum(num) {
-	return sv.gameEntities[num];
-}
-
-/**
- * SvEntityForGentity
- */
-function SvEntityForGentity(gent) {
-	var num = gent.s.number;
-
-	if (!gent || num < 0 || num >= MAX_GENTITIES) {
-		com.error(sh.Err.DROP, 'SvEntityForSharedEntity: bad game entity');
-	}
-
-	return sv.svEntities[num];
-}
-
-/**
- * GentityForSvEntity
- */
-function GentityForSvEntity(ent) {
-	var num = sv.svEntities.indexOf(ent);
-
-	if (!ent || num < 0 || num >= MAX_GENTITIES) {
-		com.error(sh.Err.DROP, 'SharedEntityForSvEntity: bad sv entity');
-	}
-
-	return GentityForNum(num);
-}
-
-/**
- * EntityContact
- */
-function EntityContact(mins, maxs, gent) {
-	// Check for exact collision.
-	var origin = gent.currentOrigin;
-	var angles = gent.currentAngles;
-
-	var ch = ClipHandleForEntity(gent);	
-	var trace = cm.TransformedBoxTrace(qm.vec3_origin, qm.vec3_origin, mins, maxs, ch, -1, origin, angles, false);
-
-	return trace.startSolid;
-}
-
-/**
- * LocateGameData
- */
-function LocateGameData(gameEntities, gameClients) {
-	sv.gameEntities = gameEntities;
-	sv.gameClients = gameClients;
-}
-
-/**
- * GetUserCmd
- */
-function GetUserCmd(clientNum, cmd) {
-	if (clientNum < 0 || clientNum >= MAX_CLIENTS) {
-		com.error(sh.Err.DROP, 'GetUsercmd: bad clientNum: ' + clientNum);
-	}
-
-	svs.clients[clientNum].lastUserCmd.clone(cmd);
-}
-
-/**
- * SetBrushModel
- */
-function SetBrushModel(gent, name) {
-	if (!name) {
-		com.error(sh.Err.DROP, 'SV: SetBrushModel: null');
-	}
-
-	if (name.charAt(0) !== '*') {
-		com.error(sh.Err.DROP, 'SV: SetBrushModel: ' + name + 'isn\'t a brush model');
-	}
-
-	gent.s.modelIndex = parseInt(name.substr(1), 10);
-
-	var h = cm.InlineModel(gent.s.modelIndex);
-	cm.ModelBounds(h, gent.mins, gent.maxs);
-	gent.bmodel = true;
-
-	// we don't know exactly what is in the brushes
-	gent.contents = -1;
-}
-	/**
- * BuildClientSnapshot
- * 
- * Decides which entities are going to be visible to the client, and
- * copies off the playerstate and areabits.
- */
-function BuildClientSnapshot(client, msg) {
-	var clent = client.gentity;
-	if (!clent || client.state === CS.ZOMBIE) {
-		return false; // Client hasn't entered world yet.
-	}
-
-	// Bump the counter used to prevent double adding.
-	sv.snapshotCounter++;
-
-	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
-	var clientNum = GetClientNum(client);
-	var ps = gm.GetClientPlayerstate(clientNum);
-
-	// Copy the current PlayerState off.
-	ps.clone(frame.ps);
-
-	// Never send client's own entity, because it can
-	// be regenerated from the playerstate.
-	var clientNum = frame.ps.clientNum;
-	var svEnt = sv.svEntities[clientNum];
-	svEnt.snapshotCounter = sv.snapshotCounter;
-
-	var entityNumbers = [];
-	AddEntitiesVisibleFromPoint(frame.ps.origin, frame, entityNumbers, false);
-
-	frame.numEntities = 0;
-	frame.firstEntity = svs.nextSnapshotEntities;
-
-	// Copy the entity states out.
-	for (var i = 0; i < entityNumbers.length; i++) {
-		var ent = GentityForNum(entityNumbers[i]);
-		var state = svs.snapshotEntities[svs.nextSnapshotEntities % MAX_SNAPSHOT_ENTITIES];
-
-		ent.s.clone(state);
-		svs.nextSnapshotEntities++;
-		frame.numEntities++;
-	}
-
-	return true;
-}
-
-/**
- * AddEntitiesVisibleFromPoint
- */
-function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
-	/*leafnum = cm.PointLeafnum (origin);
-	clientarea = cm.LeafArea (leafnum);
-	clientcluster = cm.LeafCluster (leafnum);
-
-	// calculate the visible areas
-	frame->areabytes =cm.WriteAreaBits( frame->areabits, clientarea );
-
-	clientpvs = cm.ClusterPVS (clientcluster);*/
-
-	for (var i = 0; i < MAX_GENTITIES; i++) {
-		var ent = GentityForNum(i);
-
-		// Never send entities that aren't linked in.
-		if (!ent || !ent.linked) {
-			continue;
-		}
-
-		if (ent.s.number !== i) {
-			com.error(sh.Err.DROP, 'Entity number does not match.. WTF');
-			/*log('FIXING ENT->S.NUMBER!!!');
-			ent.s.number = e;*/
-		}
-
-		// Entities can be flagged to explicitly not be sent to the client.
-		if (ent.svFlags & SVF.NOCLIENT) {
-			continue;
-		}
-
-		// Entities can be flagged to be sent to only one client.
-		if (ent.svFlags & SVF.SINGLECLIENT) {
-			if (ent.singleClient != frame.ps.clientNum) {
-				continue;
-			}
-		}
-		// Entities can be flagged to be sent to everyone but one client.
-		if (ent.svFlags & SVF.NOTSINGLECLIENT) {
-			if (ent.singleClient === frame.ps.clientNum) {
-				continue;
-			}
-		}
-
-		var svEnt = SvEntityForGentity(ent);
-
-		// Don't double add an entity through portals.
-		if (svEnt.snapshotCounter === sv.snapshotCounter) {
-			continue;
-		}
-
-		// Broadcast entities are always sent.
-		if (ent.svFlags & SVF.BROADCAST) {
-			AddEntToSnapshot(svEnt, ent, eNums);
-			continue;
-		}
-
-		// // Ignore if not touching a PV leaf.
-		// // Check area.
-		// if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
-		// 	// doors can legally straddle two areas, so
-		// 	// we may need to check another one
-		// 	if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
-		// 		continue;		// blocked by a door
-		// 	}
-		// }
-
-		// bitvector = clientpvs;
-
-		// // Check individual leafs.
-		// if ( !svEnt->numClusters ) {
-		// 	continue;
-		// }
-		// l = 0;
-		// for ( i=0 ; i < svEnt->numClusters ; i++ ) {
-		// 	l = svEnt->clusternums[i];
-		// 	if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-		// 		break;
-		// 	}
-		// }
-
-		// // If we haven't found it to be visible,
-		// // check overflow clusters that coudln't be stored.
-		// if ( i == svEnt->numClusters ) {
-		// 	if ( svEnt->lastCluster ) {
-		// 		for ( ; l <= svEnt->lastCluster ; l++ ) {
-		// 			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-		// 				break;
-		// 			}
-		// 		}
-		// 		if ( l == svEnt->lastCluster ) {
-		// 			continue;	// not visible
-		// 		}
-		// 	} else {
-		// 		continue;
-		// 	}
-		// }
-
-		// Add it.
-		AddEntToSnapshot(svEnt, ent, eNums);
-
-		// // If it's a portal entity, add everything visible from its camera position.
-		// if (ent.r.svFlags & SVF_PORTAL) {
-		// 	if (ent.s.generic1) {
-		// 		var dir = vec3.subtract(ent.s.origin, origin, [0, 0, 0]);
-
-		// 		if (VectorLengthSquared(dir) > (float) ent->s.generic1 * ent->s.generic1) {
-		// 			continue;
-		// 		}
-		// 	}
-			
-		// 	AddEntitiesVisibleFromPoint( ent->s.origin2, frame, eNums, qtrue );
-		// }
-	}
-}
-
-/**
- * AddEntToSnapshot
- */
-function AddEntToSnapshot(svEnt, gEnt, eNums) {
-	// If we have already added this entity to this snapshot, don't add again.
-	if (svEnt.snapshotCounter === sv.snapshotCounter) {
-		return;
-	}
-
-	svEnt.snapshotCounter = sv.snapshotCounter;
-
-	eNums.push(gEnt.s.number);
-}
-
-/**
- * SendClientSnapshot
- */
-function SendClientSnapshot(client) {
-	// Build the snapshot.
-	if (!BuildClientSnapshot(client)) {
-		return;
-	}
-
-	var msg = new ByteBuffer(svs.msgBuffer, ByteBuffer.LITTLE_ENDIAN);
-
-	msg.writeInt(client.lastClientCommand);
-
-	// Send any reliable server commands.
-	UpdateServerCommandsToClient(client, msg);
-
-	// Send over all the relevant player and entity states.
-	WriteSnapshotToClient(client, msg);
-
-	com.NetchanSend(client.netchan, msg.buffer, msg.index);
-}
-
-/**
- * UpdateServerCommandsToClient
- *
- * (re)send all server commands the client hasn't acknowledged yet.
- */
-function UpdateServerCommandsToClient(client, msg) {
-	// Write any unacknowledged serverCommands.
-	for (var i = client.reliableAcknowledge + 1; i <= client.reliableSequence; i++) {
-		var cmd = client.reliableCommands[i % MAX_RELIABLE_COMMANDS];
-		
-		msg.writeByte(SVM.serverCommand);
-		msg.writeInt(i);
-		msg.writeCString(cmd.type);
-		msg.writeCString(JSON.stringify(cmd.value));
-	}
-}
-
-/**
- * WriteSnapshotToClient
- */
-function WriteSnapshotToClient(client, msg) {
-	// This is the snapshot we are creating.
-	var frame = client.frames[client.netchan.outgoingSequence % PACKET_BACKUP];
-	var oldframe = null;
-	var lastframe = 0;
-
-	// Try to use a previous frame as the source for delta compressing the snapshot.
-	if (client.deltaMessage <= 0 || client.state !== CS.ACTIVE) {
-		// Client is asking for a retransmit.
-		oldframe = null;
-		lastframe = 0;
-	} else if (client.netchan.outgoingSequence - client.deltaMessage >= (PACKET_BACKUP - 3)) {
-		// Client hasn't gotten a good message through in a long time.
-		log(client.name, ': Delta request from out of date packet.');
-		oldframe = null;
-		lastframe = 0;
-	} else {
-		// We have a valid snapshot to delta from
-		oldframe = client.frames[client.deltaMessage % PACKET_BACKUP];
-		lastframe = client.netchan.outgoingSequence - client.deltaMessage;
-
-		// The snapshot's entities may still have rolled off the buffer, though.
-		if (oldframe.firstEntity <= svs.nextSnapshotEntities - svs.numSnapshotEntities) {
-			log(client.name, ': Delta request from out of date entities.');
-			oldframe = null;
-			lastframe = 0;
-		}
-	}
-	
-	msg.writeUnsignedByte(SVM.snapshot);
-
-	// Send over the current server time so the client can drift
-	// its view of time to try to match.
-	var serverTime = sv.time;
-	if (client.oldServerTime) {
-		// The server has not yet got an acknowledgement of the
-		// new gamestate from this client, so continue to send it
-		// a time as if the server has not restarted. Note from
-		// the client's perspective this time is strictly speaking
-		// incorrect, but since it'll be busy loading a map at
-		// the time it doesn't really matter.
-		serverTime = sv.time + client.oldServerTime;
-	}
-	msg.writeInt(serverTime);
-
-	// What we're delta'ing from.
-	msg.writeByte(lastframe);
-
-	var snapFlags = svs.snapFlagServerBit;
-	if (client.state !== CS.ACTIVE) {
-		snapFlags |= SNAPFLAG_NOT_ACTIVE;
-	}
-	msg.writeInt(snapFlags);
-
-	// Delta encode the playerstate.
-	sh.WriteDeltaPlayerState(msg, oldframe ? oldframe.ps : null, frame.ps);
-
-	// Delta encode the entities.
-	WriteSnapshotEntities(msg, oldframe, frame);
-}
-
-/**
- * WriteSnapshotEntities
- */
-function WriteSnapshotEntities(msg, from, to) {
-	var oldent, newent;
-	var oldindex, newindex;
-	var oldnum, newnum;
-	var fromNumEntities
-
-	// Generate the delta update.
-	fromNumEntities = !from ? 0 : from.numEntities;
-
-	oldent = null;
-	newent = null;
-	oldindex = 0;
-	newindex = 0;
-
-	while (newindex < to.numEntities || oldindex < fromNumEntities) {
-		if (newindex >= to.numEntities) {
-			newnum = 9999;
-		} else {
-			newent = svs.snapshotEntities[(to.firstEntity + newindex) % MAX_SNAPSHOT_ENTITIES];
-			newnum = newent.number;
-		}
-
-		if (oldindex >= fromNumEntities) {
-			oldnum = 9999;
-		} else {
-			oldent = svs.snapshotEntities[(from.firstEntity + oldindex) % MAX_SNAPSHOT_ENTITIES];
-			oldnum = oldent.number;
-		}
-
-		if (newnum === oldnum) {
-			// Delta update from old position.
-			// Because the force parm is false, this will not result
-			// in any bytes being emited if the entity has not changed at all.
-			sh.WriteDeltaEntityState(msg, oldent, newent, false);
-			oldindex++;
-			newindex++;
-			continue;
-		}
-		
-		if (newnum < oldnum) {
-			// This is a new entity, send it from the baseline.
-			sh.WriteDeltaEntityState(msg, sv.svEntities[newnum].baseline, newent, true);
-			newindex++;
-			continue;
-		}
-
-		if (newnum > oldnum) {
-			// The old entity isn't present in the new message.
-			sh.WriteDeltaEntityState(msg, oldent, null, true);
-			oldindex++;
-			continue;
-		}
-	}
-
-	msg.writeShort(MAX_GENTITIES-1);
-}
-
-/**
- * SendClientMessages
- */
-function SendClientMessages() {
-	for (var i = 0; i < svs.clients.length; i++) {
-		var client = svs.clients[i];
-
-		if (!client) {
-			continue;
-		}
-		
-		if (!client.state) {
-			continue; // not connected
-		}
-
-		if (svs.time - client.lastSnapshotTime < client.snapshotMsec) {
-			continue; // it's not time yet
-		}
-
-		SendClientSnapshot(client);
-		client.lastSnapshotTime = svs.time;
-	}
-}
-	/**
- * ENTITY CHECKING
- *
- * To avoid linearly searching through lists of entities during environment testing,
- * the world is carved up with an evenly spaced, axially aligned bsp tree.  Entities
- * are kept in chains either at the final leafs, or at the first node that splits
- * them, which prevents having to deal with multiple fragments of a single entity.
- */
-
-var AREA_DEPTH = 4;
-var worldSectors;
-
-var WorldSector = function () {
-	this.axis = 0; // -1 = leaf node
-	this.dist = 0;
-	this.children = [null, null];
-	this.entities = {};
-};
-
-/**
- * CmdSectorList
- */
-function CmdSectorList() {
-	for (var i = 0; i < worldSectors.length; i++) {
-		var node = worldSectors[i];
-		log('sector ' + i + ': ' + _.keys(node.entities).length + ' entities');
-	}
-}
-
-/**
- * ClearWorld
- */
-function ClearWorld() {
-	worldSectors = [];
-
-	// get world map bounds
-	var worldModel = cm.InlineModel(0);
-	var mins = [0, 0, 0];
-	var maxs = [0, 0, 0];
-	cm.ModelBounds(worldModel, mins, maxs);
-
-	CreateWorldSector(0, mins, maxs);
-}
-
-/**
- * CreateWorldSector
- *
- * Builds a uniformly subdivided tree for the given world size
- */
-function CreateWorldSector(depth, mins, maxs) {
-	var node = worldSectors[worldSectors.length] = new WorldSector();
-
-	if (depth === AREA_DEPTH) {
-		node.axis = -1;
-		node.children[0] = node.children[1] = null;
-		return node;
-	}
-	
-	var size = vec3.subtract(maxs, mins, [0, 0, 0]);
-	if (size[0] > size[1]) {
-		node.axis = 0;
-	} else {
-		node.axis = 1;
-	}
-
-	var mins1 = vec3.set(mins, [0, 0, 0]);
-	var mins2 = vec3.set(mins, [0, 0, 0]);
-	var maxs1 = vec3.set(maxs, [0, 0, 0]);
-	var maxs2 = vec3.set(maxs, [0, 0, 0]);
-
-	node.dist = 0.5 * (maxs[node.axis] + mins[node.axis]);
-	maxs1[node.axis] = mins2[node.axis] = node.dist;
-	
-	node.children[0] = CreateWorldSector(depth+1, mins2, maxs2);
-	node.children[1] = CreateWorldSector(depth+1, mins1, maxs1);
-
-	return node;
-}
-
-/**
- * LinkEntity
- */
-function LinkEntity(gent) {
-	var ent = SvEntityForGentity(gent);
-
-	if (ent.worldSector) {
-		UnlinkEntity(gent);  // unlink from old position
-	}
-
-	// Encode the size into the entityState for client prediction.
-	if (gent.bmodel) {
-		gent.s.solid = SOLID_BMODEL; // a solid_box will never create this value
-	} else if (gent.contents & (CONTENTS.SOLID | CONTENTS.BODY)) {
-		// Assume that x/y are equal and symetric.
-		var i = gent.maxs[0];
-		if (i < 1) {
-			i = 1;
-		} else if (i > 255) {
-			i = 255;
-		}
-
-		// z is not symetric.
-		var j = (-gent.mins[2]);
-		if (j < 1) {
-			j = 1;
-		} else if (j > 255) {
-			j = 255;
-		}
-
-		// And z maxs can be negative...
-		var k = (gent.maxs[2] + 32);
-		if (k < 1) {
-			k = 1;
-		} else if (k > 255) {
-			k = 255;
-		}
-
-		gent.s.solid = (k << 16) | (j << 8) | i;
-	} else {
-		gent.s.solid = 0;
-	}
-
-	// Get the position.
-	var origin = gent.currentOrigin;
-	var angles = gent.currentAngles;
-
-	// Set the abs box.
-	if (gent.bmodel && (angles[0] || angles[1] || angles[2])) {
-		var max = qm.RadiusFromBounds(gent.mins, gent.maxs);
-		for (var i = 0; i < 3; i++) {
-			gent.absmin[i] = origin[i] - max;
-			gent.absmax[i] = origin[i] + max;
-		}
-	} else {
-		// Normal
-		vec3.add(origin, gent.mins, gent.absmin);
-		vec3.add(origin, gent.maxs, gent.absmax);
-	}
-
-	// Because movement is clipped an epsilon away from an actual edge,
-	// we must fully check even when bounding boxes don't quite touch.
-	gent.absmin[0] -= 1;
-	gent.absmin[1] -= 1;
-	gent.absmin[2] -= 1;
-	gent.absmax[0] += 1;
-	gent.absmax[1] += 1;
-	gent.absmax[2] += 1;
-
-	/*// link to PVS leafs
-	ent.numClusters = 0;
-	ent.lastCluster = 0;
-	ent.areanum = -1;
-	ent.areanum2 = -1;
-
-	// get all leafs, including solids
-	num_leafs = CM_BoxLeafnums( gent.r.absmin, gent.r.absmax,
-		leafs, MAX_TOTAL_ENT_LEAFS, &lastLeaf );
-
-	// if none of the leafs were inside the map, the
-	// entity is outside the world and can be considered unlinked
-	if (!num_leafs) {
-		return;
-	}
-
-	// set areas, even from clusters that don't fit in the entity array
-	for (var i = 0; i < num_leafs; i++) {
-		var area = CM_LeafArea(leafs[i]);
-
-		if (area === -1) {
-			continue;
-		}
-
-		// doors may legally straggle two areas,
-		// but nothing should ever need more than that
-		if (ent.areanum !== -1 && ent.areanum != area) {
-			ent.areanum2 = area;
-		} else {
-			ent.areanum = area;
-		}
-	}
-
-	// store as many explicit clusters as we can
-	ent.numClusters = 0;
-
-	for (var i = 0; i < num_leafs; i++) {
-		var cluster = CM_LeafCluster(leafs[i]);
-
-		if (cluster === -1) {
-			continue;
-		}
-
-		ent.clusternums[ent.numClusters++] = cluster;
-
-		if (ent.numClusters == MAX_ENT_CLUSTERS) {
-			break;
-		}
-	}
-
-	// store off a last cluster if we need to
-	if (i !== num_leafs) {
-		ent.lastCluster = CM_LeafCluster( lastLeaf );
-	}*/
-
-	// Find the first world sector node that the ent's box crosses.
-	var node = worldSectors[0];
-
-	while (1) {
-		if (node.axis == -1) {
-			break;
-		}
-
-		if (gent.absmin[node.axis] > node.dist) {
-			node = node.children[0];
-		}
-		else if (gent.absmax[node.axis] < node.dist) {
-			node = node.children[1];
-		}
-		else {
-			break; // crosses the node
-		}
-	}
-	
-	// Link it in.
-	gent.linked = true;
-	ent.worldSector = node;
-	node.entities[gent.s.number] = ent;
-}
-
-/**
- * UnlinkEntity
- */
-function UnlinkEntity(gent) {
-	var ent = SvEntityForGentity(gent);
-	var node = ent.worldSector;
-
-	if (!node) {
-		return;  // not linked in anywhere
-	}
-
-	// Unlink.
-	gent.linked = false;
-	delete node.entities[gent.s.number];
-	ent.worldSector = null;
-}
-
-/**********************************************************
- *
- * Area query
- *
- * Fills in a list of all entities who's absmin / absmax
- * intersects the given bounds. This does NOT mean that
- * they actually touch in the case of bmodels.
- *
- **********************************************************/
-
-/**
- * FindEntitiesInBox
- */
-function FindEntitiesInBox(mins, maxs) {
-	var entityNums = [];
-
-	var FindEntitiesInBox_r = function (node) {
-		for (var num in node.entities) {
-			if (!node.entities.hasOwnProperty(num)) {
-				continue;
-			}
-
-			var ent = node.entities[num];
-			var gent = GentityForSvEntity(ent);
-			
-			if (gent.absmin[0] > maxs[0] ||
-				gent.absmin[1] > maxs[1] ||
-				gent.absmin[2] > maxs[2] ||
-				gent.absmax[0] < mins[0] ||
-				gent.absmax[1] < mins[1] ||
-				gent.absmax[2] < mins[2]) {
-				continue;
-			}
-
-			entityNums.push(gent.s.number);
-		}
-		
-		if (node.axis == -1) {
-			return; // terminal node
-		}
-
-		// Recurse down both sides.
-		if (maxs[node.axis] > node.dist) {
-			FindEntitiesInBox_r(node.children[0]);
-		}
-		if (mins[node.axis] < node.dist ) {
-			FindEntitiesInBox_r(node.children[1]);
-		}
-	};
-
-	FindEntitiesInBox_r(worldSectors[0]);
-
-	return entityNums;
-}
-
-/**********************************************************
- *
- * Trace through the world and entities
- *
- **********************************************************/
-var moveclip = function () {
-	this.boxmins       = [0, 0, 0];                        // enclose the test object along entire move
-	this.boxmaxs       = [0, 0, 0];
-	this.mins          = [0, 0, 0];
-	this.maxs          = [0, 0, 0];
-	this.start         = [0, 0, 0];
-	this.end           = [0, 0, 0];
-	this.trace         = null;
-	this.passEntityNum = 0;
-	this.contentmask   = 0;
-	this.capsule       = 0;
-};
-var clip = new moveclip();
-
-/**
- * Trace
- *
- * Moves the given mins/maxs volume through the world from start to end.
- * passEntityNum and entities owned by passEntityNum are explicitly not checked.
- */
-function Trace(start, end, mins, maxs, passEntityNum, contentmask, capsule) {
-	if (!mins) {
-		mins = [0, 0, 0];
-	}
-	if (!maxs) {
-		maxs = [0, 0, 0];
-	}
-
-	// Clip to world.
-	clip.trace = cm.BoxTrace(start, end, mins, maxs, 0, contentmask, capsule);
-	clip.trace.entityNum = clip.trace.fraction !== 1.0 ? ENTITYNUM_WORLD : ENTITYNUM_NONE;
-	if (clip.trace.fraction === 0) {
-		return clip.trace;  // blocked immediately by the world
-	}
-
-	clip.contentmask = contentmask;
-	vec3.set(start, clip.start);
-	vec3.set(end, clip.end);
-	vec3.set(mins, clip.mins);
-	vec3.set(maxs, clip.maxs);
-	clip.passEntityNum = passEntityNum;
-	clip.capsule = capsule;
-
-	// Create the bounding box of the entire move.
-	// We can limit it to the part of the move not
-	// already clipped off by the world, which can be
-	// a significant savings for line of sight and shot traces.
-	for (var i = 0; i < 3; i++) {
-		if (end[i] > start[i]) {
-			clip.boxmins[i] = clip.start[i] + clip.mins[i] - 1;
-			clip.boxmaxs[i] = clip.end[i] + clip.maxs[i] + 1;
-		} else {
-			clip.boxmins[i] = clip.end[i] + clip.mins[i] - 1;
-			clip.boxmaxs[i] = clip.start[i] + clip.maxs[i] + 1;
-		}
-	}
-
-	// Clip to other solid entities.
-	ClipMoveToEntities(clip);
-
-	return clip.trace;
-}
-
-/**
- * ClipMoveToEntities
- */
-function ClipMoveToEntities(clip) {
-	var origin = [0, 0, 0];
-	var angles = [0, 0, 0];
-	var passOwnerNum = -1;
-
-	var touchlist = FindEntitiesInBox(clip.boxmins, clip.boxmaxs);
-
-	if (clip.passEntityNum !== ENTITYNUM_NONE) {
-		passOwnerNum = (GentityForNum(clip.passEntityNum)).ownerNum;
-		if (passOwnerNum === ENTITYNUM_NONE) {
-			passOwnerNum = -1;
-		}
-	}
-
-	for (var i = 0; i < touchlist.length; i++) {
-		if (clip.trace.allSolid) {
-			return;
-		}
-
-		var touch = GentityForNum(touchlist[i]);
-
-		// See if we should ignore this entity.
-		if (clip.passEntityNum !== ENTITYNUM_NONE) {
-			if (touchlist[i] === clip.passEntityNum) {
-				continue;  // don't clip against the pass entity
-			}
-			if (touch.ownerNum === clip.passEntityNum) {
-				continue;  // don't clip against own missiles
-			}
-			if (touch.ownerNum === passOwnerNum) {
-				continue;  // don't clip against other missiles from our owner
-			}
-		}
-
-		// If it doesn't have any brushes of a type we
-		// are looking for, ignore it.
-		if (!(clip.contentmask & touch.contents)) {
-			continue;
-		}
-
-		// Might intersect, so do an exact clip.
-		var clipHandle = ClipHandleForEntity(touch);
-
-		vec3.set(touch.currentOrigin, origin);
-		vec3.set(touch.currentAngles, angles);
-		if (!touch.bmodel) {
-			angles[0] = angles[1] = angles[2] = 0;  // boxes don't rotate
-		}
-
-		var trace = cm.TransformedBoxTrace(clip.start, clip.end, clip.mins, clip.maxs,
-			clipHandle, clip.contentmask, origin, angles, clip.capsule);
-
-		if (trace.allSolid) {
-			clip.trace.allSolid = true;
-			trace.entityNum = touch.s.number;
-		} else if (trace.startSolid) {
-			clip.trace.startSolid = true;
-			trace.entityNum = touch.s.number;
-		}
-
-		if (trace.fraction < clip.trace.fraction) {
-			// Make sure we keep a startSolid from a previous trace.
-			var oldStart = clip.trace.startSolid;
-
-			trace.entityNum = touch.s.number;
-			clip.trace = trace;
-			clip.trace.startSolid |= oldStart;
-		}
-	}
-}
-
-/**
- * ClipHandleForEntity
- *
- * Returns a headnode that can be used for testing or clipping to a
- * given entity. If the entity is a bsp model, the headnode will
- * be returned, otherwise a custom box tree will be constructed.
- */
-function ClipHandleForEntity(ent) {
-	if (ent.bmodel) {
-		// Explicit hulls in the BSP model.
-		return cm.InlineModel(ent.s.modelIndex);
-	}
-	// if (ent.svFlags & SVF.CAPSULE) {
-	// 	// Create a temp capsule from bounding box sizes.
-	// 	return cm.TempBoxModel(ent.mins, ent.maxs, true);
-	// }
-
-	// Create a temp tree from bounding box sizes.
-	return cm.TempBoxModel(ent.mins, ent.maxs, false);
-}
-
-
-	return {
-		Init:             Init,
-		Frame:            Frame,
-		PacketEvent:      PacketEvent,
-		SocketClosed:     SocketClosed
-	};
-});
 
 /*global vec3: true, mat4: true */
 
 define('common/com',
 ['underscore', 'ByteBuffer', 'common/sh', 'server/sv', 'client/cl'],
-function (_, ByteBuffer, sh, sv, cl) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
+function (_, ByteBuffer, sh, sv_mod, cl_mod) {
+	// Use the following namespaces.
+	var using = _.extend({},
+		sh.enums
+	);
+	for (var key in using) {
+		if (using.hasOwnProperty(key)) {
+			eval('var ' + key + ' = using[key];');
+		}
+	}
 
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
+	/**********************************************************
+ * Definitions common between client and server, but not
+ * game or render modules.
+ **********************************************************/
 
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
+var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
+
+var ERR = {
+	FATAL:      0,                                         // exit the entire game with a popup window
+	DROP:       1,
+	DISCONNECT: 2,                                         // client disconnected from the server
 };
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-
-	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
 
 /**
  * System events
@@ -44959,10 +44085,6 @@ var SVM = {
 	snapshot:       5,
 	EOF:            6
 };
-	/**********************************************************
- * Definitions common between client and server, but not
- * game or render modules.
- **********************************************************/
 
 /**
  * Networking
@@ -45233,14 +44355,16 @@ function WriteCvars(str) {
 
 	return str;
 }
-	var sys;
+	var sys,
+	sv,
+	cl;
 
-var dedicated = false;
-var events;
-var frameTime;
-var lastFrameTime;
-var initialized = false;
-var configsLoaded = false;
+var dedicated,
+	events,
+	frameTime,
+	lastFrameTime,
+	initialized,
+	configsLoaded;
 
 /**
  * log
@@ -45255,7 +44379,7 @@ function log() {
  * error
  */
 function error(level, str) {
-	// if (level === sh.Err.DROP) {
+	// if (level === ERR.DROP) {
 	// 	console.error('Server crashed: ' + str);
 	// 	sv.Shutdown();
 	// 	cl.Disconnect();
@@ -45267,60 +44391,32 @@ function error(level, str) {
 /**
  * Init
  */
-function Init(sysinterface, isdedicated) {
-	sys = sysinterface;
-	dedicated = isdedicated;
+function Init(sysInstance, isDedicated) {
+	sys = sysInstance;
+	console.log(cl_mod);
+	cl  = cl_mod.CreateInstance(GetExports());
+	sv  = sv_mod.CreateInstance(GetExports());
+
+	dedicated = isDedicated;
 	events = [];
 	frameTime = lastFrameTime = sys.GetMilliseconds();
+	initialized = false;
+	configsLoaded = false;
 
 	RegisterCvars();
 	RegisterCommands();
-	
-	sv.Init(sys, GetExports(), dedicated);
 
 	if (!dedicated) {
-		cl.Init(sys, GetExports());
+		cl.Init();
 	}
+
+	sv.Init(cl, dedicated);
 
 	// Load the default config files (after the base set
 	// and bind commands have been added from com and cl).
 	LoadConfig();
 
 	initialized = true;
-}
-
-/**
- * GetExports
- */
-function GetExports() {
-	var exports = {
-		error:             error,
-		ExecuteBuffer:     ExecuteBuffer,
-		LoadConfig:        LoadConfig,
-		SaveConfig:        SaveConfig,
-		AddCvar:           AddCvar,
-		GetCvarVal:        GetCvarVal,
-		SetCvarVal:        SetCvarVal,
-		GetCvarValues:     GetCvarValues,
-		AddCmd:            AddCmd,
-		GetCmd:            GetCmd,
-		NetchanSetup:      NetchanSetup,
-		NetchanDestroy:    NetchanDestroy,
-		NetchanSend:       NetchanSend,
-		NetchanPrint:      NetchanPrint,
-		NetchanProcess:    NetchanProcess
-	};
-
-	Object.defineProperty(exports, 'frameTime', {
-		get: function () { return frameTime; }
-	});
-
-	Object.defineProperty(exports, 'cvarModifiedFlags', {
-		get: function () { return cvarModifiedFlags; },
-		set: function (val) { cvarModifiedFlags = val; }
-	});
-
-	return exports;
 }
 
 /**
@@ -45536,6 +44632,57 @@ function SaveConfig(callback) {
 
 	sys.WriteFile(filename, cfg, 'utf8', callback);
 }
+
+/**
+ * GetExports
+ */
+function GetExports() {
+	var exports = {
+		com: {
+			constants: {
+				MAX_MAP_AREA_BYTES:    MAX_MAP_AREA_BYTES,
+				PACKET_BACKUP:         PACKET_BACKUP,
+				MAX_PACKET_USERCMDS:   MAX_PACKET_USERCMDS,
+				MAX_RELIABLE_COMMANDS: MAX_RELIABLE_COMMANDS,
+				MAX_MSGLEN:            MAX_MSGLEN
+			},
+
+			enums: {
+				ERR: ERR,
+				CLM: CLM,
+				SVM: SVM
+			},
+
+			error:                 error,
+			ExecuteBuffer:         ExecuteBuffer,
+			LoadConfig:            LoadConfig,
+			SaveConfig:            SaveConfig,
+			AddCvar:               AddCvar,
+			GetCvarVal:            GetCvarVal,
+			SetCvarVal:            SetCvarVal,
+			GetCvarValues:         GetCvarValues,
+			AddCmd:                AddCmd,
+			GetCmd:                GetCmd,
+			NetchanSetup:          NetchanSetup,
+			NetchanDestroy:        NetchanDestroy,
+			NetchanSend:           NetchanSend,
+			NetchanPrint:          NetchanPrint,
+			NetchanProcess:        NetchanProcess
+		},
+		sys: sys  // Export all of sys
+	};
+
+	Object.defineProperty(exports.com, 'frameTime', {
+		get: function () { return frameTime; }
+	});
+
+	Object.defineProperty(exports.com, 'cvarModifiedFlags', {
+		get: function () { return cvarModifiedFlags; },
+		set: function (val) { cvarModifiedFlags = val; }
+	});
+
+	return exports;
+}
 	var MAX_PACKETLEN = 1400;
 var MAX_LOOPBACK  = 16;
 var loopbacks = [
@@ -45656,196 +44803,35 @@ function NetchanProcess(netchan, msg) {
 }
 
 	return {
-		Init:           Init,
-		Frame:          Frame,
+		constants: {
+			PACKET_BACKUP: PACKET_BACKUP
+		},
+		
+		enums: {
+			SE: SE
+		},
+
+		Init:          Init,
+		Frame:         Frame,
 		ExecuteBuffer: ExecuteBuffer,
-		QueueEvent:     QueueEvent,
-		NetchanSetup:   NetchanSetup
+		QueueEvent:    QueueEvent,
+		NetchanSetup:  NetchanSetup
 	};
 });
 
 define('system/browser/sys',
-['common/sh', 'common/com'],
-function (sh, com) {
-	var BASE_FOLDER = 'baseq3';
-var MAX_QPATH   = 64;
-var CMD_BACKUP  = 64;
-
-// If entityState.solid === SOLID_BMODEL, modelIndex is an inline model number
-var SOLID_BMODEL = 0xffffff;
-
-/**
- * Cvar flags
- */
-var CVF = {
-	ARCHIVE:    0x0001,                                    // save to config file
-	USERINFO:   0x0002,                                    // sent to server on connect or change
-	SERVERINFO: 0x0004,                                    // sent in response to front end requests
-	SYSTEMINFO: 0x0008                                     // these cvars will be duplicated on all clients
-};
-
-/**
- * Renderer (should be moved)
- */
-var MAX_DRAWSURFS  = 0x10000;
-
-/**
- * Snapshot flags
- */
-var SNAPFLAG_RATE_DELAYED   = 1;
-var SNAPFLAG_NOT_ACTIVE     = 2;                        // snapshot used during connection and for zombies
-var SNAPFLAG_SERVERCOUNT    = 4;                        // toggled every map_restart so transitions can be detected
-
-/**
- * MAX_* defines used to pre-alloc many structures
- */
-var GENTITYNUM_BITS         = 10;
-var MAX_CLIENTS             = 32;                       // absolute limit
-var MAX_GENTITIES           = (1 << 10);                // can't be increased without changing drawsurf bit packing
-var MAX_MODELS              = 256;                      // these are sent over the net as 8 bits
-var MAX_SOUNDS              = 256;                      // so they cannot be blindly increased
-
-/**
- * Faux entity numbers
- */
-var ENTITYNUM_NONE          = MAX_GENTITIES-1;
-var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
-var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
-
-var MOVE_RUN = 120;                                     // if forwardmove or rightmove are >= MOVE_RUN,
-	                                                       // then BUTTON_WALKING should be set
-
-/**
- * Playerstate
- */
-var MAX_STATS               = 16;
-var MAX_PERSISTANT          = 16;
-var MAX_POWERUPS            = 16;
-var MAX_WEAPONS             = 16;
-var MAX_PS_EVENTS           = 2;
-var PMOVEFRAMECOUNTBITS     = 6;
-
-var BUTTON = {
-	ATTACK:       1,
-	TALK:         2,                                       // displays talk balloon and disables actions
-	USE_HOLDABLE: 4,
-	GESTURE:      8,
-	WALKING:      16,                                      // walking can't just be infered from MOVE_RUN
-	                                                       // because a key pressed late in the frame will
-	                                                       // only generate a small move value for that frame
-	                                                       // walking will use different animations and
-	                                                       // won't generate footsteps
-	AFFIRMATIVE:  32,
-	NEGATIVE:     64,
-	GETFLAG:      128,
-	GUARDBASE:    256,
-	PATROL:       512,
-	FOLLOWME:     1024,
-	ANY:          2048                                     // any key whatsoever
-};
-
-var TR = {
-	STATIONARY:  0,
-	INTERPOLATE: 1,                              // non-parametric, but interpolate between snapshots
-	LINEAR:      2,
-	LINEAR_STOP: 3,
-	SINE:        4,                              // value = base + sin( time / duration ) * delta
-	GRAVITY:     5
-};
-
-var SURF = {
-	NODAMAGE:    0x1,                            // never give falling damage
-	SLICK:       0x2,                            // effects game physics
-	SKY:         0x4,                            // lighting from environment map
-	LADDER:      0x8,
-	NOIMPACT:    0x10,                           // don't make missile explosions
-	NOMARKS:     0x20,                           // don't leave missile marks
-	FLESH:       0x40,                           // make flesh sounds and effects
-	NODRAW:      0x80,                           // don't generate a drawsurface at all
-	HINT:        0x100,                          // make a primary bsp splitter
-	SKIP:        0x200,                          // completely ignore, allowing non-closed brushes
-	NOLIGHTMAP:  0x400,                          // surface doesn't need a lightmap
-	POINTLIGHT:  0x800,                          // generate lighting info at vertexes
-	METALSTEPS:  0x1000,                         // clanking footsteps
-	NOSTEPS:     0x2000,                         // no footstep sounds
-	NONSOLID:    0x4000,                         // don't collide against curves with this set
-	LIGHTFILTER: 0x8000,                         // act as a light filter during q3map -light
-	ALPHASHADOW: 0x10000,                        // do per-pixel light shadow casting in q3map
-	NODLIGHT:    0x20000,                        // don't dlight even if solid (solid lava, skies)
-	DUST:        0x40000                         // leave a dust trail when walking on this surface
-};
-
-var CONTENTS = {
-	SOLID:         1,                                      // an eye is never valid in a solid
-	LAVA:          8,
-	SLIME:         16,
-	WATER:         32,
-	FOG:           64,
-
-	NOTTEAM1:      0x0080,
-	NOTTEAM2:      0x0100,
-	NOBOTCLIP:     0x0200,
-
-	AREAPORTAL:    0x8000,
-
-	PLAYERCLIP:    0x10000,
-	MONSTERCLIP:   0x20000,
-	TELEPORTER:    0x40000,
-	JUMPPAD:       0x80000,
-	CLUSTERPORTAL: 0x100000,
-	DONOTENTER:    0x200000,
-	BOTCLIP:       0x400000,
-	MOVER:         0x800000,
-
-	ORIGIN:        0x1000000,                              // removed before bsping an entity
-
-	BODY:          0x2000000,                              // should never be on a brush, only in game
-	CORPSE:        0x4000000,
-	DETAIL:        0x8000000,                              // brushes not used for the bsp
-	STRUCTURAL:    0x10000000,                             // brushes used for the bsp
-	TRANSLUCENT:   0x20000000,                             // don't consume surface fragments inside
-	TRIGGER:       0x40000000,
-	NODROP:        0x80000000                              // don't leave bodies or items (death fog, lava)
-};
-	var MAX_MAP_AREA_BYTES = 32;                              // bit vector of area visibility
-
-/**
- * System events
- */
-var SE = {
-	CLMSG:       0,
-	SVMSG:       1,
-	SVSOCKCLOSE: 2,
-	KEY:         3,
-	MOUSE:       4
-};
-
-/**
- * Networking
- */
-var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
-                                                           // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
-var MAX_MSGLEN            = 16384;
-
-var CLM = {
-	bad:           0,
-	move:          1,                                      // [[UserCmd]
-	moveNoDelta:   2,                                      // [[UserCmd]
-	clientCommand: 3,                                      // [string] message
-	EOF:           4
-};
-
-var SVM = {
-	bad:            0,
-	gamestate:      1,
-	configstring:   2,                                     // [short] [string] only in gamestate messages
-	baseline:       3,                                     // only in gamestate messages
-	serverCommand:  4,                                     // [string] to be executed by client game module
-	snapshot:       5,
-	EOF:            6
-};
+['underscore', 'common/sh', 'common/com'],
+function (_, sh, com) {
+	// Use the following namespaces.
+	var using = _.extend({},
+		sh.constants,
+		com.enums
+	);
+	for (var key in using) {
+		if (using.hasOwnProperty(key)) {
+			eval('var ' + key + ' = using[key];');
+		}
+	}
 	
 	var KbLocals = {
 	'us': {
@@ -45960,7 +44946,7 @@ function Init() {
 	window.addEventListener('resize', ResizeViewport);
 
 	InputInit();
-	com.Init(sysinterface, false);
+	com.Init(GetExports(), false);
 
 	// Provide the user a way to interface with the client.
 	window.$ = function (str) {
@@ -46036,6 +45022,22 @@ function GetMilliseconds() {
 	} else {
 		return Date.now();
 	}
+}
+
+/**
+ * GetExports
+ */
+function GetExports() {
+	return {
+		GetMilliseconds:    GetMilliseconds,
+		ReadFile:           ReadFile,
+		GetGLContext:       GetGLContext,
+		GetUIContext:       GetUIContext,
+		NetCreateServer:    NetCreateServer,
+		NetConnectToServer: NetConnectToServer,
+		NetSend:            NetSend,
+		NetClose:           NetClose
+	};
 }
 	var localFs;
 var localWhitelist = [
@@ -46358,18 +45360,6 @@ function NetSend(socket, buffer, length) {
 function NetClose(socket) {
 	socket.close();
 }
-
-	var sysinterface = {
-		GetMilliseconds:      GetMilliseconds,
-		ReadFile:             ReadFile,
-		WriteFile:            WriteFile,
-		GetGLContext: GetGLContext,
-		GetUIContext:   GetUIContext,
-		NetCreateServer:      NetCreateServer,
-		NetConnectToServer:   NetConnectToServer,
-		NetSend:              NetSend,
-		NetClose:             NetClose
-	};
 	
 	return {
 		Init: Init
