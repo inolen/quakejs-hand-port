@@ -1,5 +1,5 @@
 <div class="background fullscreen">
-	<div class="dialog abscenter">
+	<div class="dialog centerx centery">
 		<div class="form-horizontal">
 			<h3>Settings</h3>
 			<div class="name control-group">

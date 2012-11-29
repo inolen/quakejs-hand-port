@@ -1,4 +1,4 @@
-<div class="crosshair abscenter" data-image="gfx/2d/crosshaira"></div>
+<div class="crosshair centerx centery" data-image="gfx/2d/crosshaira"></div>
 
 <div class="fps-wrapper">
 	<span class="fps"><%- fps %></span> FPS
