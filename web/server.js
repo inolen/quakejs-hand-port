@@ -4,6 +4,7 @@ var express = require('express'),
 	path = require('path');
 
 var arguments = process.argv.splice(2);
+var gameRoot = path.normalize(__dirname + '/../game');
 
 // Used by the build process.
 if (arguments.length == 2 && arguments[0] === '--processScript') {
@@ -16,10 +17,13 @@ function processScript(scriptname) {
 	var scriptdir = path.dirname(scriptname);
 	var text = fs.readFileSync(scriptname, 'utf8');
 
+	// console.log('Processing', scriptname);
+
 	// Replace includes.
 	text = text.replace(/(["'\{]{2,})\s+include\s+(.+?)\s+(["'\}]{2,})/g, function(match, open, filename, close) {
 		// Process nested includes.
-		var contents = processScript(scriptdir + '/' + filename);
+		var includename = path.normalize(scriptdir + '/' + filename);
+		var contents = processScript(includename);
 
 		// Check to see if the include is being used as a string.
 		if ((open.charAt(0) === "'" && close.charAt(close.length-1) === "'") || 
@@ -35,12 +39,6 @@ function processScript(scriptname) {
 	return text;
 }
 
-function expressScript(req, res, next) {
-	var scriptname = path.normalize(__dirname + req.url);
-	var text = processScript(scriptname);
-	res.send(text);
-}
-
 function main() {
 	var app = express();
 	var server = http.createServer(app);
@@ -50,9 +48,19 @@ function main() {
 			return /json|text|javascript|octet-stream/.test(res.getHeader('Content-Type'));
 		}
 	}));
+
+	// Static files for the web project.
 	app.use(express.static(__dirname + '/public', { maxAge: 86400000 }));
-	app.use('/bin', express.static(__dirname + '/bin'));
-	app.get('*.js', expressScript);
+
+	// Pre-compiled JS files.
+	app.use('/bin', express.static(gameRoot + '/bin'));
+
+	// Source JS files that need to be processed.
+	app.get('/lib/*.js', function (req, res, next) {
+		var scriptname = path.normalize(gameRoot + req.url);
+		var text = processScript(scriptname);
+		res.send(text);
+	});
 
 	server.listen(9000);
 	

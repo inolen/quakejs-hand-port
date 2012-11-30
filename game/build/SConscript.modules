@@ -10,7 +10,7 @@ BUILD_SRC_DIR = BUILD_DIR + '/tmp'
 def src_to_build(path):
 	return path.replace(SRC_DIR, BUILD_SRC_DIR)
 
-ExpandIncludes = Builder(action = 'node ../server.js --processScript $SOURCE > $TARGET')
+ExpandIncludes = Builder(action = 'node ../../web/server.js --processScript $SOURCE > $TARGET')
 env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
 
 RequireOpt = Builder(action = 'node r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
