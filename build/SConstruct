@@ -1,8 +1,6 @@
 import os, fnmatch
 
-#
 # Recursive glob
-#
 def rglob(root, pattern, ondisk=True, source=True, strings=False):
 	results = []
 	for base, dirnames, filenames in os.walk(root):

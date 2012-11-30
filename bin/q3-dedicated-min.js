@@ -11730,12 +11730,43 @@ function SpawnItem(ent, item) {
 	ent.nextthink = level.time + FRAMETIME * 2;
 	ent.think = FinishSpawningItem;
 	
-	//ent.physicsBounce = 0.50;		// items are bouncy
+	ent.physicsBounce = 0.5;		// items are bouncy
 	
 	/*if (item.giType == IT_POWERUP ) {
 		G_SoundIndex( "sound/items/poweruprespawn.wav" );
 		G_SpawnFloat( "noglobalsound", "0", &ent->speed);
 	}*/
+}
+
+/**
+ * BounceItem
+ */
+function BounceItem (ent, trace) {
+	var velocity;
+	var dot;
+	var hitTime;
+	
+	// reflect the velocity on the trace plane
+// 	hitTime = level.previousTime + (level.time - level.previousTime) * trace.fraction;
+// 	bg.EvaluateTrajectoryDelta(ent.s.pos, hitTime, velocity);
+// 	dot = DotProduct( velocity, trace->plane.normal );
+// 	VectorMA(velocity, -2 * dot, trace.plane.normal, ent.s.pos.trDelta);
+// 	
+// 	// cut the velocity to keep from bouncing forever
+// 	vec3.scale( ent.s.pos.trDelta, ent.physicsBounce, ent.s.pos.trDelta );
+// 	
+// 	// check for stop
+// 	if ( trace.plane.normal[2] > 0 && ent->s.pos.trDelta[2] < 40 ) {
+// 		trace.endPos[2] += 1.0;	// make sure it is off ground
+// 		SnapVector( trace.endPos );
+// 		G_SetOrigin( ent, trace.endPos );
+// 		ent.s.groundEntityNum = trace.entityNum;
+// 		return;
+// 	}
+// 	
+// 	vec3.add( ent.r.currentOrigin, trace.plane.normal, ent.r.currentOrigin);
+// 	vec3.copy( ent.r.currentOrigin, ent.s.pos.trBase );
+// 	ent.s.pos.trTime = level.time;
 }
 
 /**
@@ -15381,7 +15412,46 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 
 	return true;
 }
-		/*********************************************************************
+		
+/*
+ * PointLeafnum_r
+ */
+// function PointLeafnum_r(p, num) {
+// 	var d;
+// 	var node;
+// 	var plane;
+// 	
+// 	while (num >= 0)
+// 	{
+// 		node = cm.nodes + num;
+// 		plane = node.plane;
+// 		
+// 		if (plane.type < 3) {
+// 			d = p[plane.type] - plane.dist;
+// 		} else {
+// 			d = vec3.dot(plane.normal, p) - plane.dist;
+// 		}
+// 		
+// 		if (d < 0) {
+// 			num = node.children[1];
+// 		} else {
+// 			num = node.children[0];
+// 		}
+// 	}
+// 	
+// // 	c_pointcontents++;		// optimize counter
+// 	
+// 	return (-1) - num;
+// }
+// 
+// function PointLeafnum(p) {
+// 	if (!cm.numNodes) {	// map not loaded
+// 		return 0;
+// 	}
+// 	return PointLeafnum_r(p, 0);
+// }
+
+/*********************************************************************
  *
  * LEAF LISTING
  *
@@ -15416,6 +15486,63 @@ function BoxLeafnums_r(ll, mins, maxs, nodenum) {
 		}
 	}
 }
+
+
+/********************************************************************/
+
+
+/**
+ * CM_PointContents
+ */
+function PointContents(p, model) {
+	var leafnum;
+	var i, k;
+	var brushnum;
+	var leaf;
+	var b;
+	var contents;
+	var d;
+	var clipm;
+	
+// 	if (!cm.numNodes) {	// map not loaded
+// 		return 0;
+// 	}
+// 	
+// 	if (model) {
+// 		clipm = CM_ClipHandleToModel( model );
+// 		leaf = clipm.leaf;
+// 	} else {
+// 		leafnum = PointLeafnum_r(p, 0);
+// 		leaf = cm.leafs[leafnum];
+// 	}
+// 	
+// 	contents = 0;
+// 	for (k = 0; k < leaf.numLeafBrushes; k++) {
+// 		brushnum = cm.leafbrushes[leaf.firstLeafBrush + k];
+// 		b = cm.brushes[brushnum];
+// 		
+// 		if (!CM_BoundsIntersectPoint(b.bounds[0], b.bounds[1], p)) {
+// 			continue;
+// 		}
+// 		
+// 		// see if the point is in the brush
+// 		for (i = 0; i < b.numsides; i++) {
+// 			d = vec3.dot(p, b.sides[i].plane.normal);
+// // FIXME test for Cash
+// //			if ( d >= b->sides[i].plane->dist ) {
+// 			if ( d > b.sides[i].plane.dist ) {
+// 				break;
+// 			}
+// 		}
+// 		
+// 		if (i == b.numsides) {
+// 			contents |= b.contents;
+// 		}
+// 	}
+	
+	return contents;
+}
+
 		/**
  * TransposeMatrix
  */
@@ -15941,7 +16068,15 @@ function Trace(start, end, mins, maxs, model, origin, brushmask, capsule, sphere
 		cm.checkcount = 0;
 	}
 	cm.checkcount++;  // for multi-check avoidance
-
+	
+	// Allow NULL to be passed in for 0,0,0.
+	if (!mins) {
+		mins = [0, 0, 0];
+	}
+	if (!maxs) {
+		maxs = [0, 0, 0];
+	}
+	
 	// Set basic parms.
 	tw.contents = brushmask;
 
@@ -16102,14 +16237,13 @@ function BoxTrace(start, end, mins, maxs, model, brushmask, capsule ) {
  * TransformedBoxTrace
  *
  * Handles offseting and rotation of the end points for moving and
- * rotating entities
+ * rotating entities.
  */
 function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, angles, capsule) {
-	if (typeof(mins) === 'undefined') {
+	if (!mins) {
 		mins = [0, 0, 0];
 	}
-	
-	if (typeof(maxs) === 'undefined') {
+	if (!maxs) {
 		maxs = [0, 0, 0];
 	}
 
@@ -16199,6 +16333,7 @@ function TransformedBoxTrace(start, end, mins, maxs, model, brushmask, origin, a
 
 	return trace;
 }
+
 
 		return {
 			LoadMap:               LoadMap,
@@ -19173,6 +19308,7 @@ function GetExports() {
 	return {
 		GetMilliseconds:    GetMilliseconds,
 		ReadFile:           ReadFile,
+		WriteFile:          WriteFile,
 		GetGLContext:       GetGLContext,
 		GetUIContext:       GetUIContext,
 		NetCreateServer:    NetCreateServer,

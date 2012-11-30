@@ -3,42 +3,36 @@ import os, fnmatch
 env = Environment()
 Import('rglob')
 
-SRC_DIR = 'lib/'
-BUILD_DIR = 'bin/'
-BUILD_SRC_DIR = BUILD_DIR + 'tmp/'
+SRC_DIR = os.path.abspath('../lib')
+BUILD_DIR = os.path.abspath('../bin')
+BUILD_SRC_DIR = BUILD_DIR + '/tmp'
 
 def src_to_build(path):
 	return path.replace(SRC_DIR, BUILD_SRC_DIR)
 
-ExpandIncludes = Builder(action = "node server.js --processScript $SOURCE > $TARGET")
+ExpandIncludes = Builder(action = 'node ../server.js --processScript $SOURCE > $TARGET')
 env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
 
 RequireOpt = Builder(action = 'node r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
 env['BUILDERS']['RequireOpt'] = RequireOpt
 
-#
 # Preprocess JS
-#
 all_js = rglob(SRC_DIR, '*.js', True, True, True)
 processed_js = [env.ExpandIncludes(src_to_build(x), x) for x in all_js]
 env.AlwaysBuild(processed_js)
 
-#
 # Browser
-#
 browser = env.RequireOpt(
-	BUILD_DIR + 'q3-browser-min.js',
+	BUILD_DIR + '/q3-browser-min.js',
 	processed_js,
 	BASE_DIR=BUILD_SRC_DIR,
 	R_SCRIPT='browser.build.js',
 	R_NAME='system/browser/sys')
 env.Alias('browser', browser)
 
-#
 # Dedicated
-#
 dedicated = env.RequireOpt(
-	BUILD_DIR + 'q3-dedicated-min.js',
+	BUILD_DIR + '/q3-dedicated-min.js',
 	processed_js,
 	BASE_DIR=BUILD_SRC_DIR,
 	R_SCRIPT='dedicated.build.js',
