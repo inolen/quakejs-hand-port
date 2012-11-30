@@ -1,58 +1,18 @@
 /**
- * BuildWorldBuffers
+ * CompileWorldSurfaces
+ *
+ * We go ahead and group world faces by shader (just as the render loop
+ * would) and pre-compile the render buffers since this geometry is
+ * going to stay static.
  */
-function BuildWorldBuffers() {
+function CompileWorldSurfaces() {
 	var world = re.world;
 	var faces = world.faces;
 	var verts = world.verts;
 	var meshVerts = world.meshVerts;
 
-	// 
-	// Setup vertex buffers.
-	//
-	var buffers    = backend.worldBuffers = {};
-	var xyz        = buffers.xyz          = CreateBuffer('float32', 3, verts.length);
-	var normal     = buffers.normal       = CreateBuffer('float32', 3, verts.length);
-	var texCoord   = buffers.texCoord     = CreateBuffer('float32', 2, verts.length);
-	var lightCoord = buffers.lightCoord   = CreateBuffer('float32', 2, verts.length);
-	var color      = buffers.color        = CreateBuffer('float32', 4, verts.length);
-
-	for (var i = 0; i < verts.length; i++) {
-		var vert = verts[i];
-
-		xyz.data[xyz.offset++] = vert.pos[0];
-		xyz.data[xyz.offset++] = vert.pos[1];
-		xyz.data[xyz.offset++] = vert.pos[2];
-
-		normal.data[normal.offset++] = vert.normal[0];
-		normal.data[normal.offset++] = vert.normal[1];
-		normal.data[normal.offset++] = vert.normal[2];
-
-		texCoord.data[texCoord.offset++] = vert.texCoord[0];
-		texCoord.data[texCoord.offset++] = vert.texCoord[1];
-
-		lightCoord.data[lightCoord.offset++] = vert.lmCoord[0];
-		lightCoord.data[lightCoord.offset++] = vert.lmCoord[1];
-
-		color.data[color.offset++] = vert.color[0];
-		color.data[color.offset++] = vert.color[1];
-		color.data[color.offset++] = vert.color[2];
-		color.data[color.offset++] = vert.color[3];
-	}
-
-	xyz.modified = true;
-	normal.modified = true;
-	texCoord.modified = true;
-	lightCoord.modified = true;
-	color.modified = true;
-
-	//
-	// For the world data, we go ahead and group faces by shader (just as the render loop
-	// would) in order to avoid uploading a new index buffer each frame.
-	//
-	world.rsurfs = [];
-
-	var numIndexes = 0;
+	// Groups faces by shader.
+	world.compiledFaces = [];
 
 	for (var i = 0; i < faces.length; i++) {
 		var face = faces[i];
@@ -65,69 +25,75 @@ function BuildWorldBuffers() {
 		}
 
 		var shader = face.shader;
-		var rsurf = world.rsurfs[shader.index];
+		var compiled = world.compiledFaces[shader.index];
 
-		if (!rsurf) {
-			rsurf = world.rsurfs[shader.index] = new WorldSurface();
-			rsurf.shader = shader;
+		if (!compiled) {
+			compiled = world.compiledFaces[shader.index] = new CompiledSurface();
+			compiled.shader = shader;
 		}
 
-		// Link the face to the rsurf.
-		face.rsurf = rsurf;
+		// Link the actual face to the group for vis checks.
+		face.compiled = compiled;
 
-		// Push the face to the temp buffer so we can create
-		// an index buffer;
-		rsurf.faces.push(face);
-
-		numIndexes += face.meshVertCount;
+		compiled.numVerts += face.vertCount;
+		compiled.numIndexes += face.meshVertCount;
+		compiled.faces.push(face);
 	}
 
-	//
-	// Create the pre-sorted index buffer.
-	//
-	var index = buffers.index = CreateBuffer('uint16', 1, numIndexes, true);
+	// For each group of faces, create render buffers for the
+	// composite compiled surface.
+	var originalCmd = backend.tess;
 
-	for (var i = 0; i < world.rsurfs.length; i++) {
-		var rsurf = world.rsurfs[i];
-		if (!rsurf) {
+	for (var i = 0; i < world.compiledFaces.length; i++) {
+		var tessd = world.compiledFaces[i];
+		if (!tessd) {
 			continue;
 		}
 
-		rsurf.indexOffset = index.elementCount;
+		var xyz        = tessd.cmd.xyz        = CreateBuffer('float32', 3, tessd.numVerts);
+		var normal     = tessd.cmd.normal     = CreateBuffer('float32', 3, tessd.numVerts);
+		var texCoord   = tessd.cmd.texCoord   = CreateBuffer('float32', 2, tessd.numVerts);
+		var lightCoord = tessd.cmd.lightCoord = CreateBuffer('float32', 2, tessd.numVerts);
+		var color      = tessd.cmd.color      = CreateBuffer('float32', 4, tessd.numVerts);
+		var index      = tessd.cmd.index      = CreateBuffer('uint16',  1, tessd.numIndexes, true);
 
-		for (var j = 0; j < rsurf.faces.length; j++) {
-			var face = rsurf.faces[j];
+		// Overwrite the current backend cmd so TesselateFace
+		// writes to us.
+		backend.tess = tessd.cmd;
 
-			for (var k = 0; k < face.meshVertCount; k++) {
-				index.data[index.offset++] = face.vertex + meshVerts[face.meshVert + k];
-			}
-
-			rsurf.elementCount += face.meshVertCount;
+		tessd.cmd.indexOffset = index.elementCount;
+		for (var j = 0; j < tessd.faces.length; j++) {
+			TesselateFace(tessd.faces[j]);
 		}
+		tessd.cmd.elementCount = index.elementCount - tessd.cmd.indexOffset;
 
-		// Don't need this in memory anymore.
-		rsurf.faces = null;
+		xyz.modified = true;
+		normal.modified = true;
+		texCoord.modified = true;
+		lightCoord.modified = true;
+		color.modified = true;
+		index.modified = true;
+
+		LockBuffer(xyz);
+		LockBuffer(normal);
+		LockBuffer(texCoord);
+		LockBuffer(lightCoord);
+		LockBuffer(color);
+		LockBuffer(index);
 	}
 
-	index.modified = true;
+	backend.tess = originalCmd;
 
-	LockBuffer(index);
-	LockBuffer(xyz);
-	LockBuffer(normal);
-	LockBuffer(texCoord);
-	LockBuffer(lightCoord);
-	LockBuffer(color);
-
-	// We no longer need the vert info, let's free up ~8mb of memory.
-	re.world.verts = null;
-	re.world.meshVerts = null;
+	// We no longer need the vert info, let's free up the memory.
+	world.verts = null;
+	world.meshVerts = null;
 }
 
 /**
  * BuildCollisionBuffers
  */
 function BuildCollisionBuffers() {
-	var buffers = backend.cmBuffers = {
+	var buffers = backend.collisionBuffers = {
 		index: CreateBuffer('uint16',  1, 0xFFFF, true),
 		xyz:   CreateBuffer('float32', 3, 0xFFFF)
 	};
@@ -402,20 +368,20 @@ function AddWorldSurface(face/*, dlightBits*/) {
 		return;
 	}
 
-	if (face.rsurf.viewCount === re.viewCount) {
+	if (face.compiled.viewCount === re.viewCount) {
 		return;  // already in this view
 	}
 
+	// Try to cull before dlighting or adding.
 	// TODO Probably shouldn't cull world surfaces as they're
 	// grouped by shader and checking this when we're going batch
 	// render if only one is visible probably isn't efficient.
-	// Try to cull before dlighting or adding.
 	if (CullSurface(face, face.shader)) {
 		re.counts.culledFaces++;
 		return;
 	}
 
-	face.rsurf.viewCount = re.viewCount;
+	face.compiled.viewCount = re.viewCount;
 
 	// check for dlighting
 	/*if (dlightBits ) {
@@ -423,7 +389,7 @@ function AddWorldSurface(face/*, dlightBits*/) {
 		dlightBits = (dlightBits !== 0);
 	}*/
 
-	AddDrawSurf(face.rsurf, face.shader, ENTITYNUM_WORLD);
+	AddDrawSurf(face.compiled, face.compiled.shader, ENTITYNUM_WORLD);
 }
 
 /**

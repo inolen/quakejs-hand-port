@@ -5,85 +5,109 @@
  * meaning this function will only ever be called once
  * before EndSurface().
  */
-function TesselateFace(worldSurface) {
+function TesselateFace(face) {
 	var tess = backend.tess;
+	var xyz = tess.xyz;
+	var normal = tess.normal;
+	var texCoord = tess.texCoord;
+	var lightCoord = tess.lightCoord;
+	var color = tess.color;
+	var index = tess.index;
+	var verts = re.world.verts;
+	var meshVerts = re.world.meshVerts;
+	var xyzOffset = xyz.elementCount;
 
-	tess.numIndexes = worldSurface.elementCount;
-	tess.indexOffset = worldSurface.indexOffset;
+	for (var i = 0; i < face.vertCount; i++) {
+		var vert = verts[face.vertex + i];
 
-	tess.index = backend.worldBuffers.index;
-	tess.xyz = backend.worldBuffers.xyz;
-	tess.normal = backend.worldBuffers.normal;
-	tess.texCoord = backend.worldBuffers.texCoord;
-	tess.lightCoord = backend.worldBuffers.lightCoord;
-	tess.color = backend.worldBuffers.color;
+		xyz.data[xyz.offset++] = vert.pos[0];
+		xyz.data[xyz.offset++] = vert.pos[1];
+		xyz.data[xyz.offset++] = vert.pos[2];
+
+		normal.data[normal.offset++] = vert.normal[0];
+		normal.data[normal.offset++] = vert.normal[1];
+		normal.data[normal.offset++] = vert.normal[2];
+
+		texCoord.data[texCoord.offset++] = vert.texCoord[0];
+		texCoord.data[texCoord.offset++] = vert.texCoord[1];
+
+		lightCoord.data[lightCoord.offset++] = vert.lmCoord[0];
+		lightCoord.data[lightCoord.offset++] = vert.lmCoord[1];
+
+		color.data[color.offset++] = vert.color[0];
+		color.data[color.offset++] = vert.color[1];
+		color.data[color.offset++] = vert.color[2];
+		color.data[color.offset++] = vert.color[3];
+	}
+
+	for (var k = 0; k < face.meshVertCount; k++) {
+		index.data[index.offset++] = xyzOffset + meshVerts[face.meshVert + k];
+	}
+}
+
+/**
+ * TesselateCompiledFac
+ */
+function TesselateCompiledFace(compiled) {
+	var tess = backend.tess;
+	var cmd = compiled.cmd;
+
+	// Overwrite default buffers.
+	tess.xyz = cmd.xyz;
+	tess.normal = cmd.normal;
+	tess.texCoord = cmd.texCoord;
+	tess.lightCoord = cmd.lightCoord;
+	tess.color = cmd.color;
+	tess.index = cmd.index;
+	tess.indexOffset = cmd.indexOffset;
+	tess.elementCount = cmd.elementCount;
 }
 
 /**
  * TesselateMd3
- * 
- * Single-frame (static) models are pushed to the backend.modelBuffers
- * array on load. Since the same md3 surface is never be rendered twice
- * for the same entity, we can assume that this function will only be called
- * once before EndSurface().
+ *
+ * This is called by both the backend, and the model code
+ * when caching single-frame models. For that reason, refent
+ * may not be valid, and in that case, we can assume this is
+ * a single-frame model being precompiled.
  */
 function TesselateMd3(face) {
 	var tess = backend.tess;
 	var refent = backend.currentEntity;
-	var backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
-	var numVerts = face.header.numVerts;
+	var precompiling = !refent;
 	var oldXyz = [0, 0, 0];
 	var newXyz = [0, 0, 0];
 	var oldNormal = [0, 0, 0];
 	var newNormal = [0, 0, 0];
 	var newColor = [0, 0, 0, 0];
-	var xyz;
-	var normal;
-	var texCoord;
-	var color;
-	var index;
 
 	//
-	// If this model is in the static buffer array, let's make this fast.
+	// Update the scratch vertex buffers.
 	//
-	if (face.elementCount !== 0) {
-		xyz = backend.modelBuffers.xyz;
-		normal = backend.modelBuffers.normal;
-		texCoord = backend.modelBuffers.texCoord;
-		color = backend.modelBuffers.color;
-		index = backend.modelBuffers.index;
+	var xyz = tess.xyz;
+	var normal = tess.normal;
+	var texCoord = tess.texCoord;
+	var color = tess.color;
+	var index = tess.index;
 
-		// We always have to update the color buffer.
-		color.offset = face.colorOffset;
+	var numVerts = face.header.numVerts;
+	var backlerp = 0;
+	if (!precompiling) {
+		backlerp = refent.oldFrame === refent.frame ? 0 : refent.backlerp;
+	}
+	var xyzOffset = xyz.elementCount;
+	var oldXyzNormal;
+	var newXyzNormal;
 
-		for (var i = 0; i < numVerts; i++) {
-			var xyzNormal = face.xyzNormals[i];
-			CalcDiffuseColor(refent, xyzNormal.normal, newColor);
+	for (var i = 0; i < numVerts; i++) {
+		if (precompiling) {
+			newXyzNormal = face.xyzNormals[i];
 
-			color.data[color.offset++] = newColor[0];
-			color.data[color.offset++] = newColor[1];
-			color.data[color.offset++] = newColor[2];
-			color.data[color.offset++] = newColor[3];
-		}
-
-		color.modified = true;
-
-		tess.numIndexes = face.elementCount;
-		tess.indexOffset = face.indexOffset;
-	} else {
-		//
-		// Update the scratch vertex buffers.
-		//
-		xyz = backend.scratchBuffers.xyz;
-		normal = backend.scratchBuffers.normal;
-		texCoord = backend.scratchBuffers.texCoord;
-		color = backend.scratchBuffers.color;
-
-		var indexOffset = xyz.elementCount;
-
-		for (var i = 0; i < numVerts; i++) {
-			var oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
-			var newXyzNormal = face.xyzNormals[refent.frame * numVerts + i];
+			vec3.set(newXyzNormal.xyz, newXyz);
+			vec3.set(newXyzNormal.normal, newNormal);
+		} else {
+			oldXyzNormal = face.xyzNormals[refent.oldFrame * numVerts + i];
+			newXyzNormal = face.xyzNormals[refent.frame * numVerts + i];
 
 			// Lerp xyz / normal.
 			vec3.set(oldXyzNormal.xyz, oldXyz);
@@ -99,51 +123,83 @@ function TesselateMd3(face) {
 				}
 			}
 
-			// 
 			CalcDiffuseColor(refent, newNormal, newColor);
-
-			xyz.data[xyz.offset++] = newXyz[0];
-			xyz.data[xyz.offset++] = newXyz[1];
-			xyz.data[xyz.offset++] = newXyz[2];
-
-			normal.data[normal.offset++] = newNormal[0];
-			normal.data[normal.offset++] = newNormal[1];
-			normal.data[normal.offset++] = newNormal[2];
-
-			texCoord.data[texCoord.offset++] = face.st[i].st[0];
-			texCoord.data[texCoord.offset++] = face.st[i].st[1];
-
-			color.data[color.offset++] = newColor[0];
-			color.data[color.offset++] = newColor[1];
-			color.data[color.offset++] = newColor[2];
-			color.data[color.offset++] = newColor[3];
 		}
 
-		//
-		// Update the scratch index buffer.
-		//
-		index = backend.scratchBuffers.index;
+		xyz.data[xyz.offset++] = newXyz[0];
+		xyz.data[xyz.offset++] = newXyz[1];
+		xyz.data[xyz.offset++] = newXyz[2];
 
-		for (var i = 0; i < face.triangles.length; i++) {
-			var tri = face.triangles[i];
+		normal.data[normal.offset++] = newNormal[0];
+		normal.data[normal.offset++] = newNormal[1];
+		normal.data[normal.offset++] = newNormal[2];
 
-			index.data[index.offset++] = indexOffset + tri.indexes[0];
-			index.data[index.offset++] = indexOffset + tri.indexes[1];
-			index.data[index.offset++] = indexOffset + tri.indexes[2];
-		}
+		texCoord.data[texCoord.offset++] = face.st[i].st[0];
+		texCoord.data[texCoord.offset++] = face.st[i].st[1];
 
-		xyz.modified = true;
-		normal.modified = true;
-		texCoord.modified = true;
-		color.modified = true;
-		index.modified = true;
+		color.data[color.offset++] = newColor[0];
+		color.data[color.offset++] = newColor[1];
+		color.data[color.offset++] = newColor[2];
+		color.data[color.offset++] = newColor[3];
 	}
 
-	tess.xyz = xyz;
-	tess.normal = normal;
-	tess.texCoord = texCoord;
-	tess.color = color;
-	tess.index = index;
+	//
+	// Update the scratch index buffer.
+	//
+	for (var i = 0; i < face.triangles.length; i++) {
+		var tri = face.triangles[i];
+
+		index.data[index.offset++] = xyzOffset + tri.indexes[0];
+		index.data[index.offset++] = xyzOffset + tri.indexes[1];
+		index.data[index.offset++] = xyzOffset + tri.indexes[2];
+	}
+
+	xyz.modified = true;
+	normal.modified = true;
+	texCoord.modified = true;
+	color.modified = true;
+	index.modified = true;
+}
+
+/**
+ * TesselateCompiledMd3
+ */
+function TesselateCompiledMd3(compiled) {
+	var tess = backend.tess;
+	var refent = backend.currentEntity;
+	var cmd = compiled.cmd;
+
+	// Overwrite default buffers.
+	tess.xyz = cmd.xyz;
+	tess.normal = cmd.normal;
+	tess.texCoord = cmd.texCoord;
+	tess.color = cmd.color;
+	tess.index = cmd.index;
+	tess.indexOffset = cmd.indexOffset;
+	tess.elementCount = cmd.elementCount;
+
+	var color = tess.color;
+	var newColor = [0, 0, 0, 0];
+	var numVerts = compiled.header.numVerts;
+
+	// Use the original color offset so we match up with the index buffer.
+	var offset = compiled.colorOffset;
+
+	for (var i = 0; i < numVerts; i++) {
+		var xyzNormal = compiled.xyzNormals[i];
+		CalcDiffuseColor(refent, xyzNormal.normal, newColor);
+		color.data[offset++] = newColor[0];
+		color.data[offset++] = newColor[1];
+		color.data[offset++] = newColor[2];
+		color.data[offset++] = newColor[3];
+	}
+
+	// Update the buffer's internal offset to grow it if necessary.
+	if (offset > color.offset) {
+		color.offset = offset;
+	}
+
+	color.modified = true;
 }
 
 /**
@@ -205,11 +261,6 @@ function TesselatePoly() {
 	xyz.modified = true;
 	texCoord.modified = true;
 	color.modified = true;
-
-	tess.index = backend.scratchBuffers.index;
-	tess.xyz = backend.scratchBuffers.xyz;
-	tess.texCoord = backend.scratchBuffers.texCoord;
-	tess.color = backend.scratchBuffers.color;
 }
 
 /**
@@ -243,12 +294,6 @@ function TesselateSprite() {
 	// }
 
 	AddQuadStamp(refent.origin, left, up, refent.shaderRGBA);
-
-	tess.index = backend.scratchBuffers.index;
-	tess.xyz = backend.scratchBuffers.xyz;
-	tess.normal = backend.scratchBuffers.normal;
-	tess.texCoord = backend.scratchBuffers.texCoord;
-	tess.color = backend.scratchBuffers.color;
 }
 
 /**
@@ -270,12 +315,6 @@ function TesselateRailCore() {
 	vec3.normalize(right);
 
 	DoRailCore(start, end, right, r_railCoreWidth(), refent.shaderRGBA);
-
-	tess.index = backend.scratchBuffers.index;
-	tess.xyz = backend.scratchBuffers.xyz;
-	tess.normal = backend.scratchBuffers.normal;
-	tess.texCoord = backend.scratchBuffers.texCoord;
-	tess.color = backend.scratchBuffers.color;
 }
 
 function DoRailCore(start, end, right, spanWidth, modulate) {
@@ -326,13 +365,13 @@ function DoRailCore(start, end, right, spanWidth, modulate) {
 	// tess.vertexColors[tess.numVertexes][2] = backEnd.currentEntity->e.shaderRGBA[2];
 	// tess.numVertexes++;
 
-	// tess.indexes[tess.numIndexes++] = vbase;
-	// tess.indexes[tess.numIndexes++] = vbase + 1;
-	// tess.indexes[tess.numIndexes++] = vbase + 2;
+	// tess.indexes[tess.elementCount++] = vbase;
+	// tess.indexes[tess.elementCount++] = vbase + 1;
+	// tess.indexes[tess.elementCount++] = vbase + 2;
 
-	// tess.indexes[tess.numIndexes++] = vbase + 2;
-	// tess.indexes[tess.numIndexes++] = vbase + 1;
-	// tess.indexes[tess.numIndexes++] = vbase + 3;
+	// tess.indexes[tess.elementCount++] = vbase + 2;
+	// tess.indexes[tess.elementCount++] = vbase + 1;
+	// tess.indexes[tess.elementCount++] = vbase + 3;
 }
 
 

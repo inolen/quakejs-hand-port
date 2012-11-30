@@ -90,6 +90,8 @@ var WorldData = function () {
 	this.name                 = null;
 	this.path                 = null;
 
+	this.compiledFaces        = null;
+
 	this.lightmaps            = null;
 	this.shaders              = null;
 	this.verts                = null;
@@ -99,9 +101,6 @@ var WorldData = function () {
 	this.leafSurfaces         = null;
 	this.nodes                = null;
 	this.leafs                = null;
-	// We group all surfaces by shader to
-	// help speed up rendering.
-	this.rsurfs               = null;
 	
 	this.numClusters          = 0;
 	this.clusterBytes         = 0;
@@ -332,6 +331,27 @@ RefEntity.prototype.clone = function (refent) {
 	return refent;
 };
 
+var PolyVert = function () {
+	this.xyz      = [0, 0, 0];
+	this.st       = [0, 0];
+	this.modulate = [0, 0, 0, 0];
+};
+PolyVert.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new PolyVert();
+	}
+
+	vec3.set(this.xyz, to.xyz);
+	to.st[0] = this.st[0];
+	to.st[1] = this.st[1];
+	to.modulate[0] = this.modulate[0];
+	to.modulate[1] = this.modulate[1];
+	to.modulate[2] = this.modulate[2];
+	to.modulate[3] = this.modulate[3];
+
+	return to;
+};
+
 /**
  * BackendState
  */
@@ -349,11 +369,11 @@ var BackendState = function () {
 
 	// Static buffer optimizations.
 	this.worldBuffers       = null;
-	this.cmBuffers          = null;
+	this.collisionBuffers   = null;
 	this.modelBuffers       = null;
 
 	// Shader commands for the current frame
-	this.tess              = new ShaderCommands();
+	this.tess              = new ShaderCommand();
 	this.tessFns           = {};
 
 	// Actual data used by the backend for rendering.
@@ -369,21 +389,18 @@ var BackendState = function () {
 	}
 };
 
-var ShaderCommands = function () {
-	this.shader     = null;
-	this.shaderTime = 0;
+var ShaderCommand = function () {
+	this.shader       = null;
+	this.shaderTime   = 0;
+	this.indexOffset  = 0;
+	this.elementCount = 0;
 
-	// Used by static index buffers.
-	this.numIndexes  = 0;
-	this.indexOffset = 0;
-
-	// What we're actually rendering.
-	this.index      = null;
-	this.xyz        = null;
-	this.normal     = null;
-	this.texCoord   = null;
-	this.lightCoord = null;
-	this.color      = null;
+	this.index       = null;
+	this.xyz         = null;
+	this.normal      = null;
+	this.texCoord    = null;
+	this.lightCoord  = null;
+	this.color       = null;
 };
 
 var RenderBuffer = function () {
@@ -407,16 +424,16 @@ Object.defineProperty(RenderBuffer.prototype, 'elementCount', {
  * Render surfaces
  */
 var SF = {
-	BAD:          0,
-	SKIP:         1,                                       // ignore
-	FACE:         2,
-	GRID:         3,
-	TRIANGLES:    4,
-	POLY:         5,
-	MD3:          6,
-	FLARE:        7,
-	ENTITY:       8,                                      // beams, rails, lightning, etc that can be determined by entity
-	DISPLAY_LIST: 9
+	BAD:           0,
+	SKIP:          1,                                      // ignore
+	FACE:          2,
+	GRID:          3,
+	TRIANGLES:     4,
+	POLY:          5,
+	MD3:           6,
+	ENTITY:        7,                                      // beams, rails, lightning, etc that can be determined by entity
+	COMPILED_FACE: 8,
+	COMPILED_MD3:  9
 };
 
 var DrawSurface = function () {
@@ -424,40 +441,28 @@ var DrawSurface = function () {
 	this.surface = -1;                                     // any of surface*_t
 };
 
-var WorldSurface = function () {
-	this.surfaceType  = SF.FACE;
+var CompiledSurface = function () {
+	this.surfaceType  = SF.COMPILED_FACE;
+	this.cmd          = new ShaderCommand();               // precompiled buffers
 	this.viewCount    = 0;                                 // if == re.viewCount, already added
 	this.shader       = null;
-	this.indexOffset  = 0;
-	this.elementCount = 0;
-
-	// This array is free'd after the index buffers are created.
+	// temporary resources used during compilation
+	this.numVerts     = 0;
+	this.numIndexes   = 0;
 	this.faces        = [];
 };
 
+var CompiledMd3Surface = function () {
+	this.surfaceType  = SF.COMPILED_MD3;
+	this.cmd          = new ShaderCommand();               // precompiled buffers
+	this.colorOffset  = 0;
+	// copied from the original surface
+	this.name         = null;
+	this.shaders      = null;
+}
+
 var EntitySurface = function () {
 	this.surfaceType = SF.ENTITY;
-};
-
-var PolyVert = function () {
-	this.xyz      = [0, 0, 0];
-	this.st       = [0, 0];
-	this.modulate = [0, 0, 0, 0];
-};
-PolyVert.prototype.clone = function (to) {
-	if (typeof(to) === 'undefined') {
-		to = new PolyVert();
-	}
-
-	vec3.set(this.xyz, to.xyz);
-	to.st[0] = this.st[0];
-	to.st[1] = this.st[1];
-	to.modulate[0] = this.modulate[0];
-	to.modulate[1] = this.modulate[1];
-	to.modulate[2] = this.modulate[2];
-	to.modulate[3] = this.modulate[3];
-
-	return to;
 };
 
 /**
@@ -606,8 +611,8 @@ var msurface_t = function () {
 	// normal faces
 	this.plane         = new QMath.Plane();
 
-	// links this surface to its parent
-	this.rsurf         = null;
+	// links this surface to its compiled parent, for vis checks
+	this.compiled      = null;
 };
 
 var mnode_t = function () {
@@ -704,11 +709,6 @@ var Md3Surface = function () {
 	this.triangles     = null;
 	this.xyzNormals    = null;
 	this.model         = null;
-
-	// used for optimizations on single frame surfaces
-	this.colorOffset   = 0;
-	this.indexOffset   = 0;
-	this.elementCount  = 0;
 };
 
 var Md3Shader = function () {

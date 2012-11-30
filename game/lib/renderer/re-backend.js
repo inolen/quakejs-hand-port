@@ -17,8 +17,10 @@ function InitBackend() {
 	};
 
 	backend.tessFns[SF.FACE] = TesselateFace;
-	backend.tessFns[SF.GRID] = TesselateFace;
+	backend.tessFns[SF.COMPILED_FACE] = TesselateCompiledFace;
+	// backend.tessFns[SF.GRID] = TesselateFace;
 	backend.tessFns[SF.MD3] = TesselateMd3;
+	backend.tessFns[SF.COMPILED_MD3] = TesselateCompiledMd3;
 	backend.tessFns[SF.ENTITY] = TesselateEntity;
 }
 
@@ -118,7 +120,7 @@ function RenderDrawSurfaces() {
 }
 
 function RenderCollisionSurfaces() {
-	if (!backend.cmBuffers) {
+	if (!backend.collisionBuffers) {
 		return;
 	}
 
@@ -129,8 +131,8 @@ function RenderCollisionSurfaces() {
 	gl.enable(gl.CULL_FACE);
 	gl.cullFace(gl.FRONT);
 
-	var index = backend.cmBuffers.index;
-	var xyz = backend.cmBuffers.xyz;
+	var index = backend.collisionBuffers.index;
+	var xyz = backend.collisionBuffers.xyz;
 
 	// Render!
 	var shader = re.debugShader;
@@ -150,15 +152,15 @@ function BeginSurface(shader) {
 	tess.shader = shader;
 	tess.shaderTime = backend.refdef.time;
 
-	tess.numIndexes = 0;
+	tess.elementCount = 0;
 	tess.indexOffset = 0;
 
-	if (tess.index)      ResetBuffer(tess.index);      tess.index = null;
-	if (tess.xyz)        ResetBuffer(tess.xyz);        tess.xyz = null;
-	if (tess.normal)     ResetBuffer(tess.normal);     tess.normal = null;
-	if (tess.texCoord)   ResetBuffer(tess.texCoord);   tess.texCoord = null;
-	if (tess.lightCoord) ResetBuffer(tess.lightCoord); tess.lightCoord = null;
-	if (tess.color)      ResetBuffer(tess.color);      tess.color = null;
+	if (tess.xyz)        ResetBuffer(tess.xyz);        tess.xyz        = backend.scratchBuffers.xyz;
+	if (tess.normal)     ResetBuffer(tess.normal);     tess.normal     = backend.scratchBuffers.normal;
+	if (tess.texCoord)   ResetBuffer(tess.texCoord);   tess.texCoord   = backend.scratchBuffers.texCoord;
+	if (tess.lightCoord) ResetBuffer(tess.lightCoord); tess.lightCoord = backend.scratchBuffers.lightCoord;
+	if (tess.color)      ResetBuffer(tess.color);      tess.color      = backend.scratchBuffers.color;
+	if (tess.index)      ResetBuffer(tess.index);      tess.index      = backend.scratchBuffers.index;
 }
 
 /**
@@ -167,8 +169,8 @@ function BeginSurface(shader) {
 function EndSurface() {
 	var tess = backend.tess;
 	var shader = tess.shader;
-	var numIndexes = tess.numIndexes || tess.index.elementCount;
 	var indexOffset = tess.indexOffset;
+	var numIndexes = tess.elementCount || tess.index.elementCount;
 
 	re.counts.shaders++;
 	re.counts.vertexes += numIndexes / 3;
@@ -187,14 +189,11 @@ function EndSurface() {
 		SetShaderStage(shader, stage);
 
 		// Bind buffers for shader attributes.
-		// NOTE: While we're binding for any buffer that exists, if the
-		// associated shader doesn't use the attribute, it won't cause
-		// any problems.
-		if (tess.xyz)        BindBuffer(tess.xyz,        stage.program.attrib.xyz);
-		if (tess.normal)     BindBuffer(tess.normal,     stage.program.attrib.normal);
-		if (tess.texCoord)   BindBuffer(tess.texCoord,   stage.program.attrib.texCoord);
-		if (tess.lightCoord) BindBuffer(tess.lightCoord, stage.program.attrib.lightCoord);
-		if (tess.color)      BindBuffer(tess.color,      stage.program.attrib.color);
+		if (tess.xyz && tess.xyz.elementCount)               BindBuffer(tess.xyz,        stage.program.attrib.xyz);
+		if (tess.normal && tess.normal.elementCount)         BindBuffer(tess.normal,     stage.program.attrib.normal);
+		if (tess.texCoord && tess.texCoord.elementCount)     BindBuffer(tess.texCoord,   stage.program.attrib.texCoord);
+		if (tess.lightCoord && tess.lightCoord.elementCount) BindBuffer(tess.lightCoord, stage.program.attrib.lightCoord);
+		if (tess.color && tess.color.elementCount)           BindBuffer(tess.color,      stage.program.attrib.color);
 
 		gl.drawElements(shader.mode, numIndexes, gl.UNSIGNED_SHORT, indexOffset * 2); // offset is in bytes
 	}
@@ -241,7 +240,7 @@ function DrawNormals() {
 	var tnormal = tess.normal;
 	var bindex = backend.debugBuffers.index;
 	var bxyz = backend.debugBuffers.xyz;
-	var numIndexes = tess.numIndexes || tess.index.elementCount;
+	var numIndexes = tess.elementCount || tess.index.elementCount;
 	var indexOffset = tess.indexOffset;
 
 	ResetBuffer(bindex);

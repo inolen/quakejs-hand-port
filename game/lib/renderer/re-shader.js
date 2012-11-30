@@ -19,13 +19,13 @@ function InitShaders(callback) {
 function InitDefaultShaders() {
 	// These default programs are used to render textures without a shader.
 	re.programDefault = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['default.fp']);
-	re.programNoLightmap = CompileShaderProgram(re.programBodies['default.vp'], re.programBodies['nolightmap.fp']);
+	re.programNoLightmap = CompileShaderProgram(re.programBodies['nolightmap.vp'], re.programBodies['nolightmap.fp']);
 
 	// Default shader.
 	var shader = re.defaultShader = new Shader();
 	var stage = new ShaderStage();
 	shader.name = '<default>';
-	stage.program = re.programDefault;
+	stage.program = re.programNoLightmap;
 	stage.texture = FindImageByName('*default');
 	shader.stages.push(stage);
 	FinishShader(shader.name, shader);
@@ -74,6 +74,7 @@ function FindShaderByName(shaderName, lightmapIndex) {
 			return re.shaders[i];
 		}
 	}
+
 	var shader;
 	// TODO We should free up these shader bodies, they occupy ~4 MB of memory for no reason.
 	if (re.shaderBodies[shaderName]) {
@@ -226,7 +227,7 @@ function LoadShaderScript(path, callback) {
  */
 function ScanAndLoadShaderPrograms(callback) {
 	var allPrograms = [
-		'programs/default.vp', 'programs/debug.vp',
+		'programs/default.vp', 'programs/nolightmap.vp', 'programs/debug.vp',
 		'programs/default.fp', 'programs/nolightmap.fp', 'programs/green.fp'
 	];
 

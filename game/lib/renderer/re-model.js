@@ -6,12 +6,18 @@ function InitModels() {
 	mod.type = ModelType.BAD;
 
 	// Setup static model buffers.
-	backend.modelBuffers          = {};
-	backend.modelBuffers.xyz      = CreateBuffer('float32', 3, 0xFFFF);
-	backend.modelBuffers.normal   = CreateBuffer('float32', 3, 0xFFFF);
-	backend.modelBuffers.texCoord = CreateBuffer('float32', 2, 0xFFFF);
-	backend.modelBuffers.color    = CreateBuffer('float32', 4, 0xFFFF);
-	backend.modelBuffers.index    = CreateBuffer('uint16',  1, 0xFFFF, true);
+	var buffers      = backend.modelBuffers = {};
+	buffers.xyz      = CreateBuffer('float32', 3, 0x8000*3);
+	buffers.normal   = CreateBuffer('float32', 3, 0x8000*3);
+	buffers.texCoord = CreateBuffer('float32', 2, 0x8000*2);
+	buffers.color    = CreateBuffer('float32', 4, 0x8000*4);
+	buffers.index    = CreateBuffer('uint16',  1, 0x8000, true);
+
+	LockBuffer(buffers.xyz);
+	LockBuffer(buffers.normal);
+	LockBuffer(buffers.texCoord);
+	LockBuffer(buffers.color);
+	LockBuffer(buffers.index);
 }
 
 /**
@@ -68,7 +74,7 @@ function RegisterModel(name) {
 		}
 
 		if (mod.md3[0].header.numFrames === 1) {
-			AppendModelToBuffers(mod);
+			CompileModelSurfaces(mod);
 		}
 	});
 
@@ -420,66 +426,65 @@ function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 }
 
 /**
- * AppendModelToBuffers
+ * CompileModelSurfaces
  */
-var totalVerts = 0;
-function AppendModelToBuffers(mod) {
+function CompileModelSurfaces(mod) {
 	for (var i = 0; i < mod.numLods; i++) {
 		var md3 = mod.md3[i];
-		for (var j = 0; j < md3.surfaces.length; j++) {
-			var surface = md3.surfaces[j];
-			AppendMd3SurfaceToBuffers(surface);
-		}
+		CompileMd3Surfaces(md3);
 	}
 }
 
 /**
- * AppendMd3SurfaceToBuffers
+ * CompileMd3Surfaces
  */
-function AppendMd3SurfaceToBuffers(face) {
+function CompileMd3Surfaces(md3) {
 	var buffers = backend.modelBuffers;
 	var xyz = buffers.xyz;
 	var normal = buffers.normal;
 	var texCoord = buffers.texCoord;
+	var color = buffers.color;
 	var index = buffers.index;
-	var numVerts = face.header.numVerts;
-	var xyzOffset = xyz.elementCount;
 
-	for (var i = 0; i < numVerts; i++) {
-		var xyzNormal = face.xyzNormals[i];
+	var originalCmd = backend.tess;
 
-		xyz.data[xyz.offset++] = xyzNormal.xyz[0];
-		xyz.data[xyz.offset++] = xyzNormal.xyz[1];
-		xyz.data[xyz.offset++] = xyzNormal.xyz[2];
+	for (var i = 0; i < md3.surfaces.length; i++) {
+		var surface = md3.surfaces[i];
 
-		normal.data[normal.offset++] = xyzNormal.normal[0];
-		normal.data[normal.offset++] = xyzNormal.normal[1];
-		normal.data[normal.offset++] = xyzNormal.normal[2];
+		var compiled = new CompiledMd3Surface();
+		compiled.header = surface.header;
+		compiled.xyzNormals = surface.xyzNormals;
+		compiled.name = surface.name;
+		compiled.shaders = surface.shaders;
 
-		texCoord.data[texCoord.offset++] = face.st[i].st[0];
-		texCoord.data[texCoord.offset++] = face.st[i].st[1];
+		compiled.cmd = new ShaderCommand();
+		compiled.cmd.xyz = xyz;
+		compiled.cmd.normal = normal;
+		compiled.cmd.texCoord = texCoord;
+		compiled.cmd.color = color;
+		compiled.cmd.index = index;
+
+		// Store the color offset for dynamic updates.
+		compiled.colorOffset = color.offset;
+
+		// Overwrite the current backend cmd so TesselateMd3
+		// writes to us.
+		backend.tess = compiled.cmd;
+
+		// Tesselate and mark our index offset.
+		compiled.cmd.indexOffset = index.elementCount;
+		TesselateMd3(surface);
+		compiled.cmd.elementCount = index.elementCount - compiled.cmd.indexOffset;
+
+		// Overwrite the original surface.
+		md3.surfaces[i] = compiled;
 	}
 
-	face.colorOffset = xyzOffset * 4;
-	face.indexOffset = index.elementCount;
-
-	for (var i = 0; i < face.triangles.length; i++) {
-		var tri = face.triangles[i];
-
-		index.data[index.offset++] = xyzOffset + tri.indexes[0];
-		index.data[index.offset++] = xyzOffset + tri.indexes[1];
-		index.data[index.offset++] = xyzOffset + tri.indexes[2];
-
-		face.elementCount += 3;
-	}
+	backend.tess = originalCmd;
 
 	xyz.modified = true;
 	normal.modified = true;
 	texCoord.modified = true;
+	color.modified = true;
 	index.modified = true;
-
-	LockBuffer(xyz);
-	LockBuffer(normal);
-	LockBuffer(texCoord);
-	LockBuffer(index);
 }
