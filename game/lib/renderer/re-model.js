@@ -446,8 +446,6 @@ function CompileMd3Surfaces(md3) {
 	var color = buffers.color;
 	var index = buffers.index;
 
-	var originalCmd = backend.tess;
-
 	for (var i = 0; i < md3.surfaces.length; i++) {
 		var surface = md3.surfaces[i];
 
@@ -456,6 +454,9 @@ function CompileMd3Surfaces(md3) {
 		compiled.xyzNormals = surface.xyzNormals;
 		compiled.name = surface.name;
 		compiled.shaders = surface.shaders;
+		// Store the color offset so we can update
+		// the diffuse colors in TesselateCompiledMd3.
+		compiled.colorOffset = color.offset;
 
 		compiled.cmd = new ShaderCommand();
 		compiled.cmd.xyz = xyz;
@@ -463,9 +464,6 @@ function CompileMd3Surfaces(md3) {
 		compiled.cmd.texCoord = texCoord;
 		compiled.cmd.color = color;
 		compiled.cmd.index = index;
-
-		// Store the color offset for dynamic updates.
-		compiled.colorOffset = color.offset;
 
 		// Overwrite the current backend cmd so TesselateMd3
 		// writes to us.
@@ -479,8 +477,6 @@ function CompileMd3Surfaces(md3) {
 		// Overwrite the original surface.
 		md3.surfaces[i] = compiled;
 	}
-
-	backend.tess = originalCmd;
 
 	xyz.modified = true;
 	normal.modified = true;

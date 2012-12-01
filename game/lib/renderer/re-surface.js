@@ -1,9 +1,8 @@
 /**
  * TesselateFace
  *
- * All of our world surfaces are already grouped by shader,
- * meaning this function will only ever be called once
- * before EndSurface().
+ * Called both by the backend and re-world
+ * when pre-compiling the
  */
 function TesselateFace(face) {
 	var tess = backend.tess;
@@ -200,6 +199,9 @@ function TesselateCompiledMd3(compiled) {
 	}
 
 	color.modified = true;
+
+	// Force render.
+	return true;
 }
 
 /**

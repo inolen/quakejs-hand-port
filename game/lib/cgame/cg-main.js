@@ -149,6 +149,12 @@ function Frame(serverTime) {
  * RegisterSounds
  */
 function RegisterSounds() {
+	cgs.media.teleInSound = snd.RegisterSound('sound/world/telein.wav');
+	cgs.media.teleOutSound = snd.RegisterSound('sound/world/teleout');
+	cgs.media.respawnSound = snd.RegisterSound('sound/items/respawn1');
+
+	cgs.media.noAmmoSound = snd.RegisterSound('sound/weapons/noammo');
+
 	cgs.media.jumpPadSound = snd.RegisterSound('sound/world/jumppad');
 }
 

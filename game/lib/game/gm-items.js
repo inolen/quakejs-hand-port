@@ -181,9 +181,9 @@ function RespawnItem(self) {
 // 		te->r.svFlags |= SVF_BROADCAST;
 // 	}
 // 
-// play the normal respawn sound only to nearby clients
-// 	G_AddEvent( ent, EV_ITEM_RESPAWN, 0 );
-// 
+	// Play the normal respawn sound only to nearby clients.
+	AddEvent(self, EV.ITEM_RESPAWN, 0);
+
 	self.nextthink = 0;
 }
 

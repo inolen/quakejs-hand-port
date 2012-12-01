@@ -284,10 +284,22 @@ function SetEntitySoundPosition(cent) {
  * AddItem
  */
 function AddItem(cent) {
+	var es = cent.currentState;
+	var item = bg.ItemList[es.modelIndex];
+	var itemInfo = cg.itemInfo[es.modelIndex];
+
+	// If set to invisible, skip.
+	if (!es.modelIndex || (es.eFlags & EF.NODRAW)) {
+		return;
+	}
+
 	// TODO Pool these?
 	var refent = new re.RefEntity();
-	var item = bg.ItemList[cent.currentState.modelIndex];
-	var itemInfo = cg.itemInfo[cent.currentState.modelIndex];
+	refent.reType = RT.MODEL;
+
+	// Items bob up and down continuously.
+	var scale = 0.005 + cent.currentState.number * 0.00001;
+	cent.lerpOrigin[2] += 4 + Math.cos((cg.time + 1000) *  scale) * 4;
 
 	// Autorotate at one of two speeds.
 	if (item.giType === IT.HEALTH) {
@@ -295,14 +307,93 @@ function AddItem(cent) {
 	} else {
 		vec3.set(cg.autoAngles, cent.lerpAngles);
 	}
+	QMath.AnglesToAxis(cent.lerpAngles, refent.axis);
 
-	for (var i = 0; i < itemInfo.modelHandles.length; i++) {
-		refent.reType = RT.MODEL;
-		vec3.set(cent.lerpOrigin, refent.origin);
-		QMath.AnglesToAxis(cent.lerpAngles, refent.axis);
-		refent.hModel = itemInfo.modelHandles[i];
-		
-		re.AddRefEntityToScene(refent);
+	// The weapons have their origin where they attatch to player
+	// models, so we need to offset them or they will rotate
+	// eccentricly.
+	if (item.giType === IT.WEAPON ) {
+		var wi = cg.weaponInfo[item.giTag];
+		cent.lerpOrigin[0] -= 
+			wi.weaponMidpoint[0] * refent.axis[0][0] +
+			wi.weaponMidpoint[1] * refent.axis[1][0] +
+			wi.weaponMidpoint[2] * refent.axis[2][0];
+		cent.lerpOrigin[1] -= 
+			wi.weaponMidpoint[0] * refent.axis[0][1] +
+			wi.weaponMidpoint[1] * refent.axis[1][1] +
+			wi.weaponMidpoint[2] * refent.axis[2][1];
+		cent.lerpOrigin[2] -= 
+			wi.weaponMidpoint[0] * refent.axis[0][2] +
+			wi.weaponMidpoint[1] * refent.axis[1][2] +
+			wi.weaponMidpoint[2] * refent.axis[2][2];
+
+		cent.lerpOrigin[2] += 8;  // an extra height boost
+	}
+	
+	// if (item.giType === IT.WEAPON && item.giTag === WP.RAILGUN) {
+	// 	clientInfo_t *ci = &cgs.clientinfo[cg.snap->ps.clientNum];
+	// 	Byte4Copy( ci->c1RGBA, ent.shaderRGBA );
+	// }
+
+	refent.hModel = itemInfo.modelHandles[0];
+
+	vec3.set(cent.lerpOrigin, refent.origin);
+	vec3.set(cent.lerpOrigin, refent.oldOrigin);
+	
+	refent.nonNormalizedAxes = false;
+
+	// If just respawned, slowly scale up.
+	var msec = cg.time - cent.miscTime;
+	var frac = 1.0;
+	if (msec >= 0 && msec < ITEM_SCALEUP_TIME) {
+		frac = msec / ITEM_SCALEUP_TIME;
+		vec3.scale(refent.axis[0], frac);
+		vec3.scale(refent.axis[1], frac);
+		vec3.scale(refent.axis[2], frac);
+		refent.nonNormalizedAxes = true;
+	}
+
+	// Items without glow textures need to keep a minimum light value
+	// so they are always visible.
+	if ((item.giType === IT.WEAPON) ||
+		 (item.giType === IT.ARMOR)) {
+		refent.renderfx |= RF.MINLIGHT;
+	}
+
+	// increase the size of the weapons when they are presented as items
+	if (item.giType === IT.WEAPON) {
+		vec3.scale(refent.axis[0], 1.5);
+		vec3.scale(refent.axis[1], 1.5);
+		vec3.scale(refent.axis[2], 1.5);
+		refent.nonNormalizedAxes = true;
+	}
+
+	// Add to refresh list.
+	re.AddRefEntityToScene(refent);
+
+	// Add accompanying rings / spheres for powerups.
+	if (item.giType === IT.HEALTH || item.giType === IT.POWERUP) {
+		if (itemInfo.modelHandles.length > 1) {
+			var spinAngles = [0, 0, 0];
+
+			if (item.giType === IT.POWERUP) {
+				refent.origin[2] += 12;
+				spinAngles[1] = (cg.time % 1024) * 360 / -1024;
+			}
+
+			QMath.AnglesToAxis(spinAngles, refent.axis);
+			refent.hModel = itemInfo.modelHandles[1];
+			
+			// Scale up if respawning.
+			if (frac !== 1.0) {
+				vec3.scale(refent.axis[0], frac);
+				vec3.scale(refent.axis[1], frac);
+				vec3.scale(refent.axis[2], frac);
+				refent.nonNormalizedAxes = true;
+			}
+
+			re.AddRefEntityToScene(refent);
+		}
 	}
 }
 

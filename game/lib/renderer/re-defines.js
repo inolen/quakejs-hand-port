@@ -253,6 +253,7 @@ var RefEntity = function () {
 		[0, 0, 0],
 		[0, 0, 0]
 	];
+	this.nonNormalizedAxes  = false;
 	this.frame              = 0;
 
 	// Previous data for frame interpolation.
@@ -303,6 +304,7 @@ RefEntity.prototype.clone = function (refent) {
 	vec3.set(this.axis[0], refent.axis[0]);
 	vec3.set(this.axis[1], refent.axis[1]);
 	vec3.set(this.axis[2], refent.axis[2]);
+	refent,nonNormalizedAxes = this.nonNormalizedAxes;
 	refent.frame = this.frame;
 	vec3.set(this.oldOrigin, refent.oldOrigin);
 	refent.oldFrame = this.oldFrame;
@@ -455,10 +457,10 @@ var CompiledSurface = function () {
 var CompiledMd3Surface = function () {
 	this.surfaceType  = SF.COMPILED_MD3;
 	this.cmd          = new ShaderCommand();               // precompiled buffers
-	this.colorOffset  = 0;
-	// copied from the original surface
-	this.name         = null;
 	this.shaders      = null;
+	this.numVerts     = 0;
+	this.normals      = null;
+	this.colorOffset  = 0;
 }
 
 var EntitySurface = function () {

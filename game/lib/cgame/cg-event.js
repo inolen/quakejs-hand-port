@@ -135,6 +135,19 @@ function AddEntityEvent(cent, position) {
 		case EV.FIRE_WEAPON:
 			FireWeapon(cent);
 			break;
+
+		//
+		// Other events
+		//
+
+		case EV.ITEM_POP:
+			snd.StartSound(null, es.number, /*CHAN_AUTO,*/ cgs.media.respawnSound);
+			break;
+
+		case EV.ITEM_RESPAWN:
+			cent.miscTime = cg.time;  // scale up from this
+			snd.StartSound(null, es.number, /*CHAN_AUTO,*/ cgs.media.respawnSound);
+			break;
 		
 		//
 		// missile impacts

@@ -776,7 +776,7 @@ function GenerateVertexShader(q3shader, stage) {
 			'vec3 viewer = normalize(viewPosition - position);',
 			'float d = dot(normal, viewer);',
 			'vec3 reflected = normal*2.0*d - viewer;',
-			'vTexCoord = vec2(0.5, 0.5) + reflected.xy * 0.5;'
+			'vTexCoord = vec2(0.5 + reflected.y * 0.5, 0.5 - reflected.z * 0.5);'
 		]);
 	} else {
 		// Standard texturing

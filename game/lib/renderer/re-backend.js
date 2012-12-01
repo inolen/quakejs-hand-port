@@ -54,6 +54,7 @@ function RenderDrawSurfaces() {
 	gl.clear(gl.DEPTH_BUFFER_BIT);
 
 	//
+	var force = false;
 	var oldSort = -1;
 	var oldShader = null;
 	var oldEntityNum = -1;
@@ -73,7 +74,7 @@ function RenderDrawSurfaces() {
 		var entityNum = (drawSurf.sort >> QSORT_ENTITYNUM_SHIFT) % MAX_GENTITIES;
 		//var dlightMap = drawSurf.sort & 3;
 
-		if (drawSurfs.sort === oldSort) {
+		if (!force && drawSurfs.sort === oldSort) {
 			// Fast path, same as previous sort.
 			backend.tessFns[face.surfaceType](face);
 			continue;
@@ -81,7 +82,7 @@ function RenderDrawSurfaces() {
 		oldSort = drawSurf.sort;
 
 		// Change the tess parameters if needed.
-		if (shader !== oldShader || entityNum !== oldEntityNum) {
+		if (force || shader !== oldShader || entityNum !== oldEntityNum) {
 			if (oldShader) {
 				EndSurface();
 			}
@@ -110,7 +111,9 @@ function RenderDrawSurfaces() {
 			oldEntityNum = entityNum;
 		}
 
-		backend.tessFns[face.surfaceType](face);
+		// The tess functions operating on compiled buffers don't
+		// support continued tesselating.
+		force = backend.tessFns[face.surfaceType](face);
 	}
 
 	// Draw the contents of the last shader batch.

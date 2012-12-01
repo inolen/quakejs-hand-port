@@ -287,19 +287,18 @@ function RotateForEntity(refent, or) {
 	var delta = vec3.subtract(viewParms.or.origin, or.origin, [0, 0, 0]);
 
 	// Compensate for scale in the axes if necessary.
-	// if ( ent->e.nonNormalizedAxes ) {
-	// 	axisLength = VectorLength( ent->e.axis[0] );
-	// 	if ( !axisLength ) {
-	// 		axisLength = 0;
-	// 	} else {
-	// 		axisLength = 1.0f / axisLength;
-	// 	}
-	// } else {
-	// 	axisLength = 1.0f;
-	// }
+	var axisLength = 1.0;
+	if (refent.nonNormalizedAxes ) {
+		axisLength = vec3.length(refent.axis[0]);
+		if (!axisLength) {
+			axisLength = 0;
+		} else {
+			axisLength = 1.0 / axisLength;
+		}
+	}
 
 	QMath.RotatePoint(delta, or.axis);
-	vec3.set(delta, or.viewOrigin);
+	vec3.scale(delta, axisLength, or.viewOrigin);
 }
 
 /**
@@ -592,16 +591,13 @@ function AddModelSurfaces(refent) {
 	//fogNum = R_ComputeFogNum( header, ent );
 
 	//
-	// draw all surfaces
+	// Draw all surfaces.
 	//
 	for (var i = 0; i < md3.surfaces.length; i++) {
 		var face = md3.surfaces[i];
 
 		var shader;
-
-		if (refent.customShader) {
-			shader = GetShaderByHandle(refent.customShader);
-		} else if (refent.customSkin) {
+		if (refent.customSkin) {
 			var skin = GetSkinByHandle(refent.customSkin);
 
 			// Match the surface name to something in the skin file.
@@ -614,10 +610,14 @@ function AddModelSurfaces(refent) {
 					break;
 				}
 			}
-		} else if (face.shaders.length <= 0) {
-			shader = re.defaultShader;
+		} else if (refent.customShader) {
+			shader = GetShaderByHandle(refent.customShader);
 		} else {
-			shader = face.shaders[refent.skinNum % face.shaders.length].shader;
+			if (face.shaders.length <= 0) {
+				shader = re.defaultShader;
+			} else {
+				shader = face.shaders[refent.skinNum % face.shaders.length].shader;
+			}
 		}
 		
 		// we will add shadows even if the main object isn't visible in the view
@@ -751,7 +751,7 @@ function CullModel(md3, refent) {
 	var oldFrame = md3.frames[refent.oldFrame];
 
 	// Cull bounding sphere ONLY if this is not an upscaled entity.
-	// if (!ent->e.nonNormalizedAxes) {
+	if (!refent.nonNormalizedAxes) {
 		if (refent.frame === refent.oldframe) {
 			switch (CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius)) {
 				case Cull.OUT:
@@ -788,7 +788,7 @@ function CullModel(md3, refent) {
 				}
 			}
 		}
-	// }
+	}
 	
 	// Calculate a bounding box in the current coordinate system.
 	var bounds = [
