@@ -54,7 +54,7 @@ function CompileWorldSurfaces() {
 		var normal     = compiled.cmd.normal     = CreateBuffer('float32', 3, compiled.numVerts);
 		var texCoord   = compiled.cmd.texCoord   = CreateBuffer('float32', 2, compiled.numVerts);
 		var lightCoord = compiled.cmd.lightCoord = CreateBuffer('float32', 2, compiled.numVerts);
-		var color      = compiled.cmd.color      = CreateBuffer('float32', 4, compiled.numVerts);
+		var color      = compiled.cmd.color      = CreateBuffer('uint8',   4, compiled.numVerts);
 		var index      = compiled.cmd.index      = CreateBuffer('uint16',  1, compiled.numIndexes, true);
 
 		// Overwrite the current backend cmd so TesselateFace

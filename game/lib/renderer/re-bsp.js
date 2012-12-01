@@ -198,12 +198,6 @@ function LoadSurfaces(buffer, faceLump, vertLump, meshVertLump) {
 		];
 
 		ColorShiftLightingBytes(vert.color);
-
-		// HACK Convert from 0 - 255 to 0 - 1
-		vert.color[0] /= 255;
-		vert.color[1] /= 255;
-		vert.color[2] /= 255;
-		vert.color[3] /= 255;
 	}
 
 	// Load vert indexes.
@@ -546,9 +540,13 @@ function LoadLightGrid(buffer, gridLump) {
 	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
 	bb.index = gridLump.fileofs;
 	var len = gridLump.filelen;
+
+	// The lightgrid data is stored as bytes, but we load it 
+	// as floating point values and scale so we're not constantly
+	// converting.
 	world.lightGridData = new Uint8Array(len);
 	for (var i = 0; i < len; i++) {
-		world.lightGridData[i] = bb.readByte();
+		world.lightGridData[i] = bb.readUnsignedByte();
 	}
 
 	// Deal with overbright bits.

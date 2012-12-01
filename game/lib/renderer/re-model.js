@@ -10,7 +10,7 @@ function InitModels() {
 	buffers.xyz      = CreateBuffer('float32', 3, 0x8000*3);
 	buffers.normal   = CreateBuffer('float32', 3, 0x8000*3);
 	buffers.texCoord = CreateBuffer('float32', 2, 0x8000*2);
-	buffers.color    = CreateBuffer('float32', 4, 0x8000*4);
+	buffers.color    = CreateBuffer('uint8',   4, 0x8000*4);
 	buffers.index    = CreateBuffer('uint16',  1, 0x8000, true);
 
 	LockBuffer(buffers.xyz);

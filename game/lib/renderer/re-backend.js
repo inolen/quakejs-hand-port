@@ -8,7 +8,7 @@ function InitBackend() {
 		normal:     CreateBuffer('float32', 3, SHADER_MAX_VERTEXES),
 		texCoord:   CreateBuffer('float32', 2, SHADER_MAX_VERTEXES),
 		lightCoord: CreateBuffer('float32', 2, SHADER_MAX_VERTEXES),
-		color:      CreateBuffer('float32', 4, SHADER_MAX_VERTEXES)
+		color:      CreateBuffer('uint8',   4, SHADER_MAX_VERTEXES)
 	};
 
 	backend.debugBuffers = {

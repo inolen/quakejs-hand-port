@@ -18,8 +18,8 @@ uniform mat4 projectionMat;
 
 void main(void) {
 	vec4 worldPosition = modelViewMat * vec4(xyz, 1.0);
+	vColor = color / 255.0;
 	vTexCoord = texCoord;
-	vColor = color;
 	vLightmapCoord = lightCoord;
 	gl_Position = projectionMat * worldPosition;
 }

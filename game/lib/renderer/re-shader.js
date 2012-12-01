@@ -651,8 +651,8 @@ function TranslateShader(q3shader) {
 
 		var vs = GenerateVertexShader(q3shader, q3stage);
 		var fs = GenerateFragmentShader(q3shader, q3stage);
-		// stage.vs = vs.getSource();
-		// stage.fs = fs.getSource();
+		stage.vs = vs.getSource();
+		stage.fs = fs.getSource();
 		stage.program = CompileShaderProgram(vs.getSource(), fs.getSource());
 
 		shader.stages.push(stage);
@@ -769,7 +769,7 @@ function GenerateVertexShader(q3shader, stage) {
 	}
 
 	builder.addLines(['vec4 worldPosition = modelViewMat * vec4(position, 1.0);']);
-	builder.addLines(['vColor = color;']);
+	builder.addLines(['vColor = color / 255.0;']);
 
 	if (stage.tcGen == 'environment') {
 		builder.addLines([

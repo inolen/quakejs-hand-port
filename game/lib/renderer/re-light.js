@@ -4,32 +4,23 @@
 function CalcDiffuseColor(refent, normal, out) {
 	var incoming = vec3.dot(normal, refent.lightDir);
 	if (incoming <= 0) {
-		out[0] = refent.ambientLight[0] / 255;
-		out[1] = refent.ambientLight[1] / 255;
-		out[2] = refent.ambientLight[2] / 255;
-		out[3] = 1;
+		out[0] = refent.ambientLight[0];
+		out[1] = refent.ambientLight[1];
+		out[2] = refent.ambientLight[2];
+		out[3] = 255;
 		return;
 	}
 
-	var j = (refent.ambientLight[0] + incoming * refent.directedLight[0]) << 0;
-	if (j > 255) {
-		j = 255;
-	}
-	out[0] = j / 255;
+	var j = refent.ambientLight[0] + incoming * refent.directedLight[0];
+	out[0] = j > 255 ? 255 : j;
 
-	j = (refent.ambientLight[1] + incoming * refent.directedLight[1]) << 0;
-	if (j > 255) {
-		j = 255;
-	}
-	out[1] = j / 255;
+	j = refent.ambientLight[1] + incoming * refent.directedLight[1];
+	out[1] = j > 255 ? 255 : j;
 
-	j = (refent.ambientLight[2] + incoming * refent.directedLight[2]) << 0;
-	if (j > 255) {
-		j = 255;
-	}
-	out[2] = j / 255;
+	j = refent.ambientLight[2] + incoming * refent.directedLight[2];
+	out[2] = j > 255 ? 255 : j;
 
-	out[3] = 1;
+	out[3] = 255;
 }
 
 /**

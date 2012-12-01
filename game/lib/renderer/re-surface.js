@@ -480,25 +480,25 @@ function AddQuadStampExt(origin, left, up, modulate, s1, t1, s2, t2) {
 	texCoord.data[texCoord.offset++] = t2;
 
 	// Constant color all the way around.
-	color.data[color.offset++] = modulate[0] / 255;
-	color.data[color.offset++] = modulate[1] / 255;
-	color.data[color.offset++] = modulate[2] / 255;
-	color.data[color.offset++] = modulate[3] / 255;
+	color.data[color.offset++] = modulate[0];
+	color.data[color.offset++] = modulate[1];
+	color.data[color.offset++] = modulate[2];
+	color.data[color.offset++] = modulate[3];
 
-	color.data[color.offset++] = modulate[0] / 255;
-	color.data[color.offset++] = modulate[1] / 255;
-	color.data[color.offset++] = modulate[2] / 255;
-	color.data[color.offset++] = modulate[3] / 255;
+	color.data[color.offset++] = modulate[0];
+	color.data[color.offset++] = modulate[1];
+	color.data[color.offset++] = modulate[2];
+	color.data[color.offset++] = modulate[3];
 
-	color.data[color.offset++] = modulate[0] / 255;
-	color.data[color.offset++] = modulate[1] / 255;
-	color.data[color.offset++] = modulate[2] / 255;
-	color.data[color.offset++] = modulate[3] / 255;
+	color.data[color.offset++] = modulate[0];
+	color.data[color.offset++] = modulate[1];
+	color.data[color.offset++] = modulate[2];
+	color.data[color.offset++] = modulate[3];
 
-	color.data[color.offset++] = modulate[0] / 255;
-	color.data[color.offset++] = modulate[1] / 255;
-	color.data[color.offset++] = modulate[2] / 255;
-	color.data[color.offset++] = modulate[3] / 255;
+	color.data[color.offset++] = modulate[0];
+	color.data[color.offset++] = modulate[1];
+	color.data[color.offset++] = modulate[2];
+	color.data[color.offset++] = modulate[3];
 
 	index.modified = true;
 	xyz.modified = true;
