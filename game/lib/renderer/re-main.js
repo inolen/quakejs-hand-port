@@ -597,7 +597,9 @@ function AddModelSurfaces(refent) {
 		var face = md3.surfaces[i];
 
 		var shader;
-		if (refent.customSkin) {
+		if (refent.customShader) {
+			shader = GetShaderByHandle(refent.customShader);
+		} else if (refent.customSkin) {
 			var skin = GetSkinByHandle(refent.customSkin);
 
 			// Match the surface name to something in the skin file.
@@ -610,8 +612,6 @@ function AddModelSurfaces(refent) {
 					break;
 				}
 			}
-		} else if (refent.customShader) {
-			shader = GetShaderByHandle(refent.customShader);
 		} else {
 			if (face.shaders.length <= 0) {
 				shader = re.defaultShader;

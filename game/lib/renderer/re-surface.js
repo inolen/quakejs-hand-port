@@ -51,6 +51,10 @@ function TesselateCompiledFace(compiled) {
 	var tess = backend.tess;
 	var cmd = compiled.cmd;
 
+	if (tess.elementCount !== 0) {
+		throw new Error('Compiled world surfaces should never be tesselated a second time, check the sorting in CompileWorldSurfaces.');
+	}
+
 	// Overwrite default buffers.
 	tess.xyz = cmd.xyz;
 	tess.normal = cmd.normal;

@@ -17,7 +17,7 @@
 
 var itemList = [
 	new GameItemDesc(),
-	
+
 	/**
 	 * ARMOR
 	 */
@@ -329,11 +329,11 @@ var itemList = [
 		"Quad Damage",
 		30,
 		IT.POWERUP,
-		0,
+		PW.QUAD,
 		undefined,
 		[
-			"sound/items/damage2",
-			"sound/items/damage3.wav"
+			'sound/items/damage2',
+			'sound/items/damage3'
 		]
 	)
 ];

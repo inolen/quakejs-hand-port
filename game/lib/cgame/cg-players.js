@@ -544,32 +544,33 @@ function AddPlayer(cent) {
  * Adds a piece with modifications or duplications for powerups
  * Also called by CG_Missile for quad rockets, but nobody can tell...
  */
-function AddRefEntityWithPowerups(refent, s/*, team*/) {
-	// if ( state->powerups & ( 1 << PW_INVIS ) ) {
-	// 	ent->customShader = cgs.media.invisShader;
-	// 	trap_R_AddRefEntityToScene( ent );
-	// } else {
+function AddRefEntityWithPowerups(refent, es/*, team*/) {
+	if (es.powerups & (1 << PW.INVIS)) {
+		refent.customShader = cgs.media.invisShader;
+		re.AddRefEntityToScene(refent);
+	} else {
 		re.AddRefEntityToScene(refent);
 
-	// 	if ( state->powerups & ( 1 << PW_QUAD ) )
-	// 	{
-	// 		if (team == TEAM_RED)
-	// 			ent->customShader = cgs.media.redQuadShader;
-	// 		else
-	// 			ent->customShader = cgs.media.quadShader;
-	// 		trap_R_AddRefEntityToScene( ent );
-	// 	}
-	// 	if ( state->powerups & ( 1 << PW_REGEN ) ) {
-	// 		if ( ( ( cg.time / 100 ) % 10 ) == 1 ) {
-	// 			ent->customShader = cgs.media.regenShader;
-	// 			trap_R_AddRefEntityToScene( ent );
-	// 		}
-	// 	}
-	// 	if ( state->powerups & ( 1 << PW_BATTLESUIT ) ) {
-	// 		ent->customShader = cgs.media.battleSuitShader;
-	// 		trap_R_AddRefEntityToScene( ent );
-	// 	}
-	// }
+		if (es.powerups & (1 << PW.QUAD)) {
+			// if (team === TEAM.RED) {
+			// 	ent.customShader = cgs.media.redQuadShader;
+			// } else {
+				refent.customShader = cgs.media.quadShader;
+			// }
+
+			re.AddRefEntityToScene(refent);
+		}
+		if (es.powerups & (1 << PW.REGEN)) {
+			if (((cg.time / 100 ) % 10 ) === 1 ) {
+				refent.customShader = cgs.media.regenShader;
+				re.AddRefEntityToScene(refent);
+			}
+		}
+		if (es.powerups & ( 1 << PW.BATTLESUIT)) {
+			refent.customShader = cgs.media.battleSuitShader;
+			re.AddRefEntityToScene(refent);
+		}
+	}
 }
 
 /**********************************************************

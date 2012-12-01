@@ -166,10 +166,20 @@ function RegisterGraphics() {
 		RegisterItemVisuals(i);
 	}
 
-	cgs.media.bulletFlashModel       = re.RegisterModel('models/weaphits/bullet.md3');
-	cgs.media.ringFlashModel         = re.RegisterModel('models/weaphits/ring02.md3');
-	cgs.media.dishFlashModel         = re.RegisterModel('models/weaphits/boom01.md3');
-	cgs.media.smokePuffShader        = re.RegisterShader('smokePuff');
+	// Powerup shaders.
+	cgs.media.quadShader = re.RegisterShader('powerups/quad');
+	cgs.media.quadWeaponShader = re.RegisterShader('powerups/quadWeapon');
+	cgs.media.battleSuitShader = re.RegisterShader('powerups/battleSuit');
+	cgs.media.battleWeaponShader = re.RegisterShader('powerups/battleWeapon');
+	cgs.media.invisShader = re.RegisterShader('powerups/invisibility');
+	cgs.media.regenShader = re.RegisterShader('powerups/regen');
+	cgs.media.hastePuffShader = re.RegisterShader('hasteSmokePuff');
+
+	// General weapon fx.
+	cgs.media.bulletFlashModel = re.RegisterModel('models/weaphits/bullet.md3');
+	cgs.media.ringFlashModel = re.RegisterModel('models/weaphits/ring02.md3');
+	cgs.media.dishFlashModel = re.RegisterModel('models/weaphits/boom01.md3');
+	cgs.media.smokePuffShader = re.RegisterShader('smokePuff');
 	cgs.media.shotgunSmokePuffShader = re.RegisterShader('shotgunSmokePuff');
 	
 	cgs.media.bloodExplosionShader = re.RegisterShader('bloodExplosion');
