@@ -162,7 +162,7 @@ function RegisterSounds() {
  * RegisterGraphics
  */
 function RegisterGraphics() {
-	for (var i = 0; i < bg.ItemList.length; i++) {
+	for (var i = 1; i < bg.ItemList.length; i++) {
 		RegisterItemVisuals(i);
 	}
 

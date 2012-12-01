@@ -168,7 +168,7 @@ function SpawnEntityFromDef(def) {
 	var spawn;
 
 	// See if we should spawn this as an item.
-	for (var i = 0; i < bg.ItemList.length; i++) {
+	for (var i = 1; i < bg.ItemList.length; i++) {
 		var item = bg.ItemList[i];
 
 		if (item.classname === ent.classname) {

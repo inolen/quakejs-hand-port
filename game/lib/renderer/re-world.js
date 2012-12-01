@@ -42,30 +42,28 @@ function CompileWorldSurfaces() {
 
 	// For each group of faces, create render buffers for the
 	// composite compiled surface.
-	var originalCmd = backend.tess;
-
 	for (var i = 0; i < world.compiledFaces.length; i++) {
-		var tessd = world.compiledFaces[i];
-		if (!tessd) {
+		var compiled = world.compiledFaces[i];
+		if (!compiled) {
 			continue;
 		}
 
-		var xyz        = tessd.cmd.xyz        = CreateBuffer('float32', 3, tessd.numVerts);
-		var normal     = tessd.cmd.normal     = CreateBuffer('float32', 3, tessd.numVerts);
-		var texCoord   = tessd.cmd.texCoord   = CreateBuffer('float32', 2, tessd.numVerts);
-		var lightCoord = tessd.cmd.lightCoord = CreateBuffer('float32', 2, tessd.numVerts);
-		var color      = tessd.cmd.color      = CreateBuffer('float32', 4, tessd.numVerts);
-		var index      = tessd.cmd.index      = CreateBuffer('uint16',  1, tessd.numIndexes, true);
+		var xyz        = compiled.cmd.xyz        = CreateBuffer('float32', 3, compiled.numVerts);
+		var normal     = compiled.cmd.normal     = CreateBuffer('float32', 3, compiled.numVerts);
+		var texCoord   = compiled.cmd.texCoord   = CreateBuffer('float32', 2, compiled.numVerts);
+		var lightCoord = compiled.cmd.lightCoord = CreateBuffer('float32', 2, compiled.numVerts);
+		var color      = compiled.cmd.color      = CreateBuffer('float32', 4, compiled.numVerts);
+		var index      = compiled.cmd.index      = CreateBuffer('uint16',  1, compiled.numIndexes, true);
 
 		// Overwrite the current backend cmd so TesselateFace
 		// writes to us.
-		backend.tess = tessd.cmd;
+		backend.tess = compiled.cmd;
 
-		tessd.cmd.indexOffset = index.elementCount;
-		for (var j = 0; j < tessd.faces.length; j++) {
-			TesselateFace(tessd.faces[j]);
+		compiled.cmd.indexOffset = index.elementCount;
+		for (var j = 0; j < compiled.faces.length; j++) {
+			TesselateFace(compiled.faces[j]);
 		}
-		tessd.cmd.elementCount = index.elementCount - tessd.cmd.indexOffset;
+		compiled.cmd.elementCount = index.elementCount - compiled.cmd.indexOffset;
 
 		xyz.modified = true;
 		normal.modified = true;
@@ -81,8 +79,6 @@ function CompileWorldSurfaces() {
 		LockBuffer(color);
 		LockBuffer(index);
 	}
-
-	backend.tess = originalCmd;
 
 	// We no longer need the vert info, let's free up the memory.
 	world.verts = null;

@@ -312,7 +312,7 @@ function AddItem(cent) {
 	// The weapons have their origin where they attatch to player
 	// models, so we need to offset them or they will rotate
 	// eccentricly.
-	if (item.giType === IT.WEAPON ) {
+	if (item.giType === IT.WEAPON) {
 		var wi = cg.weaponInfo[item.giTag];
 		cent.lerpOrigin[0] -= 
 			wi.weaponMidpoint[0] * refent.axis[0][0] +

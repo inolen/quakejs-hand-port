@@ -74,7 +74,7 @@ function FinishSpawningItem(ent) {
 
 	ent.s.eType = ET.ITEM;
 	ent.s.modelIndex = itemIndex;
-	//ent.s.modelIndex2 = 0; // zero indicates this isn't a dropped item
+	ent.s.modelIndex2 = 0; // zero indicates this isn't a dropped item
 
 	ent.contents = CONTENTS.TRIGGER;
 	ent.touch = TouchItem;

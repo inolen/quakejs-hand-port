@@ -16,6 +16,8 @@
 // } gitem_t;
 
 var itemList = [
+	new GameItemDesc(),
+	
 	/**
 	 * ARMOR
 	 */
