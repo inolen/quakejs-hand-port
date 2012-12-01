@@ -3,7 +3,7 @@
  */
 function CalcDiffuseColor(refent, normal, out) {
 	var incoming = vec3.dot(normal, refent.lightDir);
-	if (incoming <= 0 || window.foobar) {
+	if (incoming <= 0) {
 		out[0] = refent.ambientLight[0] / 255;
 		out[1] = refent.ambientLight[1] / 255;
 		out[2] = refent.ambientLight[2] / 255;

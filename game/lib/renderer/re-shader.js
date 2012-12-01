@@ -731,6 +731,7 @@ function GenerateVertexShader(q3shader, stage) {
 	builder.addUniforms({
 		modelViewMat: 'mat4',
 		projectionMat: 'mat4',
+		viewPosition: 'vec3',
 		time: 'float'
 	});
 
@@ -772,7 +773,7 @@ function GenerateVertexShader(q3shader, stage) {
 
 	if (stage.tcGen == 'environment') {
 		builder.addLines([
-			'vec3 viewer = normalize(-worldPosition.xyz);',
+			'vec3 viewer = normalize(viewPosition - position);',
 			'float d = dot(normal, viewer);',
 			'vec3 reflected = normal*2.0*d - viewer;',
 			'vTexCoord = vec2(0.5, 0.5) + reflected.xy * 0.5;'
@@ -865,6 +866,7 @@ function GenerateFragmentShader(q3shader, stage) {
 	switch (stage.rgbGen) {
 		case 'vertex':
 		case 'entity':
+		case 'lightingdiffuse':
 			builder.addLines(['vec3 rgb = texColor.rgb * vColor.rgb;']);
 			break;
 		case 'wave':
@@ -909,13 +911,13 @@ function GenerateFragmentShader(q3shader, stage) {
 	if (stage.alphaFunc) {
 		switch (stage.alphaFunc) {
 			case 'GT0':
-				builder.addLines(['if(alpha == 0.0) { discard; }']);
+				builder.addLines(['if (alpha == 0.0) { discard; }']);
 				break;
 			case 'LT128':
-				builder.addLines(['if(alpha >= 0.5) { discard; }']);
+				builder.addLines(['if (alpha >= 0.5) { discard; }']);
 				break;
 			case 'GE128':
-				builder.addLines(['if(alpha < 0.5) { discard; }']);
+				builder.addLines(['if (alpha < 0.5) { discard; }']);
 				break;
 			default:
 				break;

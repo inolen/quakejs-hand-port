@@ -10,6 +10,7 @@ attribute vec4 color;
 varying vec2 vTexCoord;
 varying vec4 vColor;
 
+uniform mat4 viewPosition;
 uniform mat4 modelViewMat;
 uniform mat4 projectionMat;
 

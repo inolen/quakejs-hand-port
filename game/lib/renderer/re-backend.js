@@ -428,6 +428,7 @@ function SetShaderStage(shader, stage) {
 	}
 
 	// Set uniforms
+	gl.uniform3fv(program.uniform.viewPosition, backend.or.viewOrigin);
 	gl.uniformMatrix4fv(program.uniform.modelViewMat, false, backend.or.modelMatrix);
 	gl.uniformMatrix4fv(program.uniform.projectionMat, false, backend.viewParms.projectionMatrix);
 

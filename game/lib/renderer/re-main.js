@@ -298,8 +298,8 @@ function RotateForEntity(refent, or) {
 	// 	axisLength = 1.0f;
 	// }
 
+	QMath.RotatePoint(delta, or.axis);
 	vec3.set(delta, or.viewOrigin);
-	QMath.RotatePoint(delta, or.axis); // scale axis by axisLength
 }
 
 /**
@@ -583,7 +583,7 @@ function AddModelSurfaces(refent) {
 		return;
 	}
 
-	// set up lighting now that we know we aren't culled
+	// Set up lighting now that we know we aren't culled.
 	if (!personalModel) {
 		SetupEntityLighting(refent);
 	}
