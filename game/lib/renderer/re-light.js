@@ -106,8 +106,12 @@ function SetupEntityLightingGrid(refent) {
 		refent.directedLight[1] += factor * data[offset+4];
 		refent.directedLight[2] += factor * data[offset+5];
 
-		var lat = data[offset+7];
-		var lng = data[offset+6];
+		var zenith = data[offset+7];
+		var azimuth = data[offset+6];
+
+		var lat = zenith * (2 * Math.PI) / 255;
+		var lng = azimuth * (2 * Math.PI) / 255;
+
 		normal[0] = Math.cos(lat) * Math.sin(lng);
 		normal[1] = Math.sin(lat) * Math.sin(lng);
 		normal[2] = Math.cos(lng);
@@ -124,7 +128,6 @@ function SetupEntityLightingGrid(refent) {
 	vec3.scale(refent.ambientLight, r_ambientScale());
 	vec3.scale(refent.directedLight, r_directedScale());
 
-	//log(refent.ambientLight[0], refent.index);
 	vec3.normalize(direction, refent.lightDir);
 }
 
