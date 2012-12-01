@@ -480,6 +480,8 @@ function CompileMd3Surfaces(md3) {
 		md3.surfaces[i] = compiled;
 	}
 
+	// Restore the original command (we could be being called mid
+	// render since we're in a callback).
 	backend.tess = originalCmd;
 
 	xyz.modified = true;

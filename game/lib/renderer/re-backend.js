@@ -54,7 +54,6 @@ function RenderDrawSurfaces() {
 	gl.clear(gl.DEPTH_BUFFER_BIT);
 
 	//
-	var force = false;
 	var oldSort = -1;
 	var oldShader = null;
 	var oldEntityNum = -1;
@@ -74,7 +73,7 @@ function RenderDrawSurfaces() {
 		var entityNum = (drawSurf.sort >> QSORT_ENTITYNUM_SHIFT) % MAX_GENTITIES;
 		//var dlightMap = drawSurf.sort & 3;
 
-		if (!force && drawSurfs.sort === oldSort) {
+		if (!backend.forceRender && drawSurfs.sort === oldSort) {
 			// Fast path, same as previous sort.
 			backend.tessFns[face.surfaceType](face);
 			continue;
@@ -82,7 +81,7 @@ function RenderDrawSurfaces() {
 		oldSort = drawSurf.sort;
 
 		// Change the tess parameters if needed.
-		if (force || shader !== oldShader || entityNum !== oldEntityNum) {
+		if (backend.forceRender || shader !== oldShader || entityNum !== oldEntityNum) {
 			if (oldShader) {
 				EndSurface();
 			}
@@ -111,9 +110,7 @@ function RenderDrawSurfaces() {
 			oldEntityNum = entityNum;
 		}
 
-		// The tess functions operating on compiled buffers don't
-		// support continued tesselating.
-		force = backend.tessFns[face.surfaceType](face);
+		backend.tessFns[face.surfaceType](face);
 	}
 
 	// Draw the contents of the last shader batch.
@@ -152,12 +149,16 @@ function RenderCollisionSurfaces() {
 function BeginSurface(shader) {
 	var tess = backend.tess;
 
+	// Clear force render flag.
+	backend.forceRender = false;
+
 	tess.shader = shader;
 	tess.shaderTime = backend.refdef.time;
-
 	tess.elementCount = 0;
 	tess.indexOffset = 0;
 
+	// Reset element count in buffers and
+	// re-assign default dynamic buffers.
 	if (tess.xyz)        ResetBuffer(tess.xyz);        tess.xyz        = backend.scratchBuffers.xyz;
 	if (tess.normal)     ResetBuffer(tess.normal);     tess.normal     = backend.scratchBuffers.normal;
 	if (tess.texCoord)   ResetBuffer(tess.texCoord);   tess.texCoord   = backend.scratchBuffers.texCoord;

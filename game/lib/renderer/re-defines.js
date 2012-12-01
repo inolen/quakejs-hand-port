@@ -375,6 +375,7 @@ var BackendState = function () {
 	this.modelBuffers       = null;
 
 	// Shader commands for the current frame
+	this.forceRender       = false;
 	this.tess              = new ShaderCommand();
 	this.tessFns           = {};
 

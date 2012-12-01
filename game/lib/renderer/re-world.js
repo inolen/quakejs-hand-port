@@ -42,6 +42,8 @@ function CompileWorldSurfaces() {
 
 	// For each group of faces, create render buffers for the
 	// composite compiled surface.
+	var originalCmd = backend.tess;
+
 	for (var i = 0; i < world.compiledFaces.length; i++) {
 		var compiled = world.compiledFaces[i];
 		if (!compiled) {
@@ -79,6 +81,9 @@ function CompileWorldSurfaces() {
 		LockBuffer(color);
 		LockBuffer(index);
 	}
+
+	// Restore the original command.
+	backend.tess = originalCmd;
 
 	// We no longer need the vert info, let's free up the memory.
 	world.verts = null;

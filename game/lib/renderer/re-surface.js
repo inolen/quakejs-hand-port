@@ -52,7 +52,7 @@ function TesselateCompiledFace(compiled) {
 	var cmd = compiled.cmd;
 
 	if (tess.elementCount !== 0) {
-		throw new Error('Compiled world surfaces should never be tesselated a second time, check the sorting in CompileWorldSurfaces.');
+		throw new Error('Compiled surfaces should never be tesselated twice.');
 	}
 
 	// Overwrite default buffers.
@@ -64,6 +64,11 @@ function TesselateCompiledFace(compiled) {
 	tess.index = cmd.index;
 	tess.indexOffset = cmd.indexOffset;
 	tess.elementCount = cmd.elementCount;
+
+	// We're not forcing a render here purposefully because we shouldn't have to.
+	// If CompileWorldSurfaces() sorted the surfaces properly, we shouldn't have
+	// but one world surface per shader in the drawSurf list. If the above exception
+	// is thrown please investigate why it's happening, don't force a render.
 }
 
 /**
@@ -172,6 +177,10 @@ function TesselateCompiledMd3(compiled) {
 	var refent = backend.currentEntity;
 	var cmd = compiled.cmd;
 
+	if (tess.elementCount !== 0) {
+		throw new Error('Compiled surfaces should never be tesselated twice.');
+	}
+
 	// Overwrite default buffers.
 	tess.xyz = cmd.xyz;
 	tess.normal = cmd.normal;
@@ -204,8 +213,22 @@ function TesselateCompiledMd3(compiled) {
 
 	color.modified = true;
 
-	// Force render.
-	return true;
+	// Normally the Tesselate* functions append data to a dynamic
+	// buffer for the current shader. However, for these special-cased
+	// models we're passing a static buffer to the renderer and therefor
+	// need to force a render immediately.
+	//
+	// The minor hit we take from possibly re-binding the same shader
+	// and textures for different surfaces on the same md3 (e.g. quad damage)
+	// absolutely pales in comparison to the hit we take from re-binding the
+	// dynamic data.
+	//
+	// NOTE We can't aggregate all md3 surfaces into one buffer, due to the
+	// fact that we support assigning different shaders to different surfaces
+	// at runtime through the refent system.
+
+	// Force a render.
+	backend.forceRender = true;
 }
 
 /**
