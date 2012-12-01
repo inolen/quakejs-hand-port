@@ -11,19 +11,19 @@ function CalcDiffuseColor(refent, normal, out) {
 		return;
 	}
 
-	var j = Math.round(refent.ambientLight[0] + incoming * refent.directedLight[0]);
+	var j = (refent.ambientLight[0] + incoming * refent.directedLight[0]) << 0;
 	if (j > 255) {
 		j = 255;
 	}
 	out[0] = j / 255;
 
-	j = Math.round(refent.ambientLight[1] + incoming * refent.directedLight[1]);
+	j = (refent.ambientLight[1] + incoming * refent.directedLight[1]) << 0;
 	if (j > 255) {
 		j = 255;
 	}
 	out[1] = j / 255;
 
-	j = Math.round(refent.ambientLight[2] + incoming * refent.directedLight[2]);
+	j = (refent.ambientLight[2] + incoming * refent.directedLight[2]) << 0;
 	if (j > 255) {
 		j = 255;
 	}
