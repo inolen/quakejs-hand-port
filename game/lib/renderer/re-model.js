@@ -446,6 +446,8 @@ function CompileMd3Surfaces(md3) {
 	var color = buffers.color;
 	var index = buffers.index;
 
+	var originalCmd = backend.tess;
+
 	for (var i = 0; i < md3.surfaces.length; i++) {
 		var surface = md3.surfaces[i];
 
@@ -477,6 +479,8 @@ function CompileMd3Surfaces(md3) {
 		// Overwrite the original surface.
 		md3.surfaces[i] = compiled;
 	}
+
+	backend.tess = originalCmd;
 
 	xyz.modified = true;
 	normal.modified = true;
