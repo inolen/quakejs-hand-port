@@ -864,7 +864,8 @@ function GenerateFragmentShader(q3shader, stage) {
 	builder.addLines(['vec4 texColor = texture2D(texture, vTexCoord.st);']);
 
 	switch (stage.rgbGen) {
-		case 'vertex':
+		case 'vertex':  // TODO vertex lighting should multiply by the identityLight constant
+		case 'exactvertex':
 		case 'entity':
 		case 'lightingdiffuse':
 			builder.addLines(['vec3 rgb = texColor.rgb * vColor.rgb;']);

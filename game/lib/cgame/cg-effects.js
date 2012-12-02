@@ -111,24 +111,26 @@ function ImpactMark(markShader, origin, dir,
 		originalPoints[3][i] = origin[i] - radius * axis[1][i] + radius * axis[2][i];
 	}
 
+	var colors = [r * 0xff, g * 0xff, b * 0xff, a * 0xff];
+
 	refent.reType = RT.POLY;
 	refent.customShader = markShader;
 
 	vec3.set(originalPoints[0], refent.polyVerts[0].xyz);
 	refent.polyVerts[0].st = [0, 0];
-	refent.polyVerts[0].modulate = [r, g, b, a];
+	refent.polyVerts[0].modulate = colors;
 
 	vec3.set(originalPoints[1], refent.polyVerts[1].xyz);
 	refent.polyVerts[1].st = [1, 0];
-	refent.polyVerts[1].modulate = [r, g, b, a];
+	refent.polyVerts[1].modulate = colors;
 
 	vec3.set(originalPoints[2], refent.polyVerts[2].xyz);
 	refent.polyVerts[2].st = [1, 1];
-	refent.polyVerts[2].modulate = [r, g, b, a];
+	refent.polyVerts[2].modulate = colors;
 
 	vec3.set(originalPoints[3], refent.polyVerts[3].xyz);
 	refent.polyVerts[3].st = [0, 1];
-	refent.polyVerts[3].modulate = [r, g, b, a];
+	refent.polyVerts[3].modulate = colors;
 
 	refent.numPolyVerts = 4;
 
