@@ -117,10 +117,73 @@ function OffsetThirdPersonView() {
  * CalcFov
  */
 function CalcFov() {
-	var fovX = cg_fov();
-	var x = cg.refdef.width / Math.tan(fovX / 360 * Math.PI);
-	var fovY = Math.atan2(cg.refdef.height, x) * 360 / Math.PI;
+	var fovX, fovY;
 
+	if (cg.predictedPlayerState.pm_type === PM.INTERMISSION) {
+		// If in intermission, use a fixed value.
+		fovX = 90;
+	} else {
+		// User selectable.
+		// if ( cgs.dmflags & DF_FIXED_FOV ) {
+		// 	// dmflag to prevent wide fov for all clients
+		// 	fov_x = 90;
+		// } else {
+			fovX = cg_fov();
+			if (fovX < 1) {
+				fovX = 1;
+			} else if (fovX > 160) {
+				fovX = 160;
+			}
+		// }
+
+		// Account for zooms.
+		var zoomFov = cg_zoomFov();
+		if (zoomFov < 1) {
+			zoomFov = 1;
+		} else if (zoomFov > 160) {
+			zoomFov = 160;
+		}
+
+		var f;
+		if (cg.zoomed) {
+			f = (cg.time - cg.zoomTime) / ZOOM_TIME;
+			if (f > 1.0) {
+				fovX = zoomFov;
+			} else {
+				fovX = fovX + f * (zoomFov - fovX);
+			}
+		} else {
+			f = (cg.time - cg.zoomTime) / ZOOM_TIME;
+			if (f <= 1.0) {
+				fovX = zoomFov + f * (fovX - zoomFov);
+			}
+		}
+	}
+
+
+	var x = cg.refdef.width / Math.tan(fovX / 360 * Math.PI);
+	fovY = Math.atan2(cg.refdef.height, x) * 360 / Math.PI;
+
+	// // Warp if underwater.
+	// contents = CG_PointContents( cg.refdef.vieworg, -1 );
+	// if ( contents & ( CONTENTS_WATER | CONTENTS_SLIME | CONTENTS_LAVA ) ){
+	// 	phase = cg.time / 1000.0 * WAVE_FREQUENCY * M_PI * 2;
+	// 	v = WAVE_AMPLITUDE * sin( phase );
+	// 	fov_x += v;
+	// 	fov_y -= v;
+	// 	inwater = qtrue;
+	// }
+	// else {
+	// 	inwater = qfalse;
+	// }
+
+	// Set it.
 	cg.refdef.fovX = fovX;
 	cg.refdef.fovY = fovY;
+
+	if (!cg.zoomed) {
+		cg.zoomSensitivity = 1;
+	} else {
+		cg.zoomSensitivity = cg.refdef.fovY / 75.0;
+	}
 }

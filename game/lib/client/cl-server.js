@@ -115,8 +115,17 @@ function KeyMove(cmd) {
  */
 function MouseMove(cmd) {
 	var oldAngles = vec3.set(cl.viewangles, [0, 0, 0]);
-	var mx = cl.mouseX * cl_sensitivity();
-	var my = cl.mouseY * cl_sensitivity();
+	
+	var mx = cl.mouseX;
+	var my = cl.mouseY;
+
+	// Adjust user sensitivity.
+	mx *= cl_sensitivity();
+	my *= cl_sensitivity();
+
+	// Ingame FOV.
+	mx *= cl.cgameSensitivity;
+	my *= cl.cgameSensitivity;
 
 	cl.viewangles[QMath.YAW] -= mx * 0.022;
 	cl.viewangles[QMath.PITCH] += my * 0.022;
@@ -127,7 +136,7 @@ function MouseMove(cmd) {
 		cl.viewangles[QMath.PITCH] = oldAngles[QMath.PITCH] - 90;
 	}
 
-	// reset
+	// Reset.
 	cl.mouseX = 0;
 	cl.mouseY = 0;
 

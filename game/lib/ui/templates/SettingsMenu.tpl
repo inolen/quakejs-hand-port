@@ -40,6 +40,9 @@
 						<div class="control-label">Attack:</div><div name="attackKey" class="control-input input-key"><%- attackKey %></div>
 					</div>
 					<div class="control-group">
+						<div class="control-label">Zoom:</div><div name="zoomKey" class="control-input input-key"><%- zoomKey %></div>
+					</div>
+					<div class="control-group">
 						<div class="control-label">Next weapon:</div><div name="weapnextKey" class="control-input input-key"><%- weapnextKey %></div>
 					</div>
 					<div class="control-group">

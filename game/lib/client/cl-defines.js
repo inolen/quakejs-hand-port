@@ -29,6 +29,7 @@ var ClientLocals = function () {
 	       
 	// CGame communicates a few values to the client system.
 	this.cgameWeapon          = 0;
+	this.cgameSensitivity     = 0;
 
 	// cmds[cmdNumber] is the predicted command,
 	// [cmdNumber-1] is the last properly generated

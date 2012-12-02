@@ -3,6 +3,7 @@ var cg,
 	cg_hud;
 
 var cg_fov,
+	cg_zoomFov,
 	cg_errordecay,
 	cg_nopredict,
 	cg_showmiss,
@@ -41,11 +42,12 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	cgs.serverCommandSequence = serverCommandSequence;
 	cgs.gameState = cl.GetGameState();
 
-	cg_fov              = com.AddCvar('cg_fov',              110, CVF.ARCHIVE);
-	cg_errordecay       = com.AddCvar('cg_errordecay',       100, CVF.ARCHIVE);
-	cg_nopredict        = com.AddCvar('cg_nopredict',        0,   CVF.ARCHIVE);
-	cg_showmiss         = com.AddCvar('cg_showmiss',         1,   CVF.ARCHIVE);
-	cg_thirdPerson      = com.AddCvar('cg_thirdPerson',      0,   CVF.ARCHIVE);
+	cg_fov              = com.AddCvar('cg_fov',              110,  CVF.ARCHIVE);
+	cg_zoomFov          = com.AddCvar('cg_zoomFov',          22.5, CVF.ARCHIVE),
+	cg_errordecay       = com.AddCvar('cg_errordecay',       100,  CVF.ARCHIVE);
+	cg_nopredict        = com.AddCvar('cg_nopredict',        0,    CVF.ARCHIVE);
+	cg_showmiss         = com.AddCvar('cg_showmiss',         1,    CVF.ARCHIVE);
+	cg_thirdPerson      = com.AddCvar('cg_thirdPerson',      0,    CVF.ARCHIVE);
 	cg_thirdPersonAngle = com.AddCvar('cg_thirdPersonAngle', 0);
 	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
 	cg_railTrailTime    = com.AddCvar('cg_railTrailTime',    1000, CVF.CHEAT);
@@ -97,6 +99,7 @@ function Frame(serverTime) {
 
 	// Let the client system know our weapon.
 	cl.SetUserCmdValue('weapon', cg.weaponSelect);
+	cl.SetUserCmdValue('sensitivity', cg.zoomSensitivity);
 
 	// Predicate our local playerstate.
 	PredictPlayerState();

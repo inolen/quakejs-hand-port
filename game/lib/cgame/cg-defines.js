@@ -15,7 +15,7 @@ var MAX_LOCAL_ENTITIES = 512;
 var PAIN_TWITCH_TIME  = 200;
 // #define	WEAPON_SELECT_TIME	1400
 var ITEM_SCALEUP_TIME = 1000;
-// #define	ZOOM_TIME			150
+var ZOOM_TIME         = 150;
 // #define	ITEM_BLOB_TIME		200
 // #define	MUZZLE_FLASH_TIME	20
 // #define	SINK_TIME			1000		// time for fragments to sink into ground before going away
@@ -85,6 +85,11 @@ var ClientGame = function () {
 	// view rendering
 	this.refdef                = new re.RefDef();
 	this.refdefViewAngles      = [0, 0 ,0];                // will be converted to refdef.viewaxis
+
+	// zoom key
+	this.zoomed                = false;
+	this.zoomTime              = 0;
+	this.zoomSensitivity       = 0;
 
 	// scoreboard
 	this.showScores            = false;

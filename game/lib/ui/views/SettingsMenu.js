@@ -12,6 +12,7 @@ var SettingsMenu = UIView.extend({
 		'rightKey':    '+right',
 		'upKey':       '+jump',
 		'attackKey':   '+attack',
+		'zoomKey':     '+zoom',
 		'weapnextKey': 'weapnext',
 		'weapprevKey': 'weapprev',
 		'weapon1Key':  'weapon 1',

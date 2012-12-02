@@ -107,11 +107,13 @@ function GetUserCmd(cmdNumber, dest) {
 }
 
 /**
- * SetUsrCmdValue
+ * SetUserCmdValue
  */
 function SetUserCmdValue(name, val) {
 	if (name === 'weapon') {
 		cl.cgameWeapon = val;
+	} else if (name === 'sensitivity') {
+		cl.cgameSensitivity = val;
 	}
 }
 
