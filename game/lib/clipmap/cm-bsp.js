@@ -62,7 +62,7 @@ function LoadShaders(buffer, shaderLump) {
 		var shader = shaders[i] = new sh.dshader_t();
 
 		shader.shaderName = bb.readASCIIString(MAX_QPATH);
-		shader.flags = bb.readInt();
+		shader.surfaceFlags = bb.readInt();
 		shader.contents = bb.readInt();
 	}
 }
@@ -420,7 +420,7 @@ function LoadPatches(buffer, surfsLump, vertsLump) {
 		}
 
 		patch.contents = cm.shaders[dface.shaderNum].contents;
-		patch.surfaceFlags = cm.shaders[dface.shaderNum].flags;
+		patch.surfaceFlags = cm.shaders[dface.shaderNum].surfaceFlags;
 
 		// Create the internal facet structure
 		patch.pc = GeneratePatchCollide(width, height, points);

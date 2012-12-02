@@ -478,7 +478,7 @@ function TraceThroughBrush(tw, brush) {
 	// all planes have been checked, and the trace was not
 	// completely outside the brush
 	//
-	if (!startout) {	// original point was inside brush
+	if (!startout) {  // original point was inside brush
 		tw.trace.startSolid = true;
 		if (!getout) {
 			tw.trace.allSolid = true;
@@ -495,7 +495,7 @@ function TraceThroughBrush(tw, brush) {
 			}
 			tw.trace.fraction = enterFrac;
 			clipplane.clone(tw.trace.plane);
-			//tw.trace.surfaceFlags = leadside.surfaceFlags;
+			tw.trace.surfaceFlags = leadside.surfaceFlags;
 			tw.trace.contents = brush.contents;
 		}
 	}

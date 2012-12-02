@@ -105,7 +105,7 @@ function LoadShaders(buffer, shaderLump) {
 		var shader = shaders[i] = new sh.dshader_t();
 
 		shader.shaderName = bb.readASCIIString(MAX_QPATH);
-		shader.flags = bb.readInt();
+		shader.surfaceFlags = bb.readInt();
 		shader.contents = bb.readInt();
 	}
 }

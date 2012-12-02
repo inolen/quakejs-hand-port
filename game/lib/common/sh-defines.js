@@ -448,9 +448,9 @@ var dmodel_t = function () {
 dmodel_t.size = 40;
 
 var dshader_t = function () {
-	this.shaderName = null;                      // byte * MAX_QPATH (string)
-	this.flags      = 0;                         // int32
-	this.contents   = 0;                         // int32
+	this.shaderName   = null;                    // byte * MAX_QPATH (string)
+	this.surfaceFlags = 0;                       // int32
+	this.contents     = 0;                       // int32
 };
 dshader_t.size = 72;
 

@@ -133,7 +133,13 @@ function CmdShowCluster() {
  * AddWorldSurfaces
  */
 function AddWorldSurfaces(map) {
+	// Determine which leaves are in the PVS / areamask.
 	MarkLeaves();
+
+	// Clear out the visible min/max.
+	QMath.ClearBounds(re.viewParms.visBounds[0], re.viewParms.visBounds[1]);
+
+	// Perform frustum culling and add all the potentially visible surfaces.
 	RecursiveWorldNode(re.world.nodes[0], 15);
 }
 
@@ -157,14 +163,14 @@ function MarkLeaves() {
 	re.viewCluster = viewCluster;
 	re.visCount++;
 
-	/*if (re.viewCluster == -1 ) {
+	if (re.viewCluster == -1 ) {
 		for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
-			if (nodes[i].contents != CONTENTS.SOLID) {
+			if (nodes[i].contents !== CONTENTS.SOLID) {
 				nodes[i].visframe = re.visCount;
 			}
 		}
 		return;
-	}*/
+	}
 
 	for (var i = 0, numNodes = nodes.length; i < numNodes; i++) {
 		var node = nodes[i];
@@ -174,12 +180,12 @@ function MarkLeaves() {
 			continue;
 		}
 
-		// check general pvs
+		// Check general PVS.
 		if (!ClusterVisible(re.viewCluster, cluster)) {
 			continue;
 		}
 
-		// check for door connection
+		// Check for door connection.
 		/*if ( (tr.refdef.areamask[node->area>>3] & (1<<(node->area&7)) ) ) {
 			continue;		// not visible
 		}*/
@@ -241,13 +247,14 @@ function ClusterVisible(current, test) {
  */
 function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 	while (1) {
-		// if the node wasn't marked as potentially visible, exit
-		if (node.visframe != re.visCount) {
+		// If the node wasn't marked as potentially visible, exit.
+		if (node.visframe !== re.visCount) {
 			return;
 		}
 
-		// if the bounding volume is outside the frustum, nothing
-		// inside can be visible OPTIMIZE: don't do this all the way to leafs?
+		// If the bounding volume is outside the frustum, nothing
+		// inside can be visible.
+		// OPTIMIZE: don't do this all the way to leafs?
 		if (true/*!r_nocull->integer*/) {
 			var r;
 
@@ -292,42 +299,42 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 			break;
 		}
 
-		// node is just a decision point, so go down both sides
-		// since we don't care about sort orders, just go positive to negative
+		// Node is just a decision point, so go down both sides.
+		// Since we don't care about sort orders, just go positive to negative.
 
-		// determine which dlights are needed
-		/*var newDlights = [0, 0];
+		// // Determine which dlights are needed.
+		// var newDlights = [0, 0];
 
-		if (dlightBits) {
-			int	i;
+		// if (dlightBits) {
+		// 	int	i;
 
-			for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
-				dlight_t	*dl;
-				float		dist;
+		// 	for ( i = 0 ; i < tr.refdef.num_dlights ; i++ ) {
+		// 		dlight_t	*dl;
+		// 		float		dist;
 
-				if ( dlightBits & ( 1 << i ) ) {
-					dl = &tr.refdef.dlights[i];
-					dist = DotProduct( dl->origin, node->plane->normal ) - node->plane->dist;
+		// 		if ( dlightBits & ( 1 << i ) ) {
+		// 			dl = &tr.refdef.dlights[i];
+		// 			dist = DotProduct( dl->origin, node->plane->normal ) - node->plane->dist;
 					
-					if ( dist > -dl->radius ) {
-						newDlights[0] |= ( 1 << i );
-					}
-					if ( dist < dl->radius ) {
-						newDlights[1] |= ( 1 << i );
-					}
-				}
-			}
-		}*/
+		// 			if ( dist > -dl->radius ) {
+		// 				newDlights[0] |= ( 1 << i );
+		// 			}
+		// 			if ( dist < dl->radius ) {
+		// 				newDlights[1] |= ( 1 << i );
+		// 			}
+		// 		}
+		// 	}
+		// }
 
-		// recurse down the children, front side first
+		// Recurse down the children, front side first.
 		RecursiveWorldNode(node.children[0], planeBits/*, newDlights[0]*/);
 
-		// tail recurse
+		// Tail recurse.
 		node = node.children[1];
 		/*dlightBits = newDlights[1];*/
 	}
 
-	// add to z buffer bounds
+	// Add to z buffer bounds.
 	var parms = re.viewParms;
 
 	if (node.mins[0] < parms.visBounds[0][0]) {
