@@ -297,11 +297,10 @@ function StartLocalSound(hSound) {
 /**
  * AddLoopingSound
  */
-function AddLoopingSound( entityNum, origin, velocity, sfx )
-{
-	if( si.AddLoopingSound ) {
-		si.AddLoopingSound( entityNum, origin, velocity, sfx );
-	}
+function AddLoopingSound (entityNum, origin, velocity, sfx) {
+// 	if (si.AddLoopingSound) {
+// 		si.AddLoopingSound(entityNum, origin, velocity, sfx);
+// 	}
 }
 
 /**

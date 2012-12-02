@@ -40,6 +40,7 @@ function (_, glmatrix, ByteBuffer, sh, QMath) {
 			BoxTrace:              BoxTrace,
 			TransformedBoxTrace:   TransformedBoxTrace,
 			EmitCollisionSurfaces: EmitCollisionSurfaces,
+			SnapVector:            SnapVector
 		};
 	}
 
