@@ -189,6 +189,7 @@ function RegisterGraphics() {
 	cgs.media.burnMarkShader = re.RegisterShader('gfx/damage/burn_med_mrk');
 	// cgs.media.holeMarkShader = re.RegisterShader('gfx/damage/hole_lg_mrk');
 	cgs.media.energyMarkShader = re.RegisterShader('gfx/damage/plasma_mrk');
+	cgs.media.shadowMarkShader = re.RegisterShader('markShadow');
 }
 
 /**

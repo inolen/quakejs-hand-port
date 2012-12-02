@@ -467,8 +467,8 @@ function AddPlayer(cent) {
 	// // add the talk baloon or disconnect icon
 	// CG_PlayerSprites( cent );
 
-	// // add the shadow
-	// shadow = CG_PlayerShadow( cent, &shadowPlane );
+	// Add the shadow.
+	var shadow = PlayerShadow(cent/*, &shadowPlane*/);
 
 	// // add a water splash if partially in and out of water
 	// CG_PlayerSplash( cent );
@@ -774,6 +774,61 @@ function AddPainTwitch(cent, torsoAngles) {
 	} else {
 		torsoAngles[QMath.ROLL] -= 20 * f;
 	}
+}
+
+/**********************************************************
+ *
+ * Player effects
+ *
+ **********************************************************/
+
+/**
+ * PlayerShadow
+ * 
+ * Returns the Z component of the surface being shadowed.
+ * Should it return a full plane instead of a Z?
+ */
+var SHADOW_DISTANCE = 128;
+function PlayerShadow(cent/*, shadowPlane*/) {
+	// *shadowPlane = 0;
+
+	// if (cg_shadows.integer === 0) {
+	// 	return qfalse;
+	// }
+
+	// No shadows when invisible.
+	if (cent.currentState.powerups & (1 << PW.INVIS)) {
+		return qfalse;
+	}
+
+	// Send a trace down from the player to the ground
+	var mins = [-15, -15, 0];
+	var maxs = [15, 15, 2];
+	var end = vec3.set(cent.lerpOrigin, [0, 0, 0]);
+	end[2] -= SHADOW_DISTANCE;
+
+	var trace = cm.BoxTrace(cent.lerpOrigin, end, mins, maxs, 0, MASK.PLAYERSOLID);
+
+	// No shadow if too high
+	if (trace.fraction === 1.0 || trace.startSolid || trace.allSolid) {
+		return false;
+	}
+
+	// *shadowPlane = trace.endpos[2] + 1;
+
+	// if (cg_shadows.integer !== 1) {  // no mark for stencil or projection shadows
+	// 	return qtrue;
+	// }
+
+	// Fade the shadow out with height.
+	var alpha = 1.0 - trace.fraction;
+
+	// Add the mark as a temporary, so it goes directly to the renderer
+	// without taking a spot in the cg_marks array.
+	ImpactMark(cgs.media.shadowMarkShader, trace.endPos, trace.plane.normal, 
+		cent.pe.legs.yawAngle, alpha, alpha, alpha, 1, false, 24, true);
+
+	return true;
 }
 
 /**********************************************************

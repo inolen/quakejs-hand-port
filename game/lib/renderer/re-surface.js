@@ -2,7 +2,7 @@
  * TesselateFace
  *
  * Called both by the backend and re-world
- * when pre-compiling the
+ * when pre-compiling the faces.
  */
 function TesselateFace(face) {
 	var tess = backend.tess;
@@ -45,7 +45,7 @@ function TesselateFace(face) {
 }
 
 /**
- * TesselateCompiledFac
+ * TesselateCompiledFace
  */
 function TesselateCompiledFace(compiled) {
 	var tess = backend.tess;
@@ -224,8 +224,8 @@ function TesselateCompiledMd3(compiled) {
 	// dynamic data.
 	//
 	// NOTE We can't aggregate all md3 surfaces into one buffer, due to the
-	// fact that we support assigning different shaders to different surfaces
-	// at runtime through the refent system.
+	// fact that we support assigning different shaders to individual md3
+	// surfaces at runtime through the refent system.
 
 	// Force a render.
 	backend.forceRender = true;

@@ -78,16 +78,22 @@ function ImpactMark(markShader, origin, dir,
 		error('ImpactMark called with <= 0 radius');
 	}
 
-	var le = AllocLocalEntity();
-	le.leType = LE.MARK;
-	le.startTime = cg.time;
-	le.endTime = le.startTime + 4000;
-	le.color[0] = r;
-	le.color[1] = g;
-	le.color[2] = b;
-	le.color[3] = a;
+	var le, refent;
 
-	var refent = le.refent;
+	if (!temporary) {
+		le = AllocLocalEntity();
+		le.leType = LE.MARK;
+		le.startTime = cg.time;
+		le.endTime = le.startTime + 4000;
+		le.color[0] = r;
+		le.color[1] = g;
+		le.color[2] = b;
+		le.color[3] = a;
+
+		refent = le.refent;
+	} else {
+		refent = new re.RefEntity();
+	}
 
 	// Create the texture axis.
 	var axis = refent.axis;
@@ -125,6 +131,10 @@ function ImpactMark(markShader, origin, dir,
 	refent.polyVerts[3].modulate = [r, g, b, a];
 
 	refent.numPolyVerts = 4;
+
+	if (temporary) {
+		re.AddRefEntityToScene(refent);
+	}
 
 	// Get the fragments.
 	// vec3.scale(dir, -20, projection);

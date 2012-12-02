@@ -145,7 +145,7 @@ function CullLocalBox(bounds) {
 			}
 		}
 
-		if (!front) {			
+		if (!front) {
 			return Cull.OUT;  // all points were behind one of the planes
 		}
 		anyBack |= back;
@@ -191,9 +191,9 @@ function CullPointAndRadius(pt, radius) {
 		var frust = parms.frustum[i];
 		var dist = vec3.dot(pt, frust.normal) - frust.dist;
 
-		if ( dist < -radius ) {
+		if (dist < -radius) {
 			return Cull.OUT;
-		} else if ( dist <= radius ) {
+		} else if (dist <= radius) {
 			mightBeClipped = true;
 		}
 	}
@@ -202,7 +202,7 @@ function CullPointAndRadius(pt, radius) {
 		return Cull.CLIP;
 	}
 
-	return Cull.IN; // completely inside frustum
+	return Cull.IN;  // completely inside frustum
 }
 
 /**
@@ -578,7 +578,7 @@ function AddModelSurfaces(refent) {
 	// Cull the entire model if merged bounding box of both frames
 	// is outside the view frustum.
 	var cull = CullModel(md3, refent);
-	if (cull === Cull.OUT ) {
+	if (cull === Cull.OUT) {
 		return;
 	}
 
@@ -587,7 +587,7 @@ function AddModelSurfaces(refent) {
 		SetupEntityLighting(refent);
 	}
 
-	// see if we are in a fog volume
+	// See if we are in a fog volume.
 	//fogNum = R_ComputeFogNum( header, ent );
 
 	//
@@ -620,24 +620,24 @@ function AddModelSurfaces(refent) {
 			}
 		}
 		
-		// we will add shadows even if the main object isn't visible in the view
+		// We will add shadows even if the main object isn't visible in the view
 
-		// stencil shadows can't do personal models unless I polyhedron clip
-		/*if ( !personalModel
-			&& r_shadows->integer == 2 
-			&& fogNum == 0
-			&& !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
-			&& shader->sort == SS_OPAQUE ) {
-			R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, qfalse );
-		}
+		// // Stencil shadows can't do personal models unless I polyhedron clip.
+		// if ( !personalModel
+		//      && r_shadows->integer == 2 
+		//      && fogNum == 0
+		//      && !(ent->e.renderfx & ( RF_NOSHADOW | RF_DEPTHHACK ) ) 
+		//      && shader->sort == SS_OPAQUE ) {
+		//      R_AddDrawSurf( (void *)surface, tr.shadowShader, 0, qfalse );
+		// }
 
-		// projection shadows work fine with personal models
-		if ( r_shadows->integer == 3
-			&& fogNum == 0
-			&& (ent->e.renderfx & RF_SHADOW_PLANE )
-			&& shader->sort == SS_OPAQUE ) {
-			R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
-		}*/
+		// // Projection shadows work fine with personal models.
+		// if (r_shadows->integer == 3
+		//      && fogNum == 0
+		//      && (ent->e.renderfx & RF_SHADOW_PLANE )
+		//      && shader->sort == SS_OPAQUE ) {
+		//      R_AddDrawSurf( (void *)surface, tr.projectionShadowShader, 0, qfalse );
+		// }
 
 		// Don't add third_person objects if not viewing through a portal.
 		if (!personalModel) {
