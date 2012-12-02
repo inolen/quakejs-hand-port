@@ -21,6 +21,7 @@ function (glmatrix, QMath, sh) {
 	
 	return {
 		constants: {
+			GIB_HEALTH:             GIB_HEALTH,
 			ARMOR_PROTECTION:       ARMOR_PROTECTION,
 			DEFAULT_SHOTGUN_SPREAD: DEFAULT_SHOTGUN_SPREAD,
 			DEFAULT_SHOTGUN_COUNT:  DEFAULT_SHOTGUN_COUNT,
@@ -36,6 +37,7 @@ function (glmatrix, QMath, sh) {
 		enums: {
 			PM:   PM,
 			PMF:  PMF,
+			GT:   GT,
 			WS:   WS,
 			IT:   IT,
 			MASK: MASK,

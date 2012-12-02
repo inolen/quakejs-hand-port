@@ -21,21 +21,21 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	if (!targ.takeDamage) {
 		return;
 	}
-
-	// // The intermission has already been qualified for, so don't
-	// // allow any extra scoring.
-	// if (level.intermissionQueued) {
-	// 	return;
-	// }
-
+	
+	// The intermission has already been qualified for, so don't
+	// allow any extra scoring.
+	if (level.intermissionQueued) {
+		return;
+	}
+	
 	if (!inflictor) {
 		inflictor = level.gentities[ENTITYNUM_WORLD];
 	}
-
+	
 	if (!attacker) {
 		attacker = level.gentities[ENTITYNUM_WORLD];
 	}
-
+	
 	// // Shootable doors / buttons don't actually have any health.
 	// if (targ.s.eType == ET.MOVER) {
 	// 	if (targ.use && targ.moverState == MOVER_POS1) {

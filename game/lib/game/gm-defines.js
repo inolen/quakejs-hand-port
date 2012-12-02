@@ -42,10 +42,6 @@ var TEAM_STATE = {
 };
 
 var LevelLocals = function () {
-	this.framenum     = 0;
-	this.previousTime = 0;
-	this.time         = 0;
-	this.startTime    = 0;
 	this.clients      = new Array(MAX_CLIENTS);
 	this.gentities    = new Array(MAX_GENTITIES);
 
@@ -53,15 +49,39 @@ var LevelLocals = function () {
 		this.gentities[i] = new GameEntity();
 	}
 	
+	this.warmupTime = 0;
+	this.maxclients = 0;
+	
+	this.framenum     = 0;
+	this.previousTime = 0;
+	this.time         = 0;
+	
+	this.startTime    = 0;
+	
+	this.teamScores = new Array(TEAM.NUM_TEAMS);
+	this.lastTeamLocationTime = 0;		// last time of client team location update
+	
+	this.newSession = false;			// don't use any old session data, because
+										// we changed gametype
+	
+	this.restarted = false;				// waiting for a map_restart to fire
+	
+	this.numConnectedClients    = 0;
+	this.numNonSpectatorClients = 0;	// includes connecting clients
+	this.numPlayingClients      = 0;	// connected, non-spectators
+// 	int	sortedClients[MAX_CLIENTS];		// sorted by score
+// 	int	follow1, follow2;				// clientNums for auto-follow spectators
+	
 	// intermission state
 	this.intermissionQueued = 0;		// intermission was qualified, but
 										// wait INTERMISSION_DELAY_TIME before
 										// actually going there so the last
 										// frag can be watched.  Disable future
 										// kills during this delay
+	
 	this.intermissiontime = 0;			// time the intermission was started
 // 	char		*changemap;
-	readyToExit = false;			// at least one client wants to exit
+	readyToExit = false;				// at least one client wants to exit
 	var exitTime = 0;
 // 	vec3_t		intermission_origin;	// also used for spectator spawns
 // 	vec3_t		intermission_angle;

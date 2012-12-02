@@ -39,8 +39,7 @@ function (_, glmatrix, ByteBuffer, sh, QMath) {
 			AreasConnected:        AreasConnected,
 			BoxTrace:              BoxTrace,
 			TransformedBoxTrace:   TransformedBoxTrace,
-			EmitCollisionSurfaces: EmitCollisionSurfaces,
-			SnapVector:            SnapVector
+			EmitCollisionSurfaces: EmitCollisionSurfaces
 		};
 	}
 

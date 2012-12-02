@@ -146,7 +146,7 @@ function weapon_supershotgun_fire (ent) {
 	// send shotgun blast
 	tent = TempEntity( muzzle, EV.SHOTGUN );
 	vec3.scale( forward, 4096, tent.s.origin2 );
-	sv.SnapVector( tent.s.origin2 );
+// 	sv.SnapVector( tent.s.origin2 );
 	tent.s.eventParm = Math.floor(Math.random() * 65536) & 255;		// seed for spread pattern
 	tent.s.otherEntityNum = ent.s.number;
 	
