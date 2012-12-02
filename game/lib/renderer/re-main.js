@@ -770,7 +770,7 @@ function CullModel(md3, refent) {
 			var sphereCull  = CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius);
 			var sphereCullB;
 
-			if ( newFrame === oldFrame ) {
+			if (newFrame === oldFrame) {
 				sphereCullB = sphereCull;
 			} else {
 				sphereCullB = CullLocalPointAndRadius(oldFrame.localOrigin, oldFrame.radius);
