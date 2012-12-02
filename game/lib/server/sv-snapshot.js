@@ -49,14 +49,12 @@ function BuildClientSnapshot(client, msg) {
  * AddEntitiesVisibleFromPoint
  */
 function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
-	/*leafnum = cm.PointLeafnum (origin);
-	clientarea = cm.LeafArea (leafnum);
-	clientcluster = cm.LeafCluster (leafnum);
+	var leafnum = cm.PointLeafnum(origin);
+	var clientarea = cm.LeafArea(leafnum);
+	var clientcluster = cm.LeafCluster(leafnum);
 
-	// calculate the visible areas
-	frame->areabytes =cm.WriteAreaBits( frame->areabits, clientarea );
-
-	clientpvs = cm.ClusterPVS (clientcluster);*/
+	// Calculate the visible areas.
+	//frame->areabytes = cm.WriteAreaBits( frame->areabits, clientarea );
 
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		var ent = GentityForNum(i);
@@ -79,7 +77,7 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 
 		// Entities can be flagged to be sent to only one client.
 		if (ent.svFlags & gm.SVF.SINGLECLIENT) {
-			if (ent.singleClient != frame.ps.clientNum) {
+			if (ent.singleClient !== frame.ps.clientNum) {
 				continue;
 			}
 		}
@@ -103,46 +101,47 @@ function AddEntitiesVisibleFromPoint(origin, frame, eNums, portal) {
 			continue;
 		}
 
-		// // Ignore if not touching a PV leaf.
-		// // Check area.
-		// if ( !CM_AreasConnected( clientarea, svEnt->areanum ) ) {
-		// 	// doors can legally straddle two areas, so
-		// 	// we may need to check another one
-		// 	if ( !CM_AreasConnected( clientarea, svEnt->areanum2 ) ) {
-		// 		continue;		// blocked by a door
-		// 	}
-		// }
-
-		// bitvector = clientpvs;
+		// Ignore if not touching a PVS leaf.
+		// Check area.
+		if (!cm.AreasConnected(clientarea, svEnt.areanum)) {
+			// Doors can legally straddle two areas, so
+			// we may need to check another one
+			if (!cm.AreasConnected(clientarea, svEnt.areanum2)) {
+				continue;  // blocked by a door
+			}
+		}
 
 		// // Check individual leafs.
-		// if ( !svEnt->numClusters ) {
-		// 	continue;
-		// }
-		// l = 0;
-		// for ( i=0 ; i < svEnt->numClusters ; i++ ) {
-		// 	l = svEnt->clusternums[i];
-		// 	if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-		// 		break;
-		// 	}
-		// }
+		if (!svEnt.numClusters ) {
+			continue;
+		}
+		var j = 0;
+		var k = 0;
+		// bitvector = clientpvs;
+		for (j = 0; j < svEnt.numClusters; j++) {
+			k = svEnt.clusternums[j];
 
-		// // If we haven't found it to be visible,
-		// // check overflow clusters that coudln't be stored.
-		// if ( i == svEnt->numClusters ) {
-		// 	if ( svEnt->lastCluster ) {
-		// 		for ( ; l <= svEnt->lastCluster ; l++ ) {
-		// 			if ( bitvector[l >> 3] & (1 << (l&7) ) ) {
-		// 				break;
-		// 			}
-		// 		}
-		// 		if ( l == svEnt->lastCluster ) {
-		// 			continue;	// not visible
-		// 		}
-		// 	} else {
-		// 		continue;
-		// 	}
-		// }
+			if (cm.ClusterVisible(clientcluster, k)) {
+				break;
+			}
+		}
+
+		// If we haven't found it to be visible,
+		// check overflow clusters that coudln't be stored.
+		if (j === svEnt.numClusters) {
+			if (svEnt.lastCluster) {
+				for (; k <= svEnt.lastCluster; k++) {
+					if (cm.ClusterVisible(clientcluster, k)) {
+						break;
+					}
+				}
+				if (k === svEnt.lastCluster ) {
+					continue;  // not visible
+				}
+			} else {
+				continue;
+			}
+		}
 
 		// Add it.
 		AddEntToSnapshot(svEnt, ent, eNums);

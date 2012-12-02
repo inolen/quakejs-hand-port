@@ -31,10 +31,15 @@ function (_, glmatrix, ByteBuffer, sh, QMath) {
 			InlineModel:           InlineModel,
 			TempBoxModel:          TempBoxModel,
 			ModelBounds:           ModelBounds,
+			LeafArea:              LeafArea,
+			LeafCluster:           LeafCluster,
+			ClusterVisible:        ClusterVisible,
+			BoxLeafnums:           BoxLeafnums,
+			PointLeafnum:          PointLeafnum,
+			AreasConnected:        AreasConnected,
 			BoxTrace:              BoxTrace,
 			TransformedBoxTrace:   TransformedBoxTrace,
 			EmitCollisionSurfaces: EmitCollisionSurfaces,
-			SnapVector:            SnapVector
 		};
 	}
 

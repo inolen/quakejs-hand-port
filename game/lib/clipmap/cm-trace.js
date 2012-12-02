@@ -139,7 +139,7 @@ function TestInLeaf(tw, leaf) {
  */
 
 // Don't allocate this each time.
-var leaflist = new LeafList();
+var ptleafs = new Uint32Array(MAX_POSITION_LEAFS)
 
 function PositionTest(tw) {
 	var leafs = cm.leafs;
@@ -149,14 +149,17 @@ function PositionTest(tw) {
 	vec3.add(mins, [-1, -1, -1]);
 	vec3.add(maxs, [1, 1, 1]);
 
+	var ll = new LeafList();
+	ll.list = ptleafs;
+	ll.maxCount = MAX_POSITION_LEAFS;
+
 	cm.checkcount++;
-	leaflist.count = 0;
-	BoxLeafnums_r(leaflist, mins, maxs, 0);
+	BoxLeafnums_r(ll, mins, maxs, 0);
 	cm.checkcount++;
 
 	// Test the contents of the leafs.
-	for (var i = 0; i < leaflist.count; i++) {
-		TestInLeaf(tw, leafs[leaflist.list[i]]);
+	for (var i = 0; i < ll.count; i++) {
+		TestInLeaf(tw, leafs[ll.list[i]]);
 
 		if (tw.trace.allSolid) {
 			break;

@@ -36,10 +36,12 @@ function LoadMap(mapName, callback) {
 		LoadBrushes(data, header.lumps[sh.Lumps.BRUSHES]);
 		LoadSubmodels(data, header.lumps[sh.Lumps.MODELS]);
 		LoadNodes(data, header.lumps[sh.Lumps.NODES]);
-		LoadEntities(data, header.lumps[sh.Lumps.ENTITIES]);
+		LoadEntities(data, header.lumps[sh.Lumps.ENTITIES]);		
+		LoadVisibility(data, header.lumps[sh.Lumps.VISIBILITY]);
 		LoadPatches(data, header.lumps[sh.Lumps.SURFACES], header.lumps[sh.Lumps.DRAWVERTS]);
 
-		InitBoxHull();
+		InitBoxHull();		
+		FloodAreaConnections();
 
 		if (callback) {
 			callback();
@@ -75,6 +77,8 @@ function LoadLeafs(buffer, leafLump) {
 	var numLeafs = leafLump.filelen / sh.dleaf_t.size;
 	var leafs = cm.leafs = new Array(numLeafs);
 
+	var numAreas = 0;
+
 	for (var i = 0; i < numLeafs; i++) {
 		var leaf = leafs[i] = new cleaf_t();
 
@@ -88,6 +92,20 @@ function LoadLeafs(buffer, leafLump) {
 		leaf.numLeafSurfaces = bb.readInt();
 		leaf.firstLeafBrush = bb.readInt();
 		leaf.numLeafBrushes = bb.readInt();
+
+		if (leaf.area >= numAreas) {
+			numAreas = leaf.area + 1;
+		}
+	}
+
+	cm.areas = new Array(numAreas);
+	cm.areaPortals = new Array(numAreas * numAreas);
+
+	for (var i = 0; i < numAreas; i++) {
+		cm.areas[i] = new carea_t();
+	}	
+	for (var i = 0; i < numAreas * numAreas; i++) {
+		cm.areaPortals[i] = 0;
 	}
 }
 
@@ -239,6 +257,9 @@ function LoadSubmodels(buffer, modelLump) {
 	}
 }
 
+/**
+ * LoadNodes
+ */
 function LoadNodes(buffer, nodeLump) {
 	var planes = cm.planes;
 
@@ -306,6 +327,24 @@ function LoadEntities(buffer, entityLump) {
 		
 		entities.push(entity);
 	});
+}
+
+/**
+ * LoadVisibility
+ */
+function LoadVisibility(buffer, visLump) {
+	var bb = new ByteBuffer(buffer, ByteBuffer.LITTLE_ENDIAN);
+	bb.index = visLump.fileofs;
+
+	cm.numClusters = bb.readInt();
+	cm.clusterBytes = bb.readInt();
+
+	var vissize = cm.numClusters * cm.clusterBytes;
+	cm.vis = new Uint8Array(vissize);
+
+	for (var i = 0; i < vissize; i++) {
+		cm.vis[i] = bb.readUnsignedByte();
+	}
 }
 
 /**
@@ -515,4 +554,24 @@ function ClipHandleToModel(handle) {
 	}
 	
 	com.error(ERR.DROP, 'ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
+}
+
+/**
+ * LeafCluster
+ */
+function LeafCluster(leafNum) {
+	if (leafNum < 0 || leafNum >= cm.leafs.length) {
+		com.error(ERR.DROP, 'LeafCluster: bad number');
+	}
+	return cm.leafs[leafNum].cluster;
+}
+
+/**
+ * LeafArea
+ */
+function LeafArea(leafNum) {
+	if (leafNum < 0 || leafNum >= cm.leafs.length) {
+		com.error(ERR.DROP, 'LeafArea: bad number');
+	}
+	return cm.leafs[leafNum].area;
 }

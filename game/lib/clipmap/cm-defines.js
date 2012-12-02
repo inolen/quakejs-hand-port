@@ -19,6 +19,15 @@ var ClipMapLocals = function () {
 	this.shaders      = null;
 	this.entities     = null;
 	this.surfaces     = null;                              // only patches
+
+	this.visibility   = null;
+	this.numClusters  = 0;
+	this.clusterBytes = 0;
+
+	this.areas        = null;
+	this.areaPortals  = null;                              // [ numAreas*numAreas ] reference counts
+	
+	this.floodvalid   = 0;
 };
 
 /**********************************************************
@@ -58,6 +67,11 @@ var cbrush_t = function () {
 	this.numSides   = 0;
 	this.checkcount = 0;                                   // to avoid repeated testings
 };
+
+var carea_t = function () {
+	this.floodnum   = 0;
+	this.floodvalid = 0;
+}
 
 /**********************************************************
  * Polylib
@@ -164,7 +178,7 @@ var TraceResults = function () {
 	this.startSolid = false;                               // if true, the initial point was in a solid area
 	this.fraction   = 1.0;                                 // time completed, 1.0 = didn't hit anything
 	this.endPos     = [0, 0, 0];                           // final position
-	this.plane      = new QMath.Plane();                      // surface normal at impact, transformed to world space
+	this.plane      = new QMath.Plane();                   // surface normal at impact, transformed to world space
 };
 
 TraceResults.prototype.clone = function (to) {
@@ -184,8 +198,10 @@ TraceResults.prototype.clone = function (to) {
 var MAX_POSITION_LEAFS = 1024;
 
 var LeafList = function () {
-	this.list  = new Uint32Array(MAX_POSITION_LEAFS);
-	this.count = 0;
+	this.list     = null;
+	this.count    = 0;
+	this.maxCount = 0;
+	this.lastLeaf = 0;                                     // for overflows where each leaf can't be stored individually
 };
 
 // Used for oriented capsule collision detection

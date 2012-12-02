@@ -80,10 +80,13 @@ function CreateWorldSector(depth, mins, maxs) {
 /**
  * LinkEntity
  */
-function LinkEntity(gent) {
-	var ent = SvEntityForGentity(gent);
+var MAX_TOTAL_ENT_LEAFS = 128;
+var leleafs = new Uint32Array(MAX_TOTAL_ENT_LEAFS);
 
-	if (ent.worldSector) {
+function LinkEntity(gent) {
+	var svEnt = SvEntityForGentity(gent);
+
+	if (svEnt.worldSector) {
 		UnlinkEntity(gent);  // unlink from old position
 	}
 
@@ -146,60 +149,60 @@ function LinkEntity(gent) {
 	gent.absmax[1] += 1;
 	gent.absmax[2] += 1;
 
-	/*// link to PVS leafs
-	ent.numClusters = 0;
-	ent.lastCluster = 0;
-	ent.areanum = -1;
-	ent.areanum2 = -1;
+	// Link to PVS leafs.
+	svEnt.numClusters = 0;
+	svEnt.lastCluster = 0;
+	svEnt.areanum = -1;
+	svEnt.areanum2 = -1;
 
 	// get all leafs, including solids
-	num_leafs = CM_BoxLeafnums( gent.r.absmin, gent.r.absmax,
-		leafs, MAX_TOTAL_ENT_LEAFS, &lastLeaf );
+	var ll = cm.BoxLeafnums(gent.absmin, gent.absmax,
+		leleafs, MAX_TOTAL_ENT_LEAFS);
 
-	// if none of the leafs were inside the map, the
+	// If none of the leafs were inside the map, the
 	// entity is outside the world and can be considered unlinked
-	if (!num_leafs) {
+	if (!ll.count) {
 		return;
 	}
 
-	// set areas, even from clusters that don't fit in the entity array
-	for (var i = 0; i < num_leafs; i++) {
-		var area = CM_LeafArea(leafs[i]);
+	// Set areas, even from clusters that don't fit in the entity array.
+	for (var i = 0; i < ll.count; i++) {
+		var area = cm.LeafArea(leleafs[i]);
 
 		if (area === -1) {
 			continue;
 		}
 
-		// doors may legally straggle two areas,
-		// but nothing should ever need more than that
-		if (ent.areanum !== -1 && ent.areanum != area) {
-			ent.areanum2 = area;
+		// Doors may legally straggle two areas,
+		// but nothing should ever need more than that/
+		if (svEnt.areanum !== -1 && svEnt.areanum !== area) {
+			svEnt.areanum2 = area;
 		} else {
-			ent.areanum = area;
+			svEnt.areanum = area;
 		}
 	}
 
-	// store as many explicit clusters as we can
-	ent.numClusters = 0;
+	// Store as many explicit clusters as we can.
+	svEnt.numClusters = 0;
 
-	for (var i = 0; i < num_leafs; i++) {
-		var cluster = CM_LeafCluster(leafs[i]);
+	for (var i = 0; i < ll.count; i++) {
+		var cluster = cm.LeafCluster(leleafs[i]);
 
 		if (cluster === -1) {
 			continue;
 		}
 
-		ent.clusternums[ent.numClusters++] = cluster;
+		svEnt.clusternums[svEnt.numClusters++] = cluster;
 
-		if (ent.numClusters == MAX_ENT_CLUSTERS) {
+		if (svEnt.numClusters === MAX_ENT_CLUSTERS) {
 			break;
 		}
 	}
 
-	// store off a last cluster if we need to
-	if (i !== num_leafs) {
-		ent.lastCluster = CM_LeafCluster( lastLeaf );
-	}*/
+	// Store off a last cluster if we need to.
+	if (i !== ll.count) {
+		svEnt.lastCluster = cm.LeafCluster(ll.lastLeaf);
+	}
 
 	// Find the first world sector node that the ent's box crosses.
 	var node = worldSectors[0];
@@ -222,8 +225,8 @@ function LinkEntity(gent) {
 	
 	// Link it in.
 	gent.linked = true;
-	ent.worldSector = node;
-	node.entities[gent.s.number] = ent;
+	svEnt.worldSector = node;
+	node.entities[gent.s.number] = svEnt;
 }
 
 /**

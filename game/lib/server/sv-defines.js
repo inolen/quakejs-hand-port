@@ -1,4 +1,5 @@
 var MAX_SNAPSHOT_ENTITIES = MAX_CLIENTS * PACKET_BACKUP * 64;
+var MAX_ENT_CLUSTERS = 16;
 
 // Persistent across all maps.
 var ServerStatic = function () {
@@ -46,6 +47,11 @@ var ServerLocals = function () {
 var ServerEntity = function () {
 	this.worldSector     = null;
 	this.baseline        = new sh.EntityState();
+	this.numClusters     = 0;                              // if -1, use headnode instead
+	this.clusternums     = new Array(MAX_ENT_CLUSTERS);
+	this.lastCluster     = 0;                              // if all the clusters don't fit in clusternums
+	this.areanum         = 0;
+	this.areanum2        = 0;
 	this.snapshotCounter = 0;
 };
 
