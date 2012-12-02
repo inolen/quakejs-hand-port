@@ -257,61 +257,60 @@ function BeginIntermission () {
  * When the intermission has been exited, the server is either killed
  * or moved to a new level based on the "nextmap" cvar 
  */
-void ExitLevel (void) {
-	int		i;
-	gclient_t *cl;
-	char nextmap[MAX_STRING_CHARS];
-	char d1[MAX_STRING_CHARS];
-
-	//bot interbreeding
-	BotInterbreedEndMatch();
-
-	// if we are running a tournement map, kick the loser to spectator status,
-	// which will automatically grab the next spectator and restart
-	if ( g_gametype.integer == GT_TOURNAMENT  ) {
-		if ( !level.restarted ) {
-			RemoveTournamentLoser();
-			trap_SendConsoleCommand( EXEC_APPEND, "map_restart 0\n" );
-			level.restarted = qtrue;
-			level.changemap = NULL;
-			level.intermissiontime = 0;
-		}
-		return;	
-	}
-
-	trap_Cvar_VariableStringBuffer( "nextmap", nextmap, sizeof(nextmap) );
-	trap_Cvar_VariableStringBuffer( "d1", d1, sizeof(d1) );
-
-	if( !Q_stricmp( nextmap, "map_restart 0" ) && Q_stricmp( d1, "" ) ) {
-		trap_Cvar_Set( "nextmap", "vstr d2" );
-		trap_SendConsoleCommand( EXEC_APPEND, "vstr d1\n" );
-	} else {
-		trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
-	}
-
-	level.changemap = NULL;
-	level.intermissiontime = 0;
-
-	// reset all the scores so we don't enter the intermission again
-	level.teamScores[TEAM_RED] = 0;
-	level.teamScores[TEAM_BLUE] = 0;
-	for ( i=0 ; i< g_maxclients.integer ; i++ ) {
-		cl = level.clients + i;
-		if ( cl->pers.connected != CON_CONNECTED ) {
-			continue;
-		}
-		cl->ps.persistant[PERS_SCORE] = 0;
-	}
-
-	// we need to do this here before changing to CON_CONNECTING
-	G_WriteSessionData();
-
-	// change all client states to connecting, so the early players into the
-	// next level will know the others aren't done reconnecting
-	for (i=0 ; i< g_maxclients.integer ; i++) {
-		if ( level.clients[i].pers.connected == CON_CONNECTED ) {
-			level.clients[i].pers.connected = CON_CONNECTING;
-		}
-	}
-
+function ExitLevel () {
+// 	int		i;
+// 	gclient_t *cl;
+// 	char nextmap[MAX_STRING_CHARS];
+// 	char d1[MAX_STRING_CHARS];
+// 
+// 	//bot interbreeding
+// 	BotInterbreedEndMatch();
+// 
+// 	// if we are running a tournement map, kick the loser to spectator status,
+// 	// which will automatically grab the next spectator and restart
+// 	if ( g_gametype.integer == GT_TOURNAMENT  ) {
+// 		if ( !level.restarted ) {
+// 			RemoveTournamentLoser();
+// 			trap_SendConsoleCommand( EXEC_APPEND, "map_restart 0\n" );
+// 			level.restarted = qtrue;
+// 			level.changemap = NULL;
+// 			level.intermissiontime = 0;
+// 		}
+// 		return;	
+// 	}
+// 
+// 	trap_Cvar_VariableStringBuffer( "nextmap", nextmap, sizeof(nextmap) );
+// 	trap_Cvar_VariableStringBuffer( "d1", d1, sizeof(d1) );
+// 
+// 	if( !Q_stricmp( nextmap, "map_restart 0" ) && Q_stricmp( d1, "" ) ) {
+// 		trap_Cvar_Set( "nextmap", "vstr d2" );
+// 		trap_SendConsoleCommand( EXEC_APPEND, "vstr d1\n" );
+// 	} else {
+// 		trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
+// 	}
+// 
+// 	level.changemap = NULL;
+// 	level.intermissiontime = 0;
+// 
+// 	// reset all the scores so we don't enter the intermission again
+// 	level.teamScores[TEAM_RED] = 0;
+// 	level.teamScores[TEAM_BLUE] = 0;
+// 	for ( i=0 ; i< g_maxclients.integer ; i++ ) {
+// 		cl = level.clients + i;
+// 		if ( cl->pers.connected != CON_CONNECTED ) {
+// 			continue;
+// 		}
+// 		cl->ps.persistant[PERS_SCORE] = 0;
+// 	}
+// 
+// 	// we need to do this here before changing to CON_CONNECTING
+// 	G_WriteSessionData();
+// 
+// 	// change all client states to connecting, so the early players into the
+// 	// next level will know the others aren't done reconnecting
+// 	for (i=0 ; i< g_maxclients.integer ; i++) {
+// 		if ( level.clients[i].pers.connected == CON_CONNECTED ) {
+// 			level.clients[i].pers.connected = CON_CONNECTING;
+// 		}
+// 	}
 }
