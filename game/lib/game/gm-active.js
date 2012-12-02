@@ -65,10 +65,10 @@ function ClientThink_real(ent) {
 	}
 
 	// // Check for exiting intermission.
-	// if (level.intermissiontime) {
-	// 	ClientIntermissionThink(client);
-	// 	return;
-	// }
+	if (level.intermissiontime) {
+// 		ClientIntermissionThink(client);
+// 		return;
+	}
 
 	// // Spectators don't do much.
 	// if (client.sess.sessionTeam === TEAM.SPECTATOR) {
@@ -280,23 +280,23 @@ function ClientEvents(ent, oldEventSequence) {
  */
 function ClientEndFrame(ent) {
 	var client = ent.client;
-
-	// if (client.sess.sessionTeam == TEAM_SPECTATOR ) {
-	// 	SpectatorClientEndFrame( ent );
-	// 	return;
-	// }
-
+	
+	if (client.sess.sessionTeam == TEAM.SPECTATOR) {
+// 		SpectatorClientEndFrame( ent );
+// 		return;
+	}
+	
 	// Turn off any expired powerups
 	for (var i = 0; i < MAX_POWERUPS; i++) {
 		if (client.ps.powerups[i] < level.time) {
 			client.ps.powerups[i] = 0;
 		}
 	}
-
-	// if (level.intermissiontime) {
-	// 	return;
-	// }
-
+	
+	if (level.intermissiontime) {
+		return;
+	}
+	
 	// Burn from lava, etc.
 	WorldEffects(ent);
 

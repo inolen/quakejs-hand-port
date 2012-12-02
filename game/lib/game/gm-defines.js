@@ -1,6 +1,5 @@
 var FRAMETIME = 100;  // msec
 
-var GIB_HEALTH = -40;
 var ITEM_RADIUS = 15;
 var CARNAGE_REWARD_TIME = 3000;
 var REWARD_SPRITE_TIME  = 2000;
@@ -24,6 +23,24 @@ var GFL = {
 	FORCE_GESTURE: 0x00008000                              // force gesture on client
 };
 
+var CON = {
+	DISCONNECTED: 0,
+	CONNECTING:   1,
+	CONNECTED:    2
+};
+
+var SPECTATOR = {
+	NOT:        0,
+	FREE:       1,
+	FOLLOW:     2,
+	SCOREBOARD: 3
+};
+
+var TEAM_STATE = {
+	BEGIN:  0,		// Beginning a team game, spawn at base
+	ACTIVE: 1		// Now actively playing
+};
+
 var LevelLocals = function () {
 	this.framenum     = 0;
 	this.previousTime = 0;
@@ -35,6 +52,24 @@ var LevelLocals = function () {
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		this.gentities[i] = new GameEntity();
 	}
+	
+	// intermission state
+	this.intermissionQueued = 0;		// intermission was qualified, but
+										// wait INTERMISSION_DELAY_TIME before
+										// actually going there so the last
+										// frag can be watched.  Disable future
+										// kills during this delay
+	this.intermissiontime = 0;			// time the intermission was started
+// 	char		*changemap;
+	readyToExit = false;			// at least one client wants to exit
+	var exitTime = 0;
+// 	vec3_t		intermission_origin;	// also used for spectator spawns
+// 	vec3_t		intermission_angle;
+	
+// 	qboolean	locationLinked;			// target_locations get linked
+// 	gentity_t	*locationHead;			// head of the location list
+// 	int			bodyQueIndex;			// dead bodies
+// 	gentity_t	*bodyQue[BODY_QUEUE_SIZE];
 };
 
 // The server does not know how to interpret most of the values
@@ -160,7 +195,8 @@ GameEntity.prototype.reset = function () {
 var GameClient = function () {
 	this.ps                = new sh.PlayerState();
 	this.pers              = new GameClientPersistant();
-
+	this.sess              = new ClientSession();
+	
 	this.noclip            = false;
 
 	this.lastCmdTime       = 0;                            // level.time of last usercmd_t, for EF_CONNECTION
@@ -201,4 +237,18 @@ var GameClient = function () {
 var GameClientPersistant = function () {
 	this.cmd     = new sh.UserCmd();
 	this.netname = null;
+};
+
+// client data that stays across multiple levels or tournament restarts
+// this is achieved by writing all the data to cvar strings at game shutdown
+// time and reading them back at connection time.  Anything added here
+// MUST be dealt with in G_InitSessionData() / G_ReadSessionData() / G_WriteSessionData()
+var ClientSession = function () {
+	this.sessionTeam = TEAM.FREE;			
+	this.spectatorNum = 0;					// for determining next-in-line to play
+	this.spectatorState = SPECTATOR.NOT;	
+	this.spectatorClient;					// for chasecam and follow mode
+	this.wins = 0;							// tournament stats
+	this.losses = 0;						
+	this.teamLeader = false;				// true when this client is a team leader
 };

@@ -295,6 +295,16 @@ function StartLocalSound(hSound) {
 }
 
 /**
+ * AddLoopingSound
+ */
+function AddLoopingSound( entityNum, origin, velocity, sfx )
+{
+	if( si.AddLoopingSound ) {
+		si.AddLoopingSound( entityNum, origin, velocity, sfx );
+	}
+}
+
+/**
  * StartBackgroundTrack
  */
 function StartBackgroundTrack(hSound, loop) {

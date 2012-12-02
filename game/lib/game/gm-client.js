@@ -88,6 +88,9 @@ function ClientBegin(clientNum) {
  * ClientSpawn
  */
 function ClientSpawn(ent) {
+	var spawn_origin = [0, 0, 0];
+	var spawn_angles = [0, 0, 0];
+	
 	var client = ent.client;
 	var ps = ent.client.ps;
 
@@ -141,6 +144,57 @@ function ClientSpawn(ent) {
 	
 	// Health will count down towards max_health
 	ent.health = client.ps.stats[STAT.HEALTH] = client.ps.stats[STAT.MAX_HEALTH] + 25;
+	
+// 	G_SetOrigin( ent, spawn_origin );
+// 	VectorCopy( spawn_origin, client->ps.origin );
+	
+	// the respawned flag will be cleared after the attack and jump keys come up
+	client.ps.pm_flags |= PMF.RESPAWNED;
+	
+// 	trap_GetUsercmd( client - level.clients, &ent->client->pers.cmd );
+// 	SetClientViewAngle( ent, spawn_angles );
+	// don't allow full run speed for a bit
+	client.ps.pm_flags |= PMF.TIME_KNOCKBACK;
+	client.ps.pm_time = 100;
+	
+	client.respawnTime = level.time;
+	client.inactivityTime = level.time + g_inactivity() * 1000;
+	client.latched_buttons = 0;
+	
+	// set default animations
+	client.ps.torsoAnim = ANIM.TORSO_STAND;
+	client.ps.legsAnim = ANIM.LEGS_IDLE;
+	
+	if (!level.intermissiontime) {
+		if (ent.client.sess.sessionTeam != TEAM.SPECTATOR) {
+// 			G_KillBox(ent);
+			// force the base weapon up
+			client.ps.weapon = WP.MACHINEGUN;
+			client.ps.weaponstate = WS.READY;
+			// fire the targets of the spawn point
+// 			G_UseTargets(spawnPoint, ent);
+			// select the highest weapon number available, after any spawn given items have fired
+			client.ps.weapon = 1;
+			
+			for (var i = WP.NUM_WEAPONS - 1; i > 0; i--) {
+				if (client.ps.stats[STAT.WEAPONS] & (1 << i)) {
+					client.ps.weapon = i;
+					break;
+				}
+			}
+			
+			// positively link the client, even if the command times are weird
+// 			VectorCopy(ent.client.ps.origin, ent.r.currentOrigin);
+			
+// 			tent = G_TempEntity(ent.client.ps.origin, EV.PLAYER_TELEPORT_IN);
+// 			tent.s.clientNum = ent.s.clientNum;
+			
+// 			trap_LinkEntity (ent);
+		}
+	} else {
+		// move players to intermission
+		MoveClientToIntermission(ent);
+	}
 	
 	// Run a client frame to drop exactly to the floor,
 	// initialize weapon, animations and other things.

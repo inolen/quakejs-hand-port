@@ -1,3 +1,5 @@
+var GIB_HEALTH = -40;
+
 var ARMOR_PROTECTION = 0.66;
 
 var DEFAULT_SHOTGUN_SPREAD = 700;
@@ -98,6 +100,21 @@ var PMF = {
 	SCOREBOARD:     8192,                                  // spectate as a scoreboard
 	INVULEXPAND:    16384,                                 // invulnerability sphere set to full size
 	ALL_TIMES:      (32|64|256)
+};
+
+var GT = {
+	FFA:           0,	// free for all
+	TOURNAMENT:    1,	// one on one tournament
+	SINGLE_PLAYER: 2,	// single player ffa
+	
+	//-- team games go after this --
+	
+	TEAM:          3,	// team deathmatch
+	CTF:           4,	// capture the flag
+// 	1FCTF:         5,
+	OBELISK:       6,
+	HARVESTER:     7,
+	MAX_GAME_TYPE: 8
 };
 
 // Weapon state.
@@ -427,6 +444,15 @@ var ANIM = {
 	FLAG_STAND2RUN:      36,
 
 	MAX_TOTALANIMATIONS: 37
+};
+
+var TEAM = {
+	FREE:      0,
+	RED:       1,
+	BLUE:      2,
+	SPECTATOR: 3,
+	
+	NUM_TEAMS: 4
 };
 
 // Means of death

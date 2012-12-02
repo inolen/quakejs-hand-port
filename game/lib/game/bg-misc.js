@@ -16,16 +16,15 @@ function AddPredictableEventToPlayerstate(ps, newEvent, eventParm) {
  * and after local prediction on the client
  */
 function PlayerStateToEntityState(ps, es) {
-	/*if (ps.pm_type === PM.INTERMISSION || ps.pm_type === PM.SPECTATOR) {
+	if (ps.pm_type === PM.INTERMISSION || ps.pm_type === PM.SPECTATOR) {
 		es.eType = ET.INVISIBLE;
 	} else if ( ps.stats[STAT.HEALTH] <= GIB_HEALTH ) {
 		es.eType = ET.INVISIBLE;
 	} else {
 		es.eType = ET.PLAYER;
-	}*/
-
+	}
+	
 	es.number = ps.clientNum;
-	es.eType = ET.PLAYER;
 
 	es.pos.trType = TR.INTERPOLATE;
 	vec3.set(ps.origin, es.pos.trBase);

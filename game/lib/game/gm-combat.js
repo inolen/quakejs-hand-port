@@ -343,9 +343,9 @@ function Player_Die(self, inflictor, attacker, damage, meansOfDeath) {
 		return;
 	}
 
-	// if (level.intermissiontime) {
-	// 	return;
-	// }
+	if (level.intermissiontime) {
+		return;
+	}
 
 	// // Check for an almost capture.
 	// CheckAlmostCapture(self, attacker);

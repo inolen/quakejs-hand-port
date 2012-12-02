@@ -421,16 +421,16 @@ function AddViewWeapon(ps) {
 	// if (ps.persistant[PERS.TEAM] == TEAM_SPECTATOR) {
 	// 	return;
 	// }
-
-	// if (ps.pm_type == PM_INTERMISSION) {
-	// 	return;
-	// }
-
+	
+	if (ps.pm_type == PM.INTERMISSION) {
+		return;
+	}
+	
 	// No gun if in third person view or a camera is active.
 	if (cg.renderingThirdPerson/* || cg.cameraMode*/) {
 		return;
 	}
-
+	
 	// Allow the gun to be completely removed.
 	// if (!cg_drawGun()) {
 	// 	vec3_t		origin;
