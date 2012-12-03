@@ -307,7 +307,9 @@ function ParseMesh(dface, face, level) {
 	var points = verts.slice(face.vertex, face.vertex + face.vertCount);
 	var grid = SubdividePatchToGrid(points, face.patchWidth, face.patchHeight, level);
 
-	face.surfaceType = SF.GRID;
+	// TODO Stop merging meshes into the main very buffer,
+	// that way we can LOD them.
+	face.surfaceType = SF.FACE;  // SF.GRID;
 
 	// Start at the end of the current vert array.
 	face.vertex = verts.length;
@@ -506,6 +508,12 @@ function LoadSubmodels(buffer, modelLump) {
 
 		bb.readInt(); // firstBrush
 		bb.readInt(); // numBrushes
+
+		// Create renderable model for this submodel that cgame can use.
+		var mod = AllocateModel();
+		mod.type = MOD.BRUSH;
+		mod.bmodel = model;
+		mod.name = '*' + i;
 	}
 }
 

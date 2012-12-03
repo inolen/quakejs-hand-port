@@ -26,6 +26,13 @@ var GFL = {
 	FORCE_GESTURE: 0x00008000                              // force gesture on client
 };
 
+var MOVER = {
+	POS1: 0,
+	POS2: 1,
+	ONETOTWO: 2,
+	TWOTOONE: 3
+};
+
 var CON = {
 	DISCONNECTED: 0,
 	CONNECTING:   1,

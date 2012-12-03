@@ -72,7 +72,7 @@ function Trace(start, end, mins, maxs, skipNumber, mask) {
 // 			continue;
 // 		}
 // 		
-// 		cmodel = cm.InlineModel(ent.modelindex);
+// 		cmodel = cm.InlineModel(ent.modelIndex);
 // 		if (!cmodel) {
 // 			continue;
 // 		}

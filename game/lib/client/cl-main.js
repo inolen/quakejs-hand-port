@@ -477,11 +477,13 @@ function CGameExports() {
 			RefEntity:                re.RefEntity,
 
 			LoadMap:                  re.LoadMap,
+			NumInlineModels:          re.NumInlineModels,
 			RegisterShader:           re.RegisterShader,
 			RegisterModel:            re.RegisterModel,
 			RegisterSkin:             re.RegisterSkin,
 			AddRefEntityToScene:      re.AddRefEntityToScene,
 			LerpTag:                  re.LerpTag,
+			ModelBounds:              re.ModelBounds,
 			RenderScene:              re.RenderScene,
 			GetCounts:                re.GetCounts,
 			BuildCollisionBuffers:    re.BuildCollisionBuffers,

@@ -394,7 +394,7 @@ function MoveClientToIntermission (ent) {
 	ent.client.ps.eFlags = 0;
 	ent.s.eFlags = 0;
 	ent.s.eType = ET.GENERAL;
-	ent.s.modelindex = 0;
+	ent.s.modelIndex = 0;
 	ent.s.loopSound = 0;
 	ent.s.event = 0;
 	ent.contents = 0;

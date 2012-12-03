@@ -42,6 +42,13 @@ function TesselateFace(face) {
 	for (var k = 0; k < face.meshVertCount; k++) {
 		index.data[index.offset++] = xyzOffset + meshVerts[face.meshVert + k];
 	}
+
+	xyz.modified = true;
+	normal.modified = true;
+	texCoord.modified = true;
+	lightCoord.modified = true;
+	color.modified = true;
+	index.modified = true;
 }
 
 /**

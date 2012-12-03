@@ -115,6 +115,12 @@ var ClientGameStatic = function () {
 	this.processedSnapshotNum = 0;               // the number of snapshots cgame has requested
 
 	// locally derived information from gamestate
+	// this.gameModels           = new Array(MAX_MODELS);
+	// this.gameSounds           = new Array(MAX_SOUNDS);
+
+	this.inlineDrawModels     = null;
+	this.inlineModelMidpoints = null;
+
 	this.clientinfo           = new Array(MAX_CLIENTS);
 	this.media                = {};
 

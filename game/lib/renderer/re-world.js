@@ -144,6 +144,27 @@ function AddWorldSurfaces(map) {
 }
 
 /**
+ * AddBrushModelSurfaces
+ */
+function AddBrushModelSurfaces(refent) {
+	var mod = GetModelByHandle(refent.hModel);
+	var bmodel = mod.bmodel;
+	var faces = re.world.faces;
+	
+	var clip = CullLocalBox(bmodel.bounds);
+	if (clip === CULL.OUT) {
+		return;
+	}
+	
+	SetupEntityLighting(refent);
+	// R_DlightBmodel( bmodel );
+
+	for (var i = 0; i < bmodel.numSurfaces; i++) {
+		AddWorldSurface(faces[bmodel.firstSurface + i]/*, tr.currentEntity->needDlights*/);
+	}
+}
+
+/**
  * MarkLeaves
  */
 function MarkLeaves() {
@@ -255,7 +276,7 @@ function RecursiveWorldNode(node, planeBits/*, dlightBits*/) {
 		// If the bounding volume is outside the frustum, nothing
 		// inside can be visible.
 		// OPTIMIZE: don't do this all the way to leafs?
-		if (true/*!r_nocull->integer*/) {
+		if (!r_nocull()) {
 			var r;
 
 			if (planeBits & 1) {
@@ -409,7 +430,7 @@ function AddWorldSurface(face/*, dlightBits*/) {
  * This will also allow mirrors on both sides of a model without recursion.
  */
 function CullSurface(surface, shader) {
-	if (!r_cull()) {
+	if (r_nocull()) {
 		return false;
 	}
 
