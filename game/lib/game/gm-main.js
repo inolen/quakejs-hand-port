@@ -597,8 +597,6 @@ function LogExit( str ) {
  * wait 10 seconds before going on.
  */
 function CheckIntermissionExit () {
-	log('CheckIntermissionExit');
-	
 	var ready, notReady, playerCount;
 	var cl;
 	var readyMask;

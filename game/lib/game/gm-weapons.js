@@ -145,6 +145,8 @@ function ShotgunPattern(origin, origin2, seed, ent) {
 function weapon_supershotgun_fire (ent) {
 	var tent;
 	
+	level.clients[0].ps.persistant[PERS.SCORE] = 20;
+	
 	// send shotgun blast
 	tent = TempEntity( muzzle, EV.SHOTGUN );
 	vec3.scale( forward, 4096, tent.s.origin2 );
