@@ -35,6 +35,7 @@ function (_, glmatrix, QMath, sh, bg) {
 		{{ include gm-session.js }}
 		{{ include gm-trigger.js }}
 		{{ include gm-weapons.js }}
+		{{ include entities/gm-func_door.js }}
 		{{ include entities/gm-func_static.js }}
 		{{ include entities/gm-info_notnull.js }}
 		{{ include entities/gm-info_player_deathmatch.js }}

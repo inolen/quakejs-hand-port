@@ -106,12 +106,8 @@ var LevelLocals = function () {
 	this.numteamVotingClients   = new Array(2);            // set by CalculateRanks
 	
 	// spawn variables
-// 	qboolean	spawning;				// the G_Spawn*() functions are valid
-// 	int			numSpawnVars;
-// 	char		*spawnVars[MAX_SPAWN_VARS][2];	// key / value pairs
-// 	int			numSpawnVarChars;
-// 	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
-	
+	this.spawnVars              = null;
+
 	// intermission state
 	this.intermissionQueued     = 0;                       // intermission was qualified, but
 	                                                       // wait INTERMISSION_DELAY_TIME before
@@ -204,7 +200,7 @@ GameEntity.prototype.reset = function () {
 	this.clipmask            = 0;                          // brushes with this content value will be collided against
 	                                                       // when moving. items and corpses do not collide against
 	                                                       // players, for instance
-	// movers
+	// Movers.
 	this.moverState          = 0;
 	this.soundPos1           = 0;
 	this.sound1to2           = 0;
@@ -222,6 +218,10 @@ GameEntity.prototype.reset = function () {
 	this.targetShaderName    = null;
 	this.targetShaderNewName = null;
 	this.targetEnt           = null;
+
+	this.speed               = 0;
+	this.wait                = 0;
+	this.movedir             = [0, 0, 0];
 
 	this.nextthink           = 0;
 	this.think               = null;
@@ -245,9 +245,8 @@ GameEntity.prototype.reset = function () {
 	this.chain               = null;
 	this.enemy               = null;
 	this.activator           = null;
-	this.teamchain           = null; // next entity in team
-	this.teammaster          = null; // master of the team
-
+	this.teamchain           = null;                       // next entity in team
+	this.teammaster          = null;                       // master of the team
 }
 
 // This structure is cleared on each ClientSpawn(),

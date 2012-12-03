@@ -1,10 +1,28 @@
 var entityEvents = {};
 
-// Maps entity definition values to entity values.
-var keyMap = {
-	'origin':     ['s.origin', 'currentOrigin'],
-	'angles':     ['s.angles'],
-	'targetname': ['targetName']
+// These fields are mapped from the entity definition
+// to the spawned entity before the entity's spawn() 
+// function is invoked. Fields not in this list are
+// optional and are only available through the Spawn*
+// functions.
+var fields = {
+	'angle':      { type: 'anglehack' },
+	'angles':     { type: 'vector', aliases: ['s.angles'] },
+	'classname':  { },  // just copy to ent
+	'count':      { type: 'int' },
+	'dmg':        { type: 'int', aliases: ['damage'] },
+	'health':     { type: 'int' },
+	'message':    { },
+	'model':      { },
+	'model2':     { },
+	'origin':     { type: 'vector', aliases: ['currentOrigin', 's.origin', 's.pos.trBase'] },
+	'random':     { type: 'float' },
+	'spawnflags': { type: 'int' },
+	'speed':      { type: 'float' },
+	'target':     { },
+	'targetname': { aliases: ['targetName'] },
+	'team':       { },
+	'wait':       { type: 'float' },
 };
 
 /**
@@ -131,32 +149,36 @@ function EntityPickTarget(targetName) {
 }
 
 /**
+ * SpawnAllEntitiesFromDefs
+ *
+ * Spawns all the map entities into the game.
+ */
+function SpawnAllEntitiesFromDefs() {
+	var entityDefs = sv.GetEntityDefs();
+
+	for (var i = 0; i < entityDefs.length; i++) {
+		var def = entityDefs[i];
+		SpawnEntityFromDef(def);
+	}
+}
+
+/**
  * SpawnEntityFromDef
  */
 function SpawnEntityFromDef(def) {
 	var ent = SpawnEntity();
 
-	// Merge definition info into the entity.
-	for (var defKey in def) {
-		if (!def.hasOwnProperty(defKey)) {
+	// Store the key/value pairs in the static spawnVars
+	// for use in the entity's spawn function.
+	level.spawnVars = def;
+
+	// Parse any known fields.
+	for (var key in def) {
+		if (!def.hasOwnProperty(key)) {
 			continue;
 		}
 
-		// Use the mapping if it exists.
-		var entKeys = keyMap[defKey] || [defKey];
-
-		// Set all mapped keys.
-		for (var i = 0; i < entKeys.length; i++) {
-			var entKey = entKeys[i];
-
-			// Don't merge keys that aren't expected.
-			// TODO Do we have to use eval?
-			var val = eval('ent.' + entKey);
-			if (val === undefined) {
-				continue;
-			}
-			eval('ent.' + entKey + ' = def[defKey]');
-		}
+		ParseField(ent, key, def[key]);
 	}
 	
 	// Merge entity-specific callbacks in.
@@ -187,17 +209,91 @@ function SpawnEntityFromDef(def) {
 }
 
 /**
- * SpawnAllEntitiesFromDefs
- *
- * Spawns all the map entities into the game.
+ * ParseField
  */
-function SpawnAllEntitiesFromDefs() {
-	var entityDefs = sv.GetEntityDefs();
-
-	for (var i = 0; i < entityDefs.length; i++) {
-		var def = entityDefs[i];
-		SpawnEntityFromDef(def);
+function ParseField(ent, key, value) {
+	var fi = fields[key];
+	if (!fi) {
+		return;
 	}
+
+	// Convert the value.
+	var out;
+
+	switch (fi.type) {
+		case 'vector':
+			value.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
+				out = [
+					parseFloat(x),
+					parseFloat(y),
+					parseFloat(z)
+				];
+			});
+			break;
+		case 'int':
+			out = parseInt(value, 10);
+			break;
+		case 'float':
+			out = parseFloat(value);
+			break;
+		case 'anglehack':
+			out = [0, parseFloat(value), 0];
+			break;
+		default:
+			out = value;
+			break;
+	}
+
+	// Assign the value to the entity.
+	if (!fi.aliases) {
+		ent[key] = out;
+	} else {
+		for (var i = 0; i < fi.aliases.length; i++) {
+			var alias = fi.aliases[i];
+			eval('ent.' + alias + ' = out;');
+		}
+	}
+}
+
+/**
+ * SpawnString
+ */
+function SpawnString(key, defaultString) {
+	if (typeof(level.spawnVars[key]) !== 'undefined') {
+		return level.spawnVars[key];
+	}
+
+	return defaultString;
+}
+
+/**
+ * SpawnFloat
+ */
+function SpawnFloat(key, defaultString) {
+	var str = SpawnString(key, defaultString);
+	return parseFloat(str);
+}
+
+/**
+ * SpawnInt
+ */
+function SpawnInt(key, defaultString) {
+	var str = SpawnString(key, defaultString);
+	return parseInt(str, 10);
+}
+
+/**
+ * SpawnVector
+ */
+function SpawnVector(key, defaultString) {
+	var out = [0, 0, 0];
+	var str = SpawnString(key, defaultValue);
+	str.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
+		out[0] = parseFloat(x);
+		out[1] = parseFloat(x);
+		out[2] = parseFloat(x);
+	});
+	return out;
 }
 
 /**
@@ -214,6 +310,30 @@ function SetOrigin(ent, origin) {
 	vec3.set([0, 0, 0], ent.s.pos.trDelta);
 
 	vec3.set(origin, ent.currentOrigin);
+}
+
+/**
+ * SetMovedir
+ *
+ * The editor only specifies a single value for angles (yaw),
+ * but we have special constants to generate an up or down direction.
+ * Angles will be cleared, because it is being used to represent a direction
+ * instead of an orientation.
+ */
+var VEC_UP       = [0, -1,  0];
+var MOVEDIR_UP   = [0,  0,  1];
+var VEC_DOWN     = [0, -2,  0];
+var MOVEDIR_DOWN = [0,  0, -1];
+
+function SetMovedir(angles, movedir) {
+	if (vec3.equal(angles, VEC_UP)) {
+		vec3.set(MOVEDIR_UP, movedir);
+	} else if (vec3.equal(angles, VEC_DOWN)) {
+		vec3.set(MOVEDIR_DOWN, movedir);
+	} else {
+		QMath.AnglesToVectors(angles, movedir, null, null);
+	}
+	angles[0] = angles[1] = angles[2] = 0;
 }
 
 /**

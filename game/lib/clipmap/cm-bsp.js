@@ -296,33 +296,7 @@ function LoadEntities(buffer, entityLump) {
 		};
 
 		entitySrc.replace(/"(.+)" "(.+)"$/mg, function($0, key, value) {
-
-			switch (key) {
-				case 'origin':
-					value.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
-						entity[key] = [
-							parseFloat(x),
-							parseFloat(y),
-							parseFloat(z)
-						];
-					});
-					break;
-				case 'angles':
-					value.replace(/(.+) (.+) (.+)/, function($0, x, y, z) {
-						entity[key] = [
-							parseFloat(x),
-							parseFloat(y),
-							parseFloat(z)
-						];
-					});
-					break;
-				case 'angle':
-					entity['angles'] = [0, parseFloat(value), 0];
-					break;
-				default:
-					entity[key] = value;
-					break;
-			}
+			entity[key] = value;
 		});
 		
 		entities.push(entity);
