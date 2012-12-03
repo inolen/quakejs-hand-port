@@ -134,7 +134,7 @@ function ClientSpawn(ent) {
 	var savedSess = client.sess.clone();
 	var savedPsPers = new Array(MAX_PERSISTANT);
 	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		savedPsPers = client.ps.persistant[i];
+		savedPsPers[i] = client.ps.persistant[i];
 	}
 	// var savedPing = client.ps.ping;
 	var savedAccuracyHits = client.accuracy_hits;
