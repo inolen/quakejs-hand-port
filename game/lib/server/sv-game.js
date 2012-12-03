@@ -1,4 +1,24 @@
 /**
+ * InitGame
+ */
+function InitGame() {
+	svs.gameInitialized = true;
+	gm.Init(sv.time);
+}
+
+/**
+ * ShutdownGame
+ */
+function ShutdownGame() {
+	if (!svs.gameInitialized) {
+		return;
+	}
+
+	svs.gameInitialized = false;
+	gm.Shutdown();
+}
+
+/**
  * GentityForNum
  */
 function GentityForNum(num) {

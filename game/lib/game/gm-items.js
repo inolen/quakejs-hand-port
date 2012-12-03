@@ -332,7 +332,7 @@ function PickupWeapon(ent, other) {
 		}
 
 		// // dropped items and teamplay weapons always have full ammo
-		// if ( ! (ent->flags & FL_DROPPED_ITEM) && g_gametype.integer != GT_TEAM ) {
+		// if ( ! (ent->flags & FL_DROPPED_ITEM) && g_gametype.integer != GT.TEAM ) {
 		// 	// respawning rules
 		// 	// drop the quantity if the already have over the minimum
 		// 	if ( other->client->ps.ammo[ ent->item->giTag ] < quantity ) {
@@ -349,7 +349,7 @@ function PickupWeapon(ent, other) {
 	AddAmmo(other, ent.item.giTag, quantity);
 	
 	// team deathmatch has slow weapon respawns
-	// if ( g_gametype.integer == GT_TEAM ) {
+	// if ( g_gametype.integer == GT.TEAM ) {
 	// 	return g_weaponTeamRespawn.integer;
 	// }
 	

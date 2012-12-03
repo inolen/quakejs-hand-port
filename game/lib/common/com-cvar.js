@@ -120,7 +120,7 @@ function FindCvar(name) {
  * GetCvarVal
  */
 function GetCvarVal(name) {
-	var cvar = cvars[name];
+	var cvar = FindCvar(name);
 
 	if (!cvar) {
 		console.warn('COM: No cvar found for \'' + name + '\'');
@@ -134,14 +134,7 @@ function GetCvarVal(name) {
  * SetCvarVal
  */
 function SetCvarVal(name, value) {
-	var cvar = cvars[name];
-
-	if (!cvar) {
-		console.warn('COM: No cvar found for \'' + name + '\'');
-		return;
-	}
-
-	cvar(value);
+	CmdSet(name, value);
 }
 
 /**

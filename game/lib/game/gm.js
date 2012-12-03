@@ -31,6 +31,7 @@ function (_, glmatrix, QMath, sh, bg) {
 		{{ include gm-items.js }}
 		{{ include gm-misc.js }}
 		{{ include gm-missile.js }}
+		{{ include gm-session.js }}
 		{{ include gm-trigger.js }}
 		{{ include gm-weapons.js }}
 		{{ include entities/gm-info_notnull.js }}

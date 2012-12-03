@@ -97,7 +97,7 @@ function NewClientInfo(clientNum) {
 // 			&& !Q_stricmp( ci->headSkinName, match->headSkinName ) 
 // 			&& !Q_stricmp( ci->blueTeam, match->blueTeam ) 
 // 			&& !Q_stricmp( ci->redTeam, match->redTeam )
-// 			&& (cgs.gametype < GT_TEAM || ci->team == match->team) ) {
+// 			&& (cgs.gametype < GT.TEAM || ci->team == match->team) ) {
 // 			// this clientinfo is identical, so use its handles
 
 // 			ci->deferred = qfalse;
@@ -142,7 +142,7 @@ function LoadClientInfo(clientNum, ci) {
 
 	// Load sounds.
 	var dir = DEFAULT_MODEL;// ci.modelName;
-	// fallback = (cgs.gametype >= GT_TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
+	// fallback = (cgs.gametype >= GT.TEAM) ? DEFAULT_TEAM_MODEL : DEFAULT_MODEL;
 
 	for (var i = 0; i < customSoundNames.length; i++) {
 		var s = customSoundNames[i];

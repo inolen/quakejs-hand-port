@@ -4,6 +4,7 @@ var MAX_ENT_CLUSTERS = 16;
 // Persistent across all maps.
 var ServerStatic = function () {
 	this.initialized          = false;
+	this.gameInitialized      = false;
 	this.time                 = 0;
 	this.snapFlagServerBit    = 0;                         // ^= SNAPFLAG_SERVERCOUNT every SV_SpawnServer()
 	this.clients              = new Array(MAX_CLIENTS);

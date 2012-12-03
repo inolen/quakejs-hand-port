@@ -73,6 +73,9 @@ function Init(levelTime) {
 	g_motd               = com.AddCvar('g_motd',               "");
 	g_blood              = com.AddCvar('g_blood',              1);
 	
+	// Load session info.
+	InitWorldSession();
+
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);
 
@@ -84,6 +87,8 @@ function Init(levelTime) {
  * Shutdown
  */
 function Shutdown() {
+	// Write all the client session data so we can get it back.
+	WriteSessionData();
 }
 
 /**
@@ -209,27 +214,32 @@ function MoveClientToIntermission (ent) {
  * 
  * This is also used for spectator spawns
  */
-function FindIntermissionPoint () {
+function FindIntermissionPoint() {
 	var ent;
 	var target;
 	var dir = [0, 0, 0];
 	
-	// find the intermission spot
-// 	ent = G_Find (null, FOFS(classname), "info_player_intermission");
-// 	if (!ent) {	// the map creator forgot to put in an intermission point...
-// 		SelectSpawnPoint(vec3_origin, level.intermission_origin, level.intermission_angle, false);
-// 	} else {
-// 		VectorCopy (ent.s.origin, level.intermission_origin);
-// 		VectorCopy (ent.s.angles, level.intermission_angle);
-// 		// if it has a target, look towards it
-// 		if ( ent.target ) {
-// 			target = G_PickTarget( ent.target );
-// 			if ( target ) {
-// 				VectorSubtract( target.s.origin, level.intermission_origin, dir );
-// 				vectoangles( dir, level.intermission_angle );
-// 			}
-// 		}
-// 	}
+	var points = FindEntity('classname', 'info_player_intermission');
+
+	var point;
+	if (!points.length) {
+		point = SelectSpawnPoint(QMath.vec3_origin, level.intermissionOrigin, level.intermissionAngles);
+	} else {
+		point = points[0];
+
+		vec3.set(point.s.origin, level.intermissionOrigin);
+		vec3.set(point.s.angles, level.intermissionAngles);
+
+		// If it has a target, look towards it.
+		if (point.target) {
+			var target = PickTarget(point.target);
+
+			if (target) {
+				var dir = vec3.subtract(target.s.origin, level.intermissionOrigin, [0, 0, 0]);
+				QMath.VectorToAngles(dir, level.intermissionAngles)
+			}
+		}
+	}
 }
 
 /**
