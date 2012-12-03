@@ -44,10 +44,17 @@ var TEAM_STATE = {
 var LevelLocals = function () {
 	this.clients                = new Array(MAX_CLIENTS);
 	this.gentities              = new Array(MAX_GENTITIES);
-
+	
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		this.clients[i] = new GameClient();
+	}
+	
 	for (var i = 0; i < MAX_GENTITIES; i++) {
 		this.gentities[i] = new GameEntity();
 	}
+	
+	this.gentitySize            = 0;
+	this.num_entities           = 0;                       // MAX_CLIENTS <= num_entities <= ENTITYNUM_MAX_NORMAL
 	
 	this.warmupTime             = 0;
 	this.maxclients             = 0;

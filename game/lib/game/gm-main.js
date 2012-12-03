@@ -42,7 +42,7 @@ function error(str) {
  */
 function Init(levelTime) {
 	log('Initializing');
-
+	
 	level = new LevelLocals();
 	level.time = levelTime;
 	level.startTime = levelTime;
@@ -73,9 +73,26 @@ function Init(levelTime) {
 	g_motd               = com.AddCvar('g_motd',               "");
 	g_blood              = com.AddCvar('g_blood',              1);
 	
+	// initialize all clients for this game
+	level.maxclients = g_maxclients();
+	
+	// set client fields on player ents
+	for (var i = 0; i < level.maxclients; i++) {
+		level.gentities[i].client = level.clients[i];
+	}
+	
+	// always leave room for the max number of clients,
+	// even if they aren't all used, so numbers inside that
+	// range are NEVER anything but clients
+	level.num_entities = MAX_CLIENTS;
+	
+	for (var i = 0; i < MAX_CLIENTS; i++) {
+		level.gentities[i].classname = "clientslot";
+	}
+	
 	// Let the server system know where the entites are.
 	sv.LocateGameData(level.gentities, level.clients);
-
+	
 	// Spawn all the entities for the current level.
 	SpawnAllEntitiesFromDefs();
 }
@@ -151,6 +168,182 @@ function Frame(levelTime) {
 	CheckExitRules();
 }
 
+
+/**********************************************************
+ *
+ * Player Counting / Score Sorting
+ *
+ **********************************************************/
+
+/**
+ * SortRanks
+ */
+function SortRanks (a, b) {
+	var ca, cb;
+	
+	ca = level.clients[a];
+	cb = level.clients[b];
+	
+	// sort special clients last
+	if (ca.sess.spectatorState == SPECTATOR_SCOREBOARD || ca.sess.spectatorClient < 0) {
+		return 1;
+	}
+	if (cb.sess.spectatorState == SPECTATOR_SCOREBOARD || cb.sess.spectatorClient < 0) {
+		return -1;
+	}
+	
+	// then connecting clients
+	if (ca.pers.connected == CON.CONNECTING) {
+		return 1;
+	}
+	if (cb.pers.connected == CON.CONNECTING) {
+		return -1;
+	}
+	
+	// then spectators
+	if (ca.sess.sessionTeam == TEAM.SPECTATOR && cb.sess.sessionTeam == TEAM.SPECTATOR) {
+		if (ca.sess.spectatorNum > cb.sess.spectatorNum) {
+			return -1;
+		}
+		if (ca.sess.spectatorNum < cb.sess.spectatorNum) {
+			return 1;
+		}
+		return 0;
+	}
+	if (ca.sess.sessionTeam == TEAM.SPECTATOR) {
+		return 1;
+	}
+	if (cb.sess.sessionTeam == TEAM.SPECTATOR) {
+		return -1;
+	}
+
+	// then sort by score
+	if (ca.ps.persistant[PERS.SCORE] > cb.ps.persistant[PERS.SCORE]) {
+		return -1;
+	}
+	if (ca.ps.persistant[PERS.SCORE] < cb.ps.persistant[PERS.SCORE]) {
+		return 1;
+	}
+	return 0;
+}
+
+/**
+ * CalculateRanks
+ * 
+ * Recalculates the score ranks of all players
+ * This will be called on every client connect, begin, disconnect, death,
+ * and team change.
+ */
+function CalculateRanks () {
+	var rank;
+	var score;
+	var newScore;
+	var cl;
+
+	level.follow1 = -1;
+	level.follow2 = -1;
+	level.numConnectedClients = 0;
+	level.numNonSpectatorClients = 0;
+	level.numPlayingClients = 0;
+	level.numVotingClients = 0;		// don't count bots
+
+	for (var i = 0; i < level.numteamVotingClients.length; i++)
+		level.numteamVotingClients[i] = 0;
+
+	for (var i = 0; i < level.maxclients; i++) {
+		if (level.clients[i].pers.connected != CON.DISCONNECTED) {
+			level.sortedClients[level.numConnectedClients] = i;
+			level.numConnectedClients += 1;
+			
+			if (level.clients[i].sess.sessionTeam != TEAM.SPECTATOR) {
+				level.numNonSpectatorClients += 1;
+				
+				// decide if this should be auto-followed
+				if (level.clients[i].pers.connected == CON.CONNECTED) {
+					level.numPlayingClients += 1;
+					if (!(level.gentities[i].svFlags & SVF.BOT)) {
+						level.numVotingClients += 1;
+						if (level.clients[i].sess.sessionTeam == TEAM.RED) {
+							level.numteamVotingClients[0] += 1;
+						} else if (level.clients[i].sess.sessionTeam == TEAM.BLUE) {
+							level.numteamVotingClients[1] += 1;
+						}
+					}
+					if (level.follow1 == -1) {
+						level.follow1 = i;
+					} else if (level.follow2 == -1) {
+						level.follow2 = i;
+					}
+				}
+			}
+		}
+	}
+	
+// 	qsort( level.sortedClients, level.numConnectedClients, sizeof(level.sortedClients[0]), SortRanks );
+	level.sortedClients.sort(SortRanks);
+	
+	// set the rank value for all clients that are connected and not spectators
+	if (g_gametype() >= GT.TEAM) {
+		// in team games, rank is just the order of the teams, 0=red, 1=blue, 2=tied
+		for (var i = 0; i < level.numConnectedClients; i++) {
+			cl = level.clients[ level.sortedClients[i] ];
+			if (level.teamScores[TEAM.RED] == level.teamScores[TEAM.BLUE]) {
+				cl.ps.persistant[PERS.RANK] = 2;
+			} else if (level.teamScores[TEAM.RED] > level.teamScores[TEAM.BLUE]) {
+				cl.ps.persistant[PERS.RANK] = 0;
+			} else {
+				cl.ps.persistant[PERS.RANK] = 1;
+			}
+		}
+	} else {	
+		rank = -1;
+		score = 0;
+		for (var i = 0; i < level.numPlayingClients; i++) {
+			cl = level.clients[ level.sortedClients[i] ];
+			newScore = cl.ps.persistant[PERS.SCORE];
+			if (i == 0 || newScore != score) {
+				rank = i;
+				// assume we aren't tied until the next client is checked
+				level.clients[ level.sortedClients[i] ].ps.persistant[PERS.RANK] = rank;
+			} else {
+				// we are tied with the previous client
+				level.clients[ level.sortedClients[i - 1] ].ps.persistant[PERS.RANK] = rank | RANK_TIED_FLAG;
+				level.clients[ level.sortedClients[i    ] ].ps.persistant[PERS.RANK] = rank | RANK_TIED_FLAG;
+			}
+			score = newScore;
+			if ( g_gametype() == GT.SINGLE_PLAYER && level.numPlayingClients == 1 ) {
+				level.clients[ level.sortedClients[i] ].ps.persistant[PERS.RANK] = rank | RANK_TIED_FLAG;
+			}
+		}
+	}
+	
+	// set the CS_SCORES1/2 configstrings, which will be visible to everyone
+// 	if ( g_gametype() >= GT.TEAM ) {
+// 		trap_SetConfigstring( CS_SCORES1, va("%i", level.teamScores[TEAM_RED] ) );
+// 		trap_SetConfigstring( CS_SCORES2, va("%i", level.teamScores[TEAM_BLUE] ) );
+// 	} else {
+// 		if ( level.numConnectedClients == 0 ) {
+// 			trap_SetConfigstring( CS_SCORES1, va("%i", SCORE_NOT_PRESENT) );
+// 			trap_SetConfigstring( CS_SCORES2, va("%i", SCORE_NOT_PRESENT) );
+// 		} else if ( level.numConnectedClients == 1 ) {
+// 			trap_SetConfigstring( CS_SCORES1, va("%i", level.clients[ level.sortedClients[0] ].ps.persistant[PERS_SCORE] ) );
+// 			trap_SetConfigstring( CS_SCORES2, va("%i", SCORE_NOT_PRESENT) );
+// 		} else {
+// 			trap_SetConfigstring( CS_SCORES1, va("%i", level.clients[ level.sortedClients[0] ].ps.persistant[PERS_SCORE] ) );
+// 			trap_SetConfigstring( CS_SCORES2, va("%i", level.clients[ level.sortedClients[1] ].ps.persistant[PERS_SCORE] ) );
+// 		}
+// 	}
+	
+	// see if it is time to end the level
+	CheckExitRules();
+	
+	// if we are at the intermission, send the new info to everyone
+	if (level.intermissiontime) {
+		SendScoreboardMessageToAllClients();
+	}
+}
+
+
 /**********************************************************
  *
  * Map Changing
@@ -164,13 +357,11 @@ function Frame(levelTime) {
  * due to enters/exits/forced team changes
  */
 function SendScoreboardMessageToAllClients () {
-	var i;
-
-// 	for (var i = 0; i < level.maxclients; i++) {
-// 		if (level.clients[i].pers.connected == CON_CONNECTED) {
-// 			DeathmatchScoreboardMessage(g_entities() + i);
-// 		}
-// 	}
+	for (var i = 0; i < level.maxclients; i++) {
+		if (level.clients[i].pers.connected == CON.CONNECTED) {
+			DeathmatchScoreboardMessage(level.gentities[i]);
+		}
+	}
 }
 
 /**
@@ -201,7 +392,7 @@ function MoveClientToIntermission (ent) {
 	ent.s.modelindex = 0;
 	ent.s.loopSound = 0;
 	ent.s.event = 0;
-	ent.r.contents = 0;
+	ent.contents = 0;
 }
 
 /**
@@ -243,17 +434,18 @@ function BeginIntermission () {
 	}
 	
 	// if in tournement mode, change the wins / losses
-// 	if ( g_gametype() == GT.TOURNAMENT ) {
+// 	if (g_gametype() == GT.TOURNAMENT) {
 // 		AdjustTournamentScores();
 // 	}
 	
 	level.intermissiontime = level.time;
 	// move all clients to the intermission point
 	for (var i = 0; i < level.maxclients; i++) {
-		client = g_entities() + i;
+		client = level.gentities[i];
 		if (!client.inuse) {
 			continue;
 		}
+		
 		// respawn if dead
 		if (client.health <= 0) {
 			ClientRespawn(client);
@@ -283,23 +475,23 @@ function ExitLevel () {
 	var cl;
 // 	char nextmap[MAX_STRING_CHARS];
 // 	char d1[MAX_STRING_CHARS];
-
+	
 // 	//bot interbreeding
 // 	BotInterbreedEndMatch();
-
+	
 	// if we are running a tournement map, kick the loser to spectator status,
 	// which will automatically grab the next spectator and restart
-	if (g_gametype() == GT.TOURNAMENT ) {
-		if (!level.restarted) {
+// 	if (g_gametype() == GT.TOURNAMENT ) {
+// 		if (!level.restarted) {
 // 			RemoveTournamentLoser();
 // 			trap_SendConsoleCommand( EXEC_APPEND, "map_restart 0\n" );
-			level.restarted = true;
-			level.changemap = null;
-			level.intermissiontime = 0;
-		}
-		return;	
-	}
-
+// 			level.restarted = true;
+// 			level.changemap = null;
+// 			level.intermissiontime = 0;
+// 		}
+// 		return;	
+// 	}
+	
 // 	trap_Cvar_VariableStringBuffer( "nextmap", nextmap, sizeof(nextmap) );
 // 	trap_Cvar_VariableStringBuffer( "d1", d1, sizeof(d1) );
 // 
@@ -309,15 +501,17 @@ function ExitLevel () {
 // 	} else {
 // 		trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
 // 	}
-
+	
 	level.changemap = null;
 	level.intermissiontime = 0;
-
+	
 	// reset all the scores so we don't enter the intermission again
 	level.teamScores[TEAM.RED] = 0;
 	level.teamScores[TEAM.BLUE] = 0;
 	
 	for (var i = 0; i < g_maxclients(); i++) {
+		if (!level.clients[i]) { continue; }
+		
 		cl = level.clients[i];
 		
 		if (cl.pers.connected != CON.CONNECTED) {
@@ -326,13 +520,15 @@ function ExitLevel () {
 		
 		cl.ps.persistant[PERS.SCORE] = 0;
 	}
-
+	
 	// we need to do this here before changing to CON_CONNECTING
 // 	G_WriteSessionData();
-
+	
 	// change all client states to connecting, so the early players into the
 	// next level will know the others aren't done reconnecting
 	for (var i = 0; i < g_maxclients(); i++) {
+		if (!level.clients[i]) { continue; }
+		
 		if (level.clients[i].pers.connected == CON.CONNECTED) {
 			level.clients[i].pers.connected = CON.CONNECTING;
 		}
@@ -411,12 +607,14 @@ function CheckIntermissionExit () {
 	readyMask = 0;
 	playerCount = 0;
 	for (var i = 0; i < g_maxclients(); i++) {
+		if (!level.clients[i]) { continue; }
+		
 		cl = level.clients[i];
 		if (cl.pers.connected != CON.CONNECTED) {
 			continue;
 		}
 		
-		if ( g_entities[cl.ps.clientNum].r.svFlags & SVF_BOT ) {
+		if ( level.gentities[cl.ps.clientNum].svFlags & SVF.BOT ) {
 			continue;
 		}
 		
@@ -436,6 +634,8 @@ function CheckIntermissionExit () {
 	// copy the readyMask to each player's stats so
 	// it can be displayed on the scoreboard
 	for (var i = 0; i < g_maxclients(); i++) {
+		if (!level.clients[i]) { continue; }
+		
 		cl = level.clients[i];
 		if (cl.pers.connected != CON.CONNECTED) {
 			continue;
@@ -516,14 +716,14 @@ function CheckExitRules () {
 		return;
 	}
 	
-	if (level.intermissionQueued) {
-		if (level.time - level.intermissionQueued >= INTERMISSION_DELAY_TIME) {
+// 	if (level.intermissionQueued) {
+// 		if (level.time - level.intermissionQueued >= INTERMISSION_DELAY_TIME) {
 			level.intermissionQueued = 0;
 			BeginIntermission();
-		}
+// 		}
 		
 		return;
-	}
+// 	}
 	
 	// check for sudden death
 	if (ScoreIsTied()) {
@@ -534,7 +734,7 @@ function CheckExitRules () {
 	if (g_timelimit() && !level.warmupTime) {
 		if (level.time - level.startTime >= g_timelimit() * 60000) {
 // 			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
-// 			LogExit( "Timelimit hit." );
+			LogExit("Timelimit hit.");
 			return;
 		}
 	}
@@ -542,13 +742,13 @@ function CheckExitRules () {
 	if (g_gametype() < GT.CTF && g_fraglimit()) {
 		if (level.teamScores[TEAM.RED] >= g_fraglimit()) {
 // 			trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
-// 			LogExit( "Fraglimit hit." );
+			LogExit("Fraglimit hit.");
 			return;
 		}
 		
 		if (level.teamScores[TEAM.BLUE] >= g_fraglimit()) {
 // 			trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
-// 			LogExit( "Fraglimit hit." );
+			LogExit("Fraglimit hit.");
 			return;
 		}
 		
@@ -566,7 +766,7 @@ function CheckExitRules () {
 			}
 			
 			if (cl.ps.persistant[PERS_SCORE] >= g_fraglimit()) {
-// 				LogExit( "Fraglimit hit." );
+				LogExit("Fraglimit hit.");
 // 				trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " hit the fraglimit.\n\"", cl->pers.netname ) );
 				return;
 			}
@@ -576,13 +776,13 @@ function CheckExitRules () {
 	if (g_gametype() >= GT.CTF && g_capturelimit()) {
 		if (level.teamScores[TEAM.RED] >= g_capturelimit()) {
 // 			trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
-// 			LogExit( "Capturelimit hit." );
+			LogExit("Capturelimit hit.");
 			return;
 		}
 		
 		if (level.teamScores[TEAM.BLUE] >= g_capturelimit()) {
 // 			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
-// 			LogExit( "Capturelimit hit." );
+			LogExit("Capturelimit hit.");
 			return;
 		}
 	}
