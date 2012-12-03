@@ -2,7 +2,7 @@ var re;
 var backend;
 var gl;
 
-var r_cull,
+var r_nocull,
 	r_znear,
 	r_zproj,
 	r_lodscale,
@@ -42,7 +42,7 @@ function Init() {
 	backend = new BackendState();
 	gl      = sys.GetGLContext();
 
-	r_cull              = com.AddCvar('r_cull',              1);
+	r_nocull            = com.AddCvar('r_nocull',            0);
 	r_znear             = com.AddCvar('r_znear',             4);
 	r_zproj             = com.AddCvar('r_zproj',             64);
 	r_lodscale          = com.AddCvar('r_lodscale',          5,   CVF.CHEAT );
@@ -146,16 +146,16 @@ function CullLocalBox(bounds) {
 		}
 
 		if (!front) {
-			return Cull.OUT;  // all points were behind one of the planes
+			return CULL.OUT;  // all points were behind one of the planes
 		}
 		anyBack |= back;
 	}
 
 	if (!anyBack) {
-		return Cull.IN;  // completely inside frustum
+		return CULL.IN;  // completely inside frustum
 	}
 
-	return Cull.CLIP;  // partially clipped
+	return CULL.CLIP;  // partially clipped
 }
 
 /**
@@ -192,17 +192,17 @@ function CullPointAndRadius(pt, radius) {
 		var dist = vec3.dot(pt, frust.normal) - frust.dist;
 
 		if (dist < -radius) {
-			return Cull.OUT;
+			return CULL.OUT;
 		} else if (dist <= radius) {
 			mightBeClipped = true;
 		}
 	}
 
 	if (mightBeClipped) {
-		return Cull.CLIP;
+		return CULL.CLIP;
 	}
 
-	return Cull.IN;  // completely inside frustum
+	return CULL.IN;  // completely inside frustum
 }
 
 /**
@@ -529,7 +529,18 @@ function AddEntitySurfaces() {
 			case RT.MODEL:
 				// We must set up parts of tr.or for model culling.
 				RotateForEntity(refent, re.or);
-				AddModelSurfaces(refent);
+
+				var mod = GetModelByHandle(refent.hModel);
+
+				switch (mod.type) {
+					case MOD.MD3:
+						AddMd3Surfaces(refent);
+						break;
+
+					case MOD.BRUSH:
+						AddBrushModelSurfaces(refent);
+						break;
+				}
 				break;
 
 			default:
@@ -539,12 +550,12 @@ function AddEntitySurfaces() {
 }
 
 /**
- * AddModelSurfaces
+ * AddMd3Surfaces
  */
-function AddModelSurfaces(refent) {
+function AddMd3Surfaces(refent) {
 	var mod = GetModelByHandle(refent.hModel);
 
-	if (mod.type === ModelType.BAD) {
+	if (mod.type === MOD.BAD) {
 		return;  // probably still async loading
 	}
 
@@ -578,7 +589,7 @@ function AddModelSurfaces(refent) {
 	// Cull the entire model if merged bounding box of both frames
 	// is outside the view frustum.
 	var cull = CullModel(md3, refent);
-	if (cull === Cull.OUT) {
+	if (cull === CULL.OUT) {
 		return;
 	}
 
@@ -754,15 +765,15 @@ function CullModel(md3, refent) {
 	if (!refent.nonNormalizedAxes) {
 		if (refent.frame === refent.oldframe) {
 			switch (CullLocalPointAndRadius(newFrame.localOrigin, newFrame.radius)) {
-				case Cull.OUT:
+				case CULL.OUT:
 					re.counts.culledModelOut++;
-					return Cull.OUT;
+					return CULL.OUT;
 
-				case Cull.IN:
+				case CULL.IN:
 					re.counts.culledModelIn++;
-					return Cull.IN;
+					return CULL.IN;
 
-				case Cull.CLIP:
+				case CULL.CLIP:
 					re.counts.culledModelClip++;
 					break;
 			}
@@ -777,12 +788,12 @@ function CullModel(md3, refent) {
 			}
 
 			if (sphereCull === sphereCullB) {
-				if (sphereCull === Cull.OUT) {
+				if (sphereCull === CULL.OUT) {
 					re.counts.culledModelOut++;
-					return Cull.OUT;
-				} else if (sphereCull === Cull.IN) {
+					return CULL.OUT;
+				} else if (sphereCull === CULL.IN) {
 					re.counts.culledModelIn++;
-					return Cull.IN;
+					return CULL.IN;
 				} else {
 					re.counts.culledModelClip++;
 				}
@@ -802,15 +813,15 @@ function CullModel(md3, refent) {
 	}
 
 	switch (CullLocalBox(bounds)) {
-		case Cull.OUT:
+		case CULL.OUT:
 			re.counts.culledModelOut++;
-			return Cull.OUT;
-		case Cull.IN:
+			return CULL.OUT;
+		case CULL.IN:
 			re.counts.culledModelIn++;
-			return Cull.IN;
-		case Cull.CLIP:
+			return CULL.IN;
+		case CULL.CLIP:
 			re.counts.culledModelClip++;
-			return Cull.CLIP;
+			return CULL.CLIP;
 		default:
 			com.error(ERR.DROP, 'Invalid cull result');
 	}

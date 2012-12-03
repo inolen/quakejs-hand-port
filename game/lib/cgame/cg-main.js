@@ -193,6 +193,40 @@ function RegisterGraphics() {
 	// cgs.media.holeMarkShader = re.RegisterShader('gfx/damage/hole_lg_mrk');
 	cgs.media.energyMarkShader = re.RegisterShader('gfx/damage/plasma_mrk');
 	cgs.media.shadowMarkShader = re.RegisterShader('markShadow');
+
+	// Register the inline models.
+	var numInlineModels = re.NumInlineModels();
+
+	cgs.inlineDrawModels = new Array(numInlineModels);
+	cgs.inlineModelMidpoints = new Array(numInlineModels);
+	
+	for (var i = 1; i < numInlineModels; i++) {
+		var mins = [0, 0, 0];
+		var maxs = [0, 0, 0];
+		var name = '*' + i;
+
+		cgs.inlineDrawModels[i] = re.RegisterModel(name);
+		
+		re.ModelBounds(cgs.inlineDrawModels[i], mins, maxs);
+
+		cgs.inlineModelMidpoints[i] = [
+			mins[0] + 0.5 * (maxs[0] - mins[0]),
+			mins[1] + 0.5 * (maxs[1] - mins[1]),
+			mins[2] + 0.5 * (maxs[2] - mins[2]),
+		];
+	}
+
+	// Register all the server specified models.
+	// for (var i = 1; i < MAX_MODELS; i++) {
+	// 	const char		*modelName;
+
+	// 	modelName = CG_ConfigString( CS_MODELS+i );
+	// 	if ( !modelName[0] ) {
+	// 		break;
+	// 	}
+
+	// 	cgs.gameModels[i] = trap_R_RegisterModel( modelName );
+	// }
 }
 
 /**

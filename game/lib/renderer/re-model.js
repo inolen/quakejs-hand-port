@@ -3,7 +3,7 @@
  */
 function InitModels() {
 	var mod = re.models[0] = new Model();
-	mod.type = ModelType.BAD;
+	mod.type = MOD.BAD;
 
 	// Setup static model buffers.
 	var buffers      = backend.modelBuffers = {};
@@ -33,6 +33,19 @@ function GetModelByHandle(index) {
 }
 
 /**
+ * AllocateModel
+ */
+function AllocateModel() {
+	var hModel = re.models.length;
+
+	var mod = re.models[hModel] = new Model();
+	mod.type = MOD.BAD;
+	mod.index = hModel;
+
+	return mod;
+}
+
+/**
  * RegisterModel
  *
  * Loads in a model for the given name
@@ -58,18 +71,15 @@ function RegisterModel(name) {
 	}
 
 	// Create new model.
-	hModel = re.models.length;
-	mod = re.models[hModel] = new Model();
-	mod.type = ModelType.BAD;
+	mod = AllocateModel();
 	mod.name = name;
-	mod.index = hModel;
 
 	// Async load it.
 	RegisterMd3(mod, name);
 
 	// Append static models to static buffers.
-	ModelOnLoad(hModel, function (mod) {
-		if (mod.type === ModelType.BAD) {
+	ModelOnLoad(mod.index, function (mod) {
+		if (mod.type === MOD.BAD) {
 			return;
 		}
 
@@ -78,7 +88,7 @@ function RegisterModel(name) {
 		}
 	});
 
-	return hModel;
+	return mod.index;
 }
 
 /**
@@ -165,7 +175,7 @@ function RegisterMd3(mod, name) {
 
 		// Set a valid model type if we loaded at least one LOD.
 		if (mod.numLods > 0) {
-			mod.type = ModelType.MD3;
+			mod.type = MOD.MD3;
 		}
 
 		ModelLoadComplete(mod);
@@ -390,7 +400,7 @@ function GetTag(md3, frame, tagName) {
 function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	var model = GetModelByHandle(handle);
 
-	if (model.type === ModelType.BAD) {
+	if (model.type === MOD.BAD) {
 		return false;
 	}
 
@@ -423,6 +433,28 @@ function LerpTag(or, handle, startFrame, endFrame, frac, tagName) {
 	vec3.normalize(or.axis[2]);
 
 	return true;
+}
+
+/**
+ * ModelBounds
+ */
+function ModelBounds(hModel, mins, maxs) {
+	var mod = GetModelByHandle(hModel);
+
+	if(mod.type == MOD.BRUSH) {
+		vec3.set(mod.bmodel.bounds[0], mins);
+		vec3.set(mod.bmodel.bounds[1], maxs);
+		return;
+	} else if (mod.type == MOD.MD3) {
+		var md3 = mod.md3[0];
+		var frame = md3.frames[0];
+		vec3.set(frame.bounds[0], mins);
+		vec3.set(frame.bounds[1], maxs);
+		return;
+	}
+
+	mins[0] = mins[1] = mins[2] = 0;
+	maxs[0] = maxs[1] = maxs[2] = 0;
 }
 
 /**

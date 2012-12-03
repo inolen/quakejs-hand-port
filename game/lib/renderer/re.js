@@ -46,6 +46,7 @@ function (_, glmatrix, ByteBuffer, sh, QMath) {
 			Init:                  Init,
 			Shutdown:              Shutdown,
 			LoadMap:               LoadMap,
+			NumInlineModels:       function () { return re.world.bmodels.length; },
 			RenderScene:           RenderScene,
 			AddRefEntityToScene:   AddRefEntityToScene,
 			GetCounts:             function () { return re.counts; },
@@ -53,6 +54,7 @@ function (_, glmatrix, ByteBuffer, sh, QMath) {
 			RegisterModel:         RegisterModel,
 			RegisterSkin:          RegisterSkin,
 			LerpTag:               LerpTag,
+			ModelBounds:           ModelBounds,
 			BuildCollisionBuffers: BuildCollisionBuffers
 		};
 	};

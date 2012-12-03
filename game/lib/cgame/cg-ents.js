@@ -63,6 +63,10 @@ function AddCEntity(cent) {
 			AddMissile(cent);
 			break;
 
+		case ET.MOVER:
+			AddMover(cent);
+			break;
+
 		case ET.PLAYER:
 			AddPlayer(cent);
 			break;
@@ -240,27 +244,27 @@ function EntityEffects(cent) {
 	SetEntitySoundPosition(cent);
 
 	// // Add looping sound.
-	// if ( cent->currentState.loopSound ) {
-	// 	if (cent->currentState.eType != ET_SPEAKER) {
-	// 		trap_S_AddLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
-	// 			cgs.gameSounds[ cent->currentState.loopSound ] );
+	// if ( cent.currentState.loopSound ) {
+	// 	if (cent.currentState.eType != ET_SPEAKER) {
+	// 		trap_S_AddLoopingSound( cent.currentState.number, cent.lerpOrigin, vec3_origin, 
+	// 			cgs.gameSounds[ cent.currentState.loopSound ] );
 	// 	} else {
-	// 		trap_S_AddRealLoopingSound( cent->currentState.number, cent->lerpOrigin, vec3_origin, 
-	// 			cgs.gameSounds[ cent->currentState.loopSound ] );
+	// 		trap_S_AddRealLoopingSound( cent.currentState.number, cent.lerpOrigin, vec3_origin, 
+	// 			cgs.gameSounds[ cent.currentState.loopSound ] );
 	// 	}
 	// }
 
 	// // Constant light glow.
-	// if (cent->currentState.constantLight) {
+	// if (cent.currentState.constantLight) {
 	// 	int		cl;
 	// 	float		i, r, g, b;
 
-	// 	cl = cent->currentState.constantLight;
+	// 	cl = cent.currentState.constantLight;
 	// 	r = (float) (cl & 0xFF) / 255.0;
 	// 	g = (float) ((cl >> 8) & 0xFF) / 255.0;
 	// 	b = (float) ((cl >> 16) & 0xFF) / 255.0;
 	// 	i = (float) ((cl >> 24) & 0xFF) * 4.0;
-	// 	trap_R_AddLightToScene(cent->lerpOrigin, i, r, g, b);
+	// 	trap_R_AddLightToScene(cent.lerpOrigin, i, r, g, b);
 	// }
 }
 
@@ -272,9 +276,9 @@ function SetEntitySoundPosition(cent) {
 	// 	vec3_t	origin;
 	// 	float	*v;
 
-	// 	v = cgs.inlineModelMidpoints[ cent->currentState.modelIndex ];
-	// 	VectorAdd( cent->lerpOrigin, v, origin );
-	// 	trap_S_UpdateEntityPosition( cent->currentState.number, origin );
+	// 	v = cgs.inlineModelMidpoints[ cent.currentState.modelIndex ];
+	// 	VectorAdd( cent.lerpOrigin, v, origin );
+	// 	trap_S_UpdateEntityPosition( cent.currentState.number, origin );
 	// } else {
 		snd.UpdateEntityPosition(cent.currentState.number, cent.lerpOrigin);
 	// }
@@ -331,8 +335,8 @@ function AddItem(cent) {
 	}
 	
 	// if (item.giType === IT.WEAPON && item.giTag === WP.RAILGUN) {
-	// 	clientInfo_t *ci = &cgs.clientinfo[cg.snap->ps.clientNum];
-	// 	Byte4Copy( ci->c1RGBA, ent.shaderRGBA );
+	// 	clientInfo_t *ci = &cgs.clientinfo[cg.snap.ps.clientNum];
+	// 	Byte4Copy( ci.c1RGBA, ent.shaderRGBA );
 	// }
 
 	refent.hModel = itemInfo.modelHandles[0];
@@ -467,4 +471,38 @@ function AddMissile(cent) {
 
 	// Add to refresh list, possibly with quad glow.
 	AddRefEntityWithPowerups(refent, es/*, TEAM_FREE*/);
+}
+
+function AddMover(cent) {
+	var es = cent.currentState;
+
+	// Create the render entity.
+	var refent = new re.RefEntity();
+	refent.reType = RT.MODEL;
+	vec3.set(cent.lerpOrigin, refent.origin);
+	vec3.set(cent.lerpOrigin, refent.oldOrigin);
+	QMath.AnglesToAxis(cent.lerpAngles, refent.axis);
+
+	refent.renderfx = RF.NOSHADOW;
+
+	// Flicker between two skins (FIXME?).
+	refent.skinNum = (cg.time >> 6 ) & 1;
+
+	// Get the model, either as a bmodel or a modelIndex.
+	if (es.solid === SOLID_BMODEL) {
+		refent.hModel = cgs.inlineDrawModels[es.modelIndex];
+	}
+	// } else {
+	// 	refent.hModel = cgs.gameModels[es.modelIndex];
+	// }
+
+	// Add to refresh list.
+	re.AddRefEntityToScene(refent);
+
+	// Add the secondary model.
+	// if (es.modelIndex2) {
+	// 	refent.skinNum = 0;
+	// 	refent.hModel = cgs.gameModels[es.modelIndex2];
+	// 	re.AddRefEntityToScene(refent);
+	// }
 }

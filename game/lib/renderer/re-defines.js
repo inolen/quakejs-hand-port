@@ -25,7 +25,7 @@ var QSORT_SHADERNUM_SHIFT = QSORT_ENTITYNUM_SHIFT + GENTITYNUM_BITS;
 var SHADERNUM_BITS       = 14;
 var MAX_SHADERS          = (1 << SHADERNUM_BITS);
 
-var Cull = {
+var CULL = {
 	IN:   0,                                               // completely unclipped
 	CLIP: 1,                                               // clipped by one or more planes
 	OUT:  2                                                // completely outside the clipping planes
@@ -577,14 +577,14 @@ var SkinSurface = function () {
 /**********************************************************
  * Models
  **********************************************************/
-var ModelType = {
+var MOD = {
 	BAD:   0,
 	BRUSH: 1,
 	MD3:   2
 };
 
 var Model = function () {
-	this.type      = ModelType.BAD;
+	this.type      = MOD.BAD;
 	this.name      = null;
 	this.index     = 0;                                    // model = tr.models[model->index]
 	this.bmodel    = null;
