@@ -66,8 +66,8 @@ function ClientThink_real(ent) {
 
 	// // Check for exiting intermission.
 	if (level.intermissiontime) {
-// 		ClientIntermissionThink(client);
-// 		return;
+		ClientIntermissionThink(client);
+		return;
 	}
 
 	// // Spectators don't do much.
@@ -190,6 +190,24 @@ function ClientThink_real(ent) {
 			}
 		}
 		return;
+	}
+}
+
+/**
+ * ClientIntermissionThink
+ */
+function ClientIntermissionThink (client) {
+	client.ps.eFlags &= ~EF.TALK;
+	client.ps.eFlags &= ~EF.FIRING;
+	
+	// the level will exit when everyone wants to or after timeouts
+	
+	// swap and latch button actions
+	client.oldbuttons = client.buttons;
+	client.buttons = client.pers.cmd.buttons;
+	if (client.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE) & (client.oldbuttons ^ client.buttons)) {
+		// this used to be an ^1 but once a player says ready, it should stick
+		client.readyToExit = 1;
 	}
 }
 

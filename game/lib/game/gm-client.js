@@ -424,7 +424,7 @@ function SpotWouldTelefrag(spot) {
 	var entityNums = sv.FindEntitiesInBox(mins, maxs);
 
 	for (var i = 0; i < entityNums.length; i++) {
-		var hit = level.gentities[touch[i]];
+		var hit = level.gentities[entityNums[i]];
 
 		if (hit.client) {
 			return true;

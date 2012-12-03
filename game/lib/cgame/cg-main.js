@@ -52,8 +52,9 @@ function Init(serverMessageNum, serverCommandSequence, clientNum) {
 	cg_thirdPersonRange = com.AddCvar('cg_thirdPersonRange', 100);
 	cg_railTrailTime    = com.AddCvar('cg_railTrailTime',    1000, CVF.CHEAT);
 
-	cg_hud = ui.GetView('hud');
-
+	cg_hud        = ui.GetView('hud');
+	cg_scoreboard = ui.GetView('scoreboard');
+	
 	RegisterCommands();
 	ParseServerinfo();
 
@@ -129,7 +130,13 @@ function Frame(serverTime) {
 	
 	// Issue rendering calls.
 	re.RenderScene(cg.refdef);
-
+	
+	if (cg.snap.ps.pm_type == PM.INTERMISSION ) {
+		// DrawIntermission();
+		ui.RenderView(cg_scoreboard);
+		return;
+	}
+	
 	// All Draw* calls just prep the cg_hud viewmodel,
 	// which is finally rendered with ui.Render() in cl-main.
 	DrawRenderCounts();
@@ -138,7 +145,7 @@ function Frame(serverTime) {
 	DrawAmmo();
 	DrawWeaponSelect();
 	ui.RenderView(cg_hud);
-
+	
 	// if (cg.showScores === true) {
 	// 	var players = [
 	// 		{ name: 'Player 1' }

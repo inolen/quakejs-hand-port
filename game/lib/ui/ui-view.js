@@ -51,10 +51,10 @@ function RegisterView(name) {
  * RenderView
  */
 function RenderView(view) {
-	if (view instanceof String) {
+	if (typeof view === 'string') {
 		view = RegisterView(view);
 	}
-
+	
 	// Update visFrame so the main render can show active views.
 	view.visFrame = uil.frameCount;
 }

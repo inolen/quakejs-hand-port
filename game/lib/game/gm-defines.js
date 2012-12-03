@@ -260,6 +260,8 @@ GameClient.prototype.reset = function () {
 	this.pers              = new ClientPersistant();
 	this.sess              = new ClientSession();
 	
+	this.readyToExit       = false;                        // wishes to leave the intermission
+	
 	this.noclip            = false;
 
 	this.lastCmdTime       = 0;                            // level.time of last usercmd_t, for EF_CONNECTION

@@ -190,12 +190,12 @@ function SortRanks (a, b) {
 	cb = level.clients[b];
 	
 	// sort special clients last
-	if (ca.sess.spectatorState == SPECTATOR_SCOREBOARD || ca.sess.spectatorClient < 0) {
-		return 1;
-	}
-	if (cb.sess.spectatorState == SPECTATOR_SCOREBOARD || cb.sess.spectatorClient < 0) {
-		return -1;
-	}
+// 	if (ca.sess.spectatorState == SPECTATOR_SCOREBOARD || ca.sess.spectatorClient < 0) {
+// 		return 1;
+// 	}
+// 	if (cb.sess.spectatorState == SPECTATOR_SCOREBOARD || cb.sess.spectatorClient < 0) {
+// 		return -1;
+// 	}
 	
 	// then connecting clients
 	if (ca.pers.connected == CON.CONNECTING) {
@@ -364,7 +364,7 @@ function CalculateRanks () {
 function SendScoreboardMessageToAllClients () {
 	for (var i = 0; i < level.maxclients; i++) {
 		if (level.clients[i].pers.connected == CON.CONNECTED) {
-			DeathmatchScoreboardMessage(level.gentities[i]);
+// 			DeathmatchScoreboardMessage(level.gentities[i]);
 		}
 	}
 }
@@ -520,8 +520,6 @@ function ExitLevel () {
 	level.teamScores[TEAM.BLUE] = 0;
 	
 	for (var i = 0; i < g_maxclients(); i++) {
-		if (!level.clients[i]) { continue; }
-		
 		cl = level.clients[i];
 		
 		if (cl.pers.connected != CON.CONNECTED) {
@@ -532,17 +530,15 @@ function ExitLevel () {
 	}
 	
 	// we need to do this here before changing to CON_CONNECTING
-// 	G_WriteSessionData();
+	WriteSessionData();
 	
 	// change all client states to connecting, so the early players into the
 	// next level will know the others aren't done reconnecting
-	for (var i = 0; i < g_maxclients(); i++) {
-		if (!level.clients[i]) { continue; }
-		
-		if (level.clients[i].pers.connected == CON.CONNECTED) {
-			level.clients[i].pers.connected = CON.CONNECTING;
-		}
-	}
+// 	for (var i = 0; i < g_maxclients(); i++) {
+// 		if (level.clients[i].pers.connected == CON.CONNECTED) {
+// 			level.clients[i].pers.connected = CON.CONNECTING;
+// 		}
+// 	}
 }
 
 /**
@@ -556,14 +552,12 @@ function LogExit( str ) {
 	
 // 	G_LogPrintf( "Exit: %s\n", str );
 	
-	
 	// RD: Why the hell is this in the LogExit function? o.o
 	level.intermissionQueued = level.time;
 	
-	
 	// this will keep the clients from playing any voice sounds
 	// that will get cut off when the queued intermission starts
-// 	trap_SetConfigstring( CS_INTERMISSION, "1" );
+// 	sv.SetConfigstring(CS_INTERMISSION, "1");
 	
 	// don't send more than 32 scores (FIXME?)
 // 	numSorted = level.numConnectedClients;
@@ -603,11 +597,13 @@ function LogExit( str ) {
  * wait 10 seconds before going on.
  */
 function CheckIntermissionExit () {
+	log('CheckIntermissionExit');
+	
 	var ready, notReady, playerCount;
 	var cl;
 	var readyMask;
 	
-	if ( g_gametype() == GT.SINGLE_PLAYER ) {
+	if (g_gametype() == GT.SINGLE_PLAYER) {
 		return;
 	}
 	
@@ -617,8 +613,6 @@ function CheckIntermissionExit () {
 	readyMask = 0;
 	playerCount = 0;
 	for (var i = 0; i < g_maxclients(); i++) {
-		if (!level.clients[i]) { continue; }
-		
 		cl = level.clients[i];
 		if (cl.pers.connected != CON.CONNECTED) {
 			continue;
@@ -644,8 +638,6 @@ function CheckIntermissionExit () {
 	// copy the readyMask to each player's stats so
 	// it can be displayed on the scoreboard
 	for (var i = 0; i < g_maxclients(); i++) {
-		if (!level.clients[i]) { continue; }
-		
 		cl = level.clients[i];
 		if (cl.pers.connected != CON.CONNECTED) {
 			continue;
@@ -658,7 +650,7 @@ function CheckIntermissionExit () {
 	if (level.time < level.intermissiontime + 5000) {
 		return;
 	}
-
+	
 	// only test ready status when there are real players present
 	if (playerCount > 0) {
 		// if nobody wants to go, clear timer
@@ -700,7 +692,7 @@ function ScoreIsTied () {
 	}
 	
 	if (g_gametype() >= GT.TEAM) {
-		return level.teamScores[TEAM.RED] == level.teamScores[TEAM.BLUE];
+		return (level.teamScores[TEAM.RED] == level.teamScores[TEAM.BLUE]);
 	}
 	
 	a = level.clients[level.sortedClients[0]].ps.persistant[PERS.SCORE];

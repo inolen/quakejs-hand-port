@@ -433,4 +433,6 @@ h6 { font-size: 14px; line-height: 21px; }
 	left: 25%;
 	width: 50%;
 	height: 50%;
+	border-radius: 1em;
+	background: rgba(0, 0, 0, 0.7);
 }
