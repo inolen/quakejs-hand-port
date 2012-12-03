@@ -196,7 +196,6 @@ function AddEntityEvent(cent, position) {
 			break;
 		
 		case EV.SHOTGUN:
-			log('EV.SHOTGUN');
 			ShotgunFire(es);
 			break;
 

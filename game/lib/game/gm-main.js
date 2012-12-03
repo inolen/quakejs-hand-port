@@ -381,11 +381,11 @@ function MoveClientToIntermission (ent) {
 		StopFollowing(ent);
 	}
 	
-// 	FindIntermissionPoint();
+	FindIntermissionPoint();
 	// move to the spot
-// 	VectorCopy(level.intermission_origin, ent.s.origin);
-// 	VectorCopy(level.intermission_origin, ent.client.ps.origin);
-// 	VectorCopy(level.intermission_angle, ent.client.ps.viewangles);
+	vec3.set(level.intermissionOrigin, ent.s.origin);
+	vec3.set(level.intermissionOrigin, ent.client.ps.origin);
+	vec3.set(level.intermissionAngles, ent.client.ps.viewangles);
 	ent.client.ps.pm_type = PM.INTERMISSION;
 	
 	// clean up powerup info
@@ -411,20 +411,20 @@ function FindIntermissionPoint() {
 	var dir = [0, 0, 0];
 	
 	var points = FindEntity('classname', 'info_player_intermission');
-
+	
 	var point;
 	if (!points.length) {
 		point = SelectSpawnPoint(QMath.vec3_origin, level.intermissionOrigin, level.intermissionAngles);
 	} else {
 		point = points[0];
-
+		
 		vec3.set(point.s.origin, level.intermissionOrigin);
 		vec3.set(point.s.angles, level.intermissionAngles);
-
+		
 		// If it has a target, look towards it.
 		if (point.target) {
 			var target = PickTarget(point.target);
-
+			
 			if (target) {
 				var dir = vec3.subtract(target.s.origin, level.intermissionOrigin, [0, 0, 0]);
 				QMath.VectorToAngles(dir, level.intermissionAngles)
@@ -744,6 +744,7 @@ function CheckExitRules () {
 	if (g_timelimit() && !level.warmupTime) {
 		if (level.time - level.startTime >= g_timelimit() * 60000) {
 // 			trap_SendServerCommand( -1, "print \"Timelimit hit.\n\"");
+			log('Timelimit hit.');
 			LogExit("Timelimit hit.");
 			return;
 		}
@@ -752,32 +753,33 @@ function CheckExitRules () {
 	if (g_gametype() < GT.CTF && g_fraglimit()) {
 		if (level.teamScores[TEAM.RED] >= g_fraglimit()) {
 // 			trap_SendServerCommand( -1, "print \"Red hit the fraglimit.\n\"" );
+			log('Red hit the fraglimit.');
 			LogExit("Fraglimit hit.");
 			return;
 		}
 		
 		if (level.teamScores[TEAM.BLUE] >= g_fraglimit()) {
 // 			trap_SendServerCommand( -1, "print \"Blue hit the fraglimit.\n\"" );
+			log('Blue hit the fraglimit.');
 			LogExit("Fraglimit hit.");
 			return;
 		}
 		
 		for (var i = 0; i < g_maxclients(); i++) {
-			if (!level.clients[i]) { continue; }
-			
 			cl = level.clients[i];
 			
-			if ( cl.pers.connected != CON.CONNECTED ) {
+			if (cl.pers.connected != CON.CONNECTED) {
 				continue;
 			}
 			
-			if ( cl.sess.sessionTeam != TEAM.FREE ) {
+			if (cl.sess.sessionTeam != TEAM.FREE) {
 				continue;
 			}
 			
-			if (cl.ps.persistant[PERS_SCORE] >= g_fraglimit()) {
+			if (cl.ps.persistant[PERS.SCORE] >= g_fraglimit()) {
 				LogExit("Fraglimit hit.");
 // 				trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " hit the fraglimit.\n\"", cl->pers.netname ) );
+				log(cl.pers.netname + ' hit the fraglimit.');
 				return;
 			}
 		}
@@ -786,12 +788,14 @@ function CheckExitRules () {
 	if (g_gametype() >= GT.CTF && g_capturelimit()) {
 		if (level.teamScores[TEAM.RED] >= g_capturelimit()) {
 // 			trap_SendServerCommand( -1, "print \"Red hit the capturelimit.\n\"" );
+			log('Red hit the capturelimit.');
 			LogExit("Capturelimit hit.");
 			return;
 		}
 		
 		if (level.teamScores[TEAM.BLUE] >= g_capturelimit()) {
 // 			trap_SendServerCommand( -1, "print \"Blue hit the capturelimit.\n\"" );
+			log('Blue hit the capturelimit.');
 			LogExit("Capturelimit hit.");
 			return;
 		}

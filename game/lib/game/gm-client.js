@@ -29,7 +29,7 @@ function ClientConnect(clientNum, firstTime) {
 	ent.inuse = true;
 	
 	client.pers.connected = CON.CONNECTING;
-
+	
 	// Read or initialize the session data.
 	if (firstTime || level.newSession) {
 		InitSessionData(client, userinfo);
@@ -48,10 +48,10 @@ function ClientConnect(clientNum, firstTime) {
 	if (g_gametype() >= GT.TEAM && client.sess.sessionTeam !== TEAM.SPECTATOR) {
 		BroadcastTeamChange(client, -1);
 	}
-
+	
 	// Count current clients and rank for scoreboard.
-	// CalculateRanks();
-
+	CalculateRanks();
+	
 	return null;
 }
 
@@ -90,11 +90,38 @@ function ClientUserinfoChanged(clientNum) {
  */
 function ClientBegin(clientNum) {
 	var ent = level.gentities[clientNum];
-
+	var client = level.clients[clientNum];
+	var flags;
+	
+	if (ent.linked) {
+		sv.UnlinkEntity(ent);
+	}
+	
+// 	G_InitGentity( ent );
+	
+	ent.inuse = true;
 	ent.s.number = clientNum;
 	ent.client.ps.clientNum = clientNum;
-
+	
+	ent.touch = 0;
+	ent.pain = 0;
+	ent.client = client;
+	
+	client.pers.connected = CON.CONNECTED;
+	client.pers.enterTime = level.time;
+	client.pers.teamState.state = TEAM_STATE.BEGIN;
+	
 	ClientSpawn(ent);
+	
+	if (client.sess.sessionTeam != TEAM.SPECTATOR) {
+		if (g_gametype() != GT.TOURNAMENT) {
+//			trap_SendServerCommand( -1, va("print \"%s" S_COLOR_WHITE " entered the game\n\"", client->pers.netname) );
+			log(client.pers.netname + ' entered the game');
+		}
+	}
+	
+	// count current clients and rank for scoreboard
+	CalculateRanks();
 }
 
 /**
@@ -287,19 +314,22 @@ function ClientRespawn(ent) {
 function ClientDisconnect(clientNum) {
 	var ent = level.gentities[clientNum];
 
-	if (!ent.client/* || ent.client.pers.connected == CON_DISCONNECTED*/) {
+	if (!ent.client || ent.client.pers.connected == CON.DISCONNECTED) {
 		return;
 	}
-
+	
 	log('ClientDisconnect: ' + clientNum);
-
-	sv.UnlinkEntity (ent);
+	
+	sv.UnlinkEntity(ent);
 	ent.s.modelIndex = 0;
 	ent.classname = 'disconnected';
-	/*ent.client.pers.connected = CON_DISCONNECTED;
-	ent.client.ps.persistant[PERS.TEAM] = TEAM_FREE;
-	ent.client.sess.sessionTeam = TEAM_FREE;
-	trap_SetConfigstring( CS_PLAYERS + clientNum, "");*/
+	ent.client.pers.connected = CON.DISCONNECTED;
+	ent.client.ps.persistant[PERS.TEAM] = TEAM.FREE;
+	ent.client.sess.sessionTeam = TEAM.FREE;
+	
+// 	trap_SetConfigstring( CS_PLAYERS + clientNum, "");
+	
+	CalculateRanks();
 }
 
 /**

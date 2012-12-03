@@ -4,6 +4,9 @@ var ITEM_RADIUS = 15;
 var CARNAGE_REWARD_TIME = 3000;
 var REWARD_SPRITE_TIME  = 2000;
 
+var INTERMISSION_DELAY_TIME = 1000;
+var SP_INTERMISSION_DELAY_TIME = 5000;
+
 var DAMAGE = {
 	RADIUS:        0x00000001,                             // damage was indirect
 	NO_ARMOR:      0x00000002,                             // armour does not protect from this damage
@@ -76,8 +79,31 @@ var LevelLocals = function () {
 	this.numConnectedClients    = 0;
 	this.numNonSpectatorClients = 0;                       // includes connecting clients
 	this.numPlayingClients      = 0;                       // connected, non-spectators
-// 	int	sortedClients[MAX_CLIENTS];	                       // sorted by score
+	this.sortedClients          = new Array(MAX_CLIENTS);  // sorted by score
 // 	int	follow1, follow2;                                  // clientNums for auto-follow spectators
+	
+	// voting state
+// 	char		voteString[MAX_STRING_CHARS];
+// 	char		voteDisplayString[MAX_STRING_CHARS];
+// 	int			voteTime;				// level.time vote was called
+// 	int			voteExecuteTime;		// time the vote is executed
+// 	int			voteYes;
+// 	int			voteNo;
+	this.numVotingClients       = 0;                       // set by CalculateRanks
+	
+	// team voting state
+// 	char		teamVoteString[2][MAX_STRING_CHARS];
+// 	int			teamVoteTime[2];		// level.time vote was called
+// 	int			teamVoteYes[2];
+// 	int			teamVoteNo[2];
+	this.numteamVotingClients   = new Array(2);            // set by CalculateRanks
+	
+	// spawn variables
+// 	qboolean	spawning;				// the G_Spawn*() functions are valid
+// 	int			numSpawnVars;
+// 	char		*spawnVars[MAX_SPAWN_VARS][2];	// key / value pairs
+// 	int			numSpawnVarChars;
+// 	char		spawnVarChars[MAX_SPAWN_VARS_CHARS];
 	
 	// intermission state
 	this.intermissionQueued     = 0;                       // intermission was qualified, but
@@ -286,25 +312,40 @@ var PlayerTeamState = function () {
 // Client data that stays across multiple respawns, but is cleared
 // on each level change or team change at ClientBegin()
 var ClientPersistant = function () {
-	this.cmd           = new sh.UserCmd();
-	// this.localClient  = false;  // true if "ip" info key is "localhost"
-	this.netname       = null;
-	// this.maxHealth    = 0; // for handicapping
-	this.enterTime     = 0;                                // level.time the client entered the game
-	this.teamState     = new PlayerTeamState();            // status in teamplay games
-	// this.voteCount     = 0;                                // to prevent people from constantly calling votes
-	// this.teamVoteCount = 0;                                // to prevent people from constantly calling votes
-	// this.teamInfo      = false;                            // send team overlay updates?
+	this.connected         = 0;
+	this.cmd               = new sh.UserCmd();
+	this.localClient       = false;                        // true if "ip" info key is "localhost"
+	this.initialSpawn      = false;                        // the first spawn should be at a cool location
+	this.predictItemPickup = false;                        // based on cg_predictItems userinfo
+	this.pmoveFixed        = false;                        //
+	this.netname           = null;
+	this.maxHealth         = 0;                            // for handicapping
+	this.enterTime         = 0;                            // level.time the client entered the game
+	this.teamState         = new PlayerTeamState();        // status in teamplay games
+	this.voteCount         = 0;                            // to prevent people from constantly calling votes
+	this.teamVoteCount     = 0;                            // to prevent people from constantly calling votes
+	this.teamInfo          = false;                        // send team overlay updates?
 };
 
 ClientPersistant.prototype.clone = function (to) {
 	if (typeof(to) === 'undefined') {
 		to = new ClientPersistant();
 	}
-
+	
+	to.connected = this.connected;
 	to.cmd = this.cmd;
+	to.localClient = this.localClient;
+	to.initialSpawn = this.initialSpawn;
+	to.predictItemPickup = this.predictItemPickup;
+	to.pmoveFixed = this.pmoveFixed;
 	to.netname = this.netname;
-
+	to.maxHealth = this.maxHealth;
+	to.enterTime = this.enterTime;
+	to.teamState = this.teamState;
+	to.voteCount = this.voteCount;
+	to.teamVoteCount = this.teamVoteCount;
+	to.teamInfo = this.teamInfo;
+	
 	return to;
 };
 

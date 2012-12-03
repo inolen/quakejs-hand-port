@@ -88,10 +88,10 @@ function ShotgunPellet(start, end, ent ) {
 	var tr_start, tr_end;
 	
 // 	passent = ent.s.number;
-// 	VectorCopy( start, tr_start );
-// 	VectorCopy( end, tr_end );
+// 	vec3.set( start, tr_start );
+// 	vec3.set( end, tr_end );
 // 	for (i = 0; i < 10; i++) {
-// 		trap_Trace (&tr, tr_start, null, null, tr_end, passent, MASK_SHOT);
+// 		Trace (tr, tr_start, null, null, tr_end, passent, MASK_SHOT);
 // 		traceEnt = &g_entities[ tr.entityNum ];
 // 		
 // 		// send bullet impact
@@ -115,30 +115,32 @@ function ShotgunPellet(start, end, ent ) {
 function ShotgunPattern(origin, origin2, seed, ent) {
 	var i;
 	var r, u;
-	var end;
-	var forward, right, up;
+	var end     = [0, 0, 0];
+	var forward = [0, 0, 0],
+		right   = [0, 0, 0],
+		up      = [0, 0, 0];
 	var hitClient = false;
 	
 	// derive the right and up vectors from the forward vector, because
 	// the client won't have any other information
-// 	VectorNormalize2( origin2, forward );
-// 	PerpendicularVector( right, forward );
-// 	CrossProduct( forward, right, up );
-// 	
-// 	// generate the "random" spread pattern
-// 	for ( i = 0 ; i < DEFAULT_SHOTGUN_COUNT ; i++ ) {
-// 		r = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
-// 		u = Math.random() * DEFAULT_SHOTGUN_SPREAD * 16;
-// 		VectorMA(origin, 8192 * 16, forward, end);
-// 		VectorMA(end, r, right, end);
-// 		VectorMA(end, u, up, end);
-// 		if( ShotgunPellet( origin, end, ent ) && !hitClient ) {
-// 			hitClient = true;
-// 			ent.client.accuracy_hits++;
-// 		}
-// 	}
+	vec3.normalize(origin2, forward);
+	QMath.PerpendicularVector(forward, right);
+	vec3.cross(forward, right, up);
+	
+	// generate the "random" spread pattern
+	for (i = 0; i < DEFAULT_SHOTGUN_COUNT; i++) {
+		r = QMath.crandom() * DEFAULT_SHOTGUN_SPREAD * 16;
+		u = QMath.crandom() * DEFAULT_SHOTGUN_SPREAD * 16;
+		vec3.add(origin, vec3.scale(forward, 8192 * 16, [0, 0, 0]), end);
+		vec3.add(end, vec3.scale(right, r, [0, 0, 0]));
+		vec3.add(end, vec3.scale(up, u, [0, 0, 0]));
+		
+		if (ShotgunPellet(origin, end, ent) && !hitClient) {
+			hitClient = true;
+			ent.client.accuracy_hits += 1;
+		}
+	}
 }
-
 
 function weapon_supershotgun_fire (ent) {
 	var tent;
@@ -150,7 +152,7 @@ function weapon_supershotgun_fire (ent) {
 	tent.s.eventParm = Math.floor(Math.random() * 65536) & 255;		// seed for spread pattern
 	tent.s.otherEntityNum = ent.s.number;
 	
-// 	ShotgunPattern( tent.s.pos.trBase, tent.s.origin2, tent.s.eventParm, ent );
+	ShotgunPattern( tent.s.pos.trBase, tent.s.origin2, tent.s.eventParm, ent );
 }
 
 /**
