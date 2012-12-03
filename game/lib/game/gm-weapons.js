@@ -40,7 +40,7 @@ function FireWeapon(ent) {
 			weapon_supershotgun_fire(ent);
 			break;
 		case WP.MACHINEGUN:
-			// if (g_gametype.integer !== GT_TEAM) {
+			// if (g_gametype.integer !== GT.TEAM) {
 				BulletFire(ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
 			// } else {
 			// 	Bullet_Fire( ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD_MACHINEGUN );

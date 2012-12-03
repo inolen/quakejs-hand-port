@@ -446,15 +446,6 @@ var ANIM = {
 	MAX_TOTALANIMATIONS: 37
 };
 
-var TEAM = {
-	FREE:      0,
-	RED:       1,
-	BLUE:      2,
-	SPECTATOR: 3,
-	
-	NUM_TEAMS: 4
-};
-
 // Means of death
 var MOD = {
 	UNKNOWN:        0,

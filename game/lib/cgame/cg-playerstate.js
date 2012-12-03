@@ -123,7 +123,7 @@ function CheckLocalSounds(ps, ops) {
 	// }
 
 	// // check for flag pickup
-	// if ( cgs.gametype > GT_TEAM ) {
+	// if ( cgs.gametype > GT.TEAM ) {
 	// 	if ((ps.powerups[PW_REDFLAG] != ops.powerups[PW_REDFLAG] && ps.powerups[PW_REDFLAG]) ||
 	// 		(ps.powerups[PW_BLUEFLAG] != ops.powerups[PW_BLUEFLAG] && ps.powerups[PW_BLUEFLAG]) ||
 	// 		(ps.powerups[PW_NEUTRALFLAG] != ops.powerups[PW_NEUTRALFLAG] && ps.powerups[PW_NEUTRALFLAG]) )
@@ -138,7 +138,7 @@ function CheckLocalSounds(ps, ops) {
 	// 	if ( !cg.warmup ) {
 	// 		// never play lead changes during warmup
 	// 		if ( ps.persistant[PERS.RANK] != ops.persistant[PERS.RANK] ) {
-	// 			if ( cgs.gametype < GT_TEAM) {
+	// 			if ( cgs.gametype < GT.TEAM) {
 	// 				if (  ps.persistant[PERS.RANK] == 0 ) {
 	// 					CG_AddBufferedSound(cgs.media.takenLeadSound);
 	// 				} else if ( ps.persistant[PERS.RANK] == RANK_TIED_FLAG ) {
@@ -171,10 +171,10 @@ function CheckLocalSounds(ps, ops) {
 	// }
 
 	// // fraglimit warnings
-	// if ( cgs.fraglimit > 0 && cgs.gametype < GT_CTF) {
+	// if ( cgs.fraglimit > 0 && cgs.gametype < GT.CTF) {
 	// 	highScore = cgs.scores1;
 
-	// 	if (cgs.gametype == GT_TEAM && cgs.scores2 > highScore) {
+	// 	if (cgs.gametype == GT.TEAM && cgs.scores2 > highScore) {
 	// 		highScore = cgs.scores2;
 	// 	}
 

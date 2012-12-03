@@ -436,7 +436,7 @@ function TouchItem(cent) {
 
 	// // Special case for flags.  
 	// // We don't predict touching our own flag.
-	// if (cgs.gametype === GT_CTF) {
+	// if (cgs.gametype === GT.CTF) {
 	// 	if (cg.predictedPlayerState.persistant[PERS.TEAM] == TEAM_RED &&
 	// 		item.giTag == PW_REDFLAG)
 	// 		return;

@@ -37,8 +37,8 @@ var SPECTATOR = {
 };
 
 var TEAM_STATE = {
-	BEGIN:  0,		// Beginning a team game, spawn at base
-	ACTIVE: 1		// Now actively playing
+	BEGIN:  0,                                             // Beginning a team game, spawn at base
+	ACTIVE: 1                                              // Now actively playing
 };
 
 var LevelLocals = function () {
@@ -90,8 +90,8 @@ var LevelLocals = function () {
 // 	char		*changemap;
 	this.readyToExit            = false;                   // at least one client wants to exit
 	this.exitTime               = 0;
-// 	vec3_t		intermission_origin;                       // also used for spectator spawns
-// 	vec3_t		intermission_angle;
+	this.intermissionOrigin     = [0, 0, 0];               // also used for spectator spawns
+	this.intermissionAngles     = [0, 0, 0];
 	
 // 	qboolean	locationLinked;                            // target_locations get linked
 // 	gentity_t	*locationHead;                             // head of the location list
@@ -220,8 +220,12 @@ GameEntity.prototype.reset = function () {
 // This structure is cleared on each ClientSpawn(),
 // except for 'client->pers' and 'client->sess'.
 var GameClient = function () {
+	this.reset();
+};
+
+GameClient.prototype.reset = function () {
 	this.ps                = new sh.PlayerState();
-	this.pers              = new GameClientPersistant();
+	this.pers              = new ClientPersistant();
 	this.sess              = new ClientSession();
 	
 	this.noclip            = false;
@@ -259,23 +263,77 @@ var GameClient = function () {
 	this.airOutTime        = 0;
 };
 
-// Client data that stays across multiple respawns, but is cleared
-// on each level change or team change at ClientBegin()
-var GameClientPersistant = function () {
-	this.cmd     = new sh.UserCmd();
-	this.netname = null;
+
+var PlayerTeamState = function () {
+	this.state              = TEAM_STATE.BEGIN;
+
+	// this.location           = 0;
+
+	// this.captures           = 0;
+	// this.basedefense        = 0;
+	// this.carrierdefense     = 0;
+	// this.flagrecovery       = 0;
+	// this.fragcarrier        = 0;
+	// this.assists            = 0;
+
+	// this.lasthurtcarrier    = 0;
+	// this.lastreturnedflag   = 0;
+	// this.flagsince          = 0;
+	// this.lastfraggedcarrier = 0;
 };
 
-// client data that stays across multiple levels or tournament restarts
-// this is achieved by writing all the data to cvar strings at game shutdown
+
+// Client data that stays across multiple respawns, but is cleared
+// on each level change or team change at ClientBegin()
+var ClientPersistant = function () {
+	this.cmd           = new sh.UserCmd();
+	// this.localClient  = false;  // true if "ip" info key is "localhost"
+	this.netname       = null;
+	// this.maxHealth    = 0; // for handicapping
+	this.enterTime     = 0;                                // level.time the client entered the game
+	this.teamState     = new PlayerTeamState();            // status in teamplay games
+	// this.voteCount     = 0;                                // to prevent people from constantly calling votes
+	// this.teamVoteCount = 0;                                // to prevent people from constantly calling votes
+	// this.teamInfo      = false;                            // send team overlay updates?
+};
+
+ClientPersistant.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new ClientPersistant();
+	}
+
+	to.cmd = this.cmd;
+	to.netname = this.netname;
+
+	return to;
+};
+
+// Client data that stays across multiple levels or tournament restarts.
+// This is achieved by writing all the data to cvar strings at game shutdown
 // time and reading them back at connection time.  Anything added here
-// MUST be dealt with in G_InitSessionData() / G_ReadSessionData() / G_WriteSessionData()
+// MUST be dealt with in G_InitSessionData() / G_ReadSessionData() / G_WriteSessionData().
 var ClientSession = function () {
-	this.sessionTeam = TEAM.FREE;			
-	this.spectatorNum = 0;					// for determining next-in-line to play
-	this.spectatorState = SPECTATOR.NOT;	
-	this.spectatorClient;					// for chasecam and follow mode
-	this.wins = 0;							// tournament stats
-	this.losses = 0;						
-	this.teamLeader = false;				// true when this client is a team leader
+	this.sessionTeam      = TEAM.FREE;
+	this.spectatorNum     = 0;                             // for determining next-in-line to play
+	this.spectatorState   = SPECTATOR.NOT;
+	this.spectatorClient  = 0;                             // for chasecam and follow mode
+	this.wins             = 0;                             // tournament stats
+	this.losses           = 0;
+	this.teamLeader       = false;                         // true when this client is a team leader
+};
+
+ClientSession.prototype.clone = function (to) {
+	if (typeof(to) === 'undefined') {
+		to = new ClientSession();
+	}
+
+	to.sessionTeam = this.sessionTeam;
+	to.spectatorNum = this.spectatorNum;
+	to.spectatorState = this.spectatorState;
+	to.spectatorClient = this.spectatorClient;
+	to.wins = this.wins;
+	to.losses = this.losses;
+	to.teamLeader = this.teamLeader;
+
+	return to;
 };

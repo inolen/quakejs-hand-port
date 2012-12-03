@@ -173,7 +173,7 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	}
 
 	// See if it's the player hurting the emeny flag carrier.
-	// if (g_gametype.integer === GT_CTF) {
+	// if (g_gametype.integer === GT.CTF) {
 	// 	Team_CheckHurtCarrier(targ, attacker);
 	// }
 

@@ -48,7 +48,7 @@ function Init(clInstance, isDedicated) {
 
 	// For dev purposes, simulate command line input.
 	setTimeout(function () {
-		CmdLoadMap('q3tourney2');
+		CmdLoadMap('q3dm17');
 	}, 50);
 }
 
@@ -195,7 +195,7 @@ function SpawnServer(mapName) {
 	svs.initialized = false;
 	
 	// Shutdown the game.
-	gm.Shutdown();
+	ShutdownGame();
 	
 	if (!dedicated) {
 		// Update the local client's screen.
@@ -231,7 +231,7 @@ function SpawnServer(mapName) {
 		sv.state = ServerState.LOADING;
 
 		// Initialize the game.
-		gm.Init(sv.time);
+		InitGame();
 
 		// Run a few frames to allow everything to settle.
 		for (var i = 0; i < 3; i++) {
@@ -477,10 +477,12 @@ function GameExports() {
 			ReadFile:        sys.ReadFile,
 		},
 		com: {
-			enums:   com.enums,
-			error:   com.error,
-			AddCmd:  com.AddCmd,
-			AddCvar: com.AddCvar
+			enums:      com.enums,
+			error:      com.error,
+			AddCmd:     com.AddCmd,
+			AddCvar:    com.AddCvar,
+			GetCvarVal: com.GetCvarVal,
+			SetCvarVal: com.SetCvarVal
 		},
 		sv: {
 			EntityContact:     EntityContact,
