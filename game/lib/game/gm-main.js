@@ -726,14 +726,14 @@ function CheckExitRules () {
 		return;
 	}
 	
-// 	if (level.intermissionQueued) {
-// 		if (level.time - level.intermissionQueued >= INTERMISSION_DELAY_TIME) {
+	if (level.intermissionQueued) {
+		if (level.time - level.intermissionQueued >= INTERMISSION_DELAY_TIME) {
 			level.intermissionQueued = 0;
 			BeginIntermission();
-// 		}
+		}
 		
 		return;
-// 	}
+	}
 	
 	// check for sudden death
 	if (ScoreIsTied()) {
