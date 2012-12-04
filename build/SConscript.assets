@@ -3,7 +3,7 @@ import os, fnmatch
 env = Environment()
 Import('rglob')
 
-ASSET_DIR = 'public/baseq3/'
+ASSET_DIR = '../public/baseq3/'
 
 ConvToOGG = Builder(
 	action = 'oggenc $SOURCE -o $TARGET',
@@ -30,7 +30,7 @@ for dir in audio_dirs:
 env.Alias('audio', [env.ConvToOGG(x) for x in audio_src])
 
 # Textures
-texture_dirs = ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'models', 'textures']
+texture_dirs = ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'models', 'sprites', 'textures']
 texture_src = []
 for dir in texture_dirs:
 	texture_src.extend(rglob(ASSET_DIR + dir, '*.jpg'))

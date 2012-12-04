@@ -10,11 +10,7 @@ function main() {
 	var app = express();
 	var server = http.createServer(app);
 
-	app.use(express.compress({
-		filter: function(req, res){
-			return /json|text|javascript|octet-stream/.test(res.getHeader('Content-Type'));
-		}
-	}));
+	app.use(express.compress());
 
 	// Static files for the web project.
 	app.use(express.static(__dirname + '/public'));
