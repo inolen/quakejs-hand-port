@@ -16,6 +16,9 @@ function main() {
 		}
 	}));
 
+	// Static files for the web project.
+	app.use(express.static(__dirname + '/public'));
+
 	// Pre-compiled JS files.
 	app.use('/bin', express.static(gameRoot + '/bin'));
 
