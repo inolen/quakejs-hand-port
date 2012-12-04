@@ -1,6 +1,7 @@
 .scon*
-/game/bin/tmp
+/bin/tmp
 /node_modules
 /public/baseq3/*
+!/public/baseq3/default.cfg
 !/public/baseq3/programs
 /public/demoq3
