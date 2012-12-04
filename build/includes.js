@@ -1,11 +1,13 @@
 'use strict';
 
-var fs = require('fs'),
-	path = require('path');
+var fs = require('fs');
+var path = require('path');
+
+var args = process.argv.slice(2);
 
 // Used by the build process.
-if (arguments.length == 2 && arguments[0] === '--process') {
-	var output = includes(arguments[1]);
+if (args.length == 2 && args[0] === '--process') {
+	var output = includes(args[1]);
 	console.log(output);
 	return;
 }
