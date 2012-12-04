@@ -27,9 +27,11 @@
 </div>
 
 <div class="armor-wrapper">
-	Armor: <span class="armor"><%- armor %></span>
+	<span class="text armor"><%- armor %></span>
+	<div class="bar armor" style="width: <%- (armor / 10) %>em; <% if (armor == 0) { %>display: none;<% } %>"></div>
 </div>
 
 <div class="health-wrapper">
-	Health: <span class="health"><%- health %></span>
+	<span class="text health"><%- health %></span>
+	<div class="bar health" style="width: <%- (health / 10) %>em; <% if (health == 0) { %>display: none;<% } %>"></div>
 </div>
