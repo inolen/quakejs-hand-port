@@ -17,7 +17,7 @@ entityEvents['trigger_teleport'] = {
 			return;
 		}
 
-		var dest = EntityPickTarget(self.target);
+		var dest = PickTarget(self.target);
 		if (!dest) {
 			log('Couldn\'t find teleporter destination');
 			FreeEntity(self);

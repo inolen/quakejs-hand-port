@@ -472,12 +472,12 @@ function GenerateDrawSurfs() {
 /**
  * AddDrawSurf
  */
-function AddDrawSurf(face, shader, entityNum/*, fogIndex, dlightMap*/) {
+function AddDrawSurf(face, shader/*, fogIndex, dlightMap*/) {
 	// Instead of checking for overflow, we just mask the index so it wraps around.
 	var index = re.refdef.numDrawSurfs % MAX_DRAWSURFS;
 	// The sort data is packed into a single 32 bit value so it can be
 	// compared quickly during the qsorting process.
-	backend.drawSurfs[index].sort = (shader.sortedIndex << QSORT_SHADERNUM_SHIFT) | (entityNum << QSORT_ENTITYNUM_SHIFT);
+	backend.drawSurfs[index].sort = (shader.sortedIndex << QSORT_SHADERNUM_SHIFT) | (re.currentEntityNum << QSORT_ENTITYNUM_SHIFT);
 	// | ( fogIndex << QSORT_FOGNUM_SHIFT ) | (int)dlightMap;
 	backend.drawSurfs[index].surface = face;
 
@@ -498,6 +498,8 @@ var entitySurface = new EntitySurface();
 function AddEntitySurfaces() {
 	for (var i = 0; i < re.refdef.numRefEnts; i++) {
 		var refent = backend.refEnts[i];
+
+		re.currentEntityNum = i;
 
 		// preshift the value we are going to OR into the drawsurf sort
 		//tr.shiftedEntityNum = tr.currentEntityNum << QSORT_ENTITYNUM_SHIFT;
@@ -523,7 +525,7 @@ function AddEntitySurfaces() {
 					continue;
 				}
 				var shader = GetShaderByHandle(refent.customShader);
-				AddDrawSurf(entitySurface, shader, refent.index);
+				AddDrawSurf(entitySurface, shader);
 				break;
 
 			case RT.MODEL:
@@ -652,7 +654,7 @@ function AddMd3Surfaces(refent) {
 
 		// Don't add third_person objects if not viewing through a portal.
 		if (!personalModel) {
-			AddDrawSurf(face, shader, refent.index);
+			AddDrawSurf(face, shader);
 		}
 	}
 }

@@ -265,8 +265,8 @@ function TouchItem(self, other) {
 // 		}
 // 	}
 // 
-// 	// fire item targets
-// 	G_UseTargets (ent, other);
+	// Fire item targets.
+	UseTargets(self, other);
 
 	// Wait of -1 will not respawn.
 	if (self.wait === -1) {

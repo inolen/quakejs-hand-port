@@ -36,6 +36,7 @@ var RenderLocals = function () {
 	this.refdef             = new RefDef();
 	this.viewParms          = new ViewParms();
 	this.or                 = new sh.Orientation();           // for current entity
+	this.currentEntityNum   = 0;
 
 	this.world              = null;
 	this.counts             = new RenderCounts();

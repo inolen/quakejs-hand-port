@@ -6,23 +6,26 @@ var entityEvents = {};
 // optional and are only available through the Spawn*
 // functions.
 var fields = {
-	'angle':      { type: 'anglehack' },
-	'angles':     { type: 'vector', aliases: ['s.angles'] },
-	'classname':  { },  // just copy to ent
-	'count':      { type: 'int' },
-	'dmg':        { type: 'int', aliases: ['damage'] },
-	'health':     { type: 'int' },
-	'message':    { },
-	'model':      { },
-	'model2':     { },
-	'origin':     { type: 'vector', aliases: ['currentOrigin', 's.origin', 's.pos.trBase'] },
-	'random':     { type: 'float' },
-	'spawnflags': { type: 'int' },
-	'speed':      { type: 'float' },
-	'target':     { },
-	'targetname': { aliases: ['targetName'] },
-	'team':       { },
-	'wait':       { type: 'float' },
+	'angle':               { type: 'anglehack', aliases: ['s.angles'] },
+	'angles':              { type: 'vector', aliases: ['s.angles'] },
+	'classname':           { },  // just copy to ent
+	'count':               { type: 'int' },
+	'dmg':                 { type: 'int', aliases: ['damage'] },
+	'health':              { type: 'int' },
+	'message':             { },
+	'model':               { },
+	'model2':              { },
+	'origin':              { type: 'vector', aliases: ['currentOrigin', 's.origin', 's.pos.trBase'] },
+	'random':              { type: 'float' },
+	'spawnflags':          { type: 'int' },
+	'speed':               { type: 'float' },
+	'target':              { },
+	'targetname':          { aliases: ['targetName'] },
+	// TODO
+	// 'targetShaderName':    { },
+	// 'targetShaderNewName': { },
+	'team':                { },
+	'wait':                { type: 'float' },
 };
 
 /**
@@ -132,21 +135,64 @@ function RunEntity(ent) {
 }
 
 /**
- * EntityPickTarget
+ * PickTarget
  */
-function EntityPickTarget(targetName) {
+function PickTarget(targetName) {
 	if (!targetName) {
-		error('EntityPickTarget called with NULL targetname');
+		error('PickTarget called with NULL targetname');
 	}
 
 	var choices = FindEntity('targetName', targetName);
 
 	if (!choices.length) {
-		error('EntityPickTarget: target ' + targetName + ' not found');
+		error('PickTarget: target ' + targetName + ' not found');
 	}
 
 	return choices[Math.floor(Math.random()*choices.length)];
 }
+
+/**
+ * UseTargets
+ * 
+ * "activator" should be set to the entity that initiated the firing.
+ * 
+ * Search for (string)targetname in all entities that
+ * match (string)self.target and call their .use function
+ */
+function UseTargets(ent, activator) {
+	if (!ent) {
+		return;
+	}
+
+	// if (ent.targetShaderName && ent.targetShaderNewName) {
+	// 	float f = level.time * 0.001;
+	// 	AddRemap(ent->targetShaderName, ent->targetShaderNewName, f);
+	// 	trap_SetConfigstring(CS_SHADERSTATE, BuildShaderStateConfig());
+	// }
+
+	if (!ent.target) {
+		return;
+	}
+
+	var targets = FindEntity('targetName', ent.target);
+
+	for (var i = 0; i < targets.length; i++) {
+		var t = targets[i];
+
+		if (t == ent) {
+			log('WARNING: Entity used itself.');
+		} else {
+			if (t.use) {
+				t.use(t, ent, activator);
+			}
+		}
+		if (!ent.inuse) {
+			log('Entity was removed while using targets.');
+			return;
+		}
+	}
+}
+
 
 /**
  * SpawnAllEntitiesFromDefs

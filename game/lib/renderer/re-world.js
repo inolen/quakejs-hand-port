@@ -19,8 +19,7 @@ function CompileWorldSurfaces() {
 
 		// Only add these surface types to the list.
 		if (face.surfaceType !== SF.FACE &&
-			face.surfaceType !== SF.GRID &&
-			face.surfaceType !== SF.TRIANGLES) {
+			face.surfaceType !== SF.GRID) {
 			continue;
 		}
 
@@ -133,6 +132,8 @@ function CmdShowCluster() {
  * AddWorldSurfaces
  */
 function AddWorldSurfaces(map) {
+	re.currentEntityNum = ENTITYNUM_WORLD;
+
 	// Determine which leaves are in the PVS / areamask.
 	MarkLeaves();
 
@@ -418,7 +419,7 @@ function AddWorldSurface(face/*, dlightBits*/) {
 		dlightBits = (dlightBits !== 0);
 	}*/
 
-	AddDrawSurf(face.compiled, face.compiled.shader, ENTITYNUM_WORLD);
+	AddDrawSurf(face.compiled, face.compiled.shader);
 }
 
 /**

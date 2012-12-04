@@ -42,7 +42,7 @@ entityEvents['func_door'] = {
 		// First position at start.
 		vec3.set(self.s.origin, self.pos1);
 
-		// Calculate second position..
+		// Calculate second position.
 		sv.SetBrushModel(self, self.model);
 		SetMovedir(self.s.angles, self.movedir);
 
@@ -64,21 +64,129 @@ entityEvents['func_door'] = {
 
 		InitMover(self);
 
-		// self.nextthink = level.time + FRAMETIME;
+		self.nextthink = level.time + FRAMETIME;
 
-		// if (!(self.flags & GFL.TEAMSLAVE)) {
-		// 	int health;
+		if (!(self.flags & GFL.TEAMSLAVE)) {
+			var health = SpawnInt('health', 0);
 
-		// 	G_SpawnInt( "health", "0", &health );
-		// 	if (health) {
-		// 		self.takeDamage = true;
-		// 	}
-		// 	if (self.targetName || health) {
-		// 		// Non touch/shoot doors.
-		// 		self.think = Think_MatchTeam;
-		// 	} else {
-		// 		self.think = Think_SpawnNewDoorTrigger;
-		// 	}
-		// }
+			if (health) {
+				self.takeDamage = true;
+			}
+
+			if (self.targetName || health) {
+				// Non touch/shoot doors.
+				self.think = Think_MatchTeam;
+			} else {
+				self.think = Think_SpawnNewDoorTrigger;
+			}
+		}
+	},
+
+	blocked: function (self, other) {
+		// Remove anything other than a client.
+		if (!other.client) {
+			// // Except CTF flags!!!!
+			// if (other.s.eType === ET.ITEM && other.item.giType === IT.TEAM ) {
+			// 	Team_DroppedFlagThink( other );
+			// 	return;
+			// }
+			TempEntity(other.s.origin, EV.ITEM_POP);
+			FreeEntity(other);
+			return;
+		}
+
+		if (self.damage) {
+			Damage(other, self, self, null, null, self.damage, 0, MOD.CRUSH);
+		}
+
+		if (ent.spawnflags & 4) {
+			return;  // crushers don't reverse
+		}
+
+		// Reverse direction.
+		UseBinaryMover(self, self, other);
 	}
 };
+
+/**
+ * Think_SpawnNewDoorTrigger
+ *
+ * All of the parts of a door have been spawned, so create
+ * a trigger that encloses all of them.
+ */
+function Think_SpawnNewDoorTrigger(ent) {
+	// Set all of the slaves as shootable.
+	for (var other = ent; other; other = other.teamchain) {
+		other.takeDamage = true;
+	}
+
+	// Find the bounds of everything on the team.
+	var mins = vec3.set(ent.absmin, [0, 0, 0]);
+	var maxs = vec3.set(ent.absmax, [0, 0, 0]);
+
+	for (var other = ent.teamchain; other; other = other.teamchain) {
+		QMath.AddPointToBounds(other.absmin, mins, maxs);
+		QMath.AddPointToBounds(other.absmax, mins, maxs);
+	}
+
+	// Find the thinnest axis, which will be the one we expand.
+	var best = 0;
+	for (var i = 1; i < 3; i++) {
+		if ( maxs[i] - mins[i] < maxs[best] - mins[best] ) {
+			best = i;
+		}
+	}
+	maxs[best] += 120;
+	mins[best] -= 120;
+
+	// Create a trigger with this size.
+	var other = SpawnEntity();
+	other.classname = 'door_trigger';
+	vec3.set(mins, other.mins);
+	vec3.set(maxs, other.maxs);
+	other.parent = ent;
+	other.contents = CONTENTS.TRIGGER;
+	other.touch = Touch_DoorTrigger;
+	// Remember the thinnest axis.
+	other.count = best;
+	sv.LinkEntity (other);
+
+	MatchTeam(ent, ent.moverState, level.time);
+};
+
+function Think_MatchTeam(self) {
+	MatchTeam(self, self.moverState, level.time);
+}
+
+function Touch_DoorTrigger(ent, other, trace) {
+	if (other.client && other.client.sess.sessionTeam === TEAM.SPECTATOR) {
+		// If the door is not open and not opening.
+		if (ent.parent.moverState !== MOVER.ONETOTWO &&
+			ent.parent.moverState !== MOVER.POS2) {
+			Touch_DoorTriggerSpectator(ent, other, trace);
+		}
+	} else if (ent.parent.moverState !== MOVER.ONETOTWO) {
+		UseBinaryMover(ent.parent, ent, other);
+	}
+}
+
+function Touch_DoorTriggerSpectator(ent, other, trace) {
+	var axis = ent.count;
+	// The constants below relate to constants in Think_SpawnNewDoorTrigger().
+	var doorMin = ent.absmin[axis] + 100;
+	var doorMax = ent.absmax[axis] - 100;
+
+	var origin = vec3.set(other.client.ps.origin, [0, 0, 0]);
+
+	if (origin[axis] < doorMin || origin[axis] > doorMax) {
+		return;
+	}
+
+	if (Math.abs(origin[axis] - doorMax) < Math.abs(origin[axis] - doorMin)) {
+		origin[axis] = doorMin - 10;
+	} else {
+		origin[axis] = doorMax + 10;
+	}
+
+	TeleportPlayer(other, origin, [10000000.0, 0, 0]);
+}

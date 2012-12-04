@@ -1,0 +1,13 @@
+#ifdef GL_ES
+	precision highp float;
+#endif
+
+attribute vec3 xyz;
+
+uniform mat4 modelViewMat;
+uniform mat4 projectionMat;
+
+void main(void) {
+	vec4 worldPosition = modelViewMat * vec4(xyz, 1.0);
+	gl_Position = projectionMat * worldPosition;
+}

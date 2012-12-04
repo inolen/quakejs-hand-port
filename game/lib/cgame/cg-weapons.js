@@ -1142,7 +1142,7 @@ function RailTrail(ci, start, end) {
 	// 		le.color[2] = ci.color2[2] * 0.75;
 	// 		le.color[3] = 1.0f;
 
-	// 		le.pos.trType = TR_LINEAR;
+	// 		le.pos.trType = TR.LINEAR;
 	// 		le.pos.trTime = cg.time;
 
 	// 		VectorCopy( move, move2);

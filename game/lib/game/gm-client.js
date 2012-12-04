@@ -256,7 +256,7 @@ function ClientSpawn(ent) {
 			client.ps.weaponState = WS.READY;
 
 			// Fire the targets of the spawn point.
-			// UseTargets(spawnPoint, ent);
+			UseTargets(spawnPoint, ent);
 
 			// Select the highest weapon number available, after any spawn given items have fired.
 			client.ps.weapon = 1;

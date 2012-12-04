@@ -242,7 +242,7 @@ function AddLocalEntities() {
 // 	if ( trace.allsolid || 
 // 		( trace.plane.normal[2] > 0 && 
 // 		( le.pos.trDelta[2] < 40 || le.pos.trDelta[2] < -cg.frametime * le.pos.trDelta[2] ) ) ) {
-// 		le.pos.trType = TR_STATIONARY;
+// 		le.pos.trType = TR.STATIONARY;
 // 	} else {
 
 // 	}
@@ -255,7 +255,7 @@ function AddLocalEntities() {
 // 	vec3_t	newOrigin;
 // 	trace_t	trace;
 
-// 	if ( le.pos.trType == TR_STATIONARY ) {
+// 	if ( le.pos.trType == TR.STATIONARY ) {
 // 		// sink into the ground if near the removal time
 // 		int		t;
 // 		float	oldZ;

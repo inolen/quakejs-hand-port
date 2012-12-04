@@ -148,11 +148,16 @@ function Frame(levelTime) {
 			continue;
 		}
 
-		if (ent.s.eType == ET.MISSILE) {
+		if (ent.s.eType === ET.MISSILE) {
 			RunMissile(ent);
 			continue;
 		}
 		
+		if (ent.s.eType === ET.MOVER) {
+			RunMover(ent);
+			continue;
+		}
+
 		if (i < MAX_CLIENTS) {
 			RunClient(ent);
 			continue;
