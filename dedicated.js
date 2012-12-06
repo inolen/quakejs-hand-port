@@ -1,5 +1,9 @@
 var requirejs = require('requirejs');
 
+var args = process.argv.slice(2);
+
+var fsRoot = args.length ? args[0] : './public';
+
 requirejs.config({
 	nodeRequire: require,
 	baseUrl: 'lib',
@@ -13,5 +17,5 @@ requirejs.config({
 });
 
 requirejs(['system/dedicated/sys'], function (sys) {
-	sys.Init();
+	sys.Init(fsRoot);
 });
