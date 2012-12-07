@@ -7,18 +7,49 @@ SRC_DIR = os.path.abspath('../lib')
 BUILD_DIR = os.path.abspath('../bin')
 BUILD_SRC_DIR = BUILD_DIR + '/tmp'
 
+MODULES = [
+	SRC_DIR + '/cgame/cg.js',
+	SRC_DIR + '/client/cl.js',
+	SRC_DIR + '/clipmap/cm.js',
+	SRC_DIR + '/common/com.js',
+	SRC_DIR + '/common/qmath.js',
+	SRC_DIR + '/common/sh.js',
+	SRC_DIR + '/game/bg.js',
+	SRC_DIR + '/game/gm.js',
+	SRC_DIR + '/renderer/re.js',
+	SRC_DIR + '/server/sv.js',
+	SRC_DIR + '/sound/snd.js',
+	SRC_DIR + '/system/browser/sys.js',
+	SRC_DIR + '/system/dedicated/sys.js',
+	SRC_DIR + '/ui/ui.js'
+]
+
+PROCESS_FILTERS = [
+	'/ui/views'
+]
+
 def src_to_build(path):
 	return path.replace(SRC_DIR, BUILD_SRC_DIR)
 
 ExpandIncludes = Builder(action = 'node includes.js --process $SOURCE > $TARGET')
 env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
 
+JSHintOpt = Builder(action = 'jshint $SOURCE')
+env['BUILDERS']['JSHintOpt'] = JSHintOpt
+
 RequireOpt = Builder(action = 'node r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=uglify')
 env['BUILDERS']['RequireOpt'] = RequireOpt
 
-# Preprocess JS
+# Preprocess all module JS, as well as any JS
+# that matches the filters.
 all_js = rglob(SRC_DIR, '*.js', True, True, True)
-processed_js = [env.ExpandIncludes(src_to_build(x), x) for x in all_js]
+preprocess_js = list(MODULES)
+for script in all_js:
+	for filter in PROCESS_FILTERS:
+		if filter in script:
+			preprocess_js.append(script)
+
+processed_js = [env.ExpandIncludes(src_to_build(x), x) for x in preprocess_js]
 env.AlwaysBuild(processed_js)
 
 # Browser
@@ -38,3 +69,9 @@ dedicated = env.RequireOpt(
 	R_SCRIPT='dedicated.build.js',
 	R_NAME='system/dedicated/sys')
 env.Alias('dedicated', dedicated)
+
+# JSHint
+processed_modules = [src_to_build(x) for x in MODULES]
+jshint = [env.JSHintOpt(x) for x in processed_modules]
+env.Alias('jshint', jshint)
+env.AlwaysBuild(jshint)
