@@ -2,6 +2,16 @@
 	"maxerr": 1000,
 	"browser": true,
 	"devel": true,
+	"shadow": true,
 	"smarttabs": true,
-	"undef": true
+	"sub": true,
+	"undef": true,
+
+	// Predefined globals whom JSHint will ignore.
+	"browser"       : true,  // Standard browser globals e.g. `window`, `document`.
+
+	// Custom globals.
+	"predef": [
+		"define"
+	]
 }
