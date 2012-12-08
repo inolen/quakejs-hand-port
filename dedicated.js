@@ -48,19 +48,5 @@ requirejs.config({
 });
 
 requirejs(['system/dedicated/sys'], function (sys) {
-	// Fake fs module that runs paths through assets lib first.
-	var fakefs = {
-		readFile: function (path, encoding, callback) {
-			path = assets.getAbsolutePath(path);
-
-			if (typeof(encoding) === 'function') {
-				callback = encoding;
-				return fs.readFile(path, callback);
-			}
-
-			return fs.readFile(path, encoding, callback);
-		}
-	};
-
-	sys.Init(fakefs, config.gamePort);
+	sys.Init(assets.vfs(), config.gamePort);
 });

@@ -27,6 +27,84 @@ function loadConfig(filename) {
 }
 
 /**
+ * Create HTTP server to serve assets.
+ */
+function createServer() {
+	// Create the HTTP server.
+	var app = express();
+	var server = http.createServer(app);
+
+	// Compress everything.
+	app.use(express.compress());
+
+	// Static files for the web page.
+	app.use(express.static(__dirname + '/public'));
+
+	// Special dynamic files.
+	// app.get('/assets/maps/maps.json', mapsRequest);
+	app.get('/assets/scripts/all.shader', allShadersRequest);
+
+	// Static asset files.
+	app.get('/assets/*', assetRequest);
+
+	// Release mode, pre-compiled binaries.
+	app.use('/bin', express.static(__dirname + '/bin'));
+
+	// Debug mode, source JS files that need to be processed.
+	app.get('/lib/*.js', moduleRequest);
+
+	// Initialize the asset map.
+	refreshAssetMap();
+
+	// Start the server.
+	server.listen(config.assetPort);
+
+	console.log('Server is now listening on port', config.assetPort);
+}
+
+function assetRequest(req, res, next) {
+	var relativePath = req.params[0];
+	var physicalPath = getAbsolutePath(relativePath);
+
+	res.sendfile(physicalPath);
+}
+
+function moduleRequest(req, res, next) {
+	var scriptname = path.normalize(__dirname + req.url);
+	var text = includes(scriptname);
+
+	res.send(text);
+}
+
+// function mapRequest(req, res, next) {
+// 	res.send({
+
+// 	});
+// }
+
+function allShadersRequest(req, res, next) {
+	var buffer = '';
+
+	var i = 0;
+	var shaders = findAbsolutePaths(/scripts\/[^\.]+\.shader/);
+
+	var readComplete = function (err, data) {
+		if (err) throw err;
+		buffer += data + '\n';
+	
+		if (i < shaders.length) {
+			// Read the next file.
+			fs.readFile(shaders[i++], readComplete);
+		} else {
+			// We've read them all.
+			res.send(buffer);
+		}
+	};
+
+	fs.readFile(shaders[i++], readComplete);
+}
+
+/**
  * Helper object to map relative file paths to their correct
  * location in the assets directory, properly honoring overrides.
  */
@@ -73,52 +151,44 @@ function refreshAssetMap() {
 		console.log('Loading', path);
 		populate_r(path, path);
 	});
-};
+}
 
 function getAbsolutePath(relativePath) {
 	// Return the original path if the lookup failed.
 	return (assetMap[relativePath] || relativePath);
-};
+}
+
+function findAbsolutePaths(filter) {
+	var paths = [];
+
+	for (var relativePath in assetMap) {
+		if (!assetMap.hasOwnProperty(relativePath)) {
+			continue;
+		}
+
+		if (relativePath.match(filter)) {
+			paths.push(assetMap[relativePath]);
+		}
+	}
+
+	return paths;
+}
 
 /**
- * Create HTTP server to serve assets.
+ * Small wrapper around fs to map paths using the asset map.
  */
-function createServer() {
-	// Initialize the asset map.
-	refreshAssetMap();
+var vfs = {
+	readFile: function (path, encoding, callback) {
+		path = assets.getAbsolutePath(path);
 
-	// Create the HTTP server.
-	var app = express();
-	var server = http.createServer(app);
+		if (typeof(encoding) === 'function') {
+			callback = encoding;
+			return fs.readFile(path, callback);
+		}
 
-	app.use(express.compress());
-
-	// Static files for the web page.
-	app.use(express.static(__dirname + '/public'));
-
-	// Pre-compiled binaries.
-	app.use('/bin', express.static(__dirname + '/bin'));
-
-	// Static asset files.
-	app.get('/assets/*', function (req, res, next) {
-		var relativePath = req.params[0];
-		var physicalPath = getAbsolutePath(relativePath);
-
-		res.sendfile(physicalPath);
-	});
-
-	// Source JS files that need to be processed (for development only).
-	app.get('/lib/*.js', function (req, res, next) {
-		var scriptname = path.normalize(__dirname + req.url);
-		var text = includes(scriptname);
-
-		res.send(text);
-	});
-
-	server.listen(config.assetPort);
-	
-	console.log('Server is now listening on port', config.assetPort);
-}
+		return fs.readFile(path, encoding, callback);
+	}
+};
 
 /**
  * If we're being execute directly, spawn server,
@@ -129,8 +199,6 @@ if (module.parent === null) {
 }
 
 module.exports = {
-	getAbsolutePath: function (path) {
-		return getAbsolutePath(path);
-	},
+	vfs: function () { return fs; },
 	createServer: createServer
 };
