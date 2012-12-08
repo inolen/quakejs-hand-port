@@ -8,5 +8,7 @@ def rglob(root, pattern, ondisk=True, source=True, strings=False):
 			results.extend(Glob(os.path.join(base, filename), ondisk, source, strings))
 	return results
 
-SConscript('./SConscript.assets', exports='rglob')
-SConscript('./SConscript.modules', exports='rglob')
+env = Environment()
+
+# SConscript('./build/SConscript.assets', exports='rglob')
+SConscript('./build/SConscript.modules', exports=['env', 'rglob'])

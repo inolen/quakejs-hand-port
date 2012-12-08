@@ -1,26 +1,37 @@
 import os, fnmatch
 
-env = Environment()
+Import('env')
 Import('rglob')
 
-ASSET_DIR = '../public/baseq3/'
+CWD = os.path.abspath('.')
+ASSET_DIR = os.path.abspath(CWD + '/../public/baseq3/')
 
+##
+# Custom builders
+##
 ConvToOGG = Builder(
 	action = 'oggenc $SOURCE -o $TARGET',
 	suffix = '.ogg',
 	src_suffix = '.wav')
-env['BUILDERS']['ConvToOGG'] = ConvToOGG
 
 ConvToDXT = Builder(
 	action = 'crunch -file $SOURCE -rescalemode nearest -fileformat dds -outsamedir',
 	suffix = '.dds')
-env['BUILDERS']['ConvToDXT'] = ConvToDXT
 
 ConvToPNG = Builder(
 	action = 'convert $SOURCE $TARGET',
 	suffix = '.png',
 	src_suffix = '.jpg')
-env['BUILDERS']['ConvToPNG'] = ConvToPNG
+
+env.Append(BUILDERS = {
+	'ConvToOGG': ConvToOGG,
+	'ConvToDXT': ConvToDXT,
+	'ConvToPNG': ConvToPNG
+})
+
+##
+# Targets
+##
 
 # Audio
 audio_dirs = ['music', 'sound']

@@ -1,12 +1,21 @@
 import os, fnmatch
 
-env = Environment()
+Import('env')
 Import('rglob')
 
-SRC_DIR = os.path.abspath('../lib')
-BUILD_DIR = os.path.abspath('../bin')
-BUILD_SRC_DIR = BUILD_DIR + '/tmp'
+CWD = os.path.abspath('.')
+SRC_DIR = os.path.abspath(CWD + '/../lib')
+BIN_DIR = os.path.abspath(CWD + '/../bin')
+BIN_TMP_DIR = BIN_DIR + '/tmp'
 
+INCLUDEJS_PATH = CWD + '/includes.js'
+REQUIREJS_PATH = CWD + '/r.js'
+JSHINT_CONFIG  = CWD + '/.jshintrc'
+
+##
+# Any module or file matches PROCESS_FILTERS
+# will be preprocessed with includes.js.
+##
 MODULES = [
 	SRC_DIR + '/cgame/cg.js',
 	SRC_DIR + '/client/cl.js',
@@ -23,55 +32,92 @@ MODULES = [
 	SRC_DIR + '/system/dedicated/sys.js',
 	SRC_DIR + '/ui/ui.js'
 ]
-
 PROCESS_FILTERS = [
 	'/ui/views'
 ]
 
 def src_to_build(path):
-	return path.replace(SRC_DIR, BUILD_SRC_DIR)
+	return path.replace(SRC_DIR, BIN_TMP_DIR)
 
-ExpandIncludes = Builder(action = 'node includes.js --process $SOURCE > $TARGET')
-env['BUILDERS']['ExpandIncludes'] = ExpandIncludes
+##
+# Custom builders
+##
+ExpandIncludes = Builder(
+	action = 'node ' + INCLUDEJS_PATH + ' --process $SOURCE > $TARGET')
 
-JSHintOpt = Builder(action = 'jshint $SOURCE')
-env['BUILDERS']['JSHintOpt'] = JSHintOpt
+RequireOptimizer = Builder(
+	action = 'node ' + REQUIREJS_PATH + ' -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=uglify')
 
-RequireOpt = Builder(action = 'node r.js -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=uglify')
-env['BUILDERS']['RequireOpt'] = RequireOpt
+JSHint = Builder(
+	action = 'jshint --config=' + JSHINT_CONFIG + ' $SOURCE')
 
-# Preprocess all module JS, as well as any JS
-# that matches the filters.
+env.Append(BUILDERS = {
+	'ExpandIncludes':   ExpandIncludes,
+	'JSHint':           JSHint,
+	'RequireOptimizer': RequireOptimizer
+})
+
+##
+# Targets
+##
+
+##
+# Preprocess all module JS, as well as any JS matching
+# the PROCESS_FILTERS
+##
 all_js = rglob(SRC_DIR, '*.js', True, True, True)
-preprocess_js = list(MODULES)
+
+dynamic_js = list(MODULES)
 for script in all_js:
 	for filter in PROCESS_FILTERS:
 		if filter in script:
-			preprocess_js.append(script)
+			dynamic_js.append(script)
 
-processed_js = [env.ExpandIncludes(src_to_build(x), x) for x in preprocess_js]
-env.AlwaysBuild(processed_js)
+static_js = list(set(all_js) - set(dynamic_js))
 
+# We want to expand includes and output to the tmp dir for dynamic JS,
+# and simply do a file copy for static JS.
+all_js_processed = [env.ExpandIncludes(src_to_build(x), x) for x in dynamic_js]
+all_js_processed.extend([Command(src_to_build(x), x, Copy("$TARGET", "$SOURCE")) for x in static_js])
+
+env.AlwaysBuild(all_js_processed)
+
+##
 # Browser
-browser = env.RequireOpt(
-	BUILD_DIR + '/q3-browser-min.js',
-	processed_js,
-	BASE_DIR=BUILD_SRC_DIR,
-	R_SCRIPT='browser.build.js',
+#
+# Aggregate all the dependent JS and run it through
+# require's optimizer.
+##
+browser = env.RequireOptimizer(
+	BIN_DIR + '/q3-browser-min.js',
+	all_js_processed,
+	BASE_DIR=BIN_TMP_DIR,
+	R_SCRIPT=CWD + '/browser.build.js',
 	R_NAME='system/browser/sys')
 env.Alias('browser', browser)
 
+##
 # Dedicated
-dedicated = env.RequireOpt(
-	BUILD_DIR + '/q3-dedicated-min.js',
-	processed_js,
-	BASE_DIR=BUILD_SRC_DIR,
-	R_SCRIPT='dedicated.build.js',
+#
+# Same as the browser, but with a different require build
+# script so that various client-specific modules get
+# stubbed out
+##
+dedicated = env.RequireOptimizer(
+	BIN_DIR + '/q3-dedicated-min.js',
+	all_js_processed,
+	BASE_DIR=BIN_TMP_DIR,
+	R_SCRIPT=CWD + '/dedicated.build.js',
 	R_NAME='system/dedicated/sys')
 env.Alias('dedicated', dedicated)
 
+##
 # JSHint
-processed_modules = [src_to_build(x) for x in MODULES]
-jshint = [env.JSHintOpt(x) for x in processed_modules]
+#
+# We don't lint the individual files of a module,
+# just the aggregate module.
+##
+modules_processed = [src_to_build(x) for x in MODULES]
+jshint = [env.JSHint(x) for x in modules_processed]
 env.Alias('jshint', jshint)
 env.AlwaysBuild(jshint)
