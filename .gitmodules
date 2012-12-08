@@ -1,0 +1,3 @@
+[submodule "assets/demoq3"]
+	path = assets/demoq3
+	url = git@github.com:inolen/quakejs-demoq3.git
