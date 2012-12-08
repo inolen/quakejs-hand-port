@@ -89,7 +89,7 @@ env.AlwaysBuild(all_js_processed)
 # require's optimizer.
 ##
 browser = env.RequireOptimizer(
-	BIN_DIR + '/q3-browser-min.js',
+	BIN_DIR + '/quakejs-browser-min.js',
 	all_js_processed,
 	BASE_DIR=BIN_TMP_DIR,
 	R_SCRIPT=CWD + '/browser.build.js',
@@ -104,7 +104,7 @@ env.Alias('browser', browser)
 # stubbed out
 ##
 dedicated = env.RequireOptimizer(
-	BIN_DIR + '/q3-dedicated-min.js',
+	BIN_DIR + '/quakejs-dedicated-min.js',
 	all_js_processed,
 	BASE_DIR=BIN_TMP_DIR,
 	R_SCRIPT=CWD + '/dedicated.build.js',
