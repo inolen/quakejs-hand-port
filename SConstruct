@@ -10,5 +10,5 @@ def rglob(root, pattern, ondisk=True, source=True, strings=False):
 
 env = Environment()
 
-# SConscript('./build/SConscript.assets', exports='rglob')
+SConscript('./build/SConscript.assets', exports=['env', 'rglob'])
 SConscript('./build/SConscript.modules', exports=['env', 'rglob'])
