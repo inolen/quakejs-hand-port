@@ -12,7 +12,7 @@ var config = {
 	port: 9000
 };
 try {
-	var data = require('content.json');
+	var data = require('./content.json');
 	_.extend(config, data);
 } catch (e) {
 }
