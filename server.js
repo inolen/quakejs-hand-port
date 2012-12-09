@@ -8,13 +8,19 @@ var config = {
 	port: 8080
 };
 
-function createAssetServer() {
-	return require('./assets').createServer();
+// Start content server to proxy to.
+var contentServer = createContentServer();
+
+// Setup small server to host example client.
+var exampleServer = createExampleServer(contentServer);
+
+function createContentServer() {
+	return require('./content').createServer();
 }
 
-function createExampleServer(assetServer) {
+function createExampleServer() {
 	var app = express();
-	var exampleServer = http.createServer(app);
+	var server = http.createServer(app);
 
 	// Serve static example client files.
 	app.use(express.static(__dirname + '/example'));
@@ -24,13 +30,15 @@ function createExampleServer(assetServer) {
 	app.get('/lib/*', proxyContentRequest);
 	app.get('/assets/*', proxyContentRequest);
 
-	exampleServer.listen(config.port);
+	server.listen(config.port);
 	console.log('Example server is now listening on port', config.port);
+
+	return server;
 }
 
 function proxyContentRequest(req, res, next) {
 	var proxyHost = 'localhost';
-	var proxyPort = assetServer.address().port;
+	var proxyPort = contentServer.address().port;
 	
 	// Delete old host header so http.request() sets the correct new one.
 	// https://github.com/joyent/node/blob/master/lib/http.js#L1194
@@ -53,9 +61,3 @@ function proxyContentRequest(req, res, next) {
 
 	req.pipe(preq);
 }
-
-// Start assets server.
-var assetServer = createAssetServer();
-
-// Setup small server to host example client.
-createExampleServer(assetServer);
