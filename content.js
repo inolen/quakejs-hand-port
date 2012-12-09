@@ -141,6 +141,8 @@ function handleAsset(req, res, next) {
 	var relativePath = req.params[0];
 	var absolutePath = getAbsolutePath(relativePath);
 
+	console.log('Serving asset', relativePath, 'from', absolutePath);
+
 	res.sendfile(absolutePath, function (err) {
 		if (err) return next(err);
 	});
