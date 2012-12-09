@@ -1,5 +1,4 @@
 var http = require('http');
-var httpProxy = require('http-proxy');
 var express = require('express');
 
 /**
