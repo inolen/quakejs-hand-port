@@ -3,4 +3,4 @@ assets.json
 dedicated.json
 /bin/tmp
 /node_modules
-/assets/baseq3/*
+/assets/*

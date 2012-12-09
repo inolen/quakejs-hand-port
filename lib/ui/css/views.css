@@ -374,6 +374,10 @@ h6 { font-size: 14px; line-height: 21px; }
 	height: 2em;
 }
 
+#hud .crosshair-name {
+	margin-top: -2.5em;
+}
+
 #hud .fps-wrapper {
 	position: absolute;
 	top: 1em;

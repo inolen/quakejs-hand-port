@@ -1,4 +1,5 @@
 <div class="crosshair centerx centery" data-image="gfx/2d/crosshaira"></div>
+<div class="crosshair-name centerx centery" style="opacity: <%- crosshairAlpha %>;"><%- crosshairName %></div>
 
 <div class="fps-wrapper">
 	<span class="fps"><%- fps %></span> FPS
