@@ -1,4 +1,6 @@
 .scon*
+.assets
+.dedicated
 /bin/tmp
 /node_modules
 /assets/baseq3/*
