@@ -27,15 +27,15 @@ Assets are compiled down to more web-friendly versions with the asset build proc
 
 The module build process has 3 targets: `jshint`, `browser` and `dedicated`.
 
-### JSHint
+#### JSHint
 
 The jshint process can be a bit confusing. Unfortunately, there isn't a clear way to lint each individual script, so we instead pre-process all the modules and lint the aggregated script in `/bin/tmp`.
 
-### Browser
+#### Browser
 
 The browser binaries aren't currently used as the default index.html loads the individual dynamically aggregated JS modules.
 
-### Dedicated
+#### Dedicated
 
 The dedicated binaries must be built each time you make a change you'd like to be reflected.
 
