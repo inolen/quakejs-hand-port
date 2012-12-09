@@ -1,7 +1,6 @@
 var http = require('http');
 var httpProxy = require('http-proxy');
 var express = require('express');
-var includes = require('./build/includes.js');
 
 /**
  * Load config
@@ -21,34 +20,30 @@ function createExampleServer(assetServer) {
 	// Serve static example client files.
 	app.use(express.static(__dirname + '/example'));
 
-	// Pre-compiled binaries.
-	app.use('/bin', express.static(__dirname + '/bin'));
-
-	// Modules need to be pre-processed.
-	app.get('/lib/*.js', function (req, res, next) {
-		var scriptname = __dirname + req.url;
-		var text = includes(scriptname);
-
-		res.send(text);
-	});
-
-	// Proxy asset requests.
-	var proxy = new httpProxy.RoutingProxy();
-	var proxyOptions = {
-		host: 'localhost',
-		port: assetServer.address().port
-	};
-
-	proxy.on('proxyError', function (err, req, res) {
-		console.error(err);
-	});
-
-	app.get('/assets/*', function (req, res, next) {
-		proxy.proxyRequest(req, res, proxyOptions);
-	});
+	// Proxy content requests.
+	app.get('/bin/*', proxyContentRequest);
+	app.get('/lib/*', proxyContentRequest);
+	app.get('/assets/*', proxyContentRequest);
 
 	exampleServer.listen(config.port);
 	console.log('Example server is now listening on port', config.port);
+}
+
+function proxyContentRequest(req, res, next) {
+	var proxyHost = 'localhost';
+	var proxyPort = assetServer.address().port;
+
+	var preq = http.request({
+		host: proxyHost,
+		port: proxyPort,
+		path: req.url,
+		method: req.method,
+		headers: req.headers
+	}, function (pres) {
+		res.writeHead(pres.statusCode, pres.headers);
+		pres.pipe(res);
+	});
+	req.pipe(preq);
 }
 
 // Start assets server.

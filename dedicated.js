@@ -7,7 +7,7 @@ var requirejs = require('requirejs');
  */
 var config = {
 	port: 9001,
-	assets: {
+	content: {
 		host: 'localhost',
 		port: 9000
 	}
@@ -36,9 +36,12 @@ requirejs.config({
 requirejs(['system/dedicated/sys'], function (sys) {
 	var assetsUrl = url.format({
 		protocol: 'http',
-		hostname: config.assets.host,
-		port: config.assets.port
+		hostname: config.content.host,
+		port: config.content.port,
+		pathname: '/assets'
 	});
+
+	console.log('foobar', assetsUrl);
 
 	sys.Init(assetsUrl, config.port);
 });

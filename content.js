@@ -3,16 +3,16 @@ var fs = require('fs');
 var http = require('http');
 var path = require('path');
 var express = require('express');
+var includes = require('./build/includes.js');
 
 /**
  * Load config
  */
 var config = {
-	port: 9000,
-	root: 'assets'
+	port: 9000
 };
 try {
-	var data = require('assets.json');
+	var data = require('content.json');
 	_.extend(config, data);
 } catch (e) {
 }
@@ -24,7 +24,7 @@ try {
 var assetMap = {};
 
 function refreshAssetMap() {
-	var assetRoot = __dirname + '/' + config.root;
+	var assetRoot = __dirname + '/assets';
 
 	// Find all the subdirectories of roots.
 	var subdirs = [];
@@ -89,44 +89,61 @@ function findAbsolutePaths(filter) {
 }
 
 /**
- * Create HTTP server to serve assets.
+ * Create HTTP server to serve content.
  */
 function createServer() {
 	var app = express();
 
 	var server = http.createServer(app);
 
-	// Compress everything.
 	app.use(express.compress());
 
-	// Special dynamic assets.
-	// app.get('/maps/maps.json', mapsRequest);
-	app.get('/assets/scripts/all.shader', function (req, res, next) {
-		getAllShaders(function (err, shaders) {
-			if (err) return next(err);
-			res.send(shaders);
-		});
-	});
-
-	// Static asset files.
-	app.get('/assets/*', function (req, res, next) {
-		var relativePath = req.params[0];
-		var absolutePath = getAbsolutePath(relativePath);
-
-		res.sendfile(absolutePath, function (err) {
-			if (err) return next();
-		});
-	});
+	app.get('/bin/*.js', handleBinary);
+	app.get('/lib/*.js', handleLibrary);
+	app.get('/assets/scripts/all.shader', handleAllShader);
+	app.get('/assets/*', handleAsset);
 
 	// Initialize the asset map.
 	refreshAssetMap();
 
-	// Start the server.
 	server.listen(config.port);
-
 	console.log('Asset server is now listening on port', config.port);
 
 	return server;
+}
+
+function handleBinary(req, res, next) {
+	var absolutePath = __dirname + req.url;
+	
+	res.sendfile(absolutePath, function (err) {
+		if (err) return next(err);
+	});
+}
+
+function handleLibrary(req, res, next) {
+	var scriptname = __dirname + req.url;
+
+	fs.stat(scriptname, function (err, stat) {
+		if (err) return next(err);
+		var text = includes(scriptname);
+		res.send(text);
+	});
+}
+
+function handleAllShader(req, res, next) {
+	getAllShaders(function (err, shaders) {
+		if (err) return next(err);
+		res.send(shaders);
+	});
+}
+
+function handleAsset(req, res, next) {
+	var relativePath = req.params[0];
+	var absolutePath = getAbsolutePath(relativePath);
+
+	res.sendfile(absolutePath, function (err) {
+		if (err) return next(err);
+	});
 }
 
 function getAllShaders(callback) {
