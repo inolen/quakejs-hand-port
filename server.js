@@ -31,6 +31,10 @@ function createExampleServer(assetServer) {
 function proxyContentRequest(req, res, next) {
 	var proxyHost = 'localhost';
 	var proxyPort = assetServer.address().port;
+	
+	// Delete old host header so http.request() sets the correct new one.
+	// https://github.com/joyent/node/blob/master/lib/http.js#L1194
+	delete req.headers['host'];
 
 	var preq = http.request({
 		host: proxyHost,
@@ -42,6 +46,11 @@ function proxyContentRequest(req, res, next) {
 		res.writeHead(pres.statusCode, pres.headers);
 		pres.pipe(res);
 	});
+
+	preq.on('error', function (err) {
+		return next(err);
+	});
+
 	req.pipe(preq);
 }
 
