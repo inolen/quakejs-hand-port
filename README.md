@@ -5,9 +5,11 @@ NOTE: This project depends on the quakejs-demoq3 project for assets, so please c
 
 ## Quickstart
 
-`node assets.js`
+`git clone --recursive https://github.com/inolen/quakejs.git`
 
-Open your browser and hit `http://localhost:9000`.
+`node server.js`
+
+Open your browser and hit `http://localhost:8080`.
 
 Et voila!
 
