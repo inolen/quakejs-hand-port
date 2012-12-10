@@ -15,22 +15,8 @@
 	font-style: normal;
 }
 
-h1, h2, h3, h4, h5, h6 {
-	margin: 0; padding: 0;
-	color: #E8E8E8;
-	font-family: "Georgia", "Times New Roman", serif;
-	font-weight: normal;
-}
-h1 { font-size: 46px; line-height: 50px; margin-bottom: 14px;}
-h2 { font-size: 35px; line-height: 40px; margin-bottom: 10px; }
-h3 { font-size: 28px; line-height: 34px; margin-bottom: 8px; }
-h4 { font-size: 21px; line-height: 30px; margin-bottom: 4px; }
-h5 { font-size: 17px; line-height: 24px; }
-h6 { font-size: 14px; line-height: 21px; }
-.subheader { color: #999; }
-
 #viewport-ui {
-	font-family: "HelveticaNeue", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: 'SourceCodeProSemibold', sans-serif;
 	/**
 	 * Don't let people accidently highlight text.
 	 */
@@ -68,30 +54,34 @@ h6 { font-size: 14px; line-height: 21px; }
 	height: 100%;
 }
 
+a {
+	color: #fff;
+	text-decoration: none;
+}
+
 /**
  * Vertical menu
  */
-.vertical-menu-left {
-	padding: 3em;
-	width: 30em;
-	height: 100%;
-	background: rgba(0, 0, 0, 0.5);
+.vertical-menu {
 }
 
-.vertical-menu-left h1 {
+.vertical-menu h1 {
 	margin: 0 0 0.4em 0.1em;
 	font-size: 2.4em;
 	font-family: 'GibsonBold', sans-serif;
 	text-transform: uppercase;
 }
 
-.vertical-menu-wrapper {
-	position: relative;
-}
-
 .vertical-menu-content {
+	padding: 2em;
 	left: 0;
 	right: 0;
+}
+
+.vertical-menu-content ul {  /* sometimes menu items are in lists */
+	margin: 0;
+	padding: 0;
+	list-style: none;
 }
 
 .vertical-menu-item {
@@ -101,9 +91,33 @@ h6 { font-size: 14px; line-height: 21px; }
 	text-transform: uppercase;
 }
 
-.vertical-menu-item.hover {
+.vertical-menu-item.hover,
+.vertical-menu-item.active {  /* nav tab item */
 	background: #fff;
 	color: #000;
+}
+
+.vertical-menu-item.hover a,
+.vertical-menu-item.active a {  /* nav tab item */
+	color: #000;
+}
+
+.vertical-menu-left {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 26em;
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.vertical-menu-right {
+	position: absolute;
+	top: 0;
+	left: 26em;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.6);
 }
 
 /**
@@ -152,11 +166,14 @@ h6 { font-size: 14px; line-height: 21px; }
 	background: #333;
 }
 
-.dialog .control-group {
+/**
+ * Controls
+ */
+.control-group {
 	margin-bottom: .5em;
 }
 
-.dialog .control-label {
+.control-label {
 	float: left;
 	padding: .5em 0;
 	width: 10em;
@@ -164,34 +181,37 @@ h6 { font-size: 14px; line-height: 21px; }
 	text-align: right
 }
 
-.dialog .control-input {
+.control-input {
 	margin-left: 11em;
 	/* Empty fields */
 	min-height: 1em;
 }
 
-.dialog .control-input.input-text,
-.dialog .control-input.input-key {
+.control-input.input-text,
+.control-input.input-key {
 	padding: .5em;
-	background: #222;
+	background: rgba(34, 34, 34, 0.8);
 	border: 1px solid transparent;
 }
 
-.dialog .control-input.input-text.hover,
-.dialog .control-input.input-key.hover {
-	background: #333;
+.control-input.input-text.hover,
+.control-input.input-key.hover {
+	background: rgba(51, 51, 51, 0.8);
 }
 
-.dialog .control-input.input-text.focus,
-.dialog .control-input.input-key.focus {
-	border: 1px solid #0f0;
+.control-input.input-text.focus,
+.control-input.input-key.focus {
+	border-color: rgba(166, 226, 46, 0.8);
+	-webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(166, 226, 46, 0.6);
+	-moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(166, 226, 46, 0.6);
+	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(166, 226, 46, 0.6)
 }
 
-.dialog .form-horizontal .form-actions {
+.form-horizontal .form-actions {
 	margin-left: 11em;
 }
 
-.dialog .button {
+.button {
 	display: inline-block;
 	padding: .5em;
 	background-color: #222;
@@ -201,7 +221,7 @@ h6 { font-size: 14px; line-height: 21px; }
 	background-image: linear-gradient(to bottom, #303030, #222);
 }
 
-.dialog .button.hover {
+.button.hover {
 	background: #333;
 }
 
@@ -273,9 +293,9 @@ h6 { font-size: 14px; line-height: 21px; }
 /**
  * Main menu
  */
-#main .vertical-menu-content {
+/*#main .vertical-menu-content {
 	margin-top: -5em;
-}
+}*/
 
 /**
  * Singleplayer menu
