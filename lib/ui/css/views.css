@@ -17,6 +17,7 @@
 
 #viewport-ui {
 	font-family: 'SourceCodeProSemibold', sans-serif;
+	color: #fff;
 	/**
 	 * Don't let people accidently highlight text.
 	 */
