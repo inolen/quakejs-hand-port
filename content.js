@@ -2,6 +2,7 @@ var _ = require('underscore');
 var fs = require('fs');
 var http = require('http');
 var path = require('path');
+var url = require('url');
 var express = require('express');
 var includes = require('./build/includes.js');
 
@@ -9,7 +10,8 @@ var includes = require('./build/includes.js');
  * Load config
  */
 var config = {
-	port: 9000
+	port: 9000,
+	maxAge: 0
 };
 try {
 	var data = require('./content.json');
@@ -103,6 +105,7 @@ function createServer() {
 	app.get('/assets/scripts/all.shader', handleAllShader);
 	app.get('/assets/*', handleAsset);
 
+
 	// Initialize the asset map.
 	refreshAssetMap();
 
@@ -113,19 +116,26 @@ function createServer() {
 }
 
 function handleBinary(req, res, next) {
-	var absolutePath = __dirname + req.url;
+	// Lookup file without the cachebuster.
+	var parsed = url.parse(req.url);
+	var absolutePath = __dirname + parsed.pathname;
 	
+	res.setHeader('Cache-Control', 'public, max-age=' + config.maxAge + ', must-revalidate');
 	res.sendfile(absolutePath, function (err) {
 		if (err) return next(err);
 	});
 }
 
 function handleLibrary(req, res, next) {
-	var scriptname = __dirname + req.url;
+	// Lookup file without the cachebuster.
+	var parsed = url.parse(req.url);
+	var absolutePath = __dirname + parsed.pathname;
 
-	fs.stat(scriptname, function (err, stat) {
+	fs.stat(absolutePath, function (err, stat) {
 		if (err) return next(err);
-		var text = includes(scriptname);
+		var text = includes(absolutePath);
+
+	res.setHeader('Cache-Control', 'public, max-age=' + config.maxAge + ', must-revalidate');
 		res.send(text);
 	});
 }
@@ -133,6 +143,8 @@ function handleLibrary(req, res, next) {
 function handleAllShader(req, res, next) {
 	getAllShaders(function (err, shaders) {
 		if (err) return next(err);
+
+	res.setHeader('Cache-Control', 'public, max-age=' + config.maxAge + ', must-revalidate');
 		res.send(shaders);
 	});
 }
@@ -143,6 +155,7 @@ function handleAsset(req, res, next) {
 
 	console.log('Serving asset', relativePath, 'from', absolutePath);
 
+	res.setHeader('Cache-Control', 'public, max-age=' + config.maxAge + ', must-revalidate');
 	res.sendfile(absolutePath, function (err) {
 		if (err) return next(err);
 	});
