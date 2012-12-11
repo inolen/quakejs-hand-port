@@ -6,7 +6,8 @@ var requirejs = require('requirejs');
  * Load config
  */
 var config = {
-	port: 9001,
+	gamePort: 9001,
+	rconPort: 9002,
 	content: {
 		host: 'localhost',
 		port: 9000
@@ -41,7 +42,5 @@ requirejs(['system/dedicated/sys'], function (sys) {
 		pathname: '/assets'
 	});
 
-	console.log('foobar', assetsUrl);
-
-	sys.Init(assetsUrl, config.port);
+	sys.Init(assetsUrl, config.gamePort, config.rconPort);
 });
