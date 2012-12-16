@@ -1,4 +1,5 @@
 .scon*
+.DS_Store
 assets.json
 dedicated.json
 /bin/tmp
