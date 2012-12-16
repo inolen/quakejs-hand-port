@@ -1,46 +1,51 @@
 var _ = require('underscore');
 var url = require('url');
-var requirejs = require('requirejs');
+var requirejs = require('./build/r.js');
 
-/**
- * Load config
- */
-var config = {
-	gamePort: 9001,
-	rconPort: 9002,
-	content: {
-		host: 'localhost',
-		port: 9000
-	}
-};
-try {
-	var data = require('./dedicated.json');
-	_.extend(config, data);
-} catch (e) {
+function main() {
+	var cfg = loadConfig();
+	launchServer(cfg);
 }
 
-/** 
- * Create game server.
- */
-requirejs.config({
-	nodeRequire: require,
-	baseUrl: 'lib',
-	paths: {
-		// 'underscore':           'vendor/underscore',
-		// 'glmatrix':             'vendor/gl-matrix',
-		// 'ByteBuffer':           'vendor/byte-buffer',
-		// 'client/cl':            'stub',
-		'system/dedicated/sys': '../bin/quakejs-dedicated-min'
+function loadConfig() {
+	var config = {
+		gamePort: 9001,
+		rconPort: 9002,
+		content: {
+			host: 'localhost',
+			port: 9000
+		}
+	};
+	try {
+		var data = require('./dedicated.json');
+		_.extend(config, data);
+	} catch (e) {
 	}
-});
 
-requirejs(['system/dedicated/sys'], function (sys) {
-	var assetsUrl = url.format({
+	return config;
+}
+
+function launchServer(cfg) {
+	// Format the content server URL.
+	var contentUrl = url.format({
 		protocol: 'http',
-		hostname: config.content.host,
-		port: config.content.port,
-		pathname: '/assets'
+		hostname: cfg.content.host,
+		port: cfg.content.port
 	});
 
-	sys.Init(assetsUrl, config.gamePort, config.rconPort);
-});
+	requirejs.config({
+		nodeRequire: require,
+		Release config.
+		baseUrl: 'lib',
+		paths: {
+			'system/dedicated/sys': '../bin/quakejs-dedicated-min'
+		}
+	});
+
+	requirejs(['system/dedicated/sys'], function (sys) {
+		var assetsUrl = contentUrl + '/assets';
+		sys.Init(assetsUrl, cfg.gamePort, cfg.rconPort);
+	});
+}
+
+main();

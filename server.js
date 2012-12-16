@@ -1,52 +1,57 @@
 var http = require('http');
 var express = require('express');
 
-/**
- * Load config
- */
-var config = {
-	port: 8080
-};
+function main() {
+	var cfg = loadConfig();
 
-// Start content server to proxy to.
-var contentServer = createContentServer();
-
-// Setup small server to host example client.
-var exampleServer = createExampleServer(contentServer);
-
-function createContentServer() {
-	return require('./content').createServer();
+	createContentServer(cfg.content.port, 0);
+	createExampleServer(cfg.port, cfg.content.host, cfg.content.port);
 }
 
-function createExampleServer() {
+function loadConfig() {
+	var config = {
+		port: 8080,
+		content: {
+			host: 'localhost',
+			port: 9000
+		}
+	};
+
+	return config;
+}
+
+function createContentServer(port) {
+	return require('./content').createServer(port);
+}
+
+function createExampleServer(port, proxyHost, proxyPort) {
 	var app = express();
-	var server = http.createServer(app);
 
-	// Serve static example client files.
 	app.use(express.static(__dirname + '/example'));
-
-	// Proxy content requests.
+	app.use(function (req, res, next) {
+		res.locals.proxyHost = proxyHost;
+		res.locals.proxyPort = proxyPort;
+		next();
+	});
 	app.get('/bin/*', proxyContentRequest);
 	app.get('/lib/*', proxyContentRequest);
 	app.get('/assets/*', proxyContentRequest);
 
-	server.listen(config.port);
-	console.log('Example server is now listening on port', config.port);
+	var server = http.createServer(app);
+	server.listen(port);
+	console.log('Example server is now listening on port', port);
 
 	return server;
 }
 
 function proxyContentRequest(req, res, next) {
-	var proxyHost = 'localhost';
-	var proxyPort = contentServer.address().port;
-	
 	// Delete old host header so http.request() sets the correct new one.
 	// https://github.com/joyent/node/blob/master/lib/http.js#L1194
 	delete req.headers['host'];
 
 	var preq = http.request({
-		host: proxyHost,
-		port: proxyPort,
+		host: res.locals.proxyHost,
+		port: res.locals.proxyPort,
 		path: req.url,
 		method: req.method,
 		headers: req.headers
@@ -61,3 +66,5 @@ function proxyContentRequest(req, res, next) {
 
 	req.pipe(preq);
 }
+
+main();
