@@ -493,4 +493,9 @@ a {
 
 #scoreboard table {
 	width: 100%;
+	color: #fff;
+}
+
+#scoreboard table th {
+	text-align: left;
 }
