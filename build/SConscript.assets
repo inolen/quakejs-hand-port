@@ -4,7 +4,7 @@ Import('env')
 Import('rglob')
 
 CWD = os.path.abspath('.')
-ASSET_DIR = os.path.abspath(CWD + '/../assets/baseq3/')
+ASSET_DIR = os.path.abspath(CWD + '/../assets/quakejs/')
 
 ##
 # Custom builders
