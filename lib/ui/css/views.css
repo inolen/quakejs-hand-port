@@ -450,14 +450,16 @@ a {
 }
 
 #hud .armor-wrapper,
-#hud .health-wrapper {
+#hud .health-wrapper,
+#hud .kills-wrapper,
+#hud .team-wrapper {
+	clear: both;
 	width: 40em;
 }
 
 #hud .text.armor,
 #hud .text.health {
 	float: left;
-	clear: both;
 	width: 3em;
 	margin-right: 0.5em;
 	text-align: right;

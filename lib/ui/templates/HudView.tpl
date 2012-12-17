@@ -36,3 +36,27 @@
 	<span class="text health"><%- health %></span>
 	<div class="bar health" style="width: <%- (health / 10) %>em; <% if (health == 0) { %>display: none;<% } %>"></div>
 </div>
+
+<div class="kills-wrapper">
+	Kills: <span class="kills"><%- kills %></span>
+</div>
+
+<div class="team-wrapper">
+	Team:
+	<span class="team">
+		<% switch (team) {
+		case 1:
+			print('RED');
+			break;
+		case 2:
+			print('BLUE');
+			break;
+		case 3:
+			print('SPECTATOR');
+			break;
+		default:
+			print('FREE');
+			break;
+		} %>
+	</span>
+</div>
