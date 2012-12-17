@@ -35,7 +35,6 @@ function launchServer(cfg) {
 
 	requirejs.config({
 		nodeRequire: require,
-		Release config.
 		baseUrl: 'lib',
 		paths: {
 			'system/dedicated/sys': '../bin/quakejs-dedicated-min'
