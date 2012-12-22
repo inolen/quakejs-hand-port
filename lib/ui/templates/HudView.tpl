@@ -1,6 +1,21 @@
 <div class="crosshair centerx centery" data-image="gfx/2d/crosshaira"></div>
 <div class="crosshair-name centerx centery" style="opacity: <%- crosshairAlpha %>;"><%- crosshairName %></div>
 
+<div class="gamestate-wrapper">
+	<div class="gametype-info">
+	</div>
+	<div class="scores">
+		<div class="score score1<% if (score1 && score1.localplayer) { %> localplayer<% } %>">
+			<span class="name"><% if (score1 !== null) { %><%- score1.rank %>. <%- score1.name %><% } %></span>
+			<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
+		</div>
+		<div class="score score2<% if (score2 && score2.localplayer) { %> localplayer<% } %>">
+			<span class="name"><% if (score2 !== null) { %><%- score2.rank %>. <%- score2.name %><% } %></span>
+			<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
+		</div>
+	</div>
+</div>
+
 <div class="fps-wrapper">
 	<span class="fps"><%- fps %></span> FPS
 </div>
@@ -27,36 +42,14 @@
 	</ul>
 </div>
 
-<div class="armor-wrapper">
-	<span class="armor-text"><%- armor %></span>
-</div>
-
 <div class="health-wrapper">
 	<span class="health-text"><%- health %></span>
+	<span class="health-icon" data-image="icons/iconh_green.png"></span>
 </div>
 
-<div class="kills-wrapper">
-	Kills: <span class="kills"><%- kills %></span>
-</div>
-
-<div class="team-wrapper">
-	Team:
-	<span class="team">
-		<% switch (team) {
-		case 1:
-			print('RED');
-			break;
-		case 2:
-			print('BLUE');
-			break;
-		case 3:
-			print('SPECTATOR');
-			break;
-		default:
-			print('FREE');
-			break;
-		} %>
-	</span>
+<div class="armor-wrapper">
+	<span class="armor-icon" data-image="icons/iconr_yellow.png"></span>
+	<span class="armor-text"><%- armor %></span>
 </div>
 
 <div class="lagometer-wrapper"<% if (!lagometerVisible) { %> style="display: none;"<% } %>>

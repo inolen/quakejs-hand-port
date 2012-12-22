@@ -390,6 +390,26 @@ a {
 	font-family: 'SourceCodeProSemibold', sans-serif;
 }
 
+#hud .gamestate-wrapper {
+	position: absolute;
+	top: 1em;
+	left: 1em;
+}
+
+#hud .scores {
+	padding: .2em;
+	background: rgba(0, 0, 0, 0.7);
+}
+
+#hud .score {
+	padding: .1em .3em;
+}
+
+#hud .scores .localplayer {
+	background: rgba(255, 255, 0, 0.4);
+	border: 1px solid background: rgba(255, 255, 0, 0.8);
+}
+
 #hud .crosshair {
 	width: 2em;
 	height: 2em;
@@ -449,36 +469,37 @@ a {
 	text-align: right;
 }
 
-#hud .armor-wrapper,
-#hud .health-wrapper,
 #hud .kills-wrapper,
 #hud .team-wrapper {
 	clear: both;
 	width: 40em;
 }
 
-#hud .text.armor,
-#hud .text.health {
-	float: left;
-	width: 3em;
-	margin-right: 0.5em;
-	text-align: right;
+#hud .health-wrapper {
+	position: absolute;
+	right: 50%;
+	bottom: 0;
+	margin-right: 2em;
 }
 
-#hud .bar.armor,
-#hud .bar.health {
-	float: left;
-	width: 0;
-	height: 0.875em;
-	border: 1px solid #A6E22E;
-	color: #FFF;
-/*	text-shadow: 1px 1px 1px #333;*/
-	text-align: right;
-	line-height: 1.375em;
-	overflow: hidden;
+#hud .armor-wrapper {
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	margin-left: 2em;
 }
-#hud .bar.armor { }
-#hud .bar.health { }
+
+#hud .health-icon,
+#hud .armor-icon {
+	display: inline-block;
+	width: 2em;
+	height: 2em;
+}
+
+#hud .health-text,
+#hud .armor-text {
+	font-size: 4em;
+}
 
 #hud .lagometer-wrapper {
 	position: absolute;
