@@ -407,7 +407,7 @@ a {
 
 #hud .weapons {
 	position: absolute;
-	bottom: 1em;
+	top: 10em;
 	left: 1em;
 	margin: 0;
 	padding: 0;
@@ -479,6 +479,34 @@ a {
 }
 #hud .bar.armor { }
 #hud .bar.health { }
+
+#hud .lagometer-wrapper {
+	position: absolute;
+	bottom: 1em;
+	left: 1em;
+	height: 10em;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.7);
+}
+
+#hud .lagometer-wrapper .frame-wrapper {
+	position: relative;
+	float: left;
+	width: 0.15625em;
+	height: 10em;
+}
+
+#hud .lagometer-wrapper .lag-frame,
+#hud .lagometer-wrapper .snapshot-frame {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	background: #ff0000;
+}
+
+#hud .lagometer-wrapper .snapshot-frame {
+	background: #00ff00;
+}
 
 /**
  * Scoreboard view

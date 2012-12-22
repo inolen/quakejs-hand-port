@@ -19,7 +19,7 @@
 	<ul class="weapons">
 		<% for (var i = 0; i < weapons.length; i++) { %>
 			<% if (!weapons[i]) continue; %>
-			<li<% if (i === weaponSelect) { %> class="selected"<% } %>>
+			<li data-index="<%- i %>" class="weapon<% if (i === weaponSelect) { %> selected<% } %>">
 				<span class="icon" data-himage="<%= weapons[i].weaponIcon %>"></span>
 				<span class="ammo"><%- ammo[i] %></span>
 			</li>
@@ -28,13 +28,11 @@
 </div>
 
 <div class="armor-wrapper">
-	<span class="text armor"><%- armor %></span>
-	<div class="bar armor" style="width: <%- (armor / 10) %>em; <% if (armor == 0) { %>display: none;<% } %>"></div>
+	<span class="armor-text"><%- armor %></span>
 </div>
 
 <div class="health-wrapper">
-	<span class="text health"><%- health %></span>
-	<div class="bar health" style="width: <%- (health / 10) %>em; <% if (health == 0) { %>display: none;<% } %>"></div>
+	<span class="health-text"><%- health %></span>
 </div>
 
 <div class="kills-wrapper">
@@ -59,4 +57,13 @@
 			break;
 		} %>
 	</span>
+</div>
+
+<div class="lagometer-wrapper"<% if (!lagometerVisible) { %> style="display: none;"<% } %>>
+	<% for (var i = 0; i < frames.samples.length; i++) { %>
+		<div class="frame-wrapper">
+			<div data-index="<%- i %>" class="lag-frame">&nbsp</div>
+			<div data-index="<%- i %>" class="snapshot-frame">&nbsp</div>
+		</div>
+	<% } %>
 </div>
