@@ -1,3 +1,6 @@
 <div class="background fullscreen">
-	<span class="loading"><%- loading %></span>
+	<div class="loading">Loading...</div>
+	<div class="progress-bar">
+		<div class="progress">&nbsp;</div>
+	</div>
 </div>

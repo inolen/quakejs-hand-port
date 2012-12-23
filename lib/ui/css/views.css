@@ -370,16 +370,28 @@ a {
 }
 
 #connect .background .loading {
-	/* TODO change pixel values to relative values */
 	display: block;
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	width: 40%;
-	height: 400px;
-	margin: -200px 0 0 -20%;
+	width: 30em;
+	margin: 0 0 0 -15em;
 	text-align: center;
-	line-height: 400px;
+}
+
+#connect .progress-bar {
+	display: block;
+	position: absolute;
+	top: 55%;
+	left: 50%;
+	width: 30em;
+	margin: 0 0 0 -15em;
+	border: 1px solid #00ff00;
+}
+
+#connect .progress-bar .progress {
+	width: 0;
+	background: #0000ff;
 }
 
 /**

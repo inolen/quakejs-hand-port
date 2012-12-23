@@ -35,7 +35,7 @@
 		<% for (var i = 0; i < weapons.length; i++) { %>
 			<% if (!weapons[i]) continue; %>
 			<li data-index="<%- i %>" class="weapon<% if (i === weaponSelect) { %> selected<% } %>">
-				<span class="icon" data-himage="<%= weapons[i].weaponIcon %>"></span>
+				<span class="icon" data-himage="<%= weapons[i].icon %>"></span>
 				<span class="ammo"><%- ammo[i] %></span>
 			</li>
 		<% } %>
