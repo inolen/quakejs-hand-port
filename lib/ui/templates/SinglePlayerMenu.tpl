@@ -4,7 +4,7 @@
 		<div class="level-select-wrapper">
 			<div class="preview">
 			<% _.each(levels, function (level, i) { %>
-				<div class="preview-image" data-himage="<%- level.himage %>" <% if (i === 0) { %>style="display: block;"<% } %>></div>
+				<div class="preview-image" data-image="<%- level.imagePath %>" <% if (i === 0) { %>style="display: block;"<% } %>></div>
 			<% }); %>
 			</div>
 			<ul class="levels">
