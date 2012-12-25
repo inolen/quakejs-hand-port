@@ -168,6 +168,45 @@ a {
 }
 
 /**
+ * Buttons
+ */
+.button {
+	display: inline-block;
+	padding: .5em;
+	background-color: #222;
+	background-image: -moz-linear-gradient(top, #333, #222);
+	background-image: -webkit-linear-gradient(top, #333, #222);
+}
+
+.button.hover {
+	background: #333;
+}
+
+/**
+ * Progress bar
+ */
+.progress {
+	display: block;
+	position: absolute;
+	top: 55%;
+	left: 50%;
+	width: 30em;
+	margin: 0 0 0 -15em;
+	background: -moz-linear-gradient(top, #222, #303030);
+	background: -webkit-linear-gradient(top, #222, #303030);
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, .1);
+	border-radius: 2px;
+}
+
+.progress .bar {
+	width: 0;
+	background: -moz-linear-gradient(top, #8cc84b, #448800);
+	background: -webkit-linear-gradient(top, #8cc84b, #448800);
+	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+	transition: width .6s ease;
+}
+
+/**
  * Controls
  */
 .control-group {
@@ -210,20 +249,6 @@ a {
 
 .form-horizontal .form-actions {
 	margin-left: 11em;
-}
-
-.button {
-	display: inline-block;
-	padding: .5em;
-	background-color: #222;
-	background-image: -moz-linear-gradient(top, #333, #222);
-	background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#333), to(#222));
-	background-image: -webkit-linear-gradient(top, #333, #222);
-	background-image: linear-gradient(to bottom, #303030, #222);
-}
-
-.button.hover {
-	background: #333;
 }
 
 /**
@@ -377,21 +402,6 @@ a {
 	width: 30em;
 	margin: 0 0 0 -15em;
 	text-align: center;
-}
-
-#connect .progress-bar {
-	display: block;
-	position: absolute;
-	top: 55%;
-	left: 50%;
-	width: 30em;
-	margin: 0 0 0 -15em;
-	border: 1px solid #00ff00;
-}
-
-#connect .progress-bar .progress {
-	width: 0;
-	background: #0000ff;
 }
 
 /**
