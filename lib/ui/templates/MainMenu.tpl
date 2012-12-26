@@ -1,4 +1,4 @@
-<div class="fullscreen" data-image="ui/main_menu_bg.jpg">
+<div class="fullscreen"<% if (!ingame) { %> data-image="ui/main_menu_bg.jpg"<% } %>>
 	<div class="vertical-menu vertical-menu-left">
 		<div class="vertical-menu-content">
 			<div class="logo" data-image="ui/logo.png"></div>

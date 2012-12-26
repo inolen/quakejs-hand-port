@@ -118,7 +118,7 @@
 	left: 0;
 	bottom: 0;
 	width: 26em;
-	background: rgba(0, 0, 0, 0.5);
+	background: rgba(0, 0, 0, 0.6);
 }
 
 /**
@@ -129,7 +129,7 @@
 	width: 80%;
 	margin: 8em auto 0;
 	padding: 3em 1.6em 1.2em;
-	background: rgba(0, 0, 0, 0.5);
+	background: rgba(0, 0, 0, 0.6);
 	color: #fff;
 }
 
@@ -417,33 +417,18 @@
 }
 
 /**
- * Ingame menu
+ * Loading view
  */
-#ingame .background {
-	background: rgba(0, 0, 0, 0.3);
-}
-
-#ingame .menu-item {
-	text-align: center;
-}
-
-#ingame .exit-game.menu-item {
-	margin-bottom: 0;
-}
-
-/**
- * Connect view
- */
-#connect .background {
+#loading .background {
 	background: #222;
 }
 
-#connect .loading {
+#loading .loading {
 	display: block;
 	text-align: center;
 }
 
-#connect .loading .progress {
+#loading .loading .progress {
 	width: 30em;
 	margin: 0 auto;
 }
