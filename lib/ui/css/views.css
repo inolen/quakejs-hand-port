@@ -414,13 +414,16 @@ a {
 
 #hud .gamestate-wrapper {
 	position: absolute;
-	top: 1em;
-	left: 1em;
+	top: 0;
+	left: 0;
 }
 
 #hud .scores {
-	padding: .2em;
-	background: rgba(0, 0, 0, 0.7);
+	padding: .7em;
+	background: -moz-linear-gradient(top, rgba(48, 48, 48, .8), rgba(16, 16, 16, .8));
+	background: -webkit-linear-gradient(top, rgba(48, 48, 48,  .8), rgba(16, 16, 16, .8));
+	box-shadow: 1px 1px 5px rgba(0, 0, 0, .5);
+	border-radius: 0 0 .2em 0;
 }
 
 #hud .score {
@@ -429,7 +432,8 @@ a {
 
 #hud .scores .localplayer {
 	background: rgba(255, 255, 0, 0.4);
-	border: 1px solid background: rgba(255, 255, 0, 0.8);
+	border: .1em solid rgba(255, 255, 0, 0.4);
+	border-radius: .1em;
 }
 
 #hud .crosshair {
@@ -450,7 +454,7 @@ a {
 #hud .weapons {
 	position: absolute;
 	top: 10em;
-	left: 1em;
+	left: 0;
 	margin: 0;
 	padding: 0;
 	list-style: none;
@@ -458,11 +462,14 @@ a {
 
 #hud .weapons li {
 	display: block;
-	border: 1px solid transparent;
+	padding: .3em .5em .3em 1em;
 }
 
 #hud .weapons li.selected {
-	border: 1px solid #A6E22E;
+	background: -moz-linear-gradient(top, rgba(48, 48, 48, .8), rgba(16, 16, 16, .8));
+	background: -webkit-linear-gradient(top, rgba(48, 48, 48,  .8), rgba(16, 16, 16, .8));
+	box-shadow: 1px 1px 5px rgba(0, 0, 0, .5);
+	border-radius: 0 .2em .2em 0;
 }
 
 #hud .weapons li .icon {

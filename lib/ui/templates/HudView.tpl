@@ -36,7 +36,7 @@
 			<% if (!weapons[i]) continue; %>
 			<li data-index="<%- i %>" class="weapon<% if (i === weaponSelect) { %> selected<% } %>">
 				<span class="icon" data-himage="<%= weapons[i].gfx.icon %>"></span>
-				<span class="ammo"><%- ammo[i] %></span>
+				<span class="ammo"><% if (ammo[i] > 0) { print(ammo[i]); } else { print('&nbsp;'); } %></span>
 			</li>
 		<% } %>
 	</ul>
