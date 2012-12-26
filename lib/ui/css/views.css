@@ -47,7 +47,7 @@
 	display: inline-block;
 }
 
-.fullscreen {
+#viewport-ui .fullscreen {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -55,7 +55,17 @@
 	height: 100%;
 }
 
-a {
+#viewport-ui .logo {
+	width: 20em;
+	height: 20em;
+	margin: 0 auto 2em;
+}
+
+#viewport-ui h1, #viewport-ui h2 {
+	font-family: 'GibsonBold', sans-serif;
+}
+
+#viewport-ui a {
 	color: #fff;
 	text-decoration: none;
 }
@@ -69,7 +79,6 @@ a {
 .vertical-menu h1 {
 	margin: 0 0 0.4em 0.1em;
 	font-size: 2.4em;
-	font-family: 'GibsonBold', sans-serif;
 	text-transform: uppercase;
 }
 
@@ -112,28 +121,16 @@ a {
 	background: rgba(0, 0, 0, 0.5);
 }
 
-.vertical-menu-right {
-	position: absolute;
-	top: 0;
-	left: 26em;
-	right: 0;
-	bottom: 0;
-	background: rgba(0, 0, 0, 0.6);
-}
-
 /**
  * Dialogs
  */
 .dialog {
 	position: relative;
-	width: 40%;
-	margin: 0 auto;
-	padding: 1.2em 1.6em;
-	background: #111;
-	color: #bfbfbf;
-	border-radius: 1em;
-	word-break: break-all;
-	overflow: hidden;
+	width: 80%;
+	margin: 8em auto 0;
+	padding: 3em 1.6em 1.2em;
+	background: rgba(0, 0, 0, 0.5);
+	color: #fff;
 }
 
 .dialog .close {
@@ -150,13 +147,24 @@ a {
 .dialog .close.hover {
 	color: #bfbfbf;
 }
-/*
-.dialog h1 {
-	font-size: 1.2em;
-	padding-bottom: .2em;
-	border-bottom: 1px solid #222;
+
+.dialog .dialog-heading {
+	position: absolute;
+	top: -1em;
+	left: -.3em;
 }
-*/
+
+.dialog .dialog-title {
+	display: inline-block;
+	padding: .1em .3em;
+	vertical-align: middle;
+	text-transform: uppercase;
+	background: #fff;
+	color: #000;
+	font-family: 'GibsonBold', sans-serif;
+	font-size: 2em;
+}
+
 .dialog .menu-item {
 	margin-bottom: .5em;
 	padding: .5em;
@@ -198,7 +206,8 @@ a {
 	background: -moz-linear-gradient(top, #8cc84b, #448800);
 	background: -webkit-linear-gradient(top, #8cc84b, #448800);
 	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
-	transition: width .6s ease;
+	-moz-transition: width .6s ease;
+	-webkit-transition: width .6s ease;
 }
 
 /**
@@ -210,13 +219,14 @@ a {
 
 .control-label {
 	float: left;
-	padding: .5em 0;
+	padding: .5em 0 0;
 	width: 10em;
 	color: #a6e22e;
 	text-align: right
 }
 
 .control-input {
+	padding: .5em;
 	margin-left: 11em;
 	/* Empty fields */
 	min-height: 1em;
@@ -224,7 +234,6 @@ a {
 
 .control-input.input-text,
 .control-input.input-key {
-	padding: .5em;
 	background: rgba(34, 34, 34, 0.8);
 	border: 1px solid transparent;
 }
@@ -253,15 +262,15 @@ a {
 	list-style: none;
 	margin: 0;
 	padding: 0;
+	overflow: hidden;
 }
 
 .nav-tabs li {
-	display: inline-block;
-	padding: 0.33em 0.5em;
+	float: left;
 }
 
 .nav-tabs li a {
-	color: #fff;
+	display: inline-block;
 	text-decoration: none;
 }
 
@@ -286,20 +295,20 @@ a {
 	height: 1em;
 }
 
-.input-range .input-range-track {
-	position: absolute;
-	top: 50%;
-	left: 0;
-	width: 100%;
-	height: 1px;
-	background: #222;
+.input-range .range-track {
+	height: 100%;
+	background: -moz-linear-gradient(top, #222, #303030);
+	background: -webkit-linear-gradient(top, #222, #303030);
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, .1);
 }
 
-.input-range .input-range-slider {
+.input-range .range-slider {
 	position: absolute;
-	top: 0;
+	top: .5em;
 	left: 0;
-	background: #a6e22e;
+	background: -moz-linear-gradient(top, #8cc84b, #448800);
+	background: -webkit-linear-gradient(top, #8cc84b, #448800);
+	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
 	width: 1em;
 	height: 1em;
 	content: '';
@@ -314,9 +323,13 @@ a {
 /**
  * Main menu
  */
-/*#main .vertical-menu-content {
-	margin-top: -5em;
-}*/
+#main .content {
+	position: absolute;
+	top: 0;
+	left: 26em;
+	bottom: 0;
+	right: 0;
+}
 
 /**
  * Singleplayer menu
@@ -355,12 +368,48 @@ a {
 /**
  * Settings menu
  */
-#settings .background {
-	background: rgba(0, 0, 0, 0.3);
+#settings .sections {
+	display: inline-block;
+	margin: 0 0 0 -1em;
+	padding: 0;
+	vertical-align: middle;
+	list-style: none;
+	overflow: hidden;
+}
+
+#settings .sections li {
+	float: left;
+	padding: .1em .3em;
+	text-transform: uppercase;
+	background: #202020;
+	color: #fff;
+	font-size: 1.4em;
+	line-height: 1.4em;
+}
+
+#settings .sections li.hover {
+	background: #333;
+}
+
+#settings .sections li.active {
+	background: #8cc84b;
 }
 
 #settings .nav-tabs {
-	margin: 0.67em 0;
+	display: inline-block;
+	margin: 0 0 1em -2em;
+}
+
+#settings .nav-tabs a {
+	background: #202020;
+	color: #fff;
+	padding: .5em .7em;
+	text-transform: uppercase;
+}
+
+#settings .nav-tabs li.active a {
+	background: #8cc84b;
+	color: #fff;
 }
 
 #settings .tab-pane {
