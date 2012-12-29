@@ -523,8 +523,13 @@
 
 #hud .count-label {
 	display: inline-block;
-	width: 10em;
+	width: 9em;
 	text-align: right;
+}
+
+#hud .count-value {
+	display: inline-block;
+	width: 4em;
 }
 
 #hud .kills-wrapper,

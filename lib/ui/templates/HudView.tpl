@@ -21,13 +21,13 @@
 </div>
 
 <div class="count-wrapper">
-	<div><span class="count-label">Shaders:</span> <span class="count-shaders"><%- shaders %></span></div>
-	<div><span class="count-label">Vertexes:</span> <span class="count-vertexes"><%- vertexes %></span></div>
-	<div><span class="count-label">Indexes:</span> <span class="count-indexes"><%- indexes %></span></div>
-	<div><span class="count-label">Culled faces:</span> <span class="count-culled-faces"><%- culledFaces %></span></div>
-	<div><span class="count-label">Culled mod out:</span> <span class="count-culled-model-out"><%- culledModelOut %></span></div>
-	<div><span class="count-label">Culled mod in:</span> <span class="count-culled-model-in"><%- culledModelIn %></span></div>
-	<div><span class="count-label">Culled mod clip:</span> <span class="count-culled-model-clip"><%- culledModelClip %></span></div>
+	<div><span class="count-label">Shaders:</span> <span class="count-value count-shaders"><%- shaders %></span></div>
+	<div><span class="count-label">Nodes:</span> <span class="count-value count-nodes"><%- nodes %>/<%- leafs %></span></div>
+	<div><span class="count-label">Surfaces:</span> <span class="count-value count-surfaces"><%- surfaces %></span></div>
+	<div><span class="count-label">Indexes:</span> <span class="count-value count-indexes"><%- indexes %></span></div>
+	<div><span class="count-label">Culled mod out:</span> <span class="count-value count-culled-model-out"><%- culledModelOut %></span></div>
+	<div><span class="count-label">Culled mod in:</span> <span class="count-value count-culled-model-in"><%- culledModelIn %></span></div>
+	<div><span class="count-label">Culled mod clip:</span> <span class="count-value count-culled-model-clip"><%- culledModelClip %></span></div>
 </div>
 
 <div class="weapons-wrapper">

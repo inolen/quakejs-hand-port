@@ -1,5 +1,5 @@
-.scon*
-.DS_Store
+.*
+!/.gitignore
 assets.json
 dedicated.json
 /bin/tmp
