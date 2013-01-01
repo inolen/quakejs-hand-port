@@ -3,9 +3,9 @@
 		<div class="dialog-title">Settings</div>
 
 		<ul class="sections">
-			<li class="look vertical-menu-item active"><a href="#controls" data-toggle="tab">Controls</a></li>
-			<li class="player vertical-menu-item"><a href="#character" data-toggle="tab">Character</a></li>
-			<li class="move vertical-menu-item"><a href="#game-settings" data-toggle="tab">Game settings</a></li>
+			<li class="look active"><a href="#controls" data-toggle="tab">Controls</a></li>
+			<li class="player"><a href="#character" data-toggle="tab">Character</a></li>
+			<li class="move"><a href="#game-settings" data-toggle="tab">Game</a></li>
 		</ul>
 	</div>
 
