@@ -11,7 +11,7 @@
 
 	<div class="tab-content">
 		<div class="tab-pane active" id="controls">
-			<ul class="nav-tabs">
+			<ul class="subsections">
 				<li class="move active"><a href="#move" data-toggle="tab">Move</a></li>
 				<li class="look"><a href="#look" data-toggle="tab">Look</a></li>
 				<li class="shoot"><a href="#shoot" data-toggle="tab">Shoot</a></li>

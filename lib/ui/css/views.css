@@ -253,6 +253,10 @@
 	box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(166, 226, 46, 0.6)
 }
 
+.control-input.input-text {
+	word-wrap: break-word;
+}
+
 .control-input.input-radio:before {
 	content: 'off';
 }
@@ -268,27 +272,6 @@
 /**
  * Tabs
  */
-.nav-tabs {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
-}
-
-.nav-tabs li {
-	float: left;
-}
-
-.nav-tabs li a {
-	display: inline-block;
-	text-decoration: none;
-}
-
-.nav-tabs li.active {
-	color: #fff;
-	background-color: #222;
-}
-
 .tab-pane {
 	display: none;
 }
@@ -405,25 +388,63 @@
 	background: #8cc84b;
 }
 
-#settings .nav-tabs {
+#settings .subsections {
 	display: inline-block;
 	margin: 0 0 1em -2em;
+	padding: 0;
+	list-style: none;
+	overflow: hidden;
 }
 
-#settings .nav-tabs a {
+#settings .subsections li {
+	float: left;
+}
+
+#settings .subsections li a {
+	display: inline-block;
 	background: #202020;
 	color: #fff;
 	padding: .5em .7em;
+	text-decoration: none;
 	text-transform: uppercase;
 }
 
-#settings .nav-tabs li.active a {
+#settings .subsections li.active {
+	color: #fff;
+	background-color: #222;
+}
+
+#settings .subsections li.active a {
 	background: #8cc84b;
 	color: #fff;
 }
 
 #settings .tab-pane {
 	min-height: 12em;
+}
+
+/**
+ * Message menu
+ */
+#message {
+	position: absolute;
+	left: 0;
+	bottom: 7em;
+	padding: .7em;
+	background: rgba(0, 0, 0, 0.6);
+}
+
+#message .control-group {
+	margin: 0;
+}
+
+#message .control-label {
+	width: auto;
+}
+
+#message .control-input {
+	margin-left: 3em;
+	width: 20em;
 }
 
 /**
@@ -451,13 +472,13 @@
 	font-family: 'SourceCodeProSemibold', sans-serif;
 }
 
-#hud .gamestate-wrapper {
+#gamestate-wrapper {
 	position: absolute;
 	top: 0;
 	left: 0;
 }
 
-#hud .scores {
+#gamestate-wrapper .scores {
 	padding: .7em;
 	background: -moz-linear-gradient(top, rgba(48, 48, 48, .8), rgba(16, 16, 16, .8));
 	background: -webkit-linear-gradient(top, rgba(48, 48, 48,  .8), rgba(16, 16, 16, .8));
@@ -465,116 +486,124 @@
 	border-radius: 0 0 .2em 0;
 }
 
-#hud .score {
+#gamestate-wrapper .score {
 	padding: .1em .3em;
 }
 
-#hud .scores .localplayer {
+#gamestate-wrapper .scores .localplayer {
 	background: rgba(255, 255, 0, 0.4);
 	border: .1em solid rgba(255, 255, 0, 0.4);
 	border-radius: .1em;
 }
 
-#hud .crosshair {
+#events-wrapper {
+	position: absolute;
+	top: 0;
+	left: 12em;
+	width: 30em;
+	padding: .7em;
+}
+
+#events {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	overflow: hidden;
+}
+
+#events .name {
+	display: block;
+	float: left;
+	margin-right: 0.7em;
+}
+
+#events .text {
+	display: block;
+	color: #00dd00;
+	overflow: hidden;
+	word-wrap: break-word;
+}
+
+#crosshair {
 	width: 2em;
 	height: 2em;
 }
 
-#hud .crosshair-name {
+#crosshair-name {
 	margin-top: -2.5em;
 }
 
-#hud .fps-wrapper {
+#fps-wrapper {
 	position: absolute;
 	top: 1em;
 	right: 1em;
 }
 
-#hud .weapons {
+#weapons-wrapper {
 	position: absolute;
 	top: 10em;
 	left: 0;
+}
+
+#weapons-wrapper .weapons {
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
 
-#hud .weapons li {
+#weapons-wrapper .weapons li {
 	display: block;
 	padding: .3em .5em .3em 1em;
 }
 
-#hud .weapons li.selected {
+#weapons-wrapper .weapons li.selected {
 	background: -moz-linear-gradient(top, rgba(48, 48, 48, .8), rgba(16, 16, 16, .8));
 	background: -webkit-linear-gradient(top, rgba(48, 48, 48,  .8), rgba(16, 16, 16, .8));
 	box-shadow: 1px 1px 5px rgba(0, 0, 0, .5);
 	border-radius: 0 .2em .2em 0;
 }
 
-#hud .weapons li .icon {
+#weapons-wrapper .weapons li .icon {
 	float: left;
 	display: block;
 	width: 2em;
 	height: 2em;
 }
 
-#hud .weapons li .ammo {
+#weapons-wrapper .weapons li .ammo {
 	display: block;
 	margin-left: 2.2em;
 	padding: 0 .5em;
 	line-height: 2em;
 }
 
-#hud .count-wrapper {
-	position: absolute;
-	bottom: 1em;
-	right: 1em;
-}
-
-#hud .count-label {
-	display: inline-block;
-	width: 9em;
-	text-align: right;
-}
-
-#hud .count-value {
-	display: inline-block;
-	width: 4em;
-}
-
-#hud .kills-wrapper,
-#hud .team-wrapper {
-	clear: both;
-	width: 40em;
-}
-
-#hud .health-wrapper {
+#health-wrapper {
 	position: absolute;
 	right: 50%;
 	bottom: 0;
 	margin-right: 2em;
 }
 
-#hud .armor-wrapper {
+#armor-wrapper {
 	position: absolute;
 	left: 50%;
 	bottom: 0;
 	margin-left: 2em;
 }
 
-#hud .health-icon,
-#hud .armor-icon {
+#health-wrapper .health-icon,
+#armor-wrapper .armor-icon {
 	display: inline-block;
 	width: 2em;
 	height: 2em;
 }
 
-#hud .health-text,
-#hud .armor-text {
+#health-wrapper .health-text,
+#armor-wrapper .armor-text {
 	font-size: 4em;
 }
 
-#hud .lagometer-wrapper {
+#lagometer-wrapper {
 	position: absolute;
 	bottom: 1em;
 	left: 1em;
@@ -583,23 +612,40 @@
 	background: rgba(0, 0, 0, 0.7);
 }
 
-#hud .lagometer-wrapper .frame-wrapper {
+#lagometer-wrapper .frame-wrapper {
 	position: relative;
 	float: left;
 	width: 0.15625em;
 	height: 10em;
 }
 
-#hud .lagometer-wrapper .lag-frame,
-#hud .lagometer-wrapper .snapshot-frame {
+#lagometer-wrapper .lag-frame,
+#lagometer-wrapper .snapshot-frame {
 	position: absolute;
 	bottom: 0;
 	left: 0;
 	background: #ff0000;
 }
 
-#hud .lagometer-wrapper .snapshot-frame {
+#lagometer-wrapper .snapshot-frame {
 	background: #00ff00;
+}
+
+#counts-wrapper {
+	position: absolute;
+	bottom: 1em;
+	right: 1em;
+}
+
+#counts-wrapper .count-label {
+	display: inline-block;
+	width: 9em;
+	text-align: right;
+}
+
+#counts-wrapper .count-value {
+	display: inline-block;
+	width: 4em;
 }
 
 /**
