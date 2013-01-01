@@ -508,20 +508,15 @@
 	margin: 0;
 	padding: 0;
 	list-style: none;
-	overflow: hidden;
+	word-wrap: break-word;
 }
 
 #events .name {
-	display: block;
-	float: left;
 	margin-right: 0.7em;
 }
 
 #events .text {
-	display: block;
 	color: #00dd00;
-	overflow: hidden;
-	word-wrap: break-word;
 }
 
 #crosshair {
@@ -531,6 +526,18 @@
 
 #crosshair-name {
 	margin-top: -2.5em;
+}
+
+#crosshair-name.visible {
+	opacity: 1;
+	-moz-transition: opacity 0s;
+	-webkit-transition: opacity 0s;
+}
+
+#crosshair-name.hidden {
+	opacity: 0;
+	-moz-transition: opacity .2s linear 1s;
+	-webkit-transition: opacity .2s linear 1s;
 }
 
 #fps-wrapper {
