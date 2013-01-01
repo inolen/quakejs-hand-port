@@ -5,7 +5,7 @@
 		<ul class="sections">
 			<li class="look active"><a href="#controls" data-toggle="tab">Controls</a></li>
 			<li class="player"><a href="#character" data-toggle="tab">Character</a></li>
-			<li class="move"><a href="#game-settings" data-toggle="tab">Game</a></li>
+			<li class="move"><a href="#game" data-toggle="tab">Game</a></li>
 		</ul>
 	</div>
 
@@ -92,6 +92,12 @@
 		<div class="tab-pane" id="character">
 			<div class="name control-group">
 				<div class="control-label">Name:</div><div name="name" class="control-input input-text"><%- name %></div>
+			</div>
+		</div>
+
+		<div class="tab-pane" id="game">
+			<div class="autoSwitch control-group">
+				<div class="control-label">Autoswitch weapons:</div><div name="autoSwitch" class="control-input input-radio" data-enabled="<%- autoSwitch ? 'true' : 'false' %>"></div>
 			</div>
 		</div>
 	</div>
