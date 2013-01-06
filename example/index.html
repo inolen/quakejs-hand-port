@@ -25,22 +25,11 @@
 			});
 
 			require(['system/browser/sys'], function (sys) {
-				sys.Init();
+				var root = document.getElementsByTagName('body')[0];
+				sys.Init(root);
 			});
 		</script>
 		<link href="css/main.css" rel="stylesheet" type="text/css" />
 	</head>
-	<body>
-		<!-- Without tabindex, keyboard events won't pass to canvas once focused. -->
-		<div id="viewport-frame">
-			<canvas id="viewport">
-				Sorry, but your browser does not support WebGL or does not have it enabled.
-				To get a WebGL-enabled browser, please see:<br/>
-				<a href="http://get.webgl.org/" target="_blank">
-					http://get.webgl.org/
-				</a>
-			</canvas>
-			<div id="viewport-ui"></div>
-		</div>
-	</body>
+	<body></body>
 </html>
