@@ -21,8 +21,6 @@ MODULES = [
 	SRC_DIR + '/client/cl.js',
 	SRC_DIR + '/clipmap/cm.js',
 	SRC_DIR + '/common/com.js',
-	SRC_DIR + '/common/qmath.js',
-	SRC_DIR + '/common/sh.js',
 	SRC_DIR + '/game/bg.js',
 	SRC_DIR + '/game/gm.js',
 	SRC_DIR + '/renderer/re.js',
