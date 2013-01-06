@@ -4,29 +4,28 @@ var express = require('express');
 function main() {
 	var cfg = loadConfig();
 
-	createContentServer(cfg.content.port, 0);
+	createContentServer(cfg.content.port);
 	createExampleServer(cfg.port, cfg.content.host, cfg.content.port);
 }
 
 function loadConfig() {
-	var config = {
+	var cfg = {
 		port: 8080,
 		content: {
 			host: 'localhost',
 			port: 9000
 		}
 	};
-
-	return config;
+	return cfg;
 }
 
 function createContentServer(port) {
-	return require('./content').createServer(port);
+	// Max cache age is 0 - no caching.
+	return require('./content').createServer(port, 0);
 }
 
 function createExampleServer(port, proxyHost, proxyPort) {
 	var app = express();
-
 	app.use(express.static(__dirname + '/example'));
 	app.use(function (req, res, next) {
 		res.locals.proxyHost = proxyHost;

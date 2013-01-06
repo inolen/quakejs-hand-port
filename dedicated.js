@@ -4,33 +4,36 @@ var requirejs = require('./build/r.js');
 
 function main() {
 	var cfg = loadConfig();
-	launchServer(cfg);
+	launchServer(cfg.gamePort, cfg.rconPort, cfg.content.host, cfg.content.port);
 }
 
 function loadConfig() {
-	var config = {
+	var cfg = {
 		gamePort: 9001,
 		rconPort: 9002,
 		content: {
 			host: 'localhost',
 			port: 9000
-		}
+		},
+		masters: [
+			'master.quakejs.com'
+		]
 	};
 	try {
-		var data = require('./dedicated.json');
+		var data = require('./.dedicated.json');
 		_.extend(config, data);
 	} catch (e) {
 	}
 
-	return config;
+	return cfg;
 }
 
-function launchServer(cfg) {
+function launchServer(gamePort, rconPort, contentHost, contentPort) {
 	// Format the content server URL.
 	var contentUrl = url.format({
 		protocol: 'http',
-		hostname: cfg.content.host,
-		port: cfg.content.port
+		hostname: contentHost,
+		port: contentPort
 	});
 
 	requirejs.config({
@@ -43,7 +46,7 @@ function launchServer(cfg) {
 
 	requirejs(['system/dedicated/sys'], function (sys) {
 		var assetsUrl = contentUrl + '/assets';
-		sys.Init(assetsUrl, cfg.gamePort, cfg.rconPort);
+		sys.Init(assetsUrl, gamePort, rconPort);
 	});
 }
 

@@ -12,18 +12,18 @@ function main() {
 }
 
 function loadConfig() {
-	var config = {
+	var cfg = {
 		port: 9000,
 		maxAge: 0
 	};
 
 	try {
-		var data = require('./content.json');
-		_.extend(config, data);
+		var data = require('./.content.json');
+		_.extend(cfg, data);
 	} catch (e) {
 	}
 
-	return config;
+	return cfg;
 }
 
 function createServer(port, cacheMaxAge) {
@@ -53,7 +53,7 @@ function handleBinary(req, res, next) {
 	// Lookup file without the cachebuster.
 	var parsed = url.parse(req.url);
 	var absolutePath = __dirname + parsed.pathname;
-	
+
 	res.setHeader('Cache-Control', 'public, max-age=' + res.locals.maxAge + ', must-revalidate');
 	res.sendfile(absolutePath, function (err) {
 		if (err) return next(err);
@@ -93,7 +93,7 @@ function getAllShaders(assets, callback) {
 		if (err) return callback(err);
 
 		buffer += data + '\n';
-	
+
 		if (i < shaders.length) {
 			// Read the next file.
 			fs.readFile(shaders[i++], readComplete);
@@ -138,7 +138,7 @@ AssetMap.prototype.refresh = function () {
 	var filenames = fs.readdirSync(this.root);
 	filenames.forEach(function (file) {
 		file = self.root + '/' + file;
-		
+
 		var stat = fs.statSync(file);
 
 		if (stat.isDirectory()) {
