@@ -21,7 +21,7 @@ function loadConfig() {
 	};
 	try {
 		var data = require('./dedicated.json');
-		_.extend(config, data);
+		_.extend(cfg, data);
 	} catch (e) {
 	}
 
