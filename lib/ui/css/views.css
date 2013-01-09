@@ -501,11 +501,13 @@
 	word-wrap: break-word;
 }
 
-#events .name {
+#events .event-chat .name,
+#events .event-tchat .name {
 	margin-right: 0.7em;
 }
 
-#events .text {
+#events .event-chat .text,
+#events .event-tchat .text {
 	color: #00dd00;
 }
 
