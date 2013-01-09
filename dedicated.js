@@ -20,7 +20,7 @@ function loadConfig() {
 		]
 	};
 	try {
-		var data = require('./.dedicated.json');
+		var data = require('./dedicated.json');
 		_.extend(config, data);
 	} catch (e) {
 	}

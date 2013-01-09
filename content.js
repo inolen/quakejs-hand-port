@@ -18,7 +18,7 @@ function loadConfig() {
 	};
 
 	try {
-		var data = require('./.content.json');
+		var data = require('./content.json');
 		_.extend(cfg, data);
 	} catch (e) {
 	}

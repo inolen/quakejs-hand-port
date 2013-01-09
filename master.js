@@ -12,7 +12,7 @@ function loadConfig() {
 		port: 9003
 	};
 	try {
-		var data = require('./.master.json');
+		var data = require('./master.json');
 		_.extend(cfg, data);
 	} catch (e) {
 	}
