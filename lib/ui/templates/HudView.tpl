@@ -6,11 +6,11 @@
 	</div>
 	<div class="scores">
 		<% if (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') { %>
-			<div class="score-wrapper score1 team-red">
+			<div class="score-wrapper score1 team-red<% if (score1 && score1.localplayer) { %> localplayer<% } %>">
 				<span class="name">Team Red</span>
 				<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
 			</div>
-			<div class="score-wrapper score2 team-blue">
+			<div class="score-wrapper score2 team-blue<% if (score2 && score2.localplayer) { %> localplayer<% } %>">
 				<span class="name">Team Blue</span>
 				<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
 			</div>

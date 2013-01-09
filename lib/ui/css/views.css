@@ -477,7 +477,7 @@
 }
 
 #gamestate-wrapper .score-wrapper {
-	padding: .1em .3em;
+	padding: .2em .3em;
 }
 
 #gamestate-wrapper .score1 {
@@ -503,14 +503,22 @@
 
 #gamestate-wrapper .scores .team-red {
 	background: rgba(255, 0, 0, 0.4);
-	border: .1em solid rgba(255, 0, 0, 0.4);
+	border: .1em solid rgba(255, 0, 0, 0.2);
 	border-radius: .1em;
+}
+
+#gamestate-wrapper .scores .team-red.localplayer {
+	border: .1em solid rgba(255, 100, 0, 1.0);
 }
 
 #gamestate-wrapper .scores .team-blue {
 	background: rgba(0, 0, 255, 0.4);
-	border: .1em solid rgba(0, 0, 255, 0.4);
+	border: .1em solid rgba(0, 0, 255, 0.2);
 	border-radius: .1em;
+}
+
+#gamestate-wrapper .scores .team-blue.localplayer {
+	border: .1em solid rgba(0, 100, 255, 1.0);
 }
 
 #events-wrapper {
