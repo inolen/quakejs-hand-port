@@ -5,14 +5,25 @@
 	<div class="gametype-info">
 	</div>
 	<div class="scores">
-		<div class="score score1<% if (score1 && score1.localplayer) { %> localplayer<% } %>">
-			<span class="name"><% if (score1 !== null) { %><%- score1.rank %>. <%- score1.name %><% } %></span>
-			<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
-		</div>
-		<div class="score score2<% if (score2 && score2.localplayer) { %> localplayer<% } %>">
-			<span class="name"><% if (score2 !== null) { %><%- score2.rank %>. <%- score2.name %><% } %></span>
-			<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
-		</div>
+		<% if (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') { %>
+			<div class="score-wrapper score1 team-red">
+				<span class="name">Team Red</span>
+				<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
+			</div>
+			<div class="score-wrapper score2 team-blue">
+				<span class="name">Team Blue</span>
+				<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
+			</div>
+		<% } else { %>
+			<div class="score-wrapper score1<% if (score1 && score1.localplayer) { %> localplayer<% } %>">
+				<span class="name"><% if (score1 !== null) { %><%- score1.rank %>. <%- score1.name %><% } %></span>
+				<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
+			</div>
+			<div class="score-wrapper score2<% if (score2 && score2.localplayer) { %> localplayer<% } %>">
+				<span class="name"><% if (score2 !== null) { %><%- score2.rank %>. <%- score2.name %><% } %></span>
+				<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
+			</div>
+		<% } %>
 	</div>
 </div>
 

@@ -476,13 +476,40 @@
 	border-radius: 0 0 .2em 0;
 }
 
-#gamestate-wrapper .score {
+#gamestate-wrapper .score-wrapper {
 	padding: .1em .3em;
+}
+
+#gamestate-wrapper .score1 {
+	margin-bottom: .2em;
+}
+
+#gamestate-wrapper .name {
+	display: inline-block;
+	width: 8em;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+#gamestate-wrapper .score {
+	text-align: right;
 }
 
 #gamestate-wrapper .scores .localplayer {
 	background: rgba(255, 255, 0, 0.4);
 	border: .1em solid rgba(255, 255, 0, 0.4);
+	border-radius: .1em;
+}
+
+#gamestate-wrapper .scores .team-red {
+	background: rgba(255, 0, 0, 0.4);
+	border: .1em solid rgba(255, 0, 0, 0.4);
+	border-radius: .1em;
+}
+
+#gamestate-wrapper .scores .team-blue {
+	background: rgba(0, 0, 255, 0.4);
+	border: .1em solid rgba(0, 0, 255, 0.4);
 	border-radius: .1em;
 }
 
