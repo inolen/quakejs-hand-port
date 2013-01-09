@@ -43,7 +43,7 @@
 </div>
 
 <div id="fps-wrapper">
-	<span class="fps"><%- fps %></span> FPS
+	<span id="fps"><%- fps %></span> FPS
 </div>
 
 <div id="weapons-wrapper">
@@ -59,13 +59,13 @@
 </div>
 
 <div id="health-wrapper">
-	<span class="health-text"><%- health %></span>
-	<span class="health-icon" data-image="icons/iconh_green.png"></span>
+	<span id="health-text"><%- health %></span>
+	<span id="health-icon" data-image="icons/iconh_green.png"></span>
 </div>
 
 <div id="armor-wrapper">
-	<span class="armor-icon" data-image="icons/iconr_yellow.png"></span>
-	<span class="armor-text"><%- armor %></span>
+	<span id="armor-icon" data-image="icons/iconr_yellow.png"></span>
+	<span id="armor-text"><%- armor %></span>
 </div>
 
 <div id="lagometer-wrapper"<% if (!lagometerVisible) { %> style="display: none;"<% } %>>
@@ -78,11 +78,11 @@
 </div>
 
 <div id="counts-wrapper">
-	<div><span class="count-label">Shaders:</span> <span class="count-value count-shaders"><%- shaders %></span></div>
-	<div><span class="count-label">Nodes:</span> <span class="count-value count-nodes"><%- nodes %>/<%- leafs %></span></div>
-	<div><span class="count-label">Surfaces:</span> <span class="count-value count-surfaces"><%- surfaces %></span></div>
-	<div><span class="count-label">Indexes:</span> <span class="count-value count-indexes"><%- indexes %></span></div>
-	<div><span class="count-label">Culled mod out:</span> <span class="count-value count-culled-model-out"><%- culledModelOut %></span></div>
-	<div><span class="count-label">Culled mod in:</span> <span class="count-value count-culled-model-in"><%- culledModelIn %></span></div>
-	<div><span class="count-label">Culled mod clip:</span> <span class="count-value count-culled-model-clip"><%- culledModelClip %></span></div>
+	<div><span class="count-label">Shaders:</span> <span id="count-shaders" class="count-value"><%- shaders %></span></div>
+	<div><span class="count-label">Nodes:</span> <span id="count-nodes" class="count-value"><%- nodes %>/<%- leafs %></span></div>
+	<div><span class="count-label">Surfaces:</span> <span id="count-surfaces" class="count-value"><%- surfaces %></span></div>
+	<div><span class="count-label">Indexes:</span> <span id="count-indexes" class="count-value"><%- indexes %></span></div>
+	<div><span class="count-label">Culled mod out:</span> <span id="count-culled-model-out" class="count-value"><%- culledModelOut %></span></div>
+	<div><span class="count-label">Culled mod in:</span> <span id="count-culled-model-in" class="count-value"><%- culledModelIn %></span></div>
+	<div><span class="count-label">Culled mod clip:</span> <span id="count-culled-model-clip" class="count-value"><%- culledModelClip %></span></div>
 </div>
