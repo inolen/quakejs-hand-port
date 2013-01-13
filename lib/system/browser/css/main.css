@@ -60,6 +60,7 @@
 	min-height: 100%;
 	overflow: hidden;
 	font-family: 'SourceCodeProSemibold', sans-serif;
+	background: #000;
 }
 
 #viewport {
