@@ -1,8 +1,9 @@
 ({
 	paths: {
-		'underscore': 'vendor/underscore',
-		'glmatrix':   'vendor/gl-matrix',
-		'ByteBuffer': 'vendor/byte-buffer',
-		'client/cl':  'stub'
+		'ByteBuffer':   'vendor/byte-buffer',
+		'EventEmitter': 'vendor/EventEmitter',
+		'glmatrix':     'vendor/gl-matrix',
+		'underscore':   'vendor/underscore',
+		'client/cl':    'stub'
 	}
 })
