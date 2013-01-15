@@ -44,7 +44,7 @@ ExpandIncludes = Builder(
 	action = 'node ' + INCLUDEJS_PATH + ' --process $SOURCE > $TARGET')
 
 RequireOptimizer = Builder(
-	action = 'node ' + REQUIREJS_PATH + ' -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=none')
+	action = 'node ' + REQUIREJS_PATH + ' -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=uglify')
 
 JSHint = Builder(
 	action = 'jshint --config=' + JSHINT_CONFIG + ' $SOURCE')
