@@ -685,21 +685,35 @@
 /**
  * Scoreboard view
  */
-#scoreboard {
+#scoreboard-wrapper {
 	position: absolute;
-	top: 25%;
-	left: 25%;
-	width: 50%;
-	height: 50%;
+	top: 50%;
+	left: 50%;
+	margin-left: -27em;
+	margin-top: -12em;
+	width: 50em;
+	min-height: 20em;
 	padding: 2em;
 	background: rgba(0, 0, 0, 0.7);
 }
 
-#scoreboard table {
+#scoreboard-wrapper table {
 	width: 100%;
 	color: #fff;
 }
 
-#scoreboard table th {
+#scoreboard-wrapper table th {
 	text-align: left;
+}
+
+#scoreboard-wrapper table.team-red {
+	float: left;
+	width: 24em;
+	background: #ff0000;
+}
+
+#scoreboard-wrapper table.team-blue {
+	float: right;
+	width: 24em;
+	background: #0000ff;
 }
