@@ -469,24 +469,30 @@
 }
 
 #gamestate-wrapper .scores {
-	padding: .7em;
-	background: -moz-linear-gradient(top, rgba(48, 48, 48, .8), rgba(16, 16, 16, .8));
-	background: -webkit-linear-gradient(top, rgba(48, 48, 48,  .8), rgba(16, 16, 16, .8));
-	box-shadow: 1px 1px 5px rgba(0, 0, 0, .5);
+	margin: .7em;
+	box-shadow: 0 0 10px rgba(50, 50, 50, .5);
 	border-radius: 0 0 .2em 0;
 }
 
 #gamestate-wrapper .score-wrapper {
-	padding: .2em .3em;
+	padding: .2em .6em;
 }
 
-#gamestate-wrapper .score1 {
-	margin-bottom: .2em;
+#gamestate-wrapper .status {
+	font-size: .8em;
+	display: inline-block;
+	padding: .2em .4em;
+}
+
+#gamestate-wrapper .status .player {
+	display: inline-block;
+	width: .8em;
+	height: .8em;
 }
 
 #gamestate-wrapper .name {
 	display: inline-block;
-	width: 8em;
+	width: 10em;
 	white-space: nowrap;
 	overflow: hidden;
 }
@@ -495,36 +501,47 @@
 	text-align: right;
 }
 
-#gamestate-wrapper .scores .localplayer {
+#gamestate-wrapper .team-free.localplayer {
 	background: rgba(255, 255, 0, 0.4);
 	border: .1em solid rgba(255, 255, 0, 0.4);
 	border-radius: .1em;
 }
 
-#gamestate-wrapper .scores .team-red {
+#gamestate-wrapper .team-red {
+	background: rgba(155, 0, 0, 0.4);
+	border-radius: .1em;
+	color: #bbb;
+}
+
+#gamestate-wrapper .team-red.localplayer {
+	color: #fff;
+}
+
+#gamestate-wrapper .team-blue {
+	background: rgba(0, 0, 155, 0.4);
+	border-radius: .1em;
+	color: #bbb;
+}
+
+#gamestate-wrapper .team-blue.localplayer {
+	color: #fff;
+}
+
+#gamestate-wrapper .team-red .status {
 	background: rgba(255, 0, 0, 0.4);
-	border: .1em solid rgba(255, 0, 0, 0.2);
-	border-radius: .1em;
+	border-radius: .2em;
 }
 
-#gamestate-wrapper .scores .team-red.localplayer {
-	border: .1em solid rgba(255, 100, 0, 1.0);
-}
-
-#gamestate-wrapper .scores .team-blue {
+#gamestate-wrapper .team-blue .status {
 	background: rgba(0, 0, 255, 0.4);
-	border: .1em solid rgba(0, 0, 255, 0.2);
-	border-radius: .1em;
-}
+	border-radius: .2em;
 
-#gamestate-wrapper .scores .team-blue.localplayer {
-	border: .1em solid rgba(0, 100, 255, 1.0);
 }
 
 #events-wrapper {
 	position: absolute;
 	top: 0;
-	left: 12em;
+	left: 16em;
 	width: 30em;
 	padding: .7em;
 }
