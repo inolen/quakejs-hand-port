@@ -96,8 +96,12 @@
 		</div>
 
 		<div class="tab-pane" id="game">
-			<div class="autoSwitch control-group">
+			<div class="control-group">
 				<div class="control-label">Autoswitch weapons:</div><div name="autoSwitch" class="control-input input-radio" data-enabled="<%- autoSwitch ? 'true' : 'false' %>"></div>
+			</div>
+
+			<div class="control-group">
+				<div class="control-label">Net time nudge:</div><div name="timeNudge" class="control-input input-range" data-min="-30" data-max="30" data-value="<%- timeNudge %>"></div>
 			</div>
 		</div>
 	</div>
