@@ -92,7 +92,7 @@
 		<ul>
 		<% for (var i = 0; i < scores.spectator.length; i++) { %>
 			<% var score = scores.spectator[i]; %>
-			<li><%- scores[i].clientInfo.name %></li>
+			<li><%- score.clientInfo.name %></li>
 		<% } %>
 		</ul>
 	</div>
