@@ -704,33 +704,104 @@
  */
 #scoreboard-wrapper {
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin-left: -27em;
-	margin-top: -12em;
-	width: 50em;
-	min-height: 20em;
+	top: 6em;
+	left: 14em;
+	right: 14em;
 	padding: 2em;
-	background: rgba(0, 0, 0, 0.7);
+}
+
+#scoreboard-wrapper .summary {
+	margin-bottom: 1em;
+	padding: .7em 1em;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: .5em;
+}
+
+#scoreboard-wrapper .scores {
+	position: relative;
+	margin-bottom: 1em;
+	height: 26em;
+}
+
+#scoreboard-wrapper .team {
+	background: rgba(0, 0, 0, 0.3);
+}
+
+#scoreboard-wrapper .team .header {
+	padding: .4em .7em;
+}
+
+#scoreboard-wrapper .team .status {
+	display: inline-block;
+	padding: .2em .4em;
+	font-size: .8em;
+}
+
+#scoreboard-wrapper .team-red {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 50%;
+	bottom: 0;
+}
+
+#scoreboard-wrapper .team-red .header,
+#scoreboard-wrapper .team-red .status {
+	background: rgba(155, 0, 0, 0.4);
+}
+
+#scoreboard-wrapper .team-blue {
+	position: absolute;
+	top: 0;
+	left: 50%;
+	right: 0;
+	bottom: 0;
+}
+
+#scoreboard-wrapper .team-blue .header,
+#scoreboard-wrapper .team-blue .status {
+	background: rgba(0, 0, 155, 0.4);
 }
 
 #scoreboard-wrapper table {
+	box-sizing: border-box;
 	width: 100%;
 	color: #fff;
+	border: .6em solid transparent;
+	border-left-width: 1em;
+	border-right-width: 1em;
 }
 
 #scoreboard-wrapper table th {
 	text-align: left;
+	color: #ffff00;
 }
 
-#scoreboard-wrapper table.team-red {
+#scoreboard-wrapper .dead {
+	color: #666;
+}
+
+#scoreboard-wrapper .spectators {
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: .5em;
+	overflow: hidden;
+}
+
+#scoreboard-wrapper .spectators .header {
 	float: left;
-	width: 24em;
-	background: #ff0000;
+	padding: .7em 1em;
+	background: rgba(20, 20, 200, 0.7);
+	border-radius: .5em;
+	text-transform: uppercase;
 }
 
-#scoreboard-wrapper table.team-blue {
-	float: right;
-	width: 24em;
-	background: #0000ff;
+#scoreboard-wrapper .spectators ul {
+	list-style: none;
+	margin: 0;
+	padding: .7em 1em;
+	float: left;
+}
+
+#scoreboard-wrapper .spectators li {
+	float: left;
 }
