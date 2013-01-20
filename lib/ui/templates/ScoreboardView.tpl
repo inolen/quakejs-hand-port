@@ -1,5 +1,5 @@
 <div id="scoreboard-wrapper">
-	<% if (gametype === 'ffa' || gametype === 'tournament' || gametype === 'single') { %>
+	<% if (gametype === 'ffa' || gametype === 'tournament') { %>
 		<div class="scores">
 			<div class="team team-free">
 				<table>
