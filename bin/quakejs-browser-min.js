@@ -6057,7 +6057,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1038;
+var GAME_VERSION = 0.1039;
 
 var CMD_BACKUP   = 64;
 
@@ -15201,7 +15201,7 @@ ClientSession.prototype.clone = function (to) {
 
 		var level;
 
-var TEAM_SIZE = 1;
+var TEAM_SIZE = 2;
 
 /**
  * log
