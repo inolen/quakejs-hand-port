@@ -5699,7 +5699,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1036;
+var GAME_VERSION = 0.1038;
 
 var CMD_BACKUP   = 64;
 
@@ -15306,12 +15306,11 @@ function StartRound() {
 function EndRound(winningTeam) {
 	log('EndRound');
 
-	if (winningTeam === null) {
+	if (winningTeam !== null) {
 		level.arena.teamScores[winningTeam] += 1;
 	}
-
-	level.arena.lastWinningTeam = winningTeam;
 	level.arena.restartTime = level.time + 4000;
+	level.arena.lastWinningTeam = winningTeam;
 }
 
 /**
@@ -19030,8 +19029,8 @@ function ChainTeams() {
  */
 function TempEntity(origin, event) {
 	var e = SpawnEntity();
-	e.s.eType = ET.EVENTS + event;
 
+	e.s.eType = ET.EVENTS + event;
 	e.classname = 'tempEntity';
 	e.eventTime = level.time;
 	e.freeAfterEvent = true;
@@ -19849,7 +19848,7 @@ function ItemDrop(ent, item, angle) {
 
 	dropped.touch = ItemTouch;
 
-	SetOrigin(dropped, origin);
+	SetOrigin(dropped, ent.s.pos.trBase);
 	dropped.s.pos.trType = TR.GRAVITY;
 	dropped.s.pos.trTime = level.time;
 	vec3.set(velocity, dropped.s.pos.trDelta);
@@ -23900,7 +23899,6 @@ function ClipmapExports() {
 			ReadFile: SYS.ReadFile
 		},
 		com: {
-			ERR:   COM.ERR,
 			Error: COM.Error
 		}
 	};
@@ -24302,7 +24300,10 @@ function ExecuteClientMessage(client, msg) {
 		return;
 	}
 
-	client.reliableAcknowledge = msg.readInt();
+	// AP - TCP/IP hulk-smash. Set clients to having acknowledged
+	// immediately. Remove for UDP.
+	/*client.reliableAcknowledge = */msg.readInt();
+
 	// NOTE: when the client message is fux0red the acknowledgement numbers
 	// can be out of range, this could cause the server to send thousands of server
 	// commands which the server thinks are not yet acknowledged in SV_UpdateServerCommandsToClient
@@ -24884,8 +24885,9 @@ function SendClientSnapshot(client) {
 	// Send over all the relevant player and entity states.
 	WriteSnapshotToClient(client, msg);
 
+	msg.writeByte(COM.SVM.EOF);
+
 	// Record information about the message
-	// client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageSize = msg->cursize;
 	client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageSent = svs.time;
 	client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageAcked = -1;
 
@@ -24906,6 +24908,10 @@ function UpdateServerCommandsToClient(client, msg) {
 		msg.writeInt(i);
 		msg.writeCString(JSON.stringify(cmd));
 	}
+
+	// AP - TCP/IP hulk-smash. Set clients to having acknowledged
+	// immediately. Remove for UDP.
+	client.reliableAcknowledge = client.reliableSequence;
 }
 
 /**
@@ -26319,7 +26325,7 @@ var playerStateFields = [
 	{ path: QS.FTA('eventParms[0]'),     bits: UINT8   },
 	{ path: QS.FTA('eventParms[1]'),     bits: UINT8   },
 	{ path: QS.FTA('clientNum'),         bits: UINT8   },
-	{ path: QS.FTA('arenaNum'),          bits: UINT8   },
+	{ path: QS.FTA('arenaNum'),          bits: UINT16  },
 	{ path: QS.FTA('weapon'),            bits: UINT8   }, /*5*/
 	{ path: QS.FTA('viewangles[2]'),     bits: FLOAT32 },
 	// { path: QS.FTA('grapplePoint[0]'),   bits: FLOAT32 },

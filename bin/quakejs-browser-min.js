@@ -6057,7 +6057,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1036;
+var GAME_VERSION = 0.1038;
 
 var CMD_BACKUP   = 64;
 
@@ -15664,12 +15664,11 @@ function StartRound() {
 function EndRound(winningTeam) {
 	log('EndRound');
 
-	if (winningTeam === null) {
+	if (winningTeam !== null) {
 		level.arena.teamScores[winningTeam] += 1;
 	}
-
-	level.arena.lastWinningTeam = winningTeam;
 	level.arena.restartTime = level.time + 4000;
+	level.arena.lastWinningTeam = winningTeam;
 }
 
 /**
@@ -19388,8 +19387,8 @@ function ChainTeams() {
  */
 function TempEntity(origin, event) {
 	var e = SpawnEntity();
-	e.s.eType = ET.EVENTS + event;
 
+	e.s.eType = ET.EVENTS + event;
 	e.classname = 'tempEntity';
 	e.eventTime = level.time;
 	e.freeAfterEvent = true;
@@ -20207,7 +20206,7 @@ function ItemDrop(ent, item, angle) {
 
 	dropped.touch = ItemTouch;
 
-	SetOrigin(dropped, origin);
+	SetOrigin(dropped, ent.s.pos.trBase);
 	dropped.s.pos.trType = TR.GRAVITY;
 	dropped.s.pos.trTime = level.time;
 	vec3.set(velocity, dropped.s.pos.trDelta);
@@ -24258,7 +24257,6 @@ function ClipmapExports() {
 			ReadFile: SYS.ReadFile
 		},
 		com: {
-			ERR:   COM.ERR,
 			Error: COM.Error
 		}
 	};
@@ -24660,7 +24658,10 @@ function ExecuteClientMessage(client, msg) {
 		return;
 	}
 
-	client.reliableAcknowledge = msg.readInt();
+	// AP - TCP/IP hulk-smash. Set clients to having acknowledged
+	// immediately. Remove for UDP.
+	/*client.reliableAcknowledge = */msg.readInt();
+
 	// NOTE: when the client message is fux0red the acknowledgement numbers
 	// can be out of range, this could cause the server to send thousands of server
 	// commands which the server thinks are not yet acknowledged in SV_UpdateServerCommandsToClient
@@ -25242,8 +25243,9 @@ function SendClientSnapshot(client) {
 	// Send over all the relevant player and entity states.
 	WriteSnapshotToClient(client, msg);
 
+	msg.writeByte(COM.SVM.EOF);
+
 	// Record information about the message
-	// client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageSize = msg->cursize;
 	client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageSent = svs.time;
 	client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageAcked = -1;
 
@@ -25264,6 +25266,10 @@ function UpdateServerCommandsToClient(client, msg) {
 		msg.writeInt(i);
 		msg.writeCString(JSON.stringify(cmd));
 	}
+
+	// AP - TCP/IP hulk-smash. Set clients to having acknowledged
+	// immediately. Remove for UDP.
+	client.reliableAcknowledge = client.reliableSequence;
 }
 
 /**
@@ -33079,7 +33085,7 @@ function SetInitialSnapshot(snap) {
 
 		ResetEntity(cent);
 
-		// check for events
+		// Check for events.
 		CheckEvents(cent);
 	}
 }
@@ -33198,7 +33204,7 @@ function TransitionEntity(cent) {
 	// Clear the next state. It will be set by the next SetNextSnap.
 	cent.interpolate = false;
 
-	// check for events
+	// Check for events.
 	CheckEvents(cent);
 }
 
@@ -33332,7 +33338,7 @@ function OffsetThirdPersonView() {
 	// Trace a ray from the origin to the viewpoint to make sure the view isn't
 	// in a solid block. Use an 8 by 8 block to prevent the view from near clipping anything.
 	var trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs,
-		cg.predictedPlayerState.arenaNum, cg.predictedPlayerState.clientNum, MASK.SOLID);
+		cg.predictedPlayerState.clientNum, MASK.SOLID);
 
 	if (trace.fraction !== 1.0) {
 		vec3.set(trace.endPos, view);
@@ -33341,7 +33347,7 @@ function OffsetThirdPersonView() {
 		// Try another trace to this position, because a tunnel may have the ceiling
 		// close enogh that this is poking out.
 		trace = Trace(cg.refdef.vieworg, view, thirdPersonCameraMins, thirdPersonCameraMaxs,
-			cg.predictedPlayerState.arenaNum, cg.predictedPlayerState.clientNum, MASK.SOLID);
+			cg.predictedPlayerState.clientNum, MASK.SOLID);
 		vec3.set(trace.endPos, view);
 	}
 
@@ -35093,12 +35099,6 @@ var Script = function () {
 	this.stages         = [];
 };
 
-var Deform = function () {
-	this.type   = null;
-	this.spread = 0.0;
-	this.wave   = null;
-};
-
 var ScriptStage = function () {
 	this.maps         = [];
 	this.animFreq     = 0;
@@ -35118,13 +35118,36 @@ var ScriptStage = function () {
 	this.tcMods       = [];
 };
 
-var TexMod = function () {
+var Deform = function () {
 	this.type   = null;
+	this.spread = 0.0;
 	this.wave   = null;
-	this.scaleX = 0.0;
-	this.scaleY = 0.0;
-	this.sSpeed = 0.0;
-	this.tSpeed = 0.0;
+};
+
+Deform.equal = function (a, b) {
+	return a.type === b.type &&
+		a.spread === b.spread &&
+		((!a.wave && !b.wave) || (a.wave && b.wave && Waveform.equal(a.wave, b.wave)));
+};
+
+var TexMod = function () {
+	this.type       = null;
+	this.scaleX     = 0.0;
+	this.scaleY     = 0.0;
+	this.sSpeed     = 0.0;
+	this.tSpeed     = 0.0;
+	this.wave       = null;
+	this.turbulance = null;
+};
+
+TexMod.equal = function (a, b) {
+	return a.type === b.type &&
+		a.scaleX === b.scaleX &&
+		a.scaleY === b.scaleY &&
+		a.sSpeed === b.sSpeed &&
+		a.tSpeed === b.tSpeed &&
+		((!a.wave && !b.wave) || (a.wave && b.wave && Waveform.equal(a.wave, b.wave))) &&
+		((!a.turbulance && !b.turbulance) || (a.turbulance && b.turbulance && Waveform.equal(a.turbulance, b.turbulance)));
 };
 
 var Waveform = function () {
@@ -35133,6 +35156,14 @@ var Waveform = function () {
 	this.amp      = 0.0;
 	this.phase    = 0.0;
 	this.freq     = 0.0;
+};
+
+Waveform.equal = function (a, b) {
+	return a.funcName === b.funcName &&
+		a.base === b.base &&
+		a.amp === b.amp &&
+		a.phase === b.phase &&
+		a.freq === b.freq;
 };
 
 /**********************************************************
@@ -35649,12 +35680,11 @@ ShaderParser.parseTexMod = function (tokens, stage) {
 			break;
 
 		case 'turb':
-			tcMod.turbulance = {
-				base: parseFloat(tokens.next()),
-				amp: parseFloat(tokens.next()),
-				phase: parseFloat(tokens.next()),
-				freq: parseFloat(tokens.next())
-			};
+			tcMod.turbulance = new Waveform();
+			tcMod.turbulance.base = parseFloat(tokens.next());
+			tcMod.turbulance.amp = parseFloat(tokens.next());
+			tcMod.turbulance.phase = parseFloat(tokens.next());
+			tcMod.turbulance.freq = parseFloat(tokens.next());
 			break;
 
 		default:
@@ -35686,13 +35716,14 @@ ShaderParser.parseWaveForm = function (tokens) {
  **********************************************************/
 var ShaderCompiler = {};
 
-var programCache = {};
+var programCache = [];
 
 ShaderCompiler.compile = function (gl, script, numLights) {
-	var key = ShaderCompiler.getScriptKey(script, numLights);
+	var shaderProgram = ShaderCompiler.findProgramInCache(script, numLights);
 
-	if (programCache[key]) {
-		return programCache[key];
+	if (shaderProgram) {
+		console.log('GOT A CACHED PROGRAM');
+		return shaderProgram;
 	}
 
 	var builder = ShaderCompiler.buildProgram(script, numLights);
@@ -35725,7 +35756,7 @@ ShaderCompiler.compile = function (gl, script, numLights) {
 		return null;
 	}
 
-	var shaderProgram = gl.createProgram();
+	shaderProgram = gl.createProgram();
 	gl.attachShader(shaderProgram, vertexShader);
 	gl.attachShader(shaderProgram, fragmentShader);
 	gl.linkProgram(shaderProgram);
@@ -35756,7 +35787,7 @@ ShaderCompiler.compile = function (gl, script, numLights) {
 	}
 
 	// Add to cache.
-	programCache[key] = shaderProgram;
+	ShaderCompiler.addProgramToCache(script, numLights, shaderProgram);
 
 	return shaderProgram;
 };
@@ -35766,21 +35797,80 @@ ShaderCompiler.compile = function (gl, script, numLights) {
  * This is an incredibly naive approach, but it's an order of magnitude faster than
  * without.
  */
-ShaderCompiler.getScriptKey = function (script, numLights) {
-	// Lazy copy constructor.
-	var copy = JSON.parse(JSON.stringify(script));
+ShaderCompiler.findProgramInCache = function (script, numLights) {
+	var bucket = programCache[numLights];
 
-	// Ignore surfaceparms.
-	delete copy.surfaceFlags;
-	delete copy.contentFlags;
-
-	// Ignore maps.
-	for (var i = 0; i < copy.stages.length; i++) {
-		delete copy.stages[i].maps;
+	if (!bucket) {
+		return null;
 	}
 
-	// ... and stringify again to be used as a key.
-	return JSON.stringify(copy);
+	for (var i = 0; i < bucket.length; i++) {
+		var el = bucket[i];
+		if (ShaderCompiler.compareScript(script, el.script)) {
+			return el.program;
+		}
+	}
+
+	return null;
+};
+
+ShaderCompiler.compareScript = function (a, b) {
+	if (a.sort !== b.sort ||
+		a.cull !== b.cull ||
+		a.sky !== b.sky ||
+		a.fog !== b.fog ||
+		a.polygonOffset !== b.polygonOffset ||
+		a.entityMergable !== b.entityMergable ||
+		a.positionLerp !== b.positionLerp ||
+		a.vertexDeforms.length !== b.vertexDeforms.length ||
+		a.stages.length !== b.stages.length) {
+		return false;
+	}
+
+	for (var i = 0; i < a.vertexDeforms.length; i++) {
+		if (!Deform.equal(a.vertexDeforms[i], b.vertexDeforms[i])) {
+			return false;
+		}
+	}
+
+	for (var i = 0; i < a.stages.length; i++) {
+		var sa = a.stages[i];
+		var sb = b.stages[i];
+
+		if (sa.animFreq !== sb.animFreq ||
+			sa.clamp !== sb.clamp ||
+			sa.tcGen !== sb.tcGen ||
+			sa.rgbGen !== sb.rgbGen ||
+			// !((!sa.rgbWave && !sb.rgbWave) || (sa.rgbWave && sb.rgbWave && Waveform.equal(sa.rgbWave, sb.rgbWave))) ||
+			sa.alphaGen !== sb.alphaGen ||
+			sa.alphaFunc !== sb.alphaFunc ||
+			// !((!sa.alphaWave && !sb.alphaWave) || (sa.alphaWave && sb.alphaWave && Waveform.equal(sa.alphaWave, sb.alphaWave))) ||
+			sa.blendSrc  !== sb.blendSrc ||
+			sa.blendDest !== sb.blendDest ||
+			sa.hasBlendFunc !== sb.hasBlendFunc ||
+			sa.depthFunc !== sb.depthFunc ||
+			sa.depthWrite !== sb.depthWrite ||
+			sa.isLightmap !== sb.isLightmap ||
+			sa.tcMods.length !== sb.tcMods.length) {
+			return false;
+		}
+
+		for (var j = 0; j < sa.tcMods.length; j++) {
+			if (!TexMod.equal(sa.tcMods[j], sb.tcMods[j])) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+};
+
+ShaderCompiler.addProgramToCache = function (script, numLights, program) {
+	if (!programCache[numLights]) {
+		programCache[numLights] = [];
+	}
+
+	programCache[numLights].push({ script: script, program: program });
 };
 
 ShaderCompiler.buildProgram = function (script, numLights) {
@@ -36202,12 +36292,10 @@ function (
 		var GENTITYNUM_BITS = QShared.GENTITYNUM_BITS;
 		var MAX_GENTITIES   = QShared.MAX_GENTITIES;
 		var ENTITYNUM_WORLD = QShared.ENTITYNUM_WORLD;
-		var MAX_DLIGHTS     = ShaderCompiler.MAX_DLIGHTS;
 
 		var CVF             = QShared.CVF;
 		var SURF            = QShared.SURF;
 		var CONTENTS        = QShared.CONTENTS;
-		var ERR             = com.ERR;
 
 		var MST             = BspSerializer.MST;
 		var SS              = ShaderCompiler.SS;
@@ -36215,7 +36303,7 @@ function (
 		var MAX_QPATH = 64;
 
 var MAX_DRAWGEOM  = 4096;
-var MAX_DLIGHTS = 32;
+var MAX_DLIGHTS = 24;
 var SHADER_MAX_VERTEXES = 4096;
 var SHADER_MAX_INDEXES  = 6 * SHADER_MAX_VERTEXES;
 
@@ -40959,7 +41047,7 @@ function CompileShaderScript(script, callback) {
 	// We can't conditionally branch inside loops in GLSL v1 shaders
 	// across all hardware, so generate a custom shader for each possible
 	// amount of dlights, and bind the correct one at runtime.
-	var maxDlights = shader.sort === SS.OPAQUE ? 0 : 0;
+	var maxDlights = shader.sort === SS.OPAQUE ? MAX_DLIGHTS : 0;
 
 	shader.program = new Array(maxDlights+1);
 
@@ -53984,13 +54072,13 @@ var TextInput = function (element) {
 
 	this.$el = $(element);
 
-	this._latchedValue = this.$el.text();
+	this._latchedValue = this.$el.text() || '';
 	this._tempValue = '';
 
 	this.$el.bind('qk_focus', function (ev) {
 		self.onFocus(ev);
 	});
-	
+
 	this.$el.bind('qk_blur', function (ev) {
 		self.onBlur(ev);
 	});
@@ -54002,15 +54090,22 @@ var TextInput = function (element) {
 
 TextInput.prototype.componentName = 'qk_text';
 
-TextInput.prototype.val = function (newValue) {
+TextInput.prototype.val = function (newValue, silent) {
 	if (arguments.length) {
-		this._latchedValue = newValue;
+		if (this._latchedValue === newValue) {
+			return;
+		}
+
+		// Update the internal value.
+		this._latchedValue = newValue || '';
 
 		// Update the element text.
 		this.$el.text(this._latchedValue);
 
 		// Trigger changed event.
-		this.$el.trigger(new QkChangeEvent(this._latchedValue));
+		if (!silent) {
+			this.$el.trigger(new QkChangeEvent(this._latchedValue));
+		}
 	} else {
 		return this._latchedValue;
 	}
@@ -54018,16 +54113,9 @@ TextInput.prototype.val = function (newValue) {
 
 TextInput.prototype.onFocus = function (ev) {
 	this._tempValue = this.val();
-	if (this._tempValue === undefined) {
-		this._tempValue = '';
-	}
 };
 
 TextInput.prototype.onBlur = function (ev) {
-	// Update the actual value.
-	if (this._tempValue === undefined) {
-		this._tempValue = '';
-	}
 	this.val(this._tempValue);
 }
 
@@ -54635,10 +54723,12 @@ function GetAllElementsAtPoint(view, x, y) {
 		return (x >= range.x[0] && x <= range.x[1]) && (y >= range.y[0] && y <= range.y[1]);
 	});
 
-	// Make sure to add the origin, lowest element as the first index
+	// Make sure to add the original, bottom-most element as the first index
 	// in the array, as we rely on that later on for triggering events.
-	var matches = $matches.toArray();
-	matches.splice(0, 0, el);
+	var matches = [el];
+	$matches.each(function() {
+		matches.push(this);
+	});
 
 	return matches;
 }
@@ -54647,8 +54737,8 @@ function GetAllElementsAtPoint(view, x, y) {
  * UpdateHoverElements
  */
 function UpdateHoverElements() {
-	var i;
 	var activeMenu = PeekMenu();
+
 	if (!activeMenu) {
 		error('Calling UpdateHoverElements with no active menu');
 		return;
@@ -54658,7 +54748,7 @@ function UpdateHoverElements() {
 
 	// Trigger mouseleave events.
 	if (uil.hoverEls) {
-		for (i = 0; i < uil.hoverEls.length; i++) {
+		for (var i = 0; i < uil.hoverEls.length; i++) {
 			var oldel = uil.hoverEls[i];
 
 			if (!els || els.indexOf(oldel) === -1) {
@@ -54670,7 +54760,7 @@ function UpdateHoverElements() {
 
 	// Trigger mouseenter events.
 	if (els) {
-		for (i = 0; i < els.length; i++) {
+		for (var i = 0; i < els.length; i++) {
 			var newel = els[i];
 
 			if (!uil.hoverEls || uil.hoverEls.indexOf(newel) === -1) {
@@ -54698,7 +54788,11 @@ function ClearHoverElements() {
  * FocusElement
  */
 function FocusElement(el) {
-	// Nothing to do.
+	// If el is a jQuery object, get the inner DOM node.
+	if (el instanceof jQuery) {
+		el = el.get(0);
+	}
+
 	if (uil.focusEl === el) {
 		return false;
 	}
@@ -54716,12 +54810,21 @@ function FocusElement(el) {
  * ClearFocusedElement
  */
 function ClearFocusedElement(triggerBlur) {
-	if (triggerBlur) {
-		$(uil.focusEl).trigger(new QkBlurEvent());
+	var el = uil.focusEl;
+	if (!el) {
+		return;
 	}
 
 	$(uil.focusEl).removeClass('focus');
 	uil.focusEl = null;
+
+	// Clear uil.focusEl before triggering the event so
+	// we don't get in a cycle of multiple clear/blur/clear/blur
+	// event when child elements trap blur and inaverdantly trigger
+	// this again.
+	if (triggerBlur) {
+		$(el).trigger(new QkBlurEvent());
+	}
 }
 		/**
  * GetViewConstructor
@@ -55302,7 +55405,10 @@ var HudView = UIView.extend({
 		this.render();
 	},
 	opened: function () {
-		FocusElement(this.$say);
+		// Reset the text.
+		this.$say[0].qk_text.val('', true);
+
+		FocusElement(this.$say.get(0));
 	},
 	textChanged: function (ev) {
 		var text = ev.value;
@@ -55312,12 +55418,8 @@ var HudView = UIView.extend({
 
 		var cmd = 'say "' + text + '"';
 		COM.ExecuteBuffer(cmd);
-
-		// Reset the text for next time.
-		// Should trigger a qk_blur event.
-		this.$say[0].qk_text.val('');
 	},
-	textBlur: function () {
+	textBlur: function (ev) {
 		this.close();
 	},
 	renderView: function () {
@@ -57305,16 +57407,22 @@ function ParseServerMessage(msg) {
 		clc.reliableAcknowledge = clc.reliableSequence;
 	}
 
-	var cmd = msg.readByte();
+	while (true) {
+		var cmd = msg.readByte();
 
-	if (cmd === COM.SVM.serverCommand) {
-		ParseServerCommand(msg);
-	} else if (cmd === COM.SVM.gamestate) {
-		ParseGameState(msg);
-	} else if (cmd === COM.SVM.snapshot) {
-		ParseSnapshot(msg);
-	} else {
-		COM.Error('Bad message type', cmd);
+		if (cmd === COM.SVM.EOF) {
+			break;
+		}
+
+		if (cmd === COM.SVM.serverCommand) {
+			ParseServerCommand(msg);
+		} else if (cmd === COM.SVM.gamestate) {
+			ParseGameState(msg);
+		} else if (cmd === COM.SVM.snapshot) {
+			ParseSnapshot(msg);
+		} else {
+			COM.Error('Bad message type', cmd);
+		}
 	}
 }
 
@@ -58378,7 +58486,7 @@ var playerStateFields = [
 	{ path: QS.FTA('eventParms[0]'),     bits: UINT8   },
 	{ path: QS.FTA('eventParms[1]'),     bits: UINT8   },
 	{ path: QS.FTA('clientNum'),         bits: UINT8   },
-	{ path: QS.FTA('arenaNum'),          bits: UINT8   },
+	{ path: QS.FTA('arenaNum'),          bits: UINT16  },
 	{ path: QS.FTA('weapon'),            bits: UINT8   }, /*5*/
 	{ path: QS.FTA('viewangles[2]'),     bits: FLOAT32 },
 	// { path: QS.FTA('grapplePoint[0]'),   bits: FLOAT32 },
