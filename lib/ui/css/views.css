@@ -119,25 +119,40 @@
 	position: relative;
 	width: 80%;
 	margin: 8em auto 0;
-	padding: 3em 1.6em 1.2em;
+	padding: 1.2em 1.6em;
 	background: rgba(0, 0, 0, 0.6);
 	color: #fff;
-}
-
-.dialog .close {
-	position: absolute;
-	width: 1.4em;
-	height: 1.4em;
-	top: 0;
-	right: 0;
-	font-size: 1.4em;
-	color: #999999;
-	text-align: center;
 }
 
 .dialog .close.hover {
 	color: #bfbfbf;
 }
+
+.dialog .tab-heading {
+	position: absolute;
+	top: -1.2em;
+}
+
+.dialog .tab-heading span {
+	position: relative;
+	margin: 0 1em 0 0;
+	padding: .2em;
+	background: #ff0000;
+	font-size: 1.2em;
+	text-transform: uppercase;
+}
+/*
+.dialog .tab-heading span:after{
+	content: '';
+	position: absolute;
+	bottom: 0px;
+	width: 0px;
+	height: 0px;
+	border-bottom: 1.2em solid #ff0000;
+	border-right: .6em solid transparent;
+	top: -.2em;
+	right: -.55em;
+}*/
 
 .dialog .dialog-heading {
 	position: absolute;
@@ -304,49 +319,15 @@
  *
  **********************************************************/
 
-/**
- * Main menu
- */
-#main .content {
+#logo {
 	position: absolute;
 	top: 0;
-	left: 26em;
+	left: 0;
 	bottom: 0;
 	right: 0;
-}
-
-/**
- * Singleplayer menu
- */
-#singleplayer .background {
-	background: rgba(0, 0, 0, 0.3);
-}
-
-#singleplayer .level-select-wrapper {
-	overflow: hidden;
-}
-
-#singleplayer .levels {
-	list-style: none;
-	margin: 0 11em 0 0;
-	padding: 0;
-}
-
-#singleplayer .preview {
-	float: right;
-}
-
-#singleplayer .preview .preview-image {
-	display: none;
-	width: 10em;
-	height: 10em;
-}
-
-/**
- * Multiplayer menu
- */
-#multiplayer .background {
-	background: rgba(0, 0, 0, 0.3);
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	background-position: center;
 }
 
 /**
@@ -441,18 +422,17 @@
 /**
  * Loading view
  */
-#loading .background {
-	background: #222;
-}
-
 #loading .loading {
 	display: block;
+	padding: 1em 1.3em;
 	text-align: center;
+	background: rgba(0, 0, 0, 0.95);
+	border-radius: 0.2em;
 }
 
 #loading .loading .progress {
 	width: 30em;
-	margin: 0 auto;
+	margin: 1em auto 0;
 }
 
 /**
