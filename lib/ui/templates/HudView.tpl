@@ -6,24 +6,24 @@
 	</div>
 	<div class="scores">
 		<% if (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') { %>
-			<div class="score-wrapper score1 team-red<% if (score1 && score1.localplayer) { %> localplayer<% } %>">
-				<span class="status"><span class="player" data-image="icons/player.png">&nbsp;</span> <% if (score1 !== null) { %><%- score1.count %><% } %></span>
+			<div class="score-wrapper score1 team-red<% if (info1 && info1.localplayer) { %> localplayer<% } %>">
+				<span class="status"><span class="player" data-image="icons/player.png">&nbsp;</span> <% if (info1 !== null) { %><%- info1.count %><% } %></span>
 				<span class="name">Red Team</span>
-				<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
+				<span class="score"><% if (info1 !== null) { %><%- info1.score %><% } %></span>
 			</div>
-			<div class="score-wrapper score2 team-blue<% if (score2 && score2.localplayer) { %> localplayer<% } %>">
-				<span class="status"><span class="player" data-image="icons/player.png">&nbsp;</span> <% if (score2 !== null) { %><%- score2.count %><% } %></span>
+			<div class="score-wrapper score2 team-blue<% if (info2 && info2.localplayer) { %> localplayer<% } %>">
+				<span class="status"><span class="player" data-image="icons/player.png">&nbsp;</span> <% if (info2 !== null) { %><%- info2.count %><% } %></span>
 				<span class="name">Blue Team</span>
-				<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
+				<span class="score"><% if (info2 !== null) { %><%- info2.score %><% } %></span>
 			</div>
 		<% } else { %>
-			<div class="score-wrapper score1 team-free<% if (score1 && score1.localplayer) { %> localplayer<% } %>">
-				<span class="name"><% if (score1 !== null) { %><%- score1.rank %>. <%- score1.name %><% } %></span>
-				<span class="score"><% if (score1 !== null) { %><%- score1.score %><% } %></span>
+			<div class="score-wrapper score1 team-free<% if (info1 && info1.localplayer) { %> localplayer<% } %>">
+				<span class="name"><% if (info1 !== null) { %><%- info1.rank %>. <%- info1.name %><% } %></span>
+				<span class="score"><% if (info1 !== null) { %><%- info1.score %><% } %></span>
 			</div>
-			<div class="score-wrapper score2 team-free<% if (score2 && score2.localplayer) { %> localplayer<% } %>">
-				<span class="name"><% if (score2 !== null) { %><%- score2.rank %>. <%- score2.name %><% } %></span>
-				<span class="score"><% if (score2 !== null) { %><%- score2.score %><% } %></span>
+			<div class="score-wrapper score2 team-free<% if (info2 && info2.localplayer) { %> localplayer<% } %>">
+				<span class="name"><% if (info2 !== null) { %><%- info2.rank %>. <%- info2.name %><% } %></span>
+				<span class="score"><% if (info2 !== null) { %><%- info2.score %><% } %></span>
 			</div>
 		<% } %>
 	</div>

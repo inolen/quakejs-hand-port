@@ -41,8 +41,9 @@
 				</thead>
 				<tbody>
 					<% for (var i = 1; i < arenas.length; i++) { %>
+					<% var arena = arenas[i]; %>
 					<tr>
-						<td><%- arenas[i] %></td><td>Pickup</td><td>2</td>
+						<td><%- arena.name %></td><td>Pickup</td><td>2</td>
 					</tr>
 					<% } %>
 				</tbody>
