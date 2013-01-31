@@ -61,56 +61,18 @@
 	text-decoration: none;
 }
 
-/**
- * Vertical menu
- */
-.vertical-menu {
+#viewport-ui .visible {
+	opacity: 1;
+	-moz-transition: opacity .2s ease-in;
+	-webkit-transition: opacity .2s ease-in;
 }
 
-.vertical-menu h1 {
-	margin: 0 0 0.4em 0.1em;
-	font-size: 2.4em;
-	text-transform: uppercase;
+#viewport-ui .hidden {
+	opacity: 0;
+	-moz-transition: opacity .2s ease-out;
+	-webkit-transition: opacity .2s ease-out;
 }
 
-.vertical-menu-content {
-	padding: 2em;
-	left: 0;
-	right: 0;
-}
-
-.vertical-menu-content ul {  /* sometimes menu items are in lists */
-	margin: 0;
-	padding: 0;
-	list-style: none;
-}
-
-.vertical-menu-item {
-	margin: 0.1em 0;
-	padding: 0.1em 0.3em;
-	font-size: 1.2em;
-	text-transform: uppercase;
-}
-
-.vertical-menu-item.hover,
-.vertical-menu-item.active {  /* nav tab item */
-	background: #fff;
-	color: #000;
-}
-
-.vertical-menu-item.hover a,
-.vertical-menu-item.active a {  /* nav tab item */
-	color: #000;
-}
-
-.vertical-menu-left {
-	position: absolute;
-	top: 0;
-	left: 0;
-	bottom: 0;
-	width: 26em;
-	background: rgba(0, 0, 0, 0.6);
-}
 
 /**
  * Dialogs
@@ -318,7 +280,6 @@
  * Specialized
  *
  **********************************************************/
-
 #logo {
 	position: absolute;
 	top: 0;
