@@ -6,6 +6,7 @@
 	</div>
 
 	<div class="content">
+		<% if (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') { %>
 		<div class="teams">
 			<h1>Teams</h1>
 			<table>
@@ -25,5 +26,28 @@
 				</tbody>
 			</table>
 		</div>
+		<% } %>
+
+		<% if (arenas && arenas.length > 1) { %>
+		<div class="arenas">
+			<h1>Arenas</h1>
+			<table>
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Gametype</th>
+						<th>Players</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for (var i = 1; i < arenas.length; i++) { %>
+					<tr>
+						<td><%- arenas[i] %></td><td>Pickup</td><td>2</td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
+		</div>
+		<% } %>
 	</div>
 </div>
