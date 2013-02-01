@@ -1,5 +1,5 @@
-<div id="crosshair" class="centerx centery" data-image="gfx/2d/crosshaira"></div>
-<div id="crosshair-name" class="centerx centery"><%- crosshairName || '' %></div>
+<div id="crosshair" data-image="gfx/2d/crosshaira"></div>
+<div id="crosshair-name"><%- crosshairName || '' %></div>
 
 <div id="gamestate-wrapper">
 	<div class="gametype-info">
