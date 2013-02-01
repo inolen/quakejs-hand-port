@@ -1,4 +1,4 @@
-<div id="current-game" class="dialog">
+<div id="ingame-dialog" class="dialog">
 	<div class="tab-heading">
 		<span id="current-game">Current game</span>
 		<span id="callvote">Call vote</span>
@@ -38,13 +38,14 @@
 							<th>Name</th>
 							<th>Gametype</th>
 							<th>Players</th>
+							<th></th>
 						</tr>
 					</thead>
 					<tbody>
 						<% for (var i = 1; i < arenas.length; i++) { %>
 						<% var arena = arenas[i]; %>
 						<tr>
-							<td><%- arena.name %></td><td>Pickup</td><td>2</td>
+							<td><%- arena.name %></td><td>Pickup</td><td>2</td><td><span class="join-arena" data-arena="<%- i %>">JOIN</span></td>
 						</tr>
 						<% } %>
 					</tbody>

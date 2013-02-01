@@ -38,7 +38,7 @@
 	display: inline-block;
 }
 
-#viewport-ui .fullscreen {
+#viewport-ui > div {
 	position: fixed;
 	top: 0;
 	left: 0;
@@ -63,14 +63,17 @@
 
 #viewport-ui .visible {
 	opacity: 1;
-	-moz-transition: opacity .2s ease-in;
-	-webkit-transition: opacity .2s ease-in;
+	visibility: visible;
+	-moz-transition: visibility 0s, opacity .2s ease-in;
+	-webkit-transition: visibility 0s, opacity .2s ease-in;
 }
 
 #viewport-ui .hidden {
 	opacity: 0;
-	-moz-transition: opacity .2s ease-out;
-	-webkit-transition: opacity .2s ease-out;
+	/* Must animate visibility so mouse events are ignored. */
+	visibility: hidden;
+	-moz-transition: visibility 0s, opacity .2s ease-out;
+	-webkit-transition: visibility 0s, opacity .2s ease-out;
 }
 
 
@@ -292,6 +295,13 @@
 }
 
 /**
+ * Main menu
+ */
+#main {
+	background: #000;
+}
+
+/**
  * Settings menu
  */
 #settings .sections {
@@ -383,6 +393,10 @@
 /**
  * Loading view
  */
+#loading {
+	background: #000;
+}
+
 #loading .loading {
 	position: absolute;
 	top: 50%;
@@ -515,8 +529,8 @@
 	left: 50%;
 	margin-top: -1em;
 	margin-left: -1em;
-	width: 2em;
-	height: 2em;
+	width: 2.2em;
+	height: 2.2em;
 }
 
 #crosshair-name {

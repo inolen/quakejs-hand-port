@@ -1,4 +1,4 @@
-<div id="crosshair" data-image="gfx/2d/crosshaira"></div>
+<div id="crosshair" data-image="gfx/2d/crosshairb"></div>
 <div id="crosshair-name"><%- crosshairName || '' %></div>
 
 <div id="gamestate-wrapper">
