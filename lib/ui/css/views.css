@@ -82,7 +82,7 @@
  */
 .dialog {
 	position: relative;
-	width: 80%;
+	width: 60%;
 	margin: 8em auto 0;
 	padding: 1.2em 1.6em;
 	background: rgba(0, 0, 0, 0.6);
@@ -119,31 +119,43 @@
 	right: -.55em;
 }*/
 
-.dialog .dialog-heading {
+/**
+ * Tabsets
+ */
+.tabset {
+	margin: 2em 0 1.4em;
+}
+
+.tabset .tabset-heading {
+	position: relative;
+	float: left;
+	padding: .3em 1.4em;
+	background: #1b1b1b;
+}
+
+.tabset .tabset-heading:after{
+	content: '';
 	position: absolute;
-	top: -1em;
-	left: -.3em;
+	top: 0;
+	right: -.98em;
+	width: 0px;
+	height: 0px;
+	border-bottom: 1.6em solid #1b1b1b;
+	border-right: 1em solid transparent;
 }
 
-.dialog .dialog-title {
-	display: inline-block;
-	padding: .1em .3em;
-	vertical-align: middle;
-	text-transform: uppercase;
-	background: #fff;
-	color: #000;
-	font-family: 'GibsonBold', sans-serif;
-	font-size: 2em;
+.tabset .tabset-content {
+	clear: both;
+	padding: .6em 1em;
+	background: #1b1b1b;
 }
 
-.dialog .menu-item {
-	margin-bottom: .5em;
-	padding: .5em;
-	background: #222;
+.tabset table {
+	width: 100%;
 }
 
-.dialog .menu-item.hover {
-	background: #333;
+.tabset table th {
+	text-align: left;
 }
 
 /**
@@ -299,6 +311,17 @@
  */
 #main {
 	background: #000;
+}
+
+/**
+ * Ingame menu
+ */
+#ingame .tabset table tbody td:first-child {
+	width: 20em;
+}
+
+#ingame .tabset table tbody td:last-child {
+	text-align: right;
 }
 
 /**

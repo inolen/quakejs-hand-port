@@ -1,3 +1,5 @@
+<% var rocketarena = arenas && arenas.length > 1 && gametype === 'ca'; %>
+
 <div id="ingame-dialog" class="dialog">
 	<div class="tab-heading">
 		<span id="current-game">Current game</span>
@@ -6,32 +8,42 @@
 	</div>
 
 	<div class="content">
-		<% if (arenas) { %>
-			<% if (currentArenaNum !== null && (gametype === 'team' || gametype === 'ctf' || gametype === 'ca')) { %>
-			<div class="teams">
-				<h1>Teams</h1>
+		<% if (rocketarena && currentArenaNum === 0) { %>
+			<p>
+				Welcome! You're currently in the lobby. Select an arena from below or run through a portal to join an arena and get started fragging.
+			</p>
+		<% } %>
+
+		<% if (arenas && currentArenaNum !== null && (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') &&
+			(!rocketarena || (rocketarena && currentArenaNum !== 0))) { %>
+		<div class="teams tabset">
+			<div class="tabset-heading">Teams</div>
+			<div class="tabset-content">
 				<table>
 					<thead>
 						<tr>
 							<th>Name</th>
 							<th>Players</th>
+							<th></th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
-							<td>Red</td><td><%- arenas[currentArenaNum].count1 %></td>
+							<td>Red</td><td><%- arenas[currentArenaNum].count1 %></td><td><span class="join-team" data-team="red">JOIN</span></td>
 						</tr>
 						<tr>
-							<td>Blue</td><td><%- arenas[currentArenaNum].count2 %></td>
+							<td>Blue</td><td><%- arenas[currentArenaNum].count2 %></td><td><span class="join-team" data-team="blue">JOIN</span></td>
 						</tr>
 					</tbody>
 				</table>
 			</div>
-			<% } %>
+		</div>
+		<% } %>
 
-			<% if (arenas.length > 1) { %>
-			<div class="arenas">
-				<h1>Arenas</h1>
+		<% if (arenas && arenas.length > 1) { %>
+		<div class="arenas tabset">
+			<div class="tabset-heading">Arenas</div>
+			<div class="tabset-content">
 				<table>
 					<thead>
 						<tr>
@@ -51,7 +63,7 @@
 					</tbody>
 				</table>
 			</div>
-			<% } %>
+		</div>
 		<% } %>
 	</div>
 </div>
