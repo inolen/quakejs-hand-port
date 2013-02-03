@@ -8,13 +8,13 @@ var argv = require('optimist')
 	.default('port', 45735)
 	.argv;
 
-var servers = [];
-var scanInterval = 30 * 1000;
+var servers = {};
+var pruneInterval = 60 * 1000;
 
 function main() {
 	createServer(argv.port);
 
-	setTimeout(scanServers, scanInterval);
+	setInterval(pruneServers, pruneInterval);
 }
 
 function createServer(port) {
@@ -48,11 +48,17 @@ function handleHeartbeat(req, res, next) {
 
 	var address = hostname + ':' + port;
 
-	console.log('Received heartbeat from', address);
+	console.log((new Date()) + ' Received heartbeat from', address);
 
-	if (servers.indexOf(address) === -1) {
-		servers.push(address);
-	}
+	// Scan server immediately.
+	scanServer(address, function (err, data) {
+		if (err) {
+			removeServer(address);
+			return;
+		}
+
+		addServer(address, data);
+	});
 
 	res.send({ message: 'success' });
 	res.end();
@@ -63,16 +69,10 @@ function handleServers(req, res, next) {
 	res.send(servers);
 }
 
-function scanServers() {
-
-}
-
-function scanServer(callback) {
-	var ws = new WebSocketClient('ws://localhost:9001');
+function scanServer(address, callback) {
+	var ws = new WebSocketClient('ws://' + address);
 
 	ws.on('open', function () {
-		console.log('WebSocket client connected');
-
 		// FIXME node.js encodes 0x0 as 0x20 for some reason so we force it.
 		// https://github.com/joyent/node/issues/297
 		var buff = new Buffer('\xff\xff\xff\xffgetinfo\0', 'ascii');
@@ -91,8 +91,6 @@ function scanServer(callback) {
 		}
 
 		// Account for null-terminator.
-		console.log(data.length);
-
 		var str = data.toString('ascii', 4, data.length - 1);
 		var json = JSON.parse(str);
 
@@ -106,8 +104,37 @@ function scanServer(callback) {
 	});
 }
 
-scanServer(function (err, json) {
-	console.log(err, json);
-});
+function addServer(address, data) {
+	if (!servers[address]) {
+		console.log((new Date()) + ' Adding server', address);
+	} else {
+		console.log((new Date()) + ' Updating server', address);
+	}
 
-// main();
+	servers[address] = data;
+	servers[address].timestamp = Date.now();
+}
+
+function removeServer(address) {
+	console.log((new Date()) + ' Removing server', address);
+
+	delete servers[address];
+}
+
+function pruneServers() {
+	var now = Date.now();
+
+	for (var address in servers) {
+		if (!servers.hasOwnProperty(address)) {
+			continue;
+		}
+
+		var delta = now - servers[address].timestamp;
+
+		if (delta > pruneInterval) {
+			removeServer(address);
+		}
+	}
+}
+
+main();
