@@ -6,27 +6,15 @@ var url = require('url');
 var express = require('express');
 var includes = require('./build/includes.js');
 
+var argv = require('optimist')
+	.default('port', 9000)
+	.argv;
+
 function main() {
-	var cfg = loadConfig();
-	createServer(cfg.port);
+	createServer(argv.port);
 }
 
-function loadConfig() {
-	var cfg = {
-		port: 9000,
-		maxAge: 0
-	};
-
-	try {
-		var data = require('./content.json');
-		_.extend(cfg, data);
-	} catch (e) {
-	}
-
-	return cfg;
-}
-
-function createServer(port, cacheMaxAge) {
+function createServer(port) {
 	var app = express();
 
 	app.locals.assets = new AssetMap(__dirname + '/assets');
@@ -34,7 +22,6 @@ function createServer(port, cacheMaxAge) {
 	app.use(express.compress());
 	app.use(function (req, res, next) {
 		res.locals.assets = app.locals.assets;
-		res.locals.maxAge = cacheMaxAge;
 		next();
 	});
 	app.get('/bin/*.js', handleBinary);
@@ -44,24 +31,21 @@ function createServer(port, cacheMaxAge) {
 
 	var server = http.createServer(app);
 	server.listen(port);
-	console.log('Asset server is now listening on port', port);
+	console.log('Content server is now listening on port', port);
 
 	return server;
 }
 
 function handleBinary(req, res, next) {
-	// Lookup file without the cachebuster.
 	var parsed = url.parse(req.url);
 	var absolutePath = __dirname + parsed.pathname;
 
-	res.setHeader('Cache-Control', 'public, max-age=' + res.locals.maxAge + ', must-revalidate');
 	res.sendfile(absolutePath, function (err) {
 		if (err) return next(err);
 	});
 }
 
 function handleLibrary(req, res, next) {
-	// Lookup file without the cachebuster.
 	var parsed = url.parse(req.url);
 	var absolutePath = __dirname + parsed.pathname;
 
@@ -69,7 +53,6 @@ function handleLibrary(req, res, next) {
 		if (err) return next(err);
 		var text = includes(absolutePath);
 
-	res.setHeader('Cache-Control', 'public, max-age=' + res.locals.maxAge + ', must-revalidate');
 		res.send(text);
 	});
 }
@@ -78,7 +61,6 @@ function handleAllShader(req, res, next) {
 	getAllShaders(res.locals.assets, function (err, shaders) {
 		if (err) return next(err);
 
-		res.setHeader('Cache-Control', 'public, max-age=' + res.locals.maxAge + ', must-revalidate');
 		res.send(shaders);
 	});
 }
@@ -112,7 +94,6 @@ function handleAsset(req, res, next) {
 
 	console.log('Serving asset', relativePath, 'from', absolutePath);
 
-	res.setHeader('Cache-Control', 'public, max-age=' + res.locals.maxAge + ', must-revalidate');
 	res.sendfile(absolutePath, function (err) {
 		if (err) return next(err);
 	});

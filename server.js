@@ -1,35 +1,24 @@
 var http = require('http');
 var express = require('express');
 
+var port = 8080;
+var contentPort = 9000;
+
 function main() {
-	var cfg = loadConfig();
-
-	createContentServer(cfg.content.port);
-	createExampleServer(cfg.port, cfg.content.host, cfg.content.port);
-}
-
-function loadConfig() {
-	var cfg = {
-		port: 8080,
-		content: {
-			host: 'localhost',
-			port: 9000
-		}
-	};
-	return cfg;
+	var contentServer = createContentServer(contentPort);
+	createExampleServer(port, contentServer.address().address, contentServer.address().port);
 }
 
 function createContentServer(port) {
-	// Max cache age is 0 - no caching.
-	return require('./content').createServer(port, 0);
+	return require('./content').createServer(port);
 }
 
-function createExampleServer(port, proxyHost, proxyPort) {
+function createExampleServer(port, contentHost, contentPort) {
 	var app = express();
 	app.use(express.static(__dirname + '/example'));
 	app.use(function (req, res, next) {
-		res.locals.proxyHost = proxyHost;
-		res.locals.proxyPort = proxyPort;
+		res.locals.contentHost = contentHost;
+		res.locals.contentPort = contentPort;
 		next();
 	});
 	app.get('/bin/*', proxyContentRequest);
@@ -49,8 +38,8 @@ function proxyContentRequest(req, res, next) {
 	delete req.headers['host'];
 
 	var preq = http.request({
-		host: res.locals.proxyHost,
-		port: res.locals.proxyPort,
+		host: res.locals.contentHost,
+		port: res.locals.contentPort,
 		path: req.url,
 		method: req.method,
 		headers: req.headers
