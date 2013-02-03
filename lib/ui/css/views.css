@@ -8,18 +8,6 @@
 	font-style: normal;
 }
 
-#viewport-ui {
-	/**
-	 * Don't let people accidently highlight text.
-	 */
-	-webkit-touch-callout: none;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
-}
-
 #viewport-ui .pointer {
 	display: none;
 	position: absolute;
@@ -39,7 +27,7 @@
 }
 
 #viewport-ui > div {
-	position: fixed;
+	position: absolute;
 	top: 0;
 	left: 0;
 	bottom: 0;
