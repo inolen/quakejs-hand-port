@@ -1,7 +1,6 @@
 .*
 !/.gitignore
-assets.json
-dedicated.json
+user.cfg
 /bin/tmp
 /node_modules
 /assets/*
