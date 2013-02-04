@@ -1,13 +1,14 @@
 var _ = require('underscore');
-var express = require('express');
 var http = require('http');
 var url = require('url');
 var WebSocketClient = require('ws');
+var WebSocketServer = require('ws').Server;
 
 var argv = require('optimist')
 	.default('port', 45735)
 	.argv;
 
+var subscribers = [];
 var servers = {};
 var pruneInterval = 60 * 1000;
 
@@ -18,37 +19,73 @@ function main() {
 }
 
 function createServer(port) {
-	var app = express();
+	var server = http.createServer();
 
-	app.use(express.compress());
-	app.use(express.bodyParser());
+	var wss = new WebSocketServer({
+		server: server
+	});
 
-	var server = http.createServer(app);
+	wss.on('connection', function (ws) {
+		console.log((new Date()) + ' Connection accepted from ' + ws._socket.remoteAddress);
 
-	app.post('/heartbeat', handleHeartbeat);
-	app.get('/servers', handleServers);
+		ws.on('message', function (data, flags) {
+			// Heartbeats come from the game as ArrayBuffers.
+			if (flags.binary) {
+				if (data.readInt8(0) !== -1) {
+					return;
+				}
 
-	server.listen(port, function () {
-		console.log('Master server is now listening on port', port);
+				// Skip past the -1 and ignore the trailing \0 from the game.
+				data = data.toString('ascii', 4, data.length - 1);
+			}
+
+			// Parse out the JSON message.
+			var msg;
+			try {
+				msg = JSON.parse(data);
+			} catch (e) {
+				return;
+			}
+
+			if (msg.type === 'heartbeat') {
+				handleHeartbeat(ws, msg);
+			} else if (msg.type === 'subscribe') {
+				handleSubscribe(ws, msg);
+			}
+		});
+
+		ws.on('error', function (err) {
+			removeSubscriber(ws);
+		});
+
+		ws.on('close', function () {
+			removeSubscriber(ws);
+		});
+	});
+
+	server.listen(port, function() {
+		console.log(new Date() + ' Master server is listening on port ' + server.address().port);
 	});
 
 	return server;
 }
 
-function handleHeartbeat(req, res, next) {
-	var hostname = req.connection.remoteAddress.toLowerCase();
-	var port = parseInt(req.body.port, 10);
-
-	res.type('json');
+/**********************************************************
+ *
+ * Heartbeats
+ *
+ **********************************************************/
+function handleHeartbeat(ws, msg) {
+	var hostname = ws._socket.remoteAddress;
+	var port = parseInt(msg.port, 10);
 
 	if (isNaN(port)) {
-		res.send(500, { error: 'Invalid port number.' });
 		return;
 	}
 
 	var address = hostname + ':' + port;
 
-	console.log((new Date()) + ' Received heartbeat from', address);
+	console.log((new Date()) + ' Received heartbeat from ' + address);
 
 	// Scan server immediately.
 	scanServer(address, function (err, data) {
@@ -57,16 +94,8 @@ function handleHeartbeat(req, res, next) {
 			return;
 		}
 
-		addServer(address, data);
+		updateServer(address, data);
 	});
-
-	res.send({ message: 'success' });
-	res.end();
-}
-
-function handleServers(req, res, next) {
-	res.type('json');
-	res.send(servers);
 }
 
 function scanServer(address, callback) {
@@ -104,19 +133,28 @@ function scanServer(address, callback) {
 	});
 }
 
-function addServer(address, data) {
+function updateServer(address, data) {
 	if (!servers[address]) {
-		console.log((new Date()) + ' Adding server', address);
+		console.log((new Date()) + ' Adding server ' + address);
 	} else {
-		console.log((new Date()) + ' Updating server', address);
+		console.log((new Date()) + ' Updating server ' + address);
 	}
 
 	servers[address] = data;
 	servers[address].timestamp = Date.now();
+
+	// Send partial update to subscribers.
+	var partial = {};
+	partial[address] = servers[address];
+
+	sendMessageToSubscribers(JSON.stringify({
+		type: 'servers',
+		servers: partial
+	}));
 }
 
 function removeServer(address) {
-	console.log((new Date()) + ' Removing server', address);
+	console.log((new Date()) + ' Removing server ' + address);
 
 	delete servers[address];
 }
@@ -134,6 +172,52 @@ function pruneServers() {
 		if (delta > pruneInterval) {
 			removeServer(address);
 		}
+	}
+}
+
+/**********************************************************
+ *
+ * Subscriptions
+ *
+ **********************************************************/
+function handleSubscribe(ws, msg) {
+	addSubscriber(ws);
+
+	// Send all servers upon subscribing.
+	sendMessageToSubscribers(JSON.stringify({
+		type: 'servers',
+		servers: servers
+	}));
+}
+
+function addSubscriber(ws) {
+	var idx = subscribers.indexOf(ws);
+
+	if (idx !== -1) {
+		return;  // already subscribed
+	}
+
+	console.log((new Date()) + ' Adding subscriber ' + ws._socket.remoteAddress);
+
+	subscribers.push(ws);
+}
+
+function removeSubscriber(ws) {
+	var idx = subscribers.indexOf(ws);
+	if (idx === -1) {
+		return;  // should not happen
+	}
+
+	console.log((new Date()) + ' Removing subscriber');
+
+	subscribers.splice(idx, 1);
+}
+
+function sendMessageToSubscribers(msg) {
+	console.log((new Date()) + ' Sending message to ' + subscribers.length + ' subscribers');
+
+	for (var i = 0; i < subscribers.length; i++) {
+		subscribers[i].send(msg);
 	}
 }
 
