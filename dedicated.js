@@ -1,4 +1,3 @@
-var _ = require('underscore');
 var url = require('url');
 var requirejs = require('./build/r.js');
 
