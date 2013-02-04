@@ -16,16 +16,11 @@ function createContentServer(port) {
 
 function createExampleServer(port, contentHost, contentPort) {
 	var app = express();
+
+	app.locals.proxy = new httpProxy.RoutingProxy();
+
 	app.use(express.static(__dirname + '/example'));
-	app.use(function (req, res, next) {
-		res.locals.proxy = new httpProxy.RoutingProxy();
-		res.locals.contentHost = contentHost;
-		res.locals.contentPort = contentPort;
-		next();
-	});
-	app.get('/bin/*', proxyContentRequest);
-	app.get('/lib/*', proxyContentRequest);
-	app.get('/assets/*', proxyContentRequest);
+	app.use(assetProxy(app.locals.proxy, contentHost, contentPort));
 
 	var server = http.createServer(app);
 	server.listen(port);
@@ -34,11 +29,21 @@ function createExampleServer(port, contentHost, contentPort) {
 	return server;
 }
 
-function proxyContentRequest(req, res, next) {
-	res.locals.proxy.proxyRequest(req, res, {
-		host: res.locals.contentHost,
-		port: res.locals.contentPort
-	});
+function assetProxy(proxy, host, port) {
+	return function (req, res, next) {
+		if (req.url.indexOf('/assets/') !== 0 &&
+			req.url.indexOf('/bin/') !== 0 &&
+			req.url.indexOf('/lib/') !== 0) {
+			return next();
+		}
+
+		console.log('Proxying request for', req.url, 'to', host, port);
+
+		proxy.proxyRequest(req, res, {
+			host: host,
+			port: port
+		});
+	};
 }
 
 main();
