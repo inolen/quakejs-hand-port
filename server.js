@@ -1,4 +1,5 @@
 var http = require('http');
+var httpProxy = require('http-proxy');
 var express = require('express');
 
 var port = 8080;
@@ -17,6 +18,7 @@ function createExampleServer(port, contentHost, contentPort) {
 	var app = express();
 	app.use(express.static(__dirname + '/example'));
 	app.use(function (req, res, next) {
+		res.locals.proxy = new httpProxy.RoutingProxy();
 		res.locals.contentHost = contentHost;
 		res.locals.contentPort = contentPort;
 		next();
@@ -33,26 +35,10 @@ function createExampleServer(port, contentHost, contentPort) {
 }
 
 function proxyContentRequest(req, res, next) {
-	// Delete old host header so http.request() sets the correct new one.
-	// https://github.com/joyent/node/blob/master/lib/http.js#L1194
-	delete req.headers['host'];
-
-	var preq = http.request({
+	res.locals.proxy.proxyRequest(req, res, {
 		host: res.locals.contentHost,
-		port: res.locals.contentPort,
-		path: req.url,
-		method: req.method,
-		headers: req.headers
-	}, function (pres) {
-		res.writeHead(pres.statusCode, pres.headers);
-		pres.pipe(res);
+		port: res.locals.contentPort
 	});
-
-	preq.on('error', function (err) {
-		return next(err);
-	});
-
-	req.pipe(preq);
 }
 
 main();
