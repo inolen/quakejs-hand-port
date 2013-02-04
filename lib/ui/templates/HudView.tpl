@@ -35,9 +35,7 @@
 			<% var ev = events[i]; %>
 			<li class="event event-<%- ev.type %>">
 			<% if (ev.type === 'print') { %>
-				<span class="text"><%- ev.text %></span>
-			<% } else if (ev.type === 'chat' || ev.type === 'tchat') { %>
-				<span class="name"><%- ev.name %>: </span><span class="text"><%- ev.text %></span>
+				<span class="text"><%= colorize(ev.text) %></span>
 			<% } %>
 			</li>
 		<% } %>
