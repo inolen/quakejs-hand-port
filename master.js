@@ -1,4 +1,3 @@
-var _ = require('underscore');
 var http = require('http');
 var url = require('url');
 var WebSocketClient = require('ws');
