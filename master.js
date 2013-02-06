@@ -5,7 +5,7 @@ var WebSocketClient = require('ws');
 var WebSocketServer = require('ws').Server;
 
 var argv = require('optimist')
-	.describe('port', 'Port to bind to')..default('port', 45735)
+	.describe('port', 'Port to bind to').default('port', 45735)
 	.argv;
 
 if (argv.h || argv.help) {
