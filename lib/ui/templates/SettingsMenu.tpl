@@ -1,7 +1,6 @@
 <div id="ingame-dialog" class="dialog">
 	<div class="tab-heading">
 		<span id="current-game">Current game</span>
-		<span id="callvote">Call vote</span>
 		<span id="settings">Settings</span>
 	</div>
 

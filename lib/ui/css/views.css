@@ -110,8 +110,7 @@
 	position: relative;
 	width: 60%;
 	margin: 8em auto 0;
-	padding: 1.2em 1.6em;
-	background: rgba(0, 0, 0, 0.6);
+	background: #1b1b1b;
 	color: #fff;
 }
 
@@ -119,84 +118,83 @@
 	color: #bfbfbf;
 }
 
-.dialog .tab-heading {
-	position: absolute;
-	top: -1.2em;
+.dialog .sections {
+	background-image: -moz-linear-gradient(top, #222, #111);
+	background-image: -webkit-linear-gradient(top, #222, #111);
+	border-bottom: 1px solid #252525;
 }
 
-.dialog .tab-heading span {
-	position: relative;
-	margin: 0 1em 0 0;
-	padding: .2em;
-	background: #ff0000;
-	font-size: 1.2em;
-	text-transform: uppercase;
-}
-/*
-.dialog .tab-heading span:after{
-	content: '';
-	position: absolute;
-	bottom: 0px;
-	width: 0px;
-	height: 0px;
-	border-bottom: 1.2em solid #ff0000;
-	border-right: .6em solid transparent;
-	top: -.2em;
-	right: -.55em;
-}*/
-
-/**
- * Tabsets
- */
-.tabset {
-	margin: 2em 0 1.4em;
+.dialog .sections ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
 }
 
-.tabset .tabset-heading {
-	position: relative;
+.dialog .sections li {
 	float: left;
-	padding: .3em 1.4em;
-	background: #1b1b1b;
-}
-
-.tabset .tabset-heading:after{
-	content: '';
-	position: absolute;
-	top: 0;
-	right: -.98em;
-	width: 0px;
-	height: 0px;
-	border-bottom: 1.6em solid #1b1b1b;
-	border-right: 1em solid transparent;
-}
-
-.tabset .tabset-content {
-	clear: both;
+	margin: 0;
 	padding: .6em 1em;
-	background: #1b1b1b;
+	font-size: 1.1em;
+	text-transform: uppercase;
+	border-right: 1px solid #111;
+	border-left: 1px solid #222;
 }
 
-.tabset table {
-	width: 100%;
+.dialog .sections li:first-child {
+	border-left: none;
 }
 
-.tabset table th {
-	text-align: left;
+.dialog .sections li:last-child {
+	border-right: none;
+}
+
+.dialog .sections li.active,
+.dialog .sections li.hover {
+	background: #050505;
+}
+
+.dialog .sections li.active {
+	color: #15e000;
+}
+
+.dialog .content {
+	padding: 1.2em 1.6em;
 }
 
 /**
- * Buttons
+ * TABLES
  */
-.button {
-	display: inline-block;
-	padding: .5em;
-	background-color: #222;
-	background-image: -moz-linear-gradient(top, #333, #222);
-	background-image: -webkit-linear-gradient(top, #333, #222);
+.table {
+	width: 100%;
+	border-collapse: collapse;
 }
 
-.button.hover {
-	background: #333;
+.table th,
+.table td {
+	padding: .4em 1em;
+	border: 1px solid #000;
+}
+
+.table thead th {
+	background-image: -moz-linear-gradient(top, #181818, #121212);
+	background-image: -webkit-linear-gradient(top, #181818, #121212);
+	text-align: left;
+	text-transform: uppercase;
+	font-size: 1.1em;
+	color: #aaa;
+}
+
+.table tbody td {
+	background: #181818;
+}
+
+.table tbody tr:nth-child(odd) td {
+	background: #121212;
+}
+
+.table tbody tr.hover td {
+	background: #050505;
 }
 
 /**
@@ -342,12 +340,16 @@
 /**
  * Ingame menu
  */
-#ingame .tabset table tbody td:first-child {
-	width: 20em;
+#ingame p {
+	margin: .4em 0 1.4em 0;
 }
 
-#ingame .tabset table tbody td:last-child {
-	text-align: right;
+#ingame .table th:first-child {
+	width: 12em;
+}
+
+#ingame #team-select {
+	margin-bottom: 1em;
 }
 
 /**

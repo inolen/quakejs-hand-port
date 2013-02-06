@@ -1,68 +1,79 @@
 <% var rocketarena = arenas && arenas.length > 1 && gametype === 'ca'; %>
+<%
+	var teamcolor = 'white';
+	if (team === 'RED') {
+		teamcolor = 'red';
+	} else if (team === 'BLUE') {
+		teamcolor = 'blue';
+	}
+%>
 
 <div id="ingame-dialog" class="dialog">
-	<div class="tab-heading">
-		<span id="current-game">Current game</span>
-		<span id="callvote">Call vote</span>
-		<span id="settings">Settings</span>
+	<div class="sections">
+		<ul>
+			<li id="current-game" class="active">Current game</li>
+			<li id="settings">Settings</li>
+		</uL>
 	</div>
 
 	<div class="content">
-		<% if (rocketarena && currentArenaNum === 0) { %>
-			<p>
-				Welcome! You're currently in the lobby. Select an arena from below or run through a portal to join an arena and get started fragging.
-			</p>
+		<% if (rocketarena) { %>
+			<% if (arenaNum === 0) { %>
+				<p>
+					Welcome! You're currently in the lobby. Select an arena from below or run through a portal to join an arena and get started fragging.
+				</p>
+			<% } else { %>
+				<p>
+					Currently on team <span class="<%- teamcolor %>"><%- team %></span> in <span class="yellow"><%- arenas[arenaNum].name %></span>. You can change your team or arena by selecting one from below.
+				</p>
+			<% } %>
 		<% } %>
 
-		<% if (arenas && currentArenaNum !== null && (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') &&
-			(!rocketarena || (rocketarena && currentArenaNum !== 0))) { %>
-		<div class="teams tabset">
-			<div class="tabset-heading">Teams</div>
-			<div class="tabset-content">
-				<table>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Players</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>Red</td><td><%- arenas[currentArenaNum].count1 %></td><td><span class="join-team" data-team="red">JOIN</span></td>
-						</tr>
-						<tr>
-							<td>Blue</td><td><%- arenas[currentArenaNum].count2 %></td><td><span class="join-team" data-team="blue">JOIN</span></td>
-						</tr>
-					</tbody>
-				</table>
-			</div>
+		<% if (arenas && arenaNum !== null && (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') &&
+			(!rocketarena || (rocketarena && arenaNum !== 0))) { %>
+		<div id="team-select">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Name</th>
+						<th>Players</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td class="join-team" data-team="red"><span class="red">RED</span></td>
+						<td class="join-team" data-team="red"><%- arenas[arenaNum].count1 %></td>
+					</tr>
+					<tr>
+						<td class="join-team" data-team="blue"><span class="blue">BLUE</span></td>
+						<td class="join-team" data-team="blue"><%- arenas[arenaNum].count2 %></td>
+					</tr>
+				</tbody>
+			</table>
 		</div>
 		<% } %>
 
 		<% if (arenas && arenas.length > 1) { %>
-		<div class="arenas tabset">
-			<div class="tabset-heading">Arenas</div>
-			<div class="tabset-content">
-				<table>
-					<thead>
-						<tr>
-							<th>Name</th>
-							<th>Gametype</th>
-							<th>Players</th>
-							<th></th>
-						</tr>
-					</thead>
-					<tbody>
-						<% for (var i = 1; i < arenas.length; i++) { %>
-						<% var arena = arenas[i]; %>
-						<tr>
-							<td><%- arena.name %></td><td>Pickup</td><td>2</td><td><span class="join-arena" data-arena="<%- i %>">JOIN</span></td>
-						</tr>
-						<% } %>
-					</tbody>
-				</table>
-			</div>
+		<div id="arena-select">
+			<table class="table">
+				<thead>
+					<tr>
+						<th>Arena</th>
+						<th>Gametype</th>
+						<th>Players</th>
+					</tr>
+				</thead>
+				<tbody>
+					<% for (var i = 1; i < arenas.length; i++) { %>
+					<% var arena = arenas[i]; %>
+					<tr>
+						<td class="join-arena" data-arena="<%- i %>"><%- arena.name %></td>
+						<td class="join-arena" data-arena="<%- i %>"><%- arena.playersPerTeam === 0 ? 'Pickup' : arena.playersPerTeam + 'v' + arena.playersPerTeam %></td>
+						<td class="join-arena" data-arena="<%- i %>"><%- arena.numPlayingClients %></td>
+					</tr>
+					<% } %>
+				</tbody>
+			</table>
 		</div>
 		<% } %>
 	</div>
