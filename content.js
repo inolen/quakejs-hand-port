@@ -1,13 +1,19 @@
+var express = require('express');
 var fs = require('fs');
 var http = require('http');
+var includes = require('./build/includes.js');
+var opt = require('optimist');
 var path = require('path');
 var url = require('url');
-var express = require('express');
-var includes = require('./build/includes.js');
 
-var argv = require('optimist')
-	.default('port', 9000)
+var argv = opt
+	.describe('port', 'Port to bind to').default('port', 9000)
 	.argv;
+
+if (argv.h || argv.help) {
+	opt.showHelp();
+	return;
+}
 
 function main() {
 	createServer(argv.port);
