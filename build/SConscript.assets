@@ -27,6 +27,77 @@ env.Append(BUILDERS = {
 ##
 # Targets
 ##
+def findAssets(root, dirs, exts):
+	files = []
+
+	for dir in dirs:
+		absolute_dir = root + '/' + dir
+
+		for ext in exts:
+			files.extend(rglob(absolute_dir, '*' + ext))
+
+	return files
+
+def addAudio(commands, src_dir, out_dir):
+	files = findAssets(src_dir, ['music', 'sound'], ['.wav'])
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir).replace('.wav', '.ogg')
+		commands.append(env.ConvToOGG(out, file.abspath))
+
+def addConfigs(commands, src_dir, out_dir):
+	files = findAssets(src_dir, ['configs'], ['.cfg'])
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir)
+		commands.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addImages(commands, src_dir, out_dir):
+	exts = ['.jpg', '.png', '.tga']
+	files = findAssets(src_dir, ['gfx/2d', 'icons', 'levelshots', 'ui'], exts)
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir)
+		for ext in exts:
+			out = out.replace(ext, '.png')
+
+		commands.append(env.ConvToPNG(out, file.abspath))
+
+def addMaps(commands, src_dir, out_dir):
+	files = findAssets(src_dir, ['maps'], ['.bsp'])
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir)
+		commands.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addModels(commands, src_dir, out_dir):
+	files = findAssets(src_dir, ['models'], ['.cfg', '.md3', '.skin'])
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir)
+		commands.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addShaders(commands, src_dir, out_dir):
+	files = findAssets(src_dir, ['scripts'], ['.shader'])
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir)
+		commands.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addTextures(commands, src_dir, out_dir):
+	exts = ['.jpg', '.tga']
+	files = findAssets(src_dir, ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'menu/medals', 'models', 'sprites', 'textures'], exts)
+
+	for file in files:
+		out = file.abspath.replace(src_dir, out_dir)
+		for ext in exts:
+			out = out.replace(ext, '.dds')
+
+		commands.append(env.ConvToDXT(out, file.abspath))
+
+##
+# Add all of the assets from each sub dir of /assets.
+##
 audio = []
 configs = []
 images = []
@@ -35,71 +106,16 @@ models = []
 shaders = []
 textures = []
 
-def addAudio(src_dir, out_dir):
-	for file in rglob(src_dir, '*.wav'):
-		out = file.abspath.replace(src_dir, out_dir).replace('.wav', '.ogg')
-		audio.append(env.ConvToOGG(out, file.abspath))
-
-def addConfigs(src_dir, out_dir):
-	for file in rglob(src_dir, '*.cfg'):
-		out = file.abspath.replace(src_dir, out_dir)
-		configs.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
-
-def addImages(src_dir, out_dir):
-	image_dirs = ['gfx/2d', 'icons', 'levelshots', 'ui']
-	exts = ['.jpg', '.png']
-
-	for dir in image_dirs:
-		absolute_dir = src_dir + '/' + dir
-
-		for ext in exts:
-			for file in rglob(absolute_dir, '*' + ext):
-				out = file.abspath.replace(src_dir, out_dir).replace(ext, '.png')
-				images.append(env.ConvToPNG(out, file.abspath))
-
-def addMaps(src_dir, out_dir):
-	for file in rglob(src_dir, '*.bsp'):
-		out = file.abspath.replace(src_dir, out_dir)
-		configs.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
-
-def addModels(src_dir, out_dir):
-	exts = ['.md3', '.skin']
-
-	for ext in exts:
-		for file in rglob(src_dir, '*' + ext):
-			out = file.abspath.replace(src_dir, out_dir)
-			models.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
-
-def addShaders(src_dir, out_dir):
-	for file in rglob(src_dir, '*.shader'):
-		out = file.abspath.replace(src_dir, out_dir)
-		configs.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
-
-def addTextures(src_dir, out_dir):
-	texture_dirs = ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'menu/medals', 'models', 'sprites', 'textures']
-	exts = ['.jpg', '.png']
-
-	for dir in texture_dirs:
-		absolute_dir = src_dir + '/' + dir
-
-		for ext in exts:
-			for file in rglob(absolute_dir, '*' + ext):
-				out = file.abspath.replace(src_dir, out_dir).replace(ext, '.dds')
-				textures.append(env.ConvToDXT(out, file.abspath))
-
-##
-# Add all of the assets from each sub dir of /assets.
-##
 for dir in subdirs(ASSET_DIR):
 	src_dir = ASSET_DIR + '/' + dir + '/src'
 	out_dir = ASSET_DIR + '/' + dir + '/built'
-	addAudio(src_dir, out_dir)
-	addConfigs(src_dir, out_dir)
-	addImages(src_dir, out_dir)
-	addMaps(src_dir, out_dir)
-	addModels(src_dir, out_dir)
-	addShaders(src_dir, out_dir)
-	addTextures(src_dir, out_dir)
+	addAudio(audio, src_dir, out_dir)
+	addConfigs(configs, src_dir, out_dir)
+	addImages(images, src_dir, out_dir)
+	addMaps(maps, src_dir, out_dir)
+	addModels(models, src_dir, out_dir)
+	addShaders(shaders, src_dir, out_dir)
+	addTextures(textures, src_dir, out_dir)
 
 env.Alias('audio', audio)
 env.Alias('configs', configs)
