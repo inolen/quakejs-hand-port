@@ -1,7 +1,11 @@
 import os, fnmatch
 
-# Recursive glob
-def rglob(root, pattern, ondisk=True, source=True, strings=False):
+def subdirs(root) :
+	dirs = [name for name in os.listdir(root) if os.path.isdir(os.path.join(root, name)) and name[0] != '.']
+	dirs.sort()
+	return dirs
+
+def rglob(root, pattern, ondisk=True, source=True, strings=False) :
 	results = []
 	for base, dirnames, filenames in os.walk(root):
 		for filename in fnmatch.filter(filenames, pattern):
@@ -10,5 +14,5 @@ def rglob(root, pattern, ondisk=True, source=True, strings=False):
 
 env = Environment()
 
-SConscript('./build/SConscript.assets', exports=['env', 'rglob'])
-SConscript('./build/SConscript.modules', exports=['env', 'rglob'])
+SConscript('./build/SConscript.assets', exports=['env', 'subdirs', 'rglob'])
+SConscript('./build/SConscript.modules', exports=['env', 'subdirs', 'rglob'])

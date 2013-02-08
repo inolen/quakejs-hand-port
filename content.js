@@ -118,7 +118,7 @@ function AssetMap(root) {
 AssetMap.prototype.refresh = function () {
 	var self = this;
 
-	// Find all the subdirectories of roots.
+	// Find all the subdirectories of root.
 	var subdirs = [];
 
 	var filenames = fs.readdirSync(this.root);
@@ -128,7 +128,7 @@ AssetMap.prototype.refresh = function () {
 		var stat = fs.statSync(file);
 
 		if (stat.isDirectory()) {
-			subdirs.push(file);
+			subdirs.push(file + '/built');
 		}
 	});
 

@@ -1,57 +1,110 @@
 import os, fnmatch
 
 Import('env')
+Import('subdirs')
 Import('rglob')
 
-CWD = os.path.abspath('.')
-ASSET_DIR = os.path.abspath(CWD + '/../assets/quakejs/')
+ASSET_DIR = os.path.abspath('../assets')
 
 ##
 # Custom builders
 ##
 ConvToOGG = Builder(
-	action = 'oggenc $SOURCE -o $TARGET',
-	suffix = '.ogg',
-	src_suffix = '.wav')
-
-ConvToDXT = Builder(
-	action = 'crunch -file $SOURCE -rescalemode nearest -fileformat dds -outsamedir',
-	suffix = '.dds')
+	action = 'oggenc $SOURCE -o $TARGET')
 
 ConvToPNG = Builder(
-	action = 'convert $SOURCE $TARGET',
-	suffix = '.png',
-	src_suffix = '.jpg')
+	action = 'convert $SOURCE $TARGET')
+
+ConvToDXT = Builder(
+	action = 'crunch -file $SOURCE -rescalemode nearest -fileformat dds -out $TARGET')
 
 env.Append(BUILDERS = {
 	'ConvToOGG': ConvToOGG,
-	'ConvToDXT': ConvToDXT,
-	'ConvToPNG': ConvToPNG
+	'ConvToPNG': ConvToPNG,
+	'ConvToDXT': ConvToDXT
 })
 
 ##
 # Targets
 ##
+audio = []
+configs = []
+images = []
+maps = []
+models = []
+shaders = []
+textures = []
 
-# Audio
-audio_dirs = ['music', 'sound']
-audio_src = []
-for dir in audio_dirs:
-	audio_src.extend(rglob(ASSET_DIR + '/' + dir, '*.wav'))
-env.Alias('audio', [env.ConvToOGG(x) for x in audio_src])
+def addAudio(src_dir, out_dir):
+	for file in rglob(src_dir, '*.wav'):
+		out = file.abspath.replace(src_dir, out_dir).replace('.wav', '.ogg')
+		audio.append(env.ConvToOGG(out, file.abspath))
 
-# Textures
-texture_dirs = ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'menu/medals', 'models', 'sprites', 'textures']
-texture_src = []
-for dir in texture_dirs:
-	texture_src.extend(rglob(ASSET_DIR + '/' + dir, '*.jpg'))
-	texture_src.extend(rglob(ASSET_DIR + '/' + dir, '*.tga'))
-env.Alias('textures', [env.ConvToDXT(x) for x in texture_src])
+def addConfigs(src_dir, out_dir):
+	for file in rglob(src_dir, '*.cfg'):
+		out = file.abspath.replace(src_dir, out_dir)
+		configs.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
 
-# Images
-image_dirs = ['gfx/2d', 'icons', 'levelshots']
-image_src = []
-for dir in image_dirs:
-	image_src.extend(rglob(ASSET_DIR + '/' + dir, '*.jpg'))
-	image_src.extend(rglob(ASSET_DIR + '/' + dir, '*.tga'))
-env.Alias('images', [env.ConvToPNG(x) for x in image_src])
+def addImages(src_dir, out_dir):
+	image_dirs = ['gfx/2d', 'icons', 'levelshots', 'ui']
+	exts = ['.jpg', '.png']
+
+	for dir in image_dirs:
+		absolute_dir = src_dir + '/' + dir
+
+		for ext in exts:
+			for file in rglob(absolute_dir, '*' + ext):
+				out = file.abspath.replace(src_dir, out_dir).replace(ext, '.png')
+				images.append(env.ConvToPNG(out, file.abspath))
+
+def addMaps(src_dir, out_dir):
+	for file in rglob(src_dir, '*.bsp'):
+		out = file.abspath.replace(src_dir, out_dir)
+		configs.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addModels(src_dir, out_dir):
+	exts = ['.md3', '.skin']
+
+	for ext in exts:
+		for file in rglob(src_dir, '*' + ext):
+			out = file.abspath.replace(src_dir, out_dir)
+			models.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addShaders(src_dir, out_dir):
+	for file in rglob(src_dir, '*.shader'):
+		out = file.abspath.replace(src_dir, out_dir)
+		configs.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
+
+def addTextures(src_dir, out_dir):
+	texture_dirs = ['env', 'gfx/colors', 'gfx/damage', 'gfx/misc', 'menu/medals', 'models', 'sprites', 'textures']
+	exts = ['.jpg', '.png']
+
+	for dir in texture_dirs:
+		absolute_dir = src_dir + '/' + dir
+
+		for ext in exts:
+			for file in rglob(absolute_dir, '*' + ext):
+				out = file.abspath.replace(src_dir, out_dir).replace(ext, '.dds')
+				textures.append(env.ConvToDXT(out, file.abspath))
+
+##
+# Add all of the assets from each sub dir of /assets.
+##
+for dir in subdirs(ASSET_DIR):
+	src_dir = ASSET_DIR + '/' + dir + '/src'
+	out_dir = ASSET_DIR + '/' + dir + '/built'
+	addAudio(src_dir, out_dir)
+	addConfigs(src_dir, out_dir)
+	addImages(src_dir, out_dir)
+	addMaps(src_dir, out_dir)
+	addModels(src_dir, out_dir)
+	addShaders(src_dir, out_dir)
+	addTextures(src_dir, out_dir)
+
+env.Alias('audio', audio)
+env.Alias('configs', configs)
+env.Alias('images', images)
+env.Alias('maps', maps)
+env.Alias('models', models)
+env.Alias('shaders', shaders)
+env.Alias('textures', textures)
