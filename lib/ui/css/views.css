@@ -689,18 +689,11 @@
 	background: rgba(0, 0, 0, 0.7);
 }
 
-#lagometer-wrapper .frame-wrapper {
-	position: relative;
+#lagometer-wrapper .lag-frame,
+#lagometer-wrapper .snapshot-frame {
 	float: left;
 	width: 0.15625em;
 	height: 10em;
-}
-
-#lagometer-wrapper .lag-frame,
-#lagometer-wrapper .snapshot-frame {
-	position: absolute;
-	bottom: 0;
-	left: 0;
 	background: #ff0000;
 }
 
