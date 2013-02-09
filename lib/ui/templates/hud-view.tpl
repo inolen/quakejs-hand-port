@@ -31,7 +31,7 @@
 	<div id="events-wrapper">
 		<ul id="events" data-bind="foreach: events">
 			<li class="event">
-				<span data-bind="text: text"></span>
+				<span data-bind="html: text"></span>
 			</li>
 		</ul>
 	</div>
