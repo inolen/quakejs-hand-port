@@ -1,1 +1,3 @@
-<div id="logo" data-image="ui/logo.png"></div>
+<div id="main">
+	<div id="logo" data-bind="img: 'ui/logo.png'"></div>
+</div>
