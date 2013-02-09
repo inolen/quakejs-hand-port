@@ -17,11 +17,11 @@
 			<!-- /ko -->
 			<!-- ko if: gametype() === 'ffa' || gametype() === 'tourney' -->
 				<div class="score-wrapper score1 team-free" data-bind="css: { localplayer: score1.localplayer }">
-					<span class="name" data-bind="text: score1.rank + '. ' + score1.name"></span>
+					<span class="name" data-bind="text: score1.rank() + '. ' + score1.name()"></span>
 					<span class="score" data-bind="text: score1.score"></span>
 				</div>
 				<div class="score-wrapper score2 team-free" data-bind="css: { localplayer: score2.localplayer }">
-					<span class="name" data-bind="text: score2.rank + '. ' + score2.name"></span>
+					<span class="name" data-bind="text: score2.rank() + '. ' + score2.name()"></span>
 					<span class="score" data-bind="text: score2.score"></span>
 				</div>
 			<!-- /ko -->
