@@ -1,80 +1,61 @@
-<% var rocketarena = arenas && arenas.length > 1 && gametype === 'ca'; %>
-<%
-	var teamcolor = 'white';
-	if (team === 'RED') {
-		teamcolor = 'red';
-	} else if (team === 'BLUE') {
-		teamcolor = 'blue';
-	}
-%>
-
-<div id="ingame-dialog" class="dialog">
-	<div class="sections">
-		<ul>
-			<li id="current-game" class="active">Current game</li>
-			<li id="settings">Settings</li>
-		</uL>
-	</div>
-
-	<div class="content">
-		<% if (rocketarena) { %>
-			<% if (arenaNum === 0) { %>
-				<p>
-					Welcome! You're currently in the lobby. Select an arena from below or run through a portal to join an arena and get started fragging.
-				</p>
-			<% } else { %>
-				<p>
-					Currently on team <span class="<%- teamcolor %>"><%- team %></span> in <span class="yellow"><%- arenas[arenaNum].name %></span>. You can change your team or arena by selecting one from below.
-				</p>
-			<% } %>
-		<% } %>
-
-		<% if (arenas && arenaNum !== null && (gametype === 'team' || gametype === 'ctf' || gametype === 'ca') &&
-			(!rocketarena || (rocketarena && arenaNum !== 0))) { %>
-		<div id="team-select">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Name</th>
-						<th>Players</th>
-					</tr>
-				</thead>
-				<tbody>
-					<tr>
-						<td class="join-team" data-team="red"><span class="red">RED</span></td>
-						<td class="join-team" data-team="red"><%- arenas[arenaNum].count1 %></td>
-					</tr>
-					<tr>
-						<td class="join-team" data-team="blue"><span class="blue">BLUE</span></td>
-						<td class="join-team" data-team="blue"><%- arenas[arenaNum].count2 %></td>
-					</tr>
-				</tbody>
-			</table>
+<div id="ingame" data-bind="visible: visible">
+	<div id="ingame-dialog" class="dialog">
+		<div class="sections">
+			<ul>
+				<li id="current-game" class="active">Current game</li>
+				<li id="settings">Settings</li>
+			</ul>
 		</div>
-		<% } %>
 
-		<% if (arenas && arenas.length > 1) { %>
-		<div id="arena-select">
-			<table class="table">
-				<thead>
-					<tr>
-						<th>Arena</th>
-						<th>Gametype</th>
-						<th>Players</th>
-					</tr>
-				</thead>
-				<tbody>
-					<% for (var i = 1; i < arenas.length; i++) { %>
-					<% var arena = arenas[i]; %>
-					<tr>
-						<td class="join-arena" data-arena="<%- i %>"><%- arena.name %></td>
-						<td class="join-arena" data-arena="<%- i %>"><%- arena.playersPerTeam === 0 ? 'Pickup' : arena.playersPerTeam + 'v' + arena.playersPerTeam %></td>
-						<td class="join-arena" data-arena="<%- i %>"><%- arena.numPlayingClients %></td>
-					</tr>
-					<% } %>
-				</tbody>
-			</table>
+		<div class="content">
+			<p data-bind="if: rocketarena() && lobby()">
+				Welcome! You're currently in the lobby. Select an arena from below or run through a portal to join an arena and get started fragging.
+			</p>
+			<p data-bind="if: rocketarena() && !lobby()">
+				Currently on team <span data-bind="text: currentTeamName"></span> in <span data-bind="text: currentArena().name"></span>. You can change your team or arena by selecting one from below.
+			</p>
+
+			<div id="team-select" data-bind="if: !rocketarena() || (rocketarena() && !lobby())">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Players</th>
+						</tr>
+					</thead>
+					<tbody>
+						<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
+						<tr>
+							<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
+							<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().count1"></td>
+						</tr>
+						<tr>
+							<td data-bind="event: { click: function () { joinTeam('blue'); } }"><span class="blue">BLUE</span></td>
+							<td data-bind="event: { click: function () { joinTeam('blue'); } }, text: currentArena().count2"></td>
+						</tr>
+						<!-- /ko -->
+					</tbody>
+				</table>
+			</div>
+
+			<div id="arena-select" data-bind="if: arenas().length > 1">
+				<table class="table">
+					<thead>
+						<tr>
+							<th>Arena</th>
+							<th>Gametype</th>
+							<th>Players</th>
+						</tr>
+					</thead>
+					<tbody data-bind="foreach: arenas">
+						<tr data-bind="visible: $index() !== 0">
+							<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: name"></td>
+							<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: type"></td>
+							<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: numPlayingClients"></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 		</div>
-		<% } %>
 	</div>
 </div>
