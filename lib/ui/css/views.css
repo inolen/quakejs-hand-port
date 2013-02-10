@@ -268,7 +268,7 @@
 	content: 'off';
 }
 
-.control-input.input-radio[data-enabled="true"]:before {
+.control-input.input-radio[value=true]:before {
 	content: 'on';
 }
 
