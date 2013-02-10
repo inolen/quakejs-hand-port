@@ -48,7 +48,7 @@
 			<!-- ko if: $data && icon -->
 			<li class="weapon" data-bind="css: { selected: $index() === $parent.weaponSelect() }">
 				<span class="icon" data-bind="img: icon"></span>
-				<span class="ammo" data-bind="text: ammo > -1 ? ammo : '&nbsp'"></span>
+				<span class="ammo" data-bind="text: ammo() > -1 ? ammo() : '&nbsp'"></span>
 			</li>
 			<!-- /ko -->
 		</ul>
