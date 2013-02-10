@@ -119,16 +119,13 @@
 }
 
 .dialog .sections {
-	background-image: -moz-linear-gradient(top, #222, #111);
-	background-image: -webkit-linear-gradient(top, #222, #111);
-	border-bottom: 1px solid #252525;
-}
-
-.dialog .sections ul {
 	list-style: none;
 	margin: 0;
 	padding: 0;
 	overflow: hidden;
+	background-image: -moz-linear-gradient(top, #222, #111);
+	background-image: -webkit-linear-gradient(top, #222, #111);
+	border-bottom: 1px solid #252525;
 }
 
 .dialog .sections li {
