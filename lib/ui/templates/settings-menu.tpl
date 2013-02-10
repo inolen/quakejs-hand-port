@@ -4,16 +4,16 @@
 	<li><a href="#game" data-bind="tab: false">Game</a></li>
 </ul>
 
-<div class="tab-content">
+<div class="content">
 	<div class="tab-pane" id="controls">
-		<ul class="subsections">
+		<ul class="sections">
 			<li><a href="#move" data-bind="tab: true">Move</a></li>
 			<li><a href="#look" data-bind="tab: false">Look</a></li>
 			<li><a href="#shoot" data-bind="tab: false">Shoot</a></li>
 			<li><a href="#weapons" data-bind="tab: false">Weapons</a></li>
 		</ul>
 
-		<div class="tab-content">
+		<div class="content">
 			<div class="tab-pane active" id="move">
 				<div class="control-group">
 					<div class="control-label">Move forward:</div><div name="forwardKey" class="control-input input-key" data-bind="keyinput: forwardKey, event: { change: updated }"></div>

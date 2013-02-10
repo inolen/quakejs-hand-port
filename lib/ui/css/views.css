@@ -131,11 +131,9 @@
 .dialog .sections li {
 	float: left;
 	margin: 0;
-	padding: .6em 1em;
+	padding: 0;
 	font-size: 1.1em;
 	text-transform: uppercase;
-	border-right: 1px solid #111;
-	border-left: 1px solid #222;
 }
 
 .dialog .sections li:first-child {
@@ -146,13 +144,20 @@
 	border-right: none;
 }
 
-.dialog .sections li.active,
-.dialog .sections li.hover {
+.dialog .sections li a {
+	display: inline-block;
+	padding: .6em 1em;
+	border-right: 1px solid #111;
+	border-left: 1px solid #222;
+}
+
+.dialog .sections li.active a,
+.dialog .sections li.hover a {
 	background: #050505;
 }
 
-.dialog .sections li.active {
-	color: #15e000;
+.dialog .sections li.active a {
+	color: #15e000 !important;
 }
 
 .dialog .content {
@@ -352,67 +357,7 @@
 /**
  * Settings menu
  */
-#settings .sections {
-	display: inline-block;
-	margin: 0 0 0 -1em;
-	padding: 0;
-	vertical-align: middle;
-	list-style: none;
-	overflow: hidden;
-}
 
-#settings .sections li {
-	float: left;
-	padding: .1em .3em;
-	text-transform: uppercase;
-	background: #202020;
-	color: #fff;
-	font-size: 1.4em;
-	line-height: 1.4em;
-}
-
-#settings .sections li.hover {
-	background: #333;
-}
-
-#settings .sections li.active {
-	background: #8cc84b;
-}
-
-#settings .subsections {
-	display: inline-block;
-	margin: 0 0 1em -2em;
-	padding: 0;
-	list-style: none;
-	overflow: hidden;
-}
-
-#settings .subsections li {
-	float: left;
-}
-
-#settings .subsections li a {
-	display: inline-block;
-	background: #202020;
-	color: #fff;
-	padding: .5em .7em;
-	text-decoration: none;
-	text-transform: uppercase;
-}
-
-#settings .subsections li.active {
-	color: #fff;
-	background-color: #222;
-}
-
-#settings .subsections li.active a {
-	background: #8cc84b;
-	color: #fff;
-}
-
-#settings .tab-pane {
-	min-height: 12em;
-}
 
 /**
  * Message menu
