@@ -136,19 +136,19 @@
 	text-transform: uppercase;
 }
 
-.dialog .sections li:first-child {
-	border-left: none;
-}
-
-.dialog .sections li:last-child {
-	border-right: none;
-}
-
 .dialog .sections li a {
 	display: inline-block;
 	padding: .6em 1em;
 	border-right: 1px solid #111;
 	border-left: 1px solid #222;
+}
+
+.dialog .sections li:first-child a {
+	border-left: none;
+}
+
+.dialog .sections li:last-child a {
+	border-right: none;
 }
 
 .dialog .sections li.active a,
