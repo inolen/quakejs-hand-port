@@ -1,4 +1,4 @@
-<div id="hud" data-bind="visible: visible">
+<div id="hud" class="fullscreen" data-bind="visible: visible">
 	<div id="gamestate-wrapper">
 		<div class="gametype-info">
 		</div>

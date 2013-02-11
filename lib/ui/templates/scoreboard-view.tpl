@@ -1,4 +1,4 @@
-<div id="scoreboard" data-bind="visible: visible">
+<div id="scoreboard" class="fullscreen" data-bind="visible: visible">
 	<div id="scoreboard-wrapper">
 		<!-- ko if: gametype() === 'ffa' || gametype() === 'tournament' -->
 		<div class="scores">
