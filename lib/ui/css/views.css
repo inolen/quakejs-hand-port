@@ -49,17 +49,6 @@
 	text-decoration: none;
 }
 
-#viewport-ui .visible {
-	opacity: 1;
-	visibility: visible;
-}
-
-#viewport-ui .hidden {
-	opacity: 0;
-	/* Must change visibility so mouse events are ignored. */
-	visibility: hidden;
-}
-
 /**
  * Text colors
  */
@@ -538,14 +527,40 @@
 
 #crosshair-name.visible {
 	opacity: 1;
-	-moz-transition: opacity 0s;
 	-webkit-transition: opacity 0s;
+	   -moz-transition: opacity 0s;
+	        transition: opacity 0s;
 }
 
 #crosshair-name.hidden {
 	opacity: 0;
-	-moz-transition: opacity .2s linear 1s;
-	-webkit-transition: opacity .2s linear 1s;
+	-webkit-transition: opacity .2s ease-out;
+	   -moz-transition: opacity .2s ease-out;
+	        transition: opacity .2s ease-out;
+}
+
+#centerprint {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-top: -5em;
+	margin-left: -8em;
+	width: 16em;
+	font-size: 2em;
+	text-align: center;
+	text-shadow: 0.1em 0.1em 0.05em #000;
+
+	opacity: 1;
+	-webkit-transition: opacity 0s;
+	   -moz-transition: opacity 0s;
+	        transition: opacity 0s;
+}
+
+#centerprint.hidden {
+	opacity: 0;
+	-webkit-transition: opacity .2s ease-out;
+	   -moz-transition: opacity .2s ease-out;
+	        transition: opacity .2s ease-out;
 }
 
 #fps-wrapper {

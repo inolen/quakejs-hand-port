@@ -37,7 +37,8 @@
 	</div>
 
 	<div id="crosshair" data-bind="visible: alive, img: 'gfx/2d/crosshairb'"></div>
-	<div id="crosshair-name" data-bind="visible: alive, text: crosshairName"></div>
+	<div id="crosshair-name" data-bind="visible: alive, css: { hidden: !crosshairNameVisible() }, text: crosshairName"></div>
+	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, html: centerPrint"></div>
 
 	<div id="fps-wrapper">
 		<span id="fps" data-bind="text: fps"></span> FPS
