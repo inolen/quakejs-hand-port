@@ -86,8 +86,8 @@
 	</div>
 
 	<div class="tab-pane" id="character">
-		<div class="name control-group">
-			<div class="control-label">Name:</div><div name="name" class="control-input input-text" data-input="textinput: name, event: { change: updated }"></div>
+		<div class="control-group">
+			<div class="control-label">Name:</div><div name="name" class="control-input input-text" data-bind="textinput: name, event: { change: updated }"></div>
 		</div>
 	</div>
 
