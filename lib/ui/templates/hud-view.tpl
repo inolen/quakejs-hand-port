@@ -36,14 +36,14 @@
 		</ul>
 	</div>
 
-	<div id="crosshair" data-bind="img: 'gfx/2d/crosshairb'"></div>
-	<div id="crosshair-name" data-bind="text: crosshairName"></div>
+	<div id="crosshair" data-bind="visible: alive, img: 'gfx/2d/crosshairb'"></div>
+	<div id="crosshair-name" data-bind="visible: alive, text: crosshairName"></div>
 
 	<div id="fps-wrapper">
 		<span id="fps" data-bind="text: fps"></span> FPS
 	</div>
 
-	<div id="weapons-wrapper">
+	<div id="weapons-wrapper" data-bind="visible: alive">
 		<ul class="weapons" data-bind="foreach: weapons">
 			<!-- ko if: $data && icon -->
 			<li class="weapon" data-bind="css: { selected: $index() === $parent.weaponSelect() }">
@@ -54,12 +54,12 @@
 		</ul>
 	</div>
 
-	<div id="health-wrapper">
+	<div id="health-wrapper" data-bind="visible: alive">
 		<span id="health-text" data-bind="text: health"></span>
 		<span id="health-icon" data-bind="img: 'icons/iconh_green.png'"></span>
 	</div>
 
-	<div id="armor-wrapper">
+	<div id="armor-wrapper" data-bind="visible: alive">
 		<span id="armor-icon" data-bind="img: 'icons/iconr_yellow.png'"></span>
 		<span id="armor-text" data-bind="text: armor"></span>
 	</div>
