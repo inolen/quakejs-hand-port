@@ -74,7 +74,7 @@
 		</div>
 	</div>
 
-	<div id="counts-wrapper">
+	<div id="counts-wrapper" data-bind="visible: countsVisible">
 		<div><span class="count-label">Shaders:</span> <span class="count-value" data-bind="text: shaders"></span></div>
 		<div><span class="count-label">Nodes:</span> <span class="count-value" data-bind="text: nodes() + '/' + leafs()"></span></div>
 		<div><span class="count-label">Surfaces:</span> <span class="count-value" data-bind="text: surfaces"><%- surfaces %></span></div>
