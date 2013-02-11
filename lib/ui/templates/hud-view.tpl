@@ -36,7 +36,7 @@
 		</ul>
 	</div>
 
-	<div id="crosshair" data-image="gfx/2d/crosshairb"></div>
+	<div id="crosshair" data-bind="img: 'gfx/2d/crosshairb'"></div>
 	<div id="crosshair-name" data-bind="text: crosshairName"></div>
 
 	<div id="fps-wrapper">
