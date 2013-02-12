@@ -1,25 +1,25 @@
 <div id="hud" class="fullscreen" data-bind="visible: visible">
 	<div id="scores-wrapper">
 		<div class="scores">
+			<!-- ko if: gametype() === 'ffa' || gametype() === 'tournament' -->
+				<div class="score-wrapper score1 team-free" data-bind="visible: score1.visible, css: { localplayer: score1.localplayer }">
+					<span class="name" data-bind="text: score1.rank() + '. ' + score1.name()"></span>
+					<span class="score" data-bind="text: score1.score"></span>
+				</div>
+				<div class="score-wrapper score2 team-free" data-bind="visible: score2.visible, css: { localplayer: score2.localplayer }">
+					<span class="name" data-bind="text: score2.rank() + '. ' + score2.name()"></span>
+					<span class="score" data-bind="text: score2.score"></span>
+				</div>
+			<!-- /ko -->
 			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
-				<div class="score-wrapper score1 team-red" data-bind="css: { localplayer: score1.localplayer }">
+				<div class="score-wrapper score1 team-red" data-bind="visible: score1.visible, css: { localplayer: score1.localplayer }">
 					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: score1.count"></span></span>
 					<span class="name">Red Team</span>
 					<span class="score" data-bind="text: score1.score"></span>
 				</div>
-				<div class="score-wrapper score2 team-blue" data-bind="css: { localplayer: score2.localplayer }">
+				<div class="score-wrapper score2 team-blue" data-bind="visible: score2.visible, css: { localplayer: score2.localplayer }">
 					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: score2.count"></span></span>
 					<span class="name">Blue Team</span>
-					<span class="score" data-bind="text: score2.score"></span>
-				</div>
-			<!-- /ko -->
-			<!-- ko if: gametype() === 'ffa' || gametype() === 'tourney' -->
-				<div class="score-wrapper score1 team-free" data-bind="css: { localplayer: score1.localplayer }">
-					<span class="name" data-bind="text: score1.rank() + '. ' + score1.name()"></span>
-					<span class="score" data-bind="text: score1.score"></span>
-				</div>
-				<div class="score-wrapper score2 team-free" data-bind="css: { localplayer: score2.localplayer }">
-					<span class="name" data-bind="text: score2.rank() + '. ' + score2.name()"></span>
 					<span class="score" data-bind="text: score2.score"></span>
 				</div>
 			<!-- /ko -->

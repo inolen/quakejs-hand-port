@@ -13,7 +13,7 @@
 					</thead>
 					<tbody data-bind="foreach: freeScores">
 						<tr>
-							<td data-bind="text: name"></td>
+							<td data-bind="text: name + ' (' + spectatorNum + ')'"></td>
 							<td data-bind="text: ping"></td>
 							<td data-bind="text: score"></td>
 						</tr>
