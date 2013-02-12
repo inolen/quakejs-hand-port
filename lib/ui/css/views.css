@@ -413,77 +413,77 @@
 	padding: 1em;
 }
 
-#gamestate-wrapper {
+#scores-wrapper {
 	position: absolute;
 	top: 0;
 	left: 0;
 }
 
-#gamestate-wrapper .scores {
+#scores-wrapper .scores {
 	margin: .7em;
 	box-shadow: 0 0 10px rgba(50, 50, 50, .5);
 	border-radius: 0 0 .2em 0;
 }
 
-#gamestate-wrapper .score-wrapper {
+#scores-wrapper .score-wrapper {
 	padding: .2em .6em;
 }
 
-#gamestate-wrapper .status {
+#scores-wrapper .status {
 	font-size: .8em;
 	display: inline-block;
 	padding: .2em .4em;
 }
 
-#gamestate-wrapper .status .player {
+#scores-wrapper .status .player {
 	display: inline-block;
 	width: .8em;
 	height: .8em;
 }
 
-#gamestate-wrapper .name {
+#scores-wrapper .name {
 	display: inline-block;
 	width: 10em;
 	white-space: nowrap;
 	overflow: hidden;
 }
 
-#gamestate-wrapper .score {
+#scores-wrapper .score {
 	text-align: right;
 }
 
-#gamestate-wrapper .team-free.localplayer {
+#scores-wrapper .team-free.localplayer {
 	background: rgba(255, 255, 0, 0.4);
 	border: .1em solid rgba(255, 255, 0, 0.4);
 	border-radius: .1em;
 }
 
-#gamestate-wrapper .team-red {
+#scores-wrapper .team-red {
 	background: rgba(155, 0, 0, 0.4);
 	border-radius: .1em;
 	color: #bbb;
 }
 
-#gamestate-wrapper .team-red.localplayer {
+#scores-wrapper .team-red.localplayer {
 	color: #fff;
 }
 
-#gamestate-wrapper .team-blue {
+#scores-wrapper .team-blue {
 	background: rgba(0, 0, 155, 0.4);
 	border-radius: .1em;
 	color: #bbb;
 }
 
-#gamestate-wrapper .team-blue.localplayer {
+#scores-wrapper .team-blue.localplayer {
 	color: #fff;
 }
 
-#gamestate-wrapper .team-red .status {
+#scores-wrapper .team-red .status {
 	background: rgba(255, 0, 0, 0.4);
 	border-radius: .2em;
 }
 
-#gamestate-wrapper .team-blue .status {
+#scores-wrapper .team-blue .status {
 	background: rgba(0, 0, 255, 0.4);
 	border-radius: .2em;
 
@@ -502,6 +502,38 @@
 	padding: 0;
 	list-style: none;
 	word-wrap: break-word;
+}
+
+#warmup {
+	position: absolute;
+	top: 20%;
+	left: 0;
+	right: 0;
+	font-size: 1.6em;
+	text-align: center;
+}
+
+#centerprint {
+	position: absolute;
+	top: 30%;
+	left: 50%;
+	margin-left: -8em;
+	width: 16em;
+	font-size: 2em;
+	text-align: center;
+	text-shadow: 0.1em 0.1em 0.05em #000;
+
+	opacity: 1;
+	-webkit-transition: opacity 0s;
+	   -moz-transition: opacity 0s;
+	        transition: opacity 0s;
+}
+
+#centerprint.hidden {
+	opacity: 0;
+	-webkit-transition: opacity .2s ease-out;
+	   -moz-transition: opacity .2s ease-out;
+	        transition: opacity .2s ease-out;
 }
 
 #crosshair {
@@ -533,30 +565,6 @@
 }
 
 #crosshair-name.hidden {
-	opacity: 0;
-	-webkit-transition: opacity .2s ease-out;
-	   -moz-transition: opacity .2s ease-out;
-	        transition: opacity .2s ease-out;
-}
-
-#centerprint {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	margin-top: -5em;
-	margin-left: -8em;
-	width: 16em;
-	font-size: 2em;
-	text-align: center;
-	text-shadow: 0.1em 0.1em 0.05em #000;
-
-	opacity: 1;
-	-webkit-transition: opacity 0s;
-	   -moz-transition: opacity 0s;
-	        transition: opacity 0s;
-}
-
-#centerprint.hidden {
 	opacity: 0;
 	-webkit-transition: opacity .2s ease-out;
 	   -moz-transition: opacity .2s ease-out;
@@ -676,9 +684,9 @@
  */
 #scoreboard-wrapper {
 	position: absolute;
-	top: 6em;
-	left: 14em;
-	right: 14em;
+	top: 15%;
+	left: 20%;
+	right: 20%;
 	padding: 2em;
 }
 
@@ -692,7 +700,7 @@
 #scoreboard-wrapper .scores {
 	position: relative;
 	margin-bottom: 1em;
-	height: 26em;
+	height: 20em;
 }
 
 #scoreboard-wrapper .team {

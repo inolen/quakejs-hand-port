@@ -25,10 +25,10 @@
 
 		<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
 		<div class="summary">
-			<span data-bind="if: score1 > score2">
+			<span data-bind="if: score1() > score2()">
 				Red team leads Blue, <span data-bind="text: score1"></span> to <span data-bind="text: score2"></span>
 			</span>
-			<span data-bind="if: score2 > score1">
+			<span data-bind="if: score2() > score1()">
 				Blue team leads red, <span data-bind="text: score2"></span> to <span data-bind="text: score1"></span>
 			</span>
 			<span data-bind="if: score1() === score2()">

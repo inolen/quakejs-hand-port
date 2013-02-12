@@ -1,7 +1,5 @@
 <div id="hud" class="fullscreen" data-bind="visible: visible">
-	<div id="gamestate-wrapper">
-		<div class="gametype-info">
-		</div>
+	<div id="scores-wrapper">
 		<div class="scores">
 			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
 				<div class="score-wrapper score1 team-red" data-bind="css: { localplayer: score1.localplayer }">
@@ -36,9 +34,11 @@
 		</ul>
 	</div>
 
+	<div id="warmup" data-bind="visible: gamestate() <= 2, text: warmup"></div>
+	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, html: centerPrint"></div>
+
 	<div id="crosshair" data-bind="visible: alive, img: 'gfx/2d/crosshairb'"></div>
 	<div id="crosshair-name" data-bind="visible: alive, css: { hidden: !crosshairNameVisible() }, text: crosshairName"></div>
-	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, html: centerPrint"></div>
 
 	<div id="fps-wrapper">
 		<span id="fps" data-bind="text: fps"></span> FPS
