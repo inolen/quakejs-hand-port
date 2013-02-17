@@ -16,12 +16,12 @@
 		<tbody>
 			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
 			<tr>
-				<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
-				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: 'foobar'"></td>
+				<td data-bind="event: { click: function (data, ev) { joinTeam(ev, 'red'); } }"><span class="red">RED</span></td>
+				<td data-bind="event: { click: function (data, ev) { joinTeam(ev, 'red'); } }, text: 'foobar'"></td>
 			</tr>
 			<tr>
-				<td data-bind="event: { click: function () { joinTeam('blue'); } }"><span class="blue">BLUE</span></td>
-				<td data-bind="event: { click: function () { joinTeam('blue'); } }, text: 'foobar'"></td>
+				<td data-bind="event: { click: function (data, ev) { joinTeam(ev, 'blue'); } }"><span class="blue">BLUE</span></td>
+				<td data-bind="event: { click: function (data, ev) { joinTeam(ev, 'blue'); } }, text: 'foobar'"></td>
 			</tr>
 			<!-- /ko -->
 		</tbody>

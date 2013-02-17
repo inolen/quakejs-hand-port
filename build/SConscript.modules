@@ -6,9 +6,7 @@ Import('rglob')
 CWD = os.path.abspath('.')
 SRC_DIR = os.path.abspath(CWD + '/../lib')
 BIN_DIR = os.path.abspath(CWD + '/../bin')
-BIN_TMP_DIR = BIN_DIR + '/tmp'
 
-INCLUDEJS_PATH = CWD + '/includes.js'
 REQUIREJS_PATH = CWD + '/r.js'
 JSHINT_CONFIG  = CWD + '/.jshintrc'
 
@@ -44,7 +42,6 @@ JSHint = Builder(
 	action = 'jshint --config=' + JSHINT_CONFIG + ' $SOURCE')
 
 env.Append(BUILDERS = {
-	'ExpandIncludes':   ExpandIncludes,
 	'JSHint':           JSHint,
 	'RequireOptimizer': RequireOptimizer
 })
@@ -69,8 +66,8 @@ project_js = list(set(all_js) - set(vendor_js))
 ##
 browser = env.RequireOptimizer(
 	BIN_DIR + '/quakejs-browser-min.js',
-	all_js_processed,
-	BASE_DIR=BIN_TMP_DIR,
+	all_js,
+	BASE_DIR=BIN_DIR,
 	R_SCRIPT=CWD + '/browser.build.js',
 	R_NAME='system/browser/sys')
 env.Alias('browser', browser)
@@ -84,8 +81,8 @@ env.Alias('browser', browser)
 ##
 dedicated = env.RequireOptimizer(
 	BIN_DIR + '/quakejs-dedicated-min.js',
-	all_js_processed,
-	BASE_DIR=BIN_TMP_DIR,
+	all_js,
+	BASE_DIR=BIN_DIR,
 	R_SCRIPT=CWD + '/dedicated.build.js',
 	R_NAME='system/dedicated/sys')
 env.Alias('dedicated', dedicated)
@@ -96,7 +93,7 @@ env.Alias('dedicated', dedicated)
 # We don't lint the individual files of a module,
 # just the aggregate module.
 ##
-modules_processed = [src_to_build(x) for x in MODULES]
-jshint = [env.JSHint(x) for x in modules_processed]
-env.Alias('jshint', jshint)
-env.AlwaysBuild(jshint)
+# modules_processed = [src_to_build(x) for x in MODULES]
+# jshint = [env.JSHint(x) for x in modules_processed]
+# env.Alias('jshint', jshint)
+# env.AlwaysBuild(jshint)
