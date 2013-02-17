@@ -1,6 +1,6 @@
 .*
 !/.gitignore
 user.cfg
-/bin/tmp
 /node_modules
 /assets/*
+*.js.tmp

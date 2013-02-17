@@ -1,7 +1,7 @@
+var ejs = require('ejs');
 var express = require('express');
 var fs = require('fs');
 var http = require('http');
-var includes = require('./build/includes.js');
 var opt = require('optimist');
 var path = require('path');
 var url = require('url');
@@ -24,13 +24,16 @@ function createServer(port) {
 
 	app.locals.assets = new AssetMap(__dirname + '/assets');
 
+	app.engine('ejs', require('ejs').__express);
 	app.use(express.compress());
 	app.use(function (req, res, next) {
 		res.locals.assets = app.locals.assets;
 		next();
 	});
-	app.get('/bin/*.js', handleBinary);
+	app.get('/bin/*.js', handleLibrary);
+	app.get('/lib/*.css', handleLibrary);
 	app.get('/lib/*.js', handleLibrary);
+	app.get('/lib/*.tpl', handleLibrary);
 	app.get('/assets/scripts/all.shader', handleAllShader);
 	app.get('/assets/*', handleAsset);
 
@@ -41,24 +44,15 @@ function createServer(port) {
 	return server;
 }
 
-function handleBinary(req, res, next) {
-	var parsed = url.parse(req.url);
-	var absolutePath = __dirname + parsed.pathname;
-
-	res.sendfile(absolutePath, function (err) {
-		if (err) return next(err);
-	});
-}
-
 function handleLibrary(req, res, next) {
 	var parsed = url.parse(req.url);
 	var absolutePath = __dirname + parsed.pathname;
 
-	fs.stat(absolutePath, function (err, stat) {
-		if (err) return next(err);
-		var text = includes(absolutePath);
-
-		res.send(text);
+	res.sendfile(absolutePath, function (err) {
+		if (err) {
+			var ejsPath = absolutePath + '.ejs';
+			return res.render(ejsPath);
+		}
 	});
 }
 
