@@ -4,6 +4,7 @@
 		<title>quakejs</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<script type="text/javascript" src="js/require.min.js"></script>
+		<!--<script type="text/javascript" src="../../lib/vendor/prequire.js"></script>-->
 		<script>
 			require.config({
 				baseUrl: 'lib',
@@ -13,8 +14,10 @@
 					'EventEmitter':       'vendor/EventEmitter',
 					'gameshim':           'vendor/game-shim',
 					'glmatrix':           'vendor/gl-matrix',
+					'include':            'vendor/requirejs-include',
 					'knockout':           'vendor/knockout-latest',
 					'state-machine':      'vendor/state-machine',
+					'text':               'vendor/text',
 					'underscore':         'vendor/underscore',
 					//'system/browser/sys': '../bin/quakejs-browser-min'
 				}

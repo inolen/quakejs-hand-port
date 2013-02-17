@@ -34,15 +34,9 @@ PROCESS_FILTERS = [
 	'/ui/views'
 ]
 
-def src_to_build(path):
-	return path.replace(SRC_DIR, BIN_TMP_DIR)
-
 ##
 # Custom builders
 ##
-ExpandIncludes = Builder(
-	action = 'node ' + INCLUDEJS_PATH + ' --process $SOURCE > $TARGET')
-
 RequireOptimizer = Builder(
 	action = 'node ' + REQUIREJS_PATH + ' -o $R_SCRIPT baseUrl=$BASE_DIR name=$R_NAME out=$TARGET optimize=uglify')
 
@@ -64,21 +58,8 @@ env.Append(BUILDERS = {
 # the PROCESS_FILTERS
 ##
 all_js = rglob(SRC_DIR, '*.js', True, True, True)
-
-dynamic_js = list(MODULES)
-for script in all_js:
-	for filter in PROCESS_FILTERS:
-		if filter in script:
-			dynamic_js.append(script)
-
-static_js = list(set(all_js) - set(dynamic_js))
-
-# We want to expand includes and output to the tmp dir for dynamic JS,
-# and simply do a file copy for static JS.
-all_js_processed = [env.ExpandIncludes(src_to_build(x), x) for x in dynamic_js]
-all_js_processed.extend([Command(src_to_build(x), x, Copy("$TARGET", "$SOURCE")) for x in static_js])
-
-env.AlwaysBuild(all_js_processed)
+vendor_js = rglob(SRC_DIR + '/vendor', '*.js', True, True, True)
+project_js = list(set(all_js) - set(vendor_js))
 
 ##
 # Browser
