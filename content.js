@@ -24,7 +24,6 @@ function createServer(port) {
 
 	app.locals.assets = new AssetMap(__dirname + '/assets');
 
-	app.engine('ejs', require('ejs').__express);
 	app.use(express.compress());
 	app.use(function (req, res, next) {
 		res.locals.assets = app.locals.assets;
@@ -50,8 +49,17 @@ function handleLibrary(req, res, next) {
 
 	res.sendfile(absolutePath, function (err) {
 		if (err) {
-			var ejsPath = absolutePath + '.ejs';
-			return res.render(ejsPath);
+			// If sendfile failed, maybe there is an EJS script we just need to render.
+			var ejsPath = absolutePath.replace('.js', '.ejs.js');
+
+			fs.readFile(ejsPath, 'utf8', function (err, data) {
+				if (err) {
+					return next(err);
+				}
+
+				var output = ejs.render(data, { filename: ejsPath });
+				res.send(output);
+			})
 		}
 	});
 }

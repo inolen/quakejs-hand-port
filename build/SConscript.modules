@@ -18,14 +18,14 @@ EJS = Builder(
 		var input = require('fs').readFileSync('$SOURCE', 'utf8');\
 		var output = require('ejs').render(input, { filename: '$SOURCE'});\
 		console.log(output)" > $TARGET""",
-	suffix = '.js.tmp',
-	src_suffix = '.js.ejs')
+	suffix = '.tmp.js',
+	src_suffix = '.ejs.js')
 
 RequireOptimizer = Builder(
-	action = 'node ' + REQUIREJS_PATH + ' -o $BUILD_SCRIPT baseUrl=$BASE_DIR name=$MODULE out=$TARGET optimize=uglify')
+	action = 'node ' + REQUIREJS_PATH + ' -o $BUILD_SCRIPT name=$MODULE out=$TARGET')
 
 JSHint = Builder(
-	action = 'jshint $SOURCE --config=' + JSHINT_CONFIG + ' --extra-ext .tmp')
+	action = 'jshint $SOURCE --config=' + JSHINT_CONFIG)
 
 env.Append(BUILDERS = {
 	'EJS':              EJS,
@@ -36,7 +36,29 @@ env.Append(BUILDERS = {
 ##
 # Targets
 ##
-all_js = rglob(SRC_DIR, '*.js', True, True, True)
+MODULES = [
+	env.EJS(SRC_DIR + '/cgame/cg.ejs.js'),
+	env.EJS(SRC_DIR + '/client/cl.ejs.js'),
+	env.EJS(SRC_DIR + '/clipmap/cm.ejs.js'),
+	       (SRC_DIR + '/common/asset-cache.js'),
+	       (SRC_DIR + '/common/bsp-serializer.js'),
+	env.EJS(SRC_DIR + '/common/com.ejs.js'),
+	       (SRC_DIR + '/common/cvar.js'),
+	       (SRC_DIR + '/common/qmath.js'),
+	       (SRC_DIR + '/common/qshared.js'),
+	       (SRC_DIR + '/common/shader-compiler.js'),
+	       (SRC_DIR + '/common/text-tokenizer.js'),
+	env.EJS(SRC_DIR + '/game/bg.ejs.js'),
+	env.EJS(SRC_DIR + '/game/gm.ejs.js'),
+	env.EJS(SRC_DIR + '/renderer/re.ejs.js'),
+	env.EJS(SRC_DIR + '/server/sv.ejs.js'),
+	env.EJS(SRC_DIR + '/sound/snd.ejs.js'),
+	env.EJS(SRC_DIR + '/system/browser/sys.ejs.js'),
+	env.EJS(SRC_DIR + '/system/dedicated/sys.ejs.js'),
+	       (SRC_DIR + '/ui/dom.js'),
+	env.EJS(SRC_DIR + '/ui/ui.ejs.js')
+]
+AlwaysBuild(MODULES)
 
 ##
 # Browser
@@ -46,8 +68,7 @@ all_js = rglob(SRC_DIR, '*.js', True, True, True)
 ##
 browser = env.RequireOptimizer(
 	BIN_DIR + '/quakejs-browser-min.js',
-	all_js,
-	BASE_DIR=SRC_DIR,
+	MODULES,
 	BUILD_SCRIPT=CWD + '/browser.build.js',
 	MODULE='system/browser/sys')
 env.Alias('browser', browser)
@@ -61,8 +82,7 @@ env.Alias('browser', browser)
 ##
 dedicated = env.RequireOptimizer(
 	BIN_DIR + '/quakejs-dedicated-min.js',
-	all_js,
-	BASE_DIR=SRC_DIR,
+	MODULES,
 	BUILD_SCRIPT=CWD + '/dedicated.build.js',
 	MODULE='system/dedicated/sys')
 env.Alias('dedicated', dedicated)
@@ -73,30 +93,5 @@ env.Alias('dedicated', dedicated)
 # We don't lint the individual files of a module,
 # just the aggregate module.
 ##
-
-MODULES = [
-	env.EJS(SRC_DIR + '/cgame/cg.js.ejs'),
-	env.EJS(SRC_DIR + '/client/cl.js.ejs'),
-	env.EJS(SRC_DIR + '/clipmap/cm.js.ejs'),
-	       (SRC_DIR + '/common/asset-cache.js'),
-	       (SRC_DIR + '/common/bsp-serializer.js'),
-	env.EJS(SRC_DIR + '/common/com.js.ejs'),
-	       (SRC_DIR + '/common/cvar.js'),
-	       (SRC_DIR + '/common/qmath.js'),
-	       (SRC_DIR + '/common/qshared.js'),
-	       (SRC_DIR + '/common/shader-compiler.js'),
-	       (SRC_DIR + '/common/text-tokenizer.js'),
-	env.EJS(SRC_DIR + '/game/bg.js.ejs'),
-	env.EJS(SRC_DIR + '/game/gm.js.ejs'),
-	env.EJS(SRC_DIR + '/renderer/re.js.ejs'),
-	env.EJS(SRC_DIR + '/server/sv.js.ejs'),
-	env.EJS(SRC_DIR + '/sound/snd.js.ejs'),
-	env.EJS(SRC_DIR + '/system/browser/sys.js.ejs'),
-	env.EJS(SRC_DIR + '/system/dedicated/sys.js.ejs'),
-	       (SRC_DIR + '/ui/dom.js'),
-	env.EJS(SRC_DIR + '/ui/ui.js.ejs')
-]
-AlwaysBuild(MODULES)
-
 jshint = [env.JSHint(x) for x in MODULES]
 env.Alias('jshint', jshint)

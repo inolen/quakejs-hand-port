@@ -3,4 +3,4 @@
 user.cfg
 /node_modules
 /assets/*
-*.js.tmp
+*.tmp.js
