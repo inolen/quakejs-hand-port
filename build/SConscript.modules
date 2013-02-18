@@ -96,7 +96,7 @@ MODULES = [
 	       (SRC_DIR + '/ui/dom.js'),
 	env.EJS(SRC_DIR + '/ui/ui.js.ejs')
 ]
-Depends(MODULES)
+AlwaysBuild(MODULES)
 
 jshint = [env.JSHint(x) for x in MODULES]
 env.Alias('jshint', jshint)
