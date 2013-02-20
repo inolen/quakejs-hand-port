@@ -3,7 +3,7 @@
 	optimize: 'uglify',
 	paths: {
 		'async':                'vendor/async',
-		'ByteBuffer':           'vendor/byte-buffer',
+		'BitBuffer':            'vendor/bit-buffer',
 		'EventEmitter':         'vendor/EventEmitter',
 		'gameshim':             'vendor/game-shim',
 		'glmatrix':             'vendor/gl-matrix',
