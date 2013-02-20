@@ -1,0 +1,22 @@
+{
+  "name": "quakejs",
+  "version": "0.1.0",
+  "description": "",
+  "dependencies": {
+    "ejs": "~0.8.3",
+    "express": "~3.0.4",
+    "http-proxy": "~0.8.7",
+    "optimist": "~0.3.5",
+    "ws": "git@github.com:inolen/ws.git"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/inolen/quakejs.git"
+  },
+  "keywords": [
+    "quake",
+    "webgl",
+    "html5"
+  ],
+  "author": "Anthony Pesch"
+}
