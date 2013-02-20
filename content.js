@@ -149,7 +149,8 @@ AssetMap.prototype.refresh = function () {
 			if (stat.isDirectory()) {
 				populate_r(subRoot, file);
 			} else if (stat.isFile()) {
-				var relativePath = file.replace(subRoot + '/', '');
+				// Add file to cache.
+				var relativePath = file.replace(subRoot + '/', '').toLowerCase();
 				self.map[relativePath] = file;
 			}
 		});
