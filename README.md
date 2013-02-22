@@ -1,8 +1,5 @@
 # quakejs
 
-NOTE: This project depends on two sub-modules for assets, so please be sure to clone with:
-`git clone --recursive https://github.com/inolen/quakejs.git`
-
 ## Quickstart
 
     git clone --recursive https://github.com/inolen/quakejs.git
@@ -12,7 +9,8 @@ NOTE: This project depends on two sub-modules for assets, so please be sure to c
 
 Open your browser and hit `http://localhost:8080` et voila!
 
-NOTE: QuakeJS requires node.js 0.9.4+.
+NOTE: node.js 0.9.4 or higher is required.
+NOTE 2: This project depends on sub-modules for assets, so please be sure to do a recursive clone as outlined above.
 
 ## Building
 
