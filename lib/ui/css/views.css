@@ -322,6 +322,13 @@
 }
 
 /**
+ * Default view
+ */
+#default {
+	background: #000;
+}
+
+/**
  * Main menu
  */
 #main {
