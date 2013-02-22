@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1071;
+var GAME_VERSION = 0.1072;
 
 var CMD_BACKUP   = 64;
 
@@ -25730,10 +25730,6 @@ function (glmatrix, QS, COM, Cvar) {
 	}
 };
 
-var localFiles = [
-	'user.cfg'
-];
-
 /**
  * MetaSockets are the object we pass to the
  * cl, sv and com layers instead of the raw
@@ -25748,6 +25744,19 @@ var MetaSocket = function () {
 // to shutdown, preventing any pending callbacks from
 // being executed.
 var proxies = {};
+
+/**
+ * IsLocalFile
+ *
+ * .cfg files are always loaded locally.
+ */
+function IsLocalFile(path) {
+	if (path.indexOf('.cfg') !== -1) {
+		return true;
+	}
+
+	return false;
+}
 
 /**
  * CancelFileCallbacks
@@ -25795,8 +25804,7 @@ function ReadFile(path, encoding, callback, namespace) {
 		callback = ProxyFileCallback(namespace, callback);
 	}
 
-	var local = localFiles.indexOf(path) > -1;
-	if (local) {
+	if (IsLocalFile(path)) {
 		ReadLocalFile(path, encoding, callback);
 	} else {
 		ReadRemoteFile(path, encoding, callback);
@@ -25811,9 +25819,10 @@ function WriteFile(path, data, encoding, callback, namespace) {
 		callback = ProxyFileCallback(namespace, callback);
 	}
 
-	var local = localFiles.indexOf(path) > -1;
+	var local = IsLocalFile(path);
+
 	if (!local) {
-		error('Can\'t write to non-whitelisted files.');
+		error('Can\'t write to remote files.');
 		return;
 	}
 
@@ -25990,8 +25999,6 @@ function ReadRemoteFile(path, encoding, callback) {
 	// directly to the content server. FREEDOM!!!
 	var sv_filecdn = Cvar.AddCvar('sv_filecdn');
 	path = sv_filecdn.get() + '/assets/' + path + '?v=' + QS.GAME_VERSION;
-
-	console.log('ReadFile', path);
 
 	http.get(path, function (res) {
 		if (res.statusCode !== 200) {
