@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1070;
+var GAME_VERSION = 0.1071;
 
 var CMD_BACKUP   = 64;
 
@@ -8814,322 +8814,322 @@ function TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, 
 	results.endPos[2] = start[2] + results.fraction * (end[2] - start[2]);
 }
 
-		var cm; 
- 
-/** 
- * LoadWorld 
- */ 
-function LoadWorld(bsp) { 
-	log('Initializing'); 
- 
-	cm = new ClipWorld(); 
- 
-	cm.shaders = bsp.shaders; 
-	cm.planes = bsp.planes; 
-	cm.nodes = bsp.nodes; 
-	cm.numClusters = bsp.numClusters; 
-	cm.clusterBytes = bsp.clusterBytes; 
-	cm.vis = bsp.vis; 
- 
-	LoadLeafs(bsp.leafs, bsp.leafBrushes, bsp.leafSurfaces); 
-	LoadBrushes(bsp.brushes, bsp.brushSides); 
-	LoadBrushModels(bsp.bmodels); 
-	LoadPatches(bsp.surfaces, bsp.verts); 
- 
-	InitBoxHull(); 
-	FloodAreaConnections(); 
-} 
- 
-/** 
- * LoadLeafs 
- */ 
-function LoadLeafs(leafs, leafBrushes, leafSurfaces) { 
-	cm.leafs = leafs; 
-	cm.leafBrushes = leafBrushes; 
-	cm.leafSurfaces = leafSurfaces; 
- 
-	var numAreas = 0; 
-	for (var i = 0; i < leafs.length; i++) { 
-		var leaf = leafs[i]; 
- 
-		if (leaf.area >= numAreas) { 
-			numAreas = leaf.area + 1; 
-		} 
-	} 
- 
-	cm.areas = new Array(numAreas); 
-	cm.areaPortals = new Array(numAreas * numAreas); 
- 
-	for (var i = 0; i < numAreas; i++) { 
-		cm.areas[i] = new ClipArea(); 
-	} 
-	for (var i = 0; i < numAreas * numAreas; i++) { 
-		cm.areaPortals[i] = 0; 
-	} 
-} 
- 
-/** 
- * LoadBrushes 
- */ 
-function LoadBrushes(brushes, brushSides) { 
-	var shaders = cm.shaders; 
-	var planes = cm.planes; 
- 
-	// 
-	// Load brush sides. 
-	// 
-	var cbrushSides = cm.brushSides = new Array(brushSides.length); 
- 
-	for (var i = 0; i < brushSides.length; i++) { 
-		var side = brushSides[i]; 
-		var cside = cbrushSides[i] = new ClipBrushSide(); 
- 
-		cside.plane = planes[side.planeNum]; 
-		cside.surfaceFlags = shaders[side.shaderNum].surfaceFlags; 
-	} 
- 
-	// 
-	// Load brushes. 
-	// 
-	var cbrushes = cm.brushes = new Array(brushes.length); 
- 
-	for (var i = 0; i < brushes.length; i++) { 
-		var brush = brushes[i]; 
-		var cbrush = cbrushes[i] = new ClipBrush(); 
- 
-		cbrush.shader = shaders[brush.shaderNum]; 
-		cbrush.contents = cbrush.shader.contents; 
- 
-		cbrush.bounds[0][0] = -cbrushSides[brush.side + 0].plane.dist; 
-		cbrush.bounds[0][1] = -cbrushSides[brush.side + 2].plane.dist; 
-		cbrush.bounds[0][2] = -cbrushSides[brush.side + 4].plane.dist; 
- 
-		cbrush.bounds[1][0] = cbrushSides[brush.side + 1].plane.dist; 
-		cbrush.bounds[1][1] = cbrushSides[brush.side + 3].plane.dist; 
-		cbrush.bounds[1][2] = cbrushSides[brush.side + 5].plane.dist; 
- 
-		cbrush.firstSide = brush.side; 
-		cbrush.numSides = brush.numSides; 
-	} 
-} 
- 
-/** 
- * LoadBrushModels 
- */ 
-function LoadBrushModels(models) { 
-	cm.models = new Array(models.length); 
- 
-	for (var i = 0; i < models.length; i++) { 
-		var model = models[i]; 
-		var cmodel = cm.models[i] = new ClipModel(); 
- 
-		// Spread the mins / maxs by a unit. 
-		var spread = vec3.createFrom(1, 1, 1); 
-		vec3.subtract(model.bounds[0], spread, cmodel.mins); 
-		vec3.add(model.bounds[1], spread, cmodel.maxs); 
- 
-		if (i === 0) { 
-			continue;  // world model doesn't need other info 
-		} 
- 
-		// Make a "leaf" just to hold the model's brushes and surfaces. 
-		var leaf = cmodel.leaf; 
-		leaf.numLeafBrushes = model.numBrushes; 
-		leaf.firstLeafBrush = cm.leafBrushes.length; 
-		for (var j = 0; j < model.numBrushes; j++) { 
-			cm.leafBrushes.push(model.firstBrush + j); 
-		} 
- 
-		leaf.numLeafSurfaces = model.numSurfaces; 
-		leaf.firstLeafSurface = cm.leafSurfaces.length; 
-		for (var j = 0; j < model.numSurfaces; j++) { 
-			cm.leafSurfaces.push(model.firstSurface + j); 
-		} 
-	} 
-} 
- 
-/** 
- * LoadPatches 
- */ 
-function LoadPatches(surfaces, verts) { 
-	cm.surfaces = new Array(surfaces.length); 
- 
-	// Scan through all the surfaces, but only load patches, 
-	// not planar faces. 
-	var points = new Array(MAX_PATCH_VERTS); 
-	for (var i = 0; i < MAX_PATCH_VERTS; i++) { 
-		points[i] = vec3.create(); 
-	} 
- 
-	for (var i = 0; i < surfaces.length; i++) { 
-		var surface = surfaces[i]; 
-		if (surface.surfaceType !== BspSerializer.MST.PATCH) { 
-			continue;  // ignore other surfaces 
-		} 
- 
-		var patch = cm.surfaces[i] = new cpatch_t(); 
- 
-		// Load the full drawverts onto the stack. 
-		var width = surface.patchWidth; 
-		var height = surface.patchHeight; 
-		var c = width * height; 
-		if (c > MAX_PATCH_VERTS) { 
-			error('ParseMesh: MAX_PATCH_VERTS'); 
-		} 
-		for (var j = 0; j < c ; j++) { 
-			vec3.set(verts[surface.vertex + j].pos, points[j]); 
-		} 
- 
-		patch.contents = cm.shaders[surface.shaderNum].contents; 
-		patch.surfaceFlags = cm.shaders[surface.shaderNum].surfaceFlags; 
- 
-		// Create the internal facet structure 
-		patch.pc = GeneratePatchCollide(width, height, points); 
-	} 
-} 
- 
-/** 
- * InitBoxHull 
- * 
- * Set up the planes and nodes so that the six floats of a bounding box 
- * can just be stored out and get a proper clipping hull structure. 
- */ 
-var BOX_BRUSHES = 1; 
-var BOX_SIDES   = 6; 
-var BOX_LEAFS   = 2; 
-var BOX_PLANES  = 12; 
- 
-var box_model = null; 
-var box_brush = null; 
-var box_planes = null; 
- 
-function InitBoxHull() { 
-	box_model = new ClipModel(); 
-	box_model.leaf.numLeafBrushes = 1; 
-	box_model.leaf.firstLeafBrush = cm.leafBrushes.length; 
-	cm.leafBrushes.push(cm.brushes.length); 
- 
-	box_brush = new ClipBrush(); 
-	box_brush.firstSide = cm.brushSides.length; 
-	box_brush.numSides = BOX_SIDES; 
-	box_brush.contents = SURF.CONTENTS.BODY; 
-	cm.brushes.push(box_brush); 
- 
-	box_planes = new Array(BOX_PLANES); 
-	for (var i = 0; i < BOX_PLANES; i++) { 
-		var plane = box_planes[i] = new QMath.Plane(); 
-		cm.planes.push(plane); 
-	} 
- 
-	for (var i = 0; i < 6; i++) { 
-		var side = i & 1; 
- 
-		// Brush sides. 
-		var s = new BspSerializer.dbrushside_t(); 
-		s.plane = box_planes[i * 2 + side]; 
-		s.surfaceFlags = 0; 
- 
-		// Planes. 
-		var p = box_planes[i * 2]; 
-		p.type = i >> 1; 
-		p.normal[0] = p.normal[1] = p.normal[2] = 0; 
-		p.normal[i >> 1] = 1; 
-		p.signbits = 0; 
- 
-		p = box_planes[i * 2 + 1]; 
-		p.type = 3 + (i >> 1); 
-		p.normal[0] = p.normal[1] = p.normal[2] = 0; 
-		p.normal[i >> 1] = -1; 
-		p.signbits = QMath.GetPlaneSignbits(p.normal); 
- 
-		cm.brushSides.push(s); 
-	} 
-} 
- 
-/** 
- * InlineModel 
- */ 
-function InlineModel(num) { 
-	if (num < 0 || num >= cm.models.length) { 
-		error('GetInlineModel: bad number'); 
-	} 
- 
-	return num; 
-} 
- 
-/** 
- * TempBoxModel 
- * 
- * To keep everything totally uniform, bounding boxes are turned into small 
- * BSP trees instead of being compared directly. 
- */ 
-function TempBoxModel(mins, maxs) { 
-	vec3.set(mins, box_model.mins); 
-	vec3.set(maxs, box_model.maxs); 
- 
-	box_planes[0].dist = maxs[0]; 
-	box_planes[1].dist = -maxs[0]; 
-	box_planes[2].dist = mins[0]; 
-	box_planes[3].dist = -mins[0]; 
-	box_planes[4].dist = maxs[1]; 
-	box_planes[5].dist = -maxs[1]; 
-	box_planes[6].dist = mins[1]; 
-	box_planes[7].dist = -mins[1]; 
-	box_planes[8].dist = maxs[2]; 
-	box_planes[9].dist = -maxs[2]; 
-	box_planes[10].dist = mins[2]; 
-	box_planes[11].dist = -mins[2]; 
- 
-	vec3.set(mins, box_brush.bounds[0]); 
-	vec3.set(maxs, box_brush.bounds[1]); 
- 
-	return BOX_MODEL_HANDLE; 
-} 
- 
-/** 
- * ModelBounds 
- */ 
-function ModelBounds(model, mins, maxs) { 
-	var cmod = ClipHandleToModel(model); 
-	vec3.set(cmod.mins, mins); 
-	vec3.set(cmod.maxs, maxs); 
-} 
- 
-/** 
- * ClipHandleToModel 
- */ 
-function ClipHandleToModel(handle) { 
-	if (handle < 0) { 
-		error('ClipHandleToModel: bad handle ' + handle); 
-	} 
-	if (handle < cm.models.length) { 
-		return cm.models[handle]; 
-	} 
-	if (handle === BOX_MODEL_HANDLE) { 
-		return box_model; 
-	} 
- 
-	error('ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle); 
-} 
- 
-/** 
- * LeafCluster 
- */ 
-function LeafCluster(leafNum) { 
-	if (leafNum < 0 || leafNum >= cm.leafs.length) { 
-		error('LeafCluster: bad number'); 
-	} 
-	return cm.leafs[leafNum].cluster; 
-} 
- 
-/** 
- * LeafArea 
- */ 
-function LeafArea(leafNum) { 
-	if (leafNum < 0 || leafNum >= cm.leafs.length) { 
-		error('LeafArea: bad number'); 
-	} 
-	return cm.leafs[leafNum].area; 
+		var cm;
+
+/**
+ * LoadWorld
+ */
+function LoadWorld(bsp) {
+	log('Initializing CM');
+
+	cm = new ClipWorld();
+
+	cm.shaders = bsp.shaders;
+	cm.planes = bsp.planes;
+	cm.nodes = bsp.nodes;
+	cm.numClusters = bsp.numClusters;
+	cm.clusterBytes = bsp.clusterBytes;
+	cm.vis = bsp.vis;
+
+	LoadLeafs(bsp.leafs, bsp.leafBrushes, bsp.leafSurfaces);
+	LoadBrushes(bsp.brushes, bsp.brushSides);
+	LoadBrushModels(bsp.bmodels);
+	LoadPatches(bsp.surfaces, bsp.verts);
+
+	InitBoxHull();
+	FloodAreaConnections();
+}
+
+/**
+ * LoadLeafs
+ */
+function LoadLeafs(leafs, leafBrushes, leafSurfaces) {
+	cm.leafs = leafs;
+	cm.leafBrushes = leafBrushes;
+	cm.leafSurfaces = leafSurfaces;
+
+	var numAreas = 0;
+	for (var i = 0; i < leafs.length; i++) {
+		var leaf = leafs[i];
+
+		if (leaf.area >= numAreas) {
+			numAreas = leaf.area + 1;
+		}
+	}
+
+	cm.areas = new Array(numAreas);
+	cm.areaPortals = new Array(numAreas * numAreas);
+
+	for (var i = 0; i < numAreas; i++) {
+		cm.areas[i] = new ClipArea();
+	}
+	for (var i = 0; i < numAreas * numAreas; i++) {
+		cm.areaPortals[i] = 0;
+	}
+}
+
+/**
+ * LoadBrushes
+ */
+function LoadBrushes(brushes, brushSides) {
+	var shaders = cm.shaders;
+	var planes = cm.planes;
+
+	//
+	// Load brush sides.
+	//
+	var cbrushSides = cm.brushSides = new Array(brushSides.length);
+
+	for (var i = 0; i < brushSides.length; i++) {
+		var side = brushSides[i];
+		var cside = cbrushSides[i] = new ClipBrushSide();
+
+		cside.plane = planes[side.planeNum];
+		cside.surfaceFlags = shaders[side.shaderNum].surfaceFlags;
+	}
+
+	//
+	// Load brushes.
+	//
+	var cbrushes = cm.brushes = new Array(brushes.length);
+
+	for (var i = 0; i < brushes.length; i++) {
+		var brush = brushes[i];
+		var cbrush = cbrushes[i] = new ClipBrush();
+
+		cbrush.shader = shaders[brush.shaderNum];
+		cbrush.contents = cbrush.shader.contents;
+
+		cbrush.bounds[0][0] = -cbrushSides[brush.side + 0].plane.dist;
+		cbrush.bounds[0][1] = -cbrushSides[brush.side + 2].plane.dist;
+		cbrush.bounds[0][2] = -cbrushSides[brush.side + 4].plane.dist;
+
+		cbrush.bounds[1][0] = cbrushSides[brush.side + 1].plane.dist;
+		cbrush.bounds[1][1] = cbrushSides[brush.side + 3].plane.dist;
+		cbrush.bounds[1][2] = cbrushSides[brush.side + 5].plane.dist;
+
+		cbrush.firstSide = brush.side;
+		cbrush.numSides = brush.numSides;
+	}
+}
+
+/**
+ * LoadBrushModels
+ */
+function LoadBrushModels(models) {
+	cm.models = new Array(models.length);
+
+	for (var i = 0; i < models.length; i++) {
+		var model = models[i];
+		var cmodel = cm.models[i] = new ClipModel();
+
+		// Spread the mins / maxs by a unit.
+		var spread = vec3.createFrom(1, 1, 1);
+		vec3.subtract(model.bounds[0], spread, cmodel.mins);
+		vec3.add(model.bounds[1], spread, cmodel.maxs);
+
+		if (i === 0) {
+			continue;  // world model doesn't need other info
+		}
+
+		// Make a "leaf" just to hold the model's brushes and surfaces.
+		var leaf = cmodel.leaf;
+		leaf.numLeafBrushes = model.numBrushes;
+		leaf.firstLeafBrush = cm.leafBrushes.length;
+		for (var j = 0; j < model.numBrushes; j++) {
+			cm.leafBrushes.push(model.firstBrush + j);
+		}
+
+		leaf.numLeafSurfaces = model.numSurfaces;
+		leaf.firstLeafSurface = cm.leafSurfaces.length;
+		for (var j = 0; j < model.numSurfaces; j++) {
+			cm.leafSurfaces.push(model.firstSurface + j);
+		}
+	}
+}
+
+/**
+ * LoadPatches
+ */
+function LoadPatches(surfaces, verts) {
+	cm.surfaces = new Array(surfaces.length);
+
+	// Scan through all the surfaces, but only load patches,
+	// not planar faces.
+	var points = new Array(MAX_PATCH_VERTS);
+	for (var i = 0; i < MAX_PATCH_VERTS; i++) {
+		points[i] = vec3.create();
+	}
+
+	for (var i = 0; i < surfaces.length; i++) {
+		var surface = surfaces[i];
+		if (surface.surfaceType !== BspSerializer.MST.PATCH) {
+			continue;  // ignore other surfaces
+		}
+
+		var patch = cm.surfaces[i] = new cpatch_t();
+
+		// Load the full drawverts onto the stack.
+		var width = surface.patchWidth;
+		var height = surface.patchHeight;
+		var c = width * height;
+		if (c > MAX_PATCH_VERTS) {
+			error('ParseMesh: MAX_PATCH_VERTS');
+		}
+		for (var j = 0; j < c ; j++) {
+			vec3.set(verts[surface.vertex + j].pos, points[j]);
+		}
+
+		patch.contents = cm.shaders[surface.shaderNum].contents;
+		patch.surfaceFlags = cm.shaders[surface.shaderNum].surfaceFlags;
+
+		// Create the internal facet structure
+		patch.pc = GeneratePatchCollide(width, height, points);
+	}
+}
+
+/**
+ * InitBoxHull
+ *
+ * Set up the planes and nodes so that the six floats of a bounding box
+ * can just be stored out and get a proper clipping hull structure.
+ */
+var BOX_BRUSHES = 1;
+var BOX_SIDES   = 6;
+var BOX_LEAFS   = 2;
+var BOX_PLANES  = 12;
+
+var box_model = null;
+var box_brush = null;
+var box_planes = null;
+
+function InitBoxHull() {
+	box_model = new ClipModel();
+	box_model.leaf.numLeafBrushes = 1;
+	box_model.leaf.firstLeafBrush = cm.leafBrushes.length;
+	cm.leafBrushes.push(cm.brushes.length);
+
+	box_brush = new ClipBrush();
+	box_brush.firstSide = cm.brushSides.length;
+	box_brush.numSides = BOX_SIDES;
+	box_brush.contents = SURF.CONTENTS.BODY;
+	cm.brushes.push(box_brush);
+
+	box_planes = new Array(BOX_PLANES);
+	for (var i = 0; i < BOX_PLANES; i++) {
+		var plane = box_planes[i] = new QMath.Plane();
+		cm.planes.push(plane);
+	}
+
+	for (var i = 0; i < 6; i++) {
+		var side = i & 1;
+
+		// Brush sides.
+		var s = new BspSerializer.dbrushside_t();
+		s.plane = box_planes[i * 2 + side];
+		s.surfaceFlags = 0;
+
+		// Planes.
+		var p = box_planes[i * 2];
+		p.type = i >> 1;
+		p.normal[0] = p.normal[1] = p.normal[2] = 0;
+		p.normal[i >> 1] = 1;
+		p.signbits = 0;
+
+		p = box_planes[i * 2 + 1];
+		p.type = 3 + (i >> 1);
+		p.normal[0] = p.normal[1] = p.normal[2] = 0;
+		p.normal[i >> 1] = -1;
+		p.signbits = QMath.GetPlaneSignbits(p.normal);
+
+		cm.brushSides.push(s);
+	}
+}
+
+/**
+ * InlineModel
+ */
+function InlineModel(num) {
+	if (num < 0 || num >= cm.models.length) {
+		error('GetInlineModel: bad number');
+	}
+
+	return num;
+}
+
+/**
+ * TempBoxModel
+ *
+ * To keep everything totally uniform, bounding boxes are turned into small
+ * BSP trees instead of being compared directly.
+ */
+function TempBoxModel(mins, maxs) {
+	vec3.set(mins, box_model.mins);
+	vec3.set(maxs, box_model.maxs);
+
+	box_planes[0].dist = maxs[0];
+	box_planes[1].dist = -maxs[0];
+	box_planes[2].dist = mins[0];
+	box_planes[3].dist = -mins[0];
+	box_planes[4].dist = maxs[1];
+	box_planes[5].dist = -maxs[1];
+	box_planes[6].dist = mins[1];
+	box_planes[7].dist = -mins[1];
+	box_planes[8].dist = maxs[2];
+	box_planes[9].dist = -maxs[2];
+	box_planes[10].dist = mins[2];
+	box_planes[11].dist = -mins[2];
+
+	vec3.set(mins, box_brush.bounds[0]);
+	vec3.set(maxs, box_brush.bounds[1]);
+
+	return BOX_MODEL_HANDLE;
+}
+
+/**
+ * ModelBounds
+ */
+function ModelBounds(model, mins, maxs) {
+	var cmod = ClipHandleToModel(model);
+	vec3.set(cmod.mins, mins);
+	vec3.set(cmod.maxs, maxs);
+}
+
+/**
+ * ClipHandleToModel
+ */
+function ClipHandleToModel(handle) {
+	if (handle < 0) {
+		error('ClipHandleToModel: bad handle ' + handle);
+	}
+	if (handle < cm.models.length) {
+		return cm.models[handle];
+	}
+	if (handle === BOX_MODEL_HANDLE) {
+		return box_model;
+	}
+
+	error('ClipHandleToModel: bad handle ' + cm.models.length + ' < ' + handle);
+}
+
+/**
+ * LeafCluster
+ */
+function LeafCluster(leafNum) {
+	if (leafNum < 0 || leafNum >= cm.leafs.length) {
+		error('LeafCluster: bad number');
+	}
+	return cm.leafs[leafNum].cluster;
+}
+
+/**
+ * LeafArea
+ */
+function LeafArea(leafNum) {
+	if (leafNum < 0 || leafNum >= cm.leafs.length) {
+		error('LeafArea: bad number');
+	}
+	return cm.leafs[leafNum].area;
 }
 
 		return {
@@ -13048,7 +13048,6 @@ var ArenaInfo = function () {
 
 	this.intermissionTime       = 0;                       // time the intermission was started
 
-	// this.changemap              = null;
 	this.readyToExit            = false;                   // at least one client wants to exit
 	this.exitTime               = 0;
 
@@ -13329,7 +13328,7 @@ function error(str) {
  * Init
  */
 function Init(levelTime) {
-	log('Initializing');
+	log('Initializing GM');
 
 	level = new GameLocals();
 	level.time = levelTime;
@@ -13389,6 +13388,8 @@ function RegisterCvars() {
  * Shutdown
  */
 function Shutdown() {
+	log('Shutdown GM');
+
 	// Write all the client session data so we can get it back.
 	WriteWorldSession();
 }
@@ -13978,7 +13979,6 @@ function TournamentRestart() {
 	// If we are running a tournement map, kick the loser to spectator status,
 	// which will automatically grab the next spectator and restart.
 	if (g_gametype.get() === GT.TOURNAMENT) {
-		level.changemap = null;
 		level.arena.intermissionTime = 0;
 
 		QueueTournamentLoser();
@@ -14468,18 +14468,14 @@ function CheckIntermissionExit() {
  * or moved to a new level based on the "nextmap" cvar.
  */
 function ExitIntermission() {
-// 	trap_Cvar_VariableStringBuffer( "nextmap", nextmap, sizeof(nextmap) );
-// 	trap_Cvar_VariableStringBuffer( "d1", d1, sizeof(d1) );
-//
-// 	if( !Q_stricmp( nextmap, "map_restart 0" ) && Q_stricmp( d1, "" ) ) {
-// 		trap_Cvar_Set( "nextmap", "vstr d2" );
-// 		trap_SendConsoleCommand( EXEC_APPEND, "vstr d1\n" );
-// 	} else {
-// 		trap_SendConsoleCommand( EXEC_APPEND, "vstr nextmap\n" );
-// 	}
+	var nextmap = Cvar.AddCvar('nextmap');
 
-	level.changemap = null;
 	level.arena.intermissionTime = 0;
+
+	// If no nextmap is specified, let the default map restart occur.
+	if (!nextmap.get()) {
+		return;
+	}
 
 	// We need to do this here before changing to CON_CONNECTING.
 	WriteWorldSession();
@@ -14491,6 +14487,8 @@ function ExitIntermission() {
 			level.clients[i].pers.connected = CON.CONNECTING;
 		}
 	}
+
+	COM.ExecuteBuffer('vstr nextmap');
 }
 
 /**********************************************************
@@ -22056,7 +22054,7 @@ function error(str) {
  * Called only once on startup.
  */
 function Init(inCL) {
-	log('Initializing');
+	log('Initializing SV');
 
 	CL = inCL;
 
@@ -22099,11 +22097,7 @@ function CreateListenServer() {
 	// to be used as the loopback handler.
 	if (!dedicated) {
 		var addr = COM.StringToAddr('localhost');
-		var loopback = COM.NetchanSetup(QS.NS.SERVER, addr, {
-			onmessage: function (buffer) {
-				PacketEvent(loopback, buffer);
-			}
-		});
+		ClientAccept(addr);
 		return;
 	}
 
@@ -22441,11 +22435,6 @@ function Spawn(mapName) {
 		// Restart renderer and sound systems.
 		CL.InitSubsystems();
 	}
-
-	// // Set nextmap to the same map, but it may be overriden
-	// // by the game startup or another console command.
-	// var nextmap = Cvar.AddCvar('nextmap');
-	// nextmap.set('map_restart 0');
 
 	// Toggle the server bit so clients can detect that a server has changed.
 	svs.snapFlagServerBit ^= QS.SNAPFLAG_SERVERCOUNT;
@@ -23141,11 +23130,12 @@ function ExecuteClientMessage(client, msg) {
 
 	// If we can tell that the client has dropped the last
 	// gamestate we sent them, resend it.
+	// log('ExecuteClientMessage', serverid, sv.serverId, client.messageAcknowledge, client.gamestateMessageNum);
 	if (serverid !== sv.serverId) {
 		// TTimo - use a comparison here to catch multiple map_restart.
 		if (serverid >= sv.restartedServerId && serverid < sv.serverId) {
 			// They just haven't caught the map_restart yet
-			// log(client.name, 'ignoring pre map_restart / outdated client message');
+			log(client.name, 'ignoring pre map_restart / outdated client message');
 			return;
 		}
 
@@ -23230,9 +23220,12 @@ function ParseClientCommand(client, msg) {
 function ExecuteClientCommand(client, cmd) {
 	if (cmd.type === 'userinfo') {
 		UpdateUserinfo(client, cmd.data);
-	} else if (cmd.type === 'disconnect') {
-		Disconnect(client);
 	}
+	// Since we're on TCP/IP the disconnect is handled as a result
+	// of a socket close event.
+	// else if (cmd.type === 'disconnect') {
+	// 	Disconnect(client);
+	// }
 
 	// Pass unknown strings to the game.
 	if (sv.state === SS.GAME && (client.state === CS.ACTIVE || client.state === CS.PRIMED)) {
@@ -23270,10 +23263,10 @@ function CmdRestartMap(delayString) {
 	}
 
 	// Make sure server is running.
-	// if ( !com_sv_running->integer ) {
-	// 	log('Server is not running.'');
-	// 	return;
-	// }
+	if (!Running()) {
+		log('Server is not running.');
+		return;
+	}
 
 	if (sv.restartTime) {
 		return;
@@ -23340,7 +23333,7 @@ function CmdRestartMap(delayString) {
 		// Connect the client again, without the firstTime flag.
 		var denied = GM.ClientConnect(i, false);
 		if (denied) {
-			// this generally shouldn't happen, because the client
+			// This generally shouldn't happen, because the client
 			// was connected before the level change
 			DropClient(client, denied);
 			log('MapRestart: dropped client', i, '- denied!');
@@ -24565,7 +24558,7 @@ function CmdExec(filename, callback) {
 		data = data.replace(/^\s+|\s+$/g, '');
 
 		// Split by newline.
-		var lines = data.split(/\r\n|\r|\n/);
+		var lines = data.split(/[\r\n]+|\r+|\n+/);
 
 		for (var i = 0; i < lines.length; i++) {
 			ExecuteBuffer(lines[i]);
@@ -24714,34 +24707,50 @@ function QueueEvent(ev) {
 /**
  * ExecuteBuffer
  */
+
+// Splits by non-quotes semicolons.
+var splitRegex = /(?:\"[^\"]*\"|[^;])+/g;
+
 // This regex will split space delimited strings,
 // honoring quotation mark groups.
 var argsRegex = /([^"\s]+)|"((?:\\"|[^"])+)"/g;
+
 function ExecuteBuffer(buffer) {
-	var args = [];
-	var m;
-	while ((m = argsRegex.exec(buffer))) {
-		var val = m[1] || m[2];
+	// Split buffer by non-quoted semicolons.
+	var matches = buffer.match(splitRegex);
 
-		// Unescape quotes.
-		val = val.replace(/\\"/g, '"');
-
-		args.push(val);
-	}
-
-	// Try to look up the cmd in the registered cmds.
-	var cmdcb = GetCmd(args[0]);
-	if (cmdcb) {
-		cmdcb.apply(this, args.slice(1));
-		return;
-	}
-	// If cb is explicitly null, forward this command to the server.
-	else if (cmdcb === null) {
-		CL.ForwardCommandToServer(args);
+	if (!matches) {
+		log('Failed to parse buffer.');
 		return;
 	}
 
-	log('Unknown command \'' + args[0] + '\'');
+	matches.forEach(function (buffer) {
+		var args = [];
+
+		var m;
+		while ((m = argsRegex.exec(buffer))) {
+			var val = m[1] || m[2];
+
+			// Unescape quotes.
+			val = val.replace(/\\"/g, '"');
+
+			args.push(val);
+		}
+
+		// Try to look up the cmd in the registered cmds.
+		var cmdcb = GetCmd(args[0]);
+		if (cmdcb) {
+			cmdcb.apply(this, args.slice(1));
+			return;
+		}
+		// If cb is explicitly null, forward this command to the server.
+		else if (cmdcb === null) {
+			CL.ForwardCommandToServer(args);
+			return;
+		}
+
+		log('Unknown command \'' + args[0] + '\'');
+	});
 }
 
 /**
@@ -25389,10 +25398,9 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	var MAX_PACKETLEN = 1400;
 var MAX_LOOPBACK  = 16;
 var loopbacks = [
-	{ msgs: new Array(MAX_LOOPBACK), send: 0 },
-	{ msgs: new Array(MAX_LOOPBACK), send: 0 }
+	{ msocket: null, msgs: new Array(MAX_LOOPBACK), send: 0 },
+	{ msocket: null, msgs: new Array(MAX_LOOPBACK), send: 0 }
 ];
-var loopbackHandlers = [];
 var msgBuffer = new ArrayBuffer(MAX_MSGLEN);
 
 /**
@@ -25451,8 +25459,8 @@ function NetchanSetup(src, addrOrSocket, opts) {
 	};
 
 	if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
-		// Store the onmessage handler to use during future sends.
-		loopbackHandlers[src] = netchan.msocket.onmessage;
+		// Store the socket to use for future sends.
+		loopbacks[src].msocket = netchan.msocket;
 
 		// Go ahead and trigger a fake open event.
 		netchan.msocket.onopen();
@@ -25468,6 +25476,16 @@ function NetchanDestroy(netchan) {
 	netchan.ready = false;
 
 	if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
+		// Trigger fake close event on both the client and server
+		// so they both clean up properly.
+		var err = new Error('destroyed');
+
+		var msocket = loopbacks[netchan.src].msocket;
+		msocket.onclose(err);
+
+		msocket = loopbacks[netchan.src === QS.NS.CLIENT ? QS.NS.SERVER : QS.NS.CLIENT].msocket;
+		msocket.onclose(err);
+
 		return;
 	}
 
@@ -25484,14 +25502,14 @@ function NetchanSendLoopPacket(netchan, buffer) {
 
 	// Trigger a fake message event.
 	var remote_src = netchan.src === QS.NS.CLIENT ? QS.NS.SERVER : QS.NS.CLIENT;
-	var handler = loopbackHandlers[remote_src];
+	var msocket = loopbacks[remote_src].msocket;
 
-	if (!handler) {
-		error('No loopback handler for', remote_src === QS.NS.CLIENT ? 'client' : 'server');
+	if (!msocket || !msocket.onmessage) {
+		error('No loopback onmessage handler for', remote_src === QS.NS.CLIENT ? 'client' : 'server');
 		return;
 	}
 
-	handler(buffer);
+	msocket.onmessage(buffer);
 }
 
 /**
@@ -26131,7 +26149,13 @@ function NetConnect(addr) {
 function NetSend(msocket, buffer) {
 	var ws = msocket.handle;
 
-	ws.send(buffer, { binary: true });
+	try {
+		ws.send(buffer, { binary: true });
+	} catch (e) {
+		log('NetSend:', e.message);
+
+		NetClose(msocket);
+	}
 }
 
 /**
@@ -26139,7 +26163,11 @@ function NetSend(msocket, buffer) {
  */
 function NetClose(msocket) {
 	var ws = msocket.handle;
-	ws.close();
+	try {
+		ws.close();
+	} catch (e) {
+		log('NetClose:', e.message);
+	}
 }
 
 	return {

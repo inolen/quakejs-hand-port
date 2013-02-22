@@ -23,8 +23,9 @@ function createExampleServer(port, contentHost, contentPort) {
 	app.use(assetProxy(app.locals.proxy, contentHost, contentPort));
 
 	var server = http.createServer(app);
-	server.listen(port);
-	console.log('Example server is now listening on port', server.address().address, server.address().port);
+	server.listen(port, function () {
+		console.log('Example server is now listening on port', server.address().address, server.address().port);
+	});
 
 	return server;
 }
