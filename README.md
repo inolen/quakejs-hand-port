@@ -5,10 +5,10 @@ NOTE: This project depends on the quakejs-demoq3 project for assets, so please c
 
 ## Quickstart
 
-  git clone --recursive https://github.com/inolen/quakejs.git
-  cd quakejs
-  npm install
-  node server.js
+    git clone --recursive https://github.com/inolen/quakejs.git
+    cd quakejs
+    npm install
+    node server.js
 
 Open your browser and hit `http://localhost:8080`.
 
