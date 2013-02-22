@@ -99,9 +99,5 @@
 		<div class="control-group">
 			<div class="control-label">Net time nudge:</div><div name="timeNudge" class="control-input input-range" min="-30" max="30" data-bind="rangeinput: timeNudge, event: { change: updated }"></div>
 		</div>
-
-		<div class="control-group">
-			<div class="control-label">Gamma correction:</div><div name="gamma" class="control-input input-range" min="2" max="0" data-bind="rangeinput: gamma, event: { change: updated }"></div>
-		</div>
 	</div>
 </div>
