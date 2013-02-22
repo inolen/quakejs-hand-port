@@ -1,6 +1,6 @@
 # quakejs
 
-NOTE: This project depends on the quakejs-demoq3 project for assets, so please clone with:
+NOTE: This project depends on two sub-modules for assets, so please be sure to clone with:
 `git clone --recursive https://github.com/inolen/quakejs.git`
 
 ## Quickstart
@@ -10,9 +10,9 @@ NOTE: This project depends on the quakejs-demoq3 project for assets, so please c
     npm install
     node server.js
 
-Open your browser and hit `http://localhost:8080`.
+Open your browser and hit `http://localhost:8080` et voila!
 
-Et voila!
+NOTE: QuakeJS requires node.js 0.9.4+.
 
 ## Building
 
