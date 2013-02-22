@@ -38,7 +38,7 @@ function createServer(port) {
 
 	var server = http.createServer(app);
 	server.listen(port);
-	console.log('Content server is now listening on port', port);
+	console.log('Content server is now listening on port', server.address().address, server.address().port);
 
 	return server;
 }

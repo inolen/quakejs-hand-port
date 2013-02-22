@@ -6,8 +6,8 @@ var port = 8080;
 var contentPort = 9000;
 
 function main() {
-	var contentServer = createContentServer(contentPort);
-	createExampleServer(port, contentServer.address().address, contentServer.address().port);
+	createContentServer(contentPort);
+	createExampleServer(port, 'localhost', contentPort);
 }
 
 function createContentServer(port) {
@@ -24,7 +24,7 @@ function createExampleServer(port, contentHost, contentPort) {
 
 	var server = http.createServer(app);
 	server.listen(port);
-	console.log('Example server is now listening on port', port);
+	console.log('Example server is now listening on port', server.address().address, server.address().port);
 
 	return server;
 }
