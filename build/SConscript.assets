@@ -45,13 +45,6 @@ def addAudio(commands, src_dir, out_dir):
 		out = file.abspath.replace(src_dir, out_dir).replace('.wav', '.ogg')
 		commands.append(env.ConvToOGG(out, file.abspath))
 
-def addConfigs(commands, src_dir, out_dir):
-	files = findAssets(src_dir, ['configs'], ['.cfg'])
-
-	for file in files:
-		out = file.abspath.replace(src_dir, out_dir)
-		commands.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
-
 def addImages(commands, src_dir, out_dir):
 	exts = ['.jpg', '.png', '.tga']
 	files = findAssets(src_dir, ['gfx/2d', 'icons', 'levelshots', 'ui'], exts)
@@ -78,7 +71,7 @@ def addModels(commands, src_dir, out_dir):
 		commands.append(Command(out, file.abspath, Copy('$TARGET', '$SOURCE')))
 
 def addShaders(commands, src_dir, out_dir):
-files = findAssets(src_dir, ['scripts'], ['.shader'])
+	files = findAssets(src_dir, ['scripts'], ['.shader'])
 
 	for file in files:
 		out = file.abspath.replace(src_dir, out_dir)
@@ -99,7 +92,6 @@ def addTextures(commands, src_dir, out_dir):
 # Add all of the assets from each sub dir of /assets.
 ##
 audio = []
-configs = []
 images = []
 maps = []
 models = []
@@ -110,11 +102,10 @@ for dir in subdirs(ASSET_DIR):
 	src_dir = ASSET_DIR + '/' + dir + '/src'
 	out_dir = ASSET_DIR + '/' + dir + '/built'
 	addAudio(audio, src_dir, out_dir)
-	addConfigs(audio, src_dir, out_dir)
 	addImages(images, src_dir, out_dir)
 	addMaps(maps, src_dir, out_dir)
 	addModels(models, src_dir, out_dir)
 	addShaders(shaders, src_dir, out_dir)
 	addTextures(textures, src_dir, out_dir)
 
-env.Alias('assets', [audio, configs, images, maps, models, shaders, textures])
+env.Alias('assets', [audio, images, maps, models, shaders, textures])

@@ -5,6 +5,7 @@ var http = require('http');
 var opt = require('optimist');
 var path = require('path');
 var url = require('url');
+var AssetMap = require('./asset-map');
 
 var argv = opt
 	.describe('port', 'Port to bind to').default('port', 9000)
@@ -29,39 +30,20 @@ function createServer(port) {
 		res.locals.assets = app.locals.assets;
 		next();
 	});
-	app.get('/bin/*.js', handleLibrary);
-	app.get('/lib/*.css', handleLibrary);
-	app.get('/lib/*.js', handleLibrary);
-	app.get('/lib/*.tpl', handleLibrary);
+
 	app.get('/assets/scripts/all.shader', handleAllShader);
-	app.get('/assets/*', handleAsset);
+	app.get('/assets/*', handleStaticAsset);
+	app.get('/bin/*.js', handleDynamicAsset);
+	app.get('/lib/*.css', handleDynamicAsset);
+	app.get('/lib/*.js', handleDynamicAsset);
+	app.get('/lib/*.tpl', handleDynamicAsset);
 
 	var server = http.createServer(app);
-	server.listen(port);
-	console.log('Content server is now listening on port', server.address().address, server.address().port);
+	server.listen(port, function () {
+		console.log('Content server is now listening on port', server.address().address, server.address().port);
+	});
 
 	return server;
-}
-
-function handleLibrary(req, res, next) {
-	var parsed = url.parse(req.url);
-	var absolutePath = __dirname + parsed.pathname;
-
-	res.sendfile(absolutePath, function (err) {
-		if (err) {
-			// If sendfile failed, maybe there is an EJS script we just need to render.
-			var ejsPath = absolutePath.replace('.js', '.ejs.js');
-
-			fs.readFile(ejsPath, 'utf8', function (err, data) {
-				if (err) {
-					return next(err);
-				}
-
-				var output = ejs.render(data, { filename: ejsPath });
-				res.send(output);
-			})
-		}
-	});
 }
 
 function handleAllShader(req, res, next) {
@@ -75,7 +57,7 @@ function handleAllShader(req, res, next) {
 function getAllShaders(assets, callback) {
 	var i = 0;
 	var buffer = '';
-	var shaders = assets.findPaths(/scripts\/[^\.]+\.shader/);
+	var shaders = assets.find(/scripts\/[^\.]+\.shader/);
 
 	var readComplete = function (err, data) {
 		// If there was an error, throw a 500.
@@ -95,9 +77,9 @@ function getAllShaders(assets, callback) {
 	fs.readFile(shaders[i++], readComplete);
 }
 
-function handleAsset(req, res, next) {
+function handleStaticAsset(req, res, next) {
 	var relativePath = req.params[0];
-	var absolutePath = res.locals.assets.getPath(relativePath);
+	var absolutePath = res.locals.assets.find(relativePath);
 
 	console.log('Serving asset', relativePath, 'from', absolutePath);
 
@@ -106,83 +88,26 @@ function handleAsset(req, res, next) {
 	});
 }
 
-/**
- * Helper object to map relative file paths to their correct
- * location in the assets directory, properly honoring overrides.
- */
-function AssetMap(root) {
-	this.root = root;
-	this.map = {};
+function handleDynamicAsset(req, res, next) {
+	var parsed = url.parse(req.url);
+	var absolutePath = __dirname + parsed.pathname;
 
-	this.refresh();
-}
-
-AssetMap.prototype.refresh = function () {
-	var self = this;
-
-	// Find all the subdirectories of root.
-	var subdirs = [];
-
-	var filenames = fs.readdirSync(this.root);
-	filenames.forEach(function (file) {
-		file = self.root + '/' + file;
-
-		var stat = fs.statSync(file);
-
-		if (stat.isDirectory()) {
-			subdirs.push(file + '/built');
+	res.sendfile(absolutePath, function (err) {
+		if (!err) {
+			return;
 		}
-	});
 
-	// Order them alphabetically as we want
-	// reverse alphabetical precedence.
-	subdirs.sort();
+		// If sendfile failed, maybe there is an EJS script we just need to render.
+		var ejsPath = absolutePath.replace('.js', '.ejs.js');
 
-	// Populate the cache with their contents.
-	var populate_r = function (subRoot, path) {
-		var filenames = fs.readdirSync(path);
-		filenames.forEach(function (file) {
-			file = path + '/' + file;
+		fs.readFile(ejsPath, 'utf8', function (err, data) {
+			if (err) return next(err);
 
-			var stat = fs.statSync(file);
-
-			if (stat.isDirectory()) {
-				populate_r(subRoot, file);
-			} else if (stat.isFile()) {
-				// Add file to cache.
-				var relativePath = file.replace(subRoot + '/', '').toLowerCase();
-				self.map[relativePath] = file;
-			}
+			var output = ejs.render(data, { filename: ejsPath });
+			res.send(output);
 		});
-	};
-
-	subdirs.forEach(function (path) {
-		console.log('Loading', path);
-		populate_r(path, path);
 	});
-};
-
-AssetMap.prototype.getPath = function (relativePath) {
-	// Return the original path if the lookup failed.
-	return (this.map[relativePath] || relativePath);
-};
-
-AssetMap.prototype.findPaths = function (filter) {
-	var map = this.map;
-	var paths = [];
-
-	for (var relativePath in map) {
-		if (!map.hasOwnProperty(relativePath)) {
-			continue;
-		}
-
-		if (relativePath.match(filter)) {
-			paths.push(map[relativePath]);
-		}
-	}
-
-	return paths;
-};
+}
 
 /**
  * If we're being execute directly, spawn server,
