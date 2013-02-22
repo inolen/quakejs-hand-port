@@ -10,6 +10,7 @@
 Open your browser and hit `http://localhost:8080` et voila!
 
 NOTE: node.js 0.9.4 or higher is required.
+
 NOTE 2: This project depends on sub-modules for assets, so please be sure to do a recursive clone as outlined above.
 
 ## Building
