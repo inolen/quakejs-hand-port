@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1079;
+var GAME_VERSION = 0.1080;
 
 var CMD_BACKUP   = 64;
 
@@ -14283,7 +14283,7 @@ function InitArenas() {
  */
 function ArenaInfoChanged() {
 	var team1 = 0;
-	var team2 = 0;
+	var team2 = 1;
 
 	if (g_gametype.get() >= GT.TEAM) {
 		team1 = TEAM.RED;
@@ -25344,6 +25344,11 @@ function Init(inSYS, inDedicated, callback) {
 		function (cb) {
 			LoadConfig(cb);
 		},
+		// function (cb) {
+		// 	// Override anything from the config files with command line args.
+		// 	SYS.ExecuteCommandLine();
+		// 	cb(null);
+		// },
 		function (cb) {
 			if (!CL) {
 				return cb();
@@ -26663,16 +26668,17 @@ function GetMilliseconds() {
  */
 function GetExports() {
 	return {
-		Error:           error,
-		GetMilliseconds: GetMilliseconds,
-		ReadFile:        ReadFile,
-		WriteFile:       WriteFile,
-		GetGLContext:    GetGLContext,
-		GetUIContext:    GetUIContext,
-		NetListen:       NetListen,
-		NetConnect:      NetConnect,
-		NetSend:         NetSend,
-		NetClose:        NetClose
+		Error:              error,
+		GetMilliseconds:    GetMilliseconds,
+		ExecuteCommandLine: ExecuteCommandLine,
+		ReadFile:           ReadFile,
+		WriteFile:          WriteFile,
+		GetGLContext:       GetGLContext,
+		GetUIContext:       GetUIContext,
+		NetListen:          NetListen,
+		NetConnect:         NetConnect,
+		NetSend:            NetSend,
+		NetClose:           NetClose
 	};
 }
 	var fs = require('fs');
