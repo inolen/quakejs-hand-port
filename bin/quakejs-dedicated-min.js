@@ -22725,7 +22725,6 @@ var ClientSnapshot = function () {
 
 var sv_filecdn,
 	sv_port,
-	sv_rconPort,
 	sv_master,
 	sv_serverid,
 	sv_hostname,
@@ -22770,7 +22769,6 @@ function Init(inCL, callback) {
 	RegisterCommands();
 
 	CreateListenServer();
-	CreateRemoteConsole();
 
 	callback(null);
 }
@@ -22781,7 +22779,6 @@ function Init(inCL, callback) {
 function RegisterCvars() {
 	sv_filecdn    = Cvar.AddCvar('sv_filecdn',    'http://content.quakejs.com', Cvar.FLAGS.ARCHIVE);
 	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE, true);
-	sv_rconPort   = Cvar.AddCvar('sv_rconPort',   9002,                         Cvar.FLAGS.ARCHIVE, true);
 	sv_master     = Cvar.AddCvar('sv_master',     'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
 	sv_hostname   = Cvar.AddCvar('sv_hostname',   'Anonymous',                  Cvar.FLAGS.ARCHIVE);
 	sv_serverid   = Cvar.AddCvar('sv_serverid',   0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
@@ -22808,17 +22805,6 @@ function CreateListenServer() {
 		onrequest: ClientRequest,
 		onaccept: ClientAccept
 	});
-}
-
-/**
- * CreateRemoteConsole
- */
-function CreateRemoteConsole() {
-	if (!dedicated) {
-		return;
-	}
-
-	SYS.CreateRemoteConsole(sv_rconPort.get());
 }
 
 /**
@@ -26603,38 +26589,6 @@ function Init() {
 }
 
 /**
- * CreateRemoteConsole
- */
-function CreateRemoteConsole(port) {
-	// Create small TCP server.
-	var server = net.createServer(function (socket) {
-		socket.write('Welcome!\n');
-
-		// Create a readline interface bound to the connected
-		// socket for stdio / stdout.
-		var rl = readline.createInterface({
-			input: socket,
-			output: socket,
-			terminal: true
-		});
-
-		rl.setPrompt('quakejs> ');
-		rl.prompt();
-
-		rl.on('line', function(line) {
-			COM.ExecuteBuffer(line);
-			rl.prompt();
-		}).on('close', function() {
-			console.log('Have a great day!');
-		});
-	});
-
-	server.listen(port, function() {
-		log((new Date()), 'Rcon server is listening on port', server.address().port);
-	});
-}
-
-/**
  * ExecuteCommandLine
  *
  * TODO Perhaps use a proper command line parser if this needs to be expanded.
@@ -26692,17 +26646,16 @@ function GetMilliseconds() {
  */
 function GetExports() {
 	return {
-		Error:               error,
-		GetMilliseconds:     GetMilliseconds,
-		ReadFile:            ReadFile,
-		WriteFile:           WriteFile,
-		GetGLContext:        GetGLContext,
-		GetUIContext:        GetUIContext,
-		NetListen:           NetListen,
-		NetConnect:          NetConnect,
-		NetSend:             NetSend,
-		NetClose:            NetClose,
-		CreateRemoteConsole: CreateRemoteConsole
+		Error:           error,
+		GetMilliseconds: GetMilliseconds,
+		ReadFile:        ReadFile,
+		WriteFile:       WriteFile,
+		GetGLContext:    GetGLContext,
+		GetUIContext:    GetUIContext,
+		NetListen:       NetListen,
+		NetConnect:      NetConnect,
+		NetSend:         NetSend,
+		NetClose:        NetClose
 	};
 }
 	var fs = require('fs');
