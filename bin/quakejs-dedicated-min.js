@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1078;
+var GAME_VERSION = 0.1079;
 
 var CMD_BACKUP   = 64;
 
@@ -26807,7 +26807,7 @@ function NetListen(address, port, opts) {
 		}
 	});
 
-	log((new Date()), 'Attempting to start game server on', server.address().address, server.address().port);
+	log((new Date()), 'Attempting to start game server on', address, port);
 
 	server.listen(port, address, function() {
 		log((new Date()), 'Game server is listening on port', server.address().address, server.address().port);
