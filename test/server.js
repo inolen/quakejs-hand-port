@@ -11,7 +11,7 @@ function main() {
 }
 
 function createContentServer(port) {
-	return require('./content').createServer(port);
+	return require('../content').createServer(port);
 }
 
 function createExampleServer(port, contentHost, contentPort) {
@@ -19,7 +19,7 @@ function createExampleServer(port, contentHost, contentPort) {
 
 	app.locals.proxy = new httpProxy.RoutingProxy();
 
-	app.use(express.static(__dirname + '/example'));
+	app.use(express.static(__dirname));
 	app.use(assetProxy(app.locals.proxy, contentHost, contentPort));
 
 	var server = http.createServer(app);

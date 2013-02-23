@@ -1,3 +1,14 @@
+/**
+ * AssetMap
+ *
+ * Loads a root directory, flattening it's sub-directories into
+ * a flat map of files. File precedence is in reverse-alphabetical
+ * order, e.g. zzz/foobar.bsp will override aaa/foobar.bsp.
+ *
+ * Additionally, the root directory is set up to be monitored so
+ * that the asset map is refreshed when it is modified.
+ *
+ */
 var fs = require('fs');
 var path = require('path');
 var watch = require('watch');
