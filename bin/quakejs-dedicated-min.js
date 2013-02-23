@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1076;
+var GAME_VERSION = 0.1077;
 
 var CMD_BACKUP   = 64;
 
@@ -13739,13 +13739,6 @@ var ArenaInfo = function () {
 	this.numPlayingClients      = 0;                       // connected, non-spectators
 	this.sortedClients          = new Array(MAX_CLIENTS);  // sorted by score
 
-	this.score1                 = 0;
-	this.score2                 = 0;
-	this.count1                 = 0;
-	this.count2                 = 0;
-	this.alive1                 = 0;
-	this.alive2                 = 0;
-
 	this.intermissionTime       = 0;                       // time the intermission was started
 
 	this.readyToExit            = false;                   // at least one client wants to exit
@@ -13760,7 +13753,6 @@ var TeamInfo = function () {
 	this.score = 0;
 	this.count = 0;
 	this.alive = 0;
-	this.extra = 0;
 };
 
 var GameEntity = function () {
@@ -13935,7 +13927,7 @@ var ClientPersistant = function () {
 	this.teamState         = new PlayerTeamState();        // status in teamplay games
 	this.voteCount         = 0;                            // to prevent people from constantly calling votes
 	this.teamVoteCount     = 0;                            // to prevent people from constantly calling votes
-	this.teamInfo          = false;                        // send team overlay updates?
+	// this.teamInfo          = false;                        // send team overlay updates?
 };
 
 ClientPersistant.prototype.clone = function (to) {
@@ -13953,7 +13945,7 @@ ClientPersistant.prototype.clone = function (to) {
 	to.teamState = this.teamState;
 	to.voteCount = this.voteCount;
 	to.teamVoteCount = this.teamVoteCount;
-	to.teamInfo = this.teamInfo;
+	// to.teamInfo = this.teamInfo;
 
 	return to;
 };
@@ -14290,41 +14282,36 @@ function InitArenas() {
  * FIXME Don't send so much info on each update?
  */
 function ArenaInfoChanged() {
+	var team1 = 0;
+	var team2 = 0;
+
+	if (g_gametype.get() >= GT.TEAM) {
+		team1 = TEAM.RED;
+		team2 = TEAM.BLUE;
+	}
+
 	var info = {
 		'name': level.arena.name,
 		'fl': g_fraglimit.at(level.arena.arenaNum).get(),
 		'cl': g_capturelimit.at(level.arena.arenaNum).get(),
 		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
 		'nc': level.arena.numConnectedClients,
+
+		's1': level.arena.teams[team1].score,
+		's2': level.arena.teams[team2].score,
+		'c1': level.arena.teams[team1].count,
+		'c2': level.arena.teams[team2].count,
+		'a1': level.arena.teams[team1].alive,
+		'a2': level.arena.teams[team2].alive,
+
 		'gs': level.arena.state.current,
 		'wt': level.arena.warmupTime
 	};
 
 	SV.SetConfigstring('arena' + level.arena.arenaNum, info);
 
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		// var ti = level.arena.teams[i];
-		TeamInfoChanged(i);
-	}
-
 	// This is not the userinfo, more like the configstring actually.
 	log('ArenaInfoChanged: ' + level.arena.arenaNum + ' ' + JSON.stringify(info));
-}
-
-/**
- * TeamInfoChanged
- */
-function TeamInfoChanged(teamNum) {
-	var team = level.arena.teams[teamNum];
-
-	var info = {
-		'score': team.score,
-		'count': team.count,
-		'alive': team.alive,
-		'extra': team.extra
-	};
-
-	SV.SetConfigstring('team' + teamNum, info);
 }
 
 /**
@@ -15331,29 +15318,26 @@ function CalculateRanks() {
 
 		if (level.arena.numConnectedClients === 0) {
 			level.arena.teams[0].score = SCORE_NOT_PRESENT;
-			level.arena.teams[0].extra = ENTITYNUM_NONE;
+			level.arena.teams[0].count = ENTITYNUM_NONE;
 
 			level.arena.teams[1].score = SCORE_NOT_PRESENT;
-			level.arena.teams[1].extra = ENTITYNUM_NONE;
+			level.arena.teams[1].count = ENTITYNUM_NONE;
 		} else if (level.arena.numConnectedClients === 1) {
 			level.arena.teams[0].score = level.clients[n1].ps.persistant[PERS.SCORE];
-			level.arena.teams[0].extra = n1;
+			level.arena.teams[0].count = n1;
 
 			level.arena.teams[1].score = SCORE_NOT_PRESENT;
-			level.arena.teams[1].extra = ENTITYNUM_NONE;
+			level.arena.teams[1].count = ENTITYNUM_NONE;
 		} else {
 			level.arena.teams[0].score = level.clients[n1].ps.persistant[PERS.SCORE];
-			level.arena.teams[0].extra = n1;
+			level.arena.teams[0].count = n1;
 
 			level.arena.teams[1].score = level.clients[n2].ps.persistant[PERS.SCORE];
-			level.arena.teams[1].extra = n2;
+			level.arena.teams[1].count = n2;
 		}
 	}
 
 	ArenaInfoChanged();
-
-	// // See if it is time to end the level.
-	// CheckExitRules();
 
 	// If we are at the intermission, send the new info to everyone.
 	if (IntermissionStarted()) {
@@ -25395,9 +25379,11 @@ function Frame() {
 	var msec = frameTime - lastFrameTime;
 
 	CheckSaveConfig();
+
 	EventLoop();
 
 	SV.Frame(msec);
+
 	if (CL) {
 		CL.Frame(msec);
 	}
