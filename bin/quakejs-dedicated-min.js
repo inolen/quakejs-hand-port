@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1073;
+var GAME_VERSION = 0.1074;
 
 var CMD_BACKUP   = 64;
 
@@ -22724,6 +22724,7 @@ var ClientSnapshot = function () {
 	dedicated;
 
 var sv_filecdn,
+	sv_ip,
 	sv_port,
 	sv_master,
 	sv_serverid,
@@ -22778,6 +22779,7 @@ function Init(inCL, callback) {
  */
 function RegisterCvars() {
 	sv_filecdn    = Cvar.AddCvar('sv_filecdn',    'http://content.quakejs.com', Cvar.FLAGS.ARCHIVE);
+	sv_ip         = Cvar.AddCvar('sv_ip',         '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
 	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE, true);
 	sv_master     = Cvar.AddCvar('sv_master',     'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
 	sv_hostname   = Cvar.AddCvar('sv_hostname',   'Anonymous',                  Cvar.FLAGS.ARCHIVE);
@@ -22801,7 +22803,7 @@ function CreateListenServer() {
 		return;
 	}
 
-	SYS.NetListen(sv_port.get(), {
+	SYS.NetListen(sv_ip.get(), sv_port.get(), {
 		onrequest: ClientRequest,
 		onaccept: ClientAccept
 	});
@@ -26737,7 +26739,7 @@ var WebSocketServer = require('ws').Server;
 /**
  * NetListen
  */
-function NetListen(port, opts) {
+function NetListen(address, port, opts) {
 	var server = http.createServer();
 
 	var wss = new WebSocketServer({
@@ -26790,7 +26792,7 @@ function NetListen(port, opts) {
 		}
 	});
 
-	server.listen(port, function() {
+	server.listen(port, address, function() {
 		log((new Date()), 'Game server is listening on port', server.address().port);
 	});
 }
