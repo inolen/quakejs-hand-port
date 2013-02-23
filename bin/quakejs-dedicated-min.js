@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1077;
+var GAME_VERSION = 0.1078;
 
 var CMD_BACKUP   = 64;
 
@@ -22787,8 +22787,8 @@ function Init(inCL, callback) {
  */
 function RegisterCvars() {
 	sv_filecdn    = Cvar.AddCvar('sv_filecdn',    'http://content.quakejs.com', Cvar.FLAGS.ARCHIVE);
-	sv_ip         = Cvar.AddCvar('sv_ip',         '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
-	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE, true);
+	sv_ip         = Cvar.AddCvar('sv_ip',         '0.0.0.0',                    Cvar.FLAGS.ARCHIVE/*, true*/);
+	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE/*, true*/);
 	sv_master     = Cvar.AddCvar('sv_master',     'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
 	sv_hostname   = Cvar.AddCvar('sv_hostname',   'Anonymous',                  Cvar.FLAGS.ARCHIVE);
 	sv_serverid   = Cvar.AddCvar('sv_serverid',   0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
@@ -26807,8 +26807,10 @@ function NetListen(address, port, opts) {
 		}
 	});
 
+	log((new Date()), 'Attempting to start game server on', server.address().address, server.address().port);
+
 	server.listen(port, address, function() {
-		log((new Date()), 'Game server is listening on port', server.address().port);
+		log((new Date()), 'Game server is listening on port', server.address().address, server.address().port);
 	});
 }
 
