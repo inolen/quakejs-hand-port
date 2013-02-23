@@ -1,5 +1,5 @@
 var fs = require('fs');
-var requirejs = require('./build/r.js');
+var requirejs = require('requirejs');
 
 // HACK! However, this seems silly to have configurable.
 // We want to load the game lib from bin/ for development,
