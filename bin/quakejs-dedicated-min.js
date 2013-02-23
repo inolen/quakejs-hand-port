@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1074;
+var GAME_VERSION = 0.1075;
 
 var CMD_BACKUP   = 64;
 
