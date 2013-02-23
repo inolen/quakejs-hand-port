@@ -4500,7 +4500,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1075;
+var GAME_VERSION = 0.1076;
 
 var CMD_BACKUP   = 64;
 
@@ -13608,7 +13608,6 @@ var CARNAGE_REWARD_TIME = 3000;
 var REWARD_SPRITE_TIME  = 2000;
 
 var INTERMISSION_DELAY_TIME = 1000;
-var SP_INTERMISSION_DELAY_TIME = 5000;
 
 var DAMAGE = {
 	RADIUS:        0x00000001,                             // damage was indirect
@@ -14442,12 +14441,12 @@ function CreateTournamentMachine() {
 			defer: true
 		},
 		events: [
-			{ name: 'wait',         from: ['none', GS.COUNTDOWN, GS.ACTIVE], to: GS.WAITING      },
-			{ name: 'ready',        from: GS.WAITING,                        to: GS.COUNTDOWN    },
-			{ name: 'start',        from: GS.COUNTDOWN,                      to: GS.ACTIVE       },
-			{ name: 'end',          from: GS.ACTIVE,                         to: GS.OVER         },
-			{ name: 'intermission', from: GS.OVER,                           to: GS.INTERMISSION },
-			{ name: 'restart',      from: GS.INTERMISSION,                   to: GS.WAITING      }
+			{ name: 'wait',         from: ['none', GS.COUNTDOWN, GS.ACTIVE],     to: GS.WAITING      },
+			{ name: 'ready',        from: GS.WAITING,                            to: GS.COUNTDOWN    },
+			{ name: 'start',        from: GS.COUNTDOWN,                          to: GS.ACTIVE       },
+			{ name: 'end',          from: [GS.WAITING, GS.COUNTDOWN, GS.ACTIVE], to: GS.OVER         },
+			{ name: 'intermission', from: GS.OVER,                               to: GS.INTERMISSION },
+			{ name: 'restart',      from: GS.INTERMISSION,                       to: GS.WAITING      }
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
@@ -14510,7 +14509,13 @@ function CheckTournamentRules() {
 		return true;
 	};
 
+	//
 	if (state.current === GS.WAITING) {
+		if (!ScoreIsTied() && TimelimitHit()) {
+			state.end('Timelimit hit.')
+			return;
+		}
+
 		// Cycle spectators in tournament mode.
 		if (g_gametype.get() === GT.TOURNAMENT) {
 			while (true) {
@@ -14533,6 +14538,11 @@ function CheckTournamentRules() {
 			state.ready();
 		}
 	} else if (state.current === GS.COUNTDOWN) {
+		if (!ScoreIsTied() && TimelimitHit()) {
+			state.end('Timelimit hit.')
+			return;
+		}
+
 		// If we don't have two players, go back to "waiting for players".
 		if (!enough()) {
 			state.wait();
@@ -14544,15 +14554,14 @@ function CheckTournamentRules() {
 			state.start();
 		}
 	} else if (state.current === GS.ACTIVE) {
-		if (!enough()) {
-			// Go back to waiting.
-			state.wait();
+		if (!ScoreIsTied() && TimelimitHit()) {
+			state.end('Timelimit hit.')
 			return;
 		}
 
-		// Check exit conditions.
-		if (g_timelimit.get() && level.time - level.startTime >= g_timelimit.get() * 60000) {
-			state.end('Timelimit hit.')
+		if (!enough()) {
+			// Go back to waiting.
+			state.wait();
 			return;
 		}
 
@@ -14562,6 +14571,7 @@ function CheckTournamentRules() {
 			return;
 		}
 
+		// Check exit conditions.
 		if (g_gametype.get() < GT.CTF && g_fraglimit.get()) {
 			if (level.arena.teams[TEAM.RED].score >= g_fraglimit.get()) {
 				state.end('Red hit the fraglimit.');
@@ -14601,7 +14611,7 @@ function CheckTournamentRules() {
 			}
 		}
 	} else if (state.current === GS.OVER) {
-		if (level.time - level.arena.intermissionTime >= 0) {
+		if (IntermissionStarted()) {
 			state.intermission();
 		}
 	} else if (state.current === GS.INTERMISSION) {
@@ -15006,10 +15016,24 @@ function RemoveClientFromQueue(ent) {
  **********************************************************/
 
 /**
+ * TimelimitHit
+ */
+function TimelimitHit() {
+	return level.time - level.startTime >= g_timelimit.get() * 60000;
+}
+
+/**
+ * IntermissionStarted
+ */
+function IntermissionStarted() {
+	return level.arena.intermissionTime && (level.time - level.arena.intermissionTime) >= 0;
+}
+
+/**
  * QueueIntermission
  */
 function QueueIntermission(msg) {
-	level.arena.intermissionTime = level.time + 5000;
+	level.arena.intermissionTime = level.time + INTERMISSION_DELAY_TIME;
 
 	SV.SendServerCommand(null, 'print', msg);
 
@@ -15332,7 +15356,7 @@ function CalculateRanks() {
 	// CheckExitRules();
 
 	// If we are at the intermission, send the new info to everyone.
-	if (level.arena.intermissionTime) {
+	if (IntermissionStarted()) {
 		SendScoreboardMessageToAllClients();
 	}
 }
@@ -15717,7 +15741,7 @@ function ClientSpawn(ent) {
 	client.ps.torsoAnim = ANIM.TORSO_STAND;
 	client.ps.legsAnim = ANIM.LEGS_IDLE;
 
-	if (!level.arena.intermissionTime) {
+	if (!IntermissionStarted()) {
 		if (client.sess.sessionTeam !== TEAM.SPECTATOR &&
 			client.pers.teamState.state !== TEAM_STATE.ELIMINATED) {
 			KillBox(ent);
@@ -15849,7 +15873,7 @@ function ClientThink_real(ent) {
 	}
 
 	// // Check for exiting intermission.
-	if (level.arena.intermissionTime) {
+	if (IntermissionStarted()) {
 		ClientIntermissionThink(client);
 		return;
 	}
@@ -16180,7 +16204,7 @@ function ClientEndFrame(ent) {
 		}
 	}
 
-	if (level.arena.intermissionTime) {
+	if (IntermissionStarted()) {
 		return;
 	}
 
@@ -17017,7 +17041,7 @@ function ClientCommand(clientNum, cmd) {
 	}
 
 	// Ignore all other commands when at intermission.
-	if (level.arena.intermissionTime) {
+	if (IntermissionStarted()) {
 		// Cmd_Say_f (ent, qfalse, qtrue);
 		return;
 	}
@@ -17683,7 +17707,7 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		return;
 	}
 
-	if (level.arena.intermissionTime) {
+	if (IntermissionStarted()) {
 		return;
 	}
 
@@ -24531,6 +24555,11 @@ function WriteSnapshotEntities(msg, from, to) {
  * SendClientMessages
  */
 function SendClientMessages() {
+	// If we're in the middle of loading the game, don't send any snapshots.
+	if (sv.state !== SS.GAME) {
+		return;
+	}
+
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
