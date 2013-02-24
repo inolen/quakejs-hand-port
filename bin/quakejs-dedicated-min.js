@@ -5201,7 +5201,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1082;
+var GAME_VERSION = 0.1083;
 
 var CMD_BACKUP   = 64;
 
@@ -14270,10 +14270,10 @@ function InitArenas() {
 		}
 	}
 
-	// // Make sure we have flags for CTF, etc.
-	// if (g_gametype.get() >= GT.TEAM) {
-	// 	Team_CheckItems();
-	// }
+	// Make sure we have flags for CTF, etc.
+	if (g_gametype.get() === GT.CTG) {
+		Team_CheckItems();
+	}
 }
 
 /**
@@ -20520,6 +20520,7 @@ function Team_CheckItems() {
 		if (!item) {
 			error('No team_CTF_redflag in map');
 		}
+
 		item = BG.FindItemForPowerup(PW.BLUEFLAG);
 		if (!item) {
 			error('No team_CTF_blueflag in map');
@@ -20540,6 +20541,7 @@ function Team_InitGame() {
 			Team_SetFlagStatus(TEAM.RED, FLAG.ATBASE);
 			Team_SetFlagStatus(TEAM.BLUE, FLAG.ATBASE);
 			break;
+
 		default:
 			break;
 	}
@@ -20960,10 +20962,10 @@ function Team_AddScore(team, origin, score) {
 	tent.r.svFlags |= SVF.BROADCAST;
 
 	if (team === TEAM.RED) {
-		if (level.teams[TEAM.RED].score + score === level.teams[TEAM.BLUE].score) {
+		if (level.arena.teams[TEAM.RED].score + score === level.arena.teams[TEAM.BLUE].score) {
 			// Teams are tied sound.
 			tent.s.eventParm = GTS.TEAMS_ARE_TIED;
-		} else if (level.teams[TEAM.RED].score <= level.teams[TEAM.BLUE].score && level.teams[TEAM.RED].score + score > level.teams[TEAM.BLUE].score) {
+		} else if (level.arena.teams[TEAM.RED].score <= level.arena.teams[TEAM.BLUE].score && level.arena.teams[TEAM.RED].score + score > level.arena.teams[TEAM.BLUE].score) {
 			// Red took the lead sound.
 			tent.s.eventParm = GTS.REDTEAM_TOOK_LEAD;
 		} else {
@@ -20971,10 +20973,10 @@ function Team_AddScore(team, origin, score) {
 			tent.s.eventParm = GTS.REDTEAM_SCORED;
 		}
 	} else {
-		if (level.teams[TEAM.BLUE].score + score === level.teams[TEAM.RED].score) {
+		if (level.arena.teams[TEAM.BLUE].score + score === level.arena.teams[TEAM.RED].score) {
 			// Teams are tied sound.
 			tent.s.eventParm = GTS.TEAMS_ARE_TIED;
-		} else if (level.teams[TEAM.BLUE].score <= level.teams[TEAM.RED].score && level.teams[TEAM.BLUE].score + score > level.teams[TEAM.RED].score) {
+		} else if (level.arena.teams[TEAM.BLUE].score <= level.arena.teams[TEAM.RED].score && level.arena.teams[TEAM.BLUE].score + score > level.arena.teams[TEAM.RED].score) {
 			// Blue took the lead sound.
 			tent.s.eventParm = GTS.BLUETEAM_TOOK_LEAD;
 
@@ -25629,7 +25631,7 @@ function WriteCvars(str) {
 			continue;
 		}
 
-		str += 'set ' + name + ' ' + cvars[name] + '\n';
+		str += 'set ' + name + ' \"' + cvars[name] + '\"\n';
 	}
 
 	return str;
