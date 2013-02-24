@@ -4,11 +4,12 @@
 	</script>
 
 	<div class="dialog">
-		<ul class="sections" data-bind="foreach: tabs">
-			<li><a data-bind="attr: { href: '#' + id() }, text: title, tab: $index() === 0"></a></li>
-		</ul>
-
-		<div class="content" data-bind="template: { name: 'tab-pane', foreach: tabs, afterRender: bindTab }">
+		<div class="tabbable">
+			<ul class="nav nav-tabs" data-bind="foreach: tabs">
+				<li><a data-bind="attr: { href: '#' + id() }, text: title, tab: $index() === 0"></a></li>
+			</ul>
+			<div class="tab-content" data-bind="template: { name: 'tab-pane', foreach: tabs, afterRender: bindTab }">
+			</div>
 		</div>
 	</div>
 </div>

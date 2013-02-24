@@ -103,54 +103,96 @@
 	color: #fff;
 }
 
-.dialog .close.hover {
-	color: #bfbfbf;
-}
-
-.dialog .sections {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	overflow: hidden;
+.dialog > .tabbable > .nav-tabs {
 	background-image: -moz-linear-gradient(top, #222, #111);
 	background-image: -webkit-linear-gradient(top, #222, #111);
 	border-bottom: 1px solid #252525;
 }
 
-.dialog .sections li {
-	float: left;
-	margin: 0;
-	padding: 0;
+.dialog > .tabbable > .nav-tabs li {
 	font-size: 1.1em;
 	text-transform: uppercase;
 }
 
-.dialog .sections li a {
-	display: inline-block;
+.dialog > .tabbable > .nav-tabs li a {
 	padding: .6em 1em;
 	border-right: 1px solid #111;
 	border-left: 1px solid #222;
 }
 
-.dialog .sections li:first-child a {
+.dialog > .tabbable > .nav-tabs li:first-child a {
 	border-left: none;
 }
 
-.dialog .sections li:last-child a {
+.dialog > .tabbable > .nav-tabs li:last-child a {
 	border-right: none;
 }
 
-.dialog .sections li.active a,
-.dialog .sections li.hover a {
+.dialog > .tabbable > .nav-tabs li.active a,
+.dialog > .tabbable > .nav-tabs li.hover a {
 	background: #050505;
 }
 
-.dialog .sections li.active a {
+.dialog > .tabbable > .nav-tabs li.active a {
 	color: #15e000 !important;
 }
 
-.dialog .content {
+.dialog .tab-pane {
 	padding: 1.2em 1.6em;
+}
+
+.dialog #settings {
+	padding: 0;
+}
+
+.dialog .tabbable.tabs-left {
+	display: table;
+	width: 100%;
+}
+
+.dialog .tabbable.tabs-left > .nav-tabs {
+	display: table-cell;
+	vertical-align: top;
+	float: none;
+	width: 9em;
+	background: #111;
+}
+
+.dialog .tabbable.tabs-left > .nav-tabs li {
+	line-height: 1.2em;
+	text-transform: uppercase;
+}
+
+.dialog .tabbable.tabs-left > .nav-tabs li a {
+	padding: .4em 1em;
+	color: #ddd !important;
+}
+
+.dialog .tabbable.tabs-left > .nav-tabs li.hover a,
+.dialog .tabbable.tabs-left > .nav-tabs li.active a {
+	background: #222;
+}
+
+.dialog .tabbable.tabs-left > .nav-tabs li.active a {
+	color: #fff !important;
+}
+
+.dialog .tabbable.tabs-left > .tab-content {
+	display: table-cell;
+	vertical-align: top;
+}
+
+.dialog .nav-pills a {
+	text-transform: uppercase;
+	padding: .4em .8em;
+	margin-right: .6em;
+	background: #111;
+
+}
+
+.dialog .nav-pills .hover a,
+.dialog .nav-pills .active a {
+	background: #222;
 }
 
 /**
@@ -268,8 +310,47 @@
 }
 
 /**
- * Tabs
+ * Nav buttons / tabs
  */
+.nav {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+.nav li {
+	float: left;
+	margin: 0;
+	padding: 0;
+}
+
+.nav li a {
+	display: inline-block;
+}
+
+.tabs-left > .nav-tabs {
+	float: left;
+	height: 100%;
+}
+
+.tabs-left > .nav-tabs li {
+	float: none;
+}
+
+.tabs-left > .nav-tabs li a {
+	display: block;
+}
+
+.tabs-left > .tab-content {
+	overflow: hidden;
+}
+
+.tab-content {
+	position: relative;
+	overflow: hidden;
+}
+
 .tab-pane {
 	display: none;
 }
@@ -349,11 +430,6 @@
 #ingame #team-select {
 	margin-bottom: 1em;
 }
-
-/**
- * Settings menu
- */
-
 
 /**
  * Message menu

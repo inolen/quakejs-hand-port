@@ -1,4 +1,4 @@
-<p data-bind="if: rocketarena() && lobby()">
+<p data-bind="if: lobby()">
 	Welcome! You're currently in the lobby. Select an arena from below or run through a portal to join an arena and get started fragging.
 </p>
 <p data-bind="if: rocketarena() && !lobby()">
@@ -14,7 +14,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
+			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || (gametype() === 'ca' && !rocketarena()) || (gametype() === 'ca' && rocketarena() && currentArena().playersPerTeam() === 0) -->
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().count1"></td>
@@ -22,6 +22,11 @@
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam('blue'); } }"><span class="blue">BLUE</span></td>
 				<td data-bind="event: { click: function () { joinTeam('blue'); } }, text: currentArena().count2"></td>
+			</tr>
+			<!-- /ko -->
+			<!-- ko if: gametype() === 'ca' && rocketarena() && currentArena().playersPerTeam() !== 0 -->
+			<tr>
+				<td data-bind="event: { click: createTeam }" colspan="2">Create team</td>
 			</tr>
 			<!-- /ko -->
 		</tbody>
