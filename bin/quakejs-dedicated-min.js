@@ -5201,7 +5201,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1081;
+var GAME_VERSION = 0.1082;
 
 var CMD_BACKUP   = 64;
 
@@ -25262,8 +25262,6 @@ var dedicated,
 	events,
 	frameTime,
 	lastFrameTime,
-	startupCvarsOnly,
-	startupCommandsOnly,
 	initialized;
 
 /**
@@ -25315,13 +25313,8 @@ function Init(inSYS, inDedicated, callback) {
 			LoadConfig(cb);
 		},
 		function (cb) {
-			// Override anything from the config files with command line args.
-			// FIXME: Only execute set commands?
-			startupCvarsOnly = true;
-			SYS.ExecuteCommandLine(function (err) {
-				startupCvarsOnly = false;
-				cb(err);
-			});
+			// Go ahead and execute any cvars from the startup commands.
+			ExecuteStartupCommands(true, cb);
 		},
 		function (cb) {
 			if (!CL) {
@@ -25334,13 +25327,8 @@ function Init(inSYS, inDedicated, callback) {
 			SV.Init(CL, cb);
 		},
 		function (cb) {
-			// Call again after client / server have loaded. Many of the commands
-			// aren't available on the first run.
-			startupCommandsOnly = true;
-			SYS.ExecuteCommandLine(function (err) {
-				startupCommandsOnly = false;
-				cb(err);
-			});
+			// Wait until after CL / SV have initialized to run commands.
+			ExecuteStartupCommands(false, cb);
 		},
 	], function (err) {
 		if (err) {
@@ -25410,10 +25398,81 @@ function QueueEvent(ev) {
 }
 
 /**
+ * SplitBuffer
+ */
+
+// Splits by non-quoted semicolons.
+var splitRegex = /(?:\"[^\"]*\"|[^;])+/g;
+
+function SplitBuffer(buffer) {
+	var matches = buffer.match(splitRegex);
+
+	for (var i = 0; i < matches.length; i++) {
+		matches[i] = matches[i].replace(/^\s+|\s+$/g, '');
+	}
+
+	return matches;
+}
+
+/**
+ * SplitArguments
+ */
+
+// This regex will split space delimited strings,
+// honoring quotation mark groups.
+var argsRegex = /([^"\s]+)|"((?:\\"|[^"])+)"/g;
+
+function SplitArguments(buffer) {
+	var args = [];
+
+	var m;
+	while ((m = argsRegex.exec(buffer))) {
+		var val = m[1] || m[2];
+		args.push(val);
+	}
+
+	return args;
+}
+
+/**
+ * ExecuteStartupCommands
+ */
+function ExecuteStartupCommands(cvars, callback) {
+	var startup = SYS.GetStartupCommands();
+
+	var tasks = [];
+
+	// Go ahead and merge all commands into a single list.
+	var cmds = [];
+	startup.forEach(function (cmd) {
+		cmds.push.apply(cmds, SplitBuffer(cmd));
+	});
+
+	cmds.forEach(function (cmd) {
+		var args = SplitArguments(cmd);
+
+		if (cvars && args[0] !== 'set') {
+			return;
+		} else if (!cvars && args[0] === 'set') {
+			return;
+		}
+
+		tasks.push(function (cb) {
+			ExecuteBuffer(cmd, cb);
+		});
+	});
+
+	// Execute tasks.
+	async.series(tasks, function (err) {
+		callback(err);
+	});
+}
+
+/**
  * ExecuteBuffer
  */
 function ExecuteBuffer(buffer, callback) {
-	var matches = buffer.split(';');
+	var matches = SplitBuffer(buffer);
 
 	if (!matches.length) {
 		if (callback) {
@@ -25426,18 +25485,8 @@ function ExecuteBuffer(buffer, callback) {
 	var tasks = [];
 
 	matches.forEach(function (buffer) {
-		buffer = buffer.replace(/^\s+|\s+$/g, '');  // trim
-
-		var args = buffer.split(' ');
+		var args = SplitArguments(buffer);
 		var cmd = args[0];
-
-		// We need to filter startup arguments differently at
-		// different stages of initialization.
-		if (startupCvarsOnly && cmd !== 'set') {
-			return;
-		} else if (startupCommandsOnly && cmd === 'set') {
-			return;
-		}
 
 		var cmdcb = GetCmd(cmd);
 
@@ -26657,9 +26706,9 @@ function Init() {
 }
 
 /**
- * ExecuteCommandLine
+ * ExecuteStartupCvars
  */
-function ExecuteCommandLine(callback) {
+function ExecuteStartupCvars(cvarsOnly, callback) {
 	var args = process.argv.slice(2);
 
 	var tasks = [];
@@ -26679,6 +26728,26 @@ function ExecuteCommandLine(callback) {
 	async.series(tasks, function (err) {
 		callback(err);
 	});
+}
+
+/**
+ * GetStartupCommands
+ */
+function GetStartupCommands() {
+	var args = process.argv.slice(2);
+
+	var cmds = [];
+
+	args.forEach(function (arg) {
+		if (arg.indexOf('--cmd') !== 0) {
+			return;
+		}
+
+		var cmd = arg.substr(6);
+		cmds.push(cmd);
+	});
+
+	return cmds;
 }
 
 /**
@@ -26723,7 +26792,7 @@ function GetExports() {
 	return {
 		Error:              error,
 		GetMilliseconds:    GetMilliseconds,
-		ExecuteCommandLine: ExecuteCommandLine,
+		GetStartupCommands: GetStartupCommands,
 		ReadFile:           ReadFile,
 		WriteFile:          WriteFile,
 		GetGLContext:       GetGLContext,
