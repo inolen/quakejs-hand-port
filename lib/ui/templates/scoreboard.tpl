@@ -23,7 +23,7 @@
 		</div>
 		<!-- /ko -->
 
-		<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
+		<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' || gametype() === 'ra' -->
 		<div class="summary">
 			<span data-bind="if: score1() > score2()">
 				Red team leads Blue, <span data-bind="text: score1"></span> to <span data-bind="text: score2"></span>
