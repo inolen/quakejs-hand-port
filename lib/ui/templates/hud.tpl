@@ -14,12 +14,12 @@
 			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' || gametype() === 'ra' -->
 				<div class="score-wrapper score1 team-red" data-bind="visible: score1.visible, css: { localplayer: score1.localplayer }">
 					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: score1.count"></span></span>
-					<span class="name">Red Team</span>
+					<span class="name" data-bind="text: score1.name"></span>
 					<span class="score" data-bind="text: score1.score"></span>
 				</div>
 				<div class="score-wrapper score2 team-blue" data-bind="visible: score2.visible, css: { localplayer: score2.localplayer }">
 					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: score2.count"></span></span>
-					<span class="name">Blue Team</span>
+					<span class="name" data-bind="text: score2.name"></span>
 					<span class="score" data-bind="text: score2.score"></span>
 				</div>
 			<!-- /ko -->

@@ -9,7 +9,7 @@
 		<tbody>
 			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' || gametype() === 'ra' -->
 			<!-- ko foreach: currentArena().teams -->
-			<!-- ko if: count() > 0 -->
+			<!-- ko if: $data && count() > 0 -->
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam(name()); } }"><span data-bind="text: name"></span></td>
 				<td data-bind="event: { click: function () { joinTeam(name()); } }, text: count"></td>
