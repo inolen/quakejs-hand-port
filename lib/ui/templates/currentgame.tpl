@@ -11,8 +11,8 @@
 			<!-- ko foreach: currentArena().teams -->
 			<!-- ko if: $data && count() > 0 -->
 			<tr>
-				<td data-bind="event: { click: function () { joinTeam(name()); } }"><span data-bind="text: name"></span></td>
-				<td data-bind="event: { click: function () { joinTeam(name()); } }, text: count"></td>
+				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }"><span data-bind="text: name"></span></td>
+				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }, text: count"></td>
 			</tr>
 			<!-- /ko -->
 			<!-- /ko -->
