@@ -11,11 +11,11 @@
 			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
-				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().score1.count"></td>
+				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().score1().count"></td>
 			</tr>
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam('blue'); } }"><span class="blue">BLUE</span></td>
-				<td data-bind="event: { click: function () { joinTeam('blue'); } }, text: currentArena().score1.count"></td>
+				<td data-bind="event: { click: function () { joinTeam('blue'); } }, text: currentArena().score2().count"></td>
 			</tr>
 			<!-- /ko -->
 
