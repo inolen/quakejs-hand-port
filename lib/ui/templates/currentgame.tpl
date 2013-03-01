@@ -1,3 +1,4 @@
+<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' || gametype() === 'ra' -->
 <div id="team-select">
 	<table class="table">
 		<thead>
@@ -7,17 +8,24 @@
 			</tr>
 		</thead>
 		<tbody>
-			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' || gametype() === 'ra' -->
-			<!-- ko foreach: currentArena().teams -->
-			<!-- ko if: $data && count() > 0 -->
+			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
 			<tr>
-				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }"><span data-bind="text: name"></span></td>
-				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }, text: count"></td>
+				<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
+				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().score1.count"></td>
+			</tr>
+			<tr>
+				<td data-bind="event: { click: function () { joinTeam('blue'); } }"><span class="blue">BLUE</span></td>
+				<td data-bind="event: { click: function () { joinTeam('blue'); } }, text: currentArena().score1.count"></td>
 			</tr>
 			<!-- /ko -->
-			<!-- /ko -->
-			<!-- /ko -->
+
 			<!-- ko if: gametype() === 'ra' -->
+			<!-- ko foreach: currentArena().groups -->
+			<tr>
+				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }"><span data-bind="text: name"></span></td>
+				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }, text: count() === $parent.currentArena().playersPerTeam() ? 'FULL' : count() + ' / ' + $parent.currentArena().playersPerTeam()"></td>
+			</tr>
+			<!-- /ko -->
 			<tr>
 				<td data-bind="event: { click: createTeam }" colspan="2">Create team</td>
 			</tr>
@@ -25,6 +33,7 @@
 		</tbody>
 	</table>
 </div>
+<!-- /ko -->
 
 <div id="arena-select" data-bind="if: arenas().length > 1">
 	<table class="table">
