@@ -13,7 +13,7 @@
 					</thead>
 					<tbody data-bind="foreach: freeScores">
 						<tr>
-							<td data-bind="text: name + ' (' + spectatorNum + ')'"></td>
+							<td data-bind="text: name"></td>
 							<td data-bind="text: ping"></td>
 							<td data-bind="text: score"></td>
 						</tr>
@@ -51,7 +51,7 @@
 					</thead>
 					<tbody data-bind="foreach: redScores">
 						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name + ' (' + spectatorNum + ')'"></td>
+							<td data-bind="text: name"></td>
 							<td data-bind="text: ping"></td>
 							<td data-bind="text: score"></td>
 						</tr>
@@ -73,7 +73,7 @@
 					</thead>
 					<tbody data-bind="foreach: blueScores">
 						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name + ' (' + spectatorNum + ')'"></td>
+							<td data-bind="text: name"></td>
 							<td data-bind="text: ping"></td>
 							<td data-bind="text: score"></td>
 						</tr>
@@ -86,7 +86,7 @@
 		<div class="spectators">
 			<div class="header">Spectators</div>
 			<ul data-bind="foreach: specScores">
-				<li data-bind="text: name + ' (' + spectatorNum + ')'"></li>
+				<li data-bind="text: name"></li>
 			</ul>
 		</div>
 	</div>
