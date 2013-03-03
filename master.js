@@ -23,6 +23,12 @@ function main() {
 	setInterval(pruneServers, pruneInterval);
 }
 
+function log() {
+	var args = Array.prototype.slice.call(arguments);
+	args.splice(0, 0, (new Date()).toString());
+	Function.apply.call(console.log, console, args);
+}
+
 function createServer(port) {
 	var server = http.createServer();
 
@@ -31,31 +37,24 @@ function createServer(port) {
 	});
 
 	wss.on('connection', function (ws) {
-		console.log((new Date()) + ' Connection accepted from ' + ws._socket.remoteAddress);
+		log('Connection accepted from ' + ws._socket.remoteAddress);
 
-		ws.on('message', function (data, flags) {
-			// Heartbeats come from the game as ArrayBuffers.
-			if (flags.binary) {
-				if (data.readInt8(0) !== -1) {
-					return;
-				}
-
-				// Skip past the -1 and ignore the trailing \0 from the game.
-				data = data.toString('ascii', 4, data.length - 1);
-			}
-
-			// Parse out the JSON message.
-			var msg;
-			try {
-				msg = JSON.parse(data);
-			} catch (e) {
+		ws.on('message', function (buffer, flags) {
+			if (!flags.binary) {
 				return;
 			}
 
-			if (msg.type === 'heartbeat') {
-				handleHeartbeat(ws, msg);
-			} else if (msg.type === 'subscribe') {
-				handleSubscribe(ws, msg);
+			var data = stripOOB(buffer);
+
+			if (data === null) {
+				removeSubscriber(ws);
+				return;
+			}
+
+			if (data.type === 'heartbeat') {
+				handleHeartbeat(ws, data);
+			} else if (data.type === 'subscribe') {
+				handleSubscribe(ws, data);
 			}
 		});
 
@@ -69,7 +68,7 @@ function createServer(port) {
 	});
 
 	server.listen(port, function() {
-		console.log(new Date() + ' Master server is listening on port ' + server.address().port);
+		log('Master server is listening on port ' + server.address().port);
 	});
 
 	return server;
@@ -77,29 +76,65 @@ function createServer(port) {
 
 /**********************************************************
  *
+ * OOB helpers
+ *
+ **********************************************************/
+function formatOOB(data) {
+	var str = '\xff\xff\xff\xff' + JSON.stringify(data) + '\x00';
+
+	var buffer = new ArrayBuffer(str.length);
+	var view = new Uint8Array(buffer);
+
+	for (var i = 0; i < str.length; i++) {
+		view[i] = str.charCodeAt(i);
+	}
+
+	return buffer;
+}
+
+function stripOOB(buffer) {
+	var view = new DataView(buffer);
+
+	if (view.getInt32(0) !== -1) {
+		return null;
+	}
+
+	var str = '';
+	for (var i = 4; i < buffer.length; i++) {
+		var c = String.fromCharCode(view.getUint8(i));
+		if (c === '\x00') break;
+		str += c;
+	}
+
+	var data = JSON.parse(str);
+	return data;
+}
+
+/**********************************************************
+ *
  * Heartbeats
  *
  **********************************************************/
-function handleHeartbeat(ws, msg) {
-	var hostname = ws._socket.remoteAddress;
-	var port = parseInt(msg.port, 10);
+function handleHeartbeat(ws, data) {
+	var ipaddr = ws._socket.remoteAddress;
+	var port = parseInt(data.port, 10);
 
 	if (isNaN(port)) {
 		return;
 	}
 
-	var address = hostname + ':' + port;
+	var address = ipaddr + ':' + port;
 
-	console.log((new Date()) + ' Received heartbeat from ' + address);
+	log('Received heartbeat from ' + address);
 
 	// Scan server immediately.
-	scanServer(address, function (err, data) {
+	scanServer(address, function (err) {
 		if (err) {
 			removeServer(address);
 			return;
 		}
 
-		updateServer(address, data);
+		updateServer(address);
 	});
 }
 
@@ -107,30 +142,26 @@ function scanServer(address, callback) {
 	var ws = new WebSocketClient('ws://' + address);
 
 	ws.on('open', function () {
-		// FIXME node.js encodes 0x0 as 0x20 for some reason so we force it.
-		// https://github.com/joyent/node/issues/297
-		var buff = new Buffer('\xff\xff\xff\xffgetinfo\0', 'ascii');
-		buff[buff.length - 1] = 0;
+		var buffer = formatOOB({ type: 'getinfo' });
 
-		ws.send(buff, { binary: true });
+		ws.send(buffer, { binary: true });
 	});
 
-	ws.on('message', function (data, flags) {
+	ws.on('message', function (buffer, flags) {
 		if (!flags.binary) {
 			return callback(new Error('Received non-binary response.'));
 		}
 
-		if (data.readInt8(0) !== -1) {
+		var data = stripOOB(buffer);
+
+		if (data === null) {
 			return callback(new Error('Invalid header.'));
 		}
 
-		// Account for null-terminator.
-		var str = data.toString('ascii', 4, data.length - 1);
-		var json = JSON.parse(str);
+		// TODO Validate data or something?
 
 		ws.close();
-
-		return callback(null, json);
+		return callback(null);
 	});
 
 	ws.on('error', function (err) {
@@ -138,28 +169,24 @@ function scanServer(address, callback) {
 	});
 }
 
-function updateServer(address, data) {
+function updateServer(address) {
 	if (!servers[address]) {
-		console.log((new Date()) + ' Adding server ' + address);
+		log('Adding server ' + address);
 	} else {
-		console.log((new Date()) + ' Updating server ' + address);
+		log('Updating server ' + address);
 	}
 
-	servers[address] = data;
-	servers[address].timestamp = Date.now();
+	servers[address] = Date.now();
 
 	// Send partial update to subscribers.
-	var partial = {};
-	partial[address] = servers[address];
-
-	sendMessageToSubscribers(JSON.stringify({
+	sendMessageToSubscribers({
 		type: 'servers',
-		servers: partial
-	}));
+		servers: [address]
+	});
 }
 
 function removeServer(address) {
-	console.log((new Date()) + ' Removing server ' + address);
+	log('Removing server ' + address);
 
 	delete servers[address];
 }
@@ -172,7 +199,7 @@ function pruneServers() {
 			continue;
 		}
 
-		var delta = now - servers[address].timestamp;
+		var delta = now - servers[address];
 
 		if (delta > pruneInterval) {
 			removeServer(address);
@@ -185,14 +212,14 @@ function pruneServers() {
  * Subscriptions
  *
  **********************************************************/
-function handleSubscribe(ws, msg) {
+function handleSubscribe(ws, data) {
 	addSubscriber(ws);
 
 	// Send all servers upon subscribing.
-	sendMessageToSubscribers(JSON.stringify({
+	sendMessageToSubscribers({
 		type: 'servers',
-		servers: servers
-	}));
+		servers: Object.keys(servers)
+	});
 }
 
 function addSubscriber(ws) {
@@ -202,7 +229,7 @@ function addSubscriber(ws) {
 		return;  // already subscribed
 	}
 
-	console.log((new Date()) + ' Adding subscriber ' + ws._socket.remoteAddress);
+	log('Adding subscriber ' + ws._socket.remoteAddress);
 
 	subscribers.push(ws);
 }
@@ -213,16 +240,18 @@ function removeSubscriber(ws) {
 		return;  // should not happen
 	}
 
-	console.log((new Date()) + ' Removing subscriber');
+	log('Removing subscriber');
 
 	subscribers.splice(idx, 1);
 }
 
-function sendMessageToSubscribers(msg) {
-	console.log((new Date()) + ' Sending message to ' + subscribers.length + ' subscribers');
+function sendMessageToSubscribers(data) {
+	log('Sending message to ' + subscribers.length + ' subscribers');
+
+	var buffer = formatOOB(data);
 
 	for (var i = 0; i < subscribers.length; i++) {
-		subscribers[i].send(msg);
+		subscribers[i].send(buffer, { binary: true });
 	}
 }
 

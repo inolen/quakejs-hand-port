@@ -5213,7 +5213,9 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1084;
+// FIXME Remove this and add a more advanced checksum-based cachebuster to game.
+var GAME_VERSION     = 0.1085;
+var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
 
@@ -5750,6 +5752,8 @@ function atob64(arr) {
 
 return {
 	GAME_VERSION:          GAME_VERSION,
+	PROTOCOL_VERSION:      PROTOCOL_VERSION,
+
 	CMD_BACKUP:            CMD_BACKUP,
 	SOLID_BMODEL:          SOLID_BMODEL,
 
@@ -23492,9 +23496,6 @@ function SendMasterHeartbeat() {
 
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
-	//
-	log('SendMasterHeartbeat');
-
 	var addr = COM.StringToAddr(sv_master.get());
 	var netchan = COM.NetchanSetup(QS.NS.SERVER, addr, {
 		onopen: function () {
@@ -23565,11 +23566,23 @@ function ConnectionlessPacket(netchan, msg) {
 	msg.readInt32();  // Skip the -1.
 
 	var str = msg.readASCIIString();
+	var message;
 
-	if (str.indexOf('connect') === 0) {
-		ClientEnterServer(netchan, str.substr(8));
-	} else if (str.indexOf('getinfo') === 0) {
+	try {
+		message = JSON.parse(str);
+	} catch (e) {
+		COM.NetchanDestroy(netchan);
+		return;
+	}
+
+	var cmd = message.type;
+
+	if (cmd === 'getinfo') {
 		ServerInfo(netchan);
+	// } else if (str.indexOf('getchallenge') === 0) {
+	// 	GetChallenge(netchan);
+	} else if (cmd === 'connect') {
+		ClientEnterServer(netchan, message.data);
 	}
 }
 
@@ -23598,8 +23611,21 @@ function ServerInfo(netchan) {
 
 	info.clients = count;
 
-	COM.NetchanPrint(netchan, JSON.stringify(info));
+	COM.NetchanPrint(netchan, JSON.stringify({ type: 'infoResponse', data: info }));
 }
+
+// /**
+//  * GetChallenge
+//  *
+//  * A "getchallenge" OOB command has been received
+//  * Returns a challenge number that can be used
+//  * in a subsequent connectResponse command.
+//  * We do this to prevent denial of service attacks that
+//  * flood the server with invalid connection IPs.  With a
+//  * challenge, they must give a valid IP address.
+//  */
+// function GetChallenge(netchan) {
+// }
 
 /**
  * Spawn
@@ -23975,12 +24001,10 @@ function ClientAccept(msocket) {
  * Called after a client has been accepted and its game-level
  * connect request has been processed.
  */
-function ClientEnterServer(netchan, infostr) {
+function ClientEnterServer(netchan, data) {
 	if (!Running()) {
 		return;
 	}
-
-	log('A client is connecting');
 
 	// Find a slot for the client.
 	var clientNum;
@@ -23991,8 +24015,22 @@ function ClientEnterServer(netchan, infostr) {
 		}
 	}
 	if (clientNum === undefined) {
-		//NET_OutOfBandPrint( QS.NS_SERVER, from, "print\nServer is full.\n" );
+		COM.NetchanPrint(netchan, JSON.stringify({
+			type: 'print',
+			data: 'Server is full.'
+		}));
 		log('Rejected a connection.');
+		return;
+	}
+
+	var com_protocol = Cvar.AddCvar('com_protocol');
+	var version = data.protocol;
+	if(version !== com_protocol.get()) {
+		COM.NetchanPrint(netchan, JSON.stringify({
+			type: 'print',
+			data: 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').'
+		}));
+		log('Rejected connect from version', version);
 		return;
 	}
 
@@ -24001,7 +24039,7 @@ function ClientEnterServer(netchan, infostr) {
 	newcl.reset();
 
 	newcl.netchan = netchan;
-	newcl.userinfo = JSON.parse(infostr);
+	newcl.userinfo = data.userinfo;
 
 	// Give the game a chance to modify the userinfo.
 	GM.ClientConnect(clientNum, true);
@@ -24014,7 +24052,7 @@ function ClientEnterServer(netchan, infostr) {
 	newcl.lastPacketTime = svs.time;
 
 	// Let the client know we've accepted them.
-	COM.NetchanPrint(newcl.netchan, 'connectResponse');
+	COM.NetchanPrint(newcl.netchan, JSON.stringify({ type: 'connectResponse' }));
 
 	// When we receive the first packet from the client, we will
 	// notice that it is from a different serverid and that the
@@ -24372,7 +24410,15 @@ function ExecuteClientMessage(client, msg) {
  */
 function ParseClientCommand(client, msg) {
 	var sequence = msg.readInt32();
-	var cmd = JSON.parse(msg.readASCIIString());
+	var str = msg.readASCIIString();
+
+	var cmd;
+	try {
+		cmd = JSON.parse(str);
+	} catch (e) {
+		DropClient(client, 'Failed to parse command');
+		return;
+	}
 
 	// See if we have already executed it.
 	if (client.lastClientCommand >= sequence) {
@@ -25740,6 +25786,8 @@ function CmdVstr(name) {
 	CL,
 	SV;
 
+var com_protocol;
+
 var dedicated,
 	events,
 	frameTime,
@@ -25782,6 +25830,7 @@ function Init(inSYS, inDedicated, callback) {
 	frameTime = lastFrameTime = SYS.GetMilliseconds();
 	initialized = false;
 
+	RegisterCvars();
 	RegisterCommands();
 
 	// Register bind commands early to support LoadConfig.
@@ -25821,6 +25870,13 @@ function Init(inSYS, inDedicated, callback) {
 		initialized = true;
 		callback(null);
 	});
+}
+
+/**
+ * RegisterCvars
+ */
+function RegisterCvars() {
+	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION, Cvar.FLAGS.ROM);
 }
 
 /**
@@ -26763,9 +26819,9 @@ function NetchanSetup(src, addrOrSocket, opts) {
 		}
 	};
 
-	netchan.msocket.onclose = function (err) {
+	netchan.msocket.onclose = function () {
 		if (opts.onclose) {
-			opts.onclose(err);
+			opts.onclose();
 		}
 	};
 
@@ -27385,8 +27441,6 @@ function NetListen(address, port, opts) {
 			return;
 		}
 
-		log((new Date()), 'Connection accepted from ' + ws._socket.remoteAddress + '.');
-
 		var msocket = new MetaSocket();
 		msocket.handle = ws;
 
@@ -27405,9 +27459,9 @@ function NetListen(address, port, opts) {
 			}
 		});
 
-		ws.on('error', function (err) {
+		ws.on('error', function () {
 			if (msocket.onclose) {
-				msocket.onclose(err);
+				msocket.onclose();
 			}
 		});
 
