@@ -4560,6 +4560,17 @@ function AxisMultiply(in1, in2, out) {
 }
 
 /**
+ * TransposeMatrix
+ */
+function TransposeMatrix(matrix, transpose) {
+	for (var i = 0; i < 3; i++) {
+		for (var j = 0; j < 3; j++) {
+			transpose[i][j] = matrix[j][i];
+		}
+	}
+}
+
+/**
  * RotatePoint
  */
 function RotatePoint(point, axis) {
@@ -5162,6 +5173,7 @@ return {
 	AxisCopy:                AxisCopy,
 	AnglesToAxis:            AnglesToAxis,
 	AxisMultiply:            AxisMultiply,
+	TransposeMatrix:         TransposeMatrix,
 	RotatePoint:             RotatePoint,
 	RotatePointAroundVector: RotatePointAroundVector,
 	RotateAroundDirection:   RotateAroundDirection,
@@ -5201,7 +5213,7 @@ return {
 
 define('common/qshared', ['common/qmath'], function (QMath) {
 
-var GAME_VERSION = 0.1083;
+var GAME_VERSION = 0.1084;
 
 var CMD_BACKUP   = 64;
 
@@ -5736,17 +5748,6 @@ function atob64(arr) {
 	return btoa(str);
 }
 
-/**
- * colorize
- */
-var colors = ['black', 'red', 'green', 'yellow', 'blue', 'cyan', 'pink', 'white'];
-
-function colorize(text) {
-	return text.replace(/\^(\d)(.*?)(?=\^|$)/g, function (match, color, text) {
-		return '<span class="' + colors[color] + '">' + text + '</span>';
-	});
-}
-
 return {
 	GAME_VERSION:          GAME_VERSION,
 	CMD_BACKUP:            CMD_BACKUP,
@@ -5796,8 +5797,7 @@ return {
 	AGET:                  AGET,
 	ASET:                  ASET,
 
-	atob64:                atob64,
-	colorize:              colorize,
+	atob64:                atob64
 };
 
 });
@@ -6813,11 +6813,10 @@ define('common/cvar', [], function () {
 			split[i] = split[i].replace(/^\s*/, '').replace(/\s*$/, '');
 		}
 
-		// Use the first value if one doesn't exist for the specified index.
+		// Use the last value if one doesn't exist for the specified index.
 		var val = split[this._index];
-
-		if (val === undefined && split[0] !== undefined) {
-			val = split[0];
+		if (val === undefined) {
+			val = split[split.length - 1];
 		}
 
 		return asDefaultType(val, this._cvar.defaultValue());
@@ -8870,18 +8869,7 @@ function AreasConnected(area1, area2) {
 	return false;
 }
 
-		/**
- * TransposeMatrix
- */
-function TransposeMatrix(matrix, transpose) {
-	for (var i = 0; i < 3; i++) {
-		for (var j = 0; j < 3; j++) {
-			transpose[i][j] = matrix[j][i];
-		}
-	}
-}
-
-/*********************************************************************
+		/*********************************************************************
  *
  * Position testing
  *
@@ -9504,7 +9492,7 @@ function TransformedBoxTrace(results, start, end, mins, maxs, model, brushmask, 
 	// If the bmodel was rotated and there was a collision.
 	if (rotated && results.fraction !== 1.0) {
 		// Rotation of bmodel collision plane.
-		TransposeMatrix(matrix, transpose);
+		QMath.TransposeMatrix(matrix, transpose);
 		QMath.RotatePoint(results.plane.normal, transpose);
 	}
 
@@ -10083,14 +10071,12 @@ var DEFAULT_SHOTGUN_COUNT  = 11;
 
 var LIGHTNING_RANGE        = 768;
 
-var SCORE_NOT_PRESENT      = -9999;  // for the CS_SCORES[12] when only one player is present
-
 var MINS_Z                 = -24;
 var DEFAULT_VIEWHEIGHT     = 26;
 var CROUCH_VIEWHEIGHT      = 12;
 var DEAD_VIEWHEIGHT        = -16;
 
-var MAX_TOUCH_ENTS = 32;
+var MAX_TOUCH_ENTS         = 32;
 
 var PmoveLocals = function () {
 	this.forward             = vec3.create();
@@ -10113,8 +10099,8 @@ var PmoveLocals = function () {
 
 PmoveLocals.prototype.reset = function () {
 	this.forward[0] = this.forward[1] = this.forward[2] = 0.0;
-	this.right[0]   = this.right[1]   = this.right[2]   = 0.0;
-	this.up[0]      = this.up[1]      = this.up[2]      = 0.0;
+	this.right[0] = this.right[1] = this.right[2] = 0.0;
+	this.up[0] = this.up[1] = this.up[2] = 0.0;
 
 	this.frameTime = 0;
 	this.msec = 0;
@@ -10194,19 +10180,19 @@ var PMF = {
 };
 
 var GT = {
-	FFA:           0,                                      // free for all
-	TOURNAMENT:    1,                                      // one on one tournament
-	// TEAM GAMES GO AFTER THIS
-	TEAM:          2,                                      // team deathmatch
-	CTF:           3,                                      // capture the flag
-	NFCTF:         4,
-	// OBELISK:       6,
-	// HARVESTER:     7,
-	CLANARENA:     5,
-	MAX_GAME_TYPE: 6
+	LOBBY:         0,                                      // used by RA3-style multi-arena maps
+	FFA:           1,                                      // free for all
+	TOURNAMENT:    2,                                      // one on one tournament
+	TEAM:          3,                                      // team deathmatch
+	CTF:           4,                                      // capture the flag
+	NFCTF:         5,
+	CLANARENA:     6,
+	ROCKETARENA:   7,
+	MAX_GAME_TYPE: 8
 };
 
 var GS = {
+	// Starting at 1 due to type coercion in state machine lib.
 	WAITING:      1,
 	COUNTDOWN:    2,
 	ACTIVE:       3,
@@ -10312,19 +10298,20 @@ var SPECTATOR = {
 // NOTE: may not have more than 16
 var PERS = {
 	SCORE:                0,                               // !!! MUST NOT CHANGE, SERVER AND GAME BOTH REFERENCE !!!
-	HITS:                 1,                               // total points damage inflicted so damage beeps can sound on change
-	RANK:                 2,                               // player rank or team rank
-	TEAM:                 3,                               // player team
-	SPAWN_COUNT:          4,                               // incremented every respawn
-	PLAYEREVENTS:         5,                               // 16 bits that can be flipped for events
-	KILLED:               6,                               // count of the number of times you died
+	FRAGS:                1,
+	DEATHS:               2,                               // count of the number of times you died
+	HITS:                 3,                               // total points damage inflicted so damage beeps can sound on change
+	RANK:                 4,                               // player rank or team rank
+	TEAM:                 5,                               // player team
+	SPAWN_COUNT:          6,                               // incremented every respawn
+	PLAYEREVENTS:         7,                               // 16 bits that can be flipped for events
 	// player awards tracking
-	IMPRESSIVE_COUNT:     7,                               // two railgun hits in a row
-	EXCELLENT_COUNT:      8,                               // two successive kills in a short amount of time
-	DEFEND_COUNT:         9,                               // defend awards
-	ASSIST_COUNT:         10,                              // assist awards
-	GAUNTLET_FRAG_COUNT:  11,                              // kills with the guantlet
-	CAPTURES:             12                               // captures
+	IMPRESSIVE_COUNT:     8,                               // two railgun hits in a row
+	EXCELLENT_COUNT:      9,                               // two successive kills in a short amount of time
+	DEFEND_COUNT:         10,                              // defend awards
+	ASSIST_COUNT:         11,                              // assist awards
+	GAUNTLET_FRAG_COUNT:  12,                              // kills with the guantlet
+	CAPTURES:             13                               // captures
 };
 
 // Reward sounds (stored in ps->persistant[PERS_PLAYEREVENTS]).
@@ -10606,12 +10593,14 @@ var MOD = {
 
 
 var GametypeNames               = [];
+GametypeNames[GT.LOBBY]         = 'lobby';
 GametypeNames[GT.FFA]           = 'ffa';
 GametypeNames[GT.TOURNAMENT]    = 'tournament';
 GametypeNames[GT.TEAM]          = 'team';
 GametypeNames[GT.CTF]           = 'ctf';
 GametypeNames[GT.NFCTF]         = 'nfctf';
-GametypeNames[GT.CLANARENA]     = 'ca';
+GametypeNames[GT.CLANARENA]     = 'clanarena';
+GametypeNames[GT.ROCKETARENA]   = 'rocketarena';
 
 var TeamNames = [];
 TeamNames[TEAM.FREE] = 'free';
@@ -13474,7 +13463,6 @@ function FindItemForHoldable(pw) {
 			DEFAULT_SHOTGUN_SPREAD: DEFAULT_SHOTGUN_SPREAD,
 			DEFAULT_SHOTGUN_COUNT:  DEFAULT_SHOTGUN_COUNT,
 			LIGHTNING_RANGE:        LIGHTNING_RANGE,
-			SCORE_NOT_PRESENT:      SCORE_NOT_PRESENT,
 			DEFAULT_VIEWHEIGHT:     DEFAULT_VIEWHEIGHT,
 			CROUCH_VIEWHEIGHT:      CROUCH_VIEWHEIGHT,
 
@@ -13567,7 +13555,6 @@ define('game/gm',['require','glmatrix','state-machine','common/qmath','common/qs
 		var DEFAULT_SHOTGUN_SPREAD = BG.DEFAULT_SHOTGUN_SPREAD;
 		var DEFAULT_SHOTGUN_COUNT  = BG.DEFAULT_SHOTGUN_COUNT;
 		var LIGHTNING_RANGE        = BG.LIGHTNING_RANGE;
-		var SCORE_NOT_PRESENT      = BG.SCORE_NOT_PRESENT;
 		var ANIM_TOGGLEBIT         = BG.ANIM_TOGGLEBIT;
 		var EV_EVENT_BIT1          = BG.EV_EVENT_BIT1;
 		var EV_EVENT_BIT2          = BG.EV_EVENT_BIT2;
@@ -13726,33 +13713,31 @@ var ArenaInfo = function () {
 
 	this.name                   = null;
 
+	this.gametype               = 0;
 	this.state                  = null;
-	this.teams                  = new Array(TEAM.NUM_TEAMS);
+	this.teamScores             = new Array(TEAM.NUM_TEAMS);
 	this.warmupTime             = 0;
 	this.restartTime            = 0;
-	this.lastWinningTeam        = 0;
+	this.lastWinningTeam        = TEAM.FREE;
+	this.group1                 = null;  // rocketarena
+	this.group2                 = null;
 
-//	this.follow1                = 0;                       // clientNums for auto-follow spectators
+//	this.follow1                = 0;  // clientNums for auto-follow spectators
 //	this.follow2;               = 0;
 	this.numConnectedClients    = 0;
-	this.numNonSpectatorClients = 0;                       // includes connecting clients
-	this.numPlayingClients      = 0;                       // connected, non-spectators
+	this.numNonSpectatorClients = 0;  // includes connecting clients
+	this.numPlayingClients      = 0;  // connected, non-spectators
 	this.sortedClients          = new Array(MAX_CLIENTS);  // sorted by score
+	this.score1                 = 0;
+	this.score2                 = 0;
 
-	this.intermissionTime       = 0;                       // time the intermission was started
-
-	this.readyToExit            = false;                   // at least one client wants to exit
+	this.intermissionTime       = 0;  // time the intermission was started
+	this.readyToExit            = false;  // at least one client wants to exit
 	this.exitTime               = 0;
 
-	for (var i = 0; i < MAX_CLIENTS; i++) {
-		this.teams[i] = new TeamInfo();
+	for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
+		this.teamScores[i] = 0;
 	}
-};
-
-var TeamInfo = function () {
-	this.score = 0;
-	this.count = 0;
-	this.alive = 0;
 };
 
 var GameEntity = function () {
@@ -13918,7 +13903,7 @@ var PlayerTeamState = function () {
 // on each level change or team change at ClientBegin()
 var ClientPersistant = function () {
 	this.connected         = 0;
-	this.netname           = null;
+	this.name              = null;
 	this.cmd               = new QS.UserCmd();
 	this.localClient       = false;                        // true if "ip" info key is "localhost"
 	this.predictItemPickup = false;                        // based on cg_predictItems userinfo
@@ -13936,7 +13921,7 @@ ClientPersistant.prototype.clone = function (to) {
 	}
 
 	to.connected = this.connected;
-	to.netname = this.netname;
+	to.name = this.name;
 	to.cmd = this.cmd;
 	to.localClient = this.localClient;
 	to.predictItemPickup = this.predictItemPickup;
@@ -13955,11 +13940,12 @@ ClientPersistant.prototype.clone = function (to) {
 // time and reading them back at connection time.  Anything added here
 // MUST be dealt with in InitSessionData() / ReadSessionData() / WriteSessionData().
 var ClientSession = function () {
-	this.sessionTeam      = TEAM.FREE;
+	this.team             = TEAM.FREE;
+	this.group            = null;
 	this.spectatorState   = SPECTATOR.NOT;
-	this.spectatorClient  = 0;                             // for chasecam and follow mode
-	this.spectatorNum     = 0;                             // for determining next-in-line to play
-	this.wins             = 0;                             // tournament stats
+	this.spectatorClient  = 0;  // for chasecam and follow mode
+	this.spectatorNum     = 0;  // for determining next-in-line to play
+	this.wins             = 0;  // tournament stats
 	this.losses           = 0;
 };
 
@@ -13968,7 +13954,8 @@ ClientSession.prototype.clone = function (to) {
 		to = new ClientSession();
 	}
 
-	to.sessionTeam = this.sessionTeam;
+	to.team = this.team;
+	to.group = this.group;
 	to.spectatorState = this.spectatorState;
 	to.spectatorClient = this.spectatorClient;
 	to.spectatorNum = this.spectatorNum;
@@ -14049,11 +14036,12 @@ function Init(levelTime) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	g_fraglimit          = Cvar.AddCvar('g_fraglimit',          20,    Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE);
-	g_capturelimit       = Cvar.AddCvar('g_capturelimit',       8,     Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE);
-	g_rocketarena        = Cvar.AddCvar('g_rocketarena',        0,     Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.ARCHIVE, true);
-	g_gametype           = Cvar.AddCvar('g_gametype',           0,     Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.ARCHIVE, true);
 	g_timelimit          = Cvar.AddCvar('g_timelimit',          0,     Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.ARCHIVE);
+	g_fraglimit          = Cvar.AddCvar('g_fraglimit',          20,    Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.ARCHIVE);
+	g_capturelimit       = Cvar.AddCvar('g_capturelimit',       8,     Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.ARCHIVE);
+
+	g_gametype           = Cvar.AddCvar('g_gametype',           0,     Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE, true);
+	g_playersPerTeam     = Cvar.AddCvar('g_playersPerTeam',     0,     Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE);
 
 	g_synchronousClients = Cvar.AddCvar('g_synchronousClients', 0,     Cvar.FLAGS.SYSTEMINFO);
 	pmove_fixed          = Cvar.AddCvar('pmove_fixed',          1,     Cvar.FLAGS.SYSTEMINFO);
@@ -14062,7 +14050,6 @@ function RegisterCvars() {
 	g_teamAutoJoin       = Cvar.AddCvar('g_teamAutoJoin',       0,     Cvar.FLAGS.ARCHIVE);
 	g_teamForceBalance   = Cvar.AddCvar('g_teamForceBalance',   0,     Cvar.FLAGS.ARCHIVE);
 	g_friendlyFire       = Cvar.AddCvar('g_friendlyFire',       0,     Cvar.FLAGS.ARCHIVE);
-	g_playersPerTeam     = Cvar.AddCvar('g_playersPerTeam',     0,     Cvar.FLAGS.ARCHIVE);
 	g_teamForceBalance   = Cvar.AddCvar('g_teamForceBalance',   0,     Cvar.FLAGS.ARCHIVE);
 	g_warmup             = Cvar.AddCvar('g_warmup',             10,    Cvar.FLAGS.ARCHIVE);
 
@@ -14106,8 +14093,8 @@ function Frame(levelTime) {
 			continue;
 		}
 
-		// Set current arena for entity spawning purposes.
-		level.arena = level.arenas[ent.s.arenaNum];
+		// Set the global arena.
+		SetCurrentArena(ent.s.arenaNum);
 
 		// Clear events that are too old.
 		if (level.time - ent.eventTime > EVENT_VALID_MSEC) {
@@ -14209,6 +14196,49 @@ function PointContents(point, passEntityNum) {
 	return SV.PointContents(point, level.arena.arenaNum, passEntityNum);
 }
 
+
+/**
+ * FindConfigstringIndex
+ */
+function FindConfigstringIndex(name, namespace, max) {
+	if (!name || !name.charCodeAt(0)) {
+		return 0;
+	}
+
+	for (var i = 1; i < max; i++) {
+		var s = SV.GetConfigstring(namespace + ':' + i);
+		if (!s) {
+			break;
+		}
+		if (s === name) {
+			return i;
+		}
+	}
+
+	if (i === max) {
+		error('FindConfigstringIndex: overflow');
+		return;
+	}
+
+	SV.SetConfigstring(namespace + ':' + i, name);
+
+	return i;
+}
+
+/**
+ * ModelIndex
+ */
+function ModelIndex(name) {
+	return FindConfigstringIndex(name, 'models', QS.MAX_MODELS);
+}
+
+/**
+ * SoundIndex
+ */
+function SoundIndex(name) {
+	return FindConfigstringIndex(name, 'sounds', QS.MAX_SOUNDS);
+}
+
 /**
  * BGExports
  */
@@ -14225,27 +14255,25 @@ function InitArenas() {
 		'default'
 	];
 
-	// Load up arenas from intermission points in rocket arena mode.
-	if (g_rocketarena.get()) {
-		var entityDefs = SV.GetEntityDefs();
+	// Load up arenas from intermission points.
+	var entityDefs = SV.GetEntityDefs();
 
-		for (var i = 0; i < entityDefs.length; i++) {
-			var def = entityDefs[i];
+	for (var i = 0; i < entityDefs.length; i++) {
+		var def = entityDefs[i];
 
-			if (def.classname === 'info_player_intermission') {
-				var num = parseInt(def.arena, 10);
+		if (def.classname === 'info_player_intermission') {
+			var num = parseInt(def.arena, 10);
 
-				if (isNaN(num)) {
-					continue;
-				}
-
-				if (arenas[num] !== undefined) {
-					continue;
-				}
-
-				// Store off the name.
-				arenas[num] = def.message;
+			if (isNaN(num)) {
+				continue;
 			}
+
+			if (arenas[num] !== undefined) {
+				continue;
+			}
+
+			// Store off the name.
+			arenas[num] = def.message;
 		}
 	}
 
@@ -14254,16 +14282,18 @@ function InitArenas() {
 
 		arena.arenaNum = i;
 		arena.name = arenas[i];
+		arena.gametype = g_gametype.at(arena.arenaNum).get();
 
-		// Set current arena for entity spawning purposes.
-		level.arena = level.arenas[i] = arena;
+		// Set global arena for entity spawning purposes.
+		level.arenas[i] = arena;
+		SetCurrentArena(i);
 
 		// FIXME We don't really need to spawn all map entities for each arena,
 		// especially static, stateless ones such as triggers and what not.
 		SpawnAllEntitiesFromDefs(i);
 
 		//
-		if (g_gametype.get() === GT.CLANARENA) {
+		if (arena.gametype >= GT.CLANARENA) {
 			CreateRoundMachine();
 		} else {
 			CreateTournamentMachine();
@@ -14271,47 +14301,19 @@ function InitArenas() {
 	}
 
 	// Make sure we have flags for CTF, etc.
-	if (g_gametype.get() === GT.CTG) {
+	if (level.arena.gametype === GT.CTF) {
 		Team_CheckItems();
 	}
 }
 
 /**
- * ArenaInfoChanged
+ * SetCurrentArena
  *
- * FIXME Don't send so much info on each update?
+ * This isn't exactly the prettiest solution to multiarena, but
+ * it's a lot better than subclassing half of the game code for now.
  */
-function ArenaInfoChanged() {
-	var team1 = 0;
-	var team2 = 1;
-
-	if (g_gametype.get() >= GT.TEAM) {
-		team1 = TEAM.RED;
-		team2 = TEAM.BLUE;
-	}
-
-	var info = {
-		'name': level.arena.name,
-		'fl': g_fraglimit.at(level.arena.arenaNum).get(),
-		'cl': g_capturelimit.at(level.arena.arenaNum).get(),
-		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
-		'nc': level.arena.numConnectedClients,
-
-		's1': level.arena.teams[team1].score,
-		's2': level.arena.teams[team2].score,
-		'c1': level.arena.teams[team1].count,
-		'c2': level.arena.teams[team2].count,
-		'a1': level.arena.teams[team1].alive,
-		'a2': level.arena.teams[team2].alive,
-
-		'gs': level.arena.state.current,
-		'wt': level.arena.warmupTime
-	};
-
-	SV.SetConfigstring('arena' + level.arena.arenaNum, info);
-
-	// This is not the userinfo, more like the configstring actually.
-	log('ArenaInfoChanged: ' + level.arena.arenaNum + ' ' + JSON.stringify(info));
+function SetCurrentArena(arenaNum) {
+	level.arena = level.arenas[arenaNum];
 }
 
 /**
@@ -14336,55 +14338,64 @@ function RunArenas() {
 }
 
 /**
- * ArenaCount
+ * ArenaInfoChanged
  */
-function ArenaCount(ignoreClientNum) {
-	var numAlive = 0;
+function ArenaInfoChanged() {
+	var info = {
+		'name': level.arena.name,
+		'gt': level.arena.gametype,
+		'gs': level.arena.state.current,
 
-	for (var i = 0; i < level.maxclients; i++) {
-		if (i === ignoreClientNum) {
-			continue;
-		}
+		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
 
-		var ent = level.gentities[i];
-
-		if (!ent.inuse) {
-			continue;
-		}
-
-		if (ent.s.arenaNum !== level.arena.arenaNum) {
-			continue;
-		}
-
-		if (ent.client.sess.sessionTeam === TEAM.SPECTATOR) {
-			continue;
-		}
-
-		numAlive++;
+		'nc': level.arena.numConnectedClients,
+		'wt': level.arena.warmupTime,
+		's1': level.arena.score1,
+		's2': level.arena.score2
 	}
 
-	return numAlive;
+	SV.SetConfigstring('arena:' + level.arena.arenaNum, info);
 }
 
-/**
- * IsLobbyArena
- */
-function IsLobbyArena() {
-	if (!g_rocketarena.get()) {
-		return false;
-	}
+// /**
+//  * ArenaCount
+//  */
+// function ArenaCount(ignoreClientNum) {
+// 	var numAlive = 0;
 
-	return (level.arena.arenaNum === 0);
-}
+// 	for (var i = 0; i < level.maxclients; i++) {
+// 		if (i === ignoreClientNum) {
+// 			continue;
+// 		}
+
+// 		var ent = level.gentities[i];
+
+// 		if (!ent.inuse) {
+// 			continue;
+// 		}
+
+// 		if (ent.s.arenaNum !== level.arena.arenaNum) {
+// 			continue;
+// 		}
+
+// 		if (ent.client.sess.team === TEAM.SPECTATOR) {
+// 			continue;
+// 		}
+
+// 		numAlive++;
+// 	}
+
+// 	return numAlive;
+// }
 
 /**
  * ArenaRestart
  */
 function ArenaRestart() {
-	// Reset scores.
-	for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
-		level.arena.teams[i].score = 0;
-	}
+	// // Reset scores.
+	// for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
+	// 	level.arena.teamScores[i] = 0;
+	// }
 
 	// Respawn everybody.
 	for (var i = 0; i < level.maxclients; i++) {
@@ -14398,7 +14409,7 @@ function ArenaRestart() {
 			continue;
 		}
 
-		if (ent.client.sess.sessionTeam === TEAM.SPECTATOR) {
+		if (ent.client.sess.team === TEAM.SPECTATOR) {
 			continue;
 		}
 
@@ -14440,7 +14451,7 @@ function CreateTournamentMachine() {
 				ArenaInfoChanged();
 			},
 			onready: function (event, from, to, msg) {
-				TournamentWarmup();
+				TournamentReady();
 				ArenaInfoChanged();
 			},
 			onstart: function (event, from, to, msg) {
@@ -14479,7 +14490,7 @@ function CheckTournamentRules() {
 
 	// Are there enough players for the match?
 	var enough = function () {
-		if (g_gametype.get() >= GT.TEAM) {
+		if (level.arena.gametype >= GT.TEAM) {
 			var counts = new Array(TEAM.NUM_TEAMS);
 			counts[TEAM.BLUE] = TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
 			counts[TEAM.RED] = TeamCount(TEAM.RED, ENTITYNUM_NONE);
@@ -14504,7 +14515,7 @@ function CheckTournamentRules() {
 		}
 
 		// Cycle spectators in tournament mode.
-		if (g_gametype.get() === GT.TOURNAMENT) {
+		if (level.arena.gametype === GT.TOURNAMENT) {
 			while (true) {
 				if (enough()) {
 					break;
@@ -14516,7 +14527,7 @@ function CheckTournamentRules() {
 					break;
 				}
 
-				SetTeam(next.client, 'f', false);
+				SetTeam(next, 'f', false);
 			}
 		}
 
@@ -14559,13 +14570,13 @@ function CheckTournamentRules() {
 		}
 
 		// Check exit conditions.
-		if (g_gametype.get() < GT.CTF && g_fraglimit.get()) {
-			if (level.arena.teams[TEAM.RED].score >= g_fraglimit.get()) {
+		if (level.arena.gametype < GT.CTF && g_fraglimit.get()) {
+			if (level.arena.teamScores[TEAM.RED] >= g_fraglimit.get()) {
 				state.end('Red hit the fraglimit.');
 				return;
 			}
 
-			if (level.arena.teams[TEAM.BLUE].score >= g_fraglimit.get()) {
+			if (level.arena.teamScores[TEAM.BLUE] >= g_fraglimit.get()) {
 				state.end('Blue hit the fraglimit.');
 				return;
 			}
@@ -14577,22 +14588,22 @@ function CheckTournamentRules() {
 				if (client.pers.connected !== CON.CONNECTED) {
 					continue;
 				}
-				if (client.sess.sessionTeam !== TEAM.FREE) {
+				if (client.sess.team !== TEAM.FREE) {
 					continue;
 				}
 
 				if (client.ps.persistant[PERS.SCORE] >= g_fraglimit.get()) {
-					state.end(client.pers.netname + '^' + QS.COLOR.WHITE + 'hit the fraglimit.');
+					state.end(client.pers.name + '^' + QS.COLOR.WHITE + 'hit the fraglimit.');
 					return;
 				}
 			}
-		} else if (g_gametype.get() >= GT.CTF && g_capturelimit.get()) {
-			if (level.arena.teams[TEAM.RED].score >= g_capturelimit.get()) {
+		} else if (level.arena.gametype >= GT.CTF && g_capturelimit.get()) {
+			if (level.arena.teamScores[TEAM.RED] >= g_capturelimit.get()) {
 				state.end('Red hit the capturelimit.');
 				return;
 			}
 
-			if (level.arena.teams[TEAM.BLUE].score >= g_capturelimit.get()) {
+			if (level.arena.teamScores[TEAM.BLUE] >= g_capturelimit.get()) {
 				state.end('Blue hit the capturelimit.');
 				return;
 			}
@@ -14616,8 +14627,8 @@ function ScoreIsTied() {
 		return false;
 	}
 
-	if (g_gametype.get() >= GT.TEAM) {
-		return (level.arena.teams[TEAM.RED].score === level.arena.teams[TEAM.BLUE].score);
+	if (level.arena.gametype >= GT.TEAM) {
+		return (level.arena.teamScores[TEAM.RED] === level.arena.teamScores[TEAM.BLUE]);
 	}
 
 	var a = level.clients[level.arena.sortedClients[0]].ps.persistant[PERS.SCORE];
@@ -14627,10 +14638,10 @@ function ScoreIsTied() {
 }
 
 /**
- * TournamentWarmup
+ * TournamentReady
  */
-function TournamentWarmup() {
-	log('TournamentWarmup');
+function TournamentReady() {
+	log('TournamentReady');
 
 	// Fudge by -1 to account for extra delays.
 	level.arena.warmupTime = 0;
@@ -14676,7 +14687,7 @@ function TournamentRestart() {
 
 	// If we are running a tournement map, kick the loser to spectator status,
 	// which will automatically grab the next spectator and restart.
-	if (g_gametype.get() === GT.TOURNAMENT) {
+	if (level.arena.gametype === GT.TOURNAMENT) {
 		level.arena.intermissionTime = 0;
 
 		QueueTournamentLoser();
@@ -14703,8 +14714,11 @@ function QueueTournamentLoser() {
 		return;
 	}
 
-	// Make them a spectator.
-	SetTeam(ent.client, 's', true);
+	// Make them a spectator (restore group as joining spec clears it).
+	var group = ent.client.sess.group;
+	SetTeam(ent, 's', true);
+	ent.client.sess.group = group;
+
 	PushClientToQueue(ent);
 }
 
@@ -14735,7 +14749,7 @@ function CreateRoundMachine() {
 				ArenaInfoChanged();
 			},
 			onready: function (event, from, to, msg) {
-				RoundWarmup();
+				RoundReady();
 				ArenaInfoChanged();
 			},
 			onstart: function (event, from, to, msg) {
@@ -14764,52 +14778,81 @@ function CreateRoundMachine() {
  * CheckRoundRules
  */
 function CheckRoundRules() {
-	var state = level.arena.state;
+	switch (level.arena.state.current) {
+		case GS.WAITING:
+			RoundRunWaiting();
+			break;
 
-	var counts = new Array(TEAM.NUM_TEAMS);
-	counts[TEAM.BLUE] = TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
-	counts[TEAM.RED] = TeamCount(TEAM.RED, ENTITYNUM_NONE);
+		case GS.COUNTDOWN:
+			RoundRunCountdown();
+			break;
 
-	var enough = true;
-	if (counts[TEAM.RED] < 1 || counts[TEAM.BLUE] < 1) {
-		enough = false;
-	}
+		case GS.ACTIVE:
+			RoundRunActive();
+			break;
 
-	if (state.current === GS.WAITING) {
-		if (enough) {
-			state.ready();
-		}
-	} else if (state.current === GS.COUNTDOWN) {
-		if (level.time > level.arena.warmupTime) {
-			state.start();
-		}
-	} else if (state.current === GS.ACTIVE) {
-		if (IsLobbyArena()) {
-			return;
-		}
-
-		counts[TEAM.RED] = TeamAliveCount(TEAM.RED);
-		counts[TEAM.BLUE] = TeamAliveCount(TEAM.BLUE);
-
-		if (!counts[TEAM.RED] && !counts[TEAM.BLUE]) {
-			state.end(null);
-		} else if (!counts[TEAM.RED]) {
-			state.end(TEAM.BLUE);
-		} else if (!counts[TEAM.BLUE]) {
-			state.end(TEAM.RED);
-		}
-	} else if (state.current === GS.OVER) {
-		// Need to restart once it's time.
-		if (level.time > level.arena.restartTime) {
-			state.restart();
-		}
+		case GS.OVER:
+			RoundRunOver();
+			break;
 	}
 }
 
 /**
- * RoundWarmup
+ * RoundRunWaiting
  */
-function RoundWarmup() {
+function RoundRunWaiting() {
+	var count1 = function () {
+		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
+	}
+	var count2 = function () {
+		return TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
+	}
+
+	if (level.arena.gametype === GT.CLANARENA) {
+		if (count1() >= 1 && count2() >= 1) {
+			level.arena.state.ready();
+		}
+	} else if (level.arena.gametype === GT.ROCKETARENA) {
+		// Spawn in the next team.
+		while (true) {
+			// Free up the team if they all left.
+			if (!count1()) {
+				level.arena.group1 = null;
+			}
+			if (!count2()) {
+				level.arena.group2 = null;
+			}
+
+			// If we have everyone, lets rock and roll.
+			if (count1() && count2()) {
+				break;
+			}
+
+			// Pull the next team from the queue.
+			var nextInLine = PopClientFromQueue();
+			if (!nextInLine) {
+				break;
+			}
+
+			var group = nextInLine.client.sess.group;
+
+			level.arena[!count1() ? 'group1' : 'group2'] = group;
+
+			DequeueGroup(group);
+		}
+
+		if (count1() >= 1 && count2() >= 1) {
+			level.arena.state.ready();
+		}
+	} else {
+		error('Unsupported gametype.');
+	}
+}
+
+/**
+ * RoundReady
+ */
+function RoundReady() {
 	log('RoundWarmup');
 
 	// Fudge by -1 to account for extra delays.
@@ -14817,6 +14860,15 @@ function RoundWarmup() {
 
 	if (g_warmup.get() > 1) {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
+	}
+}
+
+/**
+ * RoundRunCountdown
+ */
+function RoundRunCountdown() {
+	if (level.time > level.arena.warmupTime) {
+		level.arena.state.start();
 	}
 }
 
@@ -14832,16 +14884,43 @@ function RoundStart() {
 }
 
 /**
+ * RoundRunActive
+ */
+function RoundRunActive() {
+	var alive1 = TeamAliveCount(TEAM.RED);
+	var alive2 = TeamAliveCount(TEAM.BLUE);
+
+	if (!alive1 && !alive2) {
+		level.arena.state.end(null);
+	} else if (!alive1) {
+		level.arena.state.end(TEAM.BLUE);
+	} else if (!alive2) {
+		level.arena.state.end(TEAM.RED);
+	}
+}
+
+/**
  * RoundEnd
  */
 function RoundEnd(winningTeam) {
 	log('RoundEnd', winningTeam);
 
 	if (winningTeam !== null) {
-		level.arena.teams[winningTeam].score += 1;
+		level.arena.teamScores[winningTeam] += 1;
 	}
+
 	level.arena.restartTime = level.time + 4000;
 	level.arena.lastWinningTeam = winningTeam;
+}
+
+/**
+ * RoundRunOver
+ */
+function RoundRunOver() {
+	// Need to restart once it's time.
+	if (level.time > level.arena.restartTime) {
+		level.arena.state.restart();
+	}
 }
 
 /**
@@ -14852,11 +14931,40 @@ function RoundEnd(winningTeam) {
 function RoundRestart() {
 	log('RoundRestart');
 
-	var playersPerTeam = g_playersPerTeam.at(level.arena.arenaNum).get();
-
 	level.arena.restartTime = 0;
 
-	// Respawn everybody, queuing losers.
+	if (level.arena.gametype === GT.ROCKETARENA) {
+		// Queue losing team in RA.
+		if (level.arena.lastWinningTeam === TEAM.RED) {
+			QueueGroup(level.arena.group2);
+			level.arena.group2 = null;
+
+			// Respawn winners.
+			RespawnTeam(TEAM.RED);
+		} else {
+			QueueGroup(level.arena.group1);
+			level.arena.group1 = null;
+
+			// Move winners to red team.
+			SetTeamForGroup(level.arena.group2, TEAM.RED);
+			RespawnTeam(TEAM.RED);
+			level.arena.group1 = level.arena.group2;
+			level.arena.group2 = null;
+		}
+	}
+	// Always respawn both teams in CA.
+	else if (level.arena.gametype === GT.CLANARENA) {
+		RespawnTeam(TEAM.RED);
+		RespawnTeam(TEAM.BLUE);
+	}
+}
+
+/**
+ * QueueGroup
+ */
+function QueueGroup(group) {
+	log('Queuing group', group);
+
 	for (var i = 0; i < level.maxclients; i++) {
 		var ent = level.gentities[i];
 
@@ -14868,45 +14976,83 @@ function RoundRestart() {
 			continue;
 		}
 
-		if (ent.client.sess.sessionTeam === TEAM.SPECTATOR) {
-			continue;
-		}
+		if (ent.client.sess.group === group) {
+			SetTeam(ent, 's', true);
 
-		// No longer eliminated.
-		ent.client.pers.teamState.state = TEAM_STATE.BEGIN;
-
-		// In non-pickup games, queue losers as specs.
-		if (playersPerTeam > 0 && ent.client.sess.sessionTeam !== level.arena.lastWinningTeam) {
-			SetTeam(ent.client, 's', true);
 			PushClientToQueue(ent);
 			continue;
 		}
-
-		ClientSpawn(ent);
 	}
+}
 
-	// Finally, spawn in the next wave of players.
-	while (true) {
-		if (playersPerTeam && ArenaCount() >= playersPerTeam*2) {
-			break;
-		}
+/**
+ * DequeueGroup
+ */
+function DequeueGroup(group) {
+	log('Dequeuing group', group);
 
-		var next = PopClientFromQueue();
-		if (!next) {
-			break;
-		}
+	for (var i = 0; i < level.maxclients; i++) {
+		var ent = level.gentities[i];
 
-		// No longer eliminated.
-		next.client.pers.teamState.state = TEAM_STATE.BEGIN;
-
-		// In non-pickup games, the client's go to spec when queued,
-		// so we need to place them on the appropriate team.
-		if (next.client.sess.sessionTeam === TEAM.SPECTATOR) {
-			SetTeam(next.client, 'f', true);
+		if (!ent.inuse) {
 			continue;
 		}
 
-		ClientSpawn(next);
+		if (ent.s.arenaNum !== level.arena.arenaNum) {
+			continue;
+		}
+
+		if (ent.client.sess.group === group) {
+			RemoveClientFromQueue(ent);
+
+			// Since our group is active, it'll place us on the correct team.
+			SetTeam(ent, group, true);
+		}
+	}
+}
+
+/**
+ * SetTeamForGroup
+ */
+function SetTeamForGroup(group, team) {
+	for (var i = 0; i < level.maxclients; i++) {
+		var ent = level.gentities[i];
+
+		if (!ent.inuse) {
+			continue;
+		}
+
+		if (ent.s.arenaNum !== level.arena.arenaNum) {
+			continue;
+		}
+
+		if (ent.client.sess.group === group) {
+			ent.client.sess.team = team;
+			ClientUserinfoChanged(i);
+		}
+	}
+}
+
+/**
+ * RespawnTeam
+ */
+function RespawnTeam(team) {
+	for (var i = 0; i < level.maxclients; i++) {
+		var ent = level.gentities[i];
+
+		if (!ent.inuse) {
+			continue;
+		}
+
+		if (ent.s.arenaNum !== level.arena.arenaNum) {
+			continue;
+		}
+
+		if (ent.client.sess.team === team) {
+			// No longer eliminated.
+			ent.client.pers.teamState.state = TEAM_STATE.BEGIN;
+			ClientSpawn(ent);
+		}
 	}
 }
 
@@ -14935,11 +15081,12 @@ function PopClientFromQueue() {
 			continue;
 		}
 
-		if (ent.client.sess.sessionTeam !== TEAM.SPECTATOR) {
+		if (ent.client.sess.team !== TEAM.SPECTATOR) {
 			continue;
 		}
 
-		if (ent.client.sess.spectatorNum === -1) {
+		// Don't pop if not in a group.
+		if (level.arena.gametype === GT.ROCKETARENA && ent.client.sess.group === null) {
 			continue;
 		}
 
@@ -14993,6 +15140,7 @@ function PushClientToQueue(ent) {
  */
 function RemoveClientFromQueue(ent) {
 	log('RemoveClientFromQueue', ent.client.ps.clientNum);
+
 	ent.client.sess.spectatorNum = -1;
 }
 
@@ -15043,7 +15191,7 @@ function QueueIntermission(msg) {
  */
 function BeginIntermission() {
 	// If in tournement mode, change the wins / losses.
-	if (g_gametype.get() === GT.TOURNAMENT) {
+	if (level.arena.gametype === GT.TOURNAMENT) {
 		AdjustTournamentScores();
 	}
 
@@ -15208,7 +15356,7 @@ function ExitIntermission() {
 		}
 	}
 
-	COM.ExecuteBuffer('vstr nextmap');
+	SV.ExecuteBuffer('vstr nextmap');
 }
 
 /**********************************************************
@@ -15253,16 +15401,16 @@ function CalculateRanks() {
 		level.arena.sortedClients[level.arena.numConnectedClients] = i;
 		level.arena.numConnectedClients++;
 
-		if (ent.client.sess.sessionTeam !== TEAM.SPECTATOR) {
+		if (ent.client.sess.team !== TEAM.SPECTATOR) {
 			level.arena.numNonSpectatorClients++;
 
 			// Decide if this should be auto-followed.
 			if (ent.client.pers.connected === CON.CONNECTED) {
 				level.arena.numPlayingClients++;
 
-				// if (level.clients[i].sess.sessionTeam == TEAM.RED) {
+				// if (level.clients[i].sess.team == TEAM.RED) {
 				// 	level.numteamVotingClients[0] += 1;
-				// } else if (level.clients[i].sess.sessionTeam == TEAM.BLUE) {
+				// } else if (level.clients[i].sess.team == TEAM.BLUE) {
 				// 	level.numteamVotingClients[1] += 1;
 				// }
 
@@ -15278,14 +15426,14 @@ function CalculateRanks() {
 	level.arena.sortedClients.sort(SortRanks);
 
 	// Set the rank value for all clients that are connected and not spectators.
-	if (g_gametype.get() >= GT.TEAM) {
+	if (level.arena.gametype >= GT.TEAM) {
 		// In team games, rank is just the order of the teams, 0=red, 1=blue, 2=tied.
 		for (var i = 0; i < level.arena.numPlayingClients; i++) {
 			var client = level.clients[level.arena.sortedClients[i]];
 
-			if (level.arena.teams[TEAM.RED].score === level.arena.teams[TEAM.BLUE].score) {
+			if (level.arena.teamScores[TEAM.RED] === level.arena.teamScores[TEAM.BLUE]) {
 				client.ps.persistant[PERS.RANK] = 2;
-			} else if (level.arena.teams[TEAM.RED].score > level.arena.teams[TEAM.BLUE].score) {
+			} else if (level.arena.teamScores[TEAM.RED] > level.arena.teamScores[TEAM.BLUE]) {
 				client.ps.persistant[PERS.RANK] = 0;
 			} else {
 				client.ps.persistant[PERS.RANK] = 1;
@@ -15314,37 +15462,61 @@ function CalculateRanks() {
 	}
 
 	// Set the CS_SCORES1/2 configstrings, which will be visible to everyone.
-	if (g_gametype.get() >= GT.TEAM) {
-		level.arena.teams[TEAM.RED].count = TeamCount(TEAM.RED, ENTITYNUM_NONE);
-		level.arena.teams[TEAM.BLUE].count = TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
+	if (level.arena.gametype === GT.ROCKETARENA) {
+		level.arena.score1 = !level.arena.group1 ? null : {
+			group: level.arena.group1,
+			score: TeamGroupScore(level.arena.group1),
+			count: TeamCount(TEAM.RED, ENTITYNUM_NONE),
+			alive: TeamAliveCount(TEAM.RED)
+		};
 
-		level.arena.teams[TEAM.RED].alive = TeamAliveCount(TEAM.RED);
-		level.arena.teams[TEAM.BLUE].alive = TeamAliveCount(TEAM.BLUE);
+		level.arena.score2 = !level.arena.group2 ? null : {
+			group: level.arena.group2,
+			score: TeamGroupScore(level.arena.group2),
+			count: TeamCount(TEAM.BLUE, ENTITYNUM_NONE),
+			alive: TeamAliveCount(TEAM.BLUE)
+		};
+	}
+	else if (level.arena.gametype >= GT.TEAM) {
+		level.arena.score1 = {
+			score: level.arena.teamScores[TEAM.RED],
+			count: TeamCount(TEAM.RED, ENTITYNUM_NONE),
+			alive: TeamAliveCount(TEAM.RED)
+		};
+
+		level.arena.score2 = {
+			score: level.arena.teamScores[TEAM.BLUE],
+			count: TeamCount(TEAM.BLUE, ENTITYNUM_NONE),
+			alive: TeamAliveCount(TEAM.BLUE)
+		};
 	} else {
 		var n1 = level.arena.sortedClients[0];
 		var n2 = level.arena.sortedClients[1];
 
 		if (level.arena.numConnectedClients === 0) {
-			level.arena.teams[0].score = SCORE_NOT_PRESENT;
-			level.arena.teams[0].count = ENTITYNUM_NONE;
-
-			level.arena.teams[1].score = SCORE_NOT_PRESENT;
-			level.arena.teams[1].count = ENTITYNUM_NONE;
+			level.arena.score1 = null;
+			level.arena.score2 = null;
 		} else if (level.arena.numConnectedClients === 1) {
-			level.arena.teams[0].score = level.clients[n1].ps.persistant[PERS.SCORE];
-			level.arena.teams[0].count = n1;
+			level.arena.score1 = {
+				clientNum: n1,
+				score: level.clients[n1].ps.persistant[PERS.SCORE]
+			};
 
-			level.arena.teams[1].score = SCORE_NOT_PRESENT;
-			level.arena.teams[1].count = ENTITYNUM_NONE;
+			level.arena.score2 = null;
 		} else {
-			level.arena.teams[0].score = level.clients[n1].ps.persistant[PERS.SCORE];
-			level.arena.teams[0].count = n1;
+			level.arena.score1 = {
+				clientNum: n1,
+				score: level.clients[n1].ps.persistant[PERS.SCORE]
+			};
 
-			level.arena.teams[1].score = level.clients[n2].ps.persistant[PERS.SCORE];
-			level.arena.teams[1].count = n2;
+			level.arena.score2 = {
+				clientNum: n2,
+				score: level.clients[n2].ps.persistant[PERS.SCORE]
+			};
 		}
 	}
 
+	//
 	ArenaInfoChanged();
 
 	// If we are at the intermission, send the new info to everyone.
@@ -15357,9 +15529,7 @@ function CalculateRanks() {
  * AdjustTournamentScores
  */
 function AdjustTournamentScores() {
-	var clientNum;
-
-	clientNum = level.arena.sortedClients[0];
+	var clientNum = level.arena.sortedClients[0];
 	if (level.clients[clientNum].pers.connected === CON.CONNECTED) {
 		level.clients[clientNum].sess.wins++;
 		ClientUserinfoChanged(clientNum);
@@ -15396,7 +15566,7 @@ function SortRanks(a, b) {
 	}
 
 	// Then spectators.
-	if (ca.sess.sessionTeam == TEAM.SPECTATOR && cb.sess.sessionTeam == TEAM.SPECTATOR) {
+	if (ca.sess.team === TEAM.SPECTATOR && cb.sess.team === TEAM.SPECTATOR) {
 		if (ca.sess.spectatorNum > cb.sess.spectatorNum) {
 			return -1;
 		}
@@ -15405,10 +15575,10 @@ function SortRanks(a, b) {
 		}
 		return 0;
 	}
-	if (ca.sess.sessionTeam == TEAM.SPECTATOR) {
+	if (ca.sess.team === TEAM.SPECTATOR) {
 		return 1;
 	}
-	if (cb.sess.sessionTeam == TEAM.SPECTATOR) {
+	if (cb.sess.team === TEAM.SPECTATOR) {
 		return -1;
 	}
 
@@ -15456,8 +15626,8 @@ function ClientConnect(clientNum, firstTime) {
 	ent.client = client;
 	ent.client.pers.connected = CON.CONNECTING;
 
-	// Set current arena for entity spawning purposes.
-	level.arena = level.arenas[ent.s.arenaNum];
+	// Set the global arena.
+	SetCurrentArena(ent.s.arenaNum);
 
 	// Read or initialize the session data.
 	if (firstTime || level.newSession) {
@@ -15470,10 +15640,10 @@ function ClientConnect(clientNum, firstTime) {
 
 	// Don't do the "xxx connected" messages if they were caried over from previous level
 	if (firstTime) {
-		SV.SendServerCommand(null, 'print', client.pers.netname + ' connected');
+		SV.SendServerCommand(null, 'print', client.pers.name + ' connected');
 	}
 
-	if (g_gametype.get() >= GT.TEAM && client.sess.sessionTeam !== TEAM.SPECTATOR) {
+	if (level.arena.gametype >= GT.TEAM && client.sess.team !== TEAM.SPECTATOR) {
 		BroadcastTeamChange(client, null);
 	}
 
@@ -15492,21 +15662,20 @@ function ClientConnect(clientNum, firstTime) {
  * if desired.
  */
 function ClientUserinfoChanged(clientNum) {
+	var userinfo = SV.GetUserinfo(clientNum);
 	var ent = level.gentities[clientNum];
 	var client = ent.client;
-	var userinfo = SV.GetUserinfo(clientNum);
 
-	client.pers.netname = userinfo['name'];
+	client.pers.name = userinfo['name'];
 
 	var cs = {
-		'name': client.pers.netname,
-		'team': client.sess.sessionTeam
+		'arena': client.ps.arenaNum,
+		'name': client.pers.name,
+		'team': client.sess.team,
+		'group': client.sess.group
 	};
 
-	SV.SetConfigstring('player' + clientNum, cs);
-
-	// This is not the userinfo, more like the configstring actually.
-	log('ClientUserinfoChanged: ' + clientNum + ' ' + JSON.stringify(cs));
+	SV.SetConfigstring('player:' + clientNum, cs);
 }
 
 /**
@@ -15518,8 +15687,8 @@ function ClientBegin(clientNum) {
 	var ent = level.gentities[clientNum];
 	var client = level.clients[clientNum];
 
-	// Set current arena for entity spawning purposes.
-	level.arena = level.arenas[ent.s.arenaNum];
+	// Set the global arena.
+	SetCurrentArena(ent.s.arenaNum);
 
 	if (ent.r.linked) {
 		SV.UnlinkEntity(ent);
@@ -15534,8 +15703,8 @@ function ClientBegin(clientNum) {
 
 	ClientSpawn(ent);
 
-	if (client.sess.sessionTeam !== TEAM.SPECTATOR) {
-		SV.SendServerCommand(null, 'print', client.pers.netname + ' entered the game');
+	if (client.sess.team !== TEAM.SPECTATOR) {
+		SV.SendServerCommand(null, 'print', client.pers.name + ' entered the game');
 	}
 
 	// Count current clients and rank for scoreboard.
@@ -15558,8 +15727,8 @@ function ClientDisconnect(clientNum) {
 		return;
 	}
 
-	// Set current arena for entity spawning purposes.
-	level.arena = level.arenas[ent.s.arenaNum];
+	// Set the global arena.
+	SetCurrentArena(ent.s.arenaNum);
 
 	log('ClientDisconnect: ' + clientNum);
 
@@ -15568,9 +15737,9 @@ function ClientDisconnect(clientNum) {
 	ent.classname = 'disconnected';
 	ent.client.pers.connected = CON.DISCONNECTED;
 	// ent.client.ps.persistant[PERS.TEAM] = TEAM.FREE;
-	// ent.client.sess.sessionTeam = TEAM.FREE;
+	// ent.client.sess.team = TEAM.FREE;
 
-	SV.SetConfigstring('player' + clientNum, null);
+	SV.SetConfigstring('player:' + clientNum, null);
 
 	CalculateRanks();
 }
@@ -15583,17 +15752,22 @@ function ClientSpawn(ent) {
 	var spawnOrigin = vec3.create();
 	var spawnAngles = vec3.create();
 
+	// Auto-eliminate if joining post warmup.
+	if (level.arena.state.current > GS.COUNTDOWN) {
+		client.pers.teamState.state = TEAM_STATE.ELIMINATED;
+	}
+
 	// Find a spawn point.
 	var spawnPoint;
 
-	if (client.sess.sessionTeam === TEAM.SPECTATOR ||
+	if (client.sess.team === TEAM.SPECTATOR ||
 		// In CA mode, eliminated players become pseudo spectators.
-		(g_gametype.get() === GT.CLANARENA && client.pers.teamState.state === TEAM_STATE.ELIMINATED)) {
+		(level.arena.gametype >= GT.CLANARENA && client.pers.teamState.state === TEAM_STATE.ELIMINATED)) {
 		spawnPoint = SelectSpectatorSpawnPoint(spawnOrigin, spawnAngles);
 	} else {
-		if (g_gametype.get() >= GT.CTF) {
+		if (level.arena.gametype >= GT.CTF) {
 			// All base oriented team games use the CTF spawn points.
-			spawnPoint = SelectCTFSpawnPoint(client.sess.sessionTeam, client.pers.teamState.state,
+			spawnPoint = SelectCTFSpawnPoint(client.sess.team, client.pers.teamState.state,
 			                                 spawnOrigin, spawnAngles);
 		} else {
 			// Don't spawn near existing origin if possible.
@@ -15638,7 +15812,7 @@ function ClientSpawn(ent) {
 
 	// Increment the spawncount so the client will detect the respawn.
 	client.ps.persistant[PERS.SPAWN_COUNT]++;
-	client.ps.persistant[PERS.TEAM] = client.sess.sessionTeam;
+	client.ps.persistant[PERS.TEAM] = client.sess.team;
 
 	client.airOutTime = level.time + 12000;
 
@@ -15669,7 +15843,7 @@ function ClientSpawn(ent) {
 	vec3.set(playerMaxs, ent.r.maxs);
 
 	// Set starting resources based on gametype.
-	if (g_gametype.get() === GT.CLANARENA) {
+	if (level.arena.gametype >= GT.CLANARENA) {
 		client.ps.stats[STAT.WEAPONS] = (1 << WP.GAUNTLET);
 		client.ps.stats[STAT.WEAPONS] |= (1 << WP.MACHINEGUN);
 		client.ps.stats[STAT.WEAPONS] |= (1 << WP.SHOTGUN);
@@ -15699,7 +15873,7 @@ function ClientSpawn(ent) {
 		client.ps.stats[STAT.WEAPONS] |= (1 << WP.MACHINEGUN);
 
 		client.ps.ammo[WP.GAUNTLET] = -1;
-		if (g_gametype.get() === GT.TEAM) {
+		if (level.arena.gametype === GT.TEAM) {
 			client.ps.ammo[WP.MACHINEGUN] = 50;
 		} else {
 			client.ps.ammo[WP.MACHINEGUN] = 100;
@@ -15734,7 +15908,7 @@ function ClientSpawn(ent) {
 	client.ps.legsAnim = ANIM.LEGS_IDLE;
 
 	if (!IntermissionStarted()) {
-		if (client.sess.sessionTeam !== TEAM.SPECTATOR &&
+		if (client.sess.team !== TEAM.SPECTATOR &&
 			client.pers.teamState.state !== TEAM_STATE.ELIMINATED) {
 			KillBox(ent);
 
@@ -15742,7 +15916,7 @@ function ClientSpawn(ent) {
 			UseTargets(spawnPoint, ent);
 
 			// Select the highest weapon number available, after any spawn given items have fired.
-			if (g_gametype.get() !== GT.CLANARENA) {
+			if (level.arena.gametype < GT.CLANARENA) {
 				for (var i = WP.NUM_WEAPONS - 1; i > 0; i--) {
 					if (client.ps.stats[STAT.WEAPONS] & (1 << i)) {
 						client.ps.weapon = i;
@@ -15804,8 +15978,8 @@ function RunClient(ent) {
 function ClientThink(clientNum) {
 	var ent = level.gentities[clientNum];
 
-	// Set current arena for entity spawning purposes.
-	level.arena = level.arenas[ent.s.arenaNum];
+	// Set the global arena.
+	SetCurrentArena(ent.s.arenaNum);
 
 	// Grab the latest command.
 	SV.GetUserCmd(clientNum, ent.client.pers.cmd);
@@ -15871,7 +16045,7 @@ function ClientThink_real(ent) {
 	}
 
 	// Spectators don't do much.
-	if (client.sess.sessionTeam === TEAM.SPECTATOR ||
+	if (client.sess.team === TEAM.SPECTATOR ||
 		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.ps.pm_type !== PM.DEAD)) {
 		if (client.sess.spectatorState === SPECTATOR.SCOREBOARD) {
 			return;
@@ -15906,7 +16080,7 @@ function ClientThink_real(ent) {
 	}
 
 	// Disable attacks during CA warmup.
-	if (g_gametype.get() === GT.CLANARENA) {
+	if (level.arena.gametype >= GT.CLANARENA) {
 		if (level.arena.state.current === GS.COUNTDOWN) {
 			client.ps.pm_flags |= PMF.NO_ATTACK;
 		} else {
@@ -16183,7 +16357,7 @@ function ClientEvents(ent, oldEventSequence) {
 function ClientEndFrame(ent) {
 	var client = ent.client;
 
-	if (client.sess.sessionTeam === TEAM.SPECTATOR ||
+	if (client.sess.team === TEAM.SPECTATOR ||
 		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.ps.pm_type !== PM.DEAD)) {
 		SpectatorClientEndFrame(ent);
 		return;
@@ -16317,7 +16491,7 @@ function TouchTriggers(ent) {
 		}
 
 		// Ignore most entities if a spectator.
-		if (ent.client.sess.sessionTeam === TEAM.SPECTATOR) {
+		if (ent.client.sess.team === TEAM.SPECTATOR) {
 			if (hit.s.eType !== ET.TELEPORT_TRIGGER &&
 				// This is ugly but adding a new ET_? type will
 				// most likely cause network incompatibilities.
@@ -16392,132 +16566,19 @@ function SetClientViewAngle(ent, angles) {
 }
 
 /**
- * SetArena
- */
-function SetArena(ent, arenaNum) {
-	if (arenaNum < 0 || arenaNum >= level.arenas.length) {
-		error('Invalid arena number.');
-		return;
-	}
-
-	// Push off old arena.
-	var oldArena = level.arena;
-
-	// Temporarily update while spawning the client.
-	level.arena = level.arenas[arenaNum];
-
-	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
-
-	// Fool same-team-change check.
-	ent.client.sess.sessionTeam = -1;
-
-	SetTeam(ent.client, 'f', false);
-
-	// Pop back.
-	level.arena = oldArena;
-
-	// Recalculate ranks for the old arena now.
-	CalculateRanks();
-}
-
-/**
- * SetTeam
- */
-function SetTeam(client, teamName, silent) {
-	var clientNum = client.ps.clientNum;
-	var ent = level.gentities[clientNum];
-
-	//
-	// See what change is requested
-	//
-	var team;
-	var specState = SPECTATOR.NOT;
-	var specClient = 0;
-	var oldTeam = client.sess.sessionTeam;
-
-	if (teamName === 'scoreboard' || teamName === 'score') {
-		team = TEAM.SPECTATOR;
-		specState = SPECTATOR.SCOREBOARD;
-	} else if (teamName === 'follow1') {
-		team = TEAM.SPECTATOR;
-		specState = SPECTATOR.FOLLOW;
-		specClient = -1;
-	} else if (teamName === 'follow2') {
-		team = TEAM.SPECTATOR;
-		specState = SPECTATOR.FOLLOW;
-		specClient = -2;
-	} else if (teamName === 'spectator' || teamName === 's') {
-		team = TEAM.SPECTATOR;
-		specState = SPECTATOR.FREE;
-	} else if (g_gametype.get() >= GT.TEAM) {
-		// If running a team game, assign player to one of the teams.
-		if (teamName === 'red' || teamName === 'r') {
-			team = TEAM.RED;
-		} else if (teamName === 'blue' || teamName === 'b') {
-			team = TEAM.BLUE;
-		} else {
-			team = PickTeam(clientNum);
-
-			// Queue client if forced to spec due to limits.
-			if (team === TEAM.SPECTATOR) {
-				PushClientToQueue(ent);
-			}
-		}
-	} else {
-		// Force to free in non-team games.
-		team = TEAM.FREE;
-	}
-
-	//
-	// Decide if we will allow the change.
-	//
-	if (team === oldTeam && team !== TEAM.SPECTATOR) {
-		return;
-	}
-
-	//
-	// Execute the team change
-	//
-
-	log('Setting team for', clientNum, 'to', team);
-
-	client.sess.sessionTeam = team;
-	client.sess.spectatorState = specState;
-	client.sess.spectatorClient = specClient;
-
-	// If the player was dead leave the body.
-	if (client.ps.pm_type === PM.DEAD) {
-		CopyToBodyQueue(ent);
-	}
-
-	if (oldTeam !== TEAM.SPECTATOR) {
-		// Kill him (makes sure he loses flags, etc).
-		ent.flags &= ~GFL.GODMODE;
-		client.ps.stats[STAT.HEALTH] = ent.health = 0;
-		PlayerDie(ent, ent, ent, 100000, MOD.SUICIDE);
-	}
-
-	if (!silent) {
-		BroadcastTeamChange(client, oldTeam);
-	}
-	ClientUserinfoChanged(clientNum);
-	ClientBegin(clientNum);
-}
-
-/**
  * BroadCastTeamChange
  *
  * Let everyone know about a team change.
  */
 function BroadcastTeamChange(client, oldTeam) {
-	if (client.sess.sessionTeam === TEAM.RED) {
-		SV.SendServerCommand(null, 'cp', client.pers.netname + ' joined the red team.');
-	} else if (client.sess.sessionTeam === TEAM.BLUE) {
-		SV.SendServerCommand(null, 'cp', client.pers.netname + ' joined the blue team.');
-	} else if (client.sess.sessionTeam === TEAM.SPECTATOR && oldTeam !== TEAM.SPECTATOR) {
-		SV.SendServerCommand(null, 'cp', client.pers.netname + ' joined the spectators.');
-	} else if (client.sess.sessionTeam === TEAM.FREE) {
-		SV.SendServerCommand(null, 'cp', client.pers.netname + ' joined the battle.');
+	if (client.sess.team === TEAM.RED) {
+		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the red team.');
+	} else if (client.sess.team === TEAM.BLUE) {
+		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the blue team.');
+	} else if (client.sess.team === TEAM.SPECTATOR && oldTeam !== TEAM.SPECTATOR) {
+		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the spectators.');
+	} else if (client.sess.team === TEAM.FREE) {
+		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the battle.');
 	}
 }
 
@@ -17012,10 +17073,24 @@ function ClientCommand(clientNum, cmd) {
 		return;  // not fully in game yet
 	}
 
+	// Set the global arena.
+	SetCurrentArena(ent.s.arenaNum);
+
 	var name = cmd.type;
 	var args = cmd.data;
 
-	if (name === 'say') {
+	if (name === 'queue') {
+		var arenaNum = parseInt(args[0], 10);
+		console.log('---------- ARENA ' + arenaNum + ' ----------');
+		console.log(level.arenas[arenaNum]);
+		console.log('---------- CLIENTS ----------');
+		for (var i = 0; i < level.maxclients; i++) {
+			if (level.gentities[i].s.arenaNum === arenaNum) {
+				console.log('Client', i, level.gentities[i].client.sess);
+			}
+		}
+	}
+	else if (name === 'say') {
 		ClientCmdSay(ent, SAY.ALL, args[0]);
 		return;
 	}
@@ -17112,7 +17187,7 @@ function Say(ent, target, mode, text) {
 		return;
 	}
 
-	if (g_gametype.get() < GT.TEAM && mode === SAY.TEAM) {
+	if (level.arena.gametype < GT.TEAM && mode === SAY.TEAM) {
 		mode = SAY.ALL;
 	}
 
@@ -17121,27 +17196,27 @@ function Say(ent, target, mode, text) {
 
 	switch (mode) {
 		case SAY.ALL:
-			// G_LogPrintf( "say: %s: %s\n", ent->client->pers.netname, chatText );
-			name = ent.client.pers.netname;
+			// G_LogPrintf( "say: %s: %s\n", ent->client->pers.name, chatText );
+			name = ent.client.pers.name;
 			color = QS.COLOR.GREEN;
 			break;
 		// case SAY.TEAM:
-		// 	G_LogPrintf( "sayteam: %s: %s\n", ent->client->pers.netname, chatText );
+		// 	G_LogPrintf( "sayteam: %s: %s\n", ent->client->pers.name, chatText );
 		// 	if (Team_GetLocationMsg(ent, location, sizeof(location)))
 		// 		Com_sprintf (name, sizeof(name), EC"(%s%c%c"EC") (%s)"EC": ",
-		// 			ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE, location);
+		// 			ent->client->pers.name, Q_COLOR_ESCAPE, COLOR_WHITE, location);
 		// 	else
 		// 		Com_sprintf (name, sizeof(name), EC"(%s%c%c"EC")"EC": ",
-		// 			ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
+		// 			ent->client->pers.name, Q_COLOR_ESCAPE, COLOR_WHITE );
 		// 	color = COLOR_CYAN;
 		// 	break;
 		// case SAY.TELL:
-		// 	if (target && g_gametype.get() >= GT.TEAM &&
-		// 		target.client.sess.sessionTeam === ent.client.sess.sessionTeam &&
+		// 	if (target && level.arena.gametype >= GT.TEAM &&
+		// 		target.client.sess.team === ent.client.sess.team &&
 		// 		Team_GetLocationMsg(ent, location, sizeof(location))) {
-		// 		Com_sprintf (name, sizeof(name), EC"[%s%c%c"EC"] (%s)"EC": ", ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE, location );
+		// 		Com_sprintf (name, sizeof(name), EC"[%s%c%c"EC"] (%s)"EC": ", ent->client->pers.name, Q_COLOR_ESCAPE, COLOR_WHITE, location );
 		// 	} else {
-		// 		Com_sprintf (name, sizeof(name), EC"[%s%c%c"EC"]"EC": ", ent->client->pers.netname, Q_COLOR_ESCAPE, COLOR_WHITE );
+		// 		Com_sprintf (name, sizeof(name), EC"[%s%c%c"EC"]"EC": ", ent->client->pers.name, Q_COLOR_ESCAPE, COLOR_WHITE );
 		// 	}
 		// 	color = COLOR_MAGENTA;
 		// 	break;
@@ -17192,9 +17267,9 @@ function SayTo(ent, other, mode, color, name, text) {
 	}
 
 	// No chatting to players in tournements.
-	if (g_gametype.get() === GT.TOURNAMENT &&
-		other.client.sess.sessionTeam === TEAM.FREE &&
-		ent.client.sess.sessionTeam !== TEAM.FREE) {
+	if (level.arena.gametype === GT.TOURNAMENT &&
+		other.client.sess.team === TEAM.FREE &&
+		ent.client.sess.team !== TEAM.FREE) {
 		return;
 	}
 
@@ -17215,8 +17290,8 @@ function SendScoreboardMessage(ent) {
 	var arena = level.arenas[ent.s.arenaNum];
 
 	var val = {
-		scoreRed: arena.teams[TEAM.RED].score,
-		scoreBlue: arena.teams[TEAM.BLUE].score,
+		scoreRed: arena.teamScores[TEAM.RED],
+		scoreBlue: arena.teamScores[TEAM.BLUE],
 		scores: []
 	};
 
@@ -17234,14 +17309,16 @@ function SendScoreboardMessage(ent) {
 			accuracy = client.accuracy_hits * 100 / client.accuracy_shots;
 		}
 
-		var perfect = (client.ps.persistant[PERS.RANK] === 0 && client.ps.persistant[PERS.KILLED] === 0) ? 1 : 0;
+		var perfect = (client.ps.persistant[PERS.RANK] === 0 && client.ps.persistant[PERS.DEATHS] === 0) ? 1 : 0;
 
 		val.scores.push({
 			clientNum: clientNum,
 			score: client.ps.persistant[PERS.SCORE],
-			spectatorNum: client.sess.spectatorNum,
-			ping: ping,
+			frags: client.ps.persistant[PERS.FRAGS],
+			deaths: client.ps.persistant[PERS.DEATHS],
 			time: (level.time - client.pers.enterTime)/60000,
+			ping: ping,
+			spectatorNum: client.sess.spectatorNum,
 			powerups: level.gentities[arena.sortedClients[i]].s.powerups,
 			accuracy: accuracy,
 			impressive: client.ps.persistant[PERS.IMPRESSIVE_COUNT],
@@ -17280,22 +17357,8 @@ function ClientCmdNoclip(ent) {
  * ClientCmdTeam
  */
 function ClientCmdTeam(ent, teamName) {
-	if (!teamName) {
-		var oldTeam = ent.client.sess.sessionTeam;
-		switch (oldTeam) {
-			case TEAM.BLUE:
-				SV.SendServerCommand(ent.s.number, 'print', 'Blue team');
-				break;
-			case TEAM.RED:
-				SV.SendServerCommand(ent.s.number, 'print', 'Red team');
-				break;
-			case TEAM.FREE:
-				SV.SendServerCommand(ent.s.number, 'print', 'Free team');
-				break;
-			case TEAM.SPECTATOR:
-				SV.SendServerCommand(ent.s.number, 'print', 'Spectator team');
-				break;
-		}
+	if (teamName === undefined) {
+		SV.SendServerCommand(ent.s.number, 'print', 'Invalid team');
 		return;
 	}
 
@@ -17305,18 +17368,116 @@ function ClientCmdTeam(ent, teamName) {
 	}
 
 	// If they are playing a tournement game, count as a loss.
-	if (g_gametype.get() === GT.TOURNAMENT && ent.client.sess.sessionTeam === TEAM.FREE) {
+	if (level.arena.gametype === GT.TOURNAMENT && ent.client.sess.team === TEAM.FREE) {
 		ent.client.sess.losses++;
 	}
 
-	SetTeam(ent.client, teamName, false);
-
-	// If they voluntarily joined the spectators, remove them from the queue.
-	if (ent.client.sess.sessionTeam === TEAM.SPECTATOR) {
-		RemoveClientFromQueue(ent);
-	}
+	SetTeam(ent, teamName, false);
 
 	ent.client.switchTeamTime = level.time + 5000;
+}
+
+/**
+ * SetTeam
+ */
+function SetTeam(ent, teamName, silent) {
+	var client = ent.client;
+	var clientNum = client.ps.clientNum;
+
+	//
+	// See what change is requested
+	//
+	var team = TEAM.SPECTATOR;
+	var groupName = null;
+	var specState = SPECTATOR.NOT;
+	var specClient = 0;
+	var oldTeam = client.sess.team;
+
+	if (teamName === 'scoreboard' || teamName === 'score') {
+		team = TEAM.SPECTATOR;
+		specState = SPECTATOR.SCOREBOARD;
+	} else if (teamName === 'follow1') {
+		team = TEAM.SPECTATOR;
+		specState = SPECTATOR.FOLLOW;
+		specClient = -1;
+	} else if (teamName === 'follow2') {
+		team = TEAM.SPECTATOR;
+		specState = SPECTATOR.FOLLOW;
+		specClient = -2;
+	} else if (teamName === 'spectator' || teamName === 's') {
+		team = TEAM.SPECTATOR;
+		specState = SPECTATOR.FREE;
+	} else if (level.arena.gametype === GT.ROCKETARENA) {
+		if (teamName === '<default>') {
+			groupName = ent.client.pers.name + '\'s team';
+		} else {
+			groupName = teamName;
+		}
+
+		// Auto-join if the group is active.
+		if (level.arena.group1 === groupName) {
+			team = TEAM.RED;
+		} else if (level.arena.group2 === groupName) {
+			team = TEAM.BLUE;
+		} else {
+			team = TEAM.SPECTATOR;
+		}
+
+		// Make sure we can actually join this group.
+		var playersPerTeam = g_playersPerTeam.at(level.arena.arenaNum).get();
+		if (TeamGroupCount(groupName, clientNum) >= playersPerTeam) {
+			SV.SendServerCommand(ent.s.number, 'print', 'Team is full.');
+			return;
+		}
+	} else if (level.arena.gametype >= GT.TEAM) {
+		// If running a team game, assign player to one of the teams.
+		if (teamName === 'red' || teamName === 'r') {
+			team = TEAM.RED;
+		} else if (teamName === 'blue' || teamName === 'b') {
+			team = TEAM.BLUE;
+		} else {
+			team = PickTeam(clientNum);
+		}
+	} else {
+		// Force to free in non-team games.
+		team = TEAM.FREE;
+	}
+
+	// AP - Why would this matter?
+	// //
+	// // Decide if we will allow the change.
+	// //
+	// if (team === oldTeam && team !== TEAM.SPECTATOR) {
+	// 	return;
+	// }
+
+	//
+	// Execute the team change
+	//
+	log('Setting team for', clientNum, 'to', team, groupName);
+
+	client.sess.team = team;
+	client.sess.group = groupName;
+	client.sess.spectatorState = specState;
+	client.sess.spectatorClient = specClient;
+
+	// If the player was dead leave the body.
+	if (client.ps.pm_type === PM.DEAD) {
+		CopyToBodyQueue(ent);
+	}
+
+	if (oldTeam !== TEAM.SPECTATOR) {
+		// Kill him (makes sure he loses flags, etc).
+		ent.flags &= ~GFL.GODMODE;
+		client.ps.stats[STAT.HEALTH] = ent.health = 0;
+		PlayerDie(ent, ent, ent, 100000, MOD.SUICIDE);
+	}
+
+	if (!silent) {
+		BroadcastTeamChange(client, oldTeam);
+	}
+	ClientUserinfoChanged(clientNum);
+	ClientBegin(clientNum);
 }
 
 /**
@@ -17338,6 +17499,32 @@ function ClientCmdArena(ent, arenaNum) {
 	SetArena(ent, arenaNum);
 
 	ent.client.switchArenaTime = level.time + 3000;
+}
+
+/**
+ * SetArena
+ */
+function SetArena(ent, arenaNum) {
+	if (arenaNum < 0 || arenaNum >= level.arenas.length) {
+		error('Invalid arena number.');
+		return;
+	}
+
+	// Push off old arena.
+	var oldArena = level.arena;
+
+	// Temporarily update while spawning the client.
+	level.arena = level.arenas[arenaNum];
+
+	// Change arena and kick to spec.
+	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
+	SetTeam(ent, 's', false);
+
+	// Pop back.
+	level.arena = oldArena;
+
+	// Recalculate ranks for the old arena now.
+	CalculateRanks();
 }
 		/**
  * Damage
@@ -17436,7 +17623,7 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	}
 
 	// Free rocket jumps in CA.
-	if (g_gametype.get() === GT.CLANARENA &&
+	if (level.arena.gametype >= GT.CLANARENA &&
 		targ === attacker &&
 		(inflictor.classname === 'rocket' || inflictor.classname === 'grenade')) {
 		return;
@@ -17458,8 +17645,7 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 		}
 
 		// No damage in CA lobby or during warmup.
-		if (g_gametype.get() === GT.CLANARENA &&
-			(IsLobbyArena() || level.arena.state.current <= GS.COUNTDOWN)) {
+		if (level.arena.gametype >= GT.CLANARENA && level.arena.state.current <= GS.COUNTDOWN) {
 			return;
 		}
 	}
@@ -17715,11 +17901,10 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 
 	self.client.ps.pm_type = PM.DEAD;
 
-	if (g_gametype.get() === GT.CLANARENA &&
+	if (level.arena.gametype >= GT.CLANARENA &&
 		// If the player was killed due to the environment during
 		// warmup, don't eliminate them.
-		level.arena.state.current >= GS.ACTIVE &&
-		!IsLobbyArena()) {
+		level.arena.state.current >= GS.ACTIVE) {
 		self.client.pers.teamState.state = TEAM_STATE.ELIMINATED;
 	}
 
@@ -17728,7 +17913,7 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 	if (attacker) {
 		killer = attacker.s.number;
 		if (attacker.client) {
-			killerName = attacker.client.pers.netname;
+			killerName = attacker.client.pers.name;
 		} else {
 			killerName = "<non-client>";
 		}
@@ -17738,7 +17923,7 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		killerName = "<world>";
 	}
 
-	log('Kill:', killer, self.s.number, meansOfDeath, ',', killerName, 'killed', self.client.pers.netname);
+	log('Kill:', killer, self.s.number, meansOfDeath, ',', killerName, 'killed', self.client.pers.name);
 
 	// Broadcast the death event to everyone
 	var ent = TempEntity(self.r.currentOrigin, EV.OBITUARY);
@@ -17749,10 +17934,12 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 
 	self.enemy = attacker;
 
-	self.client.ps.persistant[PERS.KILLED]++;
+	self.client.ps.persistant[PERS.DEATHS]++;
 
 	if (attacker && attacker.client) {
 		attacker.client.lastkilled_client = self.s.number;
+
+		attacker.client.ps.persistant[PERS.FRAGS]++;
 
 		if (attacker == self || OnSameTeam(self, attacker)) {
 			AddScore(attacker, self.r.currentOrigin, -1);
@@ -17819,7 +18006,7 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		if (client.pers.connected !== CON.CONNECTED) {
 			continue;
 		}
-		if (client.sess.sessionTeam !== TEAM.SPECTATOR) {
+		if (client.sess.team !== TEAM.SPECTATOR) {
 			continue;
 		}
 		if (client.sess.spectatorClient === self.s.number) {
@@ -18030,7 +18217,7 @@ function AddScore(ent, origin, score) {
 	ScorePlum(ent, origin, score);
 
 	client.ps.persistant[PERS.SCORE] += score;
-	if (g_gametype.get() === GT.TEAM) {
+	if (level.arena.gametype === GT.TEAM) {
 		level.arena.teamScores[client.ps.persistant[PERS.TEAM]] += score;
 	}
 
@@ -18057,7 +18244,7 @@ function ScorePlum(ent, origin, score) {
  */
 function TossClientItems(self) {
 	// Don't drop items in CA.
-	if (g_gametype.get() === GT.CLANARENA) {
+	if (level.arena.gametype >= GT.CLANARENA) {
 		return;
 	}
 
@@ -18086,7 +18273,7 @@ function TossClientItems(self) {
 	}
 
 	// Drop all the powerups if not in teamplay.
-	if (g_gametype.get() !== GT.TEAM) {
+	if (level.arena.gametype !== GT.TEAM) {
 		var angle = 45;
 		for (var i = 1; i < PW.NUM_POWERUPS; i++) {
 			if (self.client.ps.powerups[i] > level.time) {
@@ -18221,7 +18408,7 @@ function SpawnEntityFromDef(def) {
 	}
 
 	// Check for "notteam" flag (GT.FFA, GT.TOURNAMENT).
-	if (g_gametype.get() >= GT.TEAM) {
+	if (level.arena.gametype >= GT.TEAM) {
 		var notteam = SpawnInt('notteam', 0);
 		if (notteam) {
 			SV.LinkEntity(ent);
@@ -18243,8 +18430,8 @@ function SpawnEntityFromDef(def) {
 	// the current gametype.
 	var gametype = SpawnString('gametype', null);
 	if (gametype !== null) {
-		if (g_gametype.get() >= GT.FFA && g_gametype.get() < GT.MAX_GAME_TYPE) {
-			var gametypeName = BG.GametypeNames[g_gametype.get()];
+		if (level.arena.gametype >= GT.FFA && level.arena.gametype < GT.MAX_GAME_TYPE) {
+			var gametypeName = BG.GametypeNames[level.arena.gametype];
 
 			if (gametype.indexOf(gametypeName) === -1) {
 				SV.LinkEntity(ent);
@@ -18269,7 +18456,7 @@ function SpawnEntityFromDef(def) {
 	ent.spawn = spawnFuncs[ent.classname];
 
 	if (!ent.spawn) {
-		// log(ent.classname + ' doesn\'t have a spawn function');
+		log(ent.classname + ' doesn\'t have a spawn function');
 		FreeEntity(ent);
 		return;
 	}
@@ -18663,6 +18850,15 @@ function AddPredictableEvent(ent, event, eventParm) {
 
 	BG.AddPredictableEventToPlayerstate(ent.client.ps, event, eventParm);
 }
+
+/**
+ * AddSound
+ */
+function AddSound(ent, /*channel,*/ soundIndex) {
+	var te = TempEntity(ent.r.currentOrigin, EV.GENERAL_SOUND);
+	te.s.eventParm = soundIndex;
+}
+
 		/**
  * SpawnItem
  *
@@ -18870,14 +19066,14 @@ function RespawnItem(ent) {
 		// Play powerup spawn sound to all clients.
 		var tent;
 
-		// If the powerup respawn sound should Not be global.
+		// If the powerup respawn sound should not be global.
 		if (ent.speed) {
 			tent = TempEntity(ent.s.pos.trBase, EV.GENERAL_SOUND);
 		}
 		else {
 			tent = TempEntity(ent.s.pos.trBase, EV.GLOBAL_SOUND);
 		}
-		// tent.s.eventParm = G_SoundIndex( "sound/items/poweruprespawn.wav" );
+		tent.s.eventParm = SoundIndex('sound/items/poweruprespawn');
 		tent.r.svFlags |= SVF.BROADCAST;
 	}
 
@@ -18892,7 +19088,7 @@ function RespawnItem(ent) {
 		else {
 			tent = TempEntity(ent.s.pos.trBase, EV.GLOBAL_SOUND);
 		}
-		// te.s.eventParm = G_SoundIndex( "sound/items/kamikazerespawn.wav" );
+		tent.s.eventParm = SoundIndex('sound/items/kamikazerespawn');
 		tent.r.svFlags |= SVF.BROADCAST;
 	}
 
@@ -18915,7 +19111,7 @@ function ItemTouch(ent, other) {
 	}
 
 	// The same pickup rules are used for client side and server side.
-	if (!BG.CanItemBeGrabbed(g_gametype.get(), ent.s, other.client.ps)) {
+	if (!BG.CanItemBeGrabbed(level.arena.gametype, ent.s, other.client.ps)) {
 		return;
 	}
 
@@ -19066,7 +19262,7 @@ function PickupWeapon(ent, other) {
 		}
 
 		// Dropped items and teamplay weapons always have full ammo.
-		if (!(ent.flags & GFL.DROPPED_ITEM) && g_gametype.get() !== GT.TEAM ) {
+		if (!(ent.flags & GFL.DROPPED_ITEM) && level.arena.gametype !== GT.TEAM ) {
 			// Respawning rules.
 			// Drop the quantity if they already have over the minimum.
 			if (other.client.ps.ammo[ent.item.giTag] < quantity) {
@@ -19083,7 +19279,7 @@ function PickupWeapon(ent, other) {
 	AddAmmo(other, ent.item.giTag, quantity);
 
 	// Team deathmatch has slow weapon respawns.
-	if (g_gametype.get() === GT.TEAM) {
+	if (level.arena.gametype === GT.TEAM) {
 		return g_weaponTeamRespawn.get();
 	}
 
@@ -19202,7 +19398,7 @@ function PickupPowerup(ent, other) {
 
 		// If same team in team game, no sound.
 		// Cannot use OnSameTeam as it expects to g_entities, not clients.
-		if (g_gametype.get() >= GT.TEAM && other.client.sess.sessionTeam === client.sess.sessionTeam) {
+		if (level.arena.gametype >= GT.TEAM && other.client.sess.team === client.sess.team) {
 			continue;
 		}
 
@@ -19281,7 +19477,7 @@ function ItemDrop(ent, item, angle) {
 
 	dropped.s.eFlags |= EF.BOUNCE_HALF;
 
-	if ((g_gametype.get() == GT.CTF || g_gametype.get() == GT.NFCTF) && item.giType == IT.TEAM) { // Special case for CTF flags
+	if ((level.arena.gametype == GT.CTF || level.arena.gametype == GT.NFCTF) && item.giType == IT.TEAM) { // Special case for CTF flags
 		dropped.think = Team_DroppedFlagThink;
 		dropped.nextthink = level.time + 30000;
 		Team_CheckDroppedItem(dropped);
@@ -19664,6 +19860,18 @@ function FireBFG (self, start, dir) {
  *
  **********************************************************/
 
+var Pushed = function () {
+	this.ent = null;
+	this.origin = vec3.create();
+	this.angles = vec3.create();
+	this.deltayaw = 0;
+};
+var pushed = new Array(MAX_GENTITIES);
+for (var i = 0; i < MAX_GENTITIES; i++) {
+	pushed[i] = new Pushed();
+}
+var pidx = 0;
+
 /**
  * InitMover
  *
@@ -19671,11 +19879,11 @@ function FireBFG (self, start, dir) {
  * so the movement delta can be calculated
  */
 function InitMover(ent) {
-	// // If the "model2" key is set, use a seperate model
-	// // for drawing, but clip against the brushes
-	// if (ent.model2) {
-	// 	ent.s.modelIndex2 = ModelIndex(ent.model2);
-	// }
+	// If the "model2" key is set, use a seperate model
+	// for drawing, but clip against the brushes.
+	if (ent.model2) {
+		ent.s.modelIndex2 = ModelIndex(ent.model2);
+	}
 
 	// // If the "loopsound" key is set, use a constant looping sound when moving.
 	// if ( G_SpawnString( "noise", "100", &sound ) ) {
@@ -19767,7 +19975,7 @@ function RunMoverTeam(ent) {
 	// Make sure all team slaves can move before commiting
 	// any moves or calling any think functions.
 	// If the move is blocked, all moved objects will be backed out.
-	// pushed_p = pushed;
+	pidx = 0;
 	for (part = ent; part; part = part.teamchain) {
 		// Get current position.
 		BG.EvaluateTrajectory(part.s.pos, level.time, origin);
@@ -19819,7 +20027,6 @@ function RunMoverTeam(ent) {
  * If false is returned, obstacle will be the blocking entity.
  */
 function MoverPush(pusher, move, amove) {
-	// pushed_t	*p;
 	var mins = vec3.create();
 	var maxs = vec3.create();
 	var totalMins = vec3.create();
@@ -19908,18 +20115,22 @@ function MoverPush(pusher, move, amove) {
 		// Save off the obstacle so we can call the block function (crush, etc).
 		var obstacle = check;
 
-		// // Move back any entities we already moved.
-		// // Go backwards, so if the same entity was pushed
-		// // twice, it goes back to the original position.
-		// for (p = pushed_p-1; p >= pushed; p--) {
-		// 	vec3.set(p.origin, p.ent.s.pos.trBase);
-		// 	vec3.set(p.angles, p.ent.s.apos.trBase);
-		// 	if (p.ent.client) {
-		// 		p.ent.client.ps.delta_angles[QMath.YAW] = p.deltayaw;
-		// 		vec3.set(p.origin, p.ent.client.ps.origin);
-		// 	}
-		// 	SV.LinkEntity(p.ent);
-		// }
+		// Move back any entities we already moved.
+		// Go backwards, so if the same entity was pushed
+		// twice, it goes back to the original position.
+		for (var idx = pidx-1; idx >= 0; idx--) {
+			var p = pushed[idx];
+
+			vec3.set(p.origin, p.ent.s.pos.trBase);
+			vec3.set(p.angles, p.ent.s.apos.trBase);
+
+			if (p.ent.client) {
+				p.ent.client.ps.delta_angles[QMath.YAW] = p.deltayaw;
+				vec3.set(p.origin, p.ent.client.ps.origin);
+			}
+
+			SV.LinkEntity(p.ent);
+		}
 
 		return obstacle;
 	}
@@ -19958,84 +20169,106 @@ function TestEntityPosition(ent) {
  * Returns false if the move is blocked.
  */
 function TryPushingEntity(check, pusher, move, amove) {
-	// vec3_t		matrix[3], transpose[3];
-	// vec3_t		org, org2, move2;
-	// gentity_t	*block;
+	var org = vec3.create();
+	var org2 = vec3.create();
+	var move2 = vec3.create();
 
 	// EF.MOVER_STOP will just stop when contacting another entity
 	// instead of pushing it, but entities can still ride on top of it.
-	if ((pusher.s.eFlags & EF.MOVER_STOP ) &&
+	if ((pusher.s.eFlags & EF.MOVER_STOP) &&
 		check.s.groundEntityNum !== pusher.s.number) {
 		return false;
 	}
 
-	// // Save off the old position.
-	// if (pushed_p > &pushed[MAX_GENTITIES]) {
-	// 	G_Error( "pushed_p > &pushed[MAX_GENTITIES]" );
-	// }
-	// pushed_p.ent = check;
-	// vec3.set(check.s.pos.trBase, pushed_p.origin);
-	// vec3.set(check.s.apos.trBase, pushed_p.angles);
-	// if ( check.client ) {
-	// 	pushed_p.deltayaw = check.client.ps.delta_angles[YAW];
-	// 	vec3.set(check.client.ps.origin, pushed_p.origin);
-	// }
-	// pushed_p++;
+	if (pidx > MAX_GENTITIES) {
+		error('pidx > MAX_GENTITIES');
+		return;
+	}
 
-	// // try moving the contacted entity
-	// // figure movement due to the pusher's amove
-	// G_CreateRotationMatrix( amove, transpose );
-	// G_TransposeMatrix( transpose, matrix );
-	// if ( check.client ) {
-	// 	VectorSubtract (check.client.ps.origin, pusher.r.r.currentOrigin, org);
-	// }
-	// else {
-	// 	VectorSubtract (check.s.pos.trBase, pusher.r.r.currentOrigin, org);
-	// }
-	// vec3.set( org, org2 );
-	// G_RotatePoint( org2, matrix );
-	// VectorSubtract (org2, org, move2);
-	// // add movement
-	// VectorAdd (check.s.pos.trBase, move, check.s.pos.trBase);
-	// VectorAdd (check.s.pos.trBase, move2, check.s.pos.trBase);
-	// if ( check.client ) {
-	// 	VectorAdd (check.client.ps.origin, move, check.client.ps.origin);
-	// 	VectorAdd (check.client.ps.origin, move2, check.client.ps.origin);
-	// 	// make sure the client's view rotates when on a rotating mover
-	// 	check.client.ps.delta_angles[YAW] += ANGLE2SHORT(amove[YAW]);
-	// }
+	//
+	// Save off the old position.
+	//
+	var pushed_p = pushed[pidx];
+	pushed_p.ent = check;
+	vec3.set(check.s.pos.trBase, pushed_p.origin);
+	vec3.set(check.s.apos.trBase, pushed_p.angles);
+	if (check.client) {
+		pushed_p.deltayaw = check.client.ps.delta_angles[QMath.YAW];
+		vec3.set(check.client.ps.origin, pushed_p.origin);
+	}
+	pushed_p = pushed[++pidx];
 
-	// // may have pushed them off an edge
-	// if ( check.s.groundEntityNum != pusher.s.number ) {
-	// 	check.s.groundEntityNum = ENTITYNUM_NONE;
-	// }
+	//
+	// Try moving the contacted entity figure movement due to the pusher's amove.
+	//
+	var matrix = [
+		vec3.create(),
+		vec3.create(),
+		vec3.create()
+	];
+	var transpose = [
+		vec3.create(),
+		vec3.create(),
+		vec3.create()
+	];
+	QMath.AnglesToAxis(amove, matrix);
+	QMath.TransposeMatrix(matrix, transpose);
+	if (check.client) {
+		vec3.subtract(check.client.ps.origin, pusher.r.currentOrigin, org);
+	}
+	else {
+		vec3.subtract(check.s.pos.trBase, pusher.r.currentOrigin, org);
+	}
+	vec3.set(org, org2);
+	QMath.RotatePoint(org2, transpose);
+	vec3.subtract(org2, org, move2);
 
-	// block = G_TestEntityPosition( check );
-	// if (!block) {
-	// 	// pushed ok
-	// 	if ( check.client ) {
-	// 		vec3.set( check.client.ps.origin, check.r.r.currentOrigin );
-	// 	} else {
-	// 		vec3.set( check.s.pos.trBase, check.r.r.currentOrigin );
-	// 	}
-	// 	trap_LinkEntity (check);
-	// 	return qtrue;
-	// }
+	//
+	// Add movement.
+	//
+	vec3.add(check.s.pos.trBase, move, check.s.pos.trBase);
+	vec3.add(check.s.pos.trBase, move2, check.s.pos.trBase);
+	if (check.client) {
+		vec3.add(check.client.ps.origin, move, check.client.ps.origin);
+		vec3.add(check.client.ps.origin, move2, check.client.ps.origin);
 
-	// // if it is ok to leave in the old position, do it
-	// // this is only relevent for riding entities, not pushed
-	// // Sliding trapdoors can cause this.
-	// vec3.set( (pushed_p-1).origin, check.s.pos.trBase);
-	// if ( check.client ) {
-	// 	vec3.set( (pushed_p-1).origin, check.client.ps.origin);
-	// }
-	// vec3.set( (pushed_p-1).angles, check.s.apos.trBase );
-	// block = G_TestEntityPosition (check);
-	// if ( !block ) {
-	// 	check.s.groundEntityNum = ENTITYNUM_NONE;
-	// 	pushed_p--;
-	// 	return qtrue;
-	// }
+		// Make sure the client's view rotates when on a rotating mover.
+		check.client.ps.delta_angles[QMath.YAW] += QMath.AngleToShort(amove[QMath.YAW]);
+	}
+
+	// May have pushed them off an edge.
+	if (check.s.groundEntityNum !== pusher.s.number) {
+		check.s.groundEntityNum = ENTITYNUM_NONE;
+	}
+
+	var block = TestEntityPosition(check);
+	if (!block) {
+		// Pushed ok.
+		if (check.client) {
+			vec3.set(check.client.ps.origin, check.r.currentOrigin);
+		} else {
+			vec3.set(check.s.pos.trBase, check.r.currentOrigin);
+		}
+		SV.LinkEntity(check);
+		return true;
+	}
+
+	// If it is ok to leave in the old position, do it.
+	// This is only relevent for riding entities, not pushed.
+	// Sliding trapdoors can cause this..
+	var old_pushed_p = pushed[pidx-1];
+
+	vec3.set(old_pushed_p.origin, check.s.pos.trBase);
+	if (check.client) {
+		vec3.set(old_pushed_p.origin, check.client.ps.origin);
+	}
+	vec3.set(old_pushed_p.angles, check.s.apos.trBase);
+	block = TestEntityPosition(check);
+	if (!block) {
+		check.s.groundEntityNum = ENTITYNUM_NONE;
+		pidx--;
+		return true;
+	}
 
 	// Blocked.
 	return false;
@@ -20264,27 +20497,23 @@ function InitSessionData(client, userinfo) {
 	var value = userinfo['team'];
 	if (value === 's') {
 		// A willing spectator, not a waiting-in-line.
-		sess.sessionTeam = TEAM.SPECTATOR;
+		sess.team = TEAM.SPECTATOR;
 	} else {
-		if (g_gametype.get() === GT.TOURNAMENT) {
-			sess.sessionTeam = PickTeam(client.ps.clientNum);
-		} else if (g_gametype.get() >= GT.TEAM) {
-			// If we're in RA mode in the lobby, auto join a team always.
-			if (IsLobbyArena() || g_teamAutoJoin.get()) {
-				sess.sessionTeam = PickTeam(client.ps.clientNum);
+		if (level.arena.gametype === GT.TOURNAMENT) {
+			sess.team = PickTeam(client.ps.clientNum);
+		} else if (level.arena.gametype >= GT.TEAM) {
+			if (g_teamAutoJoin.get()) {
+				sess.team = PickTeam(client.ps.clientNum);
 			} else {
 				// Always spawn as spectator in team games.
-				sess.sessionTeam = TEAM.SPECTATOR;
+				sess.team = TEAM.SPECTATOR;
 			}
 		} else {
-			sess.sessionTeam = TEAM.FREE;
-		}
-
-		// Queue client if forced to spec due to limits.
-		if (sess.sessionTeam === TEAM.SPECTATOR) {
-			PushClientToQueue(level.gentities[client.ps.clientNum]);
+			sess.team = TEAM.FREE;
 		}
 	}
+
+	PushClientToQueue(level.gentities[client.ps.clientNum]);
 
 	WriteSessionData(client);
 }
@@ -20305,7 +20534,7 @@ function ReadSessionData(client) {
 	// Parse string.
 	var val = JSON.parse(cvar.get());
 
-	client.sess.sessionTeam = val.sessionTeam;
+	client.sess.team = val.team;
 	client.sess.spectatorNum = val.spectatorNum;
 	client.sess.spectatorState = val.spectatorState;
 	client.sess.spectatorClient = val.spectatorClient;
@@ -20400,11 +20629,11 @@ function OnSameTeam(ent1, ent2) {
 		return false;
 	}
 
-	if (g_gametype.get() < GT.TEAM) {
+	if (level.arena.gametype < GT.TEAM) {
 		return false;
 	}
 
-	if (ent1.client.sess.sessionTeam === ent2.client.sess.sessionTeam) {
+	if (ent1.client.sess.team === ent2.client.sess.team) {
 		return true;
 	}
 
@@ -20417,7 +20646,7 @@ function OnSameTeam(ent1, ent2) {
 function PickTeam(ignoreClientNum) {
 	var team = TEAM.FREE;
 
-	if (g_gametype.get() >= GT.TEAM) {
+	if (level.arena.gametype >= GT.TEAM) {
 		// Find the team with the least amount of players.
 		var counts = new Array(TEAM.NUM_TEAMS);
 
@@ -20430,7 +20659,7 @@ function PickTeam(ignoreClientNum) {
 			team = TEAM.RED;
 		}
 		// Equal team count, so join the team with the lowest score.
-		else if (level.arena.teams[TEAM.RED].score > level.arena.teams[TEAM.BLUE].score) {
+		else if (level.arena.teamScores[TEAM.RED] > level.arena.teamScores[TEAM.BLUE]) {
 			team = TEAM.BLUE;
 		} else {
 			team = TEAM.RED;
@@ -20438,9 +20667,7 @@ function PickTeam(ignoreClientNum) {
 	}
 
 	// If we've exceeded the amount of allowed players, kick to spec.
-	var playersPerTeam = g_playersPerTeam.at(level.arena.arenaNum).get();
-	if ((g_gametype.get() === GT.CLANARENA && playersPerTeam && ArenaCount(ignoreClientNum) >= playersPerTeam*2) ||
-	    (g_gametype.get() === GT.TOURNAMENT && level.arena.numNonSpectatorClients >= 2)) {
+	if ((level.arena.gametype === GT.TOURNAMENT && level.arena.numNonSpectatorClients >= 2)) {
 		team = TEAM.SPECTATOR;
 	}
 
@@ -20450,7 +20677,7 @@ function PickTeam(ignoreClientNum) {
 /**
  * TeamCount
  *
- * Returns number of players on a team
+ * Returns number of players on a team.
  */
 function TeamCount(team, ignoreClientNum) {
 	var count = 0;
@@ -20470,7 +20697,7 @@ function TeamCount(team, ignoreClientNum) {
 			continue;
 		}
 
-		if (ent.client.sess.sessionTeam === team) {
+		if (ent.client.sess.team === team) {
 			count++;
 		}
 	}
@@ -20495,7 +20722,7 @@ function TeamAliveCount(team) {
 			continue;
 		}
 
-		if (ent.client.sess.sessionTeam !== team) {
+		if (ent.client.sess.team !== team) {
 			continue;
 		}
 
@@ -20508,13 +20735,69 @@ function TeamAliveCount(team) {
 }
 
 /**
+ * TeamGroupCount
+ */
+function TeamGroupCount(group, ignoreClientNum) {
+	var count = 0;
+
+	for (var i = 0; i < level.maxclients; i++) {
+		if (i === ignoreClientNum) {
+			continue;
+		}
+
+		var ent = level.gentities[i];
+
+		if (!ent.inuse) {
+			continue;
+		}
+
+		if (ent.s.arenaNum !== level.arena.arenaNum) {
+			continue;
+		}
+
+		if (ent.client.sess.group === group) {
+			count++;
+		}
+	}
+
+	return count;
+}
+
+/**
+ * TeamGroupScore
+ */
+function TeamGroupScore(group) {
+	var score = 0;
+
+	for (var i = 0; i < level.maxclients; i++) {
+		var ent = level.gentities[i];
+
+		if (!ent.inuse) {
+			continue;
+		}
+
+		if (ent.s.arenaNum !== level.arena.arenaNum) {
+			continue;
+		}
+
+		if (ent.client.sess.group !== group) {
+			continue;
+		}
+
+		score += ent.client.ps.persistant[PERS.SCORE];
+	}
+
+	return score;
+}
+
+/**
  * Team_CheckItems
  */
 function Team_CheckItems() {
 	// Set up team stuff
 	Team_InitGame();
 
-	if (g_gametype.get() === GT.CTF) {
+	if (level.arena.gametype === GT.CTF) {
 		// Check for the two flags.
 		var item = BG.FindItemForPowerup(PW.REDFLAG);
 		if (!item) {
@@ -20534,7 +20817,7 @@ function Team_CheckItems() {
 function Team_InitGame() {
 	teamgame.reset();
 
-	switch (g_gametype.get()) {
+	switch (level.arena.gametype) {
 		case GT.CTF:
 			teamgame.redStatus = -1; // Invalid to force update
 			teamgame.blueStatus = -1; // Invalid to force update
@@ -20582,7 +20865,7 @@ function Team_SetFlagStatus(team, status) {
 	if (modified) {
 		var st = new Array(4);
 
-		if(g_gametype.get() == GT.CTF) {
+		if(level.arena.gametype == GT.CTF) {
 			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
 			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
 			st[2] = 0;
@@ -20627,7 +20910,7 @@ function Team_PickupItem(ent, other) {
 	}
 
 	// GT.CTF
-	if (team === cl.sess.sessionTeam) {
+	if (team === cl.sess.team) {
 		return Team_TouchOurFlag(ent, other, team);
 	}
 
@@ -20641,7 +20924,7 @@ function Team_TouchOurFlag(ent, other, team) {
 	var cl = other.client;
 
 	var enemy_flag;
-	if (cl.sess.sessionTeam == TEAM.RED) {
+	if (cl.sess.team == TEAM.RED) {
 		enemy_flag = PW.BLUEFLAG;
 	} else {
 		enemy_flag = PW.REDFLAG;
@@ -20649,7 +20932,7 @@ function Team_TouchOurFlag(ent, other, team) {
 
 	if (ent.flags & GFL.DROPPED_ITEM) {
 		// Hey, it's not home.  return it by teleporting it back.
-		SV.SendServerCommand(null, 'print', cl.pers.netname + ' returned the ' + TeamName(team) + ' flag!');
+		SV.SendServerCommand(null, 'print', cl.pers.name + ' returned the ' + TeamName(team) + ' flag!');
 		AddScore(other, ent.r.currentOrigin, CTF_RECOVERY_BONUS);
 		other.client.pers.teamState.flagrecovery++;
 		other.client.pers.teamState.lastreturnedflag = level.time;
@@ -20664,7 +20947,7 @@ function Team_TouchOurFlag(ent, other, team) {
 		return 0;  // We don't have the flag
 	}
 
-	SV.SendServerCommand(null, 'print', cl.pers.netname + ' captured the ' + TeamName(OtherTeam(team)) + ' flag!');
+	SV.SendServerCommand(null, 'print', cl.pers.name + ' captured the ' + TeamName(OtherTeam(team)) + ' flag!');
 
 	cl.ps.powerups[enemy_flag] = 0;
 
@@ -20672,8 +20955,8 @@ function Team_TouchOurFlag(ent, other, team) {
 	teamgame.last_capture_team = team;
 
 	// Increase the team's score
-	Team_AddScore(other.client.sess.sessionTeam, ent.s.pos.trBase, 1);
-	Team_ForceGesture(other.client.sess.sessionTeam);
+	Team_AddScore(other.client.sess.team, ent.s.pos.trBase, 1);
+	Team_ForceGesture(other.client.sess.team);
 
 	other.client.pers.teamState.captures++;
 	// Add the sprite over the player's head.
@@ -20696,10 +20979,10 @@ function Team_TouchOurFlag(ent, other, team) {
 			continue;
 		}
 
-		if (player.client.sess.sessionTeam != cl.sess.sessionTeam) {
+		if (player.client.sess.team != cl.sess.team) {
 			player.client.pers.teamState.lasthurtcarrier = -5;
 
-		} else if (player.client.sess.sessionTeam == cl.sess.sessionTeam) {
+		} else if (player.client.sess.team == cl.sess.team) {
 
 			// Award extra points for capture assists.
 			if (player.client.pers.teamState.lastreturnedflag + CTF_RETURN_FLAG_ASSIST_TIMEOUT > level.time) {
@@ -20739,7 +21022,7 @@ function Team_TouchOurFlag(ent, other, team) {
 function Team_TouchEnemyFlag(ent, other, team) {
 	var cl = other.client;
 
-	SV.SendServerCommand(null, 'print', other.client.pers.netname + ' got the ' + TeamName(team) + ' flag!');
+	SV.SendServerCommand(null, 'print', other.client.pers.name + ' got the ' + TeamName(team) + ' flag!');
 
 	if (team == TEAM.RED) {
 		cl.ps.powerups[PW.REDFLAG] = 0x1fffffff /*INT_MAX*/; // flags never expire
@@ -20767,7 +21050,7 @@ function Team_ForceGesture(team) {
 		if (!ent.client) {
 			continue;
 		}
-		if (ent.client.sess.sessionTeam != team) {
+		if (ent.client.sess.team != team) {
 			continue;
 		}
 
@@ -20779,11 +21062,11 @@ function Team_ForceGesture(team) {
  * Team_ResetFlags
  */
 function Team_ResetFlags() {
-	if (g_gametype.get() == GT.CTF) {
+	if (level.arena.gametype == GT.CTF) {
 		Team_ResetFlag(TEAM.RED);
 		Team_ResetFlag(TEAM.BLUE);
 
-	} else if (g_gametype.get() == GT.NFCTF) {
+	} else if (level.arena.gametype == GT.NFCTF) {
 		Team_ResetFlag(TEAM.FREE);
 	}
 }
@@ -20962,10 +21245,10 @@ function Team_AddScore(team, origin, score) {
 	tent.r.svFlags |= SVF.BROADCAST;
 
 	if (team === TEAM.RED) {
-		if (level.arena.teams[TEAM.RED].score + score === level.arena.teams[TEAM.BLUE].score) {
+		if (level.arena.teamScores[TEAM.RED] + score === level.arena.teamScores[TEAM.BLUE]) {
 			// Teams are tied sound.
 			tent.s.eventParm = GTS.TEAMS_ARE_TIED;
-		} else if (level.arena.teams[TEAM.RED].score <= level.arena.teams[TEAM.BLUE].score && level.arena.teams[TEAM.RED].score + score > level.arena.teams[TEAM.BLUE].score) {
+		} else if (level.arena.teamScores[TEAM.RED] <= level.arena.teamScores[TEAM.BLUE] && level.arena.teamScores[TEAM.RED] + score > level.arena.teamScores[TEAM.BLUE]) {
 			// Red took the lead sound.
 			tent.s.eventParm = GTS.REDTEAM_TOOK_LEAD;
 		} else {
@@ -20973,10 +21256,10 @@ function Team_AddScore(team, origin, score) {
 			tent.s.eventParm = GTS.REDTEAM_SCORED;
 		}
 	} else {
-		if (level.arena.teams[TEAM.BLUE].score + score === level.arena.teams[TEAM.RED].score) {
+		if (level.arena.teamScores[TEAM.BLUE] + score === level.arena.teamScores[TEAM.RED]) {
 			// Teams are tied sound.
 			tent.s.eventParm = GTS.TEAMS_ARE_TIED;
-		} else if (level.arena.teams[TEAM.BLUE].score <= level.arena.teams[TEAM.RED].score && level.arena.teams[TEAM.BLUE].score + score > level.arena.teams[TEAM.RED].score) {
+		} else if (level.arena.teamScores[TEAM.BLUE] <= level.arena.teamScores[TEAM.RED] && level.arena.teamScores[TEAM.BLUE] + score > level.arena.teamScores[TEAM.RED]) {
 			// Blue took the lead sound.
 			tent.s.eventParm = GTS.BLUETEAM_TOOK_LEAD;
 
@@ -21118,7 +21401,7 @@ function FireWeapon(ent) {
 			ShotgunFire(ent);
 			break;
 		case WP.MACHINEGUN:
-			if (g_gametype.get() !== GT.TEAM) {
+			if (level.arena.gametype !== GT.TEAM) {
 				BulletFire(ent, MACHINEGUN_SPREAD, MACHINEGUN_DAMAGE, MOD.MACHINEGUN);
 			} else {
 				BulletFire(ent, MACHINEGUN_SPREAD, MACHINEGUN_TEAM_DAMAGE, MOD.MACHINEGUN);
@@ -21691,7 +21974,7 @@ spawnFuncs['func_bobbing'] = function (self) {
  * "light"   constantLight radius
  */
 spawnFuncs['func_button'] = function (self) {
-	// self.sound1to2 = G_SoundIndex("sound/movers/switches/butn2.wav");
+	self.sound1to2 = SoundIndex('sound/movers/switches/butn2');
 
 	if (!self.speed) {
 		self.speed = 40;
@@ -21762,8 +22045,8 @@ function ButtonTouch(ent, other, trace) {
  * "health"      if set, the door must be shot open
  */
 spawnFuncs['func_door'] = function (self) {
-	// self.sound1to2 = self.sound2to1 = G_SoundIndex('sound/movers/doors/dr1_strt.wav');
-	// self.soundPos1 = self.soundPos2 = G_SoundIndex('sound/movers/doors/dr1_end.wav');
+	self.sound1to2 = self.sound2to1 = SoundIndex('sound/movers/doors/dr1_strt');
+	self.soundPos1 = self.soundPos2 = SoundIndex('sound/movers/doors/dr1_end');
 
 	self.blocked = DoorBlocked;
 
@@ -21879,7 +22162,7 @@ function DoorSpawnNewTrigger(ent) {
 	// Find the thinnest axis, which will be the one we expand.
 	var best = 0;
 	for (var i = 1; i < 3; i++) {
-		if ( maxs[i] - mins[i] < maxs[best] - mins[best] ) {
+		if (maxs[i] - mins[i] < maxs[best] - mins[best]) {
 			best = i;
 		}
 	}
@@ -21892,11 +22175,11 @@ function DoorSpawnNewTrigger(ent) {
 	vec3.set(mins, other.r.mins);
 	vec3.set(maxs, other.r.maxs);
 	other.parent = ent;
-	other.contents = SURF.CONTENTS.TRIGGER;
+	other.r.contents = SURF.CONTENTS.TRIGGER;
 	other.touch = DoorTriggerTouch;
 	// Remember the thinnest axis.
 	other.count = best;
-	SV.LinkEntity (other);
+	SV.LinkEntity(other);
 
 	MatchTeam(ent, ent.moverState, level.time);
 }
@@ -21946,6 +22229,136 @@ function DoorTriggerTouchSpectator(ent, other, trace) {
 
 	TeleportPlayer(other, origin, vec3.createFrom(10000000, 0, 0));
 }
+		/**
+ * QUAKED func_plat (0 .5 .8) ?
+ * Plats are always drawn in the extended position so they will light correctly.
+ *
+ * "lip"    default 8, protrusion above rest position
+ * "height" total height of movement, defaults to model height
+ * "speed"  overrides default 200.
+ * "dmg"    overrides default 2
+ * "model2" .md3 model to also draw
+ * "color"  constantLight color
+ * "light"  constantLight radius
+ */
+spawnFuncs['func_plat'] = function (ent) {
+	ent.sound1to2 = ent.sound2to1 = SoundIndex('sound/movers/plats/pt1_strt');
+	ent.soundPos1 = ent.soundPos2 = SoundIndex('sound/movers/plats/pt1_end');
+
+	ent.s.angles[0] = ent.s.angles[1] = ent.s.angles[2] = 0.0;
+	ent.speed = SpawnFloat('speed', 200);
+	ent.damage = SpawnFloat('dmg', 2);
+	ent.wait = SpawnFloat('wait', 1);
+
+	var phase = SpawnFloat('phase', 0);
+
+	ent.wait = 1000;
+
+	// Create second position.
+	SV.SetBrushModel(ent, ent.model);
+
+	var lip = SpawnFloat('lip', 8);
+	var height = SpawnFloat('height', 0);
+
+	if (!height) {
+		height = (ent.r.maxs[2] - ent.r.mins[2]) - lip;
+	}
+
+	// pos1 is the rest (bottom) position, pos2 is the top
+	vec3.set(ent.s.origin, ent.pos2);
+	vec3.set(ent.pos2, ent.pos1);
+	ent.pos1[2] -= height;
+
+	InitMover(ent);
+
+	// Touch function keeps the plat from returning while
+	// a live player is standing on it.
+	ent.touch = TouchPlat;
+	ent.blocked = DoorBlocked;
+
+	ent.parent = ent;  // so it can be treated as a door
+
+	// Spawn the trigger if one hasn't been custom made.
+	if (!ent.targetName) {
+		SpawnPlatTrigger(ent);
+	}
+}
+
+/**
+ * SpawnPlatTrigger
+ *
+ * Spawn a trigger in the middle of the plat's low position
+ * Elevator cars require that the trigger extend through the entire low position,
+ * not just sit on top of it.
+ */
+function SpawnPlatTrigger(ent) {
+	// The middle trigger will be a thin trigger just
+	// above the starting position.
+	var trigger = SpawnEntity();
+	trigger.classname = 'plat_trigger';
+	trigger.touch = TouchPlatCenterTrigger;
+	trigger.r.contents = SURF.CONTENTS.TRIGGER;
+	trigger.parent = ent;
+
+	var tmin = vec3.createFrom(
+		ent.pos1[0] + ent.r.mins[0] + 33,
+		ent.pos1[1] + ent.r.mins[1] + 33,
+		ent.pos1[2] + ent.r.mins[2]
+	);
+
+	var tmax = vec3.createFrom(
+		ent.pos1[0] + ent.r.maxs[0] - 33,
+		ent.pos1[1] + ent.r.maxs[1] - 33,
+		ent.pos1[2] + ent.r.maxs[2] + 8
+	);
+
+	if (tmax[0] <= tmin[0]) {
+		tmin[0] = ent.pos1[0] + (ent.r.mins[0] + ent.r.maxs[0]) *0.5;
+		tmax[0] = tmin[0] + 1;
+	}
+	if (tmax[1] <= tmin[1]) {
+		tmin[1] = ent.pos1[1] + (ent.r.mins[1] + ent.r.maxs[1]) *0.5;
+		tmax[1] = tmin[1] + 1;
+	}
+
+	vec3.set(tmin, trigger.r.mins);
+	vec3.set(tmax, trigger.r.maxs);
+
+	SV.LinkEntity(trigger);
+}
+
+/**
+ * TouchPlat
+ *
+ * Don't allow decent if a living player is on it.
+ */
+function TouchPlat(ent, other) {
+	if (!other.client || other.client.ps.pm_type === PM.DEAD) {
+		return;
+	}
+
+	// Delay return-to-pos1 by one second.
+	if (ent.moverState === MOVER.POS2) {
+		ent.nextthink = level.time + 1000;
+	}
+}
+
+/**
+ * TouchPlatCenterTrigger
+ *
+ * If the plat is at the bottom position, start it going up.
+ */
+function TouchPlatCenterTrigger(ent, other) {
+	if (!other.client) {
+		return;
+	}
+
+	if (ent.parent.moverState === MOVER.POS1) {
+		UseBinaryMover(ent.parent, ent, other);
+	}
+}
+
+
 		spawnFuncs['func_static'] = function (self) {
 	SV.SetBrushModel(self, self.model);
 	InitMover(self);
@@ -22120,10 +22533,33 @@ function TrainBeginMoving(ent) {
 		spawnFuncs['info_notnull'] = function (self) {
 	SetOrigin(self, self.s.origin);
 };
+		spawnFuncs['info_null'] = function (self) {
+	FreeEntity(self);
+};
 		spawnFuncs['info_player_deathmatch'] = function (self) {
 };
 		spawnFuncs['info_player_intermission'] = function (self) {
 };
+		/**
+ * QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) linear
+ * Non-displayed light.
+ * "light"  overrides the default 300 intensity.
+ * Linear   checkbox gives linear falloff instead of inverse square
+ * Lights   pointed at a target will be spotlights.
+ * "radius" overrides the default 64 unit radius of a spotlight at the target point.
+ */
+spawnFuncs['light'] = function (self) {
+	FreeEntity(self);
+};
+
+		/**
+ * QUAKED misc_model (1 0 0) (-16 -16 -16) (16 16 16)
+ * "model"  arbitrary .md3 file to display
+ */
+spawnFuncs['misc_model'] = function (ent) {
+	FreeEntity(ent);
+};
+
 		/*
  * QUAKED misc_portal_camera (0 0 1) (-8 -8 -8) (8 8 8) slowrotate fastrotate noswing
  * The target for a misc_portal_director.  You can set either angles or target another entity to determine the direction of view.
@@ -22220,6 +22656,50 @@ spawnFuncs['path_corner'] = function (self) {
 	// path corners don't need to be linked in
 };
 
+		/**
+ * QUAKED target_location (0 0.5 0) (-8 -8 -8) (8 8 8)
+ * Set "message" to the name of this location.
+ * Set "count" to 0-7 for color.
+ * 0:white 1:red 2:green 3:yellow 4:blue 5:cyan 6:magenta 7:white
+ *
+ * Closest target_location in sight used for the location, if none
+ * in site, closest in distance.
+ */
+spawnFuncs['target_location'] = function (self) {
+	self.think = TargetLocationLinkup;
+	self.nextthink = level.time + 200;  // Let them all spawn first
+
+	SetOrigin(self, self.s.origin);
+}
+
+/**
+ * TargetLocationLinkup
+ */
+function TargetLocationLinkup(ent) {
+	// if (level.locationLinked) {
+	// 	return;
+	// }
+
+	// level.locationLinked = true;
+	// level.locationHead = null;
+
+	// // SV.SetConfigstring('locations', 'unknown');
+
+	// for (i = 0, ent = g_entities, n = 1;
+	// 		i < level.num_entities;
+	// 		i++, ent++) {
+	// 	if (ent.classname && ent.classname === 'target_location')) {
+	// 		// Lets overload some variables!.
+	// 		ent.health = n; // use for location marking
+	// 		SV.SetConfigstring('locations:' + n, ent.message);
+	// 		n++;
+	// 		ent.nextTrain = level.locationHead;
+	// 		level.locationHead = ent;
+	// 	}
+	// }
+
+	// All linked together now
+}
 		spawnFuncs['target_position'] = function (self) {
 	SetOrigin(self, self.s.origin);
 };
@@ -22231,11 +22711,11 @@ spawnFuncs['path_corner'] = function (self) {
 	SetMovedir(self.s.angles, self.s.origin2);
 	vec3.scale(self.s.origin2, self.speed);
 
-	/*if ( self->spawnflags & 1 ) {
-		self->noise_index = G_SoundIndex("sound/world/jumppad.wav");
+	if (self.spawnflags & 1) {
+		self.noise_index = SoundIndex('sound/world/jumppad');
 	} else {
-		self->noise_index = G_SoundIndex("sound/misc/windfly.wav");
-	}*/
+		self.noise_index = SoundIndex('sound/misc/windfly');
+	}
 
 	if (self.target) {
 		vec3.set(self.s.origin, self.r.absmin);
@@ -22264,10 +22744,10 @@ function PushUse(self, other, activator) {
 	vec3.set(self.s.origin2, activator.client.ps.velocity);
 
 	// Play fly sound every 1.5 seconds.
-	// if (activator.fly_sound_debounce_time < level.time) {
-	// 	activator.fly_sound_debounce_time = level.time + 1500;
-	// 	G_Sound(activator, CHAN_AUTO, self.noise_index);
-	// }
+	if (activator.flyDebounceTime < level.time) {
+		activator.flyDebounceTime = level.time + 1500;
+		AddSound(activator, /*CHAN_AUTO,*/ self.noise_index);
+	}
 }
 		/**
  * QUAKED target_teleporter (1 0 0) (-8 -8 -8) (8 8 8)
@@ -22323,7 +22803,7 @@ spawnFuncs['trigger_hurt'] = function (self) {
 	self.touch = HurtTouch;
 	self.use = HurtUse;
 
-	// self.noise_index = G_SoundIndex( "sound/world/electro.wav" );
+	self.noise_index = SoundIndex('sound/world/electro');
 
 	if (!self.damage) {
 		self.damage = 5;
@@ -22355,7 +22835,7 @@ function HurtTouch(self, other) {
 
 	// Play sound.
 	if (!(self.spawnflags & 4) ) {
-		// G_Sound(other, CHAN_AUTO, self->noise_index);
+		AddSound(other, /*CHAN_AUTO,*/ self.noise_index);
 	}
 
 	var dflags = 0;
@@ -22424,11 +22904,11 @@ function MultiTrigger(ent, activator) {
 
 	if (activator.client) {
 		if ((ent.spawnflags & 1) &&
-			activator.client.sess.sessionTeam !== TEAM.RED) {
+			activator.client.sess.team !== TEAM.RED) {
 			return;
 		}
 		if ((ent.spawnflags & 2) &&
-			activator.client.sess.sessionTeam !== TEAM.BLUE ) {
+			activator.client.sess.team !== TEAM.BLUE) {
 			return;
 		}
 	}
@@ -22467,7 +22947,7 @@ spawnFuncs['trigger_push'] = function (self) {
 	self.r.svFlags &= ~SVF.NOCLIENT;
 
 	// Make sure the client precaches this sound.
-	// G_SoundIndex("sound/world/jumppad.wav");
+	SoundIndex('sound/world/jumppad');
 
 	self.s.eType = ET.PUSH_TRIGGER;
 	self.touch = PushTouch;
@@ -22504,7 +22984,7 @@ spawnFuncs['trigger_teleport'] = function (self) {
 	}
 
 	// Make sure the client precaches this sound.
-	// G_SoundIndex("sound/world/jumppad.wav");
+	SoundIndex('sound/world/jumppad');
 
 	self.s.eType = ET.TELEPORT_TRIGGER;
 	self.touch = TeleportTouch;
@@ -23124,8 +23604,8 @@ function ServerInfo(netchan) {
 /**
  * Spawn
  */
-function Spawn(mapName) {
-	log('Spawning new server for', mapName, 'at', COM.frameTime);
+function Spawn(mapname) {
+	log('Spawning new server for', mapname, 'at', COM.frameTime);
 
 	svs.initialized = false;
 
@@ -23146,7 +23626,7 @@ function Spawn(mapName) {
 	sv = new ServerLocals();
 
 	// Load the map data.
-	COM.LoadBsp(mapName, function (err, world) {
+	COM.LoadBsp(mapname, function (err, world) {
 		if (err) {
 			return error(err);
 		}
@@ -23157,7 +23637,7 @@ function Spawn(mapName) {
 		// Load the collision info.
 		CM.LoadWorld(world);
 
-		sv_mapname.set(mapName);
+		sv_mapname.set(mapname);
 
 		// Server id should be different each time.
 		sv.serverId = sv.restartedServerId = COM.frameTime;
@@ -23282,6 +23762,8 @@ function SetConfigstring(key, val) {
 	if (json === sv.configstrings[key]) {
 		return;
 	}
+
+	log('SetConfigstring', key, json);
 
 	// Change the string.
 	sv.configstrings[key] = json;
@@ -23428,13 +23910,11 @@ function ClipmapExports() {
 function GameExports() {
 	return {
 		SYS: SYS,
-		COM: {
-			ExecuteBuffer: COM.ExecuteBuffer,
-			AddCmd:        COM.AddCmd
-		},
 		SV: {
 			Log:                   log,
 			Error:                 error,
+			ExecuteBuffer:         COM.ExecuteBuffer,
+			AddCmd:                COM.AddCmd,
 			LocateGameData:        LocateGameData,
 			GetUserCmd:            GetUserCmd,
 			AdjustAreaPortalState: AdjustAreaPortalState,
@@ -23948,8 +24428,8 @@ function RegisterCommands() {
 /**
  * CmdLoadMap
  */
-function CmdLoadMap(mapName) {
-	Spawn(mapName);
+function CmdLoadMap(mapname) {
+	Spawn(mapname);
 }
 
 /**
@@ -25430,6 +25910,10 @@ function SplitArguments(buffer) {
 	var m;
 	while ((m = argsRegex.exec(buffer))) {
 		var val = m[1] || m[2];
+
+		// Unescape quotes.
+		val = val.replace(/\\"/g, '"');
+
 		args.push(val);
 	}
 
@@ -26417,6 +26901,8 @@ function StringToAddr(str) {
 
 	if (str.indexOf('localhost') !== -1) {
 		addr.type = QS.NA.LOOPBACK;
+		addr.ip = 'localhost';
+		addr.port = 0;
 		return addr;
 	}
 
@@ -26440,8 +26926,8 @@ function StringToAddr(str) {
 	/**
  * LoadBsp
  */
-function LoadBsp(mapName, callback) {
-	SYS.ReadFile('maps/' + mapName + '.bsp', 'binary', function (err, data) {
+function LoadBsp(mapname, callback) {
+	SYS.ReadFile('maps/' + mapname + '.bsp', 'binary', function (err, data) {
 		if (err) {
 			return callback(err);
 		}
@@ -26458,8 +26944,8 @@ function LoadBsp(mapName, callback) {
 // /**
 //  * LoadMap
 //  */
-// function LoadMap(mapName, callback) {
-// 	SYS.ReadFile('maps/' + mapName + '.map', 'utf8', function (err, data) {
+// function LoadMap(mapname, callback) {
+// 	SYS.ReadFile('maps/' + mapname + '.map', 'utf8', function (err, data) {
 // 		if (err) {
 // 			return callback(err);
 // 		}
