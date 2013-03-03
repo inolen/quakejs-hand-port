@@ -29,13 +29,13 @@
 	<div id="events-wrapper">
 		<ul id="events" data-bind="foreach: events">
 			<li class="event">
-				<span data-bind="html: text"></span>
+				<span data-bind="pretty: text"></span>
 			</li>
 		</ul>
 	</div>
 
-	<div id="warmup" data-bind="visible: gamestate() <= 2, text: warmup"></div>
-	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, html: centerPrint"></div>
+	<div id="warmup" data-bind="visible: gamestate() <= 2, pretty: warmup"></div>
+	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, pretty: centerPrint"></div>
 
 	<div id="crosshair" data-bind="visible: alive, img: 'gfx/2d/crosshairb'"></div>
 	<div id="crosshair-name" data-bind="visible: alive, css: { hidden: !crosshairNameVisible() }, text: crosshairName"></div>
