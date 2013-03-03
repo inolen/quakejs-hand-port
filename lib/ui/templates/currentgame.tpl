@@ -1,4 +1,4 @@
-<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' || gametype() === 'ra' -->
+<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'clanarena' || gametype() === 'rocketarena' -->
 <div id="team-select">
 	<table class="table">
 		<thead>
@@ -8,7 +8,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'ca' -->
+			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'clanarena' -->
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().score1().count"></td>
@@ -19,7 +19,7 @@
 			</tr>
 			<!-- /ko -->
 
-			<!-- ko if: gametype() === 'ra' -->
+			<!-- ko if: gametype() === 'rocketarena' -->
 			<!-- ko foreach: currentArena().groups -->
 			<tr>
 				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }"><span data-bind="text: name"></span></td>
