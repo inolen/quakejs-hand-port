@@ -21,13 +21,14 @@
 
 			<!-- ko if: gametype() === 'rocketarena' -->
 			<!-- ko foreach: currentArena().groups -->
-			<tr>
+			<tr data-bind="css: { localplayer: $parent.currentGroup() === name() }">
 				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }"><span data-bind="text: name"></span></td>
 				<td data-bind="event: { click: function () { $parent.joinTeam(name()); } }, text: count() === $parent.currentArena().playersPerTeam() ? 'FULL' : count() + ' / ' + $parent.currentArena().playersPerTeam()"></td>
 			</tr>
 			<!-- /ko -->
 			<tr>
-				<td data-bind="event: { click: createTeam }" colspan="2">Create team</td>
+				<td data-bind="visible: currentGroup() === null, event: { click: createTeam }" colspan="2">Create team</td>
+				<td data-bind="visible: currentGroup() !== null, event: { click: leaveTeam }" colspan="2">Leave team</td>
 			</tr>
 			<!-- /ko -->
 		</tbody>

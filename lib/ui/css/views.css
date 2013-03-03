@@ -480,6 +480,10 @@ table thead th {
 	margin-bottom: 1em;
 }
 
+#ingame tr.localplayer td {
+	background: #303030;
+}
+
 /**
  * Message menu
  */
@@ -886,6 +890,10 @@ table thead th {
 
 #scoreboard-wrapper .team tbody td:first-child {
 	width: 70%;
+}
+
+#scoreboard-wrapper .localplayer td {
+	background: #303030;
 }
 
 #scoreboard-wrapper .eliminated {

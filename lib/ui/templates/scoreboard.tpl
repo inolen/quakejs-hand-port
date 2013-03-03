@@ -27,86 +27,6 @@
 							<td data-bind="text: time"></td>
 							<td data-bind="text: ping"></td>
 						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr>
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
 					</tbody>
 				</table>
 			</div>
@@ -142,40 +62,8 @@
 							<th>Ping</th>
 						</tr>
 					</thead>
-					<tbody data-bind="foreach: specScores()">
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
+					<tbody data-bind="foreach: redScores()">
+						<tr data-bind="css: { localplayer: localPlayer, eliminated: eliminated }">
 							<td data-bind="text: name"></td>
 							<td data-bind="text: score"></td>
 							<td data-bind="text: frags"></td>
@@ -202,48 +90,8 @@
 							<th>Ping</th>
 						</tr>
 					</thead>
-					<tbody data-bind="foreach: specScores()">
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
-							<td data-bind="text: name"></td>
-							<td data-bind="text: score"></td>
-							<td data-bind="text: frags"></td>
-							<td data-bind="text: deaths"></td>
-							<td data-bind="text: time"></td>
-							<td data-bind="text: ping"></td>
-						</tr>
-						<tr data-bind="css: { eliminated: score.eliminated }">
+					<tbody data-bind="foreach: blueScores()">
+						<tr data-bind="css: { localplayer: localPlayer, eliminated: eliminated }">
 							<td data-bind="text: name"></td>
 							<td data-bind="text: score"></td>
 							<td data-bind="text: frags"></td>
