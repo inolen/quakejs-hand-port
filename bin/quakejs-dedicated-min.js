@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1086;
+var GAME_VERSION = 0.1087;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -13971,17 +13971,18 @@ ClientSession.prototype.clone = function (to) {
 
 		var level;
 
-var g_gametype,
-	g_fraglimit,
+var g_fraglimit,
 	g_timelimit,
 	g_capturelimit,
+	g_gametype,
+	g_playersPerTeam,
+	g_roundlimit,
 	g_synchronousClients,
 	pmove_fixed,
 	pmove_msec,
 	g_teamAutoJoin,
 	g_teamForceBalance,
 	g_friendlyFire,
-	g_playersPerTeam,
 	g_teamForceBalance,
 	g_warmup,
 	g_speed,
@@ -14358,7 +14359,7 @@ function ArenaInfoChanged() {
 		'wt': level.arena.warmupTime,
 		's1': level.arena.score1,
 		's2': level.arena.score2
-	}
+	};
 
 	SV.SetConfigstring('arena:' + level.arena.arenaNum, info);
 }
@@ -14511,7 +14512,7 @@ function CheckTournamentRules() {
 	//
 	if (state.current === GS.WAITING) {
 		if (!ScoreIsTied() && TimelimitHit()) {
-			state.end('Timelimit hit.')
+			state.end('Timelimit hit.');
 			return;
 		}
 
@@ -14538,7 +14539,7 @@ function CheckTournamentRules() {
 		}
 	} else if (state.current === GS.COUNTDOWN) {
 		if (!ScoreIsTied() && TimelimitHit()) {
-			state.end('Timelimit hit.')
+			state.end('Timelimit hit.');
 			return;
 		}
 
@@ -14554,7 +14555,7 @@ function CheckTournamentRules() {
 		}
 	} else if (state.current === GS.ACTIVE) {
 		if (!ScoreIsTied() && TimelimitHit()) {
-			state.end('Timelimit hit.')
+			state.end('Timelimit hit.');
 			return;
 		}
 
@@ -14819,10 +14820,10 @@ function CheckRoundRules() {
 function RoundRunWaiting() {
 	var count1 = function () {
 		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
-	}
+	};
 	var count2 = function () {
 		return TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
-	}
+	};
 
 	if (level.arena.gametype === GT.CLANARENA) {
 		if (count1() >= 1 && count2() >= 1) {
@@ -22355,7 +22356,7 @@ spawnFuncs['func_plat'] = function (ent) {
 	if (!ent.targetName) {
 		SpawnPlatTrigger(ent);
 	}
-}
+};
 
 /**
  * SpawnPlatTrigger
@@ -22430,8 +22431,6 @@ function TouchPlatCenterTrigger(ent, other) {
 		UseBinaryMover(ent.parent, ent, other);
 	}
 }
-
-
 		spawnFuncs['func_static'] = function (self) {
 	SV.SetBrushModel(self, self.model);
 	InitMover(self);
@@ -22745,7 +22744,7 @@ spawnFuncs['target_location'] = function (self) {
 	// self.nextthink = level.time + 200;  // Let them all spawn first
 
 	// SetOrigin(self, self.s.origin);
-}
+};
 
 /**
  * TargetLocationLinkup
@@ -25931,7 +25930,7 @@ function Init(inSYS, inDedicated, callback) {
 		function (cb) {
 			// Wait until after CL / SV have initialized to run commands.
 			ExecuteStartupCommands(false, cb);
-		},
+		}
 	], function (err) {
 		if (err) {
 			error(err.message);
@@ -26924,7 +26923,7 @@ function NetchanDestroy(netchan) {
 		}, 0);
 
 		setTimeout(function () {
-			msocket = loopbacks[netchan.src === QS.NS.CLIENT ? QS.NS.SERVER : QS.NS.CLIENT].msocket;
+			var msocket = loopbacks[netchan.src === QS.NS.CLIENT ? QS.NS.SERVER : QS.NS.CLIENT].msocket;
 			msocket.onclose(err);
 		}, 0);
 
