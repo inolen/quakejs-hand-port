@@ -1,4 +1,4 @@
-<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'clanarena' || gametype() === 'rocketarena' -->
+<!-- ko if: isTeamGame() -->
 <div id="team-select">
 	<table class="table">
 		<thead>
@@ -8,7 +8,7 @@
 			</tr>
 		</thead>
 		<tbody>
-			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'clanarena' -->
+			<!-- ko if: gametype() !== 'rocketarena' -->
 			<tr>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }"><span class="red">RED</span></td>
 				<td data-bind="event: { click: function () { joinTeam('red'); } }, text: currentArena().score1().count"></td>

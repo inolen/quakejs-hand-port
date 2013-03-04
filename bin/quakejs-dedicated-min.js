@@ -4695,14 +4695,14 @@ function BoxOnPlaneSide(mins, maxs, p) {
 		return SIDE_ON;
 	}
 
-	// general case
+	// General case.
 	var dist = [0, 0];
 
-	if (p.signbits < 8) {                       // >= 8: default case is original code (dist[0]=dist[1]=0)
+	if (p.signbits < 8) {  // >= 8: default case is original code (dist[0]=dist[1]=0)
 		for (var i = 0; i < 3; i++) {
 			var b = (p.signbits >> i) & 1;
-			dist[b] += p.normal[i]*maxs[i];
-			dist[b^1] += p.normal[i]*mins[i];
+			dist[b] += p.normal[i] * maxs[i];
+			dist[b^1] += p.normal[i] * mins[i];
 		}
 	}
 
@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION     = 0.1085;
+var GAME_VERSION = 0.1086;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -6723,8 +6723,8 @@ define('common/cvar', [], function () {
 	 * Core CVAR class
 	 *
 	 ******************************************************/
-	function asFloat(val, defaultValue) {
-		val = parseFloat(val);
+	function asNumber(val, defaultValue) {
+		val = typeof(val) === 'number' ? val : parseFloat(val);
 		if (isNaN(val)) {
 			return defaultValue;
 		}
@@ -6746,7 +6746,7 @@ define('common/cvar', [], function () {
 		}
 
 		if (typeof(defaultValue) === 'number') {
-			return asFloat(val, defaultValue);
+			return asNumber(val, defaultValue);
 		}
 
 		return asString(val, defaultValue);
@@ -10184,14 +10184,14 @@ var PMF = {
 };
 
 var GT = {
-	LOBBY:         0,                                      // used by RA3-style multi-arena maps
-	FFA:           1,                                      // free for all
-	TOURNAMENT:    2,                                      // one on one tournament
-	TEAM:          3,                                      // team deathmatch
-	CTF:           4,                                      // capture the flag
-	NFCTF:         5,
-	CLANARENA:     6,
-	ROCKETARENA:   7,
+	FFA:           0,                                      // free for all
+	TOURNAMENT:    1,                                      // one on one tournament
+	TEAM:          2,                                      // team deathmatch
+	CTF:           3,                                      // capture the flag
+	NFCTF:         4,
+	CLANARENA:     5,
+	ROCKETARENA:   6,
+	PRACTICEARENA: 7,
 	MAX_GAME_TYPE: 8
 };
 
@@ -10597,7 +10597,6 @@ var MOD = {
 
 
 var GametypeNames               = [];
-GametypeNames[GT.LOBBY]         = 'lobby';
 GametypeNames[GT.FFA]           = 'ffa';
 GametypeNames[GT.TOURNAMENT]    = 'tournament';
 GametypeNames[GT.TEAM]          = 'team';
@@ -10605,6 +10604,7 @@ GametypeNames[GT.CTF]           = 'ctf';
 GametypeNames[GT.NFCTF]         = 'nfctf';
 GametypeNames[GT.CLANARENA]     = 'clanarena';
 GametypeNames[GT.ROCKETARENA]   = 'rocketarena';
+GametypeNames[GT.PRACTICEARENA] = 'practicearena';
 
 var TeamNames = [];
 TeamNames[TEAM.FREE] = 'free';
@@ -14046,6 +14046,7 @@ function RegisterCvars() {
 
 	g_gametype           = Cvar.AddCvar('g_gametype',           0,     Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE, true);
 	g_playersPerTeam     = Cvar.AddCvar('g_playersPerTeam',     0,     Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE);
+	g_roundlimit         = Cvar.AddCvar('g_roundlimit',         20,    Cvar.FLAGS.ARENAINFO | Cvar.FLAGS.ARCHIVE);
 
 	g_synchronousClients = Cvar.AddCvar('g_synchronousClients', 0,     Cvar.FLAGS.SYSTEMINFO);
 	pmove_fixed          = Cvar.AddCvar('pmove_fixed',          1,     Cvar.FLAGS.SYSTEMINFO);
@@ -14351,6 +14352,7 @@ function ArenaInfoChanged() {
 		'gs': level.arena.state.current,
 
 		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
+		'rl': g_roundlimit.at(level.arena.arenaNum).get(),
 
 		'nc': level.arena.numConnectedClients,
 		'wt': level.arena.warmupTime,
@@ -14396,11 +14398,6 @@ function ArenaInfoChanged() {
  * ArenaRestart
  */
 function ArenaRestart() {
-	// // Reset scores.
-	// for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
-	// 	level.arena.teamScores[i] = 0;
-	// }
-
 	// Respawn everybody.
 	for (var i = 0; i < level.maxclients; i++) {
 		var ent = level.gentities[i];
@@ -14718,10 +14715,8 @@ function QueueTournamentLoser() {
 		return;
 	}
 
-	// Make them a spectator (restore group as joining spec clears it).
-	var group = ent.client.sess.group;
+	// Make them a spectator.
 	SetTeam(ent, 's', true);
-	ent.client.sess.group = group;
 
 	PushClientToQueue(ent);
 }
@@ -14736,17 +14731,26 @@ function QueueTournamentLoser() {
  * CreateRoundMachine
  */
 function CreateRoundMachine() {
+	var initialEvent = 'wait';
+	var initialState = GS.WAITING;
+
+	if (level.arena.gametype === GT.PRACTICEARENA) {
+		initialEvent = 'start';
+		initialState = GS.ACTIVE;
+	}
+
 	level.arena.state = StateMachine.create({
 		initial: {
-			event: 'wait',
-			state: GS.WAITING,
+			event: initialEvent,
+			state: initialState,
 			defer: true
 		},
 		events: [
-			{ name: 'ready',   from: GS.WAITING,   to: GS.COUNTDOWN },
-			{ name: 'start',   from: GS.COUNTDOWN, to: GS.ACTIVE    },
-			{ name: 'end',     from: GS.ACTIVE,    to: GS.OVER      },
-			{ name: 'restart', from: GS.OVER,      to: GS.WAITING   }
+			{ name: 'ready',        from: GS.WAITING,                 to: GS.COUNTDOWN },
+			{ name: 'start',        from: GS.COUNTDOWN,               to: GS.ACTIVE    },
+			{ name: 'end',          from: GS.ACTIVE,                  to: GS.OVER      },
+			{ name: 'intermission', from: GS.OVER,                    to: GS.INTERMISSION },
+			{ name: 'restart',      from: [GS.OVER, GS.INTERMISSION], to: GS.WAITING   }
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
@@ -14764,6 +14768,10 @@ function CreateRoundMachine() {
 				RoundEnd(msg);
 				ArenaInfoChanged();
 			},
+			onintermission: function (event, from, to, msg) {
+				RoundIntermission();
+				ArenaInfoChanged();
+			},
 			onrestart: function (event, from, to, msg) {
 				RoundRestart();
 				ArenaInfoChanged();
@@ -14775,7 +14783,7 @@ function CreateRoundMachine() {
 	level.arena.state.frame = CheckRoundRules;
 
 	// Fire initial state change.
-	level.arena.state.wait();
+	level.arena.state[initialEvent]();
 }
 
 /**
@@ -14797,6 +14805,10 @@ function CheckRoundRules() {
 
 		case GS.OVER:
 			RoundRunOver();
+			break;
+
+		case GS.INTERMISSION:
+			RoundRunIntermission();
 			break;
 	}
 }
@@ -14891,6 +14903,11 @@ function RoundStart() {
  * RoundRunActive
  */
 function RoundRunActive() {
+	// Practice arena is always actice.
+	if (level.arena.gametype === GT.PRACTICEARENA) {
+		return;
+	}
+
 	var alive1 = TeamAliveCount(TEAM.RED);
 	var alive2 = TeamAliveCount(TEAM.BLUE);
 
@@ -14909,20 +14926,64 @@ function RoundRunActive() {
 function RoundEnd(winningTeam) {
 	log('RoundEnd', winningTeam);
 
-	if (winningTeam !== null) {
+	if (level.arena.gametype === GT.CLANARENA && winningTeam !== null) {
 		level.arena.teamScores[winningTeam] += 1;
 	}
-
-	level.arena.restartTime = level.time + 4000;
 	level.arena.lastWinningTeam = winningTeam;
+
+	// Go to intermission if the roundlimit was hit.
+	var roundlimit = g_roundlimit.at(level.arena.arenaNum).get();
+
+	// Roundlimit is the number of rounds to be played at maximum,
+	// end the match once a team has passed the halfway mark.
+	if (level.arena.teamScores[TEAM.RED] >= Math.ceil(roundlimit / 2)) {
+		QueueIntermission('Red won the match.');
+	} else if (level.arena.teamScores[TEAM.BLUE] >= Math.ceil(roundlimit / 2)) {
+		QueueIntermission('Blue won the match.');
+	} else {
+		level.arena.restartTime = level.time + 4000;
+	}
+
+	// We're calling this purely to update score1 / score2,
+	// maybe that should be split out.
+	CalculateRanks();
 }
 
 /**
  * RoundRunOver
  */
 function RoundRunOver() {
-	// Need to restart once it's time.
-	if (level.time > level.arena.restartTime) {
+	if (IntermissionStarted()) {
+		level.arena.state.intermission();
+	}
+
+	if (level.arena.restartTime && level.time > level.arena.restartTime) {
+		level.arena.state.restart();
+	}
+}
+
+/**
+ * RoundIntermission
+ */
+function RoundIntermission() {
+	log('RoundIntermission');
+	BeginIntermission();
+}
+
+/**
+ * RoundRunIntermission
+ */
+function RoundRunIntermission() {
+	if (CheckIntermissionExit()) {
+		// Reset scores.
+		for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
+			level.arena.teamScores[i] = 0;
+		}
+
+		// We're calling this purely to update score1 / score2,
+		// maybe that should be split out.
+		CalculateRanks();
+
 		level.arena.state.restart();
 	}
 }
@@ -14935,6 +14996,7 @@ function RoundRunOver() {
 function RoundRestart() {
 	log('RoundRestart');
 
+	level.arena.intermissionTime = 0;
 	level.arena.restartTime = 0;
 
 	if (level.arena.gametype === GT.ROCKETARENA) {
@@ -14981,7 +15043,10 @@ function QueueGroup(group) {
 		}
 
 		if (ent.client.sess.group === group) {
+			// Restore group as going to spec clears it.
+			var group = ent.client.sess.group;
 			SetTeam(ent, 's', true);
+			ent.client.sess.group = group;
 
 			PushClientToQueue(ent);
 			continue;
@@ -15757,7 +15822,8 @@ function ClientSpawn(ent) {
 	var spawnAngles = vec3.create();
 
 	// Auto-eliminate if joining post warmup.
-	if (level.arena.state.current > GS.COUNTDOWN) {
+	if ((level.arena.gametype === GT.CLANARENA || level.arena.gametype === GT.ROCKETARENA) &&
+	    level.arena.state.current > GS.COUNTDOWN) {
 		client.pers.teamState.state = TEAM_STATE.ELIMINATED;
 	}
 
@@ -17648,8 +17714,9 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 			return;
 		}
 
-		// No damage in CA lobby or during warmup.
-		if (level.arena.gametype >= GT.CLANARENA && level.arena.state.current <= GS.COUNTDOWN) {
+		// No damage in during CA warmup or practice arena.
+		if ((level.arena.gametype >= GT.CLANARENA && level.arena.state.current <= GS.COUNTDOWN) ||
+		    level.arena.gametype === GT.PRACTICEARENA) {
 			return;
 		}
 	}
@@ -18221,6 +18288,7 @@ function AddScore(ent, origin, score) {
 	ScorePlum(ent, origin, score);
 
 	client.ps.persistant[PERS.SCORE] += score;
+
 	if (level.arena.gametype === GT.TEAM) {
 		level.arena.teamScores[client.ps.persistant[PERS.TEAM]] += score;
 	}
@@ -18877,12 +18945,12 @@ function SpawnItem(ent, item) {
 	ent.nextthink = level.time + FRAMETIME * 2;
 	ent.think = FinishSpawningItem;
 
-	ent.physicsBounce = 0.5;		// items are bouncy
+	ent.physicsBounce = 0.5;  // items are bouncy
 
-	/*if (item.giType == IT_POWERUP ) {
-		G_SoundIndex( "sound/items/poweruprespawn.wav" );
-		G_SpawnFloat( "noglobalsound", "0", &ent.speed);
-	}*/
+	if (item.giType === IT.POWERUP) {
+		SoundIndex('sound/items/poweruprespawn');  // precache
+		ent.speed = SpawnFloat('noglobalsound', '0');
+	}
 }
 
 /**
@@ -20506,7 +20574,8 @@ function InitSessionData(client, userinfo) {
 		if (level.arena.gametype === GT.TOURNAMENT) {
 			sess.team = PickTeam(client.ps.clientNum);
 		} else if (level.arena.gametype >= GT.TEAM) {
-			if (g_teamAutoJoin.get()) {
+			// Always auto-join for practice arena.
+			if (level.arena.gametype === GT.PRACTICEARENA || g_teamAutoJoin.get()) {
 				sess.team = PickTeam(client.ps.clientNum);
 			} else {
 				// Always spawn as spectator in team games.
@@ -22670,10 +22739,12 @@ spawnFuncs['path_corner'] = function (self) {
  * in site, closest in distance.
  */
 spawnFuncs['target_location'] = function (self) {
-	self.think = TargetLocationLinkup;
-	self.nextthink = level.time + 200;  // Let them all spawn first
+	FreeEntity(self);
 
-	SetOrigin(self, self.s.origin);
+	// self.think = TargetLocationLinkup;
+	// self.nextthink = level.time + 200;  // Let them all spawn first
+
+	// SetOrigin(self, self.s.origin);
 }
 
 /**
@@ -25396,7 +25467,7 @@ function FindEntitiesInBox(mins, maxs, arenaNum) {
 		}
 
 		if (node.axis == -1) {
-			return; // terminal node
+			return;  // terminal node
 		}
 
 		// Recurse down both sides.

@@ -1,7 +1,7 @@
 <div id="hud" class="fullscreen" data-bind="visible: visible">
 	<div id="scores-wrapper">
 		<div class="scores">
-			<!-- ko if: gametype() === 'ffa' || gametype() === 'tournament' -->
+			<!-- ko if: !isTeamGame() -->
 				<div class="score-wrapper score1 team-free" data-bind="visible: score1.visible, css: { localplayer: score1.localplayer }">
 					<span class="name" data-bind="text: score1.rank() + '. ' + score1.name()"></span>
 					<span class="score" data-bind="text: score1.score"></span>
@@ -11,7 +11,7 @@
 					<span class="score" data-bind="text: score2.score"></span>
 				</div>
 			<!-- /ko -->
-			<!-- ko if: gametype() === 'team' || gametype() === 'ctf' || gametype() === 'nfctf' || gametype() === 'clanarena' || gametype() === 'rocketarena' -->
+			<!-- ko if: isTeamGame() -->
 				<div class="score-wrapper score1 team-red" data-bind="css: { localplayer: score1.localplayer }">
 					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: score1.count"></span></span>
 					<span class="name" data-bind="text: score1.name"></span>
