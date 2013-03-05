@@ -20,7 +20,6 @@ function createExampleServer(port, contentHost, contentPort) {
 	app.locals.proxy = new httpProxy.RoutingProxy();
 
 	app.use(express.static(__dirname));
-	app.use(assetProxy(app.locals.proxy, contentHost, contentPort));
 
 	var server = http.createServer(app);
 	server.listen(port, function () {
@@ -28,23 +27,6 @@ function createExampleServer(port, contentHost, contentPort) {
 	});
 
 	return server;
-}
-
-function assetProxy(proxy, host, port) {
-	return function (req, res, next) {
-		if (req.url.indexOf('/assets/') !== 0 &&
-			req.url.indexOf('/bin/') !== 0 &&
-			req.url.indexOf('/lib/') !== 0) {
-			return next();
-		}
-
-		console.log('Proxying request for', req.url, 'to', host, port);
-
-		proxy.proxyRequest(req, res, {
-			host: host,
-			port: port
-		});
-	};
 }
 
 main();

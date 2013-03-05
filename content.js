@@ -1,3 +1,4 @@
+var CORS = require('connect-xcors');
 var ejs = require('ejs');
 var express = require('express');
 var fs = require('fs');
@@ -26,6 +27,8 @@ function createServer(port) {
 	app.locals.assets = new AssetMap(__dirname + '/assets');
 
 	app.use(express.compress());
+	// Allow cross-domain requests on our content.
+	app.use(CORS());
 	app.use(function (req, res, next) {
 		res.locals.assets = app.locals.assets;
 		next();
