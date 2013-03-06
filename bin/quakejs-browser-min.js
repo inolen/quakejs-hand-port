@@ -5572,7 +5572,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1088;
+var GAME_VERSION = 0.1089;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5613,11 +5613,11 @@ var MAX_SOUNDS              = 256;                         // so they cannot be 
 /**
  * Faux entity numbers
  */
-var ARENANUM_NONE           = ENTITYNUM_NONE;
-
 var ENTITYNUM_NONE          = MAX_GENTITIES-1;
 var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
 var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var ARENANUM_NONE           = ENTITYNUM_NONE;
 
 /**
  * Communicated across the network
@@ -6183,7 +6183,7 @@ var BitView = function (source, byteOffset, byteLength) {
 
 	// Used to massage fp values so we can operate on them
 	// at the bit level.
-	this._scratch = new DataView(new ArrayBuffer(4));
+	this._scratch = new DataView(new ArrayBuffer(8));
 };
 
 Object.defineProperty(BitView.prototype, 'buffer', {
@@ -6268,6 +6268,12 @@ BitView.prototype.getFloat32 = function (offset) {
 	this._scratch.setUint32(0, this.getUint32(offset));
 	return this._scratch.getFloat32(0);
 };
+BitView.prototype.getFloat64 = function (offset) {
+	this._scratch.setUint32(0, this.getUint32(offset));
+	// DataView offset is in bytes.
+	this._scratch.setUint32(4, this.getUint32(offset+32));
+	return this._scratch.getFloat64(0);
+};
 
 BitView.prototype.setInt8  =
 BitView.prototype.setUint8 = function (offset, value) {
@@ -6284,6 +6290,11 @@ BitView.prototype.setUint32 = function (offset, value) {
 BitView.prototype.setFloat32 = function (offset, value) {
 	this._scratch.setFloat32(0, value);
 	this.setBits(offset, this._scratch.getUint32(0), 32);
+};
+BitView.prototype.setFloat64 = function (offset, value) {
+	this._scratch.setFloat64(0, value);
+	this.setBits(offset, this._scratch.getUint32(0), 32);
+	this.setBits(offset+32, this._scratch.getUint32(4), 32);
 };
 
 /**********************************************************
@@ -6362,6 +6373,7 @@ BitStream.prototype.readUint16 = reader('getUint16', 16);
 BitStream.prototype.readInt32 = reader('getInt32', 32);
 BitStream.prototype.readUint32 = reader('getUint32', 32);
 BitStream.prototype.readFloat32 = reader('getFloat32', 32);
+BitStream.prototype.readFloat64 = reader('getFloat64', 64);
 
 BitStream.prototype.writeInt8 = writer('setInt8', 8);
 BitStream.prototype.writeUint8 = writer('setUint8', 8);
@@ -6370,6 +6382,7 @@ BitStream.prototype.writeUint16 = writer('setUint16', 16);
 BitStream.prototype.writeInt32 = writer('setInt32', 32);
 BitStream.prototype.writeUint32 = writer('setUint32', 32);
 BitStream.prototype.writeFloat32 = writer('setFloat32', 32);
+BitStream.prototype.writeFloat64 = writer('setFloat64', 64);
 
 BitStream.prototype.readASCIIString = function (bytes) {
 	var i = 0;
@@ -14722,36 +14735,22 @@ function ArenaInfoChanged() {
 	SV.SetConfigstring('arena:' + level.arena.arenaNum, info);
 }
 
-// /**
-//  * ArenaCount
-//  */
-// function ArenaCount(ignoreClientNum) {
-// 	var numAlive = 0;
+/**
+ * SendArenaCommand
+ */
+function SendArenaCommand(type, data) {
+	for (var i = 0; i < level.maxclients; i++) {
+		var ent = level.gentities[i];
 
-// 	for (var i = 0; i < level.maxclients; i++) {
-// 		if (i === ignoreClientNum) {
-// 			continue;
-// 		}
+		if (!ent.inuse) {
+			continue;
+		}
 
-// 		var ent = level.gentities[i];
-
-// 		if (!ent.inuse) {
-// 			continue;
-// 		}
-
-// 		if (ent.s.arenaNum !== level.arena.arenaNum) {
-// 			continue;
-// 		}
-
-// 		if (ent.client.sess.team === TEAM.SPECTATOR) {
-// 			continue;
-// 		}
-
-// 		numAlive++;
-// 	}
-
-// 	return numAlive;
-// }
+		if (ent.s.arenaNum === level.arena.arenaNum) {
+			SV.SendServerCommand(i, type, data);
+		}
+	}
+}
 
 /**
  * ArenaRestart
@@ -14887,7 +14886,7 @@ function CheckTournamentRules() {
 					break;
 				}
 
-				SetTeam(next, 'f', false);
+				SetTeam(next, 'f');
 			}
 		}
 
@@ -15075,7 +15074,7 @@ function QueueTournamentLoser() {
 	}
 
 	// Make them a spectator.
-	SetTeam(ent, 's', true);
+	SetTeam(ent, 's');
 
 	PushClientToQueue(ent);
 }
@@ -15105,6 +15104,7 @@ function CreateRoundMachine() {
 			defer: true
 		},
 		events: [
+			{ name: 'wait',         from: ['none', GS.COUNTDOWN],     to: GS.WAITING      },
 			{ name: 'ready',        from: GS.WAITING,                 to: GS.COUNTDOWN },
 			{ name: 'start',        from: GS.COUNTDOWN,               to: GS.ACTIVE    },
 			{ name: 'end',          from: GS.ACTIVE,                  to: GS.OVER      },
@@ -15242,6 +15242,17 @@ function RoundReady() {
  * RoundRunCountdown
  */
 function RoundRunCountdown() {
+	var count1 = function () {
+		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
+	};
+	var count2 = function () {
+		return TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
+	};
+
+	if (!count1() || !count2()) {
+		level.arena.state.wait();
+	}
+
 	if (level.time > level.arena.warmupTime) {
 		level.arena.state.start();
 	}
@@ -15371,8 +15382,21 @@ function RoundRestart() {
 			level.arena.group1 = null;
 
 			// Move winners to red team.
-			SetTeamForGroup(level.arena.group2, TEAM.RED);
-			RespawnTeam(TEAM.RED);
+			for (var i = 0; i < level.maxclients; i++) {
+				var ent = level.gentities[i];
+
+				if (!ent.inuse) {
+					continue;
+				}
+				if (ent.s.arenaNum !== level.arena.arenaNum) {
+					continue;
+				}
+
+				if (ent.client.sess.group === level.arena.group2) {
+					ForceTeam(ent, TEAM.RED);
+				}
+			}
+
 			level.arena.group1 = level.arena.group2;
 			level.arena.group2 = null;
 		}
@@ -15402,12 +15426,7 @@ function QueueGroup(group) {
 		}
 
 		if (ent.client.sess.group === group) {
-			// Restore group as going to spec clears it.
-			var group = ent.client.sess.group;
-			SetTeam(ent, 's', true);
-			ent.client.sess.group = group;
-
-			PushClientToQueue(ent);
+			ForceTeam(ent, TEAM.SPECTATOR);
 			continue;
 		}
 	}
@@ -15419,30 +15438,15 @@ function QueueGroup(group) {
 function DequeueGroup(group) {
 	log('Dequeuing group', group);
 
-	for (var i = 0; i < level.maxclients; i++) {
-		var ent = level.gentities[i];
-
-		if (!ent.inuse) {
-			continue;
-		}
-
-		if (ent.s.arenaNum !== level.arena.arenaNum) {
-			continue;
-		}
-
-		if (ent.client.sess.group === group) {
-			RemoveClientFromQueue(ent);
-
-			// Since our group is active, it'll place us on the correct team.
-			SetTeam(ent, group, true);
-		}
+	var team;
+	if (level.arena.group1 === group) {
+		team = TEAM.RED;
+	} else if (level.arena.group2 === group) {
+		team = TEAM.BLUE;
+	} else {
+		error('No active group to match', group);
 	}
-}
 
-/**
- * SetTeamForGroup
- */
-function SetTeamForGroup(group, team) {
 	for (var i = 0; i < level.maxclients; i++) {
 		var ent = level.gentities[i];
 
@@ -15455,8 +15459,7 @@ function SetTeamForGroup(group, team) {
 		}
 
 		if (ent.client.sess.group === group) {
-			ent.client.sess.team = team;
-			ClientUserinfoChanged(i);
+			ForceTeam(ent, team);
 		}
 	}
 }
@@ -15482,6 +15485,27 @@ function RespawnTeam(team) {
 			ClientSpawn(ent);
 		}
 	}
+}
+
+/**
+ * ForceTeam
+ */
+function ForceTeam(ent, team) {
+	ent.client.sess.team = team;
+	ent.client.sess.spectatorState = team === TEAM.SPECTATOR ? SPECTATOR.FREE : SPECTATOR.NOT;
+	ent.client.pers.teamState.state = TEAM_STATE.BEGIN;
+
+	// Go to the end of the line as spec.
+	if (team === TEAM.SPECTATOR) {
+		PushClientToQueue(ent);
+	}
+
+	TossClientItems(ent);
+
+	ClientUserinfoChanged(ent.client.ps.clientNum);
+	ClientSpawn(ent);
+
+	CalculateRanks();
 }
 
 /**********************************************************
@@ -15518,6 +15542,12 @@ function PopClientFromQueue() {
 			continue;
 		}
 
+		// Never select the dedicated follow or scoreboard clients.
+		if (ent.client.sess.spectatorState === SPECTATOR.SCOREBOARD ||
+			ent.client.sess.spectatorClient < 0) {
+			continue;
+		}
+
 		if (!nextInLine || ent.client.sess.spectatorNum > nextInLine.client.sess.spectatorNum) {
 			nextInLine = ent;
 		}
@@ -15528,8 +15558,6 @@ function PopClientFromQueue() {
 	}
 
 	log('Popping client', nextInLine.client.ps.clientNum, 'from end of queue');
-
-	nextInLine.client.sess.spectatorNum = -1;
 
 	return nextInLine;
 }
@@ -15557,19 +15585,10 @@ function PushClientToQueue(ent) {
 
 		if (cur === ent) {
 			cur.client.sess.spectatorNum = 0;
-		} else if (cur.client.sess.spectatorNum !== -1) {
+		} else if (cur.client.sess.team === TEAM.SPECTATOR) {
 			cur.client.sess.spectatorNum++;
 		}
 	}
-}
-
-/**
- * RemoveClientFromQueue
- */
-function RemoveClientFromQueue(ent) {
-	log('RemoveClientFromQueue', ent.client.ps.clientNum);
-
-	ent.client.sess.spectatorNum = -1;
 }
 
 /**********************************************************
@@ -16132,7 +16151,7 @@ function ClientBegin(clientNum) {
 	ClientSpawn(ent);
 
 	if (client.sess.team !== TEAM.SPECTATOR) {
-		SV.SendServerCommand(null, 'print', client.pers.name + ' entered the game');
+		SendArenaCommand('print', client.pers.name + ' entered the game');
 	}
 
 	// Count current clients and rank for scoreboard.
@@ -17001,13 +17020,13 @@ function SetClientViewAngle(ent, angles) {
  */
 function BroadcastTeamChange(client, oldTeam) {
 	if (client.sess.team === TEAM.RED) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the red team.');
+		SendArenaCommand('cp', client.pers.name + ' joined the red team.');
 	} else if (client.sess.team === TEAM.BLUE) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the blue team.');
+		SendArenaCommand('cp', client.pers.name + ' joined the blue team.');
 	} else if (client.sess.team === TEAM.SPECTATOR && oldTeam !== TEAM.SPECTATOR) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the spectators.');
+		SendArenaCommand('cp', client.pers.name + ' joined the spectators.');
 	} else if (client.sess.team === TEAM.FREE) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the battle.');
+		SendArenaCommand('cp', client.pers.name + ' joined the battle.');
 	}
 }
 
@@ -17715,8 +17734,8 @@ function ClientCmdScore(ent) {
 /**
  * SendScoreboardMessage
  */
-function SendScoreboardMessage(ent) {
-	var arena = level.arenas[ent.s.arenaNum];
+function SendScoreboardMessage(to) {
+	var arena = level.arenas[to.s.arenaNum];
 
 	var val = {
 		scoreRed: arena.teamScores[TEAM.RED],
@@ -17726,7 +17745,12 @@ function SendScoreboardMessage(ent) {
 
 	for (var i = 0; i < arena.numConnectedClients; i++) {
 		var clientNum = arena.sortedClients[i];
-		var client = level.clients[clientNum];
+		var ent = level.gentities[clientNum];
+		var client = ent.client;
+
+		if (ent.s.arenaNum !== to.s.arenaNum) {
+			continue;
+		}
 
 		var ping = -1;
 		if (client.pers.connected !== CON.CONNECTING) {
@@ -17761,7 +17785,7 @@ function SendScoreboardMessage(ent) {
 		});
 	}
 
-	SV.SendServerCommand(ent.s.number, 'scores', val);
+	SV.SendServerCommand(to.s.number, 'scores', val);
 }
 
 /**
@@ -17809,7 +17833,7 @@ function ClientCmdTeam(ent, teamName) {
 /**
  * SetTeam
  */
-function SetTeam(ent, teamName, silent) {
+function SetTeam(ent, teamName) {
 	var client = ent.client;
 	var clientNum = client.ps.clientNum;
 
@@ -17883,12 +17907,15 @@ function SetTeam(ent, teamName, silent) {
 	//
 	// Execute the team change
 	//
-	log('Setting team for', clientNum, 'to', team, groupName);
-
 	client.sess.team = team;
 	client.sess.group = groupName;
 	client.sess.spectatorState = specState;
 	client.sess.spectatorClient = specClient;
+
+	// They go to the end of the line for tournements.
+	if (team === TEAM.SPECTATOR) {
+		PushClientToQueue(ent);
+	}
 
 	// If the player was dead leave the body.
 	if (client.ps.pm_type === PM.DEAD) {
@@ -17902,9 +17929,7 @@ function SetTeam(ent, teamName, silent) {
 		PlayerDie(ent, ent, ent, 100000, MOD.SUICIDE);
 	}
 
-	if (!silent) {
-		BroadcastTeamChange(client, oldTeam);
-	}
+	BroadcastTeamChange(client, oldTeam);
 	ClientUserinfoChanged(clientNum);
 	ClientBegin(clientNum);
 }
@@ -17947,7 +17972,11 @@ function SetArena(ent, arenaNum) {
 
 	// Change arena and kick to spec.
 	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
-	SetTeam(ent, 's', false);
+	ent.client.sess.group = null;
+	ForceTeam(ent, TEAM.SPECTATOR);
+
+	// Update scores.
+	SendScoreboardMessage(ent);
 
 	// Pop back.
 	level.arena = oldArena;
@@ -18345,17 +18374,17 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		if (attacker.client) {
 			killerName = attacker.client.pers.name;
 		} else {
-			killerName = "<non-client>";
+			killerName = '<non-client>';
 		}
 	}
 	if (killer === undefined || killer < 0 || killer >= MAX_CLIENTS) {
 		killer = ENTITYNUM_WORLD;
-		killerName = "<world>";
+		killerName = '<world>';
 	}
 
 	log('Kill:', killer, self.s.number, meansOfDeath, ',', killerName, 'killed', self.client.pers.name);
 
-	// Broadcast the death event to everyone
+	// Broadcast the death event to everyone.
 	var ent = TempEntity(self.r.currentOrigin, EV.OBITUARY);
 	ent.s.eventParm = meansOfDeath;
 	ent.s.otherEntityNum = self.s.number;
@@ -18369,12 +18398,14 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 	if (attacker && attacker.client) {
 		attacker.client.lastkilled_client = self.s.number;
 
-		attacker.client.ps.persistant[PERS.FRAGS]++;
-
-		if (attacker == self || OnSameTeam(self, attacker)) {
+		if (attacker === self || OnSameTeam(self, attacker)) {
 			AddScore(attacker, self.r.currentOrigin, -1);
+
+			attacker.client.ps.persistant[PERS.FRAGS]--;
 		} else {
 			AddScore(attacker, self.r.currentOrigin, 1);
+
+			attacker.client.ps.persistant[PERS.FRAGS]++;
 
 			if (meansOfDeath === MOD.GAUNTLET) {
 				// Play humiliation on player.
@@ -18389,9 +18420,9 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 				self.client.ps.persistant[PERS.PLAYEREVENTS] ^= PLAYEREVENTS.GAUNTLETREWARD;
 			}
 
-			// check for two kills in a short amount of time
-			// if this is close enough to the last kill, give a reward sound
-			if ( level.time - attacker.client.lastKillTime < CARNAGE_REWARD_TIME ) {
+			// Check for two kills in a short amount of time
+			// if this is close enough to the last kill, give a reward sound.
+			if (level.time - attacker.client.lastKillTime < CARNAGE_REWARD_TIME ) {
 				// play excellent on player
 				attacker.client.ps.persistant[PERS.EXCELLENT_COUNT]++;
 
@@ -18406,20 +18437,20 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		AddScore(self, self.r.currentOrigin, -1);
 	}
 
-	// // Add team bonuses
+	// // Add team bonuses.
 	// Team_FragBonuses(self, inflictor, attacker);
 
 	// If I committed suicide, the flag does not fall, it returns.
 	if (meansOfDeath === MOD.SUICIDE) {
-		if (self.client.ps.powerups[PW.NEUTRALFLAG]) {		// only happens in One Flag CTF
+		if (self.client.ps.powerups[PW.NEUTRALFLAG]) {  // only happens in One Flag CTF
 			Team_ReturnFlag(TEAM.FREE);
 			self.client.ps.powerups[PW.NEUTRALFLAG] = 0;
 
-		} else if (self.client.ps.powerups[PW.REDFLAG]) {		// only happens in standard CTF
+		} else if (self.client.ps.powerups[PW.REDFLAG]) {  // only happens in standard CTF
 			Team_ReturnFlag(TEAM.RED);
 			self.client.ps.powerups[PW.REDFLAG] = 0;
 
-		} else if (self.client.ps.powerups[PW.BLUEFLAG]) {	// only happens in standard CTF
+		} else if (self.client.ps.powerups[PW.BLUEFLAG]) {  // only happens in standard CTF
 			Team_ReturnFlag(TEAM.BLUE);
 			self.client.ps.powerups[PW.BLUEFLAG] = 0;
 		}
@@ -23653,8 +23684,7 @@ var ClientSnapshot = function () {
 	svs,
 	dedicated;
 
-var sv_filecdn,
-	sv_ip,
+var sv_ip,
 	sv_port,
 	sv_master,
 	sv_serverid,
@@ -23708,7 +23738,6 @@ function Init(inCL, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	sv_filecdn    = Cvar.AddCvar('sv_filecdn',    'http://content.quakejs.com', Cvar.FLAGS.ARCHIVE);
 	sv_ip         = Cvar.AddCvar('sv_ip',         '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
 	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE, true);
 	sv_master     = Cvar.AddCvar('sv_master',     'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
@@ -24593,9 +24622,11 @@ function UserMove(client, msg, delta) {
 	}
 
 	var cmds = [];
+	var oldcmd = client.lastUserCmd;
 	for (var i = 0; i < count; i++) {
 		var cmd = new QS.UserCmd();
-		COM.ReadDeltaUsercmd(msg, null, cmd);
+		COM.ReadDeltaUsercmd(msg, oldcmd, cmd);
+		oldcmd = cmd;
 		cmds.push(cmd);
 	}
 
@@ -28937,11 +28968,17 @@ function UpdateWarmup() {
 				var ci1, ci2;
 
 				for (var i = 0; i < cgs.maxclients; i++) {
-					if (cgs.clientinfo[i].infoValid && cgs.clientinfo[i].team === TEAM.FREE) {
+					var ci = cgs.clientinfo[i];
+
+					if (ci.arena !== cg.snap.ps.arenaNum) {
+						continue;
+					}
+
+					if (ci.infoValid && ci.team === TEAM.FREE) {
 						if (!ci1) {
-							ci1 = cgs.clientinfo[i];
+							ci1 = ci;
 						} else {
-							ci2 = cgs.clientinfo[i];
+							ci2 = ci;
 						}
 					}
 				}
@@ -28956,9 +28993,15 @@ function UpdateWarmup() {
 				var ci1, ci2;
 
 				for (var i = 0; i < cgs.maxclients; i++) {
-					if (cgs.clientinfo[i].infoValid && cgs.clientinfo[i].team === TEAM.RED) {
+					var ci = cgs.clientinfo[i];
+
+					if (ci.arena !== cg.snap.ps.arenaNum) {
+						continue;
+					}
+
+					if (ci.infoValid && ci.team === TEAM.RED) {
 						ci1 = cgs.clientinfo[i];
-					} else if (cgs.clientinfo[i].infoValid && cgs.clientinfo[i].team === TEAM.BLUE) {
+					} else if (ci.infoValid && ci.team === TEAM.BLUE) {
 						ci2 = cgs.clientinfo[i];
 					}
 				}
@@ -30667,12 +30710,19 @@ function PrintObituary(ent) {
 	var attackerNum = ent.otherEntityNum2;
 	var mod = ent.eventParm;
 
-	var ci = cgs.clientinfo[targetNum];
-
 	// Get target name.
 	if (targetNum < 0 || targetNum >= MAX_CLIENTS) {
 		error('Obituary: target out of range');
 	}
+
+	var ci = cgs.clientinfo[cg.snap.ps.clientNum];
+	var targetCi = cgs.clientinfo[targetNum];
+
+	// Ignore deaths in other arenas.
+	if (ci.arena !== targetCi.arena) {
+		return;
+	}
+
 	var targetInfo = Configstring('player:' + targetNum);
 	if (!targetInfo) {
 		return;
@@ -30714,7 +30764,7 @@ function PrintObituary(ent) {
 	}
 
 	if (attackerNum === targetNum) {
-		var gender = ci.gender;
+		var gender = targetCi.gender;
 
 		switch (mod) {
 			case MOD.GRENADE_SPLASH:
@@ -31534,6 +31584,7 @@ function NewClientInfo(clientNum, callback) {
 	var cs = Configstring('player:' + clientNum);
 
 	if (!cs) {
+		ci.infoValid = false;
 		return;  // player just left
 	}
 
@@ -33457,6 +33508,7 @@ function PredictPlayerState() {
 
 	// Run cmds.
 	var moved = false;
+
 	for (var cmdNum = oldest; cmdNum <= latest; cmdNum++) {
 		// Get the command.
 		CL.GetUserCmd(cmdNum, cg.pmove.cmd);
@@ -33477,7 +33529,7 @@ function PredictPlayerState() {
 
 		// Check for a prediction error from last frame on a lan, this will often
 		// be the exact value from the snapshot, but on a wan we will have to
-		// predict several commands to get to the point we want to compaRE.
+		// predict several commands to get to the point we want to compare.
 		if (cg.predictedPlayerState.commandTime === oldPlayerState.commandTime) {
 			if (cg.thisFrameTeleport) {
 				// A teleport will not cause an error decay
@@ -33493,12 +33545,12 @@ function PredictPlayerState() {
 				AdjustPositionForMover(cg.predictedPlayerState.origin, cg.predictedPlayerState.groundEntityNum,
 					cg.physicsTime, cg.oldTime, adjusted, cg.predictedPlayerState.viewangles, new_angles);
 
-				// FIXME: vec3.equal fails because origin comes in as a Float32Array over the
-				// net, however, internally we use 64 bit arrays which causes a cast, and for
-				// this specific case I didn't want to create a magic epsilon.
-				// if (cg_showmiss.get() && !vec3.equal(oldPlayerState.origin, adjusted)) {
-				// 	log('Prediction error', oldPlayerState.origin[0], adjusted[0]);
-				// }
+				// FIXME: We frequently have prediction errors across snapshots when doing abrupt things
+				// such as rocket / plasma jumps. Our misses are concistent on the LAN, where was VQ3's
+				// are only frequent on WAN. Perhaps this has to do with VQ3's lack of LAN rate limiting.
+				if (cg_showmiss.get() && !vec3.equal(oldPlayerState.origin, adjusted)) {
+					log('Prediction error (' + cg.predictedPlayerState.commandTime + ')', vec3.length(vec3.subtract(oldPlayerState.origin, adjusted, vec3.create())));
+				}
 				var delta = vec3.subtract(oldPlayerState.origin, adjusted, vec3.create());
 				var len = vec3.length(delta);
 
@@ -33555,16 +33607,22 @@ function PredictPlayerState() {
 	AdjustPositionForMover(cg.predictedPlayerState.origin, cg.predictedPlayerState.groundEntityNum,
 		cg.physicsTime, cg.time, cg.predictedPlayerState.origin, cg.predictedPlayerState.viewangles, cg.predictedPlayerState.viewangles);
 
-	// if (cg_showmiss.get()) {
-	// 	if (cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS) {
-	// 		CG_Printf("WARNING: dropped event\n");
-	// 	}
-	// }
+	if (cg_showmiss.get()) {
+		if (cg.predictedPlayerState.eventSequence > oldPlayerState.eventSequence + MAX_PS_EVENTS) {
+			log('WARNING: dropped event');
+		}
+	}
 
 	// Fire events and other transition triggered things
 	TransitionPlayerState(cg.predictedPlayerState, oldPlayerState);
-}
 
+	if (cg_showmiss.get()) {
+		if (cg.eventSequence > cg.predictedPlayerState.eventSequence) {
+			log('WARNING: double event\n');
+			cg.eventSequence = cg.predictedPlayerState.eventSequence;
+		}
+	}
+}
 
 /**
  * TouchTriggerPrediction
@@ -35367,7 +35425,7 @@ function LightningBolt(cent, origin) {
 
 	var itemInfo = FindItemInfo(IT.WEAPON, WP.LIGHTNING);
 
-	// CPMA  "true" lightning.
+	// CPMA "true" lightning.
 	if ((cent.currentState.number === cg.predictedPlayerState.clientNum) && cg_trueLightning.get() !== 0) {
 		var angle = vec3.create();
 
@@ -47185,13 +47243,13 @@ function AdjustTimeDelta() {
 			log('AdjustTimeDelta: <RESET>');
 		}
 	} else if (deltaDelta > 100) {
-		// fast adjust, cut the difference in half
-		cl.serverTimeDelta = (cl.serverTimeDelta + newDelta) / 2;
+		// Fast adjust, cut the difference in half.
+		cl.serverTimeDelta = (cl.serverTimeDelta + newDelta) >> 1;
 		if (cl_showTimeDelta.get()) {
 			log('AdjustTimeDelta: <FAST>');
 		}
 	} else {
-		// slow drift adjust, only move 1 or 2 msec
+		// Slow drift adjust, only move 1 or 2 msec.
 
 		// if any of the frames between this and the previous snapshot
 		// had to be extrapolated, nudge our sense of time back a little
@@ -47799,9 +47857,10 @@ function KeyMove(cmd) {
 	if (cls.inUp) { up += movespeed * GetKeyState(cls.inUp); }
 	if (cls.inDown) up -= movespeed * GetKeyState(cls.inDown);
 
-	cmd.forwardmove = Math.max(-127, Math.min(forward, 127));
-	cmd.rightmove = Math.max(-127, Math.min(right, 127));
-	cmd.upmove = Math.max(-127, Math.min(up, 127));
+	// Clamp and round to int.
+	cmd.forwardmove = Math.max(-127, Math.min(Math.floor(forward), 127));
+	cmd.rightmove = Math.max(-127, Math.min(Math.floor(right), 127));
+	cmd.upmove = Math.max(-127, Math.min(Math.floor(up), 127));
 }
 
 /**
@@ -47908,6 +47967,7 @@ function WritePacket() {
 		msg.writeInt8(count);
 
 		// Write all the commands, including the predicted command.
+		oldcmd = cl.cmds[(cl.cmdNumber - count) % QS.CMD_BACKUP];
 		for (var i = 0; i < count; i++) {
 			var j = (cl.cmdNumber - count + i + 1) % QS.CMD_BACKUP;
 			var cmd = cl.cmds[j];
@@ -48465,7 +48525,8 @@ function CmdVstr(name) {
 	CL,
 	SV;
 
-var com_protocol;
+var com_filecdn,
+	com_protocol;
 
 var dedicated,
 	events,
@@ -48555,7 +48616,8 @@ function Init(inSYS, inDedicated, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION, Cvar.FLAGS.ROM);
+	com_filecdn  = Cvar.AddCvar('com_filecdn', 'http://content.quakejs.com',  Cvar.FLAGS.ARCHIVE);
+	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION,          Cvar.FLAGS.ROM);
 }
 
 /**
@@ -48903,7 +48965,7 @@ function GetExports() {
 	//
 // Helper functions to get/set object properties based on a string.
 //
-var FLOAT32 = 0;
+var FLOAT64 = 0;
 var INT8    = 1;
 var UINT8   = 2;
 var UINT16  = 3;
@@ -48911,8 +48973,8 @@ var UINT32  = 4;
 
 function fnread(bits) {
 	switch (bits) {
-		case FLOAT32:
-			return 'readFloat32';
+		case FLOAT64:
+			return 'readFloat64';
 		case INT8:
 			return 'readInt8';
 		case UINT8:
@@ -48928,8 +48990,8 @@ function fnread(bits) {
 
 function fnwrite(bits) {
 	switch (bits) {
-		case FLOAT32:
-			return 'writeFloat32';
+		case FLOAT64:
+			return 'writeFloat64';
 		case INT8:
 			return 'writeInt8';
 		case UINT8:
@@ -48950,59 +49012,104 @@ function fnwrite(bits) {
  **********************************************************/
 var dummyUsercmd = new QS.UserCmd();
 
-var usercmdFields = [
-	{ path: QS.FTA('angles[0]'),   bits: UINT16 },
-	{ path: QS.FTA('angles[1]'),   bits: UINT16 },
-	{ path: QS.FTA('angles[2]'),   bits: UINT16 },
-	{ path: QS.FTA('forwardmove'), bits: UINT8  },
-	{ path: QS.FTA('rightmove'),   bits: UINT8  },
-	{ path: QS.FTA('upmove'),      bits: UINT8  },
-	{ path: QS.FTA('buttons'),     bits: UINT16 },
-	{ path: QS.FTA('weapon'),      bits: UINT8  }
-];
+// var kbitmask = [
+// 	0x00000001, 0x00000003, 0x00000007, 0x0000000F,
+// 	0x0000001F, 0x0000003F, 0x0000007F, 0x000000FF,
+// 	0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF,
+// 	0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF,
+// 	0x0001FFFF, 0x0003FFFF, 0x0007FFFF, 0x000FFFFF,
+// 	0x001FFFFf, 0x003FFFFF, 0x007FFFFF, 0x00FFFFFF,
+// 	0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF, 0x0FFFFFFF,
+// 	0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF
+// ];
+
+function WriteDeltaKey(msg, key, oldV, newV, bits) {
+	if (oldV === newV) {
+		msg.writeBits(0, 1);
+		return;
+	}
+	msg.writeBits(1, 1);
+	msg.writeBits(newV/* ^ key*/, bits);
+}
+
+function ReadDeltaKey(msg, key, oldV, bits) {
+	if (msg.readBits(1)) {
+		// Negative bits are signed.
+		return msg.readBits(Math.abs(bits), (bits < 0))/* ^ (key & kbitmask[bits])*/;
+	}
+	return oldV;
+}
 
 function WriteDeltaUsercmd(msg, from, to) {
 	if (!from) {
 		from = dummyUsercmd;
 	}
 
-	msg.writeInt32(to.serverTime);
+	if (to.serverTime - from.serverTime < 256) {
+		msg.writeBits(1, 1);
+		msg.writeBits(to.serverTime - from.serverTime, 8);
+	} else {
+		msg.writeBits(0, 1);
+		msg.writeBits(to.serverTime, 32);
+	}
 
-	// if (from.angles[0] === to.angles[0] &&
-	// 	from.angles[1] === to.angles[1] &&
-	// 	from.angles[2] === to.angles[2] &&
-	// 	from.forwardmove === to.forwardmove &&
-	// 	from.rightmove === to.rightmove &&
-	// 	from.upmove === to.upmove &&
-	// 	from.buttons === to.buttons &&
-	// 	from.weapon === to.weapon) {
-	// 		msg.writeInt8(0);  // no change
-	// 		return;
-	// }
+	if (from.angles[0] === to.angles[0] &&
+		from.angles[1] === to.angles[1] &&
+		from.angles[2] === to.angles[2] &&
+		from.forwardmove === to.forwardmove &&
+		from.rightmove === to.rightmove &&
+		from.upmove === to.upmove &&
+		from.buttons === to.buttons &&
+		from.weapon === to.weapon) {
+			msg.writeBits(0, 1);  // no change
+			return;
+	}
 
-	// msg.writeInt8(1);  // changed
+	// key ^= to.serverTime;
 
-	msg.writeUint16(to.angles[0]);
-	msg.writeUint16(to.angles[1]);
-	msg.writeUint16(to.angles[2]);
-	msg.writeInt8(to.forwardmove);
-	msg.writeInt8(to.rightmove);
-	msg.writeInt8(to.upmove);
-	msg.writeUint16(to.buttons);
-	msg.writeUint8(to.weapon);
+	msg.writeBits(1, 1);  // change
+
+	WriteDeltaKey(msg, 0/*key*/, from.angles[0], to.angles[0], 16);
+	WriteDeltaKey(msg, 0/*key*/, from.angles[1], to.angles[1], 16);
+	WriteDeltaKey(msg, 0/*key*/, from.angles[2], to.angles[2], 16);
+	WriteDeltaKey(msg, 0/*key*/, from.forwardmove, to.forwardmove, 8);
+	WriteDeltaKey(msg, 0/*key*/, from.rightmove, to.rightmove, 8);
+	WriteDeltaKey(msg, 0/*key*/, from.upmove, to.upmove, 8);
+	WriteDeltaKey(msg, 0/*key*/, from.buttons, to.buttons, 16);
+	WriteDeltaKey(msg, 0/*key*/, from.weapon, to.weapon, 8);
 }
 
 function ReadDeltaUsercmd(msg, from, to) {
-	to.serverTime = msg.readInt32();
+	if (!from) {
+		from = dummyUsercmd;
+	}
 
-	to.angles[0] = msg.readUint16();
-	to.angles[1] = msg.readUint16();
-	to.angles[2] = msg.readUint16();
-	to.forwardmove = msg.readInt8();
-	to.rightmove = msg.readInt8();
-	to.upmove = msg.readInt8();
-	to.buttons = msg.readUint16();
-	to.weapon = msg.readUint8();
+	if (msg.readBits(1)) {
+		to.serverTime = from.serverTime + msg.readBits(8);
+	} else {
+		to.serverTime = msg.readBits(32);
+	}
+
+	if (msg.readBits(1)) {
+		// key ^= to.serverTime;
+		to.angles[0] = ReadDeltaKey(msg, 0/*key*/, from.angles[0], 16);
+		to.angles[1] = ReadDeltaKey(msg, 0/*key*/, from.angles[1], 16);
+		to.angles[2] = ReadDeltaKey(msg, 0/*key*/, from.angles[2], 16);
+		to.forwardmove = ReadDeltaKey(msg, 0/*key*/, from.forwardmove, -8);
+		to.rightmove = ReadDeltaKey(msg, 0/*key*/, from.rightmove, -8);
+		to.upmove = ReadDeltaKey(msg, 0/*key*/, from.upmove, -8);
+		to.buttons = ReadDeltaKey(msg, 0/*key*/, from.buttons, 16);
+		to.weapon = ReadDeltaKey(msg, 0/*key*/, from.weapon, 8);
+	} else {
+		to.angles[0] = from.angles[0];
+		to.angles[1] = from.angles[1];
+		to.angles[2] = from.angles[2];
+		to.forwardmove = from.forwardmove;
+		to.rightmove = from.rightmove;
+		to.upmove = from.upmove;
+		to.buttons = from.buttons;
+		to.weapon = from.weapon;
+	}
 }
 
 /**********************************************************
@@ -49013,16 +49120,16 @@ function ReadDeltaUsercmd(msg, from, to) {
 
 var playerStateFields = [
 	{ path: QS.FTA('commandTime'),       bits: UINT32  },
-	{ path: QS.FTA('origin[0]'),         bits: FLOAT32 },
-	{ path: QS.FTA('origin[1]'),         bits: FLOAT32 },
+	{ path: QS.FTA('origin[0]'),         bits: FLOAT64 },
+	{ path: QS.FTA('origin[1]'),         bits: FLOAT64 },
 	{ path: QS.FTA('bobCycle'),          bits: UINT8   },
-	{ path: QS.FTA('velocity[0]'),       bits: FLOAT32 },
-	{ path: QS.FTA('velocity[1]'),       bits: FLOAT32 },
-	{ path: QS.FTA('viewangles[1]'),     bits: FLOAT32 },
-	{ path: QS.FTA('viewangles[0]'),     bits: FLOAT32 },
+	{ path: QS.FTA('velocity[0]'),       bits: FLOAT64 },
+	{ path: QS.FTA('velocity[1]'),       bits: FLOAT64 },
+	{ path: QS.FTA('viewangles[1]'),     bits: FLOAT64 },
+	{ path: QS.FTA('viewangles[0]'),     bits: FLOAT64 },
 	{ path: QS.FTA('weaponTime'),        bits: UINT16  },
-	{ path: QS.FTA('origin[2]'),         bits: FLOAT32 },
-	{ path: QS.FTA('velocity[2]'),       bits: FLOAT32 },
+	{ path: QS.FTA('origin[2]'),         bits: FLOAT64 },
+	{ path: QS.FTA('velocity[2]'),       bits: FLOAT64 },
 	{ path: QS.FTA('legsTimer'),         bits: UINT8   },
 	{ path: QS.FTA('pm_time'),           bits: UINT16  },
 	{ path: QS.FTA('eventSequence'),     bits: UINT16  },
@@ -49053,14 +49160,14 @@ var playerStateFields = [
 	{ path: QS.FTA('eventParms[0]'),     bits: UINT8   },
 	{ path: QS.FTA('eventParms[1]'),     bits: UINT8   },
 	{ path: QS.FTA('clientNum'),         bits: UINT8   },
-	{ path: QS.FTA('arenaNum'),          bits: UINT16  },
 	{ path: QS.FTA('weapon'),            bits: UINT8   }, /*5*/
-	{ path: QS.FTA('viewangles[2]'),     bits: FLOAT32 },
-	// { path: QS.FTA('grapplePoint[0]'),   bits: FLOAT32 },
-	// { path: QS.FTA('grapplePoint[1]'),   bits: FLOAT32 },
-	// { path: QS.FTA('grapplePoint[2]'),   bits: FLOAT32 },
+	{ path: QS.FTA('viewangles[2]'),     bits: FLOAT64 },
+	// { path: QS.FTA('grapplePoint[0]'),   bits: FLOAT64 },
+	// { path: QS.FTA('grapplePoint[1]'),   bits: FLOAT64 },
+	// { path: QS.FTA('grapplePoint[2]'),   bits: FLOAT64 },
 	{ path: QS.FTA('jumppad_ent'),       bits: UINT16  }, /*GENTITYNUM_BITS*/
-	{ path: QS.FTA('loopSound'),         bits: UINT16  }
+	{ path: QS.FTA('loopSound'),         bits: UINT16  },
+	{ path: QS.FTA('arenaNum'),          bits: UINT16  }
 ];
 
 var dummyPlayerState = new QS.PlayerState();
@@ -49069,15 +49176,15 @@ var dummyPlayerState = new QS.PlayerState();
  * WriteDeltaPlayerState
  */
 function WriteDeltaPlayerState(msg, from, to) {
-	var i, changed;
+	var i, lastChanged;
 	var field, fromF, toF, func;
 
 	if (!from) {
 		from = dummyPlayerState;
 	}
 
-	// Figure out the number of fields that have changed.
-	changed = 0;
+	// Figure out the last changed field.
+	lastChanged = 0;
 	for (i = 0; i < playerStateFields.length; i++) {
 		field = playerStateFields[i];
 
@@ -49085,46 +49192,37 @@ function WriteDeltaPlayerState(msg, from, to) {
 		toF = QS.AGET(to, field.path);
 
 		if (fromF !== toF) {
-			changed++;
+			lastChanged = i + 1;
 		}
 	}
 
-	msg.writeInt8(changed);
+	msg.writeUint8(lastChanged);
 
-	// Write out each field that has changed, prefixing
-	// the changed field with its indexed into the ps
-	// field array.
-	for (i = 0; i < playerStateFields.length; i++) {
+	// Write out up to last changed, prefixing each field with a
+	// 0 or 1 to indicated if they've changed.
+	for (i = 0; i < lastChanged; i++) {
 		field = playerStateFields[i];
 
 		fromF = QS.AGET(from, field.path);
 		toF = QS.AGET(to, field.path);
 		if (fromF === toF) {
+			msg.writeBits(0, 1);  // no change
 			continue;
 		}
 
+		msg.writeBits(1, 1);  // changed
+
 		func = fnwrite(field.bits);
 
-		// TODO Could write out a master bitmask describing
-		// the changed fields.
-		msg.writeInt8(i);
 		msg[func](QS.AGET(to, field.path));
 	}
 
-	// Write out the arrays. First we write a bit mask
-	// describing which arrays have changed, followed by
-	// a mask for each array describing which of its
-	// elements have changed.
-
-	// Sanity check. Increase bitmask send length if changing
-	// these maxes is necessary
-	if (QS.MAX_STATS > 16 || QS.MAX_PERSISTANT > 16 || QS.MAX_POWERUPS > 16 || QS.MAX_WEAPONS > 16) {
-		throw new Error('Array maxes exceed bitmask length');
-	}
-
+	// Write out a 0 or 1 before each array indicating if
+	// it's changed as well asa mask for each array describing
+	// which of its elements have changed.
 	var statsbits      = 0,
 		persistantbits = 0,
-		powerupsbits   = 0,
+		powerupbits    = 0,
 		ammobits       = 0;
 
 	for (i = 0; i < QS.MAX_STATS; i++) {
@@ -49139,7 +49237,7 @@ function WriteDeltaPlayerState(msg, from, to) {
 	}
 	for (i = 0; i < QS.MAX_POWERUPS; i++) {
 		if (to.powerups[i] !== from.powerups[i]) {
-			powerupsbits |= 1 << i;
+			powerupbits |= 1 << i;
 		}
 	}
 	for (i = 0; i < QS.MAX_WEAPONS; i++) {
@@ -49148,46 +49246,64 @@ function WriteDeltaPlayerState(msg, from, to) {
 		}
 	}
 
-	// Write out a byte explaining which arrays changed.
-	var arrbits = (statsbits ? 1 : 0) | (persistantbits ? 2 : 0) | (powerupsbits ? 4 : 0) | (ammobits ? 8 : 0);
-	msg.writeInt8(arrbits);
+	if (!statsbits && !persistantbits && !powerupbits && !ammobits) {
+		msg.writeBits(0, 1);  // no change
+		return;
+	}
+
+	msg.writeBits(1, 1);  // changed
 
 	if (statsbits) {
-		msg.writeInt16(statsbits);
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(statsbits, QS.MAX_STATS);
 		for (i = 0; i < QS.MAX_STATS; i++) {
 			if (statsbits & (1 << i)) {
 				msg.writeInt16(to.stats[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
+
 	if (persistantbits) {
-		msg.writeInt16(persistantbits);
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(persistantbits, QS.MAX_PERSISTANT);
 		for (i = 0; i < QS.MAX_PERSISTANT; i++) {
 			if (persistantbits & (1 << i)) {
 				msg.writeInt16(to.persistant[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
-	if (powerupsbits) {
-		msg.writeInt16(powerupsbits);
+
+	if (powerupbits) {
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(powerupbits, QS.MAX_POWERUPS);
 		for (i = 0; i < QS.MAX_POWERUPS; i++) {
-			if (powerupsbits & (1 << i)) {
+			if (powerupbits & (1 << i)) {
 				msg.writeInt16(to.powerups[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
+
 	if (ammobits) {
-		msg.writeInt16(ammobits);
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(ammobits, QS.MAX_WEAPONS);
 		for (i = 0; i < QS.MAX_WEAPONS; i++) {
 			if (ammobits & (1 << i)) {
 				msg.writeInt16(to.ammo[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
 }
 
 function ReadDeltaPlayerState(msg, from, to) {
-	var i, changed;
+	var i, lastChanged;
 	var idx, field, fromF, toF, func;
 
 	if (!from) {
@@ -49197,51 +49313,57 @@ function ReadDeltaPlayerState(msg, from, to) {
 	// Clone the initial state.
 	from.clone(to);
 
-	// Get the number of fields changed.
-	changed = msg.readInt8();
+	// Get the last field index changed.
+	lastChanged = msg.readUint8();
 
-	// Read all the changed fields.
-	for (i = 0; i < changed; i++) {
-		idx = msg.readInt8();
-		field = playerStateFields[idx];
+	if (lastChanged > playerStateFields.length || lastChanged < 0) {
+		error('invalid playerState field count');
+	}
+
+	for (i = 0; i < lastChanged; i++) {
+		if (!msg.readBits(1)) {
+			continue;  // no change
+		}
+
+		field = playerStateFields[i];
 		func = fnread(field.bits);
-
 		QS.ASET(to, field.path, msg[func]());
 	}
 
-	var arrbits = msg.readInt8();
-
-	if (arrbits & 1) {
-		var statsbits = msg.readInt16();
-		for (i = 0; i < QS.MAX_STATS; i++) {
-			if (statsbits & (1 << i)) {
-				to.stats[i] = msg.readInt16();
+	if (msg.readBits(1)) {
+		if (msg.readBits(1)) {
+			var statsbits = msg.readBits(QS.MAX_STATS);
+			for (i = 0; i < QS.MAX_STATS; i++) {
+				if (statsbits & (1 << i)) {
+					to.stats[i] = msg.readInt16();
+				}
 			}
 		}
-	}
-	if (arrbits & 2) {
-		var persistantbits = msg.readInt16();
-		for (i = 0; i < QS.MAX_PERSISTANT; i++) {
-			if (persistantbits & (1 << i)) {
-				to.persistant[i] = msg.readInt16();
+
+		if (msg.readBits(1)) {
+			var persistantbits = msg.readBits(QS.MAX_PERSISTANT);
+			for (i = 0; i < QS.MAX_PERSISTANT; i++) {
+				if (persistantbits & (1 << i)) {
+					to.persistant[i] = msg.readInt16();
+				}
 			}
 		}
-	}
 
-	if (arrbits & 4) {
-		var powerupsbits = msg.readInt16();
-		for (i = 0; i < QS.MAX_POWERUPS; i++) {
-			if (powerupsbits & (1 << i)) {
-				to.powerups[i] = msg.readInt16();
+		if (msg.readBits(1)) {
+			var powerupbits = msg.readBits(QS.MAX_POWERUPS);
+			for (i = 0; i < QS.MAX_POWERUPS; i++) {
+				if (powerupbits & (1 << i)) {
+					to.powerups[i] = msg.readInt16();
+				}
 			}
 		}
-	}
 
-	if (arrbits & 8) {
-		var ammobits = msg.readInt16();
-		for (i = 0; i < QS.MAX_WEAPONS; i++) {
-			if (ammobits & (1 << i)) {
-				to.ammo[i] = msg.readInt16();
+		if (msg.readBits(1)) {
+			var ammobits = msg.readBits(QS.MAX_WEAPONS);
+			for (i = 0; i < QS.MAX_WEAPONS; i++) {
+				if (ammobits & (1 << i)) {
+					to.ammo[i] = msg.readInt16();
+				}
 			}
 		}
 	}
@@ -49256,16 +49378,16 @@ function ReadDeltaPlayerState(msg, from, to) {
 var entityStateFields = [
 	{ path: QS.FTA('arenaNum'),        bits: UINT16  },
 	{ path: QS.FTA('pos.trTime'),      bits: UINT32  },
-	{ path: QS.FTA('pos.trBase[0]'),   bits: FLOAT32 },
-	{ path: QS.FTA('pos.trBase[1]'),   bits: FLOAT32 },
-	{ path: QS.FTA('pos.trDelta[0]'),  bits: FLOAT32 },
-	{ path: QS.FTA('pos.trDelta[1]'),  bits: FLOAT32 },
-	{ path: QS.FTA('pos.trBase[2]'),   bits: FLOAT32 },
-	{ path: QS.FTA('apos.trBase[1]'),  bits: FLOAT32 },
-	{ path: QS.FTA('pos.trDelta[2]'),  bits: FLOAT32 },
-	{ path: QS.FTA('apos.trBase[0]'),  bits: FLOAT32 },
+	{ path: QS.FTA('pos.trBase[0]'),   bits: FLOAT64 },
+	{ path: QS.FTA('pos.trBase[1]'),   bits: FLOAT64 },
+	{ path: QS.FTA('pos.trDelta[0]'),  bits: FLOAT64 },
+	{ path: QS.FTA('pos.trDelta[1]'),  bits: FLOAT64 },
+	{ path: QS.FTA('pos.trBase[2]'),   bits: FLOAT64 },
+	{ path: QS.FTA('apos.trBase[1]'),  bits: FLOAT64 },
+	{ path: QS.FTA('pos.trDelta[2]'),  bits: FLOAT64 },
+	{ path: QS.FTA('apos.trBase[0]'),  bits: FLOAT64 },
 	{ path: QS.FTA('event'),           bits: UINT16  }, /*10*/
-	{ path: QS.FTA('angles2[1]'),      bits: FLOAT32 },
+	{ path: QS.FTA('angles2[1]'),      bits: FLOAT64 },
 	{ path: QS.FTA('eType'),           bits: UINT8   },
 	{ path: QS.FTA('torsoAnim'),       bits: UINT8   },
 	{ path: QS.FTA('eventParm'),       bits: UINT8   },
@@ -49276,34 +49398,34 @@ var entityStateFields = [
 	{ path: QS.FTA('otherEntityNum'),  bits: UINT16  }, /*GENTITYNUM_BITS*/
 	{ path: QS.FTA('weapon'),          bits: UINT8   },
 	{ path: QS.FTA('clientNum'),       bits: UINT8   },
-	{ path: QS.FTA('angles[1]'),       bits: FLOAT32 },
+	{ path: QS.FTA('angles[1]'),       bits: FLOAT64 },
 	{ path: QS.FTA('pos.trDuration'),  bits: UINT32  },
 	{ path: QS.FTA('apos.trType'),     bits: UINT8   },
-	{ path: QS.FTA('origin[0]'),       bits: FLOAT32 },
-	{ path: QS.FTA('origin[1]'),       bits: FLOAT32 },
-	{ path: QS.FTA('origin[2]'),       bits: FLOAT32 },
+	{ path: QS.FTA('origin[0]'),       bits: FLOAT64 },
+	{ path: QS.FTA('origin[1]'),       bits: FLOAT64 },
+	{ path: QS.FTA('origin[2]'),       bits: FLOAT64 },
 	{ path: QS.FTA('solid'),           bits: UINT32  }, /*24*/
 	{ path: QS.FTA('powerups'),        bits: UINT16  }, /*QS.MAX_POWERUPS*/
 	{ path: QS.FTA('modelIndex'),      bits: UINT8   },
 	{ path: QS.FTA('otherEntityNum2'), bits: UINT16  }, /*GENTITYNUM_BITS*/
 	{ path: QS.FTA('loopSound'),       bits: UINT8   },
 	{ path: QS.FTA('generic1'),        bits: UINT8   },
-	{ path: QS.FTA('origin2[2]'),      bits: FLOAT32 },
-	{ path: QS.FTA('origin2[0]'),      bits: FLOAT32 },
-	{ path: QS.FTA('origin2[1]'),      bits: FLOAT32 },
+	{ path: QS.FTA('origin2[2]'),      bits: FLOAT64 },
+	{ path: QS.FTA('origin2[0]'),      bits: FLOAT64 },
+	{ path: QS.FTA('origin2[1]'),      bits: FLOAT64 },
 	{ path: QS.FTA('modelIndex2'),     bits: UINT8   },
-	{ path: QS.FTA('angles[0]'),       bits: FLOAT32 },
+	{ path: QS.FTA('angles[0]'),       bits: FLOAT64 },
 	{ path: QS.FTA('time'),            bits: UINT32  },
 	{ path: QS.FTA('apos.trTime'),     bits: UINT32  },
 	{ path: QS.FTA('apos.trDuration'), bits: UINT32  },
-	{ path: QS.FTA('apos.trBase[2]'),  bits: FLOAT32 },
-	{ path: QS.FTA('apos.trDelta[0]'), bits: FLOAT32 },
-	{ path: QS.FTA('apos.trDelta[1]'), bits: FLOAT32 },
-	{ path: QS.FTA('apos.trDelta[2]'), bits: FLOAT32 },
+	{ path: QS.FTA('apos.trBase[2]'),  bits: FLOAT64 },
+	{ path: QS.FTA('apos.trDelta[0]'), bits: FLOAT64 },
+	{ path: QS.FTA('apos.trDelta[1]'), bits: FLOAT64 },
+	{ path: QS.FTA('apos.trDelta[2]'), bits: FLOAT64 },
 	{ path: QS.FTA('time2'),           bits: UINT32  },
-	{ path: QS.FTA('angles[2]'),       bits: FLOAT32 },
-	{ path: QS.FTA('angles2[0]'),      bits: FLOAT32 },
-	{ path: QS.FTA('angles2[2]'),      bits: FLOAT32 },
+	{ path: QS.FTA('angles[2]'),       bits: FLOAT64 },
+	{ path: QS.FTA('angles2[0]'),      bits: FLOAT64 },
+	{ path: QS.FTA('angles2[2]'),      bits: FLOAT64 },
 	{ path: QS.FTA('constantLight'),   bits: UINT32  },
 	{ path: QS.FTA('frame'),           bits: UINT16  }
 ];
@@ -49318,7 +49440,7 @@ var entityStateFields = [
  * identical, under the assumption that the in-order delta code will catch it.
  */
 function WriteDeltaEntityState(msg, from, to, force) {
-	var i, changed;
+	var i, lastChanged;
 	var field, fromF, toF, func;
 
 	// A null to is a delta remove message.
@@ -49327,7 +49449,7 @@ function WriteDeltaEntityState(msg, from, to, force) {
 			return;
 		}
 		msg.writeInt16(from.number);  /* GENTITYNUM_BITS */
-		msg.writeInt8(0 | 1);  // removed | no delta
+		msg.writeBits(1, 1);
 		return;
 	}
 
@@ -49337,7 +49459,7 @@ function WriteDeltaEntityState(msg, from, to, force) {
 	}
 
 	// Figure out the number of fields that have changed.
-	changed = 0;
+	lastChanged = 0;
 	for (i = 0; i < entityStateFields.length; i++) {
 		field = entityStateFields[i];
 
@@ -49345,40 +49467,43 @@ function WriteDeltaEntityState(msg, from, to, force) {
 		toF = QS.AGET(to, field.path);
 
 		if (fromF !== toF) {
-			changed++;
+			lastChanged = i + 1;
 		}
 	}
 
-	if (changed === 0) {
+	if (lastChanged === 0) {
 		// Nothing at all changed.
 		if (!force) {
 			return;  // write nothing
 		}
 
 		msg.writeInt16(to.number);  /* GENTITYNUM_BITS */
-		msg.writeInt8(0);  // not removed | no delta
+		msg.writeBits(0, 1);  // not removed
+		msg.writeBits(0, 1);  // no delta
 		return;
 	}
 
 	msg.writeInt16(to.number); /* GENTITYNUM_BITS */
-	msg.writeInt8(0 | 2);  // not removed | we have a delta
-	msg.writeInt8(changed); // number of fields changed
+	msg.writeBits(0, 1);  // not removed
+	msg.writeBits(1, 1);  // we have a delta
+	msg.writeInt8(lastChanged); // number of fields changed
 
 	// Write out each field that has changed, prefixing
-	// the changed field with its indexed into the ps
-	// field array.
-	for (i = 0; i < entityStateFields.length; i++) {
+	// the field with a 0 or 1 denoting if it's changed.
+	for (i = 0; i < lastChanged; i++) {
 		field = entityStateFields[i];
 
 		fromF = QS.AGET(from, field.path);
 		toF = QS.AGET(to, field.path);
 		if (fromF === toF) {
+			msg.writeBits(0, 1);  // no change
 			continue;
 		}
 
+		msg.writeBits(1, 1);  // no change
+
 		func = fnwrite(field.bits);
 
-		msg.writeInt8(i);
 		msg[func](QS.AGET(to, field.path));
 	}
 }
@@ -49394,19 +49519,15 @@ function WriteDeltaEntityState(msg, from, to, force) {
  * Can go from either a baseline or a previous packet entity.
  */
 function ReadDeltaEntityState(msg, from, to, number) {
-	var i, changed;
+	var i, lastChanged;
 	var idx, field, fromF, toF, func;
 
 	if (number < 0 || number >= QS.MAX_GENTITIES) {
 		throw new Error('Bad delta entity number: ', number);
 	}
 
-	var opmask = msg.readInt8();
-	var remove = opmask & 1;
-	var delta = opmask & 2;
-
-	// Check for a remove
-	if (remove) {
+	// Check for a remove.
+	if (msg.readBits(1)) {
 		to.reset();
 		to.number = QS.MAX_GENTITIES - 1;
 		return;
@@ -49417,17 +49538,20 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	to.number = number;
 
 	// Check for no delta.
-	if (!delta) {
+	if (!msg.readBits(1)) {
 		return;
 	}
 
-	// Get the number of fields changed.
-	changed = msg.readInt8();
+	// Get the last changed field index.
+	lastChanged = msg.readInt8();
 
 	// Read all the changed fields.
-	for (i = 0; i < changed; i++) {
-		idx = msg.readInt8();
-		field = entityStateFields[idx];
+	for (i = 0; i < lastChanged; i++) {
+		if (!msg.readBits(1)) {
+			continue;  // not changed
+		}
+
+		field = entityStateFields[i];
 		func = fnread(field.bits);
 
 		QS.ASET(to, field.path, msg[func]());
@@ -49706,15 +49830,23 @@ function LoadBsp(mapname, callback) {
 
 define('text!system/browser/css/main.css',[],function () { return '@font-face {\n\tfont-family: \'SourceCodeProSemibold\';\n\tsrc: url(\'data:application/x-font-ttf;base64,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\') format(\'truetype\');\n\tfont-weight: normal;\n\tfont-style: normal;\n}\n\n/**\n * GENERAL\n */\n#error-wrapper {\n\tposition: absolute;\n\tleft: 0;\n\ttop: 0;\n\twidth: 100%;\n\theight: 100%;\n\tcolor: #fff;\n\tfont-family: \'SourceCodeProSemibold\', sans-serif;\n\tz-index: 999;\n}\n\n#error-fatal,\n#error-dialog {\n\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\tmargin: -5em 0 0 -15em;\n\tpadding: 1em;\n\twidth: 30em;\n\theight: 10em;\n}\n\n#error-fatal {\n\ttext-align: center;\n}\n\n#error-dialog {\n\tbackground: rgba(0, 0, 0, 0.6);\n}\n\n#error-dialog .accept {\n\tdisplay: inline-block;\n\tpadding: .5em;\n\tbackground-color: #222;\n\tbackground-image: -moz-linear-gradient(top, #333, #222);\n\tbackground-image: -webkit-linear-gradient(top, #333, #222);\n}\n\n#error-dialog .accept:hover {\n\tbackground: #333;\n}\n\n/**\n * GAME\n */\n#viewport-frame {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\tbottom: 0;\n\tright: 0;\n\toverflow: hidden;\n\tfont-family: \'SourceCodeProSemibold\', sans-serif;\n\tbackground: #000;\n}\n\n#viewport-frame:focus {\n\toutline: none;\n}\n\n#viewport {\n\tbackground: #000;\n}\n\n#viewport-ui {\n\tposition: absolute;\n\ttop: 0;\n\tleft: 0;\n\tbottom: 0;\n\tright: 0;\n\tcolor: #fff;\n\tz-index: 1;\n\n\t/**\n\t * Don\'t allow people to select text.\n\t */\n\t-webkit-touch-callout: none;\n\t-webkit-user-select: none;\n\t-moz-user-select: none;\n\tuser-select: none;\n}\n\n#viewport-frame:-moz-full-screen,\n#viewport:-moz-full-screen,\n#viewport-ui:-moz-full-screen {\n\tdisplay: block;\n\tposition: absolute;\n\tleft: 0;\n\ttop: 0;\n\tmargin: 0;\n\twidth: 100%;\n\theight: 100%;\n}\n\n#viewport-frame:-webkit-full-screen,\n#viewport:-webkit-full-screen,\n#viewport-ui:-webkit-full-screen {\n\tdisplay: block;\n\tposition: absolute;\n\tleft: 0;\n\ttop: 0;\n\tmargin: 0;\n\twidth: 100%;\n\theight: 100%;\n}';});
 
-
 /*global setMatrixArrayType: true */
 
-define('system/browser/sys',['require','async','gameshim','glmatrix','common/qshared','common/com','text!system/browser/css/main.css'],function (require) {
+// HACK to get the current CDN root for the com_filecdn cvar.
+var sys_cdnroot = (function () {
+	var scripts = document.getElementsByTagName('script');
+	var script = scripts[scripts.length - 1];
+	var matches = script.src.match(/^(http|https):\/\/[^\/]+/);
+	return matches[0];
+})();
+
+define('system/browser/sys',['require','async','gameshim','glmatrix','common/qshared','common/com','common/cvar','text!system/browser/css/main.css'],function (require) {
 	var async    = require('async');
 	var gameshim = require('gameshim');
 	var glmatrix = require('glmatrix');
 	var QS       = require('common/qshared');
 	var COM      = require('common/com');
+	var Cvar     = require('common/cvar');
 
 	var css = require('text!system/browser/css/main.css');
 
@@ -49955,7 +50087,7 @@ function Init(inRoot, expectedGameVersion) {
 	setMatrixArrayType(Array);
 
 	// Initialize DOM elements.
-	InitInterface();
+	InitChrome();
 
 	// Get the GL Context (try 'webgl' first, then fallback).
 	gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
@@ -49970,6 +50102,7 @@ function Init(inRoot, expectedGameVersion) {
 
 	InitInput();
 	InitConsole();
+	InitFilesystem();
 
 	// Initialize the actual game.
 	COM.Init(GetExports(), false, function () {
@@ -49987,9 +50120,9 @@ function Init(inRoot, expectedGameVersion) {
 }
 
 /**
- * InitInterface
+ * InitChrome
  */
-function InitInterface() {
+function InitChrome() {
 	root.innerHTML = '<div id="viewport-frame">' +
 	                     '<canvas id="viewport"></canvas>' +
 	                     '<div id="viewport-ui"></div>' +
@@ -50024,6 +50157,23 @@ function InitConsole() {
 	window.$ = function (str) {
 		COM.ExecuteBuffer(str);
 	};
+}
+
+/**
+ * InitFilesystem
+ */
+function InitFilesystem() {
+	// By default, set the CDN root to the current script root.
+	// TODO Enable servers to override, append a fallback to this
+	// when a client connects for custom maps.
+	if (!sys_cdnroot) {
+		error('Could not resolve CDN root');
+		return;
+	}
+	var com_filecdn = Cvar.AddCvar('com_filecdn');
+	com_filecdn.set(sys_cdnroot);
+
+	// TODO request FS permissions here?
 }
 
 /**
@@ -50221,13 +50371,8 @@ function ReadLocalFile(path, encoding, callback) {
 function ReadRemoteFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 
-	// Due to browser cross-domain restrictions, we can't prefix the
-	// path with the content server host. Instead, we prefix the path
-	// with 'asset/' and send them to the current domain, which in
-	// turn forwards them to the correct content server.
-	//
-	// Also, cache bust the assets with the current game version.
-	path = 'assets/' + path + '?v=' + QS.GAME_VERSION;
+	var com_filecdn = Cvar.AddCvar('com_filecdn');
+	path = com_filecdn.get() + '/assets/' + path + '?v=' + QS.GAME_VERSION;
 
 	var request = new XMLHttpRequest();
 	request.open('GET', path, true);

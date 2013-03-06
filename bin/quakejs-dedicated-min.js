@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1088;
+var GAME_VERSION = 0.1089;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5255,11 +5255,11 @@ var MAX_SOUNDS              = 256;                         // so they cannot be 
 /**
  * Faux entity numbers
  */
-var ARENANUM_NONE           = ENTITYNUM_NONE;
-
 var ENTITYNUM_NONE          = MAX_GENTITIES-1;
 var ENTITYNUM_WORLD         = MAX_GENTITIES-2;
 var ENTITYNUM_MAX_NORMAL    = MAX_GENTITIES-2;
+
+var ARENANUM_NONE           = ENTITYNUM_NONE;
 
 /**
  * Communicated across the network
@@ -5825,7 +5825,7 @@ var BitView = function (source, byteOffset, byteLength) {
 
 	// Used to massage fp values so we can operate on them
 	// at the bit level.
-	this._scratch = new DataView(new ArrayBuffer(4));
+	this._scratch = new DataView(new ArrayBuffer(8));
 };
 
 Object.defineProperty(BitView.prototype, 'buffer', {
@@ -5910,6 +5910,12 @@ BitView.prototype.getFloat32 = function (offset) {
 	this._scratch.setUint32(0, this.getUint32(offset));
 	return this._scratch.getFloat32(0);
 };
+BitView.prototype.getFloat64 = function (offset) {
+	this._scratch.setUint32(0, this.getUint32(offset));
+	// DataView offset is in bytes.
+	this._scratch.setUint32(4, this.getUint32(offset+32));
+	return this._scratch.getFloat64(0);
+};
 
 BitView.prototype.setInt8  =
 BitView.prototype.setUint8 = function (offset, value) {
@@ -5926,6 +5932,11 @@ BitView.prototype.setUint32 = function (offset, value) {
 BitView.prototype.setFloat32 = function (offset, value) {
 	this._scratch.setFloat32(0, value);
 	this.setBits(offset, this._scratch.getUint32(0), 32);
+};
+BitView.prototype.setFloat64 = function (offset, value) {
+	this._scratch.setFloat64(0, value);
+	this.setBits(offset, this._scratch.getUint32(0), 32);
+	this.setBits(offset+32, this._scratch.getUint32(4), 32);
 };
 
 /**********************************************************
@@ -6004,6 +6015,7 @@ BitStream.prototype.readUint16 = reader('getUint16', 16);
 BitStream.prototype.readInt32 = reader('getInt32', 32);
 BitStream.prototype.readUint32 = reader('getUint32', 32);
 BitStream.prototype.readFloat32 = reader('getFloat32', 32);
+BitStream.prototype.readFloat64 = reader('getFloat64', 64);
 
 BitStream.prototype.writeInt8 = writer('setInt8', 8);
 BitStream.prototype.writeUint8 = writer('setUint8', 8);
@@ -6012,6 +6024,7 @@ BitStream.prototype.writeUint16 = writer('setUint16', 16);
 BitStream.prototype.writeInt32 = writer('setInt32', 32);
 BitStream.prototype.writeUint32 = writer('setUint32', 32);
 BitStream.prototype.writeFloat32 = writer('setFloat32', 32);
+BitStream.prototype.writeFloat64 = writer('setFloat64', 64);
 
 BitStream.prototype.readASCIIString = function (bytes) {
 	var i = 0;
@@ -14364,36 +14377,22 @@ function ArenaInfoChanged() {
 	SV.SetConfigstring('arena:' + level.arena.arenaNum, info);
 }
 
-// /**
-//  * ArenaCount
-//  */
-// function ArenaCount(ignoreClientNum) {
-// 	var numAlive = 0;
+/**
+ * SendArenaCommand
+ */
+function SendArenaCommand(type, data) {
+	for (var i = 0; i < level.maxclients; i++) {
+		var ent = level.gentities[i];
 
-// 	for (var i = 0; i < level.maxclients; i++) {
-// 		if (i === ignoreClientNum) {
-// 			continue;
-// 		}
+		if (!ent.inuse) {
+			continue;
+		}
 
-// 		var ent = level.gentities[i];
-
-// 		if (!ent.inuse) {
-// 			continue;
-// 		}
-
-// 		if (ent.s.arenaNum !== level.arena.arenaNum) {
-// 			continue;
-// 		}
-
-// 		if (ent.client.sess.team === TEAM.SPECTATOR) {
-// 			continue;
-// 		}
-
-// 		numAlive++;
-// 	}
-
-// 	return numAlive;
-// }
+		if (ent.s.arenaNum === level.arena.arenaNum) {
+			SV.SendServerCommand(i, type, data);
+		}
+	}
+}
 
 /**
  * ArenaRestart
@@ -14529,7 +14528,7 @@ function CheckTournamentRules() {
 					break;
 				}
 
-				SetTeam(next, 'f', false);
+				SetTeam(next, 'f');
 			}
 		}
 
@@ -14717,7 +14716,7 @@ function QueueTournamentLoser() {
 	}
 
 	// Make them a spectator.
-	SetTeam(ent, 's', true);
+	SetTeam(ent, 's');
 
 	PushClientToQueue(ent);
 }
@@ -14747,6 +14746,7 @@ function CreateRoundMachine() {
 			defer: true
 		},
 		events: [
+			{ name: 'wait',         from: ['none', GS.COUNTDOWN],     to: GS.WAITING      },
 			{ name: 'ready',        from: GS.WAITING,                 to: GS.COUNTDOWN },
 			{ name: 'start',        from: GS.COUNTDOWN,               to: GS.ACTIVE    },
 			{ name: 'end',          from: GS.ACTIVE,                  to: GS.OVER      },
@@ -14884,6 +14884,17 @@ function RoundReady() {
  * RoundRunCountdown
  */
 function RoundRunCountdown() {
+	var count1 = function () {
+		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
+	};
+	var count2 = function () {
+		return TeamCount(TEAM.BLUE, ENTITYNUM_NONE);
+	};
+
+	if (!count1() || !count2()) {
+		level.arena.state.wait();
+	}
+
 	if (level.time > level.arena.warmupTime) {
 		level.arena.state.start();
 	}
@@ -15013,8 +15024,21 @@ function RoundRestart() {
 			level.arena.group1 = null;
 
 			// Move winners to red team.
-			SetTeamForGroup(level.arena.group2, TEAM.RED);
-			RespawnTeam(TEAM.RED);
+			for (var i = 0; i < level.maxclients; i++) {
+				var ent = level.gentities[i];
+
+				if (!ent.inuse) {
+					continue;
+				}
+				if (ent.s.arenaNum !== level.arena.arenaNum) {
+					continue;
+				}
+
+				if (ent.client.sess.group === level.arena.group2) {
+					ForceTeam(ent, TEAM.RED);
+				}
+			}
+
 			level.arena.group1 = level.arena.group2;
 			level.arena.group2 = null;
 		}
@@ -15044,12 +15068,7 @@ function QueueGroup(group) {
 		}
 
 		if (ent.client.sess.group === group) {
-			// Restore group as going to spec clears it.
-			var group = ent.client.sess.group;
-			SetTeam(ent, 's', true);
-			ent.client.sess.group = group;
-
-			PushClientToQueue(ent);
+			ForceTeam(ent, TEAM.SPECTATOR);
 			continue;
 		}
 	}
@@ -15061,30 +15080,15 @@ function QueueGroup(group) {
 function DequeueGroup(group) {
 	log('Dequeuing group', group);
 
-	for (var i = 0; i < level.maxclients; i++) {
-		var ent = level.gentities[i];
-
-		if (!ent.inuse) {
-			continue;
-		}
-
-		if (ent.s.arenaNum !== level.arena.arenaNum) {
-			continue;
-		}
-
-		if (ent.client.sess.group === group) {
-			RemoveClientFromQueue(ent);
-
-			// Since our group is active, it'll place us on the correct team.
-			SetTeam(ent, group, true);
-		}
+	var team;
+	if (level.arena.group1 === group) {
+		team = TEAM.RED;
+	} else if (level.arena.group2 === group) {
+		team = TEAM.BLUE;
+	} else {
+		error('No active group to match', group);
 	}
-}
 
-/**
- * SetTeamForGroup
- */
-function SetTeamForGroup(group, team) {
 	for (var i = 0; i < level.maxclients; i++) {
 		var ent = level.gentities[i];
 
@@ -15097,8 +15101,7 @@ function SetTeamForGroup(group, team) {
 		}
 
 		if (ent.client.sess.group === group) {
-			ent.client.sess.team = team;
-			ClientUserinfoChanged(i);
+			ForceTeam(ent, team);
 		}
 	}
 }
@@ -15124,6 +15127,27 @@ function RespawnTeam(team) {
 			ClientSpawn(ent);
 		}
 	}
+}
+
+/**
+ * ForceTeam
+ */
+function ForceTeam(ent, team) {
+	ent.client.sess.team = team;
+	ent.client.sess.spectatorState = team === TEAM.SPECTATOR ? SPECTATOR.FREE : SPECTATOR.NOT;
+	ent.client.pers.teamState.state = TEAM_STATE.BEGIN;
+
+	// Go to the end of the line as spec.
+	if (team === TEAM.SPECTATOR) {
+		PushClientToQueue(ent);
+	}
+
+	TossClientItems(ent);
+
+	ClientUserinfoChanged(ent.client.ps.clientNum);
+	ClientSpawn(ent);
+
+	CalculateRanks();
 }
 
 /**********************************************************
@@ -15160,6 +15184,12 @@ function PopClientFromQueue() {
 			continue;
 		}
 
+		// Never select the dedicated follow or scoreboard clients.
+		if (ent.client.sess.spectatorState === SPECTATOR.SCOREBOARD ||
+			ent.client.sess.spectatorClient < 0) {
+			continue;
+		}
+
 		if (!nextInLine || ent.client.sess.spectatorNum > nextInLine.client.sess.spectatorNum) {
 			nextInLine = ent;
 		}
@@ -15170,8 +15200,6 @@ function PopClientFromQueue() {
 	}
 
 	log('Popping client', nextInLine.client.ps.clientNum, 'from end of queue');
-
-	nextInLine.client.sess.spectatorNum = -1;
 
 	return nextInLine;
 }
@@ -15199,19 +15227,10 @@ function PushClientToQueue(ent) {
 
 		if (cur === ent) {
 			cur.client.sess.spectatorNum = 0;
-		} else if (cur.client.sess.spectatorNum !== -1) {
+		} else if (cur.client.sess.team === TEAM.SPECTATOR) {
 			cur.client.sess.spectatorNum++;
 		}
 	}
-}
-
-/**
- * RemoveClientFromQueue
- */
-function RemoveClientFromQueue(ent) {
-	log('RemoveClientFromQueue', ent.client.ps.clientNum);
-
-	ent.client.sess.spectatorNum = -1;
 }
 
 /**********************************************************
@@ -15774,7 +15793,7 @@ function ClientBegin(clientNum) {
 	ClientSpawn(ent);
 
 	if (client.sess.team !== TEAM.SPECTATOR) {
-		SV.SendServerCommand(null, 'print', client.pers.name + ' entered the game');
+		SendArenaCommand('print', client.pers.name + ' entered the game');
 	}
 
 	// Count current clients and rank for scoreboard.
@@ -16643,13 +16662,13 @@ function SetClientViewAngle(ent, angles) {
  */
 function BroadcastTeamChange(client, oldTeam) {
 	if (client.sess.team === TEAM.RED) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the red team.');
+		SendArenaCommand('cp', client.pers.name + ' joined the red team.');
 	} else if (client.sess.team === TEAM.BLUE) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the blue team.');
+		SendArenaCommand('cp', client.pers.name + ' joined the blue team.');
 	} else if (client.sess.team === TEAM.SPECTATOR && oldTeam !== TEAM.SPECTATOR) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the spectators.');
+		SendArenaCommand('cp', client.pers.name + ' joined the spectators.');
 	} else if (client.sess.team === TEAM.FREE) {
-		SV.SendServerCommand(null, 'cp', client.pers.name + ' joined the battle.');
+		SendArenaCommand('cp', client.pers.name + ' joined the battle.');
 	}
 }
 
@@ -17357,8 +17376,8 @@ function ClientCmdScore(ent) {
 /**
  * SendScoreboardMessage
  */
-function SendScoreboardMessage(ent) {
-	var arena = level.arenas[ent.s.arenaNum];
+function SendScoreboardMessage(to) {
+	var arena = level.arenas[to.s.arenaNum];
 
 	var val = {
 		scoreRed: arena.teamScores[TEAM.RED],
@@ -17368,7 +17387,12 @@ function SendScoreboardMessage(ent) {
 
 	for (var i = 0; i < arena.numConnectedClients; i++) {
 		var clientNum = arena.sortedClients[i];
-		var client = level.clients[clientNum];
+		var ent = level.gentities[clientNum];
+		var client = ent.client;
+
+		if (ent.s.arenaNum !== to.s.arenaNum) {
+			continue;
+		}
 
 		var ping = -1;
 		if (client.pers.connected !== CON.CONNECTING) {
@@ -17403,7 +17427,7 @@ function SendScoreboardMessage(ent) {
 		});
 	}
 
-	SV.SendServerCommand(ent.s.number, 'scores', val);
+	SV.SendServerCommand(to.s.number, 'scores', val);
 }
 
 /**
@@ -17451,7 +17475,7 @@ function ClientCmdTeam(ent, teamName) {
 /**
  * SetTeam
  */
-function SetTeam(ent, teamName, silent) {
+function SetTeam(ent, teamName) {
 	var client = ent.client;
 	var clientNum = client.ps.clientNum;
 
@@ -17525,12 +17549,15 @@ function SetTeam(ent, teamName, silent) {
 	//
 	// Execute the team change
 	//
-	log('Setting team for', clientNum, 'to', team, groupName);
-
 	client.sess.team = team;
 	client.sess.group = groupName;
 	client.sess.spectatorState = specState;
 	client.sess.spectatorClient = specClient;
+
+	// They go to the end of the line for tournements.
+	if (team === TEAM.SPECTATOR) {
+		PushClientToQueue(ent);
+	}
 
 	// If the player was dead leave the body.
 	if (client.ps.pm_type === PM.DEAD) {
@@ -17544,9 +17571,7 @@ function SetTeam(ent, teamName, silent) {
 		PlayerDie(ent, ent, ent, 100000, MOD.SUICIDE);
 	}
 
-	if (!silent) {
-		BroadcastTeamChange(client, oldTeam);
-	}
+	BroadcastTeamChange(client, oldTeam);
 	ClientUserinfoChanged(clientNum);
 	ClientBegin(clientNum);
 }
@@ -17589,7 +17614,11 @@ function SetArena(ent, arenaNum) {
 
 	// Change arena and kick to spec.
 	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
-	SetTeam(ent, 's', false);
+	ent.client.sess.group = null;
+	ForceTeam(ent, TEAM.SPECTATOR);
+
+	// Update scores.
+	SendScoreboardMessage(ent);
 
 	// Pop back.
 	level.arena = oldArena;
@@ -17987,17 +18016,17 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		if (attacker.client) {
 			killerName = attacker.client.pers.name;
 		} else {
-			killerName = "<non-client>";
+			killerName = '<non-client>';
 		}
 	}
 	if (killer === undefined || killer < 0 || killer >= MAX_CLIENTS) {
 		killer = ENTITYNUM_WORLD;
-		killerName = "<world>";
+		killerName = '<world>';
 	}
 
 	log('Kill:', killer, self.s.number, meansOfDeath, ',', killerName, 'killed', self.client.pers.name);
 
-	// Broadcast the death event to everyone
+	// Broadcast the death event to everyone.
 	var ent = TempEntity(self.r.currentOrigin, EV.OBITUARY);
 	ent.s.eventParm = meansOfDeath;
 	ent.s.otherEntityNum = self.s.number;
@@ -18011,12 +18040,14 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 	if (attacker && attacker.client) {
 		attacker.client.lastkilled_client = self.s.number;
 
-		attacker.client.ps.persistant[PERS.FRAGS]++;
-
-		if (attacker == self || OnSameTeam(self, attacker)) {
+		if (attacker === self || OnSameTeam(self, attacker)) {
 			AddScore(attacker, self.r.currentOrigin, -1);
+
+			attacker.client.ps.persistant[PERS.FRAGS]--;
 		} else {
 			AddScore(attacker, self.r.currentOrigin, 1);
+
+			attacker.client.ps.persistant[PERS.FRAGS]++;
 
 			if (meansOfDeath === MOD.GAUNTLET) {
 				// Play humiliation on player.
@@ -18031,9 +18062,9 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 				self.client.ps.persistant[PERS.PLAYEREVENTS] ^= PLAYEREVENTS.GAUNTLETREWARD;
 			}
 
-			// check for two kills in a short amount of time
-			// if this is close enough to the last kill, give a reward sound
-			if ( level.time - attacker.client.lastKillTime < CARNAGE_REWARD_TIME ) {
+			// Check for two kills in a short amount of time
+			// if this is close enough to the last kill, give a reward sound.
+			if (level.time - attacker.client.lastKillTime < CARNAGE_REWARD_TIME ) {
 				// play excellent on player
 				attacker.client.ps.persistant[PERS.EXCELLENT_COUNT]++;
 
@@ -18048,20 +18079,20 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		AddScore(self, self.r.currentOrigin, -1);
 	}
 
-	// // Add team bonuses
+	// // Add team bonuses.
 	// Team_FragBonuses(self, inflictor, attacker);
 
 	// If I committed suicide, the flag does not fall, it returns.
 	if (meansOfDeath === MOD.SUICIDE) {
-		if (self.client.ps.powerups[PW.NEUTRALFLAG]) {		// only happens in One Flag CTF
+		if (self.client.ps.powerups[PW.NEUTRALFLAG]) {  // only happens in One Flag CTF
 			Team_ReturnFlag(TEAM.FREE);
 			self.client.ps.powerups[PW.NEUTRALFLAG] = 0;
 
-		} else if (self.client.ps.powerups[PW.REDFLAG]) {		// only happens in standard CTF
+		} else if (self.client.ps.powerups[PW.REDFLAG]) {  // only happens in standard CTF
 			Team_ReturnFlag(TEAM.RED);
 			self.client.ps.powerups[PW.REDFLAG] = 0;
 
-		} else if (self.client.ps.powerups[PW.BLUEFLAG]) {	// only happens in standard CTF
+		} else if (self.client.ps.powerups[PW.BLUEFLAG]) {  // only happens in standard CTF
 			Team_ReturnFlag(TEAM.BLUE);
 			self.client.ps.powerups[PW.BLUEFLAG] = 0;
 		}
@@ -23295,8 +23326,7 @@ var ClientSnapshot = function () {
 	svs,
 	dedicated;
 
-var sv_filecdn,
-	sv_ip,
+var sv_ip,
 	sv_port,
 	sv_master,
 	sv_serverid,
@@ -23350,7 +23380,6 @@ function Init(inCL, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	sv_filecdn    = Cvar.AddCvar('sv_filecdn',    'http://content.quakejs.com', Cvar.FLAGS.ARCHIVE);
 	sv_ip         = Cvar.AddCvar('sv_ip',         '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
 	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE, true);
 	sv_master     = Cvar.AddCvar('sv_master',     'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
@@ -24235,9 +24264,11 @@ function UserMove(client, msg, delta) {
 	}
 
 	var cmds = [];
+	var oldcmd = client.lastUserCmd;
 	for (var i = 0; i < count; i++) {
 		var cmd = new QS.UserCmd();
-		COM.ReadDeltaUsercmd(msg, null, cmd);
+		COM.ReadDeltaUsercmd(msg, oldcmd, cmd);
+		oldcmd = cmd;
 		cmds.push(cmd);
 	}
 
@@ -25856,7 +25887,8 @@ function CmdVstr(name) {
 	CL,
 	SV;
 
-var com_protocol;
+var com_filecdn,
+	com_protocol;
 
 var dedicated,
 	events,
@@ -25946,7 +25978,8 @@ function Init(inSYS, inDedicated, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION, Cvar.FLAGS.ROM);
+	com_filecdn  = Cvar.AddCvar('com_filecdn', 'http://content.quakejs.com',  Cvar.FLAGS.ARCHIVE);
+	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION,          Cvar.FLAGS.ROM);
 }
 
 /**
@@ -26294,7 +26327,7 @@ function GetExports() {
 	//
 // Helper functions to get/set object properties based on a string.
 //
-var FLOAT32 = 0;
+var FLOAT64 = 0;
 var INT8    = 1;
 var UINT8   = 2;
 var UINT16  = 3;
@@ -26302,8 +26335,8 @@ var UINT32  = 4;
 
 function fnread(bits) {
 	switch (bits) {
-		case FLOAT32:
-			return 'readFloat32';
+		case FLOAT64:
+			return 'readFloat64';
 		case INT8:
 			return 'readInt8';
 		case UINT8:
@@ -26319,8 +26352,8 @@ function fnread(bits) {
 
 function fnwrite(bits) {
 	switch (bits) {
-		case FLOAT32:
-			return 'writeFloat32';
+		case FLOAT64:
+			return 'writeFloat64';
 		case INT8:
 			return 'writeInt8';
 		case UINT8:
@@ -26341,59 +26374,104 @@ function fnwrite(bits) {
  **********************************************************/
 var dummyUsercmd = new QS.UserCmd();
 
-var usercmdFields = [
-	{ path: QS.FTA('angles[0]'),   bits: UINT16 },
-	{ path: QS.FTA('angles[1]'),   bits: UINT16 },
-	{ path: QS.FTA('angles[2]'),   bits: UINT16 },
-	{ path: QS.FTA('forwardmove'), bits: UINT8  },
-	{ path: QS.FTA('rightmove'),   bits: UINT8  },
-	{ path: QS.FTA('upmove'),      bits: UINT8  },
-	{ path: QS.FTA('buttons'),     bits: UINT16 },
-	{ path: QS.FTA('weapon'),      bits: UINT8  }
-];
+// var kbitmask = [
+// 	0x00000001, 0x00000003, 0x00000007, 0x0000000F,
+// 	0x0000001F, 0x0000003F, 0x0000007F, 0x000000FF,
+// 	0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF,
+// 	0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF,
+// 	0x0001FFFF, 0x0003FFFF, 0x0007FFFF, 0x000FFFFF,
+// 	0x001FFFFf, 0x003FFFFF, 0x007FFFFF, 0x00FFFFFF,
+// 	0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF, 0x0FFFFFFF,
+// 	0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF
+// ];
+
+function WriteDeltaKey(msg, key, oldV, newV, bits) {
+	if (oldV === newV) {
+		msg.writeBits(0, 1);
+		return;
+	}
+	msg.writeBits(1, 1);
+	msg.writeBits(newV/* ^ key*/, bits);
+}
+
+function ReadDeltaKey(msg, key, oldV, bits) {
+	if (msg.readBits(1)) {
+		// Negative bits are signed.
+		return msg.readBits(Math.abs(bits), (bits < 0))/* ^ (key & kbitmask[bits])*/;
+	}
+	return oldV;
+}
 
 function WriteDeltaUsercmd(msg, from, to) {
 	if (!from) {
 		from = dummyUsercmd;
 	}
 
-	msg.writeInt32(to.serverTime);
+	if (to.serverTime - from.serverTime < 256) {
+		msg.writeBits(1, 1);
+		msg.writeBits(to.serverTime - from.serverTime, 8);
+	} else {
+		msg.writeBits(0, 1);
+		msg.writeBits(to.serverTime, 32);
+	}
 
-	// if (from.angles[0] === to.angles[0] &&
-	// 	from.angles[1] === to.angles[1] &&
-	// 	from.angles[2] === to.angles[2] &&
-	// 	from.forwardmove === to.forwardmove &&
-	// 	from.rightmove === to.rightmove &&
-	// 	from.upmove === to.upmove &&
-	// 	from.buttons === to.buttons &&
-	// 	from.weapon === to.weapon) {
-	// 		msg.writeInt8(0);  // no change
-	// 		return;
-	// }
+	if (from.angles[0] === to.angles[0] &&
+		from.angles[1] === to.angles[1] &&
+		from.angles[2] === to.angles[2] &&
+		from.forwardmove === to.forwardmove &&
+		from.rightmove === to.rightmove &&
+		from.upmove === to.upmove &&
+		from.buttons === to.buttons &&
+		from.weapon === to.weapon) {
+			msg.writeBits(0, 1);  // no change
+			return;
+	}
 
-	// msg.writeInt8(1);  // changed
+	// key ^= to.serverTime;
 
-	msg.writeUint16(to.angles[0]);
-	msg.writeUint16(to.angles[1]);
-	msg.writeUint16(to.angles[2]);
-	msg.writeInt8(to.forwardmove);
-	msg.writeInt8(to.rightmove);
-	msg.writeInt8(to.upmove);
-	msg.writeUint16(to.buttons);
-	msg.writeUint8(to.weapon);
+	msg.writeBits(1, 1);  // change
+
+	WriteDeltaKey(msg, 0/*key*/, from.angles[0], to.angles[0], 16);
+	WriteDeltaKey(msg, 0/*key*/, from.angles[1], to.angles[1], 16);
+	WriteDeltaKey(msg, 0/*key*/, from.angles[2], to.angles[2], 16);
+	WriteDeltaKey(msg, 0/*key*/, from.forwardmove, to.forwardmove, 8);
+	WriteDeltaKey(msg, 0/*key*/, from.rightmove, to.rightmove, 8);
+	WriteDeltaKey(msg, 0/*key*/, from.upmove, to.upmove, 8);
+	WriteDeltaKey(msg, 0/*key*/, from.buttons, to.buttons, 16);
+	WriteDeltaKey(msg, 0/*key*/, from.weapon, to.weapon, 8);
 }
 
 function ReadDeltaUsercmd(msg, from, to) {
-	to.serverTime = msg.readInt32();
+	if (!from) {
+		from = dummyUsercmd;
+	}
 
-	to.angles[0] = msg.readUint16();
-	to.angles[1] = msg.readUint16();
-	to.angles[2] = msg.readUint16();
-	to.forwardmove = msg.readInt8();
-	to.rightmove = msg.readInt8();
-	to.upmove = msg.readInt8();
-	to.buttons = msg.readUint16();
-	to.weapon = msg.readUint8();
+	if (msg.readBits(1)) {
+		to.serverTime = from.serverTime + msg.readBits(8);
+	} else {
+		to.serverTime = msg.readBits(32);
+	}
+
+	if (msg.readBits(1)) {
+		// key ^= to.serverTime;
+		to.angles[0] = ReadDeltaKey(msg, 0/*key*/, from.angles[0], 16);
+		to.angles[1] = ReadDeltaKey(msg, 0/*key*/, from.angles[1], 16);
+		to.angles[2] = ReadDeltaKey(msg, 0/*key*/, from.angles[2], 16);
+		to.forwardmove = ReadDeltaKey(msg, 0/*key*/, from.forwardmove, -8);
+		to.rightmove = ReadDeltaKey(msg, 0/*key*/, from.rightmove, -8);
+		to.upmove = ReadDeltaKey(msg, 0/*key*/, from.upmove, -8);
+		to.buttons = ReadDeltaKey(msg, 0/*key*/, from.buttons, 16);
+		to.weapon = ReadDeltaKey(msg, 0/*key*/, from.weapon, 8);
+	} else {
+		to.angles[0] = from.angles[0];
+		to.angles[1] = from.angles[1];
+		to.angles[2] = from.angles[2];
+		to.forwardmove = from.forwardmove;
+		to.rightmove = from.rightmove;
+		to.upmove = from.upmove;
+		to.buttons = from.buttons;
+		to.weapon = from.weapon;
+	}
 }
 
 /**********************************************************
@@ -26404,16 +26482,16 @@ function ReadDeltaUsercmd(msg, from, to) {
 
 var playerStateFields = [
 	{ path: QS.FTA('commandTime'),       bits: UINT32  },
-	{ path: QS.FTA('origin[0]'),         bits: FLOAT32 },
-	{ path: QS.FTA('origin[1]'),         bits: FLOAT32 },
+	{ path: QS.FTA('origin[0]'),         bits: FLOAT64 },
+	{ path: QS.FTA('origin[1]'),         bits: FLOAT64 },
 	{ path: QS.FTA('bobCycle'),          bits: UINT8   },
-	{ path: QS.FTA('velocity[0]'),       bits: FLOAT32 },
-	{ path: QS.FTA('velocity[1]'),       bits: FLOAT32 },
-	{ path: QS.FTA('viewangles[1]'),     bits: FLOAT32 },
-	{ path: QS.FTA('viewangles[0]'),     bits: FLOAT32 },
+	{ path: QS.FTA('velocity[0]'),       bits: FLOAT64 },
+	{ path: QS.FTA('velocity[1]'),       bits: FLOAT64 },
+	{ path: QS.FTA('viewangles[1]'),     bits: FLOAT64 },
+	{ path: QS.FTA('viewangles[0]'),     bits: FLOAT64 },
 	{ path: QS.FTA('weaponTime'),        bits: UINT16  },
-	{ path: QS.FTA('origin[2]'),         bits: FLOAT32 },
-	{ path: QS.FTA('velocity[2]'),       bits: FLOAT32 },
+	{ path: QS.FTA('origin[2]'),         bits: FLOAT64 },
+	{ path: QS.FTA('velocity[2]'),       bits: FLOAT64 },
 	{ path: QS.FTA('legsTimer'),         bits: UINT8   },
 	{ path: QS.FTA('pm_time'),           bits: UINT16  },
 	{ path: QS.FTA('eventSequence'),     bits: UINT16  },
@@ -26444,14 +26522,14 @@ var playerStateFields = [
 	{ path: QS.FTA('eventParms[0]'),     bits: UINT8   },
 	{ path: QS.FTA('eventParms[1]'),     bits: UINT8   },
 	{ path: QS.FTA('clientNum'),         bits: UINT8   },
-	{ path: QS.FTA('arenaNum'),          bits: UINT16  },
 	{ path: QS.FTA('weapon'),            bits: UINT8   }, /*5*/
-	{ path: QS.FTA('viewangles[2]'),     bits: FLOAT32 },
-	// { path: QS.FTA('grapplePoint[0]'),   bits: FLOAT32 },
-	// { path: QS.FTA('grapplePoint[1]'),   bits: FLOAT32 },
-	// { path: QS.FTA('grapplePoint[2]'),   bits: FLOAT32 },
+	{ path: QS.FTA('viewangles[2]'),     bits: FLOAT64 },
+	// { path: QS.FTA('grapplePoint[0]'),   bits: FLOAT64 },
+	// { path: QS.FTA('grapplePoint[1]'),   bits: FLOAT64 },
+	// { path: QS.FTA('grapplePoint[2]'),   bits: FLOAT64 },
 	{ path: QS.FTA('jumppad_ent'),       bits: UINT16  }, /*GENTITYNUM_BITS*/
-	{ path: QS.FTA('loopSound'),         bits: UINT16  }
+	{ path: QS.FTA('loopSound'),         bits: UINT16  },
+	{ path: QS.FTA('arenaNum'),          bits: UINT16  }
 ];
 
 var dummyPlayerState = new QS.PlayerState();
@@ -26460,15 +26538,15 @@ var dummyPlayerState = new QS.PlayerState();
  * WriteDeltaPlayerState
  */
 function WriteDeltaPlayerState(msg, from, to) {
-	var i, changed;
+	var i, lastChanged;
 	var field, fromF, toF, func;
 
 	if (!from) {
 		from = dummyPlayerState;
 	}
 
-	// Figure out the number of fields that have changed.
-	changed = 0;
+	// Figure out the last changed field.
+	lastChanged = 0;
 	for (i = 0; i < playerStateFields.length; i++) {
 		field = playerStateFields[i];
 
@@ -26476,46 +26554,37 @@ function WriteDeltaPlayerState(msg, from, to) {
 		toF = QS.AGET(to, field.path);
 
 		if (fromF !== toF) {
-			changed++;
+			lastChanged = i + 1;
 		}
 	}
 
-	msg.writeInt8(changed);
+	msg.writeUint8(lastChanged);
 
-	// Write out each field that has changed, prefixing
-	// the changed field with its indexed into the ps
-	// field array.
-	for (i = 0; i < playerStateFields.length; i++) {
+	// Write out up to last changed, prefixing each field with a
+	// 0 or 1 to indicated if they've changed.
+	for (i = 0; i < lastChanged; i++) {
 		field = playerStateFields[i];
 
 		fromF = QS.AGET(from, field.path);
 		toF = QS.AGET(to, field.path);
 		if (fromF === toF) {
+			msg.writeBits(0, 1);  // no change
 			continue;
 		}
 
+		msg.writeBits(1, 1);  // changed
+
 		func = fnwrite(field.bits);
 
-		// TODO Could write out a master bitmask describing
-		// the changed fields.
-		msg.writeInt8(i);
 		msg[func](QS.AGET(to, field.path));
 	}
 
-	// Write out the arrays. First we write a bit mask
-	// describing which arrays have changed, followed by
-	// a mask for each array describing which of its
-	// elements have changed.
-
-	// Sanity check. Increase bitmask send length if changing
-	// these maxes is necessary
-	if (QS.MAX_STATS > 16 || QS.MAX_PERSISTANT > 16 || QS.MAX_POWERUPS > 16 || QS.MAX_WEAPONS > 16) {
-		throw new Error('Array maxes exceed bitmask length');
-	}
-
+	// Write out a 0 or 1 before each array indicating if
+	// it's changed as well asa mask for each array describing
+	// which of its elements have changed.
 	var statsbits      = 0,
 		persistantbits = 0,
-		powerupsbits   = 0,
+		powerupbits    = 0,
 		ammobits       = 0;
 
 	for (i = 0; i < QS.MAX_STATS; i++) {
@@ -26530,7 +26599,7 @@ function WriteDeltaPlayerState(msg, from, to) {
 	}
 	for (i = 0; i < QS.MAX_POWERUPS; i++) {
 		if (to.powerups[i] !== from.powerups[i]) {
-			powerupsbits |= 1 << i;
+			powerupbits |= 1 << i;
 		}
 	}
 	for (i = 0; i < QS.MAX_WEAPONS; i++) {
@@ -26539,46 +26608,64 @@ function WriteDeltaPlayerState(msg, from, to) {
 		}
 	}
 
-	// Write out a byte explaining which arrays changed.
-	var arrbits = (statsbits ? 1 : 0) | (persistantbits ? 2 : 0) | (powerupsbits ? 4 : 0) | (ammobits ? 8 : 0);
-	msg.writeInt8(arrbits);
+	if (!statsbits && !persistantbits && !powerupbits && !ammobits) {
+		msg.writeBits(0, 1);  // no change
+		return;
+	}
+
+	msg.writeBits(1, 1);  // changed
 
 	if (statsbits) {
-		msg.writeInt16(statsbits);
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(statsbits, QS.MAX_STATS);
 		for (i = 0; i < QS.MAX_STATS; i++) {
 			if (statsbits & (1 << i)) {
 				msg.writeInt16(to.stats[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
+
 	if (persistantbits) {
-		msg.writeInt16(persistantbits);
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(persistantbits, QS.MAX_PERSISTANT);
 		for (i = 0; i < QS.MAX_PERSISTANT; i++) {
 			if (persistantbits & (1 << i)) {
 				msg.writeInt16(to.persistant[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
-	if (powerupsbits) {
-		msg.writeInt16(powerupsbits);
+
+	if (powerupbits) {
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(powerupbits, QS.MAX_POWERUPS);
 		for (i = 0; i < QS.MAX_POWERUPS; i++) {
-			if (powerupsbits & (1 << i)) {
+			if (powerupbits & (1 << i)) {
 				msg.writeInt16(to.powerups[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
+
 	if (ammobits) {
-		msg.writeInt16(ammobits);
+		msg.writeBits(1, 1);  // change
+		msg.writeBits(ammobits, QS.MAX_WEAPONS);
 		for (i = 0; i < QS.MAX_WEAPONS; i++) {
 			if (ammobits & (1 << i)) {
 				msg.writeInt16(to.ammo[i]);
 			}
 		}
+	} else {
+		msg.writeBits(0, 1);  // no change
 	}
 }
 
 function ReadDeltaPlayerState(msg, from, to) {
-	var i, changed;
+	var i, lastChanged;
 	var idx, field, fromF, toF, func;
 
 	if (!from) {
@@ -26588,51 +26675,57 @@ function ReadDeltaPlayerState(msg, from, to) {
 	// Clone the initial state.
 	from.clone(to);
 
-	// Get the number of fields changed.
-	changed = msg.readInt8();
+	// Get the last field index changed.
+	lastChanged = msg.readUint8();
 
-	// Read all the changed fields.
-	for (i = 0; i < changed; i++) {
-		idx = msg.readInt8();
-		field = playerStateFields[idx];
+	if (lastChanged > playerStateFields.length || lastChanged < 0) {
+		error('invalid playerState field count');
+	}
+
+	for (i = 0; i < lastChanged; i++) {
+		if (!msg.readBits(1)) {
+			continue;  // no change
+		}
+
+		field = playerStateFields[i];
 		func = fnread(field.bits);
-
 		QS.ASET(to, field.path, msg[func]());
 	}
 
-	var arrbits = msg.readInt8();
-
-	if (arrbits & 1) {
-		var statsbits = msg.readInt16();
-		for (i = 0; i < QS.MAX_STATS; i++) {
-			if (statsbits & (1 << i)) {
-				to.stats[i] = msg.readInt16();
+	if (msg.readBits(1)) {
+		if (msg.readBits(1)) {
+			var statsbits = msg.readBits(QS.MAX_STATS);
+			for (i = 0; i < QS.MAX_STATS; i++) {
+				if (statsbits & (1 << i)) {
+					to.stats[i] = msg.readInt16();
+				}
 			}
 		}
-	}
-	if (arrbits & 2) {
-		var persistantbits = msg.readInt16();
-		for (i = 0; i < QS.MAX_PERSISTANT; i++) {
-			if (persistantbits & (1 << i)) {
-				to.persistant[i] = msg.readInt16();
+
+		if (msg.readBits(1)) {
+			var persistantbits = msg.readBits(QS.MAX_PERSISTANT);
+			for (i = 0; i < QS.MAX_PERSISTANT; i++) {
+				if (persistantbits & (1 << i)) {
+					to.persistant[i] = msg.readInt16();
+				}
 			}
 		}
-	}
 
-	if (arrbits & 4) {
-		var powerupsbits = msg.readInt16();
-		for (i = 0; i < QS.MAX_POWERUPS; i++) {
-			if (powerupsbits & (1 << i)) {
-				to.powerups[i] = msg.readInt16();
+		if (msg.readBits(1)) {
+			var powerupbits = msg.readBits(QS.MAX_POWERUPS);
+			for (i = 0; i < QS.MAX_POWERUPS; i++) {
+				if (powerupbits & (1 << i)) {
+					to.powerups[i] = msg.readInt16();
+				}
 			}
 		}
-	}
 
-	if (arrbits & 8) {
-		var ammobits = msg.readInt16();
-		for (i = 0; i < QS.MAX_WEAPONS; i++) {
-			if (ammobits & (1 << i)) {
-				to.ammo[i] = msg.readInt16();
+		if (msg.readBits(1)) {
+			var ammobits = msg.readBits(QS.MAX_WEAPONS);
+			for (i = 0; i < QS.MAX_WEAPONS; i++) {
+				if (ammobits & (1 << i)) {
+					to.ammo[i] = msg.readInt16();
+				}
 			}
 		}
 	}
@@ -26647,16 +26740,16 @@ function ReadDeltaPlayerState(msg, from, to) {
 var entityStateFields = [
 	{ path: QS.FTA('arenaNum'),        bits: UINT16  },
 	{ path: QS.FTA('pos.trTime'),      bits: UINT32  },
-	{ path: QS.FTA('pos.trBase[0]'),   bits: FLOAT32 },
-	{ path: QS.FTA('pos.trBase[1]'),   bits: FLOAT32 },
-	{ path: QS.FTA('pos.trDelta[0]'),  bits: FLOAT32 },
-	{ path: QS.FTA('pos.trDelta[1]'),  bits: FLOAT32 },
-	{ path: QS.FTA('pos.trBase[2]'),   bits: FLOAT32 },
-	{ path: QS.FTA('apos.trBase[1]'),  bits: FLOAT32 },
-	{ path: QS.FTA('pos.trDelta[2]'),  bits: FLOAT32 },
-	{ path: QS.FTA('apos.trBase[0]'),  bits: FLOAT32 },
+	{ path: QS.FTA('pos.trBase[0]'),   bits: FLOAT64 },
+	{ path: QS.FTA('pos.trBase[1]'),   bits: FLOAT64 },
+	{ path: QS.FTA('pos.trDelta[0]'),  bits: FLOAT64 },
+	{ path: QS.FTA('pos.trDelta[1]'),  bits: FLOAT64 },
+	{ path: QS.FTA('pos.trBase[2]'),   bits: FLOAT64 },
+	{ path: QS.FTA('apos.trBase[1]'),  bits: FLOAT64 },
+	{ path: QS.FTA('pos.trDelta[2]'),  bits: FLOAT64 },
+	{ path: QS.FTA('apos.trBase[0]'),  bits: FLOAT64 },
 	{ path: QS.FTA('event'),           bits: UINT16  }, /*10*/
-	{ path: QS.FTA('angles2[1]'),      bits: FLOAT32 },
+	{ path: QS.FTA('angles2[1]'),      bits: FLOAT64 },
 	{ path: QS.FTA('eType'),           bits: UINT8   },
 	{ path: QS.FTA('torsoAnim'),       bits: UINT8   },
 	{ path: QS.FTA('eventParm'),       bits: UINT8   },
@@ -26667,34 +26760,34 @@ var entityStateFields = [
 	{ path: QS.FTA('otherEntityNum'),  bits: UINT16  }, /*GENTITYNUM_BITS*/
 	{ path: QS.FTA('weapon'),          bits: UINT8   },
 	{ path: QS.FTA('clientNum'),       bits: UINT8   },
-	{ path: QS.FTA('angles[1]'),       bits: FLOAT32 },
+	{ path: QS.FTA('angles[1]'),       bits: FLOAT64 },
 	{ path: QS.FTA('pos.trDuration'),  bits: UINT32  },
 	{ path: QS.FTA('apos.trType'),     bits: UINT8   },
-	{ path: QS.FTA('origin[0]'),       bits: FLOAT32 },
-	{ path: QS.FTA('origin[1]'),       bits: FLOAT32 },
-	{ path: QS.FTA('origin[2]'),       bits: FLOAT32 },
+	{ path: QS.FTA('origin[0]'),       bits: FLOAT64 },
+	{ path: QS.FTA('origin[1]'),       bits: FLOAT64 },
+	{ path: QS.FTA('origin[2]'),       bits: FLOAT64 },
 	{ path: QS.FTA('solid'),           bits: UINT32  }, /*24*/
 	{ path: QS.FTA('powerups'),        bits: UINT16  }, /*QS.MAX_POWERUPS*/
 	{ path: QS.FTA('modelIndex'),      bits: UINT8   },
 	{ path: QS.FTA('otherEntityNum2'), bits: UINT16  }, /*GENTITYNUM_BITS*/
 	{ path: QS.FTA('loopSound'),       bits: UINT8   },
 	{ path: QS.FTA('generic1'),        bits: UINT8   },
-	{ path: QS.FTA('origin2[2]'),      bits: FLOAT32 },
-	{ path: QS.FTA('origin2[0]'),      bits: FLOAT32 },
-	{ path: QS.FTA('origin2[1]'),      bits: FLOAT32 },
+	{ path: QS.FTA('origin2[2]'),      bits: FLOAT64 },
+	{ path: QS.FTA('origin2[0]'),      bits: FLOAT64 },
+	{ path: QS.FTA('origin2[1]'),      bits: FLOAT64 },
 	{ path: QS.FTA('modelIndex2'),     bits: UINT8   },
-	{ path: QS.FTA('angles[0]'),       bits: FLOAT32 },
+	{ path: QS.FTA('angles[0]'),       bits: FLOAT64 },
 	{ path: QS.FTA('time'),            bits: UINT32  },
 	{ path: QS.FTA('apos.trTime'),     bits: UINT32  },
 	{ path: QS.FTA('apos.trDuration'), bits: UINT32  },
-	{ path: QS.FTA('apos.trBase[2]'),  bits: FLOAT32 },
-	{ path: QS.FTA('apos.trDelta[0]'), bits: FLOAT32 },
-	{ path: QS.FTA('apos.trDelta[1]'), bits: FLOAT32 },
-	{ path: QS.FTA('apos.trDelta[2]'), bits: FLOAT32 },
+	{ path: QS.FTA('apos.trBase[2]'),  bits: FLOAT64 },
+	{ path: QS.FTA('apos.trDelta[0]'), bits: FLOAT64 },
+	{ path: QS.FTA('apos.trDelta[1]'), bits: FLOAT64 },
+	{ path: QS.FTA('apos.trDelta[2]'), bits: FLOAT64 },
 	{ path: QS.FTA('time2'),           bits: UINT32  },
-	{ path: QS.FTA('angles[2]'),       bits: FLOAT32 },
-	{ path: QS.FTA('angles2[0]'),      bits: FLOAT32 },
-	{ path: QS.FTA('angles2[2]'),      bits: FLOAT32 },
+	{ path: QS.FTA('angles[2]'),       bits: FLOAT64 },
+	{ path: QS.FTA('angles2[0]'),      bits: FLOAT64 },
+	{ path: QS.FTA('angles2[2]'),      bits: FLOAT64 },
 	{ path: QS.FTA('constantLight'),   bits: UINT32  },
 	{ path: QS.FTA('frame'),           bits: UINT16  }
 ];
@@ -26709,7 +26802,7 @@ var entityStateFields = [
  * identical, under the assumption that the in-order delta code will catch it.
  */
 function WriteDeltaEntityState(msg, from, to, force) {
-	var i, changed;
+	var i, lastChanged;
 	var field, fromF, toF, func;
 
 	// A null to is a delta remove message.
@@ -26718,7 +26811,7 @@ function WriteDeltaEntityState(msg, from, to, force) {
 			return;
 		}
 		msg.writeInt16(from.number);  /* GENTITYNUM_BITS */
-		msg.writeInt8(0 | 1);  // removed | no delta
+		msg.writeBits(1, 1);
 		return;
 	}
 
@@ -26728,7 +26821,7 @@ function WriteDeltaEntityState(msg, from, to, force) {
 	}
 
 	// Figure out the number of fields that have changed.
-	changed = 0;
+	lastChanged = 0;
 	for (i = 0; i < entityStateFields.length; i++) {
 		field = entityStateFields[i];
 
@@ -26736,40 +26829,43 @@ function WriteDeltaEntityState(msg, from, to, force) {
 		toF = QS.AGET(to, field.path);
 
 		if (fromF !== toF) {
-			changed++;
+			lastChanged = i + 1;
 		}
 	}
 
-	if (changed === 0) {
+	if (lastChanged === 0) {
 		// Nothing at all changed.
 		if (!force) {
 			return;  // write nothing
 		}
 
 		msg.writeInt16(to.number);  /* GENTITYNUM_BITS */
-		msg.writeInt8(0);  // not removed | no delta
+		msg.writeBits(0, 1);  // not removed
+		msg.writeBits(0, 1);  // no delta
 		return;
 	}
 
 	msg.writeInt16(to.number); /* GENTITYNUM_BITS */
-	msg.writeInt8(0 | 2);  // not removed | we have a delta
-	msg.writeInt8(changed); // number of fields changed
+	msg.writeBits(0, 1);  // not removed
+	msg.writeBits(1, 1);  // we have a delta
+	msg.writeInt8(lastChanged); // number of fields changed
 
 	// Write out each field that has changed, prefixing
-	// the changed field with its indexed into the ps
-	// field array.
-	for (i = 0; i < entityStateFields.length; i++) {
+	// the field with a 0 or 1 denoting if it's changed.
+	for (i = 0; i < lastChanged; i++) {
 		field = entityStateFields[i];
 
 		fromF = QS.AGET(from, field.path);
 		toF = QS.AGET(to, field.path);
 		if (fromF === toF) {
+			msg.writeBits(0, 1);  // no change
 			continue;
 		}
 
+		msg.writeBits(1, 1);  // no change
+
 		func = fnwrite(field.bits);
 
-		msg.writeInt8(i);
 		msg[func](QS.AGET(to, field.path));
 	}
 }
@@ -26785,19 +26881,15 @@ function WriteDeltaEntityState(msg, from, to, force) {
  * Can go from either a baseline or a previous packet entity.
  */
 function ReadDeltaEntityState(msg, from, to, number) {
-	var i, changed;
+	var i, lastChanged;
 	var idx, field, fromF, toF, func;
 
 	if (number < 0 || number >= QS.MAX_GENTITIES) {
 		throw new Error('Bad delta entity number: ', number);
 	}
 
-	var opmask = msg.readInt8();
-	var remove = opmask & 1;
-	var delta = opmask & 2;
-
-	// Check for a remove
-	if (remove) {
+	// Check for a remove.
+	if (msg.readBits(1)) {
 		to.reset();
 		to.number = QS.MAX_GENTITIES - 1;
 		return;
@@ -26808,17 +26900,20 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	to.number = number;
 
 	// Check for no delta.
-	if (!delta) {
+	if (!msg.readBits(1)) {
 		return;
 	}
 
-	// Get the number of fields changed.
-	changed = msg.readInt8();
+	// Get the last changed field index.
+	lastChanged = msg.readInt8();
 
 	// Read all the changed fields.
-	for (i = 0; i < changed; i++) {
-		idx = msg.readInt8();
-		field = entityStateFields[idx];
+	for (i = 0; i < lastChanged; i++) {
+		if (!msg.readBits(1)) {
+			continue;  // not changed
+		}
+
+		field = entityStateFields[i];
 		func = fnread(field.bits);
 
 		QS.ASET(to, field.path, msg[func]());
@@ -27320,31 +27415,6 @@ function Init() {
 }
 
 /**
- * ExecuteStartupCvars
- */
-function ExecuteStartupCvars(cvarsOnly, callback) {
-	var args = process.argv.slice(2);
-
-	var tasks = [];
-
-	args.forEach(function (arg) {
-		if (arg.indexOf('--cmd') !== 0) {
-			return;
-		}
-
-		var buffer = arg.substr(6);
-		tasks.push(function (cb) {
-			COM.ExecuteBuffer(buffer, cb);
-		});
-	});
-
-	// Execute tasks.
-	async.series(tasks, function (err) {
-		callback(err);
-	});
-}
-
-/**
  * GetStartupCommands
  */
 function GetStartupCommands() {
@@ -27440,10 +27510,8 @@ function ReadLocalFile(path, encoding, callback) {
 function ReadRemoteFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 
-	// Since we're NOT in the browser, send the request
-	// directly to the content server. FREEDOM!!!
-	var sv_filecdn = Cvar.AddCvar('sv_filecdn');
-	path = sv_filecdn.get() + '/assets/' + path + '?v=' + QS.GAME_VERSION;
+	var com_filecdn = Cvar.AddCvar('com_filecdn');
+	path = com_filecdn.get() + '/assets/' + path + '?v=' + QS.GAME_VERSION;
 
 	http.get(path, function (res) {
 		if (res.statusCode !== 200) {
