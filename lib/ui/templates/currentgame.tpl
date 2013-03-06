@@ -49,7 +49,7 @@
 			<tr data-bind="visible: $index() !== 0">
 				<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: name"></td>
 				<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: type"></td>
-				<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: numConnectedClients"></td>
+				<td data-bind="event: { click: function () { $parent.joinArena($index()); } }, text: count"></td>
 			</tr>
 		</tbody>
 	</table>
