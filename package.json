@@ -9,7 +9,8 @@
     "optimist": "~0.3.5",
     "requirejs": "~2.1.4",
     "watch": "~0.5.1",
-    "ws": "https://github.com/inolen/ws/tarball/master"
+    "ws": "https://github.com/inolen/ws/tarball/master",
+    "connect-xcors": "~0.5.2"
   },
   "repository": {
     "type": "git",
