@@ -319,6 +319,18 @@ table thead th {
 	min-height: 10px;
 }
 
+.input-text .caret {
+	background: #444;
+}
+
+.input-radio:before {
+	content: 'off';
+}
+
+.input-radio[value='1']:before {
+	content: 'on';
+}
+
 .control-input.input-text,
 .control-input.input-key,
 .control-input.input-radio {
@@ -342,14 +354,6 @@ table thead th {
 
 .control-input.input-text {
 	word-wrap: break-word;
-}
-
-.control-input.input-radio:before {
-	content: 'off';
-}
-
-.control-input.input-radio[value='1']:before {
-	content: 'on';
 }
 
 .form-horizontal .form-actions {
