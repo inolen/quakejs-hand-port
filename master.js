@@ -117,7 +117,7 @@ function stripOOB(buffer) {
  **********************************************************/
 function handleHeartbeat(ws, data) {
 	var ipaddr = ws._socket.remoteAddress;
-	var port = parseInt(data.port, 10);
+	var port = parseInt(data.data, 10);
 
 	if (isNaN(port)) {
 		return;
