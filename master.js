@@ -116,14 +116,14 @@ function stripOOB(buffer) {
  *
  **********************************************************/
 function handleHeartbeat(ws, data) {
-	var ipaddr = ws._socket.remoteAddress;
+	var ip = ws._socket.remoteAddress;
 	var port = parseInt(data.data, 10);
 
 	if (isNaN(port)) {
 		return;
 	}
 
-	var address = ipaddr + ':' + port;
+	var address = ip + ':' + port;
 
 	log('Received heartbeat from ' + address);
 
