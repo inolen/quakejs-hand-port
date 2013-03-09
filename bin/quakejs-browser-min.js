@@ -5572,7 +5572,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1091;
+var GAME_VERSION = 0.1092;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23993,6 +23993,8 @@ function SendMasterHeartbeat() {
 
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
+	log('SendMasterHeartbeat', sv_master.get());
+
 	var addr = COM.StringToAddr(sv_master.get());
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
@@ -24152,7 +24154,7 @@ function ServerInfo(netchan) {
 
 	info.clients = count;
 
-	COM.NetchanOutOfBandPrint(netchan, 'rcon', info);
+	COM.NetchanOutOfBandPrint(netchan, 'infoResponse', info);
 }
 
 // /**
@@ -24270,7 +24272,7 @@ function Spawn(mapname) {
 		svs.initialized = true;
 
 		// Send a heartbeat now so the master will get up to date info.
-		SendMasterHeartbeat();
+		svs.nextHeartbeatTime = -9999999;
 	});
 }
 
@@ -48862,6 +48864,8 @@ function Init(inSYS, inDedicated, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
+	// TODO Enable servers to override, or append a fallback to this,
+	// to provide custom maps / mods to clients.
 	com_filecdn  = Cvar.AddCvar('com_filecdn', 'http://content.quakejs.com',  Cvar.FLAGS.ARCHIVE);
 	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION,          Cvar.FLAGS.ROM);
 	com_speeds   = Cvar.AddCvar('com_speeds',   0);
@@ -50118,14 +50122,6 @@ define('text!system/browser/css/main.css',[],function () { return '@font-face {\
 
 /*global setMatrixArrayType: true */
 
-// HACK to get the current CDN root for the com_filecdn cvar.
-var sys_cdnroot = (function () {
-	var scripts = document.getElementsByTagName('script');
-	var script = scripts[scripts.length - 1];
-	var matches = script.src.match(/^(http|https):\/\/[^\/]+/);
-	return matches[0];
-})();
-
 define('system/browser/sys',['require','async','gameshim','glmatrix','common/qshared','common/com','common/cvar','text!system/browser/css/main.css'],function (require) {
 	var async    = require('async');
 	var gameshim = require('gameshim');
@@ -50358,38 +50354,25 @@ function error(str) {
 /**
  * Init
  */
-function Init(inRoot, expectedGameVersion) {
+function Init(domroot, cdnroot, expectedGameVersion) {
 	// Sanity check the game version to make sure our caching
 	// isn't completely fubar.
-	if (expectedGameVersion !== undefined &&     // dev requests don't expect anything
+	if (expectedGameVersion &&  // dev requests don't expect anything
 		expectedGameVersion !== QS.GAME_VERSION) {  // production requests do
 		error('Requested game version \'' + expectedGameVersion + '\'' +
 			' does not match received game version \'' + QS.GAME_VERSION + '\'');
 		return;
 	}
 
-	root = inRoot;
+	root = domroot;
 
 	// Override gl-matrix's default array type.
 	setMatrixArrayType(Array);
 
-	// Initialize DOM elements.
-	InitChrome();
-
-	// Get the GL Context (try 'webgl' first, then fallback).
-	gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
-	if (!gl) {
-		error('Sorry, but your browser does not support WebGL or does not have it enabled. ' +
-	          'To get a WebGL-enabled browser, please see:<br /><br />' +
-	          '<a href="http://get.webgl.org/" target="_blank">' +
-	              'http://get.webgl.org/' +
-	          '</a>');
-		return;
-	}
-
+	InitDOM();
 	InitInput();
 	InitConsole();
-	InitFilesystem();
+	InitFS(cdnroot);
 
 	// Initialize the actual game.
 	COM.Init(GetExports(), false, function () {
@@ -50407,9 +50390,9 @@ function Init(inRoot, expectedGameVersion) {
 }
 
 /**
- * InitChrome
+ * InitDOM
  */
-function InitChrome() {
+function InitDOM() {
 	root.innerHTML = '<div id="viewport-frame">' +
 	                     '<canvas id="viewport"></canvas>' +
 	                     '<div id="viewport-ui"></div>' +
@@ -50435,6 +50418,17 @@ function InitChrome() {
 		ResizeViewport();
 	}, 0);
 
+
+	// Get the GL Context (try 'webgl' first, then fallback).
+	gl = GetAvailableContext(viewport, ['webgl', 'experimental-webgl']);
+	if (!gl) {
+		error('Sorry, but your browser does not support WebGL or does not have it enabled. ' +
+	          'To get a WebGL-enabled browser, please see:<br /><br />' +
+	          '<a href="http://get.webgl.org/" target="_blank">' +
+	              'http://get.webgl.org/' +
+	          '</a>');
+		return;
+	}
 }
 
 /**
@@ -50448,18 +50442,11 @@ function InitConsole() {
 }
 
 /**
- * InitFilesystem
+ * InitFS
  */
-function InitFilesystem() {
-	// By default, set the CDN root to the current script root.
-	// TODO Enable servers to override, append a fallback to this
-	// when a client connects for custom maps.
-	if (!sys_cdnroot) {
-		error('Could not resolve CDN root');
-		return;
-	}
+function InitFS(cdnroot) {
 	var com_filecdn = Cvar.AddCvar('com_filecdn');
-	com_filecdn.set(sys_cdnroot);
+	com_filecdn.set(cdnroot);
 
 	// TODO request FS permissions here?
 }

@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1091;
+var GAME_VERSION = 0.1092;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23635,6 +23635,8 @@ function SendMasterHeartbeat() {
 
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
+	log('SendMasterHeartbeat', sv_master.get());
+
 	var addr = COM.StringToAddr(sv_master.get());
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
@@ -23794,7 +23796,7 @@ function ServerInfo(netchan) {
 
 	info.clients = count;
 
-	COM.NetchanOutOfBandPrint(netchan, 'rcon', info);
+	COM.NetchanOutOfBandPrint(netchan, 'infoResponse', info);
 }
 
 // /**
@@ -23912,7 +23914,7 @@ function Spawn(mapname) {
 		svs.initialized = true;
 
 		// Send a heartbeat now so the master will get up to date info.
-		SendMasterHeartbeat();
+		svs.nextHeartbeatTime = -9999999;
 	});
 }
 
@@ -26073,6 +26075,8 @@ function Init(inSYS, inDedicated, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
+	// TODO Enable servers to override, or append a fallback to this,
+	// to provide custom maps / mods to clients.
 	com_filecdn  = Cvar.AddCvar('com_filecdn', 'http://content.quakejs.com',  Cvar.FLAGS.ARCHIVE);
 	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION,          Cvar.FLAGS.ROM);
 	com_speeds   = Cvar.AddCvar('com_speeds',   0);
