@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1089;
+var GAME_VERSION = 0.1090;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5268,11 +5268,6 @@ var NA = {
 	BAD:      0,
 	LOOPBACK: 1,
 	IP:       2
-};
-
-var NS = {
-	CLIENT: 0,
-	SERVER: 1
 };
 
 var NetAdr = function () {
@@ -5785,7 +5780,6 @@ return {
 	TR:                    TR,
 	FLAG:                  FLAG,
 	NA:                    NA,
-	NS:                    NS,
 
 	SharedEntity:          SharedEntity,
 	PlayerState:           PlayerState,
@@ -6717,207 +6711,209 @@ return {
 
 });
 define('common/cvar', [], function () {
-	var cvars = {};
-	var modifiedFlags = 0;
 
-	var FLAGS = {
-		ROM:          1,                                         // display only, cannot be set by user at all
-		ARCHIVE:      2,                                         // save to config file
-		CHEAT:        4,                                         // save to config file
-		USERINFO:     8,                                         // sent to server on connect or change
-		SYSTEMINFO:   16,                                        // these cvars will be duplicated on all clients
-		SERVERINFO:   32,                                        // sent in response to front end requests
-		ARENAINFO:    64,
-		USER_CREATED: 128
-	};
+var cvars = {};
+var modifiedFlags = 0;
 
-	/******************************************************
-	 *
-	 * Core CVAR class
-	 *
-	 ******************************************************/
-	function asNumber(val, defaultValue) {
-		val = typeof(val) === 'number' ? val : parseFloat(val);
-		if (isNaN(val)) {
-			return defaultValue;
-		}
+var FLAGS = {
+	ROM:          1,                                         // display only, cannot be set by user at all
+	ARCHIVE:      2,                                         // save to config file
+	CHEAT:        4,                                         // save to config file
+	USERINFO:     8,                                         // sent to server on connect or change
+	SYSTEMINFO:   16,                                        // these cvars will be duplicated on all clients
+	SERVERINFO:   32,                                        // sent in response to front end requests
+	ARENAINFO:    64,
+	USER_CREATED: 128
+};
+
+/******************************************************
+ *
+ * Core CVAR class
+ *
+ ******************************************************/
+function asNumber(val, defaultValue) {
+	val = typeof(val) === 'number' ? val : parseFloat(val);
+	if (isNaN(val)) {
+		return defaultValue;
+	}
+	return val;
+}
+
+function asString(val, defaultValue) {
+	val = val.toString();
+	if (val === undefined || val  === null) {
+		return defaultValue;
+	}
+	return val;
+}
+
+function asDefaultType(val, defaultValue) {
+	// Treat as string if no default type (e.g. user-created cvars).
+	if (defaultValue === undefined) {
+		return val ? val.toString() : val;
+	}
+
+	if (typeof(defaultValue) === 'number') {
+		return asNumber(val, defaultValue);
+	}
+
+	return asString(val, defaultValue);
+}
+
+var Cvar = function (defaultValue, flags, latched) {
+	this._defaultValue = defaultValue;
+	this._currentValue = this._defaultValue;
+	this._latchedValue = this._defaultValue;
+	this._flags = flags === undefined ? 0 : flags;
+
+	// Latched cvars will only update their values on subsequent adds.
+	this._latched = latched;
+};
+
+Cvar.prototype.at = function (index) {
+	return new CvarCursor(this, index);
+};
+
+Cvar.prototype.defaultValue = function () {
+	return this._defaultValue;
+};
+
+Cvar.prototype.flags = function () {
+	return this._flags;
+};
+
+Cvar.prototype.modified = function () {
+	if (this._latched && this._modified) {
+		return true;
+	} else if (this._modified) {
+		this._modified = false;
+		return true;
+	}
+
+	return false;
+};
+
+Cvar.prototype.get = function (raw) {
+	var val = this._latched ? this._latchedValue : this._currentValue;
+
+	if (raw) {
 		return val;
 	}
 
-	function asString(val, defaultValue) {
-		val = val.toString();
-		if (val === undefined || val  === null) {
-			return defaultValue;
-		}
-		return val;
+	return asDefaultType(val, this._defaultValue);
+};
+
+Cvar.prototype.set = function (val) {
+	this._currentValue = val;
+
+	this._modified = true;
+
+	modifiedFlags |= this._flags;
+};
+
+// Helper to support getting multi-value cvars.
+var CvarCursor = function (cvar, index) {
+	this._cvar = cvar;
+	this._index = index;
+};
+
+CvarCursor.prototype.get = function () {
+	var str = this._cvar.get(true).toString();
+	var split = str.split(',');
+
+	for (var i = 0; i < split.length; i++) {
+		split[i] = split[i].replace(/^\s*/, '').replace(/\s*$/, '');
 	}
 
-	function asDefaultType(val, defaultValue) {
-		// Treat as string if no default type (e.g. user-created cvars).
-		if (defaultValue === undefined) {
-			return val ? val.toString() : val;
-		}
-
-		if (typeof(defaultValue) === 'number') {
-			return asNumber(val, defaultValue);
-		}
-
-		return asString(val, defaultValue);
+	// Use the last value if one doesn't exist for the specified index.
+	var val = split[this._index];
+	if (val === undefined) {
+		val = split[split.length - 1];
 	}
 
-	var Cvar = function (defaultValue, flags, latched) {
-		this._defaultValue = defaultValue;
-		this._currentValue = this._defaultValue;
-		this._latchedValue = this._defaultValue;
-		this._flags = flags === undefined ? 0 : flags;
+	return asDefaultType(val, this._cvar.defaultValue());
+};
 
-		// Latched cvars will only update their values on subsequent adds.
-		this._latched = latched;
-	};
+/******************************************************
+ *
+ *
+ *
+ ******************************************************/
+function AddCvar(name, defaultValue, flags, latched) {
+	var cvar = GetCvar(name);
 
-	Cvar.prototype.at = function (index) {
-		return new CvarCursor(this, index);
-	};
-
-	Cvar.prototype.defaultValue = function () {
-		return this._defaultValue;
-	};
-
-	Cvar.prototype.flags = function () {
-		return this._flags;
-	};
-
-	Cvar.prototype.modified = function () {
-		if (this._latched && this._modified) {
-			return true;
-		} else if (this._modified) {
-			this._modified = false;
-			return true;
+	if (cvar) {
+		// If the user already created a cvar, update its info.
+		if (defaultValue !== undefined) {
+			cvar._defaultValue = defaultValue;
+		}
+		if (flags !== undefined) {
+			cvar._flags = flags;
+		}
+		if (latched !== undefined) {
+			cvar._latched = latched;
 		}
 
-		return false;
-	};
-
-	Cvar.prototype.get = function (raw) {
-		var val = this._latched ? this._latchedValue : this._currentValue;
-
-		if (raw) {
-			return val;
-		}
-
-		return asDefaultType(val, this._defaultValue);
-	};
-
-	Cvar.prototype.set = function (val) {
-		this._currentValue = val;
-
-		this._modified = true;
-
-		modifiedFlags |= this._flags;
-	};
-
-	// Helper to support getting multi-value cvars.
-	var CvarCursor = function (cvar, index) {
-		this._cvar = cvar;
-		this._index = index;
-	};
-
-	CvarCursor.prototype.get = function () {
-		var str = this._cvar.get(true).toString();
-		var split = str.split(',');
-
-		for (var i = 0; i < split.length; i++) {
-			split[i] = split[i].replace(/^\s*/, '').replace(/\s*$/, '');
-		}
-
-		// Use the last value if one doesn't exist for the specified index.
-		var val = split[this._index];
-		if (val === undefined) {
-			val = split[split.length - 1];
-		}
-
-		return asDefaultType(val, this._cvar.defaultValue());
-	};
-
-	/******************************************************
-	 *
-	 *
-	 *
-	 ******************************************************/
-	function AddCvar(name, defaultValue, flags, latched) {
-		var cvar = GetCvar(name);
-
-		if (cvar) {
-			// If the user already created a cvar, update its info.
-			if (defaultValue !== undefined) {
-				cvar._defaultValue = defaultValue;
-			}
-			if (flags !== undefined) {
-				cvar._flags = flags;
-			}
-			if (latched !== undefined) {
-				cvar._latched = latched;
-			}
-
-			// This code path is possibly being hit because a module (e.g. cgame or game)
-			// is being reinitialized, so go ahead and relatch.
-			cvar._latchedValue = cvar._currentValue;
-			cvar._modified = false;
-
-			return cvar;
-		}
-
-		// Register the new cvar.
-		cvar = cvars[name] = new Cvar(defaultValue, flags, latched);
+		// This code path is possibly being hit because a module (e.g. cgame or game)
+		// is being reinitialized, so go ahead and relatch.
+		cvar._latchedValue = cvar._currentValue;
+		cvar._modified = false;
 
 		return cvar;
 	}
 
-	function GetCvar(name) {
-		return cvars[name];
-	}
+	// Register the new cvar.
+	cvar = cvars[name] = new Cvar(defaultValue, flags, latched);
 
-	function GetCvarJSON(flag) {
-		var data = {};
+	return cvar;
+}
 
-		for (var name in cvars) {
-			if (!cvars.hasOwnProperty(name)) {
-				continue;
-			}
+function GetCvar(name) {
+	return cvars[name];
+}
 
-			var cvar = cvars[name];
+function GetCvarJSON(flag) {
+	var data = {};
 
-			if (!(cvar._flags & flag)) {
-				continue;
-			}
-
-			data[name] = cvar.get();
+	for (var name in cvars) {
+		if (!cvars.hasOwnProperty(name)) {
+			continue;
 		}
 
-		return data;
+		var cvar = cvars[name];
+
+		if (!(cvar._flags & flag)) {
+			continue;
+		}
+
+		data[name] = cvar.get();
 	}
 
-	function Modified(flag) {
-		return (modifiedFlags & flag);
-	}
+	return data;
+}
 
-	function ClearModified(flag) {
-		modifiedFlags &= ~flag;
-	}
+function Modified(flag) {
+	return (modifiedFlags & flag);
+}
 
-	var exports = {
-		FLAGS:         FLAGS,
+function ClearModified(flag) {
+	modifiedFlags &= ~flag;
+}
 
-		AddCvar:       AddCvar,
-		GetCvar:       GetCvar,
+var exports = {
+	FLAGS:         FLAGS,
 
-		GetCvarJSON:   GetCvarJSON,
+	AddCvar:       AddCvar,
+	GetCvar:       GetCvar,
 
-		Modified:      Modified,
-		ClearModified: ClearModified
-	};
+	GetCvarJSON:   GetCvarJSON,
 
-	return exports;
+	Modified:      Modified,
+	ClearModified: ClearModified
+};
+
+return exports;
+
 });
 
 define('common/surfaceflags',['require'],function (require) {
@@ -14368,7 +14364,6 @@ function ArenaInfoChanged() {
 		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
 		'rl': g_roundlimit.at(level.arena.arenaNum).get(),
 
-		'nc': level.arena.numConnectedClients,
 		'wt': level.arena.warmupTime,
 		's1': level.arena.score1,
 		's2': level.arena.score2
@@ -14835,9 +14830,11 @@ function RoundRunWaiting() {
 			// Free up the team if they all left.
 			if (!count1()) {
 				level.arena.group1 = null;
+				CalculateRanks();
 			}
 			if (!count2()) {
 				level.arena.group2 = null;
+				CalculateRanks();
 			}
 
 			// If we have everyone, lets rock and roll.
@@ -15805,6 +15802,7 @@ function ClientBegin(clientNum) {
  *
  * Called when a player drops from the server, will not be
  * called between levels.
+ *
  * This should NOT be called directly by any game logic,
  * call SV.DropClient(), which will call this and do
  * server system housekeeping.
@@ -15819,14 +15817,53 @@ function ClientDisconnect(clientNum) {
 	// Set the global arena.
 	SetCurrentArena(ent.s.arenaNum);
 
+	// // Stop any following clients.
+	// for ( i = 0 ; i < level.maxclients ; i++ ) {
+	// 	if ( level.clients[i].sess.sessionTeam == TEAM_SPECTATOR
+	// 		&& level.clients[i].sess.spectatorState == SPECTATOR_FOLLOW
+	// 		&& level.clients[i].sess.spectatorClient == clientNum ) {
+	// 		StopFollowing( &g_entities[i] );
+	// 	}
+	// }
+
+	// Send effect if they were completely connected.
+	if (ent.client.pers.connected === CON.CONNECTED &&
+		ent.client.sess.sessionTeam !== TEAM.SPECTATOR) {
+		var tent = TempEntity(ent.client.ps.origin, EV.PLAYER_TELEPORT_OUT);
+		tent.s.clientNum = ent.s.clientNum;
+
+		// They don't get to take powerups with them!
+		// Especially important for stuff like CTF flags
+		TossClientItems(ent);
+	}
+
 	log('ClientDisconnect: ' + clientNum);
 
+	// If we are playing in tourney mode and losing, give a win to the other player.
+	// if (g_gametype.integer == GT_TOURNAMENT
+	// 	&& !level.intermissiontime
+	// 	&& !level.warmupTime && level.sortedClients[1] == clientNum ) {
+	// 	level.clients[ level.sortedClients[0] ].sess.wins++;
+	// 	ClientUserinfoChanged( level.sortedClients[0] );
+	// }
+
+	// if( g_gametype.integer == GT_TOURNAMENT &&
+	// 	ent->client->sess.sessionTeam == TEAM_FREE &&
+	// 	level.intermissiontime ) {
+
+	// 	trap_SendConsoleCommand( EXEC_APPEND, "map_restart 0\n" );
+	// 	level.restarted = qtrue;
+	// 	level.changemap = NULL;
+	// 	level.intermissiontime = 0;
+	// }
+
 	SV.UnlinkEntity(ent);
+	ent.inuse = false;
 	ent.s.modelIndex = 0;
 	ent.classname = 'disconnected';
 	ent.client.pers.connected = CON.DISCONNECTED;
-	// ent.client.ps.persistant[PERS.TEAM] = TEAM.FREE;
-	// ent.client.sess.team = TEAM.FREE;
+	ent.client.ps.persistant[PERS.TEAM] = TEAM.FREE;
+	ent.client.sess.team = TEAM.FREE;
 
 	SV.SetConfigstring('player:' + clientNum, null);
 
@@ -16125,7 +16162,7 @@ function ClientThink_real(ent) {
 	}
 
 	if (pmove_fixed.get()) {
-		cmd.serverTime = ((cmd.serverTime + pmove_msec.get() - 1) / pmove_msec.get()) * pmove_msec.get();
+		cmd.serverTime = Math.floor((cmd.serverTime + pmove_msec.get() - 1) / pmove_msec.get()) * pmove_msec.get();
 	}
 
 	// // Check for exiting intermission.
@@ -16272,6 +16309,9 @@ function ClientThink_real(ent) {
 		}
 		return;
 	}
+
+	// Perform once-a-second actions.
+	// ClientTimerActions(ent, msec);
 }
 
 /**
@@ -17175,6 +17215,7 @@ function ClientCommand(clientNum, cmd) {
 		console.log(level.arenas[arenaNum]);
 		console.log('---------- CLIENTS ----------');
 		for (var i = 0; i < level.maxclients; i++) {
+			if (!level.gentities[i].inuse) return;
 			if (level.gentities[i].s.arenaNum === arenaNum) {
 				console.log('Client', i, level.gentities[i].client.sess);
 			}
@@ -23334,6 +23375,7 @@ var sv_ip,
 	sv_mapname,
 	sv_maxClients,
 	sv_fps,
+	sv_rconPassword,
 	sv_timeout,
 	sv_zombietime;
 
@@ -23380,31 +23422,29 @@ function Init(inCL, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	sv_ip         = Cvar.AddCvar('sv_ip',         '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
-	sv_port       = Cvar.AddCvar('sv_port',       9001,                         Cvar.FLAGS.ARCHIVE, true);
-	sv_master     = Cvar.AddCvar('sv_master',     'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
-	sv_hostname   = Cvar.AddCvar('sv_hostname',   'Anonymous',                  Cvar.FLAGS.ARCHIVE);
-	sv_serverid   = Cvar.AddCvar('sv_serverid',   0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
-	sv_mapname    = Cvar.AddCvar('sv_mapname',    'nomap',                      Cvar.FLAGS.SERVERINFO);
-	sv_maxClients = Cvar.AddCvar('sv_maxClients', 8,                            Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
-	sv_fps        = Cvar.AddCvar('sv_fps',        20);   // time rate for running non-clients
-	sv_timeout    = Cvar.AddCvar('sv_timeout',    200);  // seconds without any message
-	sv_zombietime = Cvar.AddCvar('sv_zombietime', 2);    // seconds to sink messages after disconnect
+	sv_ip           = Cvar.AddCvar('sv_ip',           '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
+	sv_port         = Cvar.AddCvar('sv_port',         9001,                         Cvar.FLAGS.ARCHIVE, true);
+	sv_master       = Cvar.AddCvar('sv_master',       'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
+	sv_hostname     = Cvar.AddCvar('sv_hostname',     'Anonymous',                  Cvar.FLAGS.ARCHIVE);
+	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
+	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',                      Cvar.FLAGS.SERVERINFO);
+	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   8,                            Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
+	sv_fps          = Cvar.AddCvar('sv_fps',          20);   // time rate for running non-clients
+	sv_rconPassword = Cvar.AddCvar('sv_rconPassword', '');
+	sv_timeout      = Cvar.AddCvar('sv_timeout',      200);  // seconds without any message
+	sv_zombietime   = Cvar.AddCvar('sv_zombietime',   2);    // seconds to sink messages after disconnect
 }
 
 /**
  * CreateListenServer
  */
 function CreateListenServer() {
-	// For non dedicated servers, setup a bogus netchan
-	// to be used as the loopback handler.
-	if (!dedicated) {
-		var addr = COM.StringToAddr('localhost');
-		ClientAccept(addr);
-		return;
-	}
+	var addr = new QS.NetAdr();
+	addr.type = dedicated ? QS.NA.IP : QS.NA.LOOPBACK;
+	addr.ip = sv_ip.get();
+	addr.port = sv_port.get();
 
-	SYS.NetListen(sv_ip.get(), sv_port.get(), {
+	COM.NetListen(addr, {
 		onrequest: ClientRequest,
 		onaccept: ClientAccept
 	});
@@ -23596,15 +23636,11 @@ function SendMasterHeartbeat() {
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
 	var addr = COM.StringToAddr(sv_master.get());
-	var netchan = COM.NetchanSetup(QS.NS.SERVER, addr, {
+	var socket = COM.NetConnect(addr, {
 		onopen: function () {
-			var msg = {
-				type: 'heartbeat',
-				port: sv_port.get()
-			};
-
-			COM.NetchanPrint(netchan, JSON.stringify(msg));
-			COM.NetchanDestroy(netchan);
+			var netchan = COM.NetchanSetup(socket);
+			COM.NetchanOutOfBandPrint(netchan, 'heartbeat', sv_port.get());
+			COM.NetClose(socket);
 		}
 	});
 }
@@ -23633,7 +23669,7 @@ function PacketEvent(netchan, source) {
 
 	// Peek in and see if this is a string message.
 	if (msg.view.getInt32(0) === -1) {
-		ConnectionlessPacket(netchan, msg);
+		OutOfBoundPacket(netchan, msg);
 		return;
 	}
 
@@ -23657,11 +23693,11 @@ function PacketEvent(netchan, source) {
 }
 
 /**
- * ConnectionlessPacket
+ * OutOfBoundPacket
  *
  * This is silly being that we're on TCP/IP.
  */
-function ConnectionlessPacket(netchan, msg) {
+function OutOfBoundPacket(netchan, msg) {
 	msg.readInt32();  // Skip the -1.
 
 	var str = msg.readASCIIString();
@@ -23670,19 +23706,67 @@ function ConnectionlessPacket(netchan, msg) {
 	try {
 		message = JSON.parse(str);
 	} catch (e) {
-		COM.NetchanDestroy(netchan);
+		COM.NetClose(netchan.socket);
 		return;
 	}
 
 	var cmd = message.type;
 
-	if (cmd === 'getinfo') {
+	if (cmd === 'rcon') {
+		RemoteCommand(netchan, message.data[0], message.data[1]);
+	} else if (cmd === 'getinfo') {
 		ServerInfo(netchan);
 	// } else if (str.indexOf('getchallenge') === 0) {
 	// 	GetChallenge(netchan);
 	} else if (cmd === 'connect') {
 		ClientEnterServer(netchan, message.data);
 	}
+}
+
+/**
+ * RemoteCommand
+ *
+ * An rcon packet arrived from the network.
+ */
+function RemoteCommand(netchan, password, cmd) {
+	// Prevent using rcon as an amplifier and make dictionary attacks impractical.
+	// if ( SVC_RateLimitAddress( from, 10, 1000 ) ) {
+	// 	Com_DPrintf( "SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n",
+	// 		NET_AdrToString( from ) );
+	// 	return;
+	// }
+
+	var valid = false;
+
+	if (!sv_rconPassword.get() || sv_rconPassword.get() !== password) {
+		// // Make DoS via rcon impractical
+		// if ( SVC_RateLimit( &bucket, 10, 1000 ) ) {
+		// 	Com_DPrintf( "SVC_RemoteCommand: rate limit exceeded, dropping request\n" );
+		// 	return;
+		// }
+
+		log('Bad rcon request from ' + COM.SockToString(netchan.socket) + ' (' + password + ')');
+	} else {
+		valid = true;
+		log('Valid rcon request from ' + COM.SockToString(netchan.socket) + ' (' + password + ')');
+	}
+
+	// Start redirecting all print outputs to the packet.
+	COM.BeginRedirect(function () {
+		var args = Array.prototype.slice.call(arguments);
+		COM.NetchanOutOfBandPrint(netchan, 'print', args.join(' '));
+	});
+
+	if (!sv_rconPassword.get()) {
+		log('No rconpassword set on the server.');
+	} else if (!valid) {
+		log('Bad rconpassword.');
+	} else {
+		log('Executing \"' + cmd + '\"');
+		COM.ExecuteBuffer(cmd);
+	}
+
+	COM.EndRedirect();
 }
 
 /**
@@ -23808,6 +23892,7 @@ function Spawn(mapname) {
 
 			// When we get the next packet from a connected client,
 			// the new gamestate will be sent.
+			log('Going to CS_CONNECTED for', i);
 			client.state = CS.CONNECTED;
 		}
 
@@ -23825,6 +23910,9 @@ function Spawn(mapname) {
 		sv.state = SS.GAME;
 
 		svs.initialized = true;
+
+		// Send a heartbeat now so the master will get up to date info.
+		SendMasterHeartbeat();
 	});
 }
 
@@ -24082,16 +24170,15 @@ function ClientRequest(addr) {
  * its game-level connection string has been received.
  */
 function ClientAccept(msocket) {
-	// Go ahead and setup the netchan so the client
-	// can communicate its game-level connect string.
-	var netchan = COM.NetchanSetup(QS.NS.SERVER, msocket, {
-		onmessage: function (buffer) {
-			PacketEvent(netchan, buffer);
-		},
-		onclose: function () {
-			ClientDisconnected(netchan);
-		}
-	});
+	var netchan = COM.NetchanSetup(msocket);
+
+	msocket.onmessage = function (buffer) {
+		PacketEvent(netchan, buffer);
+	};
+
+	msocket.onclose = function () {
+		ClientDisconnected(netchan);
+	};
 }
 
 /**
@@ -24114,10 +24201,7 @@ function ClientEnterServer(netchan, data) {
 		}
 	}
 	if (clientNum === undefined) {
-		COM.NetchanPrint(netchan, JSON.stringify({
-			type: 'print',
-			data: 'Server is full.'
-		}));
+		COM.NetchanOutOfBandPrint(netchan, 'print', 'Server is full.');
 		log('Rejected a connection.');
 		return;
 	}
@@ -24125,10 +24209,7 @@ function ClientEnterServer(netchan, data) {
 	var com_protocol = Cvar.AddCvar('com_protocol');
 	var version = data.protocol;
 	if(version !== com_protocol.get()) {
-		COM.NetchanPrint(netchan, JSON.stringify({
-			type: 'print',
-			data: 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').'
-		}));
+		COM.NetchanOutOfBandPrint(netchan, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
 		log('Rejected connect from version', version);
 		return;
 	}
@@ -24151,7 +24232,7 @@ function ClientEnterServer(netchan, data) {
 	newcl.lastPacketTime = svs.time;
 
 	// Let the client know we've accepted them.
-	COM.NetchanPrint(newcl.netchan, JSON.stringify({ type: 'connectResponse' }));
+	COM.NetchanOutOfBandPrint(newcl.netchan, 'connectResponse', null);
 
 	// When we receive the first packet from the client, we will
 	// notice that it is from a different serverid and that the
@@ -24209,22 +24290,25 @@ function DropClient(client, reason) {
 		}
 	}*/
 
-	// tell everyone why they got dropped
-	//SV_SendServerCommand( NULL, "print \"%s" S_COLOR_WHITE " %s\n\"", drop->name, reason );
+	// Tell everyone why they got dropped.
+	SendServerCommand(null, 'print', client.name + '^' + QS.COLOR.WHITE + ' ' + reason);
 
 	// Call the game function for removing a client
 	// this will remove the body, among other things.
 	var clientNum = GetClientNum(client);
 	GM.ClientDisconnect(clientNum);
 
-	// add the disconnect command
-	//SV_SendServerCommand( drop, "disconnect \"%s\"", reason);
+	// Add the disconnect command.
+	SendServerCommand(client, 'disconnect', reason);
 
-	// nuke user info
+	// Kill the connection.
+	COM.NetClose(client.netchan.socket);
+
+	// Nuke user info..
 	//SV_SetUserinfo( drop - svs.clients, "" );
 
-	//Com_DPrintf( "Going to CS_ZOMBIE for %s\n", drop->name );
-	client.state = CS.ZOMBIE;           // become free in a few seconds
+	log('Going to CS_ZOMBIE for', client.name);
+	client.state = CS.ZOMBIE;  // become free in a few seconds
 }
 
 /**
@@ -24263,8 +24347,13 @@ function UserMove(client, msg, delta) {
 		return;
 	}
 
+	// NOTE: Only delta the user cmd from another user cmd
+	// in this message. If we delta across old commands (e.g.
+	// client.lastUserCmd) we'll run into cmd.serverTime
+	// never resetting on game restart.
 	var cmds = [];
-	var oldcmd = client.lastUserCmd;
+	var oldcmd;
+
 	for (var i = 0; i < count; i++) {
 		var cmd = new QS.UserCmd();
 		COM.ReadDeltaUsercmd(msg, oldcmd, cmd);
@@ -24360,7 +24449,7 @@ function SendClientGameState(client) {
 
 	msg.writeInt8(COM.SVM.EOF);
 
-	COM.NetchanSend(client.netchan, msg.buffer, msg.byteIndex);
+	COM.NetchanTransmit(client.netchan, msg.buffer, msg.byteIndex);
 }
 
 /**
@@ -24435,9 +24524,7 @@ function ExecuteClientMessage(client, msg) {
 		return;
 	}
 
-	// TCP/IP Set clients to having acknowledged immediately.
-	// Remove for UDP.
-	/*client.reliableAcknowledge = */msg.readInt32();
+	client.reliableAcknowledge = msg.readInt32();
 
 	// NOTE: when the client message is fux0red the acknowledgement numbers
 	// can be out of range, this could cause the server to send thousands of server
@@ -24829,7 +24916,7 @@ function EntityContact(mins, maxs, gent) {
 function BuildClientSnapshot(client, msg) {
 	var clent = client.gentity;
 	if (!clent || client.state === CS.ZOMBIE) {
-		return false; // Client hasn't entered world yet.
+		return; // Client hasn't entered world yet.
 	}
 
 	// Bump the counter used to prevent double adding.
@@ -24862,8 +24949,6 @@ function BuildClientSnapshot(client, msg) {
 		svs.nextSnapshotEntities++;
 		frame.numEntities++;
 	}
-
-	return true;
 }
 
 /**
@@ -25005,9 +25090,7 @@ function AddEntToSnapshot(svEnt, gEnt, eNums) {
  */
 function SendClientSnapshot(client) {
 	// Build the snapshot.
-	if (!BuildClientSnapshot(client)) {
-		return;
-	}
+	BuildClientSnapshot(client);
 
 	var msg = new BitStream(svs.msgBuffer);
 
@@ -25025,7 +25108,7 @@ function SendClientSnapshot(client) {
 	client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageSent = svs.time;
 	client.frames[client.netchan.outgoingSequence % COM.PACKET_BACKUP].messageAcked = -1;
 
-	COM.NetchanSend(client.netchan, msg.buffer, msg.byteIndex);
+	COM.NetchanTransmit(client.netchan, msg.buffer, msg.byteIndex);
 }
 
 /**
@@ -25042,10 +25125,6 @@ function UpdateServerCommandsToClient(client, msg) {
 		msg.writeInt32(i);
 		msg.writeASCIIString(JSON.stringify(cmd));
 	}
-
-	// TCP/IP Set clients to having acknowledged immediately.
-	// Remove for UDP.
-	client.reliableAcknowledge = client.reliableSequence;
 }
 
 /**
@@ -25176,11 +25255,6 @@ function WriteSnapshotEntities(msg, from, to) {
  * SendClientMessages
  */
 function SendClientMessages() {
-	// If we're in the middle of loading the game, don't send any snapshots.
-	if (sv.state !== SS.GAME) {
-		return;
-	}
-
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
@@ -25741,7 +25815,7 @@ define('common/com',['require','async','BitBuffer','common/qmath','common/qshare
 	var Server        = require('server/sv');
 	var Client        = require('client/cl');
 
-	var MAX_MAP_AREA_BYTES = 32;                               // bit vector of area visibility
+	var MAX_MAP_AREA_BYTES = 32;  // bit vector of area visibility
 
 /**********************************************************
  *
@@ -25761,37 +25835,35 @@ var SE = {
  * Networking
  *
  **********************************************************/
-var PACKET_BACKUP         = 32;                           // number of old messages that must be kept on client and
-                                                           // server for delta comrpession and ping estimation
-var MAX_PACKET_USERCMDS   = 32;                           // max number of usercmd_t in a packet
-var MAX_RELIABLE_COMMANDS = 64;                           // max string commands buffered for restransmit
+var PACKET_BACKUP         = 32;     // number of old messages that must be kept on client and
+                                    // server for delta comrpession and ping estimation
+var MAX_PACKET_USERCMDS   = 32;     // max number of usercmd_t in a packet
+var MAX_RELIABLE_COMMANDS = 64;     // max string commands buffered for restransmit
 var MAX_MSGLEN            = 16384;
 
 var CLM = {
 	bad:           0,
-	move:          1,                                      // [[UserCmd]
-	moveNoDelta:   2,                                      // [[UserCmd]
-	clientCommand: 3,                                      // [string] message
+	move:          1,  // [[UserCmd]
+	moveNoDelta:   2,  // [[UserCmd]
+	clientCommand: 3,  // [string] message
 	EOF:           4
 };
 
 var SVM = {
 	bad:            0,
 	gamestate:      1,
-	configstring:   2,                                     // [short] [string] only in gamestate messages
-	baseline:       3,                                     // only in gamestate messages
-	serverCommand:  4,                                     // [string] to be executed by client game module
+	configstring:   2,  // [short] [string] only in gamestate messages
+	baseline:       3,  // only in gamestate messages
+	serverCommand:  4,  // [string] to be executed by client game module
 	snapshot:       5,
 	EOF:            6
 };
 
 var NetChan = function () {
-	this.src              = 0;
-	this.remoteAddress    = null;
 	this.incomingSequence = 0;
-	this.outgoingSequence = 1;                             // start at 1 for delta checks
+	this.outgoingSequence = 1;      // start at 1 for delta checks
 	this.ready            = false;
-	this.msocket          = null;
+	this.socket           = null;   // meta socket
 };
 	var commands = {};
 
@@ -25888,18 +25960,26 @@ function CmdVstr(name) {
 	SV;
 
 var com_filecdn,
-	com_protocol;
+	com_protocol,
+	com_speeds;
 
 var dedicated,
 	events,
 	frameTime,
 	lastFrameTime,
+	frameNumber,
+	logCallback,
 	initialized;
 
 /**
  * log
  */
 function log() {
+	if (logCallback) {
+		logCallback.apply(this, arguments);
+		return;
+	}
+
 	Function.apply.call(console.log, console, arguments);
 }
 
@@ -25918,6 +25998,20 @@ function error(str) {
 }
 
 /**
+ * BeginRedirect
+ */
+function BeginRedirect(callback) {
+	logCallback = callback;
+}
+
+/**
+ * EndRedirect
+ */
+function EndRedirect() {
+	logCallback = null;
+}
+
+/**
  * Init
  */
 function Init(inSYS, inDedicated, callback) {
@@ -25930,6 +26024,7 @@ function Init(inSYS, inDedicated, callback) {
 	dedicated = inDedicated;
 	events = [];
 	frameTime = lastFrameTime = SYS.GetMilliseconds();
+	frameNumber = 0;
 	initialized = false;
 
 	RegisterCvars();
@@ -25980,6 +26075,7 @@ function Init(inSYS, inDedicated, callback) {
 function RegisterCvars() {
 	com_filecdn  = Cvar.AddCvar('com_filecdn', 'http://content.quakejs.com',  Cvar.FLAGS.ARCHIVE);
 	com_protocol = Cvar.AddCvar('com_protocol', QS.PROTOCOL_VERSION,          Cvar.FLAGS.ROM);
+	com_speeds   = Cvar.AddCvar('com_speeds',   0);
 }
 
 /**
@@ -25994,15 +26090,36 @@ function Frame() {
 	}
 
 	var msec = frameTime - lastFrameTime;
+	var timeBeforeEvents, timeBeforeServer, timeBeforeClient, timeAfter;
 
 	CheckSaveConfig();
 
+	timeBeforeEvents = SYS.GetMilliseconds();
+
 	EventLoop();
+
+	timeBeforeServer = SYS.GetMilliseconds();
 
 	SV.Frame(msec);
 
+	timeBeforeClient = SYS.GetMilliseconds();
+
 	if (CL) {
 		CL.Frame(msec);
+	}
+
+	timeAfter = SYS.GetMilliseconds();
+
+	// Report timing information.
+	if (com_speeds.get()) {
+		var all, ev, sv, cl;
+
+		all = timeAfter - timeBeforeEvents;
+		sv = timeBeforeClient- timeBeforeServer;
+		ev = timeBeforeServer - timeBeforeEvents;
+		cl = timeAfter - timeBeforeClient;
+
+		log('frame:', frameNumber++, 'all:', all, 'ev:', ev, 'sv:', sv, 'cl:', cl);
 	}
 }
 
@@ -26021,6 +26138,7 @@ function EventLoop() {
 					CL.KeyUpEvent(ev.time, ev.keyName);
 				}
 				break;
+
 			case SE.MOUSE:
 				CL.MouseMoveEvent(ev.time, ev.deltaX, ev.deltaY);
 				break;
@@ -26047,6 +26165,10 @@ var splitRegex = /(?:\"[^\"]*\"|[^;])+/g;
 
 function SplitBuffer(buffer) {
 	var matches = buffer.match(splitRegex);
+
+	if (!matches) {
+		return null;
+	}
 
 	for (var i = 0; i < matches.length; i++) {
 		matches[i] = matches[i].replace(/^\s+|\s+$/g, '');
@@ -26082,23 +26204,28 @@ function SplitArguments(buffer) {
 /**
  * ExecuteStartupCommands
  */
-function ExecuteStartupCommands(cvars, callback) {
+function ExecuteStartupCommands(cvarsOnly, callback) {
 	var startup = SYS.GetStartupCommands();
 
 	var tasks = [];
 
-	// Go ahead and merge all commands into a single list.
+	// Split and merge all commands into a flat list.
 	var cmds = [];
+
 	startup.forEach(function (cmd) {
-		cmds.push.apply(cmds, SplitBuffer(cmd));
+		var split = SplitBuffer(cmd);
+
+		if (split) {
+			cmds.push.apply(cmds, split);
+		}
 	});
 
 	cmds.forEach(function (cmd) {
 		var args = SplitArguments(cmd);
 
-		if (cvars && args[0] !== 'set') {
+		if (cvarsOnly && args[0] !== 'set') {
 			return;
-		} else if (!cvars && args[0] === 'set') {
+		} else if (!cvarsOnly && args[0] === 'set') {
 			return;
 		}
 
@@ -26119,7 +26246,7 @@ function ExecuteStartupCommands(cvars, callback) {
 function ExecuteBuffer(buffer, callback) {
 	var matches = SplitBuffer(buffer);
 
-	if (!matches.length) {
+	if (!matches) {
 		if (callback) {
 			callback(new Error('Failed to parse buffer.'));
 		}
@@ -26194,15 +26321,17 @@ function ExecuteFile(filename, callback) {
 			return;
 		}
 
-		// Trim data.
-		data = data.replace(/^\s+|\s+$/g, '');
-
 		// Split by newline.
 		var lines = data.split(/[\r\n]+|\r+|\n+/);
 
 		var tasks = [];
-
 		lines.forEach(function (line) {
+			// Trim and ignore blank lines.
+			line = line.replace(/^\s+|\s+$/g, '');
+			if (!line) {
+				return;
+			}
+
 			tasks.push(function (cb) {
 				ExecuteBuffer(line, cb);
 			});
@@ -26296,6 +26425,8 @@ function GetExports() {
 			SVM:                   SVM,
 			Log:                   log,
 			Error:                 error,
+			BeginRedirect:         BeginRedirect,
+			EndRedirect:           EndRedirect,
 			ExecuteBuffer:         ExecuteBuffer,
 			LoadConfig:            LoadConfig,
 			SaveConfig:            SaveConfig,
@@ -26307,12 +26438,16 @@ function GetExports() {
 			ReadDeltaPlayerState:  ReadDeltaPlayerState,
 			WriteDeltaEntityState: WriteDeltaEntityState,
 			ReadDeltaEntityState:  ReadDeltaEntityState,
-			NetchanSetup:          NetchanSetup,
-			NetchanDestroy:        NetchanDestroy,
-			NetchanSend:           NetchanSend,
-			NetchanPrint:          NetchanPrint,
-			NetchanProcess:        NetchanProcess,
 			StringToAddr:          StringToAddr,
+			SockToString:          SockToString,
+			NetConnect:            NetConnect,
+			NetListen:             NetListen,
+			NetSend:               NetSend,
+			NetClose:              NetClose,
+			NetchanSetup:          NetchanSetup,
+			NetchanTransmit:       NetchanTransmit,
+			NetchanOutOfBandPrint: NetchanOutOfBandPrint,
+			NetchanProcess:        NetchanProcess,
 			LoadBsp:               LoadBsp
 		}
 	};
@@ -26920,195 +27055,25 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	}
 }
 
-	var MAX_PACKETLEN = 1400;
-var MAX_LOOPBACK  = 16;
+	var MAX_LOOPBACK  = 16;
+
+// Global loopback accept handler.
+var loopbackAccept = null;
 
 var msgBuffer = new ArrayBuffer(MAX_MSGLEN);
 
-var loopbacks = [
-	{ msocket: null, msgs: new Array(MAX_LOOPBACK), send: 0 },
-	{ msocket: null, msgs: new Array(MAX_LOOPBACK), send: 0 }
-];
+var LoopbackSocket = function () {
+	this.remoteSocket = null;
+	this.onopen       = null;
+	this.onmessage    = null;
+	this.onclose      = null;
+	this.msgs         = new Array(MAX_LOOPBACK);
+	this.send         = 0;
 
-for (var i = 0; i < MAX_LOOPBACK; i++) {
-	loopbacks[0].msgs[i] = new ArrayBuffer(MAX_MSGLEN);
-	loopbacks[1].msgs[i] = new ArrayBuffer(MAX_MSGLEN);
-}
-
-/**
- * NetchanSetup
- */
-var netchanId = 0;
-
-function NetchanSetup(src, addrOrSocket, opts) {
-	var netchan = new NetChan();
-
-	netchan.src = src;
-
-	// If an address structure was passed in, create
-	// the socket handle.
-	if (addrOrSocket instanceof QS.NetAdr) {
-		netchan.remoteAddress = addrOrSocket;
-
-		// Create an empty object for loopback sockets so event handlers
-		// can still be set.
-		if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
-			netchan.msocket = {};
-		} else {
-			netchan.msocket = SYS.NetConnect(netchan.remoteAddress);
-		}
+	for (var i = 0; i < MAX_LOOPBACK; i++) {
+		this.msgs[i] = new ArrayBuffer(MAX_MSGLEN);
 	}
-	// The server initializes channels with a valid socket
-	// for connected clients.
-	else {
-		// We don't need the actual ip / port (we already have a socket
-		// handle), but set the correct address type.
-		var addr = new QS.NetAdr();
-		addr.type = QS.NA.IP;
-
-		netchan.remoteAddress = addr;
-		netchan.msocket = addrOrSocket;
-	}
-
-	// Persist the system-level events to the optional event handlers.
-	netchan.msocket.onopen = function () {
-		netchan.ready = true;
-		if (opts.onopen) {
-			opts.onopen();
-		}
-	};
-
-	netchan.msocket.onmessage = function (buffer) {
-		if (opts.onmessage) {
-			opts.onmessage(buffer);
-		}
-	};
-
-	netchan.msocket.onclose = function () {
-		if (opts.onclose) {
-			opts.onclose();
-		}
-	};
-
-	if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
-		// Store the socket to use for future sends.
-		loopbacks[src].msocket = netchan.msocket;
-
-		// Go ahead and trigger a fake open event.
-		netchan.msocket.onopen();
-	}
-
-	return netchan;
-}
-
-/**
- * NetchanDestroy
- */
-function NetchanDestroy(netchan) {
-	netchan.ready = false;
-
-	if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
-		// Trigger fake close event on both the client and server
-		// so they both clean up properly.
-		var err = new Error('destroyed');
-
-		setTimeout(function () {
-			var msocket = loopbacks[netchan.src].msocket;
-			msocket.onclose(err);
-		}, 0);
-
-		setTimeout(function () {
-			var msocket = loopbacks[netchan.src === QS.NS.CLIENT ? QS.NS.SERVER : QS.NS.CLIENT].msocket;
-			msocket.onclose(err);
-		}, 0);
-
-		return;
-	}
-
-	SYS.NetClose(netchan.msocket);
-}
-
-/**
- * NetchanSendLoopPacket
- */
-function NetchanSendLoopPacket(netchan, view) {
-	var q = loopbacks[netchan.src];
-
-	// Copy buffer to loopback buffer.
-	var loopbackView = new Uint8Array(q.msgs[q.send++ % MAX_LOOPBACK]);
-	for (var i = 0; i < view.length; i++) {
-		loopbackView[i] = view[i];
-	}
-
-	// Trigger a fake message event.
-	var remote_src = netchan.src === QS.NS.CLIENT ? QS.NS.SERVER : QS.NS.CLIENT;
-	var msocket = loopbacks[remote_src].msocket;
-
-	if (!msocket || !msocket.onmessage) {
-		error('No loopback onmessage handler for', remote_src === QS.NS.CLIENT ? 'client' : 'server');
-		return;
-	}
-
-	// Don't execute immediately.
-	setTimeout(function () {
-		msocket.onmessage(loopbackView);
-	}, 0);
-}
-
-/**
- * NetchanSend
- */
-function NetchanSend(netchan, buffer, length) {
-	var msg = new BitStream(msgBuffer);
-
-	// Write out the buffer to our internal message buffer.
-	var bufferView = new Uint8Array(buffer);
-
-	msg.writeInt32(netchan.outgoingSequence++);
-
-	for (var i = 0; i < length; i++) {
-		msg.writeUint8(bufferView[i]);
-	}
-
-	// Create a new view representing the contents of the message.
-	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
-
-	if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
-		NetchanSendLoopPacket(netchan, msgView);
-		return;
-	}
-
-	SYS.NetSend(netchan.msocket, msgView);
-}
-
-/**
- * NetchanPrint
- */
-function NetchanPrint(netchan, str) {
-	var msg = new BitStream(msgBuffer);
-
-	msg.writeInt32(-1);
-	msg.writeASCIIString(str);
-
-	// Create a new view representing the contents of the message.
-	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
-
-	if (netchan.remoteAddress.type === QS.NA.LOOPBACK) {
-		NetchanSendLoopPacket(netchan, msgView);
-		return;
-	}
-
-	SYS.NetSend(netchan.msocket, msgView);
-}
-
-/**
- * NetchanProcess
- */
-function NetchanProcess(netchan, msg) {
-	var sequence = msg.readInt32();
-	netchan.incomingSequence = sequence;
-	return true;
-}
+};
 
 /**
  * StringToAddr
@@ -27143,6 +27108,176 @@ function StringToAddr(str) {
 	addr.port = port;
 
 	return addr;
+}
+
+/**
+ * SockToString
+ */
+function SockToString(socket) {
+	if (socket instanceof LoopbackSocket) {
+		return 'loopback';
+	}
+
+	return SYS.SockToString(socket);
+}
+
+/**
+ * NetConnect
+ */
+function NetConnect(addr, opts) {
+	var socket;
+
+	// Client attempting to connect to faux loopback server.
+	if (addr.type === QS.NA.LOOPBACK) {
+		socket = new LoopbackSocket();
+
+		// Create the loop.
+		socket.remoteSocket = new LoopbackSocket();
+		socket.remoteSocket.remoteSocket = socket;
+
+		// Go ahead and trigger fake open / accept events.
+		setTimeout(function () {
+			if (!loopbackAccept) {
+				socket.onclose && socket.onclose();
+				return;
+			}
+
+			socket.onopen && socket.onopen();
+
+			loopbackAccept(socket.remoteSocket);
+		}, 0);
+	} else {
+		socket = SYS.NetConnect(addr.ip, addr.port);
+	}
+
+	socket.onopen = opts.onopen;
+	socket.onmessage = opts.onmessage;
+	socket.onclose = opts.onclose;
+
+	return socket;
+}
+
+/**
+ * NetListen
+ */
+function NetListen(addr, opts) {
+	if (addr.type === QS.NA.LOOPBACK) {
+		loopbackAccept = opts.onaccept;
+		return;
+	}
+
+	SYS.NetListen(addr.ip, addr.port, opts);
+}
+
+/**
+ * NetSendLoopPacket
+ */
+function NetSendLoopPacket(socket, view) {
+	// Copy buffer to loopback buffer.
+	var loopbackView = new Uint8Array(socket.msgs[socket.send++ % MAX_LOOPBACK]);
+	for (var i = 0; i < view.length; i++) {
+		loopbackView[i] = view[i];
+	}
+
+	// Trigger a fake message event on the remote socket.
+	setTimeout(function () {
+		socket.remoteSocket.onmessage && socket.remoteSocket.onmessage(loopbackView);
+	}, 0);
+}
+
+/**
+ * NetSend
+ */
+function NetSend(socket, view) {
+	if (socket instanceof LoopbackSocket) {
+		NetSendLoopPacket(socket, view);
+		return;
+	}
+
+	SYS.NetSend(socket, view);
+}
+
+/**
+ * NetClose
+ */
+function NetClose(socket) {
+	if (socket instanceof LoopbackSocket) {
+		// Trigger fake close event on both the client and server
+		// so they both clean up properly.
+		setTimeout(function () {
+			socket.onclose && socket.onclose();
+		}, 0);
+
+		if (socket.remoteSocket) {
+			setTimeout(function () {
+				socket.remoteSocket.onclose && socket.remoteSocket.onclose();
+			}, 0);
+		}
+		return;
+	}
+
+	SYS.NetClose(socket);
+}
+
+/**
+ * NetchanSetup
+ */
+function NetchanSetup(socket) {
+	var netchan = new NetChan();
+
+	netchan.socket = socket;
+
+	return netchan;
+}
+
+/**
+ * NetchanTransmit
+ */
+function NetchanTransmit(netchan, buffer, length) {
+	var msg = new BitStream(msgBuffer);
+
+	// Write out the buffer to our internal message buffer.
+	var bufferView = new Uint8Array(buffer);
+
+	msg.writeInt32(netchan.outgoingSequence++);
+
+	for (var i = 0; i < length; i++) {
+		msg.writeUint8(bufferView[i]);
+	}
+
+	// Create a new view representing the contents of the message.
+	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
+
+	NetSend(netchan.socket, msgView);
+}
+
+/**
+ * NetchanOutOfBandPrint
+ */
+function NetchanOutOfBandPrint(netchan, type, data) {
+	var msg = new BitStream(msgBuffer);
+
+	var str = JSON.stringify({
+		type: type,
+		data: data
+	});
+
+	msg.writeInt32(-1);
+	msg.writeASCIIString(str);
+
+	// Create a new view representing the contents of the message.
+	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
+
+	NetSend(netchan.socket, msgView);
+}
+
+/**
+ * NetchanProcess
+ */
+function NetchanProcess(netchan, msg) {
+	var sequence = msg.readInt32();
+	netchan.incomingSequence = sequence;
+	return true;
 }
 	/**
  * LoadBsp
@@ -27281,8 +27416,9 @@ function (async, glmatrix, QS, COM, Cvar) {
  * cl, sv and com layers instead of the raw
  * WebSocket instance.
  */
-var MetaSocket = function () {
-	this.handle    = null;
+var MetaSocket = function (handle) {
+	this.handle    = handle;
+	this.onopen    = null;
 	this.onmessage = null;
 	this.onclose   = null;
 };
@@ -27405,13 +27541,36 @@ function Init() {
 	// Override gl-matrix's default array type.
 	setMatrixArrayType(Array);
 
+	InitConsole();
+
 	// Initialize the game.
 	COM.Init(GetExports(), true, function () {
 		// Start main loop.
 		setInterval(function () {
 			COM.Frame();
-		}, 10);
+		}, 0);
 	});
+}
+
+/**
+ * InitConsole
+ */
+function InitConsole() {
+	var rl = require('readline').createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+
+	rl.on('line', function (line) {
+		// FIXME should queue an event, not directly execute.
+		COM.ExecuteBuffer(line);
+
+		rl.prompt(true);
+	}).on('close', function() {
+		process.exit(0);
+	});
+
+	rl.prompt(true);
 }
 
 /**
@@ -27481,6 +27640,7 @@ function GetExports() {
 		WriteFile:          WriteFile,
 		GetGLContext:       GetGLContext,
 		GetUIContext:       GetUIContext,
+		SockToString:       SockToString,
 		NetListen:          NetListen,
 		NetConnect:         NetConnect,
 		NetSend:            NetSend,
@@ -27562,9 +27722,16 @@ var WebSocketClient = require('ws');
 var WebSocketServer = require('ws').Server;
 
 /**
+ * SockToString
+ */
+function SockToString(msocket) {
+	return msocket.handle._socket.remoteAddress.toString();
+}
+
+/**
  * NetListen
  */
-function NetListen(address, port, opts) {
+function NetListen(ip, port, opts) {
 	var server = http.createServer();
 
 	var wss = new WebSocketServer({
@@ -27579,8 +27746,7 @@ function NetListen(address, port, opts) {
 			return;
 		}
 
-		var msocket = new MetaSocket();
-		msocket.handle = ws;
+		var msocket = new MetaSocket(ws);
 
 		// Persist the events down to the optional event handlers.
 		ws.on('message', function (message) {
@@ -27592,32 +27758,24 @@ function NetListen(address, port, opts) {
 				view[i] = message[i];
 			}
 
-			if (msocket.onmessage) {
-				msocket.onmessage(buffer);
-			}
+			msocket.onmessage && msocket.onmessage(buffer);
 		});
 
 		ws.on('error', function () {
-			if (msocket.onclose) {
-				msocket.onclose();
-			}
+			msocket.onclose && msocket.onclose();
 		});
 
 		ws.on('close', function () {
-			if (msocket.onclose) {
-				msocket.onclose();
-			}
+			msocket.onclose && msocket.onclose();
 		});
 
 		// Trigger the onaccept callback.
-		if (opts.onaccept) {
-			opts.onaccept(msocket);
-		}
+		opts.onaccept && opts.onaccept(msocket);
 	});
 
-	log((new Date()), 'Attempting to start game server on', address, port);
+	log((new Date()), 'Attempting to start game server on', ip, port);
 
-	server.listen(port, address, function() {
+	server.listen(port, ip, function() {
 		log((new Date()), 'Game server is listening on port', server.address().address, server.address().port);
 	});
 }
@@ -27625,39 +27783,30 @@ function NetListen(address, port, opts) {
 /**
  * NetConnect
  */
-function NetConnect(addr) {
-	var ws = new WebSocketClient('ws://' + addr.ip + ':' + addr.port);
+function NetConnect(ip, port) {
+	var ws = new WebSocketClient('ws://' + ip + ':' + port);
 
-	var msocket = new MetaSocket();
-	msocket.handle = ws;
+	var msocket = new MetaSocket(ws);
 
 	// Persist the events down to the optional event handlers.
 	ws.on('open', function () {
-		if (msocket.onopen) {
-			msocket.onopen();
-		}
+		msocket.onopen && msocket.onopen();
 	});
 
 	ws.on('message', function (data, flags) {
 		if (!flags.binary) {
-			return;  // unsupported
+			return;  // not supported
 		}
 
-		if (msocket.onmessage) {
-			msocket.onmessage(data);
-		}
+		msocket.onmessage && msocket.onmessage(data);
 	});
 
-	ws.on('error', function (err) {
-		if (msocket.onclose) {
-			msocket.onclose(err);
-		}
+	ws.on('error', function () {
+		msocket.onclose && msocket.onclose();
 	});
 
 	ws.on('close', function () {
-		if (msocket.onclose) {
-			msocket.onclose();
-		}
+		msocket.onclose && msocket.onclose();
 	});
 
 	return msocket;
