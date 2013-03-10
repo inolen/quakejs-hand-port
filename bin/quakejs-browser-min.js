@@ -5572,7 +5572,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1093;
+var GAME_VERSION = 0.1094;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23800,13 +23800,13 @@ function Init(inCL, callback) {
  * RegisterCvars
  */
 function RegisterCvars() {
-	sv_ip           = Cvar.AddCvar('sv_ip',           '0.0.0.0',                    Cvar.FLAGS.ARCHIVE, true);
-	sv_port         = Cvar.AddCvar('sv_port',         9001,                         Cvar.FLAGS.ARCHIVE, true);
-	sv_master       = Cvar.AddCvar('sv_master',       'master.quakejs.com:45735',   Cvar.FLAGS.ARCHIVE);
-	sv_hostname     = Cvar.AddCvar('sv_hostname',     'Anonymous',                  Cvar.FLAGS.ARCHIVE);
-	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
-	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',                      Cvar.FLAGS.SERVERINFO);
-	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   16,                           Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
+	sv_ip           = Cvar.AddCvar('sv_ip',           '0.0.0.0',            Cvar.FLAGS.ARCHIVE, true);
+	sv_port         = Cvar.AddCvar('sv_port',         9001,                 Cvar.FLAGS.ARCHIVE, true);
+	sv_master       = Cvar.AddCvar('sv_master',       'master.quakejs.com', Cvar.FLAGS.ARCHIVE);
+	sv_hostname     = Cvar.AddCvar('sv_hostname',     'Anonymous',          Cvar.FLAGS.ARCHIVE);
+	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                    Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
+	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',              Cvar.FLAGS.SERVERINFO);
+	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   16,                   Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
 	sv_fps          = Cvar.AddCvar('sv_fps',          20);   // time rate for running non-clients
 	sv_rconPassword = Cvar.AddCvar('sv_rconPassword', '');
 	sv_timeout      = Cvar.AddCvar('sv_timeout',      200);  // seconds without any message
@@ -24011,6 +24011,11 @@ function SendMasterHeartbeat() {
 	log('SendMasterHeartbeat', sv_master.get());
 
 	var addr = COM.StringToAddr(sv_master.get());
+	if (!addr) {
+		error('Failed to parse server address', sv_master.get());
+		return;
+	}
+
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
 			var netchan = COM.NetchanSetup(socket);
@@ -47747,7 +47752,7 @@ function CmdUnbindAll(cmdName) {
 function CmdConnect(serverName) {
 	var addr = COM.StringToAddr(serverName);
 	if (!addr) {
-		error('Bad server address', serverName);
+		error('Failed to parse server address', serverName);
 		return;
 	}
 
@@ -49909,7 +49914,7 @@ function StringToAddr(str) {
 
 	var port = parseInt(split[1], 10);
 	if (isNaN(port)) {
-		return null;
+		port = 80;
 	}
 
 	addr.ip = split[0];
