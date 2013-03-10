@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1092;
+var GAME_VERSION = 0.1093;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5816,11 +5816,11 @@ var BitView = function (source, byteOffset, byteLength) {
 
 	this._buffer = source;
 	this._view = new Uint8Array(this._buffer, byteOffset || 0, byteLength || this._buffer.byteLength);
-
-	// Used to massage fp values so we can operate on them
-	// at the bit level.
-	this._scratch = new DataView(new ArrayBuffer(8));
 };
+
+// Used to massage fp values so we can operate on them
+// at the bit level.
+BitView._scratch = new DataView(new ArrayBuffer(8));
 
 Object.defineProperty(BitView.prototype, 'buffer', {
 	get: function () { return this._buffer; },
@@ -5901,14 +5901,14 @@ BitView.prototype.getUint32 = function (offset) {
 	return this.getBits(offset, 32, false);
 };
 BitView.prototype.getFloat32 = function (offset) {
-	this._scratch.setUint32(0, this.getUint32(offset));
-	return this._scratch.getFloat32(0);
+	BitView._scratch.setUint32(0, this.getUint32(offset));
+	return BitView._scratch.getFloat32(0);
 };
 BitView.prototype.getFloat64 = function (offset) {
-	this._scratch.setUint32(0, this.getUint32(offset));
+	BitView._scratch.setUint32(0, this.getUint32(offset));
 	// DataView offset is in bytes.
-	this._scratch.setUint32(4, this.getUint32(offset+32));
-	return this._scratch.getFloat64(0);
+	BitView._scratch.setUint32(4, this.getUint32(offset+32));
+	return BitView._scratch.getFloat64(0);
 };
 
 BitView.prototype.setInt8  =
@@ -5924,13 +5924,13 @@ BitView.prototype.setUint32 = function (offset, value) {
 	this.setBits(offset, value, 32);
 };
 BitView.prototype.setFloat32 = function (offset, value) {
-	this._scratch.setFloat32(0, value);
-	this.setBits(offset, this._scratch.getUint32(0), 32);
+	BitView._scratch.setFloat32(0, value);
+	this.setBits(offset, BitView._scratch.getUint32(0), 32);
 };
 BitView.prototype.setFloat64 = function (offset, value) {
-	this._scratch.setFloat64(0, value);
-	this.setBits(offset, this._scratch.getUint32(0), 32);
-	this.setBits(offset+32, this._scratch.getUint32(4), 32);
+	BitView._scratch.setFloat64(0, value);
+	this.setBits(offset, BitView._scratch.getUint32(0), 32);
+	this.setBits(offset+32, BitView._scratch.getUint32(4), 32);
 };
 
 /**********************************************************
@@ -13741,8 +13741,6 @@ var ArenaInfo = function () {
 	this.numNonSpectatorClients = 0;  // includes connecting clients
 	this.numPlayingClients      = 0;  // connected, non-spectators
 	this.sortedClients          = new Array(MAX_CLIENTS);  // sorted by score
-	this.score1                 = 0;
-	this.score2                 = 0;
 
 	this.intermissionTime       = 0;  // time the intermission was started
 	this.readyToExit            = false;  // at least one client wants to exit
@@ -14303,11 +14301,13 @@ function InitArenas() {
 		level.arenas[i] = arena;
 		SetCurrentArena(i);
 
+		// Do initial update.
+		ArenaInfoChanged();
+
 		// FIXME We don't really need to spawn all map entities for each arena,
 		// especially static, stateless ones such as triggers and what not.
 		SpawnAllEntitiesFromDefs(i);
 
-		//
 		if (arena.gametype >= GT.CLANARENA) {
 			CreateRoundMachine();
 		} else {
@@ -14356,20 +14356,10 @@ function RunArenas() {
  * ArenaInfoChanged
  */
 function ArenaInfoChanged() {
-	var info = {
-		'name': level.arena.name,
-		'gt': level.arena.gametype,
-		'gs': level.arena.state.current,
-
-		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
-		'rl': g_roundlimit.at(level.arena.arenaNum).get(),
-
-		'wt': level.arena.warmupTime,
-		's1': level.arena.score1,
-		's2': level.arena.score2
-	};
-
-	SV.SetConfigstring('arena:' + level.arena.arenaNum, info);
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':name', level.arena.name);
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gametype', g_gametype.at(level.arena.arenaNum).get());
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':playersPerTeam', g_playersPerTeam.at(level.arena.arenaNum).get());
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':roundlimit', g_roundlimit.at(level.arena.arenaNum).get());
 }
 
 /**
@@ -14444,27 +14434,25 @@ function CreateTournamentMachine() {
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
-				ArenaInfoChanged();
 			},
 			onready: function (event, from, to, msg) {
 				TournamentReady();
-				ArenaInfoChanged();
 			},
 			onstart: function (event, from, to, msg) {
 				TournamentStart();
-				ArenaInfoChanged();
 			},
 			onend: function (event, from, to, msg) {
 				TournamentEnd(msg);
-				ArenaInfoChanged();
 			},
 			onintermission: function (event, from, to, msg) {
 				TournamentIntermission();
-				ArenaInfoChanged();
 			},
 			onrestart: function (event, from, to, msg) {
 				TournamentRestart();
-				ArenaInfoChanged();
+			},
+			// Called after all events.
+			onafterevent: function () {
+				SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gamestate', level.arena.state.current);
 			}
 		}
 	});
@@ -14645,6 +14633,8 @@ function TournamentReady() {
 	if (g_warmup.get() > 1) {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
 	}
+
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':warmupTime', level.arena.warmupTime);
 }
 
 /**
@@ -14750,27 +14740,25 @@ function CreateRoundMachine() {
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
-				ArenaInfoChanged();
 			},
 			onready: function (event, from, to, msg) {
 				RoundReady();
-				ArenaInfoChanged();
 			},
 			onstart: function (event, from, to, msg) {
 				RoundStart();
-				ArenaInfoChanged();
 			},
 			onend: function (event, from, to, msg) {
 				RoundEnd(msg);
-				ArenaInfoChanged();
 			},
 			onintermission: function (event, from, to, msg) {
 				RoundIntermission();
-				ArenaInfoChanged();
 			},
 			onrestart: function (event, from, to, msg) {
 				RoundRestart();
-				ArenaInfoChanged();
+			},
+			// Called after all events.
+			onafterevent: function () {
+				SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gamestate', level.arena.state.current);
 			}
 		}
 	});
@@ -14875,6 +14863,8 @@ function RoundReady() {
 	if (g_warmup.get() > 1) {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
 	}
+
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':warmupTime', level.arena.warmupTime);
 }
 
 /**
@@ -14940,15 +14930,38 @@ function RoundEnd(winningTeam) {
 	}
 	level.arena.lastWinningTeam = winningTeam;
 
+	// Let everyone know who won.
+	var str;
+
+	if (winningTeam === null) {
+		str = 'The round was a draw.'
+	} else {
+		var teamName;
+
+		if (winningTeam === TEAM.RED) {
+			teamName = level.arena.gametype === GT.ROCKETARENA ?
+				level.arena.group1 :
+				'Red team';
+		} else if (winningTeam === TEAM.BLUE) {
+			teamName = level.arena.gametype === GT.ROCKETARENA ?
+				level.arena.group2 :
+				'Blue team';
+		}
+
+		str = teamName + ' won the round.'
+	}
+
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':winningTeam', str);
+
 	// Go to intermission if the roundlimit was hit.
 	var roundlimit = g_roundlimit.at(level.arena.arenaNum).get();
 
 	// Roundlimit is the number of rounds to be played at maximum,
 	// end the match once a team has passed the halfway mark.
 	if (level.arena.teamScores[TEAM.RED] >= Math.ceil(roundlimit / 2)) {
-		QueueIntermission('Red won the match.');
+		QueueIntermission('Red team won the match.');
 	} else if (level.arena.teamScores[TEAM.BLUE] >= Math.ceil(roundlimit / 2)) {
-		QueueIntermission('Blue won the match.');
+		QueueIntermission('Blue team won the match.');
 	} else {
 		level.arena.restartTime = level.time + 4000;
 	}
@@ -15016,7 +15029,7 @@ function RoundRestart() {
 
 			// Respawn winners.
 			RespawnTeam(TEAM.RED);
-		} else {
+		} else if (level.arena.lastWinningTeam === TEAM.BLUE) {
 			QueueGroup(level.arena.group1);
 			level.arena.group1 = null;
 
@@ -15038,6 +15051,11 @@ function RoundRestart() {
 
 			level.arena.group1 = level.arena.group2;
 			level.arena.group2 = null;
+		}
+		// Noone won, respawn both teams.
+		else {
+			RespawnTeam(TEAM.RED);
+			RespawnTeam(TEAM.BLUE);
 		}
 	}
 	// Always respawn both teams in CA.
@@ -15548,15 +15566,18 @@ function CalculateRanks() {
 	}
 
 	// Set the CS_SCORES1/2 configstrings, which will be visible to everyone.
+	var score1 = null;
+	var score2 = null;
+
 	if (level.arena.gametype === GT.ROCKETARENA) {
-		level.arena.score1 = !level.arena.group1 ? null : {
+		score1 = !level.arena.group1 ? null : {
 			group: level.arena.group1,
 			score: TeamGroupScore(level.arena.group1),
 			count: TeamCount(TEAM.RED, ENTITYNUM_NONE),
 			alive: TeamAliveCount(TEAM.RED)
 		};
 
-		level.arena.score2 = !level.arena.group2 ? null : {
+		score2 = !level.arena.group2 ? null : {
 			group: level.arena.group2,
 			score: TeamGroupScore(level.arena.group2),
 			count: TeamCount(TEAM.BLUE, ENTITYNUM_NONE),
@@ -15564,13 +15585,13 @@ function CalculateRanks() {
 		};
 	}
 	else if (level.arena.gametype >= GT.TEAM) {
-		level.arena.score1 = {
+		score1 = {
 			score: level.arena.teamScores[TEAM.RED],
 			count: TeamCount(TEAM.RED, ENTITYNUM_NONE),
 			alive: TeamAliveCount(TEAM.RED)
 		};
 
-		level.arena.score2 = {
+		score2 = {
 			score: level.arena.teamScores[TEAM.BLUE],
 			count: TeamCount(TEAM.BLUE, ENTITYNUM_NONE),
 			alive: TeamAliveCount(TEAM.BLUE)
@@ -15580,30 +15601,29 @@ function CalculateRanks() {
 		var n2 = level.arena.sortedClients[1];
 
 		if (level.arena.numConnectedClients === 0) {
-			level.arena.score1 = null;
-			level.arena.score2 = null;
+			score1 = null;
+			score2 = null;
 		} else if (level.arena.numConnectedClients === 1) {
-			level.arena.score1 = {
+			score1 = {
 				clientNum: n1,
 				score: level.clients[n1].ps.persistant[PERS.SCORE]
 			};
 
-			level.arena.score2 = null;
+			score2 = null;
 		} else {
-			level.arena.score1 = {
+			score1 = {
 				clientNum: n1,
 				score: level.clients[n1].ps.persistant[PERS.SCORE]
 			};
 
-			level.arena.score2 = {
+			score2 = {
 				clientNum: n2,
 				score: level.clients[n2].ps.persistant[PERS.SCORE]
 			};
 		}
 	}
-
-	//
-	ArenaInfoChanged();
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':score1', score1);
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':score2', score2);
 
 	// If we are at the intermission, send the new info to everyone.
 	if (IntermissionStarted()) {
@@ -23428,7 +23448,7 @@ function RegisterCvars() {
 	sv_hostname     = Cvar.AddCvar('sv_hostname',     'Anonymous',                  Cvar.FLAGS.ARCHIVE);
 	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
 	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',                      Cvar.FLAGS.SERVERINFO);
-	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   8,                            Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
+	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   16,                           Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
 	sv_fps          = Cvar.AddCvar('sv_fps',          20);   // time rate for running non-clients
 	sv_rconPassword = Cvar.AddCvar('sv_rconPassword', '');
 	sv_timeout      = Cvar.AddCvar('sv_timeout',      200);  // seconds without any message
@@ -23498,7 +23518,6 @@ function Frame(msec) {
 	CalcPings();
 
 	// Run the game simulation in chunks.
-	var frames = 0;
 	while (sv.timeResidual >= frameMsec) {
 		sv.timeResidual -= frameMsec;
 		svs.time += frameMsec;
@@ -23506,16 +23525,12 @@ function Frame(msec) {
 
 		// Let everything in the world think and move.
 		GM.Frame(sv.time);
-		frames++;
 	}
 
 	// Check for timeouts.
 	CheckTimeouts();
 
-	// Don't send out duplicate snapshots if we didn't run any gameframes.
-	if (frames > 0) {
-		SendClientMessages();
-	}
+	SendClientMessages();
 
 	// Send a heartbeat to the master if needed.
 	SendMasterHeartbeat();
@@ -27256,6 +27271,15 @@ function NetchanTransmit(netchan, buffer, length) {
 }
 
 /**
+ * NetchanProcess
+ */
+function NetchanProcess(netchan, msg) {
+	var sequence = msg.readInt32();
+	netchan.incomingSequence = sequence;
+	return true;
+}
+
+/**
  * NetchanOutOfBandPrint
  */
 function NetchanOutOfBandPrint(netchan, type, data) {
@@ -27273,15 +27297,6 @@ function NetchanOutOfBandPrint(netchan, type, data) {
 	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
 
 	NetSend(netchan.socket, msgView);
-}
-
-/**
- * NetchanProcess
- */
-function NetchanProcess(netchan, msg) {
-	var sequence = msg.readInt32();
-	netchan.incomingSequence = sequence;
-	return true;
 }
 	/**
  * LoadBsp

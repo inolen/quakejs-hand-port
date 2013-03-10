@@ -34,7 +34,7 @@
 		</ul>
 	</div>
 
-	<div id="warmup" data-bind="visible: gamestate() <= 2, pretty: warmup"></div>
+	<div id="warmup" data-bind="visible: gamestate() <= 2 || gamestate() === 4, pretty: warmup"></div>
 	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, pretty: centerPrint"></div>
 
 	<div id="crosshair" data-bind="visible: alive, img: 'gfx/2d/crosshairb'"></div>

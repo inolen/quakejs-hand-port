@@ -5572,7 +5572,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1092;
+var GAME_VERSION = 0.1093;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -6174,11 +6174,11 @@ var BitView = function (source, byteOffset, byteLength) {
 
 	this._buffer = source;
 	this._view = new Uint8Array(this._buffer, byteOffset || 0, byteLength || this._buffer.byteLength);
-
-	// Used to massage fp values so we can operate on them
-	// at the bit level.
-	this._scratch = new DataView(new ArrayBuffer(8));
 };
+
+// Used to massage fp values so we can operate on them
+// at the bit level.
+BitView._scratch = new DataView(new ArrayBuffer(8));
 
 Object.defineProperty(BitView.prototype, 'buffer', {
 	get: function () { return this._buffer; },
@@ -6259,14 +6259,14 @@ BitView.prototype.getUint32 = function (offset) {
 	return this.getBits(offset, 32, false);
 };
 BitView.prototype.getFloat32 = function (offset) {
-	this._scratch.setUint32(0, this.getUint32(offset));
-	return this._scratch.getFloat32(0);
+	BitView._scratch.setUint32(0, this.getUint32(offset));
+	return BitView._scratch.getFloat32(0);
 };
 BitView.prototype.getFloat64 = function (offset) {
-	this._scratch.setUint32(0, this.getUint32(offset));
+	BitView._scratch.setUint32(0, this.getUint32(offset));
 	// DataView offset is in bytes.
-	this._scratch.setUint32(4, this.getUint32(offset+32));
-	return this._scratch.getFloat64(0);
+	BitView._scratch.setUint32(4, this.getUint32(offset+32));
+	return BitView._scratch.getFloat64(0);
 };
 
 BitView.prototype.setInt8  =
@@ -6282,13 +6282,13 @@ BitView.prototype.setUint32 = function (offset, value) {
 	this.setBits(offset, value, 32);
 };
 BitView.prototype.setFloat32 = function (offset, value) {
-	this._scratch.setFloat32(0, value);
-	this.setBits(offset, this._scratch.getUint32(0), 32);
+	BitView._scratch.setFloat32(0, value);
+	this.setBits(offset, BitView._scratch.getUint32(0), 32);
 };
 BitView.prototype.setFloat64 = function (offset, value) {
-	this._scratch.setFloat64(0, value);
-	this.setBits(offset, this._scratch.getUint32(0), 32);
-	this.setBits(offset+32, this._scratch.getUint32(4), 32);
+	BitView._scratch.setFloat64(0, value);
+	this.setBits(offset, BitView._scratch.getUint32(0), 32);
+	this.setBits(offset+32, BitView._scratch.getUint32(4), 32);
 };
 
 /**********************************************************
@@ -14099,8 +14099,6 @@ var ArenaInfo = function () {
 	this.numNonSpectatorClients = 0;  // includes connecting clients
 	this.numPlayingClients      = 0;  // connected, non-spectators
 	this.sortedClients          = new Array(MAX_CLIENTS);  // sorted by score
-	this.score1                 = 0;
-	this.score2                 = 0;
 
 	this.intermissionTime       = 0;  // time the intermission was started
 	this.readyToExit            = false;  // at least one client wants to exit
@@ -14661,11 +14659,13 @@ function InitArenas() {
 		level.arenas[i] = arena;
 		SetCurrentArena(i);
 
+		// Do initial update.
+		ArenaInfoChanged();
+
 		// FIXME We don't really need to spawn all map entities for each arena,
 		// especially static, stateless ones such as triggers and what not.
 		SpawnAllEntitiesFromDefs(i);
 
-		//
 		if (arena.gametype >= GT.CLANARENA) {
 			CreateRoundMachine();
 		} else {
@@ -14714,20 +14714,10 @@ function RunArenas() {
  * ArenaInfoChanged
  */
 function ArenaInfoChanged() {
-	var info = {
-		'name': level.arena.name,
-		'gt': level.arena.gametype,
-		'gs': level.arena.state.current,
-
-		'ppt': g_playersPerTeam.at(level.arena.arenaNum).get(),
-		'rl': g_roundlimit.at(level.arena.arenaNum).get(),
-
-		'wt': level.arena.warmupTime,
-		's1': level.arena.score1,
-		's2': level.arena.score2
-	};
-
-	SV.SetConfigstring('arena:' + level.arena.arenaNum, info);
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':name', level.arena.name);
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gametype', g_gametype.at(level.arena.arenaNum).get());
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':playersPerTeam', g_playersPerTeam.at(level.arena.arenaNum).get());
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':roundlimit', g_roundlimit.at(level.arena.arenaNum).get());
 }
 
 /**
@@ -14802,27 +14792,25 @@ function CreateTournamentMachine() {
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
-				ArenaInfoChanged();
 			},
 			onready: function (event, from, to, msg) {
 				TournamentReady();
-				ArenaInfoChanged();
 			},
 			onstart: function (event, from, to, msg) {
 				TournamentStart();
-				ArenaInfoChanged();
 			},
 			onend: function (event, from, to, msg) {
 				TournamentEnd(msg);
-				ArenaInfoChanged();
 			},
 			onintermission: function (event, from, to, msg) {
 				TournamentIntermission();
-				ArenaInfoChanged();
 			},
 			onrestart: function (event, from, to, msg) {
 				TournamentRestart();
-				ArenaInfoChanged();
+			},
+			// Called after all events.
+			onafterevent: function () {
+				SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gamestate', level.arena.state.current);
 			}
 		}
 	});
@@ -15003,6 +14991,8 @@ function TournamentReady() {
 	if (g_warmup.get() > 1) {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
 	}
+
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':warmupTime', level.arena.warmupTime);
 }
 
 /**
@@ -15108,27 +15098,25 @@ function CreateRoundMachine() {
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
-				ArenaInfoChanged();
 			},
 			onready: function (event, from, to, msg) {
 				RoundReady();
-				ArenaInfoChanged();
 			},
 			onstart: function (event, from, to, msg) {
 				RoundStart();
-				ArenaInfoChanged();
 			},
 			onend: function (event, from, to, msg) {
 				RoundEnd(msg);
-				ArenaInfoChanged();
 			},
 			onintermission: function (event, from, to, msg) {
 				RoundIntermission();
-				ArenaInfoChanged();
 			},
 			onrestart: function (event, from, to, msg) {
 				RoundRestart();
-				ArenaInfoChanged();
+			},
+			// Called after all events.
+			onafterevent: function () {
+				SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gamestate', level.arena.state.current);
 			}
 		}
 	});
@@ -15233,6 +15221,8 @@ function RoundReady() {
 	if (g_warmup.get() > 1) {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
 	}
+
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':warmupTime', level.arena.warmupTime);
 }
 
 /**
@@ -15298,15 +15288,38 @@ function RoundEnd(winningTeam) {
 	}
 	level.arena.lastWinningTeam = winningTeam;
 
+	// Let everyone know who won.
+	var str;
+
+	if (winningTeam === null) {
+		str = 'The round was a draw.'
+	} else {
+		var teamName;
+
+		if (winningTeam === TEAM.RED) {
+			teamName = level.arena.gametype === GT.ROCKETARENA ?
+				level.arena.group1 :
+				'Red team';
+		} else if (winningTeam === TEAM.BLUE) {
+			teamName = level.arena.gametype === GT.ROCKETARENA ?
+				level.arena.group2 :
+				'Blue team';
+		}
+
+		str = teamName + ' won the round.'
+	}
+
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':winningTeam', str);
+
 	// Go to intermission if the roundlimit was hit.
 	var roundlimit = g_roundlimit.at(level.arena.arenaNum).get();
 
 	// Roundlimit is the number of rounds to be played at maximum,
 	// end the match once a team has passed the halfway mark.
 	if (level.arena.teamScores[TEAM.RED] >= Math.ceil(roundlimit / 2)) {
-		QueueIntermission('Red won the match.');
+		QueueIntermission('Red team won the match.');
 	} else if (level.arena.teamScores[TEAM.BLUE] >= Math.ceil(roundlimit / 2)) {
-		QueueIntermission('Blue won the match.');
+		QueueIntermission('Blue team won the match.');
 	} else {
 		level.arena.restartTime = level.time + 4000;
 	}
@@ -15374,7 +15387,7 @@ function RoundRestart() {
 
 			// Respawn winners.
 			RespawnTeam(TEAM.RED);
-		} else {
+		} else if (level.arena.lastWinningTeam === TEAM.BLUE) {
 			QueueGroup(level.arena.group1);
 			level.arena.group1 = null;
 
@@ -15396,6 +15409,11 @@ function RoundRestart() {
 
 			level.arena.group1 = level.arena.group2;
 			level.arena.group2 = null;
+		}
+		// Noone won, respawn both teams.
+		else {
+			RespawnTeam(TEAM.RED);
+			RespawnTeam(TEAM.BLUE);
 		}
 	}
 	// Always respawn both teams in CA.
@@ -15906,15 +15924,18 @@ function CalculateRanks() {
 	}
 
 	// Set the CS_SCORES1/2 configstrings, which will be visible to everyone.
+	var score1 = null;
+	var score2 = null;
+
 	if (level.arena.gametype === GT.ROCKETARENA) {
-		level.arena.score1 = !level.arena.group1 ? null : {
+		score1 = !level.arena.group1 ? null : {
 			group: level.arena.group1,
 			score: TeamGroupScore(level.arena.group1),
 			count: TeamCount(TEAM.RED, ENTITYNUM_NONE),
 			alive: TeamAliveCount(TEAM.RED)
 		};
 
-		level.arena.score2 = !level.arena.group2 ? null : {
+		score2 = !level.arena.group2 ? null : {
 			group: level.arena.group2,
 			score: TeamGroupScore(level.arena.group2),
 			count: TeamCount(TEAM.BLUE, ENTITYNUM_NONE),
@@ -15922,13 +15943,13 @@ function CalculateRanks() {
 		};
 	}
 	else if (level.arena.gametype >= GT.TEAM) {
-		level.arena.score1 = {
+		score1 = {
 			score: level.arena.teamScores[TEAM.RED],
 			count: TeamCount(TEAM.RED, ENTITYNUM_NONE),
 			alive: TeamAliveCount(TEAM.RED)
 		};
 
-		level.arena.score2 = {
+		score2 = {
 			score: level.arena.teamScores[TEAM.BLUE],
 			count: TeamCount(TEAM.BLUE, ENTITYNUM_NONE),
 			alive: TeamAliveCount(TEAM.BLUE)
@@ -15938,30 +15959,29 @@ function CalculateRanks() {
 		var n2 = level.arena.sortedClients[1];
 
 		if (level.arena.numConnectedClients === 0) {
-			level.arena.score1 = null;
-			level.arena.score2 = null;
+			score1 = null;
+			score2 = null;
 		} else if (level.arena.numConnectedClients === 1) {
-			level.arena.score1 = {
+			score1 = {
 				clientNum: n1,
 				score: level.clients[n1].ps.persistant[PERS.SCORE]
 			};
 
-			level.arena.score2 = null;
+			score2 = null;
 		} else {
-			level.arena.score1 = {
+			score1 = {
 				clientNum: n1,
 				score: level.clients[n1].ps.persistant[PERS.SCORE]
 			};
 
-			level.arena.score2 = {
+			score2 = {
 				clientNum: n2,
 				score: level.clients[n2].ps.persistant[PERS.SCORE]
 			};
 		}
 	}
-
-	//
-	ArenaInfoChanged();
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':score1', score1);
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':score2', score2);
 
 	// If we are at the intermission, send the new info to everyone.
 	if (IntermissionStarted()) {
@@ -23786,7 +23806,7 @@ function RegisterCvars() {
 	sv_hostname     = Cvar.AddCvar('sv_hostname',     'Anonymous',                  Cvar.FLAGS.ARCHIVE);
 	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                            Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
 	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',                      Cvar.FLAGS.SERVERINFO);
-	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   8,                            Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
+	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   16,                           Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
 	sv_fps          = Cvar.AddCvar('sv_fps',          20);   // time rate for running non-clients
 	sv_rconPassword = Cvar.AddCvar('sv_rconPassword', '');
 	sv_timeout      = Cvar.AddCvar('sv_timeout',      200);  // seconds without any message
@@ -23856,7 +23876,6 @@ function Frame(msec) {
 	CalcPings();
 
 	// Run the game simulation in chunks.
-	var frames = 0;
 	while (sv.timeResidual >= frameMsec) {
 		sv.timeResidual -= frameMsec;
 		svs.time += frameMsec;
@@ -23864,16 +23883,12 @@ function Frame(msec) {
 
 		// Let everything in the world think and move.
 		GM.Frame(sv.time);
-		frames++;
 	}
 
 	// Check for timeouts.
 	CheckTimeouts();
 
-	// Don't send out duplicate snapshots if we didn't run any gameframes.
-	if (frames > 0) {
-		SendClientMessages();
-	}
+	SendClientMessages();
 
 	// Send a heartbeat to the master if needed.
 	SendMasterHeartbeat();
@@ -27698,6 +27713,7 @@ var ArenaInfo = function () {
 	this.playersPerTeam  = 0;
 	this.roundlimit      = 0;
 	this.warmupTime      = 0;
+	this.winningTeam     = null;
 	this.score1          = 0;
 	this.score2          = 0;
 };
@@ -29001,9 +29017,6 @@ function UpdateWarmup() {
 
 	// Waiting for players.
 	if (gamestate === GS.WAITING) {
-		// s = "Waiting for players";
-		// w = CG_DrawStrlen( s ) * BIGCHAR_WIDTH;
-		// CG_DrawBigString(320 - w / 2, 24, s, 1.0F);
 		hud_model.warmup('Waiting for players');
 		return;
 	}
@@ -29012,6 +29025,7 @@ function UpdateWarmup() {
 	if (cg.lastGamestate === GS.COUNTDOWN && gamestate === GS.ACTIVE) {
 		SND.StartLocalSound(cgs.media.countFightSound/*, CHAN_ANNOUNCER*/);
 	}
+	// Counting down.
 	else if (gamestate === GS.COUNTDOWN) {
 		// Entering a new warmup.
 		if (gamestate !== cg.lastGamestate) {
@@ -29101,6 +29115,10 @@ function UpdateWarmup() {
 
 			hud_model.warmup(str);
 		}
+	}
+	// Let everyone know who won.
+	else if (gamestate === GS.OVER) {
+		hud_model.warmup(arena.winningTeam);
 	}
 
 	cg.lastGamestate = gamestate;
@@ -34001,14 +34019,11 @@ function ParseArenaInfo(key, info) {
 		arena = cgs.arenas[arenaNum] = new ArenaInfo();
 	}
 
-	arena.name = info.name;
-	arena.gametype = info.gt;
-	arena.gamestate = info.gs;
-	arena.playersPerTeam = info.ppt;
-	arena.roundlimit = info.rl;
-	arena.warmupTime = info.wt;
-	arena.score1 = info.s1;
-	arena.score2 = info.s2;
+	if (!split[2]) {
+		return;
+	}
+
+	arena[split[2]] = info;
 
 	UpdateGameArenas();
 }
@@ -44372,7 +44387,7 @@ define('text!ui/templates/currentgame.tpl',[],function () { return '<!-- ko if: 
 
 define('text!ui/templates/default.tpl',[],function () { return '<div id="default" class="fullscreen" data-bind="visible: visible">\n\t<div id="logo" data-bind="img: \'ui/logo.png\'"></div>\n</div>';});
 
-define('text!ui/templates/hud.tpl',[],function () { return '<div id="hud" class="fullscreen" data-bind="visible: visible">\n\t<div id="scores-wrapper">\n\t\t<div class="scores">\n\t\t\t<!-- ko if: !isTeamGame() -->\n\t\t\t\t<div class="score-wrapper score1 team-free" data-bind="visible: score1.visible, css: { localplayer: score1.localplayer }">\n\t\t\t\t\t<span class="name" data-bind="text: score1.rank() + \'. \' + score1.name()"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score1.score"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class="score-wrapper score2 team-free" data-bind="visible: score2.visible, css: { localplayer: score2.localplayer }">\n\t\t\t\t\t<span class="name" data-bind="text: score2.rank() + \'. \' + score2.name()"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score2.score"></span>\n\t\t\t\t</div>\n\t\t\t<!-- /ko -->\n\t\t\t<!-- ko if: isTeamGame() -->\n\t\t\t\t<div class="score-wrapper score1 team-red" data-bind="css: { localplayer: score1.localplayer }">\n\t\t\t\t\t<span class="status"><span class="player" data-bind="img: \'icons/player.png\'">&nbsp;</span> <span data-bind="text: score1.count"></span></span>\n\t\t\t\t\t<span class="name" data-bind="text: score1.name"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score1.score"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class="score-wrapper score2 team-blue" data-bind="css: { localplayer: score2.localplayer }">\n\t\t\t\t\t<span class="status"><span class="player" data-bind="img: \'icons/player.png\'">&nbsp;</span> <span data-bind="text: score2.count"></span></span>\n\t\t\t\t\t<span class="name" data-bind="text: score2.name"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score2.score"></span>\n\t\t\t\t</div>\n\t\t\t<!-- /ko -->\n\t\t</div>\n\t</div>\n\n\t<div id="events-wrapper">\n\t\t<ul id="events" data-bind="foreach: events">\n\t\t\t<li class="event">\n\t\t\t\t<span data-bind="pretty: text"></span>\n\t\t\t</li>\n\t\t</ul>\n\t</div>\n\n\t<div id="warmup" data-bind="visible: gamestate() <= 2, pretty: warmup"></div>\n\t<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, pretty: centerPrint"></div>\n\n\t<div id="crosshair" data-bind="visible: alive, img: \'gfx/2d/crosshairb\'"></div>\n\t<div id="crosshair-name" data-bind="visible: alive, css: { hidden: !crosshairNameVisible() }, text: crosshairName"></div>\n\n\t<div id="fps-wrapper">\n\t\t<span id="fps" data-bind="text: fps"></span> FPS\n\t</div>\n\n\t<div id="weapons-wrapper" data-bind="visible: alive">\n\t\t<ul class="weapons" data-bind="foreach: weapons">\n\t\t\t<!-- ko if: $data && icon -->\n\t\t\t<li class="weapon" data-bind="css: { selected: $index() === $parent.weaponSelect() }">\n\t\t\t\t<span class="icon" data-bind="img: icon"></span>\n\t\t\t\t<span class="ammo" data-bind="text: ammo() > -1 ? ammo() : \'&nbsp\'"></span>\n\t\t\t</li>\n\t\t\t<!-- /ko -->\n\t\t</ul>\n\t</div>\n\n\t<div id="health-wrapper" data-bind="visible: alive">\n\t\t<span id="health-text" data-bind="text: health"></span>\n\t\t<span id="health-icon" data-bind="img: \'icons/iconh_green.png\'"></span>\n\t</div>\n\n\t<div id="armor-wrapper" data-bind="visible: alive">\n\t\t<span id="armor-icon" data-bind="img: \'icons/iconr_yellow.png\'"></span>\n\t\t<span id="armor-text" data-bind="text: armor"></span>\n\t</div>\n\n\t<div id="lagometer-wrapper" data-bind="visible: lagometerVisible">\n\t\t<div class="lag-frames" data-bind="foreach: frames">\n\t\t\t<div class="lag-frame" data-bind="style: { height: Math.abs((val() / 1000) * 10) + \'em\', bottom: (val() / 1000) * 10 < 0 ? ((val() / 1000) * 10) + \'em\' : 0 }">&nbsp</div>\n\t\t</div>\n\t\t<div class="snapshot-frames" data-bind="foreach: snapshots">\n\t\t\t<div class="snapshot-frame" data-bind="style: { height: Math.abs((val() / 1000) * 10) + \'em\', bottom: (val() / 1000) * 10 < 0 ? ((val() / 1000) * 10) + \'em\' : 0 }">&nbsp</div>\n\t\t</div>\n\t</div>\n\n\t<div id="counts-wrapper" data-bind="visible: countsVisible">\n\t\t<div><span class="count-label">Shaders:</span> <span class="count-value" data-bind="text: shaders"></span></div>\n\t\t<div><span class="count-label">Nodes:</span> <span class="count-value" data-bind="text: nodes() + \'/\' + leafs()"></span></div>\n\t\t<div><span class="count-label">Surfaces:</span> <span class="count-value" data-bind="text: surfaces"><%- surfaces %></span></div>\n\t\t<div><span class="count-label">Indexes:</span> <span class="count-value" data-bind="text: indexes"><%- indexes %></span></div>\n\t\t<div><span class="count-label">Culled mod out:</span> <span class="count-value" data-bind="text: culledModelOut"><%- culledModelOut %></span></div>\n\t\t<div><span class="count-label">Culled mod in:</span> <span class="count-value" data-bind="text: culledModelIn"><%- culledModelIn %></span></div>\n\t\t<div><span class="count-label">Culled mod clip:</span> <span class="count-value" data-bind="text: culledModelClip"><%- culledModelClip %></span>\n\t</div>\n</div>';});
+define('text!ui/templates/hud.tpl',[],function () { return '<div id="hud" class="fullscreen" data-bind="visible: visible">\n\t<div id="scores-wrapper">\n\t\t<div class="scores">\n\t\t\t<!-- ko if: !isTeamGame() -->\n\t\t\t\t<div class="score-wrapper score1 team-free" data-bind="visible: score1.visible, css: { localplayer: score1.localplayer }">\n\t\t\t\t\t<span class="name" data-bind="text: score1.rank() + \'. \' + score1.name()"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score1.score"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class="score-wrapper score2 team-free" data-bind="visible: score2.visible, css: { localplayer: score2.localplayer }">\n\t\t\t\t\t<span class="name" data-bind="text: score2.rank() + \'. \' + score2.name()"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score2.score"></span>\n\t\t\t\t</div>\n\t\t\t<!-- /ko -->\n\t\t\t<!-- ko if: isTeamGame() -->\n\t\t\t\t<div class="score-wrapper score1 team-red" data-bind="css: { localplayer: score1.localplayer }">\n\t\t\t\t\t<span class="status"><span class="player" data-bind="img: \'icons/player.png\'">&nbsp;</span> <span data-bind="text: score1.count"></span></span>\n\t\t\t\t\t<span class="name" data-bind="text: score1.name"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score1.score"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class="score-wrapper score2 team-blue" data-bind="css: { localplayer: score2.localplayer }">\n\t\t\t\t\t<span class="status"><span class="player" data-bind="img: \'icons/player.png\'">&nbsp;</span> <span data-bind="text: score2.count"></span></span>\n\t\t\t\t\t<span class="name" data-bind="text: score2.name"></span>\n\t\t\t\t\t<span class="score" data-bind="text: score2.score"></span>\n\t\t\t\t</div>\n\t\t\t<!-- /ko -->\n\t\t</div>\n\t</div>\n\n\t<div id="events-wrapper">\n\t\t<ul id="events" data-bind="foreach: events">\n\t\t\t<li class="event">\n\t\t\t\t<span data-bind="pretty: text"></span>\n\t\t\t</li>\n\t\t</ul>\n\t</div>\n\n\t<div id="warmup" data-bind="visible: gamestate() <= 2 || gamestate() === 4, pretty: warmup"></div>\n\t<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, pretty: centerPrint"></div>\n\n\t<div id="crosshair" data-bind="visible: alive, img: \'gfx/2d/crosshairb\'"></div>\n\t<div id="crosshair-name" data-bind="visible: alive, css: { hidden: !crosshairNameVisible() }, text: crosshairName"></div>\n\n\t<div id="fps-wrapper">\n\t\t<span id="fps" data-bind="text: fps"></span> FPS\n\t</div>\n\n\t<div id="weapons-wrapper" data-bind="visible: alive">\n\t\t<ul class="weapons" data-bind="foreach: weapons">\n\t\t\t<!-- ko if: $data && icon -->\n\t\t\t<li class="weapon" data-bind="css: { selected: $index() === $parent.weaponSelect() }">\n\t\t\t\t<span class="icon" data-bind="img: icon"></span>\n\t\t\t\t<span class="ammo" data-bind="text: ammo() > -1 ? ammo() : \'&nbsp\'"></span>\n\t\t\t</li>\n\t\t\t<!-- /ko -->\n\t\t</ul>\n\t</div>\n\n\t<div id="health-wrapper" data-bind="visible: alive">\n\t\t<span id="health-text" data-bind="text: health"></span>\n\t\t<span id="health-icon" data-bind="img: \'icons/iconh_green.png\'"></span>\n\t</div>\n\n\t<div id="armor-wrapper" data-bind="visible: alive">\n\t\t<span id="armor-icon" data-bind="img: \'icons/iconr_yellow.png\'"></span>\n\t\t<span id="armor-text" data-bind="text: armor"></span>\n\t</div>\n\n\t<div id="lagometer-wrapper" data-bind="visible: lagometerVisible">\n\t\t<div class="lag-frames" data-bind="foreach: frames">\n\t\t\t<div class="lag-frame" data-bind="style: { height: Math.abs((val() / 1000) * 10) + \'em\', bottom: (val() / 1000) * 10 < 0 ? ((val() / 1000) * 10) + \'em\' : 0 }">&nbsp</div>\n\t\t</div>\n\t\t<div class="snapshot-frames" data-bind="foreach: snapshots">\n\t\t\t<div class="snapshot-frame" data-bind="style: { height: Math.abs((val() / 1000) * 10) + \'em\', bottom: (val() / 1000) * 10 < 0 ? ((val() / 1000) * 10) + \'em\' : 0 }">&nbsp</div>\n\t\t</div>\n\t</div>\n\n\t<div id="counts-wrapper" data-bind="visible: countsVisible">\n\t\t<div><span class="count-label">Shaders:</span> <span class="count-value" data-bind="text: shaders"></span></div>\n\t\t<div><span class="count-label">Nodes:</span> <span class="count-value" data-bind="text: nodes() + \'/\' + leafs()"></span></div>\n\t\t<div><span class="count-label">Surfaces:</span> <span class="count-value" data-bind="text: surfaces"><%- surfaces %></span></div>\n\t\t<div><span class="count-label">Indexes:</span> <span class="count-value" data-bind="text: indexes"><%- indexes %></span></div>\n\t\t<div><span class="count-label">Culled mod out:</span> <span class="count-value" data-bind="text: culledModelOut"><%- culledModelOut %></span></div>\n\t\t<div><span class="count-label">Culled mod in:</span> <span class="count-value" data-bind="text: culledModelIn"><%- culledModelIn %></span></div>\n\t\t<div><span class="count-label">Culled mod clip:</span> <span class="count-value" data-bind="text: culledModelClip"><%- culledModelClip %></span>\n\t</div>\n</div>';});
 
 define('text!ui/templates/loading.tpl',[],function () { return '<div id="loading" class="fullscreen" data-bind="visible: visible">\n\t<div id="logo" data-bind="img: \'ui/logo.png\'"></div>\n\t<div class="loading">\n\t\t<h2 class="address">Connecting to <span data-bind="text: address"></span></h2>\n\t\t<h1 class="mapname" data-bind="style: { visibility: mapname() ? \'visible\' : \'hidden\' }">Loading <span data-bind="text: mapname"></span></h1>\n\t\t<div class="progress" data-bind="style: { visibility: mapname() ? \'visible\' : \'hidden\' }">\n\t\t\t<div class="bar" data-bind="style: { width: progress() + \'%\' }">&nbsp;</div>\n\t\t</div>\n\t</div>\n</div>';});
 
@@ -50045,6 +50060,15 @@ function NetchanTransmit(netchan, buffer, length) {
 }
 
 /**
+ * NetchanProcess
+ */
+function NetchanProcess(netchan, msg) {
+	var sequence = msg.readInt32();
+	netchan.incomingSequence = sequence;
+	return true;
+}
+
+/**
  * NetchanOutOfBandPrint
  */
 function NetchanOutOfBandPrint(netchan, type, data) {
@@ -50062,15 +50086,6 @@ function NetchanOutOfBandPrint(netchan, type, data) {
 	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
 
 	NetSend(netchan.socket, msgView);
-}
-
-/**
- * NetchanProcess
- */
-function NetchanProcess(netchan, msg) {
-	var sequence = msg.readInt32();
-	netchan.incomingSequence = sequence;
-	return true;
 }
 	/**
  * LoadBsp
