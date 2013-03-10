@@ -8,8 +8,8 @@ var path = require('path');
 var url = require('url');
 var AssetMap = require('./asset-map');
 
-var argv = opt
-	.describe('port', 'Port to bind to').default('port', 9000)
+var argv = require('optimist')
+	.describe('config', 'Location of the configuration file').default('config', './config.json')
 	.argv;
 
 if (argv.h || argv.help) {
@@ -18,7 +18,23 @@ if (argv.h || argv.help) {
 }
 
 function main() {
-	createServer(argv.port);
+	var config = loadConfig();
+
+	createServer(config.port);
+}
+
+function loadConfig() {
+	var config = {
+		port: 9000
+	};
+	try {
+		console.log('Loading config file from ' + argv.config + '..');
+		var data = require(argv.config);
+		_.extend(config, data);
+	} catch (e) {
+	}
+
+	return config;
 }
 
 function createServer(port) {

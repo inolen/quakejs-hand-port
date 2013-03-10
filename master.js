@@ -5,7 +5,7 @@ var WebSocketClient = require('ws');
 var WebSocketServer = require('ws').Server;
 
 var argv = require('optimist')
-	.describe('port', 'Port to bind to').default('port', 45735)
+	.describe('config', 'Location of the configuration file').default('config', './config.json')
 	.argv;
 
 if (argv.h || argv.help) {
@@ -17,16 +17,32 @@ var subscribers = [];
 var servers = {};
 var pruneInterval = 60 * 1000;
 
-function main() {
-	createServer(argv.port);
-
-	setInterval(pruneServers, pruneInterval);
-}
-
 function log() {
 	var args = Array.prototype.slice.call(arguments);
 	args.splice(0, 0, (new Date()).toString());
 	Function.apply.call(console.log, console, args);
+}
+
+function main() {
+	var config = loadConfig();
+
+	createServer(config.port);
+
+	setInterval(pruneServers, pruneInterval);
+}
+
+function loadConfig() {
+	var config = {
+		port: 45735
+	};
+	try {
+		console.log('Loading config file from ' + argv.config + '..');
+		var data = require(argv.config);
+		_.extend(config, data);
+	} catch (e) {
+	}
+
+	return config;
 }
 
 function createServer(port) {
