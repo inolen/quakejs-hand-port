@@ -53,7 +53,9 @@ function createServer(port) {
 	});
 
 	wss.on('connection', function (ws) {
-		log('Connection accepted from ' + ws._socket.remoteAddress);
+		var address = getSocketAddress(ws);
+
+		log('Connection accepted from ' + address);
 
 		ws.on('message', function (buffer, flags) {
 			if (!flags.binary) {
@@ -61,8 +63,8 @@ function createServer(port) {
 			}
 
 			var data = stripOOB(buffer);
-
-			if (data === null) {
+			if (!data) {
+				log('Failed to parse message from ' + address);
 				removeSubscriber(ws);
 				return;
 			}
@@ -88,6 +90,23 @@ function createServer(port) {
 	});
 
 	return server;
+}
+
+function getSocketAddress(ws) {
+	// By default, check the underlying socket's remote address.
+	var address = ws._socket.remoteAddress;
+
+	// If this is an x-forwarded-for header (meaning the request
+	// has been proxied), use it.
+	if (ws.upgradeReq.headers['x-forwarded-for']) {
+		address = ws.upgradeReq.headers['x-forwarded-for'];
+	}
+
+	if (!address) {
+		log('Failed to parse address for socket', JSON.stringify(ws));
+	}
+
+	return address;
 }
 
 /**********************************************************
@@ -122,7 +141,13 @@ function stripOOB(buffer) {
 		str += c;
 	}
 
-	var data = JSON.parse(str);
+	var data;
+
+	try {
+		data = JSON.parse(str);
+	} catch (e) {
+	}
+
 	return data;
 }
 
@@ -132,9 +157,12 @@ function stripOOB(buffer) {
  *
  **********************************************************/
 function handleHeartbeat(ws, data) {
-	var ip = ws._socket.remoteAddress;
-	var port = parseInt(data.data, 10);
+	var ip = getSocketAddress(ws);
+	if (!ip) {
+		return;
+	}
 
+	var port = parseInt(data.data, 10);
 	if (isNaN(port)) {
 		return;
 	}
@@ -169,14 +197,14 @@ function scanServer(address, callback) {
 		}
 
 		var data = stripOOB(buffer);
-
-		if (data === null) {
-			return callback(new Error('Invalid header.'));
+		if (!data) {
+			return callback(new Error('Failed to parse message from ' + address));
 		}
 
 		// TODO Validate data or something?
-
+		log('Got info from ' + address + ' ' + JSON.stringify(data));
 		ws.close();
+
 		return callback(null);
 	});
 
@@ -245,7 +273,7 @@ function addSubscriber(ws) {
 		return;  // already subscribed
 	}
 
-	log('Adding subscriber ' + ws._socket.remoteAddress);
+	log('Adding subscriber ' + getSocketAddress(ws));
 
 	subscribers.push(ws);
 }
