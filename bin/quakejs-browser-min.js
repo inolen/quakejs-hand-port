@@ -5572,7 +5572,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1102;
+var GAME_VERSION = 0.1103;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -46793,8 +46793,6 @@ function CheckForResend() {
 		return;
 	}
 
-	log('CheckForResend', clc.state);
-
 	clc.connectTime = cls.realTime;  // for retransmit requests
 	clc.connectPacketCount++;
 
@@ -46810,14 +46808,15 @@ function CheckForResend() {
 	// Send game-level connect request.
 	//
 	switch (clc.state) {
-		// Skip this for now, perhaps we should use WebSockets w/ TLS.
-		// case CA.CONNECTING:
-		// 	// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
-		// 	// Add the gamename so the server knows we're running the correct game or can reject the client
-		// 	// with a meaningful message
-		// 	vat str = 'getchallenge ' + clc.challenge;// com_gamename->string
-		// 	COM.NetchanPrint(clc.netchan, str);
-		// 	break;
+		case CA.CONNECTING:
+			clc.state = CA.CHALLENGING;
+			// Skip this for now, perhaps we should use WebSockets w/ TLS.
+			// 	// The challenge request shall be followed by a client challenge so no malicious server can hijack this connection.
+			// 	// Add the gamename so the server knows we're running the correct game or can reject the client
+			// 	// with a meaningful message
+			// 	vat str = 'getchallenge ' + clc.challenge;// com_gamename->string
+			// 	COM.NetchanPrint(clc.netchan, str);
+			break;
 
 		case CA.CHALLENGING:
 			var com_protocol = Cvar.AddCvar('com_protocol');
@@ -46868,10 +46867,15 @@ function ConnectToServer(address) {
 		onclose: function () {
 			pending = false;
 
-			// FIXME Look at error codes instead of this hack:
-			// https://developer.mozilla.org/en-US/docs/WebSockets/WebSockets_reference/CloseEvent
-			if (!socket.intentional) {
-				Disconnect();
+			if (clc.state === CA.DISCONNECTED) {
+				// This was an intentional disconnect.
+				return;
+			}
+
+			if (clc.state === CA.CONNECTING) {
+				error('Failed to connect to server.');
+			} else {
+				error('Disconnected from server.')
 			}
 		}
 	});
@@ -46953,7 +46957,6 @@ function Disconnect() {
 	// We do this after we change the clc.state so we
 	// don't get stuck in a loop on loopback servers.
 	if (netchan) {
-		netchan.socket.intentional = true;
 		COM.NetClose(netchan.socket);
 	}
 }
@@ -47786,7 +47789,7 @@ function CmdConnect(serverName) {
 	// Change our client connection state such that CheckForResend()
 	// will fire immediately, initializing our server connection.
 	clc.serverAddress = addr;
-	clc.state = CA.CHALLENGING;
+	clc.state = CA.CONNECTING;
 	clc.connectTime = -99999;
 	clc.connectPacketCount = 0;
 }
@@ -50342,6 +50345,7 @@ function WriteFile(path, data, encoding, callback, namespace) {
 	WriteLocalFile(path, data, encoding, callback);
 }
 	var root;
+var customErrorHandler;
 var viewportFrame;
 var viewport;
 var viewportUi;
@@ -50366,23 +50370,27 @@ function error(str) {
 		return;
 	}
 
-	var errorWrapper = document.getElementById('error-wrapper');
+	if (customErrorHandler) {
+		customErrorHandler(str);
+	} else {
+		var errorWrapper = document.getElementById('error-wrapper');
 
-	// Create wrapper.
-	errorWrapper = document.createElement('div');
-	errorWrapper.setAttribute('id', 'error-wrapper');
+		// Create wrapper.
+		errorWrapper = document.createElement('div');
+		errorWrapper.setAttribute('id', 'error-wrapper');
 
-	var error = document.createElement('div');
-	error.setAttribute('id', 'error-fatal');
-	error.innerHTML = str;
-	errorWrapper.appendChild(error);
+		var error = document.createElement('div');
+		error.setAttribute('id', 'error-fatal');
+		error.innerHTML = str;
+		errorWrapper.appendChild(error);
 
-	// For fatal errors, remove everything.
-	root.innerHTML = '';
-	root.appendChild(errorWrapper);
+		// For fatal errors, remove everything.
+		root.innerHTML = '';
+		root.appendChild(errorWrapper);
 
-	// Break pointer lock.
-	document.exitPointerLock();
+		// Break pointer lock.
+		document.exitPointerLock();
+	}
 
 	fatalError = true;
 
@@ -50393,7 +50401,7 @@ function error(str) {
 /**
  * Init
  */
-function Init(domroot, cdnroot, expectedGameVersion) {
+function Init(domroot, cdnroot, expectedGameVersion, errorHandler) {
 	// Sanity check the game version to make sure our caching
 	// isn't completely fubar.
 	if (expectedGameVersion &&  // dev requests don't expect anything
@@ -50404,6 +50412,7 @@ function Init(domroot, cdnroot, expectedGameVersion) {
 	}
 
 	root = domroot;
+	customErrorHandler = errorHandler;
 
 	// Override gl-matrix's default array type.
 	setMatrixArrayType(Array);
