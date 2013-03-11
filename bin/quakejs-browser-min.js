@@ -5572,7 +5572,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1094;
+var GAME_VERSION = 0.1095;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -6168,12 +6168,18 @@ return {
  *
  **********************************************************/
 var BitView = function (source, byteOffset, byteLength) {
-	if (!(source instanceof ArrayBuffer)) {
-		throw new Error('Must specify a valid ArrayBuffer.');
+	var isBuffer = source instanceof ArrayBuffer ||
+		(typeof(Buffer) !== 'undefined' && source instanceof Buffer);
+
+	if (!isBuffer) {
+		throw new Error('Must specify a valid ArrayBuffer or Buffer.');
 	}
 
+	byteOffset = byteOffset || 0;
+	byteLength = byteLength || source.byteLength /* ArrayBuffer */ || source.length /* Buffer */;
+
 	this._buffer = source;
-	this._view = new Uint8Array(this._buffer, byteOffset || 0, byteLength || this._buffer.byteLength);
+	this._view = new Uint8Array(this._buffer, byteOffset, byteLength);
 };
 
 // Used to massage fp values so we can operate on them
@@ -6301,11 +6307,14 @@ BitView.prototype.setFloat64 = function (offset, value) {
  *
  **********************************************************/
 var BitStream = function (source, byteOffset, byteLength) {
-	if (!(source instanceof BitView) && !(source instanceof ArrayBuffer)) {
-		throw new Error('Must specify a valid BitView or ArrayBuffer');
+	var isBuffer = source instanceof ArrayBuffer ||
+		(typeof(Buffer) !== 'undefined' && source instanceof Buffer);
+
+	if (!(source instanceof BitView) && !isBuffer) {
+		throw new Error('Must specify a valid BitView, ArrayBuffer or Buffer');
 	}
 
-	if (source instanceof ArrayBuffer) {
+	if (isBuffer) {
 		this._view = new BitView(source, byteOffset, byteLength);
 	} else {
 		this._view = source;
@@ -24194,7 +24203,7 @@ function ServerInfo(netchan) {
  * Spawn
  */
 function Spawn(mapname) {
-	log('Spawning new server for', mapname, 'at', COM.frameTime);
+	log('Spawning new server for', mapname, 'at', sv.time);
 
 	svs.initialized = false;
 
@@ -24209,6 +24218,15 @@ function Spawn(mapname) {
 
 	// Toggle the server bit so clients can detect that a server has changed.
 	svs.snapFlagServerBit ^= QS.SNAPFLAG_SERVERCOUNT;
+
+	// Keep sending client snapshots with the old server time until
+	// the client has acknowledged the new gamestate. Otherwise, we'll
+	// violate the check in cl-cgame ensuring that time doesn't flow backwards.
+	for (var i = 0; i < sv_maxClients.get(); i++) {
+		if (svs.clients[i].state >= CS.CONNECTED) {
+			svs.clients[i].oldServerTime = sv.time;
+		}
+	}
 
 	// Wipe the entire per-level structure.
 	var oldServerTime = sv.time;
@@ -24918,7 +24936,6 @@ function ExecuteClientMessage(client, msg) {
 
 	// If we can tell that the client has dropped the last
 	// gamestate we sent them, resend it.
-	// log('ExecuteClientMessage', serverid, sv.serverId, client.messageAcknowledge, client.gamestateMessageNum);
 	if (serverid !== sv.serverId) {
 		// TTimo - use a comparison here to catch multiple map_restart.
 		if (serverid >= sv.restartedServerId && serverid < sv.serverId) {
@@ -25927,9 +25944,11 @@ function FindEntitiesInBox(mins, maxs, arenaNum) {
 
 	var FindEntitiesInBox_r = function (node) {
 		for (var num in node.entities) {
-			if (!node.entities.hasOwnProperty(num)) {
-				continue;
-			}
+			// FIXME Replace node.entities with a better data
+			// structure where this slow func isn't necessary.
+			// if (!node.entities.hasOwnProperty(num)) {
+			// 	continue;
+			// }
 
 			var ent = node.entities[num];
 			var gent = GentityForSvEntity(ent);
@@ -46430,7 +46449,7 @@ var ClientStatic = function () {
 var ClientLocals = function () {
 	this.snap                 = new ClientSnapshot();      // latest received from server
 	this.serverTime           = 0;                         // may be paused during play
-	this.oldServerTime        = 0;                         // to prevent time from flowing bakcwards
+	this.oldServerTime        = 0;                         // to prevent time from flowing backwards
 	this.oldFrameServerTime   = 0;                         // to check tournament restarts
 	this.serverTimeDelta      = 0;                         // cl.serverTime = cls.realtime + cl.serverTimeDelta
 	                                                       // this value changes as net lag varies
