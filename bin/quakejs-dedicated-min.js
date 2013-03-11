@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1099;
+var GAME_VERSION = 0.1100;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -27599,22 +27599,31 @@ function Init() {
  * InitConsole
  */
 function InitConsole() {
+	log('Initializing console 1');
+
 	var rl = require('readline').createInterface({
 		input: process.stdin,
 		output: process.stdout
 	});
 
+	log('Initializing console 2');
+
 	rl.on('line', function (line) {
+		log('Initializing console 4');
 		// FIXME should queue an event, not directly execute.
 		COM.ExecuteBuffer(line);
 
+		log('Initializing console 5');
 		rl.prompt(true);
 	}).on('close', function () {
+		log('Initializing console 6');
 		process.exit(0);
 	}).on('error', function (err) {
+		log('Initializing console 7');
 		log('Error reading stdin:', err);
 	});
 
+	log('Initializing console 3');
 	rl.prompt(true);
 }
 
