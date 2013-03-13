@@ -1,4 +1,4 @@
-<div id="hud" class="fullscreen" data-bind="visible: visible">
+<div id="hud" class="fullscreen">
 	<div id="scores-wrapper">
 		<div class="scores">
 			<!-- ko if: !isTeamGame() -->
