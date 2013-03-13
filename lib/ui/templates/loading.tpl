@@ -1,4 +1,4 @@
-<div id="loading" class="fullscreen" data-bind="visible: visible">
+<div id="loading" class="fullscreen">
 	<div id="logo" data-bind="img: 'ui/logo.png'"></div>
 	<div class="loading">
 		<h2 class="address">Connecting to <span data-bind="text: address"></span></h2>

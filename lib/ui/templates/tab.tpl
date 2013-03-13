@@ -1,4 +1,4 @@
-<div class="fullscreen" data-bind="visible: visible, attr: { id: title }">
+<div class="fullscreen" data-bind="attr: { id: title }">
 	<script type="text/html" id="tab-pane">
 		<div class="tab-pane" data-bind="attr: { id: id }"></div>
 	</script>

@@ -1,4 +1,4 @@
-<div id="scoreboard" class="fullscreen" data-bind="visible: visible">
+<div id="scoreboard" class="fullscreen">
 	<div id="scoreboard-wrapper" class="dialog" data-bind="css: { 'dialog-wide': isTeamGame() }">
 		<div class="match-description">
 		<h1 data-bind="text: mapname"></h2> <span data-bind="text: gametype, visible: gametype() !== 'lobby'" class="label label-green"></span> <span class="label label-green" data-bind="text: 'Timelimit ' + timelimit(), visible: timelimit() !== 0"></span> <span class="label label-green" data-bind="text: 'Fraglimit ' + fraglimit(), visible: gametype() === 'ffa' || gametype() === 'tournament'"></span> <span class="label label-green" data-bind="text: 'Capturelimit ' + capturelimit(), visible: gametype() === 'ctf' || gametype() === 'nfctf'"></span>
