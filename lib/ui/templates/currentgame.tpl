@@ -1,3 +1,29 @@
+<!-- ko if: gametype() === 'ffa' -->
+<div class="header">
+	<h2 data-bind="text: mapname"></h2>
+
+	<div class="meta">
+		<span class="label">Fraglimit <span data-bind="text: fraglimit"></span></span>
+		<span class="label">Timelimit <span data-bind="text: timelimit"></span></span>
+	</div>
+</div>
+
+<p>This is a <span class="white">Free For All</span> game. The object being to frag anything that moves, the match will end when the fraglimit is hit or time runs out.</p>
+
+<a class="btn btn-join-match" href="javascript:void(0)" data-bind="visible: spectator, event: { click: function () { joinTeam('f'); } }">Join Match</a>
+
+<div class="footer">
+	<a class="btn btn-leave-match" href="javascript:void(0)" data-bind="event: { click: function () { disconnect(); } }">Leave Match</a>
+	<span>Join the match to begin playing</span>
+	<a class="btn btn-spectate" href="javascript:void(0)" data-bind="event: { click: function () { joinTeam('s'); } }">Spectate</a>
+</div>
+<!-- /ko -->
+
+<!-- ko if: gametype() === 'tournament' -->
+<h2>Tournament</h2>
+<p>Players fight each other one-on-one, while future foes watch as spectators. The watchers wait their turns to be the challenger who wrests control of arena from the most recent victor.</p>
+<!-- /ko -->
+
 <!-- ko if: isTeamGame() -->
 <div id="team-select">
 	<table class="table">
