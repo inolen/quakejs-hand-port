@@ -1,8 +1,10 @@
+
 <div class="tabbable tabs-left">
 	<ul class="nav nav-tabs">
 		<li><a href="#player" data-bind="tab: true">Player</a></li>
 		<li><a href="#controls" data-bind="tab: false">Controls</a></li>
 		<li><a href="#game" data-bind="tab: false">Game</a></li>
+		<li><a href="#sound" data-bind="tab: false">Sound</a></li>
 	</ul>
 
 	<div class="tab-content">
@@ -18,6 +20,7 @@
 					<li><a href="#move" data-bind="tab: true">Move</a></li>
 					<li><a href="#shoot" data-bind="tab: false">Shoot</a></li>
 					<li><a href="#weapons" data-bind="tab: false">Weapons</a></li>
+					<li><a href="#misc" data-bind="tab: false">Misc</a></li>
 				</ul>
 
 				<div class="tab-content">
@@ -86,6 +89,12 @@
 							<div class="control-label">BFG:</div><div name="weapon9Key" class="control-input input-key" data-bind="keyinput: weapon9Key, event: { change: updated }"></div>
 						</div>
 					</div>
+
+					<div class="tab-pane" id="misc">
+						<div class="control-group">
+							<div class="control-label">Chat:</div><div name="chatKey" class="control-input input-key" data-bind="keyinput: chatKey, event: { change: updated }"></div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -96,7 +105,13 @@
 			</div>
 
 			<div class="control-group">
-				<div class="control-label">Net time nudge:</div><div name="timeNudge" class="control-input input-range" min="-30" max="30" data-bind="rangeinput: timeNudge, event: { change: updated }"></div>
+				<div class="control-label">Net time nudge:</div><div name="timeNudge" class="control-input input-range" min="0" max="30" data-bind="rangeinput: timeNudge, event: { change: updated }"></div>
+			</div>
+		</div>
+
+		<div class="tab-pane" id="sound">
+			<div class="control-group">
+				<div class="control-label">Volume:</div><div name="volume" class="control-input input-range" min="0" max="2" data-bind="rangeinput: volume, event: { change: updated }"></div>
 			</div>
 		</div>
 	</div>
