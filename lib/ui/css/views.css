@@ -52,14 +52,6 @@
 /**
  * Text colors
  */
-	BLACK:   0,
-	RED:     1,
-	GREEN:   2,
-	YELLOW:  3,
-	BLUE:    4,
-	CYAN:    5,
-	MAGENTA: 6,
-	WHITE:   7
 .black {
 	color: #000;
 }
@@ -99,11 +91,8 @@
 	position: relative;
 	width: 60%;
 	margin: 8em auto 0;
-	background-image: linear-gradient(top, #1b1b1b, #050505);
-	background-image: -moz-linear-gradient(top, #1b1b1b, #050505);
-	background-image: -webkit-linear-gradient(top, #1b1b1b, #050505);
-	box-shadow: inset 0 1px 2px #000;
-	color: #fff;
+	background: #222;
+	color: #999;
 }
 
 .dialog.dialog-wide {
@@ -111,10 +100,7 @@
 }
 
 .dialog > .tabbable > .nav-tabs {
-	background-image: linear-gradient(top, #222, #111);
-	background-image: -moz-linear-gradient(top, #222, #111);
-	background-image: -webkit-linear-gradient(top, #222, #111);
-	border-bottom: 1px solid #252525;
+	background: #1b1b1b;
 }
 
 .dialog > .tabbable > .nav-tabs li {
@@ -124,25 +110,13 @@
 
 .dialog > .tabbable > .nav-tabs li a {
 	padding: .6em 1em;
-	border-right: 1px solid #111;
-	border-left: 1px solid #222;
-}
-
-.dialog > .tabbable > .nav-tabs li:first-child a {
-	border-left: none;
-}
-
-.dialog > .tabbable > .nav-tabs li:last-child a {
-	border-right: none;
+	border-bottom: 2px solid transparent;
 }
 
 .dialog > .tabbable > .nav-tabs li.active a,
 .dialog > .tabbable > .nav-tabs li.hover a {
-	background: #050505;
-}
-
-.dialog > .tabbable > .nav-tabs li.active a {
-	color: #15e000 !important;
+	color: #4cae4c !important;
+	border-bottom: 2px solid #4cae4c;
 }
 
 .dialog .tab-pane {
@@ -163,7 +137,7 @@
 	vertical-align: top;
 	float: none;
 	width: 9em;
-	background: #111;
+	background: #1b1b1b;
 }
 
 .dialog .tabbable.tabs-left > .nav-tabs li {
@@ -190,17 +164,20 @@
 	vertical-align: top;
 }
 
+.dialog .tabbable.tabs-left > .tab-content > .tab-pane {
+	min-height: 20em;
+}
+
 .dialog .nav-pills a {
 	text-transform: uppercase;
 	padding: .4em .8em;
 	margin-right: .6em;
-	background: #111;
-
+	background: #1b1b1b;
 }
 
 .dialog .nav-pills .hover a,
 .dialog .nav-pills .active a {
-	background: #222;
+	background: #4cae4c;
 }
 
 /**
@@ -279,18 +256,13 @@ table thead th {
  */
 .progress {
 	display: block;
-	background: linear-gradient(top, #222, #303030);
-	background: -moz-linear-gradient(top, #222, #303030);
-	background: -webkit-linear-gradient(top, #222, #303030);
-	box-shadow: inset 0 1px 2px rgba(0, 0, 0, .1);
+	background: #222;
 	border-radius: 2px;
 }
 
 .progress .bar {
 	width: 0;
-	background: linear-gradient(top, #8cc84b, #448800);
-	background: -moz-linear-gradient(top, #8cc84b, #448800);
-	background: -webkit-linear-gradient(top, #8cc84b, #448800);
+	background: #4cae4c;
 	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
 	transition: width .6s ease;
 	-moz-transition: width .6s ease;
@@ -302,14 +274,14 @@ table thead th {
  */
 .control-group {
 	margin-bottom: .5em;
+	color: #ddd;
 }
 
 .control-label {
 	float: left;
 	padding: .5em 0 0;
 	width: 12em;
-	color: #a6e22e;
-	text-align: right
+	text-align: right;
 }
 
 .control-input {
@@ -334,14 +306,14 @@ table thead th {
 .control-input.input-text,
 .control-input.input-key,
 .control-input.input-radio {
-	background: rgba(34, 34, 34, 0.8);
+	background: #333;
 	border: 1px solid transparent;
 }
 
 .control-input.input-text.hover,
 .control-input.input-key.hover,
 .control-input.input-radio.hover {
-	background: rgba(51, 51, 51, 0.8);
+	background: #444;
 }
 
 .control-input.input-text.focus,
@@ -420,9 +392,7 @@ table thead th {
 
 .input-range .range-track {
 	height: 100%;
-	background: linear-gradient(top, #222, #303030);
-	background: -moz-linear-gradient(top, #222, #303030);
-	background: -webkit-linear-gradient(top, #222, #303030);
+	background: #333;
 	box-shadow: inset 0 1px 2px rgba(0, 0, 0, .1);
 }
 
@@ -430,9 +400,7 @@ table thead th {
 	position: absolute;
 	top: .5em;
 	left: 0;
-	background: linear-gradient(top, #8cc84b, #448800);
-	background: -moz-linear-gradient(top, #8cc84b, #448800);
-	background: -webkit-linear-gradient(top, #8cc84b, #448800);
+	background: #4cae4c;
 	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
 	width: 1em;
 	height: 1em;

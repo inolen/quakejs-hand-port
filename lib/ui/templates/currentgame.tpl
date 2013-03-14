@@ -36,7 +36,9 @@
 </div>
 <!-- /ko -->
 
-<div id="arena-select" data-bind="if: arenas().length > 1">
+<!-- ko if: arenas().length > 1 -->
+<div data-bind="text: arenas().length"></div>
+<div id="arena-select">
 	<table class="table">
 		<thead>
 			<tr>
@@ -54,3 +56,4 @@
 		</tbody>
 	</table>
 </div>
+<!-- /ko -->

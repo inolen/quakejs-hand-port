@@ -1,4 +1,3 @@
-
 <div class="tabbable tabs-left">
 	<ul class="nav nav-tabs">
 		<li><a href="#player" data-bind="tab: true">Player</a></li>
