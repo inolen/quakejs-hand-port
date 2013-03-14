@@ -684,6 +684,18 @@ table thead th {
 	-webkit-transition: opacity .2s ease-out;
 }
 
+#spectator {
+	position: absolute;
+	bottom: 5%;
+	left: 50%;
+
+	margin-left: -8em;
+	width: 16em;
+	font-size: 1.8em;
+	text-align: center;
+	text-shadow: 0.1em 0.1em 0.05em #000;
+}
+
 #crosshair {
 	position: absolute;
 	top: 50%;
