@@ -11,11 +11,11 @@
 #viewport-ui .pointer {
 	display: none;
 	position: absolute;
-	top: 0;
-	left: 0;
-	width: 13px;
-	height: 20px;
-	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAUCAYAAABWMrcvAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZpJREFUeNqUk79LAnEUwN9FgXh4wUGIg7g46XCI4NLgcERi0NzQXyBRc/9AU4uDBNFgY4QQgi1phIqKUy2OTimBnYFy/s7Xe0eKmuJ18Pny5b37vO+77/e+gIjnhECAWXjQiat/Sf1+v1mv12mO16alTqejBYNBLJVKLN4SG2ul0WikuVwulCQJy+Uyi3fE1lrJ7XbTDFCWZczlciw+EBZTEsMrZjIZFh8J0ZTEiKI4EXmQTEmMzWbDdDrNYnZRXCkxVqsVU6kUi8/EtimJEQQB4/E4i3lCZmkTVjyqqoLX64VWqwV0hhAKhXbtdnuWUgdzkqIo0G63oVqtAm0GRKNRDj8RnwS/KxHHMBwONafTiX6/H3VdN1qZtJZIJLityz+7R5W1SCSCjUbjmwI3VOQjEAgYks/nw16v16W4MieNx+OvwWDAFc9+gxfJZHK6WiwW49z94tVoEiczwR3iPRwOG5LD4cBarcaiOisdLvlVTguFgiF5PB6sVCqTs5pKy7DQ+b0Vi0XsdvmT8IXYWycxR8Qrsb+Y+xFgABTcmOagLuC4AAAAAElFTkSuQmCC');
+	margin-top: -16px;
+	margin-left: -16px;
+	width: 32px;
+	height: 32px;
+	background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAD9JREFUeNrs1TEKACAMA0Dz/0fXyV2wIOhlbuCGQlJV42YCAAAAAHAIWOUAfAPYPc6zAD8AYAsAAAAA2jMFGABkhGnBa3GX1QAAAABJRU5ErkJggg==');
 
 	z-index: 1;
 	/* Don't let elementFromPoint() return the actual pointer */
