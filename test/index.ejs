@@ -29,6 +29,11 @@
 					'text':            'vendor/text',
 					'underscore':      'vendor/underscore'
 				},
+				shim: {
+					'GameShim': {
+						exports: 'GameShim'
+					}
+				},
 				config: {
 					text: {
 						useXhr: function (url, protocol, hostname, port) {
