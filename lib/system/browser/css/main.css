@@ -113,3 +113,21 @@
 	width: 100%;
 	height: 100%;
 }
+
+#pointer-lock-warning {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	background: rgba(0, 0, 0, 0.7);
+	color: #fff;
+	z-index: 100;
+
+	/* Let pointer events fall through to the frame */
+	pointer-events: none;
+}
+
+.locked #pointer-lock-warning {
+	display: none;
+}

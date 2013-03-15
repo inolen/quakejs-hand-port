@@ -4,10 +4,10 @@
 	paths: {
 		'async':                'vendor/async',
 		'BitBuffer':            'vendor/bit-buffer',
+		'DOMEventsLevel3':      'vendor/DOMEventsLevel3.shim',
 		'EventEmitter':         'vendor/EventEmitter',
-		'gameshim':             'vendor/game-shim',
+		'GameShim':             'vendor/game-shim',
 		'glmatrix':             'vendor/gl-matrix',
-		'jquery':               'vendor/jquery-1.8.2',
 		'knockout':             'vendor/knockout-latest',
 		'state-machine':        'vendor/state-machine',
 		'text':                 'vendor/text',

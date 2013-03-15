@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1103;
+var GAME_VERSION = 0.1104;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -13996,7 +13996,6 @@ var g_fraglimit,
 	g_synchronousClients,
 	pmove_fixed,
 	pmove_msec,
-	g_teamAutoJoin,
 	g_teamForceBalance,
 	g_friendlyFire,
 	g_teamForceBalance,
@@ -14069,7 +14068,6 @@ function RegisterCvars() {
 	pmove_fixed          = Cvar.AddCvar('pmove_fixed',          1,     Cvar.FLAGS.SYSTEMINFO);
 	pmove_msec           = Cvar.AddCvar('pmove_msec',           8,     Cvar.FLAGS.SYSTEMINFO);
 
-	g_teamAutoJoin       = Cvar.AddCvar('g_teamAutoJoin',       0,     Cvar.FLAGS.ARCHIVE);
 	g_teamForceBalance   = Cvar.AddCvar('g_teamForceBalance',   0,     Cvar.FLAGS.ARCHIVE);
 	g_friendlyFire       = Cvar.AddCvar('g_friendlyFire',       0,     Cvar.FLAGS.ARCHIVE);
 	g_teamForceBalance   = Cvar.AddCvar('g_teamForceBalance',   0,     Cvar.FLAGS.ARCHIVE);
@@ -20677,14 +20675,14 @@ function InitSessionData(client, userinfo) {
 			sess.team = PickTeam(client.ps.clientNum);
 		} else if (level.arena.gametype >= GT.TEAM) {
 			// Always auto-join for practice arena.
-			if (level.arena.gametype === GT.PRACTICEARENA || g_teamAutoJoin.get()) {
+			if (level.arena.gametype === GT.PRACTICEARENA) {
 				sess.team = PickTeam(client.ps.clientNum);
 			} else {
 				// Always spawn as spectator in team games.
 				sess.team = TEAM.SPECTATOR;
 			}
 		} else {
-			sess.team = TEAM.FREE;
+			sess.team = TEAM.SPECTATOR;
 		}
 	}
 
@@ -25864,11 +25862,10 @@ define('common/com',['require','async','BitBuffer','common/qmath','common/qshare
  *
  **********************************************************/
 var SE = {
-	CLNETMSG:   0,
-	SVNETMSG:   1,
-	SVNETCLOSE: 2,
-	KEY:        3,
-	MOUSE:      4
+	KEYDOWN: 0,
+	KEYUP:   1,
+	CHAR:    2,
+	MOUSE:   3
 };
 
 /**********************************************************
@@ -26174,16 +26171,20 @@ function EventLoop() {
 
 	while (ev) {
 		switch (ev.type) {
-			case SE.KEY:
-				if (ev.pressed) {
-					CL.KeyDownEvent(ev.time, ev.keyName);
-				} else {
-					CL.KeyUpEvent(ev.time, ev.keyName);
-				}
+			case SE.KEYDOWN:
+				CL.KeyDownEvent(ev.data);
+				break;
+
+			case SE.KEYUP:
+				CL.KeyUpEvent(ev.data);
+				break;
+
+			case SE.CHAR:
+				CL.KeyPressEvent(ev.data);
 				break;
 
 			case SE.MOUSE:
-				CL.MouseMoveEvent(ev.time, ev.deltaX, ev.deltaY);
+				CL.MouseMoveEvent(ev.data);
 				break;
 		}
 
@@ -26194,9 +26195,11 @@ function EventLoop() {
 /**
  * QueueEvent
  */
-function QueueEvent(ev) {
-	ev.time = SYS.GetMilliseconds();
-	events.push(ev);
+function QueueEvent(type, data) {
+	data = data || {};
+	data.time = SYS.GetMilliseconds();
+
+	events.push({ type: type, data: data });
 }
 
 /**
@@ -27384,77 +27387,7 @@ define('system/dedicated/sys',[
 function (async, glmatrix, QS, COM, Cvar) {
 	
 
-	var KbLocals = {
-	'us': {
-		'default': {
-			8: 'backspace',
-			9: 'tab',
-			13: 'enter',
-			16: 'shift',
-			17: 'ctrl',
-			18: 'alt',
-			19: 'pause',
-			20: 'capslock',
-			27: 'escape',
-			32: 'space',
-			33: 'pageup',
-			34: 'pagedown',
-			35: 'end',
-			36: 'home',
-			37: 'left',
-			38: 'up',
-			39: 'right',
-			40: 'down',
-			45: 'insert',
-			46: 'delete',
-			48: '0', 49: '1', 50: '2', 51: '3', 52: '4', 53: '5', 54: '6', 55: '7', 56: '8', 57: '9',
-			65: 'a', 66: 'b', 67: 'c', 68: 'd', 69: 'e', 70: 'f', 71: 'g', 72: 'h', 73: 'i', 74: 'j', 75: 'k', 76: 'l', 77: 'm', 78: 'n', 79: 'o', 80: 'p', 81: 'q', 82: 'r', 83: 's', 84: 't', 85: 'u', 86: 'v', 87: 'w', 88: 'x', 89: 'y', 90: 'z',
-			91: 'command',
-			92: '_91',
-			93: 'select',
-			96: 'num0', 97: 'num1', 98: 'num2', 99: 'num3', 100: 'num4', 101: 'num5', 102: 'num6', 103: 'num7', 104: 'num8', 105: 'num9',
-			// TODO test on full keyboard
-			// 106: '*',
-			// 107: '+',
-			// 109: '-',
-			// 110: '.',
-			// 111: '%',
-			112: 'f1', 113: 'f2', 114: 'f3', 115: 'f4', 116: 'f5', 117: 'f6', 118: 'f7', 119: 'f8', 120: 'f9', 121: 'f10', 122: 'f11', 123: 'f12',
-			144: 'numlock',
-			145: 'scrolllock',
-			186: ';',
-			187: '=',
-			188: ',',
-			189: '-',
-			190: '.',
-			191: '/',
-			192: '`',
-			219: '[',
-			220: '\\',
-			221: ']',
-			222: '\''
-		},
-		'shifted': {
-			48: ')', 49: '!', 50: '@', 51: '#', 52: '$', 53: '%', 54: '^', 55: '&', 56: '*', 57: '(',
-			65: 'A', 66: 'B', 67: 'C', 68: 'D', 69: 'E', 70: 'F', 71: 'G', 72: 'H', 73: 'I', 74: 'J', 75: 'K', 76: 'L', 77: 'M', 78: 'N', 79: 'O', 80: 'P', 81: 'Q', 82: 'R', 83: 'S', 84: 'T', 85: 'U', 86: 'V', 87: 'W', 88: 'X', 89: 'Y', 90: 'Z',
-			107: '+',
-			109: '_',
-			186: ':',
-			187: '+',
-			188: '<',
-			189: '_',
-			190: '>',
-			191: '?',
-			192: '~',
-			219: '{',
-			220: '|',
-			221: '}',
-			222: '"'
-		}
-	}
-};
-
-/**
+	/**
  * MetaSockets are the object we pass to the
  * cl, sv and com layers instead of the raw
  * WebSocket instance.
