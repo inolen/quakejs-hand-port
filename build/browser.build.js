@@ -24,6 +24,11 @@
 		'system/browser/sys':   'system/browser/sys.tmp',
 		'ui/ui':                'ui/ui.tmp'
 	},
+	shim: {
+		'GameShim': {
+			exports: 'GameShim'
+		}
+	},
 	stubModules: [
 		'text'
 	]

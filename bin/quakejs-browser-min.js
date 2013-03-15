@@ -2618,7 +2618,12 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
     }
 
 })((typeof(exports) != 'undefined') ? global : window); // Account for CommonJS environments;
-define("GameShim", function(){});
+define("GameShim", (function (global) {
+    return function () {
+        var ret, fn;
+        return ret || global.GameShim;
+    };
+}(this)));
 
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations for WebGL
@@ -7134,7 +7139,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1105;
+var GAME_VERSION = 0.1106;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
