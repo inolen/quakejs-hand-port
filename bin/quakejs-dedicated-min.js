@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1106;
+var GAME_VERSION = 0.1107;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -17683,6 +17683,12 @@ function SetArena(ent, arenaNum) {
 	// Change arena and kick to spec.
 	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
 	ent.client.sess.group = null;
+
+	// Reset persistant playerstate info on arena change (e.g. scores).
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		ent.client.ps.persistant[i] = 0;
+	}
+
 	ForceTeam(ent, TEAM.SPECTATOR);
 
 	// Update scores.

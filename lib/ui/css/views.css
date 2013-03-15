@@ -575,36 +575,29 @@ table thead th {
 }
 
 /**
- * Loading view
+ * Connecting / loading view
  */
-#loading {
+#connecting, #loading {
 	background: #000;
 }
 
-#loading #logo {
+#logo {
 	opacity: 0.3;
 }
 
-#loading.hidden {
-	opacity: 0;
-	visibility: hidden;
-	transition: visibility .2s, opacity .2s ease-out;
-	-moz-transition: visibility .2s, opacity .2s ease-out;
-	-webkit-transition: visibility .2s, opacity .2s ease-out;
-}
-
-#loading .loading {
+#connecting .content,
+#loading .content {
 	position: absolute;
 	top: 50%;
 	left: 50%;
 	display: block;
-	margin-top: -8em;
+	margin-top: -6em;
 	margin-left: -20em;
 	width: 40em;
 	text-align: center;
 }
 
-#loading .loading .progress {
+#loading .progress {
 	margin: 1em auto 0;
 }
 
