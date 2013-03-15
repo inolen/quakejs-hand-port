@@ -118,8 +118,8 @@
 
 .dialog > .tabbable > .nav-tabs li.active a,
 .dialog > .tabbable > .nav-tabs li.hover a {
-	color: #4cae4c !important;
-	border-bottom: 2px solid #4cae4c;
+	color: #2dbb30 !important;
+	border-bottom: 2px solid #2dbb30;
 }
 
 .dialog .tab-pane {
@@ -180,7 +180,7 @@
 
 .dialog .nav-pills .hover a,
 .dialog .nav-pills .active a {
-	background: #4cae4c;
+	background: #2dbb30;
 }
 
 /**
@@ -190,6 +190,7 @@
 	display: inline-block;
 	padding: .4em .7em;
 	background: #333;
+	color: #fff;
 	text-align: center;
 	text-transform: uppercase;
 	box-sizing: border-box;
@@ -199,6 +200,30 @@
 
 .btn.hover {
 	background: #444;
+}
+
+.btn-red {
+	background: #d9534f;
+}
+
+.btn-red.hover {
+	background: #d43f3a;
+}
+
+.btn-blue {
+	background: #428bca;
+}
+
+.btn-blue.hover {
+	background: #357ebd;
+}
+
+.btn-yellow {
+	background: #f0ad4e;
+}
+
+.btn-yellow.hover {
+	background: #eea236;
 }
 
 /**
@@ -211,6 +236,7 @@ table thead th {
 
 .table {
 	width: 100%;
+	background: #2a2a2a;
 }
 
 .table th,
@@ -219,25 +245,14 @@ table thead th {
 }
 
 .table thead th {
-	background-image: linear-gradient(top, #222, #111);
-	background-image: -moz-linear-gradient(top, #222, #111);
-	background-image: -webkit-linear-gradient(top, #222, #111);
 	text-align: left;
 	text-transform: uppercase;
 	padding: .6em 1em;
-	color: #fff;
-}
-
-.table tbody td {
-	background: #181818;
-}
-
-.table tbody tr:nth-child(odd) td {
-	background: #121212;
+	border-bottom: 1px solid #333;
 }
 
 .table tbody tr.hover td {
-	background: #050505;
+	background: #333;
 }
 
 .table-border {
@@ -284,7 +299,7 @@ table thead th {
 
 .progress .bar {
 	width: 0;
-	background: #4cae4c;
+	background: #2dbb30;
 	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
 	transition: width .6s ease;
 	-moz-transition: width .6s ease;
@@ -422,7 +437,7 @@ table thead th {
 	position: absolute;
 	top: .5em;
 	left: 0;
-	background: #4cae4c;
+	background: #2dbb30;
 	box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
 	width: 1em;
 	height: 1em;
@@ -488,28 +503,35 @@ table thead th {
 	margin: 0.2em 0 0 1em;
 }
 
-#current-game .btn-join-match {
-	width: 100%;
-	margin: 1em 0 2em;
+#current-game .btn {
+	display: block;
+	margin: 1em 0 0;
 }
 
-#current-game .footer {
-	clear: both;
-	text-align: center;
+#current-game .teaminfo {
+	margin: 1.6em 0;
 	overflow: hidden;
 }
 
-#current-game .footer .btn-leave-match {
+#current-game .teaminfo-red,
+#current-game .teaminfo-blue {
+	display: block;
+	width: 46%;
+	margin: 0;
+	padding: 1em;
+}
+
+#current-game .teaminfo-red {
 	float: left;
 }
 
-#current-game .footer span {
-	margin-top: .4em;
-	color: #4cae4c;
+#current-game .teaminfo-blue {
+	float: right;
 }
 
-#current-game .footer .btn-spectate {
+#current-game .teaminfo-score {
 	float: right;
+	font-weight: bold;
 }
 
 /**
