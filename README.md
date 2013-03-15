@@ -5,9 +5,9 @@
     git clone --recursive https://github.com/inolen/quakejs.git
     cd quakejs
     npm install
-    node server.js
+    node test/server.js
 
-Open your browser and hit `http://localhost:8080` et voila!
+Open your browser and hit `http://localhost:8080/cmd=map pro-q3dm6` et voila!
 
 NOTE: node.js 0.9.4 or higher is required.
 
