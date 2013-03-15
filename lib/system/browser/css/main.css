@@ -84,7 +84,11 @@
 
 #pointer-lock-container .pointer-lock-warning {
 	position: absolute;
-	top: 40%;
+	top: 46%;
+	left: 50%;
+	width: 20em;
+	margin-left: -10em;
+	text-shadow: 0em 0em 1em #666;
 }
 
 .locked #pointer-lock-container {
