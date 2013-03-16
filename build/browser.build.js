@@ -1,6 +1,6 @@
 ({
 	baseUrl: '../lib',
-	optimize: 'none',
+	optimize: 'uglify',
 	paths: {
 		'async':                'vendor/async',
 		'BitBuffer':            'vendor/bit-buffer',

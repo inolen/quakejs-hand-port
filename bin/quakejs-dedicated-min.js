@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1107;
+var GAME_VERSION = 0.1108;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23663,13 +23663,13 @@ function SendMasterHeartbeat() {
 
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
-	log('SendMasterHeartbeat', sv_master.get());
-
 	var addr = COM.StringToAddr(sv_master.get());
 	if (!addr) {
 		error('Failed to parse server address', sv_master.get());
 		return;
 	}
+
+	log('SendMasterHeartbeat', sv_master.get());
 
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
@@ -23802,6 +23802,9 @@ function RemoteCommand(netchan, password, cmd) {
 	}
 
 	COM.EndRedirect();
+
+	// // Forcefully kill the connection.
+	// COM.NetClose(netchan.socket);
 }
 
 /**
@@ -23830,6 +23833,9 @@ function ServerInfo(netchan) {
 	info.clients = count;
 
 	COM.NetchanOutOfBandPrint(netchan, 'infoResponse', info);
+
+	// Forcefully kill the connection.
+	COM.NetClose(netchan.socket);
 }
 
 // /**
