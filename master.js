@@ -62,17 +62,17 @@ function createServer(port) {
 				return;
 			}
 
-			var data = stripOOB(buffer);
-			if (!data) {
+			var msg = stripOOB(buffer);
+			if (!msg) {
 				log('Failed to parse message from ' + address);
 				removeSubscriber(ws);
 				return;
 			}
 
-			if (data.type === 'heartbeat') {
-				handleHeartbeat(ws, data);
-			} else if (data.type === 'subscribe') {
-				handleSubscribe(ws, data);
+			if (msg.type === 'heartbeat') {
+				handleHeartbeat(ws, msg.data);
+			} else if (msg.type === 'subscribe') {
+				handleSubscribe(ws, msg.data);
 			}
 		});
 
