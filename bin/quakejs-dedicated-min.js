@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1112;
+var GAME_VERSION = 0.1113;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23681,8 +23681,7 @@ function SendMasterHeartbeat() {
 
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
-			var netchan = COM.NetchanSetup(socket);
-			COM.NetchanOutOfBandPrint(netchan, 'heartbeat', {
+			COM.NetOutOfBandPrint(socket, 'heartbeat', {
 				hostname: sv_hostname.get(),
 				port: sv_externalPort.get() || sv_port.get()
 			});
@@ -23694,7 +23693,7 @@ function SendMasterHeartbeat() {
 /**
  * PacketEvent
  */
-function PacketEvent(netchan, source) {
+function PacketEvent(socket, source) {
 	if (!Running()) {
 		return;
 	}
@@ -23715,7 +23714,7 @@ function PacketEvent(netchan, source) {
 
 	// Peek in and see if this is a string message.
 	if (msg.view.getInt32(0) === -1) {
-		OutOfBoundPacket(netchan, msg);
+		OutOfBandPacket(socket, msg);
 		return;
 	}
 
@@ -23726,7 +23725,7 @@ function PacketEvent(netchan, source) {
 			continue;
 		}
 
-		if (client.netchan !== netchan) {
+		if (client.netchan.socket !== socket) {
 			continue;
 		}
 
@@ -23739,11 +23738,11 @@ function PacketEvent(netchan, source) {
 }
 
 /**
- * OutOfBoundPacket
+ * OutOfBandPacket
  *
- * This is silly being that we're on TCP/IP.
+ * This is silly being that we're on TCP.
  */
-function OutOfBoundPacket(netchan, msg) {
+function OutOfBandPacket(socket, msg) {
 	msg.readInt32();  // Skip the -1.
 
 	var str = msg.readASCIIString();
@@ -23752,20 +23751,18 @@ function OutOfBoundPacket(netchan, msg) {
 	try {
 		message = JSON.parse(str);
 	} catch (e) {
-		COM.NetClose(netchan.socket);
+		COM.NetClose(socket);
 		return;
 	}
 
 	var cmd = message.type;
 
 	if (cmd === 'rcon') {
-		RemoteCommand(netchan, message.data[0], message.data[1]);
+		RemoteCommand(socket, message.data[0], message.data[1]);
 	} else if (cmd === 'getinfo') {
-		ServerInfo(netchan);
-	// } else if (str.indexOf('getchallenge') === 0) {
-	// 	GetChallenge(netchan);
+		ServerInfo(socket);
 	} else if (cmd === 'connect') {
-		ClientEnterServer(netchan, message.data);
+		ClientEnterServer(socket, message.data);
 	}
 }
 
@@ -23774,7 +23771,7 @@ function OutOfBoundPacket(netchan, msg) {
  *
  * An rcon packet arrived from the network.
  */
-function RemoteCommand(netchan, password, cmd) {
+function RemoteCommand(socket, password, cmd) {
 	// Prevent using rcon as an amplifier and make dictionary attacks impractical.
 	// if ( SVC_RateLimitAddress( from, 10, 1000 ) ) {
 	// 	Com_DPrintf( "SVC_RemoteCommand: rate limit from %s exceeded, dropping request\n",
@@ -23791,16 +23788,16 @@ function RemoteCommand(netchan, password, cmd) {
 		// 	return;
 		// }
 
-		log('Bad rcon request from ' + COM.SockToString(netchan.socket) + ' (' + password + ')');
+		log('Bad rcon request from ' + COM.SockToString(socket) + ' (' + password + ')');
 	} else {
 		valid = true;
-		log('Valid rcon request from ' + COM.SockToString(netchan.socket) + ' (' + password + ')');
+		log('Valid rcon request from ' + COM.SockToString(socket) + ' (' + password + ')');
 	}
 
 	// Start redirecting all print outputs to the packet.
 	COM.BeginRedirect(function () {
 		var args = Array.prototype.slice.call(arguments);
-		COM.NetchanOutOfBandPrint(netchan, 'print', args.join(' '));
+		COM.NetOutOfBandPrint(socket, 'print', args.join(' '));
 	});
 
 	if (!sv_rconPassword.get()) {
@@ -23814,14 +23811,27 @@ function RemoteCommand(netchan, password, cmd) {
 
 	COM.EndRedirect();
 
-	// // Forcefully kill the connection.
-	// COM.NetClose(netchan.socket);
+	// If this command didn't come from a connected client,
+	// go ahead and close the socket.
+	var found = false;
+	for (var i = 0; i < svs.clients.length; i++) {
+		var client = svs.clients[i];
+
+		if (client.netchan.socket === socket) {
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		COM.NetClose(socket);
+	}
 }
 
 /**
  * ServerInfo
  */
-function ServerInfo(netchan) {
+function ServerInfo(socket) {
 	var info = {};
 
 	var g_gametype = Cvar.AddCvar('g_gametype');
@@ -23843,24 +23853,11 @@ function ServerInfo(netchan) {
 
 	info.clients = count;
 
-	COM.NetchanOutOfBandPrint(netchan, 'infoResponse', info);
+	COM.NetOutOfBandPrint(socket, 'infoResponse', info);
 
 	// Forcefully kill the connection.
-	COM.NetClose(netchan.socket);
+	COM.NetClose(socket);
 }
-
-// /**
-//  * GetChallenge
-//  *
-//  * A "getchallenge" OOB command has been received
-//  * Returns a challenge number that can be used
-//  * in a subsequent connectResponse command.
-//  * We do this to prevent denial of service attacks that
-//  * flood the server with invalid connection IPs.  With a
-//  * challenge, they must give a valid IP address.
-//  */
-// function GetChallenge(netchan) {
-// }
 
 /**
  * Spawn
@@ -24230,15 +24227,13 @@ function ClientRequest(addr) {
  * Called when a client acception has been accepted, but before
  * its game-level connection string has been received.
  */
-function ClientAccept(msocket) {
-	var netchan = COM.NetchanSetup(msocket);
-
-	msocket.onmessage = function (buffer) {
-		PacketEvent(netchan, buffer);
+function ClientAccept(socket) {
+	socket.onmessage = function (buffer) {
+		PacketEvent(socket, buffer);
 	};
 
-	msocket.onclose = function () {
-		ClientDisconnected(netchan);
+	socket.onclose = function () {
+		ClientDisconnected(socket);
 	};
 }
 
@@ -24248,7 +24243,7 @@ function ClientAccept(msocket) {
  * Called after a client has been accepted and its game-level
  * connect request has been processed.
  */
-function ClientEnterServer(netchan, data) {
+function ClientEnterServer(socket, data) {
 	if (!Running()) {
 		return;
 	}
@@ -24262,7 +24257,7 @@ function ClientEnterServer(netchan, data) {
 		}
 	}
 	if (clientNum === undefined) {
-		COM.NetchanOutOfBandPrint(netchan, 'print', 'Server is full.');
+		COM.NetOutOfBandPrint(netchan.socket, 'print', 'Server is full.');
 		log('Rejected a connection.');
 		return;
 	}
@@ -24270,7 +24265,7 @@ function ClientEnterServer(netchan, data) {
 	var com_protocol = Cvar.AddCvar('com_protocol');
 	var version = data.protocol;
 	if(version !== com_protocol.get()) {
-		COM.NetchanOutOfBandPrint(netchan, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
+		COM.NetOutOfBandPrint(netchan.socket, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
 		log('Rejected connect from version', version);
 		return;
 	}
@@ -24279,7 +24274,7 @@ function ClientEnterServer(netchan, data) {
 	var newcl = svs.clients[clientNum];
 	newcl.reset();
 
-	newcl.netchan = netchan;
+	newcl.netchan = COM.NetchanSetup(socket);
 	newcl.userinfo = data.userinfo;
 
 	// Give the game a chance to modify the userinfo.
@@ -24293,7 +24288,7 @@ function ClientEnterServer(netchan, data) {
 	newcl.lastPacketTime = svs.time;
 
 	// Let the client know we've accepted them.
-	COM.NetchanOutOfBandPrint(newcl.netchan, 'connectResponse', null);
+	COM.NetOutOfBandPrint(newcl.netchan.socket, 'connectResponse', null);
 
 	// When we receive the first packet from the client, we will
 	// notice that it is from a different serverid and that the
@@ -24375,9 +24370,9 @@ function DropClient(client, reason) {
 /**
  * ClientDisconnected
  *
- * Called when a
+ * Called when the socket is closed for a client.
  */
-function ClientDisconnected(netchan) {
+function ClientDisconnected(socket) {
 	for (var i = 0; i < svs.clients.length; i++) {
 		var client = svs.clients[i];
 
@@ -24385,7 +24380,7 @@ function ClientDisconnected(netchan) {
 			continue;
 		}
 
-		if (client.netchan === netchan) {
+		if (client.netchan.socket === socket) {
 			DropClient(client, 'disconnected');
 			return;
 		}
@@ -24697,7 +24692,7 @@ function ExecuteClientCommand(client, cmd) {
 	if (cmd.type === 'userinfo') {
 		UpdateUserinfo(client, cmd.data);
 	}
-	// Since we're on TCP/IP the disconnect is handled as a result
+	// Since we're on TCP the disconnect is handled as a result
 	// of a socket close event.
 	// else if (cmd.type === 'disconnect') {
 	// 	Disconnect(client);
@@ -26512,10 +26507,10 @@ function GetExports() {
 			NetConnect:            NetConnect,
 			NetListen:             NetListen,
 			NetSend:               NetSend,
+			NetOutOfBandPrint:     NetOutOfBandPrint,
 			NetClose:              NetClose,
 			NetchanSetup:          NetchanSetup,
 			NetchanTransmit:       NetchanTransmit,
-			NetchanOutOfBandPrint: NetchanOutOfBandPrint,
 			NetchanProcess:        NetchanProcess,
 			LoadBsp:               LoadBsp
 		}
@@ -27267,6 +27262,26 @@ function NetSend(socket, view) {
 }
 
 /**
+ * NetOutOfBandPrint
+ */
+function NetOutOfBandPrint(socket, type, data) {
+	var msg = new BitStream(msgBuffer);
+
+	var str = JSON.stringify({
+		type: type,
+		data: data
+	});
+
+	msg.writeInt32(-1);
+	msg.writeASCIIString(str);
+
+	// Create a new view representing the contents of the message.
+	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
+
+	NetSend(socket, msgView);
+}
+
+/**
  * NetClose
  */
 function NetClose(socket) {
@@ -27327,26 +27342,6 @@ function NetchanProcess(netchan, msg) {
 	var sequence = msg.readInt32();
 	netchan.incomingSequence = sequence;
 	return true;
-}
-
-/**
- * NetchanOutOfBandPrint
- */
-function NetchanOutOfBandPrint(netchan, type, data) {
-	var msg = new BitStream(msgBuffer);
-
-	var str = JSON.stringify({
-		type: type,
-		data: data
-	});
-
-	msg.writeInt32(-1);
-	msg.writeASCIIString(str);
-
-	// Create a new view representing the contents of the message.
-	var msgView = new Uint8Array(msg.buffer, 0, msg.byteIndex);
-
-	NetSend(netchan.socket, msgView);
 }
 	/**
  * LoadBsp
