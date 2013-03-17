@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1109;
+var GAME_VERSION = 0.1110;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23403,9 +23403,10 @@ var ClientSnapshot = function () {
 
 var sv_ip,
 	sv_port,
+	sv_hostname,
 	sv_master,
 	sv_serverid,
-	sv_hostname,
+	sv_name,
 	sv_mapname,
 	sv_maxClients,
 	sv_fps,
@@ -23458,8 +23459,9 @@ function Init(inCL, callback) {
 function RegisterCvars() {
 	sv_ip           = Cvar.AddCvar('sv_ip',           '0.0.0.0',            Cvar.FLAGS.ARCHIVE, true);
 	sv_port         = Cvar.AddCvar('sv_port',         9001,                 Cvar.FLAGS.ARCHIVE, true);
+	sv_hostname     = Cvar.AddCvar('sv_hostname',     '',                   Cvar.FLAGS.ARCHIVE, true);
 	sv_master       = Cvar.AddCvar('sv_master',       'master.quakejs.com', Cvar.FLAGS.ARCHIVE);
-	sv_hostname     = Cvar.AddCvar('sv_hostname',     'Anonymous',          Cvar.FLAGS.ARCHIVE);
+	sv_name         = Cvar.AddCvar('sv_name',         'Anonymous',          Cvar.FLAGS.ARCHIVE);
 	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                    Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
 	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',              Cvar.FLAGS.SERVERINFO);
 	sv_maxClients   = Cvar.AddCvar('sv_maxClients',   16,                   Cvar.FLAGS.SERVERINFO | Cvar.FLAGS.LATCH | Cvar.FLAGS.ARCHIVE);
@@ -23675,7 +23677,7 @@ function SendMasterHeartbeat() {
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
 			var netchan = COM.NetchanSetup(socket);
-			COM.NetchanOutOfBandPrint(netchan, 'heartbeat', sv_port.get());
+			COM.NetchanOutOfBandPrint(netchan, 'heartbeat', { hostname : sv_hostname.get() });
 			COM.NetClose(socket);
 		}
 	});
@@ -23819,7 +23821,7 @@ function ServerInfo(netchan) {
 	// Info_SetValueForKey( infostring, "gamename", com_gamename->string );
 	// Info_SetValueForKey(infostring, "protocol", va("%i", com_protocol->integer));
 
-	info.sv_hostname = sv_hostname.get();
+	info.sv_name = sv_name.get();
 	info.sv_mapname = sv_mapname.get();
 	info.sv_maxClients = sv_maxClients.get();
 	info.g_gametype = g_gametype.get();

@@ -53,7 +53,7 @@ function createServer(port) {
 	});
 
 	wss.on('connection', function (ws) {
-		var address = getSocketAddress(ws);
+		var address = getRemoteAddress(ws);
 
 		log('Connection accepted from ' + address);
 
@@ -92,7 +92,7 @@ function createServer(port) {
 	return server;
 }
 
-function getSocketAddress(ws) {
+function getRemoteAddress(ws) {
 	// By default, check the underlying socket's remote address.
 	var address = ws._socket.remoteAddress;
 
@@ -107,6 +107,20 @@ function getSocketAddress(ws) {
 	}
 
 	return address;
+}
+
+function getRemotePort(ws) {
+	var port = ws._socket.remotePort;
+
+	if (ws.upgradeReq.headers['x-forwarded-port']) {
+		port = ws.upgradeReq.headers['x-forwarded-port'];
+	}
+
+	if (!port) {
+		log('Failed to parse port for socket', JSON.stringify(ws));
+	}
+
+	return port;
 }
 
 /**********************************************************
@@ -157,33 +171,35 @@ function stripOOB(buffer) {
  *
  **********************************************************/
 function handleHeartbeat(ws, data) {
-	var ip = getSocketAddress(ws);
-	if (!ip) {
+	var address = getRemoteAddress(ws);
+	var port = getRemotePort(ws);
+
+	if (!address || !port) {
 		return;
 	}
 
-	var port = parseInt(data.data, 10);
-	if (isNaN(port)) {
-		return;
+	// If a hostname is specified, override the IP address with it.
+	if (data && data.hostname) {
+		address = data.hostname;
 	}
 
-	var address = ip + ':' + port;
+	var socket = address + ':' + port;
 
-	log('Received heartbeat from ' + address);
+	log('Received heartbeat from ' + socket);
 
 	// Scan server immediately.
-	scanServer(address, function (err) {
+	scanServer(socket, function (err) {
 		if (err) {
-			removeServer(address);
+			removeServer(socket);
 			return;
 		}
 
-		updateServer(address);
+		updateServer(socket);
 	});
 }
 
-function scanServer(address, callback) {
-	var ws = new WebSocketClient('ws://' + address);
+function scanServer(socket, callback) {
+	var ws = new WebSocketClient('ws://' + socket);
 
 	ws.on('open', function () {
 		var buffer = formatOOB({ type: 'getinfo' });
@@ -198,11 +214,11 @@ function scanServer(address, callback) {
 
 		var data = stripOOB(buffer);
 		if (!data) {
-			return callback(new Error('Failed to parse message from ' + address));
+			return callback(new Error('Failed to parse message from ' + socket));
 		}
 
 		// TODO Validate data or something?
-		log('Got info from ' + address + ' ' + JSON.stringify(data));
+		log('Got info from ' + socket + ' ' + JSON.stringify(data));
 		ws.close();
 
 		return callback(null);
@@ -213,40 +229,40 @@ function scanServer(address, callback) {
 	});
 }
 
-function updateServer(address) {
-	if (!servers[address]) {
-		log('Adding server ' + address);
+function updateServer(socket) {
+	if (!servers[socket]) {
+		log('Adding server ' + socket);
 	} else {
-		log('Updating server ' + address);
+		log('Updating server ' + socket);
 	}
 
-	servers[address] = Date.now();
+	servers[socket] = Date.now();
 
 	// Send partial update to subscribers.
 	sendMessageToSubscribers({
 		type: 'servers',
-		servers: [address]
+		servers: [socket]
 	});
 }
 
-function removeServer(address) {
-	log('Removing server ' + address);
+function removeServer(socket) {
+	log('Removing server ' + socket);
 
-	delete servers[address];
+	delete servers[socket];
 }
 
 function pruneServers() {
 	var now = Date.now();
 
-	for (var address in servers) {
-		if (!servers.hasOwnProperty(address)) {
+	for (var socket in servers) {
+		if (!servers.hasOwnProperty(socket)) {
 			continue;
 		}
 
-		var delta = now - servers[address];
+		var delta = now - servers[socket];
 
 		if (delta > pruneInterval) {
-			removeServer(address);
+			removeServer(socket);
 		}
 	}
 }
@@ -273,7 +289,7 @@ function addSubscriber(ws) {
 		return;  // already subscribed
 	}
 
-	log('Adding subscriber ' + getSocketAddress(ws));
+	log('Adding subscriber ' + getRemoteAddress(ws));
 
 	subscribers.push(ws);
 }
