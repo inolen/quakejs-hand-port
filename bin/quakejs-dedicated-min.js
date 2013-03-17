@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1110;
+var GAME_VERSION = 0.1111;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23677,7 +23677,10 @@ function SendMasterHeartbeat() {
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
 			var netchan = COM.NetchanSetup(socket);
-			COM.NetchanOutOfBandPrint(netchan, 'heartbeat', { hostname : sv_hostname.get() });
+			COM.NetchanOutOfBandPrint(netchan, 'heartbeat', {
+				hostname: sv_hostname.get(),
+				port: sv_port.get()
+			});
 			COM.NetClose(socket);
 		}
 	});

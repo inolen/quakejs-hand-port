@@ -183,9 +183,14 @@ function handleHeartbeat(ws, data) {
 		address = data.hostname;
 	}
 
+	// Same with port.
+	if (data && data.port) {
+		port = data.port;
+	}
+
 	var socket = address + ':' + port;
 
-	log('Received heartbeat from ' + socket);
+	log('Received heartbeat from ' + socket, JSON.stringify(data));
 
 	// Scan server immediately.
 	scanServer(socket, function (err) {
