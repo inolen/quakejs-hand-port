@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1113;
+var GAME_VERSION = 0.1114;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5248,7 +5248,7 @@ var SNAPFLAG_SERVERCOUNT    = 4;                           // toggled every map_
  */
 var GENTITYNUM_BITS         = 10;
 var MAX_CLIENTS             = 32;                          // absolute limit
-var MAX_GENTITIES           = (1 << 10);                   // can't be increased without changing drawsurf bit packing
+var MAX_GENTITIES           = (1 << GENTITYNUM_BITS);      // can't be increased without changing drawsurf bit packing
 var MAX_MODELS              = 256;                         // these are sent over the net as 8 bits
 var MAX_SOUNDS              = 256;                         // so they cannot be blindly increased
 
@@ -13083,33 +13083,33 @@ function ForceLegsAnim(anim) {
 		giTag: WP.PLASMAGUN,
 		flashDlightColor: [0.6, 0.6, 1.0]
 	},
-	{
-		classname: 'weapon_bfg',
-		name: 'BFG10K',
-		models: {
-			primary: 'models/weapons2/bfg/bfg.md3',
-			barrel: 'models/weapons2/bfg/bfg_barrel.md3',
-			flash: 'models/weapons2/bfg/bfg_flash.md3',
-			hand: 'models/weapons2/bfg/bfg_hand.md3',
-			missile: 'models/weaphits/bfg.md3'
-		},
-		shaders: {
-			explosion: 'bfgExplosion'
-		},
-		gfx: {
-			icon: 'icons/iconw_bfg'
-		},
-		sounds: {
-			pickup: 'sound/misc/w_pkup',
-			ready: 'sound/weapons/bfg/bfg_hum',
-			missile: 'sound/weapons/rocket/rockfly',
-			flash0: 'sound/weapons/bfg/bfg_fire'
-		},
-		quantity: 20,
-		giType: IT.WEAPON,
-		giTag: WP.BFG,
-		flashDlightColor: [1.0, 0.7, 1.0]
-	},
+	// {
+	// 	classname: 'weapon_bfg',
+	// 	name: 'BFG10K',
+	// 	models: {
+	// 		primary: 'models/weapons2/bfg/bfg.md3',
+	// 		barrel: 'models/weapons2/bfg/bfg_barrel.md3',
+	// 		flash: 'models/weapons2/bfg/bfg_flash.md3',
+	// 		hand: 'models/weapons2/bfg/bfg_hand.md3',
+	// 		missile: 'models/weaphits/bfg.md3'
+	// 	},
+	// 	shaders: {
+	// 		explosion: 'bfgExplosion'
+	// 	},
+	// 	gfx: {
+	// 		icon: 'icons/iconw_bfg'
+	// 	},
+	// 	sounds: {
+	// 		pickup: 'sound/misc/w_pkup',
+	// 		ready: 'sound/weapons/bfg/bfg_hum',
+	// 		missile: 'sound/weapons/rocket/rockfly',
+	// 		flash0: 'sound/weapons/bfg/bfg_fire'
+	// 	},
+	// 	quantity: 20,
+	// 	giType: IT.WEAPON,
+	// 	giTag: WP.BFG,
+	// 	flashDlightColor: [1.0, 0.7, 1.0]
+	// },
 	// {
 	// 	classname: 'weapon_grapplinghook',
 	// 	name: 'Grappling Hook',
@@ -13397,22 +13397,22 @@ function ForceLegsAnim(anim) {
 		giType: IT.TEAM,
 		giTag: PW.BLUEFLAG
 	},
-	/**
-	 * 1FCTF
-	 */
-	{
-		classname: 'team_CTF_neutralflag',
-		name: 'Neutral Flag',
-		models: {
-			primary: 'models/flags/n_flag.md3'
-		},
-		gfx: {
-			icon: 'icons/iconf_neutral1'
-		},
-		quantity: 0,
-		giType: IT.TEAM,
-		giTag: PW.NEUTRALFLAG
-	}
+	// /**
+	//  * 1FCTF
+	//  */
+	// {
+	// 	classname: 'team_CTF_neutralflag',
+	// 	name: 'Neutral Flag',
+	// 	models: {
+	// 		primary: 'models/flags/n_flag.md3'
+	// 	},
+	// 	gfx: {
+	// 		icon: 'icons/iconf_neutral1'
+	// 	},
+	// 	quantity: 0,
+	// 	giType: IT.TEAM,
+	// 	giTag: PW.NEUTRALFLAG
+	// }
 ];
 
 /**
