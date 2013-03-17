@@ -271,15 +271,11 @@ table thead th {
 }
 
 .label.label-green {
-	background: linear-gradient(top, #8cc84b, #448800);
-	background: -moz-linear-gradient(top, #8cc84b, #448800);
-	background: -webkit-linear-gradient(top, #8cc84b, #448800);
+	background: #2dbb30;
 }
 
 .label.label-blue {
-	background: linear-gradient(top, #4b60c8, #001088);
-	background: -moz-linear-gradient(top, #4b60c8, #001088);
-	background: -webkit-linear-gradient(top, #4b60c8, #001088);
+	background: #357ebd;
 }
 
 /**
@@ -514,10 +510,20 @@ table thead th {
 
 #current-game .teaminfo-red {
 	float: left;
+	background: #d1311f;
+}
+
+#current-game .teaminfo-red.hover {
+	background: #d11500;
 }
 
 #current-game .teaminfo-blue {
 	float: right;
+	background: #1f49d1;
+}
+
+#current-game .teaminfo-blue.hover {
+	background: #0031d1;
 }
 
 #current-game .teaminfo-title {
@@ -681,7 +687,6 @@ table thead th {
 #scores-wrapper .team-blue .status {
 	background: rgba(0, 0, 255, 0.4);
 	border-radius: .2em;
-
 }
 
 #events-wrapper {
@@ -907,6 +912,7 @@ table thead th {
 
 #scoreboard-wrapper .team .header {
 	padding: .4em .7em;
+	color: #fff;
 }
 
 #scoreboard-wrapper .team .status {
@@ -930,13 +936,11 @@ table thead th {
 }
 
 #scoreboard-wrapper .team-red .header {
-	background: linear-gradient(top, #d11500, #aa0100);
-	background: -moz-linear-gradient(top, #d11500, #aa0100);
-	background: -webkit-linear-gradient(top, #d11500, #aa0100);
+	background: #d1311f;
 }
 
 #scoreboard-wrapper .team-red .status {
-	background: #aa0000;
+	background: #d11500;
 }
 
 #scoreboard-wrapper .team-blue {
@@ -948,13 +952,11 @@ table thead th {
 }
 
 #scoreboard-wrapper .team-blue .header {
-	background: linear-gradient(top, #1800d1, #1400ab);
-	background: -moz-linear-gradient(top, #1800d1, #1400ab);
-	background: -webkit-linear-gradient(top, #1800d1, #1400ab);
+	background: #1f49d1;
 }
 
 #scoreboard-wrapper .team-blue .status {
-	background: #0000bb;
+	background: #0031d1;
 }
 
 #scoreboard-wrapper .team tbody td:first-child {

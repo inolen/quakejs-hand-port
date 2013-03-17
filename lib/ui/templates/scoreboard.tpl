@@ -1,7 +1,7 @@
 <div id="scoreboard" class="fullscreen">
 	<div id="scoreboard-wrapper" class="dialog" data-bind="css: { 'dialog-wide': isTeamGame() }">
 		<div class="match-description">
-		<h1 data-bind="text: mapname"></h2> <span data-bind="text: gametype, visible: gametype() !== 'lobby'" class="label label-green"></span> <span class="label label-green" data-bind="text: 'Timelimit ' + timelimit(), visible: timelimit() !== 0"></span> <span class="label label-green" data-bind="text: 'Fraglimit ' + fraglimit(), visible: gametype() === 'ffa' || gametype() === 'tournament'"></span> <span class="label label-green" data-bind="text: 'Capturelimit ' + capturelimit(), visible: gametype() === 'ctf' || gametype() === 'nfctf'"></span>
+		<h1 data-bind="text: mapname"></h2> <span data-bind="text: gametype, visible: gametype() !== 'lobby'" class="label"></span> <span class="label" data-bind="text: 'Timelimit ' + timelimit(), visible: timelimit() !== 0"></span> <span class="label" data-bind="text: 'Fraglimit ' + fraglimit(), visible: gametype() === 'ffa' || gametype() === 'tournament'"></span> <span class="label" data-bind="text: 'Capturelimit ' + capturelimit(), visible: gametype() === 'ctf' || gametype() === 'nfctf'"></span>
 		</div>
 
 		<!-- ko if: !isTeamGame() -->
@@ -49,7 +49,7 @@
 		<div class="scores">
 			<div class="team team-red">
 				<div class="header">
-					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: redScores().length"></span></span> Red Team
+					<span class="status"><i class="icon-user"></i> <span data-bind="text: redScores().length"></span></span> Red Team
 				</div>
 				<table class="table">
 					<thead>
@@ -77,7 +77,7 @@
 
 			<div class="team team-blue">
 				<div class="header">
-					<span class="status"><span class="player" data-bind="img: 'icons/player.png'">&nbsp;</span> <span data-bind="text: blueScores().length"></span> Blue Team
+					<span class="status"><i class="icon-user"></i> <span data-bind="text: blueScores().length"></span></span> Blue Team
 				</div>
 				<table class="table">
 					<thead>
@@ -106,7 +106,7 @@
 		<!-- /ko -->
 
 		<div class="spectators">
-			<div class="header"><span class="label label-blue">Spectators</span></div>
+			<div class="header"><span class="label label-green">Spectators</span></div>
 			<ul data-bind="foreach: specScores()">
 				<li data-bind="text: name"></li>
 			</ul>
