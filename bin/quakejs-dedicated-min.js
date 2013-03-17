@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1114;
+var GAME_VERSION = 0.1115;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5745,6 +5745,13 @@ function atob64(arr) {
 	return btoa(str);
 }
 
+/**
+ * StripColors
+ */
+function StripColors(str) {
+	return text.replace(/\^(\d)(.*?)(?=\^|$)/g, '$2');
+}
+
 return {
 	GAME_VERSION:          GAME_VERSION,
 	PROTOCOL_VERSION:      PROTOCOL_VERSION,
@@ -5795,7 +5802,8 @@ return {
 	AGET:                  AGET,
 	ASET:                  ASET,
 
-	atob64:                atob64
+	atob64:                atob64,
+	StripColors:           StripColors
 };
 
 });
@@ -13870,6 +13878,8 @@ GameClient.prototype.reset = function () {
 	this.lastCmdTime       = 0;                            // level.time of last usercmd_t, for EF_CONNECTION
 	                                                       // we can't just use pers.lastCommand.time, because
 	                                                       // of the g_sycronousclients case
+	this.buttons           = 0;
+	this.oldbuttons        = 0;
 
 	this.oldOrigin         = vec3.create();
 
@@ -15845,14 +15855,14 @@ function ClientDisconnect(clientNum) {
 	// Set the global arena.
 	SetCurrentArena(ent.s.arenaNum);
 
-	// // Stop any following clients.
-	// for ( i = 0 ; i < level.maxclients ; i++ ) {
-	// 	if ( level.clients[i].sess.sessionTeam == TEAM_SPECTATOR
-	// 		&& level.clients[i].sess.spectatorState == SPECTATOR_FOLLOW
-	// 		&& level.clients[i].sess.spectatorClient == clientNum ) {
-	// 		StopFollowing( &g_entities[i] );
-	// 	}
-	// }
+	// Stop any following clients.
+	for (var i = 0; i < level.maxclients; i++) {
+		if ( level.clients[i].sess.sessionTeam === TEAM.SPECTATOR &&
+			level.clients[i].sess.spectatorState === SPECTATOR.FOLLOW &&
+			level.clients[i].sess.spectatorClient === clientNum) {
+			StopFollowing(level.gentities[i]);
+		}
+	}
 
 	// Send effect if they were completely connected.
 	if (ent.client.pers.connected === CON.CONNECTED &&
@@ -16164,19 +16174,19 @@ function ClientThink(clientNum) {
  */
 function ClientThink_real(ent) {
 	var client = ent.client;
-	var cmd = client.pers.cmd;
+	var ucmd = client.pers.cmd;
 
 	// Sanity check the command time to prevent speedup cheating.
-	if (cmd.serverTime > level.time + 200) {
-		cmd.serverTime = level.time + 200;
+	if (ucmd.serverTime > level.time + 200) {
+		ucmd.serverTime = level.time + 200;
 	}
-	if (cmd.serverTime < level.time - 1000) {
-		cmd.serverTime = level.time - 1000;
+	if (ucmd.serverTime < level.time - 1000) {
+		ucmd.serverTime = level.time - 1000;
 	}
 
 	// Following others may result in bad times, but we still want
 	// to check for follow toggles.
-	var msec = cmd.serverTime - client.ps.commandTime;
+	var msec = ucmd.serverTime - client.ps.commandTime;
 	if (msec < 1 && client.sess.spectatorState !== SPECTATOR.FOLLOW) {
 		return;
 	} else if (msec > 200) {
@@ -16190,7 +16200,7 @@ function ClientThink_real(ent) {
 	}
 
 	if (pmove_fixed.get()) {
-		cmd.serverTime = Math.floor((cmd.serverTime + pmove_msec.get() - 1) / pmove_msec.get()) * pmove_msec.get();
+		ucmd.serverTime = Math.floor((ucmd.serverTime + pmove_msec.get() - 1) / pmove_msec.get()) * pmove_msec.get();
 	}
 
 	// // Check for exiting intermission.
@@ -16205,7 +16215,7 @@ function ClientThink_real(ent) {
 		if (client.sess.spectatorState === SPECTATOR.SCOREBOARD) {
 			return;
 		}
-		ClientSpectatorThink(ent, cmd);
+		ClientSpectatorThink(ent, ucmd);
 		return;
 	}
 
@@ -16247,7 +16257,7 @@ function ClientThink_real(ent) {
 	var oldEventSequence = client.ps.eventSequence;
 	var pm = new BG.PmoveInfo();
 	pm.ps = client.ps;
-	cmd.clone(pm.cmd);
+	ucmd.clone(pm.cmd);
 	pm.trace = Trace;
 	pm.pointContents = PointContents;
 	pm.pmove_fixed = pmove_fixed.get();
@@ -16262,7 +16272,7 @@ function ClientThink_real(ent) {
 	// Check for the hit-scan gauntlet, don't let the action
 	// go through as an attack unless it actually hits something.
 	if (client.ps.weapon === WP.GAUNTLET && !(client.ps.pm_flags & PMF.NO_ATTACK) &&
-		!(cmd.buttons & BUTTON.TALK) && (cmd.buttons & BUTTON.ATTACK) &&
+		!(ucmd.buttons & BUTTON.TALK) && (ucmd.buttons & BUTTON.ATTACK) &&
 		client.ps.weaponTime <= 0) {
 		pm.gauntletHit = CheckGauntletAttack(ent);
 	}
@@ -16314,10 +16324,9 @@ function ClientThink_real(ent) {
 		ent.eventTime = level.time;
 	}
 
-	// // Swap and latch button actions.
-	// client.oldbuttons = client.buttons;
-	// client.buttons = ucmd.buttons;
-	// client.latched_buttons |= client.buttons & ~client.oldbuttons;
+	// Swap and latch button actions.
+	client.oldbuttons = client.buttons;
+	client.buttons = ucmd.buttons;
 
 	// Check for respawning.
 	if (client.ps.pm_type === PM.DEAD) {
@@ -16331,7 +16340,7 @@ function ClientThink_real(ent) {
 			}
 
 			// Pressing attack or use is the normal respawn method
-			if (cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
+			if (ucmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
 				ClientRespawn(ent);
 			}
 		}
@@ -16341,6 +16350,79 @@ function ClientThink_real(ent) {
 	// Perform once-a-second actions.
 	// ClientTimerActions(ent, msec);
 }
+
+// /**
+//  * ClientInactivityTimer
+//  *
+//  * Returns false if the client is dropped.
+//  */
+// function ClientInactivityTimer(client) {
+// 	if ( ! g_inactivity.integer ) {
+// 		// give everyone some time, so if the operator sets g_inactivity during
+// 		// gameplay, everyone isn't kicked
+// 		client->inactivityTime = level.time + 60 * 1000;
+// 		client->inactivityWarning = qfalse;
+// 	} else if ( client->pers.cmd.forwardmove ||
+// 		client->pers.cmd.rightmove ||
+// 		client->pers.cmd.upmove ||
+// 		(client->pers.cmd.buttons & BUTTON_ATTACK) ) {
+// 		client->inactivityTime = level.time + g_inactivity.integer * 1000;
+// 		client->inactivityWarning = qfalse;
+// 	} else if ( !client->pers.localClient ) {
+// 		if ( level.time > client->inactivityTime ) {
+// 			trap_DropClient( client - level.clients, "Dropped due to inactivity" );
+// 			return qfalse;
+// 		}
+// 		if ( level.time > client->inactivityTime - 10000 && !client->inactivityWarning ) {
+// 			client->inactivityWarning = qtrue;
+// 			trap_SendServerCommand( client - level.clients, "cp \"Ten seconds until inactivity drop!\n\"" );
+// 		}
+// 	}
+// 	return qtrue;
+// }
+
+// /**
+//  * ClientTimerActions
+//  *
+//  * Actions that happen once a second.
+//  */
+// function ClientTimerActions(ent, msec) {
+// 	gclient_t	*client;
+
+// 	client = ent->client;
+// 	client->timeResidual += msec;
+
+// 	while ( client->timeResidual >= 1000 ) {
+// 		client->timeResidual -= 1000;
+
+// 		// regenerate
+// 		if ( client->ps.powerups[PW_REGEN] ) {
+// 			if ( ent->health < client->ps.stats[STAT_MAX_HEALTH]) {
+// 				ent->health += 15;
+// 				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 1.1 ) {
+// 					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 1.1;
+// 				}
+// 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
+// 			} else if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] * 2) {
+// 				ent->health += 5;
+// 				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
+// 					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 2;
+// 				}
+// 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
+// 			}
+// 		} else {
+// 			// count down health when over max
+// 			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
+// 				ent->health--;
+// 			}
+// 		}
+
+// 		// count down armor when over max
+// 		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
+// 			client->ps.stats[STAT_ARMOR]--;
+// 		}
+// 	}
+// }
 
 /**
  * SendPendingPredictableEvents
@@ -16418,13 +16500,13 @@ function ClientSpectatorThink(ent, ucmd) {
 		SV.UnlinkEntity(ent);
 	}
 
-	// client.oldbuttons = client.buttons;
-	// client.buttons = ucmd.buttons;
+	client.oldbuttons = client.buttons;
+	client.buttons = ucmd.buttons;
 
-	// // attack button cycles through spectators
-	// if ( ( client.buttons & BUTTON_ATTACK ) && ! ( client.oldbuttons & BUTTON_ATTACK ) ) {
-	// 	Cmd_FollowCycle_f( ent, 1 );
-	// }
+	// Attack button cycles through spectators.
+	if ((client.buttons & BUTTON.ATTACK) && !(client.oldbuttons & BUTTON.ATTACK)) {
+		ClientCmdFollowCycle(ent, 1);
+	}
 }
 
 /**
@@ -16571,10 +16653,10 @@ function SpectatorClientEndFrame(ent) {
 		}
 
 		if (clientNum >= 0) {
-			var client = level.clients[clientNum];
-			if (client.pers.connected === CON.CONNECTED && client.ps.pm_type !== PM.SPECTATOR) {
-				var flags = (client.ps.eFlags & ~(EF.VOTED | EF.TEAMVOTED)) | (client.ps.eFlags & (EF.VOTED | EF.TEAMVOTED));
-				client.ps = client.ps;
+			var cl = level.clients[clientNum];
+			if (cl.pers.connected === CON.CONNECTED && cl.ps.pm_type !== PM.SPECTATOR) {
+				var flags = (cl.ps.eFlags & ~(EF.VOTED | EF.TEAMVOTED)) | (client.ps.eFlags & (EF.VOTED | EF.TEAMVOTED));
+				cl.ps.clone(client.ps);
 				client.ps.pm_flags |= PMF.FOLLOW;
 				client.ps.eFlags = flags;
 				return;
@@ -17287,18 +17369,16 @@ function ClientCommand(clientNum, cmd) {
 	// 	Cmd_TeamTask_f (ent);
 	// else if (Q_stricmp (cmd, "levelshot") == 0)
 	// 	Cmd_LevelShot_f (ent);
-	// else if (Q_stricmp (cmd, "follow") == 0)
-	// 	Cmd_Follow_f (ent);
-	// else if (Q_stricmp (cmd, "follownext") == 0)
-	// 	Cmd_FollowCycle_f (ent, 1);
-	// else if (Q_stricmp (cmd, "followprev") == 0)
-	// 	Cmd_FollowCycle_f (ent, -1);
-	else if (name === 'team') {
+	else if (name === 'follow') {
+		ClientCmdFollow(ent, args[0]);
+	} else if (name === 'follownext') {
+		ClientCmdFollowCycle(ent, 1);
+	} else if (name === 'followprev') {
+		ClientCmdFollowCycle(ent, -1);
+	} else if (name === 'team') {
 		ClientCmdTeam(ent, args[0]);
-	}
-	else if (name === 'arena') {
+	} else if (name === 'arena') {
 		ClientCmdArena(ent, args[0]);
-	}
 	// else if (Q_stricmp (cmd, "where") == 0)
 	// 	Cmd_Where_f (ent);
 	// else if (Q_stricmp (cmd, "callvote") == 0)
@@ -17315,8 +17395,9 @@ function ClientCommand(clientNum, cmd) {
 	// 	Cmd_SetViewpos_f( ent );
 	// else if (Q_stricmp (cmd, "stats") == 0)
 	// 	Cmd_Stats_f( ent );
-	// else
-	// 	trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );
+	} else {
+		SV.SendServerCommand(clientNum, 'print', 'Unknown cmd ' + cmd);
+	}
 }
 
 /**
@@ -17328,6 +17409,168 @@ function ClientCmdSay(ent, mode, text) {
 	}
 
 	Say(ent, null, mode, text);
+}
+
+/**
+ * ClientCmdFollow
+ */
+function ClientCmdFollow(ent, follow) {
+	log('ClientCmdFollow', follow);
+
+	if (typeof(follow) === 'undefined') {
+		if (ent.client.sess.spectatorState === SPECTATOR.FOLLOW) {
+			StopFollowing(ent);
+		}
+		return;
+	}
+
+	var i = ClientNumberFromString(ent, follow);
+	if (i === -1) {
+		return;
+	}
+
+	// Can't follow self.
+	if (level.clients[i] === ent.client) {
+		return;
+	}
+
+	// Can't follow another spectator.
+	if (level.clients[i].sess.sessionTeam === TEAM.SPECTATOR) {
+		return;
+	}
+
+	// If they are playing a tournement game, count as a loss
+	if (level.arena.gametype === GT.TOURNAMENT &&
+		ent.client.sess.sessionTeam === TEAM.FREE) {
+		ent.client.sess.losses++;
+	}
+
+	// First set them to spectator.
+	if (ent.client.sess.sessionTeam !== TEAM.SPECTATOR) {
+		SetTeam(ent, 'spectator');
+	}
+
+	ent.client.sess.spectatorState = SPECTATOR.FOLLOW;
+	ent.client.sess.spectatorClient = i;
+}
+
+/**
+ * ClientNumberFromString
+ *
+ * Returns a player number for either a number or name string
+ * Returns -1 if invalid
+ */
+function ClientNumberFromString(to, s) {
+	var id;
+
+	// Numeric values are just slot numbers.
+	id = parseInt(s, 10);
+	if (!isNaN(id)) {
+		if (id < 0 || id >= level.maxclients) {
+			SV.SendServerCommand(to.s.number, 'print', 'Bad client slot: ' + id);
+			return -1;
+		}
+
+		var cl = level.clients[id];
+		if (cl.pers.connected !== CON.CONNECTED ) {
+			SV.SendServerCommand(to.s.number, 'print', 'Client ' + id + ' is not active');
+			return -1;
+		}
+
+		return id;
+	}
+
+	// Check for a name match
+	for (id = 0; id < level.maxclients; id++) {
+		var cl = level.clients[id];
+		if (cl.pers.connected !== CON.CONNECTED) {
+			continue;
+		}
+
+		var cleanName = QS.StripColors(cl.pers.name);
+
+		if (cleanName === s) {
+			return id;
+		}
+	}
+
+	SV.SendServerCommand(to.s.number, 'print', 'User ' + s + ' is not on the server');
+	return -1;
+}
+
+/**
+ * StopFollowing
+ *
+ * If the client being followed leaves the game, or you just want to drop
+ * to free floating spectator mode.
+ */
+function StopFollowing(ent) {
+	ent.client.ps.persistant[PERS.TEAM] = TEAM.SPECTATOR;
+	ent.client.sess.sessionTeam = TEAM.SPECTATOR;
+	ent.client.sess.spectatorState = SPECTATOR.FREE;
+	ent.client.ps.pm_flags &= ~PMF.FOLLOW;
+	// ent.r.svFlags &= ~SVF_BOT;
+	ent.client.ps.clientNum = ent.s.number;
+}
+
+/**
+ * ClientCmdFollowCycle
+ */
+function ClientCmdFollowCycle(ent, dir) {
+	// If they are playing a tournement game, count as a loss.
+	if (level.arena.gametype === GT.TOURNAMENT &&
+		ent.client.sess.sessionTeam === TEAM.FREE) {
+		ent.client.sess.losses++;
+	}
+
+	// First set them to spectator.
+	if (ent.client.sess.spectatorState === SPECTATOR.NOT) {
+		SetTeam(ent, 'spectator');
+	}
+
+	if (dir !== 1 && dir !== -1) {
+		error('followcycle: bad dir ' + dir);
+	}
+
+	// If dedicated follow client, just switch between the two auto clients.
+	if (ent.client.sess.spectatorClient < 0) {
+		if (ent.client.sess.spectatorClient === -1) {
+			ent.client.sess.spectatorClient = -2;
+		} else if (ent.client.sess.spectatorClient === -2) {
+			ent.client.sess.spectatorClient = -1;
+		}
+		return;
+	}
+
+	var clientnum = ent.client.sess.spectatorClient;
+	var original = clientnum;
+
+	do {
+		clientnum += dir;
+		if (clientnum >= level.maxclients) {
+			clientnum = 0;
+		}
+		if (clientnum < 0) {
+			clientnum = level.maxclients - 1;
+		}
+
+		// Can only follow connected clients.
+		if (level.clients[clientnum].pers.connected !== CON.CONNECTED) {
+			continue;
+		}
+
+		// Can't follow another spectator.
+		if (level.clients[clientnum].sess.sessionTeam === TEAM.SPECTATOR) {
+			continue;
+		}
+
+		// This is good, we can use it.
+		ent.client.sess.spectatorClient = clientnum;
+		ent.client.sess.spectatorState = SPECTATOR.FOLLOW;
+		return;
+	} while (clientnum !== original);
+
+	// Leave it where it was.
 }
 
 /**
@@ -22718,6 +22961,9 @@ function TrainBeginMoving(ent) {
 };
 		spawnFuncs['info_player_intermission'] = function (self) {
 };
+		spawnFuncs['info_player_start'] = function (self) {
+	self.classname = 'info_player_deathmatch';
+};
 		/**
  * QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) linear
  * Non-displayed light.
@@ -23611,13 +23857,13 @@ function CalcPings() {
 /**
  * CheckTimeouts
  *
- * If a packet has not been received from a client for timeout->integer
- * seconds, drop the conneciton. Server time is used instead of
+ * If a packet has not been received from a client for sv_timeout
+ * seconds, drop the connection. Server time is used instead of
  * realtime to avoid dropping the local client while debugging.
  *
  * When a client is normally dropped, the client_t goes into a zombie state
  * for a few seconds to make sure any final reliable message gets resent
- * if necessary
+ * if necessary.
  */
 function CheckTimeouts() {
 	var droppoint = svs.time - 1000 * sv_timeout.get();
@@ -25031,7 +25277,7 @@ function AddEntitiesVisibleFromPoint(arenaNum, origin, frame, eNums) {
 		}
 
 		if (ent.s.number !== i) {
-			error('Entity number does not match.. WTF' + ent.s.number + ', ' + i);
+			error('Entity number does not match: ent.s.number: ' + ent.s.number + ', i: ' + i);
 		}
 
 		// Entities can be flagged to explicitly not be sent to the client.
