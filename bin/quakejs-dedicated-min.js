@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1115;
+var GAME_VERSION = 0.1116;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5365,6 +5365,10 @@ var MAX_PS_EVENTS           = 2;
 var PMOVEFRAMECOUNTBITS     = 6;
 
 var PlayerState = function () {
+	this.reset();
+};
+
+PlayerState.prototype.reset = function () {
 	this.clientNum           = 0;                          // ranges from 0 to MAX_CLIENTS-1
 	this.arenaNum            = ARENANUM_NONE;
 	this.commandTime         = 0;                          // cmd->serverTime of last executed command
@@ -10664,6 +10668,11 @@ function PlayerStateToEntityState(ps, es) {
 		es.eType = ET.PLAYER;
 	}
 
+	if (es.number === 1 && ps.clientNum === 0) {
+		console.log('PlayerStateToEntityState FUCKING US');
+		console.trace();
+	}
+
 	es.number = ps.clientNum;
 	es.arenaNum = ps.arenaNum;
 
@@ -15177,7 +15186,7 @@ function ForceTeam(ent, team) {
 
 	TossClientItems(ent);
 
-	ClientUserinfoChanged(ent.client.ps.clientNum);
+	ClientUserinfoChanged(ent.s.number);
 	ClientSpawn(ent);
 
 	CalculateRanks();
@@ -15232,7 +15241,7 @@ function PopClientFromQueue() {
 		return null;
 	}
 
-	log('Popping client', nextInLine.client.ps.clientNum, 'from end of queue');
+	log('Popping client', nextInLine.s.number, 'from end of queue');
 
 	return nextInLine;
 }
@@ -15245,7 +15254,7 @@ function PopClientFromQueue() {
 function PushClientToQueue(ent) {
 	var client = ent.client;
 
-	log('Pushing client', client.ps.clientNum, 'to beginning of queue');
+	log('Pushing client', ent.s.number, 'to beginning of queue');
 
 	for (var i = 0; i < level.maxclients; i++) {
 		var cur = level.gentities[i];
@@ -15825,6 +15834,15 @@ function ClientBegin(clientNum) {
 	client.pers.enterTime = level.time;
 	client.pers.teamState.state = TEAM_STATE.BEGIN;
 
+	// Save eflags around this, because changing teams will
+	// cause this to happen with a valid entity, and we
+	// want to make sure the teleport bit is set right
+	// so the viewpoint doesn't interpolate through the
+	// world to the new position.
+	var flags = client.ps.eFlags;
+	client.ps.reset();
+	client.ps.eFlags = flags;
+
 	ClientSpawn(ent);
 
 	if (client.sess.team !== TEAM.SPECTATOR) {
@@ -15877,12 +15895,13 @@ function ClientDisconnect(clientNum) {
 
 	log('ClientDisconnect: ' + clientNum);
 
-	// If we are playing in tourney mode and losing, give a win to the other player.
-	// if (g_gametype.integer == GT_TOURNAMENT
-	// 	&& !level.intermissiontime
-	// 	&& !level.warmupTime && level.sortedClients[1] == clientNum ) {
-	// 	level.clients[ level.sortedClients[0] ].sess.wins++;
-	// 	ClientUserinfoChanged( level.sortedClients[0] );
+	// FIXME - add to gm-arena logic
+	// // If we are playing in tourney mode and losing, give a win to the other player.
+	// if (level.arena.gametype === GT.TOURNAMENT &&
+	// 	level.arena.gamestate === GS.ACTIVE &&
+	// 	level.sortedClients[1] === clientNum) {
+	// 	level.clients[level.sortedClients[0]].sess.wins++;
+	// 	ClientUserinfoChanged(level.sortedClients[0]);
 	// }
 
 	// if( g_gametype.integer == GT_TOURNAMENT &&
@@ -16055,7 +16074,7 @@ function ClientSpawn(ent) {
 	vec3.set(spawnOrigin, client.ps.origin);
 	SetClientViewAngle(ent, spawnAngles);
 
-	SV.GetUserCmd(client.ps.clientNum, ent.client.pers.cmd);
+	SV.GetUserCmd(ent.s.number, ent.client.pers.cmd);
 
 	// The respawned flag will be cleared after the attack and jump keys come up.
 	client.ps.pm_flags |= PMF.RESPAWNED;
@@ -16106,7 +16125,7 @@ function ClientSpawn(ent) {
 	// initialize weapon, animations and other things.
 	client.ps.commandTime = level.time - 100;
 	client.pers.cmd.serverTime = level.time;
-	ClientThink(client.ps.clientNum);
+	ClientThink(ent.s.number);
 
 	// Run the presend to set anything else.
 	ClientEndFrame(ent);
@@ -16466,6 +16485,7 @@ function ClientIntermissionThink(client) {
 	// Swap and latch button actions.
 	client.oldbuttons = client.buttons;
 	client.buttons = client.pers.cmd.buttons;
+
 	if (client.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE) & (client.oldbuttons ^ client.buttons)) {
 		// This used to be an ^1 but once a player says ready, it should stick.
 		client.readyToExit = 1;
@@ -17415,8 +17435,6 @@ function ClientCmdSay(ent, mode, text) {
  * ClientCmdFollow
  */
 function ClientCmdFollow(ent, follow) {
-	log('ClientCmdFollow', follow);
-
 	if (typeof(follow) === 'undefined') {
 		if (ent.client.sess.spectatorState === SPECTATOR.FOLLOW) {
 			StopFollowing(ent);
@@ -17435,18 +17453,18 @@ function ClientCmdFollow(ent, follow) {
 	}
 
 	// Can't follow another spectator.
-	if (level.clients[i].sess.sessionTeam === TEAM.SPECTATOR) {
+	if (level.clients[i].sess.team === TEAM.SPECTATOR) {
 		return;
 	}
 
 	// If they are playing a tournement game, count as a loss
 	if (level.arena.gametype === GT.TOURNAMENT &&
-		ent.client.sess.sessionTeam === TEAM.FREE) {
+		ent.client.sess.team === TEAM.FREE) {
 		ent.client.sess.losses++;
 	}
 
 	// First set them to spectator.
-	if (ent.client.sess.sessionTeam !== TEAM.SPECTATOR) {
+	if (ent.client.sess.team !== TEAM.SPECTATOR) {
 		SetTeam(ent, 'spectator');
 	}
 
@@ -17506,7 +17524,7 @@ function ClientNumberFromString(to, s) {
  */
 function StopFollowing(ent) {
 	ent.client.ps.persistant[PERS.TEAM] = TEAM.SPECTATOR;
-	ent.client.sess.sessionTeam = TEAM.SPECTATOR;
+	ent.client.sess.team = TEAM.SPECTATOR;
 	ent.client.sess.spectatorState = SPECTATOR.FREE;
 	ent.client.ps.pm_flags &= ~PMF.FOLLOW;
 	// ent.r.svFlags &= ~SVF_BOT;
@@ -17519,7 +17537,7 @@ function StopFollowing(ent) {
 function ClientCmdFollowCycle(ent, dir) {
 	// If they are playing a tournement game, count as a loss.
 	if (level.arena.gametype === GT.TOURNAMENT &&
-		ent.client.sess.sessionTeam === TEAM.FREE) {
+		ent.client.sess.team === TEAM.FREE) {
 		ent.client.sess.losses++;
 	}
 
@@ -17542,33 +17560,34 @@ function ClientCmdFollowCycle(ent, dir) {
 		return;
 	}
 
-	var clientnum = ent.client.sess.spectatorClient;
-	var original = clientnum;
+	var clientNum = ent.client.sess.spectatorClient;
+	var original = clientNum;
 
 	do {
-		clientnum += dir;
-		if (clientnum >= level.maxclients) {
-			clientnum = 0;
+		clientNum += dir;
+		if (clientNum >= level.maxclients) {
+			clientNum = 0;
 		}
-		if (clientnum < 0) {
-			clientnum = level.maxclients - 1;
+		if (clientNum < 0) {
+			clientNum = level.maxclients - 1;
 		}
 
 		// Can only follow connected clients.
-		if (level.clients[clientnum].pers.connected !== CON.CONNECTED) {
+		if (level.clients[clientNum].pers.connected !== CON.CONNECTED) {
 			continue;
 		}
 
 		// Can't follow another spectator.
-		if (level.clients[clientnum].sess.sessionTeam === TEAM.SPECTATOR) {
+		if (level.clients[clientNum].sess.team === TEAM.SPECTATOR) {
 			continue;
 		}
 
 		// This is good, we can use it.
-		ent.client.sess.spectatorClient = clientnum;
+		ent.client.sess.spectatorClient = clientNum;
 		ent.client.sess.spectatorState = SPECTATOR.FOLLOW;
+
 		return;
-	} while (clientnum !== original);
+	} while (clientNum !== original);
 
 	// Leave it where it was.
 }
@@ -17789,7 +17808,7 @@ function ClientCmdTeam(ent, teamName) {
  */
 function SetTeam(ent, teamName) {
 	var client = ent.client;
-	var clientNum = client.ps.clientNum;
+	var clientNum = ent.s.number;
 
 	//
 	// See what change is requested
@@ -17850,13 +17869,12 @@ function SetTeam(ent, teamName) {
 		team = TEAM.FREE;
 	}
 
-	// AP - Why would this matter?
-	// //
-	// // Decide if we will allow the change.
-	// //
-	// if (team === oldTeam && team !== TEAM.SPECTATOR) {
-	// 	return;
-	// }
+	//
+	// Decide if we will allow the change.
+	//
+	if (team === oldTeam && team !== TEAM.SPECTATOR) {
+		return;
+	}
 
 	//
 	// Execute the team change
@@ -18791,6 +18809,13 @@ function FreeEntity(ent) {
 	ent.inuse = false;
 	ent.classname = 'freed';
 	ent.freeTime = level.time;
+}
+
+/**
+ * GetEntityNum
+ */
+function GetEntityNum(ent) {
+	return level.gentities.indexOf(ent);
 }
 
 /**
@@ -20914,19 +20939,21 @@ function WriteWorldSession() {
  * Called on a first-time connect.
  */
 function InitSessionData(client, userinfo) {
+	var clientNum = level.clients.indexOf(client);
 	var sess = client.sess;
 
 	var value = userinfo['team'];
+
 	if (value === 's') {
 		// A willing spectator, not a waiting-in-line.
 		sess.team = TEAM.SPECTATOR;
 	} else {
 		if (level.arena.gametype === GT.TOURNAMENT) {
-			sess.team = PickTeam(client.ps.clientNum);
+			sess.team = PickTeam(clientNum);
 		} else if (level.arena.gametype >= GT.TEAM) {
 			// Always auto-join for practice arena.
 			if (level.arena.gametype === GT.PRACTICEARENA) {
-				sess.team = PickTeam(client.ps.clientNum);
+				sess.team = PickTeam(clientNum);
 			} else {
 				// Always spawn as spectator in team games.
 				sess.team = TEAM.SPECTATOR;
@@ -20936,7 +20963,8 @@ function InitSessionData(client, userinfo) {
 		}
 	}
 
-	PushClientToQueue(level.gentities[client.ps.clientNum]);
+	sess.spectatorState = SPECTATOR.FREE;
+	PushClientToQueue(level.gentities[clientNum]);
 
 	WriteSessionData(client);
 }
@@ -20947,7 +20975,7 @@ function InitSessionData(client, userinfo) {
  * Called on a reconnect.
  */
 function ReadSessionData(client) {
-	var name = 'session' + client.ps.clientNum;
+	var name = 'session' + level.clients.indexOf(client);
 	var cvar = Cvar.GetCvar(name);
 
 	if (!cvar) {
@@ -20971,7 +20999,7 @@ function ReadSessionData(client) {
  * Called on game shutdown
  */
 function WriteSessionData(client) {
-	var name = 'session' + client.ps.clientNum;
+	var name = 'session' + level.clients.indexOf(client);
 	var val = JSON.stringify(client.sess);
 
 	var cvar = Cvar.AddCvar(name);
