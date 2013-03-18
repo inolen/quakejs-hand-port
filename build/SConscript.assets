@@ -47,7 +47,7 @@ def addAudio(commands, src_dir, out_dir):
 
 def addImages(commands, src_dir, out_dir):
 	exts = ['.jpg', '.png', '.tga']
-	files = findAssets(src_dir, ['gfx/2d', 'icons', 'levelshots', 'ui'], exts)
+	files = findAssets(src_dir, ['gfx/2d', 'icons', 'levelshots', 'menu/medals', 'ui'], exts)
 
 	for file in files:
 		out = file.abspath.replace(src_dir, out_dir)

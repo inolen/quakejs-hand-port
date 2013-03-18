@@ -704,6 +704,26 @@ table thead th {
 	word-wrap: break-word;
 }
 
+#awards {
+	position: absolute;
+	top: 20%;
+	left: 0;
+	right: 0;
+	margin: -5% 0 0 0;
+	padding: 0;
+	text-align: center;
+}
+
+#awards li {
+	display: inline-block;
+	width: 4%;
+}
+
+#awards img {
+	display: inline-block;
+	width: 100%;
+}
+
 #warmup {
 	position: absolute;
 	top: 20%;

@@ -34,6 +34,9 @@
 		</ul>
 	</div>
 
+	<ul id="awards" data-bind="foreach: ko.utils.range(1, awardCount())">
+		<li><img data-bind="img: $parent.awardImage" /></li>
+	</ul>
 	<div id="warmup" data-bind="visible: gamestate() <= 2 || gamestate() === 4, pretty: warmup"></div>
 	<div id="centerprint" data-bind="css: { hidden: !centerPrintVisible() }, pretty: centerPrint"></div>
 
