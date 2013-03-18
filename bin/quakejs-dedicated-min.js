@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1116;
+var GAME_VERSION = 0.1117;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -16121,6 +16121,9 @@ function ClientSpawn(ent) {
 		MoveClientToIntermission(ent);
 	}
 
+	// Clear entity state values.
+	BG.PlayerStateToEntityState(client.ps, ent.s);
+
 	// Run a client frame to drop exactly to the floor,
 	// initialize weapon, animations and other things.
 	client.ps.commandTime = level.time - 100;
@@ -16129,9 +16132,6 @@ function ClientSpawn(ent) {
 
 	// Run the presend to set anything else.
 	ClientEndFrame(ent);
-
-	// Clear entity state values.
-	BG.PlayerStateToEntityState(client.ps, ent.s);
 }
 
 /**
@@ -17452,6 +17452,11 @@ function ClientCmdFollow(ent, follow) {
 		return;
 	}
 
+	// Can't follow people in other arenas.
+	if (level.gentities[i].s.arenaNum !== ent.s.arenaNum) {
+		return;
+	}
+
 	// Can't follow another spectator.
 	if (level.clients[i].sess.team === TEAM.SPECTATOR) {
 		return;
@@ -17574,6 +17579,11 @@ function ClientCmdFollowCycle(ent, dir) {
 
 		// Can only follow connected clients.
 		if (level.clients[clientNum].pers.connected !== CON.CONNECTED) {
+			continue;
+		}
+
+		// Can't follow people in other arenas.
+		if (level.gentities[clientNum].s.arenaNum !== ent.s.arenaNum) {
 			continue;
 		}
 
