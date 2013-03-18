@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1117;
+var GAME_VERSION = 0.1118;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5752,7 +5752,7 @@ function atob64(arr) {
 /**
  * StripColors
  */
-function StripColors(str) {
+function StripColors(text) {
 	return text.replace(/\^(\d)(.*?)(?=\^|$)/g, '$2');
 }
 
@@ -10668,11 +10668,6 @@ function PlayerStateToEntityState(ps, es) {
 		es.eType = ET.PLAYER;
 	}
 
-	if (es.number === 1 && ps.clientNum === 0) {
-		console.log('PlayerStateToEntityState FUCKING US');
-		console.trace();
-	}
-
 	es.number = ps.clientNum;
 	es.arenaNum = ps.arenaNum;
 
@@ -13901,7 +13896,7 @@ GameClient.prototype.reset = function () {
 	this.damage_fromWorld  = false;                        // if true, don't use the damage_from vector
 
 	// Awards
-	this.impressive_count  = 0;                            // for "impressive" reward sound
+	this.accurate_count    = 0;                            // for "impressive" reward sound
 	this.accuracy_shots    = 0;                            // total number of shots
 	this.accuracy_hits     = 0;                            // total number of hits
 
@@ -17596,6 +17591,8 @@ function ClientCmdFollowCycle(ent, dir) {
 		ent.client.sess.spectatorClient = clientNum;
 		ent.client.sess.spectatorState = SPECTATOR.FOLLOW;
 
+		log('CmdFollowCycle (' + ent.s.number + '): now following ' + clientNum);
+
 		return;
 	} while (clientNum !== original);
 
@@ -17954,14 +17951,7 @@ function SetArena(ent, arenaNum) {
 
 	// Change arena and kick to spec.
 	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
-	ent.client.sess.group = null;
-
-	// Reset persistant playerstate info on arena change (e.g. scores).
-	for (var i = 0; i < MAX_PERSISTANT; i++) {
-		ent.client.ps.persistant[i] = 0;
-	}
-
-	ForceTeam(ent, TEAM.SPECTATOR);
+	SetTeam(ent, 's');
 
 	// Update scores.
 	SendScoreboardMessage(ent);
@@ -22345,12 +22335,12 @@ function RailgunFire(ent) {
 	// Give the shooter a reward sound if they have made two railgun hits in a row.
 	if (hits === 0) {
 		// Complete miss.
-		ent.client.accurateCount = 0;
+		ent.client.accurate_count = 0;
 	} else {
 		// Check for "impressive" reward sound.
-		ent.client.accurateCount += hits;
-		if (ent.client.accurateCount >= 2) {
-			ent.client.accurateCount -= 2;
+		ent.client.accurate_count += hits;
+		if (ent.client.accurate_count >= 2) {
+			ent.client.accurate_count -= 2;
 			ent.client.ps.persistant[PERS.IMPRESSIVE_COUNT]++;
 			// Add the sprite over the player's head.
 			ent.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
@@ -23830,6 +23820,11 @@ function Frame(msec) {
 
 		// Let everything in the world think and move.
 		GM.Frame(sv.time);
+
+		// If the server started to shutdown during this frame, early out.
+		if (!Running()) {
+			return;
+		}
 	}
 
 	// Check for timeouts.
@@ -24643,9 +24638,6 @@ function DropClient(client, reason) {
 
 	// Kill the connection.
 	COM.NetClose(client.netchan.socket);
-
-	// Nuke user info..
-	//SV_SetUserinfo( drop - svs.clients, "" );
 
 	log('Going to CS_ZOMBIE for', client.name);
 	client.state = CS.ZOMBIE;  // become free in a few seconds
