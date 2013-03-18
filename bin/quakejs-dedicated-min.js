@@ -5214,7 +5214,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1118;
+var GAME_VERSION = 0.1119;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5843,6 +5843,12 @@ BitView._scratch = new DataView(new ArrayBuffer(8));
 
 Object.defineProperty(BitView.prototype, 'buffer', {
 	get: function () { return this._buffer; },
+	enumerable: true,
+	configurable: false
+});
+
+Object.defineProperty(BitView.prototype, 'byteLength', {
+	get: function () { return this._view.length; },
 	enumerable: true,
 	configurable: false
 });
@@ -23989,10 +23995,17 @@ function PacketEvent(socket, source) {
 		length = source.byteLength;
 	}
 
-	var msg = new BitStream(buffer, 0, length);
+	// Copy the supplied buffer over to our internal fixed size buffer.
+	var view = new Uint8Array(svs.msgBuffer, 0, COM.MAX_MSGLEN);
+	var view2 = new Uint8Array(buffer, 0, length);
+	for (var i = 0; i < length; i++) {
+		view[i] = view2[i];
+	}
+
+	var msg = new BitStream(svs.msgBuffer);
 
 	// Peek in and see if this is a string message.
-	if (msg.view.getInt32(0) === -1) {
+	if (msg.view.byteLength >= 4 && msg.view.getInt32(0) === -1) {
 		OutOfBandPacket(socket, msg);
 		return;
 	}
@@ -24019,29 +24032,34 @@ function PacketEvent(socket, source) {
 /**
  * OutOfBandPacket
  *
- * This is silly being that we're on TCP.
+ * A connectionless packet has four leading 0xff
+ * characters to distinguish it from a game channel.
+ * Clients that are in the game can still send
+ * connectionless packets.
  */
 function OutOfBandPacket(socket, msg) {
 	msg.readInt32();  // Skip the -1.
 
-	var str = msg.readASCIIString();
-	var message;
-
+	var packet;
 	try {
-		message = JSON.parse(str);
+		var str;
+		str = msg.readASCIIString();
+		packet = JSON.parse(str);
 	} catch (e) {
+		log('Failed to parse oob packet from ' + SYS.SockToString(socket));
 		COM.NetClose(socket);
 		return;
 	}
 
-	var cmd = message.type;
-
-	if (cmd === 'rcon') {
-		RemoteCommand(socket, message.data[0], message.data[1]);
-	} else if (cmd === 'getinfo') {
+	if (packet.type === 'rcon') {
+		RemoteCommand(socket, packet.data[0], packet.data[1]);
+	} else if (packet.type === 'getinfo') {
 		ServerInfo(socket);
-	} else if (cmd === 'connect') {
-		ClientEnterServer(socket, message.data);
+	} else if (packet.type === 'connect') {
+		ClientEnterServer(socket, packet.data);
+	} else {
+		log('Bad packet type from ' + SYS.SockToString(socket) + ': ' + packet.type);
+		COM.NetClose(socket);
 	}
 }
 
@@ -24678,6 +24696,10 @@ function UserMove(client, msg, delta) {
 		log('UserMove cmd count < 1');
 		return;
 	}
+	if (count > QS.MAX_PACKET_USERCMDS) {
+		log('cmdCount > MAX_PACKET_USERCMDS');
+		return;
+	}
 
 	// NOTE: Only delta the user cmd from another user cmd
 	// in this message. If we delta across old commands (e.g.
@@ -24708,6 +24730,9 @@ function UserMove(client, msg, delta) {
 		return; // shouldn't happen
 	}
 
+	// Usually, the first couple commands will be duplicates
+	// of ones we have previously received, but the servertimes
+	// in the commands will cause them to be immediately discarded.
 	for (var i = 0; i < cmds.length; i++) {
 		var cmd = cmds[i];
 
@@ -24929,10 +24954,10 @@ function ExecuteClientMessage(client, msg) {
  */
 function ParseClientCommand(client, msg) {
 	var sequence = msg.readInt32();
-	var str = msg.readASCIIString();
 
 	var cmd;
 	try {
+		var str = msg.readASCIIString();
 		cmd = JSON.parse(str);
 	} catch (e) {
 		DropClient(client, 'Failed to parse command');
@@ -24950,6 +24975,22 @@ function ParseClientCommand(client, msg) {
 		DropClient(client, 'Lost reliable commands');
 		return false;
 	}
+
+	// // Malicious users may try using too many string commands
+	// // to lag other players. If we decide that we want to stall
+	// // the command, we will stop processing the rest of the packet,
+	// // including the usercmd. This causes flooders to lag themselves
+	// // but not other people.
+	// // We don't do this when the client hasn't been active yet since it's
+	// // normal to spam a lot of commands when downloading.
+	// if ( !com_cl_running->integer &&
+	// 	cl->state >= CS_ACTIVE &&
+	// 	sv_floodProtect->integer &&
+	// 	svs.time < cl->nextReliableTime ) {
+	// 	// ignore any other text messages from this client but let them keep playing
+	// 	// TTimo - moved the ignored verbose to the actual processing in SV_ExecuteClientCommand, only printing if the core doesn't intercept
+	// 	clientOk = qfalse;
+	// }
 
 	// Don't allow another command for one second.
 	client.nextReliableTime = svs.time + 1000;
@@ -27513,7 +27554,7 @@ function NetListen(addr, opts) {
  * NetSendLoopPacket
  */
 function NetSendLoopPacket(socket, view) {
-	// Copy buffer to loopback buffer.
+	// Copy buffer to loopback view.
 	var loopbackView = new Uint8Array(socket.msgs[socket.send++ % MAX_LOOPBACK]);
 	for (var i = 0; i < view.length; i++) {
 		loopbackView[i] = view[i];
