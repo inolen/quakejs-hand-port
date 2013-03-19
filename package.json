@@ -10,7 +10,8 @@
     "requirejs": "~2.1.4",
     "watch": "~0.5.1",
     "ws": "https://github.com/inolen/ws/tarball/master",
-    "connect-xcors": "~0.5.2"
+    "connect-xcors": "~0.5.2",
+    "httpsync": "0.0.6"
   },
   "repository": {
     "type": "git",

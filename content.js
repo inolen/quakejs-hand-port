@@ -9,7 +9,7 @@ var url = require('url');
 var AssetMap = require('./asset-map');
 
 var argv = require('optimist')
-	.describe('config', 'Location of the configuration file').default('config', './config.json')
+	.describe('config', 'Location of the configuration file').default('config', './content.json')
 	.argv;
 
 if (argv.h || argv.help) {
@@ -20,27 +20,12 @@ if (argv.h || argv.help) {
 function main() {
 	var config = loadConfig();
 
-	createServer(config.port);
-}
-
-function loadConfig() {
-	var config = {
-		port: 9000
-	};
-	try {
-		console.log('Loading config file from ' + argv.config + '..');
-		var data = require(argv.config);
-		_.extend(config, data);
-	} catch (e) {
-	}
-
-	return config;
-}
-
-function createServer(port) {
+	//
+	// Setup the express app.
+	//
 	var app = express();
 
-	app.locals.assets = new AssetMap(path.join('./assets'));
+	app.locals.assets = new AssetMap(path.join(__dirname, 'assets'));
 
 	app.use(express.compress());
 	// Allow cross-domain requests on our content.
@@ -57,30 +42,39 @@ function createServer(port) {
 	app.get('/lib/*.js', handleDynamicAsset);
 	app.get('/lib/*.tpl', handleDynamicAsset);
 
+	//
+	// Create the HTTP server.
+	//
 	var server = http.createServer(app);
-	server.listen(port, function () {
+
+	server.listen(config.port, function () {
 		console.log('Content server is now listening on port', server.address().address, server.address().port);
 	});
 
 	return server;
 }
 
-function handleAllShader(req, res, next) {
-	getAllShaders(res.locals.assets, function (err, shaders) {
-		if (err) return next(err);
+function loadConfig() {
+	var config = {
+		port: 9000
+	};
+	try {
+		console.log('Loading config file from ' + argv.config + '..');
+		var data = require(argv.config);
+		_.extend(config, data);
+	} catch (e) {
+	}
 
-		res.send(shaders);
-	});
+	return config;
 }
 
-function getAllShaders(assets, callback) {
+function handleAllShader(req, res, next) {
 	var i = 0;
 	var buffer = '';
-	//var shaders = assets.find(/scripts\\[^\.]+\.shader/);
-	var shaders = assets.find(/scripts[\\\/][^\.]+\.shader/);
+	var shaders = res.locals.assets.find(/scripts[\\\/][^\.]+\.shader/);
 	var readComplete = function (err, data) {
-		// If there was an error, throw a 500.
-		if (err) return callback(err);
+		// If there was an error, continue down the middleware stack.
+		if (err) return next(err);
 
 		buffer += data + '\n';
 
@@ -89,9 +83,10 @@ function getAllShaders(assets, callback) {
 			fs.readFile(shaders[i++], readComplete);
 		} else {
 			// We've read them all.
-			callback(null, buffer);
+			res.send(buffer);
 		}
 	};
+
 	fs.readFile(shaders[i++], readComplete);
 }
 
@@ -127,14 +122,4 @@ function handleDynamicAsset(req, res, next) {
 	});
 }
 
-/**
- * If we're being execute directly, spawn server,
- * otherwise setup our exports.
- */
-if (module.parent === null) {
-	main();
-}
-
-module.exports = {
-	createServer: createServer
-};
+main();

@@ -5,7 +5,7 @@
     git clone --recursive https://github.com/inolen/quakejs.git
     cd quakejs
     npm install
-    node test/server.js
+    node local.js
 
 Open your browser and hit `http://localhost:8080/?cmd=map%20pro-q3dm6` et voila!
 
