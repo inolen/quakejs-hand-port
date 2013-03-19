@@ -104,7 +104,7 @@ AssetMap.prototype._addDirectory = function (root, dirname) {
 };
 
 AssetMap.prototype._addFile = function (root, filename) {
-	var relative = filename.replace(root + path.sep, '').toLowerCase();
+	var relative = filename.replace(root + path.sep, '').replace(/\\/g, '/').toLowerCase();
 	this.map[relative] = filename;
 };
 

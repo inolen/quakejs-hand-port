@@ -40,7 +40,7 @@ function loadConfig() {
 function createServer(port) {
 	var app = express();
 
-	app.locals.assets = new AssetMap(__dirname + '/assets');
+	app.locals.assets = new AssetMap(path.join('./assets'));
 
 	app.use(express.compress());
 	// Allow cross-domain requests on our content.
@@ -76,8 +76,8 @@ function handleAllShader(req, res, next) {
 function getAllShaders(assets, callback) {
 	var i = 0;
 	var buffer = '';
-	var shaders = assets.find(/scripts\/[^\.]+\.shader/);
-
+	//var shaders = assets.find(/scripts\\[^\.]+\.shader/);
+	var shaders = assets.find(/scripts[\\\/][^\.]+\.shader/);
 	var readComplete = function (err, data) {
 		// If there was an error, throw a 500.
 		if (err) return callback(err);
@@ -92,7 +92,6 @@ function getAllShaders(assets, callback) {
 			callback(null, buffer);
 		}
 	};
-
 	fs.readFile(shaders[i++], readComplete);
 }
 
