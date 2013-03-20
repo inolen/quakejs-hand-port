@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1120;
+var GAME_VERSION = 0.1121;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
