@@ -1,21 +1,34 @@
 
-/*global setTimeout: false, console: false */
+/*global setImmediate: false, setTimeout: false, console: false */
 (function () {
 
     var async = {};
 
     // global on the server, window in the browser
-    var root = this,
-        previous_async = root.async;
+    var root, previous_async;
+
+    root = this;
+    if (root != null) {
+      previous_async = root.async;
+    }
 
     async.noConflict = function () {
         root.async = previous_async;
         return async;
     };
 
+    function only_once(fn) {
+        var called = false;
+        return function() {
+            if (called) throw new Error("Callback was already called.");
+            called = true;
+            fn.apply(root, arguments);
+        }
+    }
+
     //// cross-browser compatiblity functions ////
 
-    var _forEach = function (arr, iterator) {
+    var _each = function (arr, iterator) {
         if (arr.forEach) {
             return arr.forEach(iterator);
         }
@@ -29,7 +42,7 @@
             return arr.map(iterator);
         }
         var results = [];
-        _forEach(arr, function (x, i, a) {
+        _each(arr, function (x, i, a) {
             results.push(iterator(x, i, a));
         });
         return results;
@@ -39,7 +52,7 @@
         if (arr.reduce) {
             return arr.reduce(iterator, memo);
         }
-        _forEach(arr, function (x, i, a) {
+        _each(arr, function (x, i, a) {
             memo = iterator(memo, x, i, a);
         });
         return memo;
@@ -62,37 +75,46 @@
 
     //// nextTick implementation with browser-compatible fallback ////
     if (typeof process === 'undefined' || !(process.nextTick)) {
-        async.nextTick = function (fn) {
-            setTimeout(fn, 0);
-        };
+        if (typeof setImmediate === 'function') {
+            async.setImmediate = setImmediate;
+            async.nextTick = setImmediate;
+        }
+        else {
+            async.nextTick = function (fn) {
+                setTimeout(fn, 0);
+            };
+            async.setImmediate = async.nextTick;
+        }
     }
     else {
         async.nextTick = process.nextTick;
+        async.setImmediate = setImmediate;
     }
 
-    async.forEach = function (arr, iterator, callback) {
+    async.each = function (arr, iterator, callback) {
         callback = callback || function () {};
         if (!arr.length) {
             return callback();
         }
         var completed = 0;
-        _forEach(arr, function (x) {
-            iterator(x, function (err) {
+        _each(arr, function (x) {
+            iterator(x, only_once(function (err) {
                 if (err) {
                     callback(err);
                     callback = function () {};
                 }
                 else {
                     completed += 1;
-                    if (completed === arr.length) {
+                    if (completed >= arr.length) {
                         callback(null);
                     }
                 }
-            });
+            }));
         });
     };
+    async.forEach = async.each;
 
-    async.forEachSeries = function (arr, iterator, callback) {
+    async.eachSeries = function (arr, iterator, callback) {
         callback = callback || function () {};
         if (!arr.length) {
             return callback();
@@ -106,7 +128,7 @@
                 }
                 else {
                     completed += 1;
-                    if (completed === arr.length) {
+                    if (completed >= arr.length) {
                         callback(null);
                     }
                     else {
@@ -117,55 +139,71 @@
         };
         iterate();
     };
+    async.forEachSeries = async.eachSeries;
 
-    async.forEachLimit = function (arr, limit, iterator, callback) {
-        callback = callback || function () {};
-        if (!arr.length || limit <= 0) {
-            return callback();
-        }
-        var completed = 0;
-        var started = 0;
-        var running = 0;
+    async.eachLimit = function (arr, limit, iterator, callback) {
+        var fn = _eachLimit(limit);
+        fn.apply(null, [arr, iterator, callback]);
+    };
+    async.forEachLimit = async.eachLimit;
 
-        (function replenish () {
-            if (completed === arr.length) {
+    var _eachLimit = function (limit) {
+
+        return function (arr, iterator, callback) {
+            callback = callback || function () {};
+            if (!arr.length || limit <= 0) {
                 return callback();
             }
+            var completed = 0;
+            var started = 0;
+            var running = 0;
 
-            while (running < limit && started < arr.length) {
-                started += 1;
-                running += 1;
-                iterator(arr[started - 1], function (err) {
-                    if (err) {
-                        callback(err);
-                        callback = function () {};
-                    }
-                    else {
-                        completed += 1;
-                        running -= 1;
-                        if (completed === arr.length) {
-                            callback();
+            (function replenish () {
+                if (completed >= arr.length) {
+                    return callback();
+                }
+
+                while (running < limit && started < arr.length) {
+                    started += 1;
+                    running += 1;
+                    iterator(arr[started - 1], function (err) {
+                        if (err) {
+                            callback(err);
+                            callback = function () {};
                         }
                         else {
-                            replenish();
+                            completed += 1;
+                            running -= 1;
+                            if (completed >= arr.length) {
+                                callback();
+                            }
+                            else {
+                                replenish();
+                            }
                         }
-                    }
-                });
-            }
-        })();
+                    });
+                }
+            })();
+        };
     };
 
 
     var doParallel = function (fn) {
         return function () {
             var args = Array.prototype.slice.call(arguments);
-            return fn.apply(null, [async.forEach].concat(args));
+            return fn.apply(null, [async.each].concat(args));
+        };
+    };
+    var doParallelLimit = function(limit, fn) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [_eachLimit(limit)].concat(args));
         };
     };
     var doSeries = function (fn) {
         return function () {
             var args = Array.prototype.slice.call(arguments);
-            return fn.apply(null, [async.forEachSeries].concat(args));
+            return fn.apply(null, [async.eachSeries].concat(args));
         };
     };
 
@@ -186,12 +224,18 @@
     };
     async.map = doParallel(_asyncMap);
     async.mapSeries = doSeries(_asyncMap);
+    async.mapLimit = function (arr, limit, iterator, callback) {
+        return _mapLimit(limit)(arr, iterator, callback);
+    };
 
+    var _mapLimit = function(limit) {
+        return doParallelLimit(limit, _asyncMap);
+    };
 
     // reduce only has a series version, as doing reduce in parallel won't
     // work in many situations.
     async.reduce = function (arr, memo, iterator, callback) {
-        async.forEachSeries(arr, function (x, callback) {
+        async.eachSeries(arr, function (x, callback) {
             iterator(memo, x, function (err, v) {
                 memo = v;
                 callback(err);
@@ -282,7 +326,7 @@
     async.detectSeries = doSeries(_detect);
 
     async.some = function (arr, iterator, main_callback) {
-        async.forEach(arr, function (x, callback) {
+        async.each(arr, function (x, callback) {
             iterator(x, function (v) {
                 if (v) {
                     main_callback(true);
@@ -298,7 +342,7 @@
     async.any = async.some;
 
     async.every = function (arr, iterator, main_callback) {
-        async.forEach(arr, function (x, callback) {
+        async.each(arr, function (x, callback) {
             iterator(x, function (v) {
                 if (!v) {
                     main_callback(false);
@@ -361,7 +405,7 @@
             }
         };
         var taskComplete = function () {
-            _forEach(listeners.slice(0), function (fn) {
+            _each(listeners.slice(0), function (fn) {
                 fn();
             });
         };
@@ -373,21 +417,26 @@
             }
         });
 
-        _forEach(keys, function (k) {
+        _each(keys, function (k) {
             var task = (tasks[k] instanceof Function) ? [tasks[k]]: tasks[k];
             var taskCallback = function (err) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                if (args.length <= 1) {
+                    args = args[0];
+                }
                 if (err) {
-                    callback(err);
+                    var safeResults = {};
+                    _each(_keys(results), function(rkey) {
+                        safeResults[rkey] = results[rkey];
+                    });
+                    safeResults[k] = args;
+                    callback(err, safeResults);
                     // stop subsequent errors hitting callback multiple times
                     callback = function () {};
                 }
                 else {
-                    var args = Array.prototype.slice.call(arguments, 1);
-                    if (args.length <= 1) {
-                        args = args[0];
-                    }
                     results[k] = args;
-                    taskComplete();
+                    async.setImmediate(taskComplete);
                 }
             };
             var requires = task.slice(0, Math.abs(task.length - 1)) || [];
@@ -413,13 +462,17 @@
 
     async.waterfall = function (tasks, callback) {
         callback = callback || function () {};
+        if (tasks.constructor !== Array) {
+          var err = new Error('First argument to waterfall must be an array of functions');
+          return callback(err);
+        }
         if (!tasks.length) {
             return callback();
         }
         var wrapIterator = function (iterator) {
             return function (err) {
                 if (err) {
-                    callback(err);
+                    callback.apply(null, arguments);
                     callback = function () {};
                 }
                 else {
@@ -431,7 +484,7 @@
                     else {
                         args.push(callback);
                     }
-                    async.nextTick(function () {
+                    async.setImmediate(function () {
                         iterator.apply(null, args);
                     });
                 }
@@ -440,10 +493,10 @@
         wrapIterator(async.iterator(tasks))();
     };
 
-    async.parallel = function (tasks, callback) {
+    var _parallel = function(eachfn, tasks, callback) {
         callback = callback || function () {};
         if (tasks.constructor === Array) {
-            async.map(tasks, function (fn, callback) {
+            eachfn.map(tasks, function (fn, callback) {
                 if (fn) {
                     fn(function (err) {
                         var args = Array.prototype.slice.call(arguments, 1);
@@ -457,7 +510,7 @@
         }
         else {
             var results = {};
-            async.forEach(_keys(tasks), function (k, callback) {
+            eachfn.each(_keys(tasks), function (k, callback) {
                 tasks[k](function (err) {
                     var args = Array.prototype.slice.call(arguments, 1);
                     if (args.length <= 1) {
@@ -470,6 +523,14 @@
                 callback(err, results);
             });
         }
+    };
+
+    async.parallel = function (tasks, callback) {
+        _parallel({ map: async.map, each: async.each }, tasks, callback);
+    };
+
+    async.parallelLimit = function(tasks, limit, callback) {
+        _parallel({ map: _mapLimit(limit), each: _eachLimit(limit) }, tasks, callback);
     };
 
     async.series = function (tasks, callback) {
@@ -489,7 +550,7 @@
         }
         else {
             var results = {};
-            async.forEachSeries(_keys(tasks), function (k, callback) {
+            async.eachSeries(_keys(tasks), function (k, callback) {
                 tasks[k](function (err) {
                     var args = Array.prototype.slice.call(arguments, 1);
                     if (args.length <= 1) {
@@ -557,6 +618,20 @@
         }
     };
 
+    async.doWhilst = function (iterator, test, callback) {
+        iterator(function (err) {
+            if (err) {
+                return callback(err);
+            }
+            if (test()) {
+                async.doWhilst(iterator, test, callback);
+            }
+            else {
+                callback();
+            }
+        });
+    };
+
     async.until = function (test, iterator, callback) {
         if (!test()) {
             iterator(function (err) {
@@ -571,7 +646,47 @@
         }
     };
 
+    async.doUntil = function (iterator, test, callback) {
+        iterator(function (err) {
+            if (err) {
+                return callback(err);
+            }
+            if (!test()) {
+                async.doUntil(iterator, test, callback);
+            }
+            else {
+                callback();
+            }
+        });
+    };
+
     async.queue = function (worker, concurrency) {
+        if (concurrency === undefined) {
+            concurrency = 1;
+        }
+        function _insert(q, data, pos, callback) {
+          if(data.constructor !== Array) {
+              data = [data];
+          }
+          _each(data, function(task) {
+              var item = {
+                  data: task,
+                  callback: typeof callback === 'function' ? callback : null
+              };
+
+              if (pos) {
+                q.tasks.unshift(item);
+              } else {
+                q.tasks.push(item);
+              }
+
+              if (q.saturated && q.tasks.length === concurrency) {
+                  q.saturated();
+              }
+              async.setImmediate(q.process);
+          });
+        }
+
         var workers = 0;
         var q = {
             tasks: [],
@@ -580,33 +695,30 @@
             empty: null,
             drain: null,
             push: function (data, callback) {
-                if(data.constructor !== Array) {
-                    data = [data];
-                }
-                _forEach(data, function(task) {
-                    q.tasks.push({
-                        data: task,
-                        callback: typeof callback === 'function' ? callback : null
-                    });
-                    if (q.saturated && q.tasks.length == concurrency) {
-                        q.saturated();
-                    }
-                    async.nextTick(q.process);
-                });
+              _insert(q, data, false, callback);
+            },
+            unshift: function (data, callback) {
+              _insert(q, data, true, callback);
             },
             process: function () {
                 if (workers < q.concurrency && q.tasks.length) {
                     var task = q.tasks.shift();
-                    if(q.empty && q.tasks.length == 0) q.empty();
+                    if (q.empty && q.tasks.length === 0) {
+                        q.empty();
+                    }
                     workers += 1;
-                    worker(task.data, function () {
+                    var next = function () {
                         workers -= 1;
                         if (task.callback) {
                             task.callback.apply(task, arguments);
                         }
-                        if(q.drain && q.tasks.length + workers == 0) q.drain();
+                        if (q.drain && q.tasks.length + workers === 0) {
+                            q.drain();
+                        }
                         q.process();
-                    });
+                    };
+                    var cb = only_once(next);
+                    worker(task.data, cb);
                 }
             },
             length: function () {
@@ -617,6 +729,71 @@
             }
         };
         return q;
+    };
+
+    async.cargo = function (worker, payload) {
+        var working     = false,
+            tasks       = [];
+
+        var cargo = {
+            tasks: tasks,
+            payload: payload,
+            saturated: null,
+            empty: null,
+            drain: null,
+            push: function (data, callback) {
+                if(data.constructor !== Array) {
+                    data = [data];
+                }
+                _each(data, function(task) {
+                    tasks.push({
+                        data: task,
+                        callback: typeof callback === 'function' ? callback : null
+                    });
+                    if (cargo.saturated && tasks.length === payload) {
+                        cargo.saturated();
+                    }
+                });
+                async.setImmediate(cargo.process);
+            },
+            process: function process() {
+                if (working) return;
+                if (tasks.length === 0) {
+                    if(cargo.drain) cargo.drain();
+                    return;
+                }
+
+                var ts = typeof payload === 'number'
+                            ? tasks.splice(0, payload)
+                            : tasks.splice(0);
+
+                var ds = _map(ts, function (task) {
+                    return task.data;
+                });
+
+                if(cargo.empty) cargo.empty();
+                working = true;
+                worker(ds, function () {
+                    working = false;
+
+                    var args = arguments;
+                    _each(ts, function (data) {
+                        if (data.callback) {
+                            data.callback.apply(null, args);
+                        }
+                    });
+
+                    process();
+                });
+            },
+            length: function () {
+                return tasks.length;
+            },
+            running: function () {
+                return working;
+            }
+        };
+        return cargo;
     };
 
     var _console_fn = function (name) {
@@ -631,7 +808,7 @@
                         }
                     }
                     else if (console[name]) {
-                        _forEach(args, function (x) {
+                        _each(args, function (x) {
                             console[name](x);
                         });
                     }
@@ -673,6 +850,7 @@
                 }]));
             }
         };
+        memoized.memo = memo;
         memoized.unmemoized = fn;
         return memoized;
     };
@@ -683,9 +861,78 @@
       };
     };
 
+    async.times = function (count, iterator, callback) {
+        var counter = [];
+        for (var i = 0; i < count; i++) {
+            counter.push(i);
+        }
+        return async.map(counter, iterator, callback);
+    };
+
+    async.timesSeries = function (count, iterator, callback) {
+        var counter = [];
+        for (var i = 0; i < count; i++) {
+            counter.push(i);
+        }
+        return async.mapSeries(counter, iterator, callback);
+    };
+
+    async.compose = function (/* functions... */) {
+        var fns = Array.prototype.reverse.call(arguments);
+        return function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            async.reduce(fns, args, function (newargs, fn, cb) {
+                fn.apply(that, newargs.concat([function () {
+                    var err = arguments[0];
+                    var nextargs = Array.prototype.slice.call(arguments, 1);
+                    cb(err, nextargs);
+                }]))
+            },
+            function (err, results) {
+                callback.apply(that, [err].concat(results));
+            });
+        };
+    };
+
+    var _applyEach = function (eachfn, fns /*args...*/) {
+        var go = function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            return eachfn(fns, function (fn, cb) {
+                fn.apply(that, args.concat([cb]));
+            },
+            callback);
+        };
+        if (arguments.length > 2) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            return go.apply(this, args);
+        }
+        else {
+            return go;
+        }
+    };
+    async.applyEach = doParallel(_applyEach);
+    async.applyEachSeries = doSeries(_applyEach);
+
+    async.forever = function (fn, callback) {
+        function next(err) {
+            if (err) {
+                if (callback) {
+                    return callback(err);
+                }
+                throw err;
+            }
+            fn(next);
+        }
+        next();
+    };
+
     // AMD / RequireJS
     if (typeof define !== 'undefined' && define.amd) {
-        define('async', [], function () {
+        define('vendor/async',[], function () {
             return async;
         });
     }
@@ -699,7 +946,6 @@
     }
 
 }());
-
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations for WebGL
  * @author Brandon Jones
@@ -740,7 +986,7 @@
         module.exports = factory(global);
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define('glmatrix',[], function () {
+        define('vendor/gl-matrix',[], function () {
             return factory(root);
         });
     } else {
@@ -4159,7 +4405,9 @@
 
 /*global vec3: true, mat4: true */
 
-define('common/qmath', ['glmatrix'], function (glmatrix) {
+define('common/qmath',['require','vendor/gl-matrix'],function (require) {
+
+var glmatrix = require('vendor/gl-matrix');
 
 var vec3origin  = vec3.create();
 var axisDefault = [
@@ -5214,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1119;
+var GAME_VERSION = 0.1120;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -6091,7 +6339,7 @@ BitStream.prototype.writeASCIIString = function(string, bytes) {
 
 // AMD / RequireJS
 if (typeof define !== 'undefined' && define.amd) {
-	define('BitBuffer',[],function () {
+	define('vendor/bit-buffer',[],function () {
 		return {
 			BitView: BitView,
 			BitStream: BitStream
@@ -6114,11 +6362,10 @@ else {
 }(this));
 /*global vec3: true */
 
-define('common/bsp-serializer',
-['BitBuffer', 'common/qmath'],
-function (BitBuffer, QMath) {
+define('common/bsp-serializer',['require','vendor/bit-buffer','common/qmath'],function (require) {
 
-var BitStream = BitBuffer.BitStream;
+var BitStream = require('vendor/bit-buffer').BitStream;
+var QMath = require('common/qmath');
 
 var MAX_QPATH = 64;
 
@@ -7007,8 +7254,8 @@ define('common/surfaceflags',['require'],function (require) {
 });
 /*global vec3: true, vec4: true, mat4: true */
 
-define('clipmap/cm',['require','glmatrix','common/bsp-serializer','common/qmath','common/qshared','common/surfaceflags'],function (require) {
-	var glmatrix      = require('glmatrix');
+define('clipmap/cm',['require','vendor/gl-matrix','common/bsp-serializer','common/qmath','common/qshared','common/surfaceflags'],function (require) {
+	var glmatrix      = require('vendor/gl-matrix');
 	var BspSerializer = require('common/bsp-serializer');
 	var QMath         = require('common/qmath');
 	var QS            = require('common/qshared');
@@ -10080,7 +10327,7 @@ function LeafArea(leafNum) {
   //===========================================================================
 
   if ("function" === typeof define) {
-    define('state-machine',['require'],function(require) { return StateMachine; });
+    define('vendor/state-machine',['require'],function(require) { return StateMachine; });
   }
   else {
     window.StateMachine = StateMachine;
@@ -10091,8 +10338,8 @@ function LeafArea(leafNum) {
 
 /*global vec3: true, mat4: true */
 
-define('game/bg',['require','glmatrix','common/qmath','common/qshared','common/surfaceflags'],function (require) {
-	var glmatrix = require('glmatrix');
+define('game/bg',['require','vendor/gl-matrix','common/qmath','common/qshared','common/surfaceflags'],function (require) {
+	var glmatrix = require('vendor/gl-matrix');
 	var QMath    = require('common/qmath');
 	var QS       = require('common/qshared');
 	var SURF     = require('common/surfaceflags');
@@ -13566,9 +13813,9 @@ function FindItemForHoldable(pw) {
 
 /*global mat4: true, vec3: true */
 
-define('game/gm',['require','glmatrix','state-machine','common/qmath','common/qshared','common/surfaceflags','common/cvar','game/bg'],function (require) {
-	var glmatrix     = require('glmatrix');
-	var StateMachine = require('state-machine');
+define('game/gm',['require','vendor/gl-matrix','vendor/state-machine','common/qmath','common/qshared','common/surfaceflags','common/cvar','game/bg'],function (require) {
+	var glmatrix     = require('vendor/gl-matrix');
+	var StateMachine = require('vendor/state-machine');
 	var QMath        = require('common/qmath');
 	var QS           = require('common/qshared');
 	var SURF         = require('common/surfaceflags');
@@ -13919,6 +14166,10 @@ GameClient.prototype.reset = function () {
 	this.airOutTime        = 0;
 	this.switchTeamTime    = 0;                            // time the player switched teams
 	this.switchArenaTime   = 0;                            // time the player switched arenas
+
+	// timeResidual is used to handle events that happen every second
+	// like health / armor countdowns and regeneration
+	this.timeResidual      = 0;
 };
 
 var PlayerTeamState = function () {
@@ -16367,8 +16618,10 @@ function ClientThink_real(ent) {
 		return;
 	}
 
-	// Perform once-a-second actions.
-	// ClientTimerActions(ent, msec);
+	// Perform once-a-second actions, in all modes excepting CA and RA.
+	if (level.arena.gametype < GT.CLANARENA) {
+		ClientTimerActions(ent, msec);
+	}
 }
 
 // /**
@@ -16401,48 +16654,45 @@ function ClientThink_real(ent) {
 // 	return qtrue;
 // }
 
-// /**
-//  * ClientTimerActions
-//  *
-//  * Actions that happen once a second.
-//  */
-// function ClientTimerActions(ent, msec) {
-// 	gclient_t	*client;
+/**
+ * ClientTimerActions
+ *
+ * Actions that happen once a second.
+ */
+function ClientTimerActions(ent, msec) {
+	var client = ent.client;
 
-// 	client = ent->client;
-// 	client->timeResidual += msec;
+	client.timeResidual += msec;
 
-// 	while ( client->timeResidual >= 1000 ) {
-// 		client->timeResidual -= 1000;
-
-// 		// regenerate
-// 		if ( client->ps.powerups[PW_REGEN] ) {
-// 			if ( ent->health < client->ps.stats[STAT_MAX_HEALTH]) {
-// 				ent->health += 15;
-// 				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 1.1 ) {
-// 					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 1.1;
-// 				}
-// 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-// 			} else if ( ent->health < client->ps.stats[STAT_MAX_HEALTH] * 2) {
-// 				ent->health += 5;
-// 				if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] * 2 ) {
-// 					ent->health = client->ps.stats[STAT_MAX_HEALTH] * 2;
-// 				}
-// 				G_AddEvent( ent, EV_POWERUP_REGEN, 0 );
-// 			}
-// 		} else {
-// 			// count down health when over max
-// 			if ( ent->health > client->ps.stats[STAT_MAX_HEALTH] ) {
-// 				ent->health--;
-// 			}
-// 		}
-
-// 		// count down armor when over max
-// 		if ( client->ps.stats[STAT_ARMOR] > client->ps.stats[STAT_MAX_HEALTH] ) {
-// 			client->ps.stats[STAT_ARMOR]--;
-// 		}
-// 	}
-// }
+	while (client.timeResidual >= 1000) {
+		client.timeResidual -= 1000;
+		// Regenerate.
+		if (client.ps.powerups[PW.REGEN]) {
+			if (ent.health < client.ps.stats[STAT.MAX_HEALTH]) {
+				ent.health += 15;
+				if (ent.health > client.ps.stats[STAT.MAX_HEALTH] * 1.1) {
+					ent.health = client.ps.stats[STAT.MAX_HEALTH] * 1.1;
+				}
+				AddEvent( ent, EV.POWERUP_REGEN, 0 );
+			} else if (ent.health < client.ps.stats[STAT.MAX_HEALTH] * 2) {
+				ent.health += 5;
+				if (ent.health > client.ps.stats[STAT.MAX_HEALTH] * 2) {
+					ent.health = client.ps.stats[STAT.MAX_HEALTH] * 2;
+				}
+				AddEvent(ent, EV.POWERUP_REGEN, 0);
+			}
+		} else {
+			// Count down health when over max.
+			if (ent.health > client.ps.stats[STAT.MAX_HEALTH]) {
+				ent.health--;
+			}
+		}
+		// Count down armor when over max.
+		if (client.ps.stats[STAT.ARMOR] > client.ps.stats[STAT.MAX_HEALTH]) {
+			client.ps.stats[STAT.ARMOR]--;
+		}
+	}
+}
 
 /**
  * SendPendingPredictableEvents
@@ -17325,6 +17575,7 @@ function KillBox(ent) {
 		Damage(hit, ent, ent, null, null, 100000, DAMAGE.NO_PROTECTION, MOD.TELEFRAG);
 	}
 }
+
 		/**
  * ClientCommand
  */
@@ -17417,7 +17668,7 @@ function ClientCommand(clientNum, cmd) {
 	// else if (Q_stricmp (cmd, "stats") == 0)
 	// 	Cmd_Stats_f( ent );
 	} else {
-		SV.SendServerCommand(clientNum, 'print', 'Unknown cmd ' + cmd);
+		SV.SendServerCommand(clientNum, 'print', 'Unknown client command \'' + name + '\'');
 	}
 }
 
@@ -18895,13 +19146,16 @@ function SpawnEntityFromDef(def) {
 		}
 	}
 
-	// See if we should spawn this as an item.
-	for (var i = 1; i < BG.ItemList.length; i++) {
-		var item = BG.ItemList[i];
+	// Don't spawn items in CA modes.
+	if (level.arena.gametype < GT.CLANARENA) {
+		// See if we should spawn this as an item.
+		for (var i = 1; i < BG.ItemList.length; i++) {
+			var item = BG.ItemList[i];
 
-		if (item.classname === ent.classname) {
-			SpawnItem(ent, item);
-			return;
+			if (item.classname === ent.classname) {
+				SpawnItem(ent, item);
+				return;
+			}
 		}
 	}
 
@@ -23546,8 +23800,8 @@ spawnFuncs['worldspawn'] = function (self) {
 
 /*global mat4: true, vec3: true */
 
-define('server/sv',['require','BitBuffer','common/qmath','common/qshared','common/surfaceflags','common/cvar','clipmap/cm','game/gm'],function (require) {
-	var BitStream  = require('BitBuffer').BitStream;
+define('server/sv',['require','vendor/bit-buffer','common/qmath','common/qshared','common/surfaceflags','common/cvar','clipmap/cm','game/gm'],function (require) {
+	var BitStream  = require('vendor/bit-buffer').BitStream;
 	var QMath      = require('common/qmath');
 	var QS         = require('common/qshared');
 	var SURF       = require('common/surfaceflags');
@@ -25008,6 +25262,7 @@ function ParseClientCommand(client, msg) {
 function ExecuteClientCommand(client, cmd) {
 	if (cmd.type === 'userinfo') {
 		UpdateUserinfo(client, cmd.data);
+		return;
 	}
 	// Since we're on TCP the disconnect is handled as a result
 	// of a socket close event.
@@ -26179,9 +26434,9 @@ define('client/cl',[],function () {
 });
 /*global vec3: true, mat4: true */
 
-define('common/com',['require','async','BitBuffer','common/qmath','common/qshared','common/bsp-serializer','common/cvar','server/sv','client/cl'],function (require) {
-	var async         = require('async');
-	var BitStream     = require('BitBuffer').BitStream;
+define('common/com',['require','vendor/async','vendor/bit-buffer','common/qmath','common/qshared','common/bsp-serializer','common/cvar','server/sv','client/cl'],function (require) {
+	var async         = require('vendor/async');
+	var BitStream     = require('vendor/bit-buffer').BitStream;
 	var QMath         = require('common/qmath');
 	var QS            = require('common/qshared');
 	var BspSerializer = require('common/bsp-serializer');
@@ -26353,6 +26608,11 @@ function log() {
 		return;
 	}
 
+	if (CL) {
+		var str = Array.prototype.join.call(arguments, ' ');
+		CL.PrintConsole(str);
+	}
+
 	Function.apply.call(console.log, console, arguments);
 }
 
@@ -26365,6 +26625,7 @@ function error(str) {
 	if (CL) {
 		CL.Disconnect();
 	}
+
 	SV.Kill();
 
 	SYS.Error(str);
@@ -27713,8 +27974,8 @@ function LoadBsp(mapname, callback) {
 // simplified CommonJS module definition syntax we use for all other
 // modules, so here we use the standard AMD definition.
 define('system/dedicated/sys',[
-	'async',
-	'glmatrix',
+	'vendor/async',
+	'vendor/gl-matrix',
 	'common/qshared',
 	'common/com',
 	'common/cvar'
