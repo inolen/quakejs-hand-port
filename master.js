@@ -1,3 +1,4 @@
+var _ = require('underscore');
 var http = require('http');
 var opt = require('optimist');
 var url = require('url');
