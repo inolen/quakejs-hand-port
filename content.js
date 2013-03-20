@@ -63,6 +63,7 @@ function loadConfig() {
 		var data = require(argv.config);
 		_.extend(config, data);
 	} catch (e) {
+		console.log('Failed to load config', e);
 	}
 
 	return config;

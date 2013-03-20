@@ -5,7 +5,7 @@ var WebSocketClient = require('ws');
 var WebSocketServer = require('ws').Server;
 
 var argv = require('optimist')
-	.describe('config', 'Location of the configuration file').default('config', './config.json')
+	.describe('config', 'Location of the configuration file').default('config', './master.json')
 	.argv;
 
 if (argv.h || argv.help) {
@@ -40,6 +40,7 @@ function loadConfig() {
 		var data = require(argv.config);
 		_.extend(config, data);
 	} catch (e) {
+		console.log('Failed to load config', e);
 	}
 
 	return config;
