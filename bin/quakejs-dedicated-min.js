@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1123;
+var GAME_VERSION = 0.1124;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -23999,7 +23999,7 @@ function RegisterCvars() {
 	// Many hosts supporting WebSockets require you to access the app through
 	// a different external port than what you bind to internally.
 	sv_externalPort = Cvar.AddCvar('sv_externalPort', 0,                    Cvar.FLAGS.ARCHIVE, true);
-	sv_master       = Cvar.AddCvar('sv_master',       'master.quakejs.com', Cvar.FLAGS.ARCHIVE);
+	sv_master       = Cvar.AddCvar('sv_master',       '',                   Cvar.FLAGS.ARCHIVE);
 	sv_name         = Cvar.AddCvar('sv_name',         'Anonymous',          Cvar.FLAGS.ARCHIVE);
 	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                    Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
 	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',              Cvar.FLAGS.SERVERINFO);
@@ -24198,8 +24198,10 @@ function CheckTimeouts() {
 var HEARTBEAT_MSEC = 30 * 1000;
 
 function SendMasterHeartbeat() {
+	var master = sv_master.get();
+
 	// Only dedicated servers send heart beats.
-	if (!dedicated) {
+	if (!dedicated || !master) {
 		return;
 	}
 
@@ -24210,13 +24212,13 @@ function SendMasterHeartbeat() {
 
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
-	var addr = COM.StringToAddr(sv_master.get());
+	var addr = COM.StringToAddr(master);
 	if (!addr) {
-		error('Failed to parse server address', sv_master.get());
+		error('Failed to parse server address', master);
 		return;
 	}
 
-	log('SendMasterHeartbeat', sv_master.get());
+	log('SendMasterHeartbeat', master);
 
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
