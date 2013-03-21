@@ -24,6 +24,15 @@ function log() {
 	Function.apply.call(console.log, console, args);
 }
 
+function toArrayBuffer(buffer) {
+	var ab = new ArrayBuffer(buffer.length);
+	var view = new Uint8Array(ab);
+	for (var i = 0; i < buffer.length; i++) {
+		view[i] = buffer[i];
+	}
+	return ab;
+}
+
 function main() {
 	var config = loadConfig();
 
@@ -63,6 +72,10 @@ function createServer(port) {
 			if (!flags.binary) {
 				return;
 			}
+
+			// node Buffer to ArrayBuffer
+			// buffer = (new Uint8Array(buffer)).buffer;
+			buffer = toArrayBuffer(buffer);
 
 			var msg = stripOOB(buffer);
 			if (!msg) {
@@ -127,48 +140,6 @@ function getRemotePort(ws) {
 
 /**********************************************************
  *
- * OOB helpers
- *
- **********************************************************/
-function formatOOB(data) {
-	var str = '\xff\xff\xff\xff' + JSON.stringify(data) + '\x00';
-
-	var buffer = new ArrayBuffer(str.length);
-	var view = new Uint8Array(buffer);
-
-	for (var i = 0; i < str.length; i++) {
-		view[i] = str.charCodeAt(i);
-	}
-
-	return buffer;
-}
-
-function stripOOB(buffer) {
-	var view = new DataView(buffer);
-
-	if (view.getInt32(0) !== -1) {
-		return null;
-	}
-
-	var str = '';
-	for (var i = 4; i < buffer.length; i++) {
-		var c = String.fromCharCode(view.getUint8(i));
-		if (c === '\x00') break;
-		str += c;
-	}
-
-	var data;
-
-	try {
-		data = JSON.parse(str);
-	} catch (e) {
-	}
-
-	return data;
-}
-
-/**********************************************************
- *
  * Heartbeats
  *
  **********************************************************/
@@ -219,7 +190,11 @@ function scanServer(socket, callback) {
 			return callback(new Error('Received non-binary response.'));
 		}
 
+		// node Buffer to ArrayBuffer
+		buffer = toArrayBuffer(buffer);
+
 		var data = stripOOB(buffer);
+
 		if (!data) {
 			return callback(new Error('Failed to parse message from ' + socket));
 		}
@@ -320,6 +295,49 @@ function sendMessageToSubscribers(data) {
 	for (var i = 0; i < subscribers.length; i++) {
 		subscribers[i].send(buffer, { binary: true });
 	}
+}
+
+/**********************************************************
+ *
+ * OOB helpers
+ *
+ **********************************************************/
+function formatOOB(data) {
+	var str = '\xff\xff\xff\xff' + JSON.stringify(data) + '\x00';
+
+	var buffer = new ArrayBuffer(str.length);
+	var view = new Uint8Array(buffer);
+
+	for (var i = 0; i < str.length; i++) {
+		view[i] = str.charCodeAt(i);
+	}
+
+	return buffer;
+}
+
+function stripOOB(buffer) {
+	var view = new DataView(buffer);
+
+	if (view.getInt32(0) !== -1) {
+		return null;
+	}
+
+	var str = '';
+	for (var i = 4; i < buffer.byteLength; i++) {
+		var c = String.fromCharCode(view.getUint8(i));
+		if (c === '\x00') break;
+		str += c;
+	}
+
+	var data;
+
+	try {
+		data = JSON.parse(str);
+	} catch (e) {
+		return null;
+	}
+
+	return data;
 }
 
 main();
