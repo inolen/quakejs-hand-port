@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1124;
+var GAME_VERSION = 0.1125;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -16190,6 +16190,7 @@ function ClientSpawn(ent) {
 	// Auto-eliminate if joining post warmup.
 	if ((level.arena.gametype === GT.CLANARENA || level.arena.gametype === GT.ROCKETARENA) &&
 	    level.arena.state.current > GS.COUNTDOWN) {
+		client.sess.spectatorState = SPECTATOR.FREE;
 		client.pers.teamState.state = TEAM_STATE.ELIMINATED;
 	}
 
@@ -17721,7 +17722,7 @@ function ClientCmdFollow(ent, follow) {
 	}
 
 	// First set them to spectator.
-	if (ent.client.sess.team !== TEAM.SPECTATOR) {
+	if (ent.client.sess.spectatorState === SPECTATOR.NOT) {
 		SetTeam(ent, 'spectator');
 	}
 
@@ -24387,6 +24388,8 @@ function RemoteCommand(socket, password, cmd) {
 function ServerInfo(socket) {
 	var info = {};
 
+	log('Received getinfo request from ' + SYS.SockToString(socket));
+
 	var g_gametype = Cvar.AddCvar('g_gametype');
 
 	// Info_SetValueForKey( infostring, "gamename", com_gamename->string );
@@ -25605,7 +25608,8 @@ function AddEntitiesVisibleFromPoint(arenaNum, origin, frame, eNums) {
 		}
 
 		if (ent.s.number !== i) {
-			error('Entity number does not match: ent.s.number: ' + ent.s.number + ', i: ' + i);
+			log('Entity number does not match: ent.s.number: ' + ent.s.number + ', i: ' + i);
+			ent.s.number = i;
 		}
 
 		// Entities can be flagged to explicitly not be sent to the client.
