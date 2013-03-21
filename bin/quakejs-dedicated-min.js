@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1122;
+var GAME_VERSION = 0.1123;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -24801,14 +24801,14 @@ function ClientEnterServer(socket, data) {
 
 	// Find a slot for the client.
 	var clientNum;
-	for (var i = 0; i < QS.MAX_CLIENTS; i++) {
+	for (var i = 0; i < sv_maxClients.get(); i++) {
 		if (svs.clients[i].state === CS.FREE) {
 			clientNum = i;
 			break;
 		}
 	}
 	if (clientNum === undefined) {
-		COM.NetOutOfBandPrint(netchan.socket, 'print', 'Server is full.');
+		COM.NetOutOfBandPrint(socket, 'print', 'Server is full.');
 		log('Rejected a connection.');
 		return;
 	}
@@ -24816,7 +24816,7 @@ function ClientEnterServer(socket, data) {
 	var com_protocol = Cvar.AddCvar('com_protocol');
 	var version = data.protocol;
 	if(version !== com_protocol.get()) {
-		COM.NetOutOfBandPrint(netchan.socket, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
+		COM.NetOutOfBandPrint(socket, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
 		log('Rejected connect from version', version);
 		return;
 	}
