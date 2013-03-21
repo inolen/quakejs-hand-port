@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1125;
+var GAME_VERSION = 0.1126;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -14607,6 +14607,12 @@ function InitArenas() {
  * it's a lot better than subclassing half of the game code for now.
  */
 function SetCurrentArena(arenaNum) {
+	// FIXME Stop spawning body queue ents with AREANNUM_NONE so we
+	// can enable this.
+	// if (!level.arenas[arenaNum]) {
+	// 	error('SetCurrentArena: Bad arena number \'' + arenaNum + '\'');
+	// }
+
 	level.arena = level.arenas[arenaNum];
 }
 
@@ -16483,7 +16489,8 @@ function ClientThink_real(ent) {
 
 	// Spectators don't do much.
 	if (client.sess.team === TEAM.SPECTATOR ||
-		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.ps.pm_type !== PM.DEAD)) {
+		// Ignore eliminated players if they're still in the death state.
+		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.sess.spectatorState !== SPECTATOR.NOT)) {
 		if (client.sess.spectatorState === SPECTATOR.SCOREBOARD) {
 			return;
 		}
@@ -16559,6 +16566,7 @@ function ClientThink_real(ent) {
 	BG.Pmove(pm);
 
 	BG.PlayerStateToEntityState(client.ps, ent.s);
+
 	// We need to set the eventTime for predicted events added through BG.
 	// However, if there is an externalEvent, the predicted event is going
 	// to be sent out by SendPendingPredictableEvents and we shouldn't muck
@@ -16870,7 +16878,8 @@ function ClientEndFrame(ent) {
 	var client = ent.client;
 
 	if (client.sess.team === TEAM.SPECTATOR ||
-		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.ps.pm_type !== PM.DEAD)) {
+		// Ignore eliminated players if they're still in the death state.
+		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.sess.spectatorState !== SPECTATOR.NOT)) {
 		SpectatorClientEndFrame(ent);
 		return;
 	}
@@ -16904,6 +16913,7 @@ function ClientEndFrame(ent) {
 	SetClientSound(ent);
 
 	BG.PlayerStateToEntityState(client.ps, ent.s);
+
 	SendPendingPredictableEvents(client.ps);
 }
 
@@ -17260,6 +17270,7 @@ function InitBodyQueue() {
 
 	for (var i = 0; i < BODY_QUEUE_SIZE; i++) {
 		var ent = SpawnEntity();
+
 		ent.classname = 'bodyqueue';
 		ent.neverFree = true;
 
@@ -17711,7 +17722,8 @@ function ClientCmdFollow(ent, follow) {
 	}
 
 	// Can't follow another spectator.
-	if (level.clients[i].sess.team === TEAM.SPECTATOR) {
+	if (level.clients[i].sess.team === TEAM.SPECTATOR ||
+		level.clients[i].pers.teamState.state === TEAM_STATE.ELIMINATED) {
 		return;
 	}
 
@@ -17722,7 +17734,8 @@ function ClientCmdFollow(ent, follow) {
 	}
 
 	// First set them to spectator.
-	if (ent.client.sess.spectatorState === SPECTATOR.NOT) {
+	if (ent.client.sess.team !== TEAM.SPECTATOR &&
+		ent.client.pers.teamState.state !== TEAM_STATE.ELIMINATED) {
 		SetTeam(ent, 'spectator');
 	}
 
@@ -17800,8 +17813,11 @@ function ClientCmdFollowCycle(ent, dir) {
 	}
 
 	// First set them to spectator.
-	if (ent.client.sess.spectatorState === SPECTATOR.NOT) {
-		SetTeam(ent, 'spectator');
+	if (ent.client.sess.team !== TEAM.SPECTATOR &&
+		// Ignore eliminated players if they're still in the death state.
+		!(ent.client.pers.teamState.state === TEAM_STATE.ELIMINATED && ent.client.sess.spectatorState !== SPECTATOR.NOT)) {
+		return;
+		// SetTeam(ent, 'spectator');
 	}
 
 	if (dir !== 1 && dir !== -1) {
@@ -17841,7 +17857,8 @@ function ClientCmdFollowCycle(ent, dir) {
 		}
 
 		// Can't follow another spectator.
-		if (level.clients[clientNum].sess.team === TEAM.SPECTATOR) {
+		if (level.clients[clientNum].sess.team === TEAM.SPECTATOR ||
+			level.clients[clientNum].pers.teamState.state === TEAM_STATE.ELIMINATED) {
 			continue;
 		}
 
@@ -18112,6 +18129,7 @@ function SetTeam(ent, teamName) {
 			team = TEAM.BLUE;
 		} else {
 			team = TEAM.SPECTATOR;
+			specState = SPECTATOR.FREE;
 		}
 
 		// Make sure we can actually join this group.
@@ -19045,7 +19063,7 @@ function SpawnEntity() {
 
 		ent.inuse = true;
 		ent.s.number = i;
-		// ARENANUM_NONE used by body queue.
+		// ARENANUM_NONE used by body queue during init.
 		ent.s.arenaNum = level.arena ? level.arena.arenaNum : ARENANUM_NONE;
 
 		return ent;
@@ -21224,7 +21242,8 @@ function InitSessionData(client, userinfo) {
 		}
 	}
 
-	sess.spectatorState = SPECTATOR.FREE;
+	sess.spectatorState = sess.team === TEAM.SPECTATOR ? SPECTATOR.FREE : SPECTATOR.NOT;
+
 	PushClientToQueue(level.gentities[clientNum]);
 
 	WriteSessionData(client);
@@ -25608,8 +25627,7 @@ function AddEntitiesVisibleFromPoint(arenaNum, origin, frame, eNums) {
 		}
 
 		if (ent.s.number !== i) {
-			log('Entity number does not match: ent.s.number: ' + ent.s.number + ', i: ' + i);
-			ent.s.number = i;
+			error('Entity number does not match: ent.s.number: ' + ent.s.number + ', i: ' + i);
 		}
 
 		// Entities can be flagged to explicitly not be sent to the client.
