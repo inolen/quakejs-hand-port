@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1130;
+var GAME_VERSION = 0.1131;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -25089,24 +25089,38 @@ function SendClientGameState(client) {
 	msg.writeInt32(client.reliableSequence);
 
 	// Write the configstrings.
-	for (var key in sv.configstrings) {
-		if (!sv.configstrings.hasOwnProperty(key)) {
-			continue;
+	var written = 0;
+	try {
+		for (var key in sv.configstrings) {
+			if (!sv.configstrings.hasOwnProperty(key)) {
+				continue;
+			}
+
+			msg.writeInt8(COM.SVM.configstring);
+			msg.writeASCIIString(JSON.stringify({ k: key, v: GetConfigstring(key) }));
 		}
 
-		msg.writeInt8(COM.SVM.configstring);
-		msg.writeASCIIString(JSON.stringify({ k: key, v: GetConfigstring(key) }));
+		// Write the baselines.
+		var nullstate = new QS.EntityState();
+		for (var i = 0; i < QS.MAX_GENTITIES; i++) {
+			var base = sv.svEntities[i].baseline;
+			if (!base.number) {
+				continue;
+			}
+			written++;
+			msg.writeInt8(COM.SVM.baseline);
+			COM.WriteDeltaEntityState(msg, nullstate, base, true);
+		}
 	}
+	catch (e) {
+		log('SendClientGameState error!');
+		log('Entities: ' + written);
+		log('Configstrings: ' + JSON.stringify(sv.configstrings));
 
-	// Write the baselines.
-	var nullstate = new QS.EntityState();
-	for (var i = 0; i < QS.MAX_GENTITIES; i++) {
-		var base = sv.svEntities[i].baseline;
-		if (!base.number) {
-			continue;
-		}
-		msg.writeInt8(COM.SVM.baseline);
-		COM.WriteDeltaEntityState(msg, nullstate, base, true);
+		console.log(e);
+		console.trace();
+
+		throw e;
 	}
 
 	msg.writeInt8(COM.SVM.EOF);
