@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1129;
+var GAME_VERSION = 0.1130;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -27178,7 +27178,7 @@ function fnread(bits) {
 		case UINT32:
 			return 'readUint32';
 		default:
-			throw new Error('fnread: bad bit count ' + bits);
+			error('fnread: bad bit count ' + bits);
 	}
 }
 
@@ -27195,7 +27195,7 @@ function fnwrite(bits) {
 		case UINT32:
 			return 'writeUint32';
 		default:
-			throw new Error('fnwrite: bad bit count ' + bits);
+			error('fnwrite: bad bit count ' + bits);
 	}
 }
 
@@ -27649,7 +27649,7 @@ function WriteDeltaEntityState(msg, from, to, force) {
 
 	// Sanity check.
 	if (to.number < 0 || to.number >= QS.MAX_GENTITIES) {
-		throw new Error('WriteDeltaEntityState: Bad entity number: ', to.number);
+		error('WriteDeltaEntityState: Bad entity number: ', to.number);
 	}
 
 	// Figure out the number of fields that have changed.
@@ -27717,7 +27717,7 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	var idx, field, fromF, toF, func;
 
 	if (number < 0 || number >= QS.MAX_GENTITIES) {
-		throw new Error('Bad delta entity number: ', number);
+		error('Bad delta entity number: ', number);
 	}
 
 	// Check for a remove.

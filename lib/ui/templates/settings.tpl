@@ -28,6 +28,9 @@
 							<div class="control-label">Sensitivity:</div><div name="sensitivity" class="control-input input-range" min="0" max="10" data-bind="rangeinput: sensitivity, event: { change: updated }"></div>
 						</div>
 						<div class="control-group">
+							<div class="control-label">Mouse filtering:</div><div name="filter" class="control-input input-radio" data-bind="radioinput: filter, event: { change: updated }"></div>
+						</div>
+						<div class="control-group">
 							<div class="control-label">Move forward:</div><div name="forwardKey" class="control-input input-key" data-bind="keyinput: forwardKey, event: { change: updated }"></div>
 						</div>
 						<div class="control-group">
