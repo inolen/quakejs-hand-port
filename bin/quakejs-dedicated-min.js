@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1127;
+var GAME_VERSION = 0.1128;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -18966,7 +18966,7 @@ function TossClientItems(self) {
 	var weapon = self.s.weapon;
 
 	// Make a special check to see if they are changing to a new
-	// weapon that isn't the mg or gauntlet.  Without this, a client
+	// weapon that isn't the mg or gauntlet. Without this, a client
 	// can pick up a weapon, be killed, and not drop the weapon because
 	// their weapon change hasn't completed yet and they are still holding the MG.
 	if (weapon === WP.MACHINEGUN || weapon === WP.GRAPPLING_HOOK) {
