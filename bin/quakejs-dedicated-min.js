@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1128;
+var GAME_VERSION = 0.1129;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -15014,12 +15014,12 @@ function CreateRoundMachine() {
 			defer: true
 		},
 		events: [
-			{ name: 'wait',         from: ['none', GS.COUNTDOWN],     to: GS.WAITING      },
-			{ name: 'ready',        from: GS.WAITING,                 to: GS.COUNTDOWN },
-			{ name: 'start',        from: GS.COUNTDOWN,               to: GS.ACTIVE    },
-			{ name: 'end',          from: GS.ACTIVE,                  to: GS.OVER      },
-			{ name: 'intermission', from: GS.OVER,                    to: GS.INTERMISSION },
-			{ name: 'restart',      from: [GS.OVER, GS.INTERMISSION], to: GS.WAITING   }
+			{ name: 'wait',         from: ['none', GS.COUNTDOWN],                to: GS.WAITING      },
+			{ name: 'ready',        from: GS.WAITING,                            to: GS.COUNTDOWN },
+			{ name: 'start',        from: GS.COUNTDOWN,                          to: GS.ACTIVE    },
+			{ name: 'end',          from: [GS.WAITING, GS.COUNTDOWN, GS.ACTIVE], to: GS.OVER      },
+			{ name: 'intermission', from: GS.OVER,                               to: GS.INTERMISSION },
+			{ name: 'restart',      from: [GS.OVER, GS.INTERMISSION],            to: GS.WAITING   }
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
@@ -15030,8 +15030,8 @@ function CreateRoundMachine() {
 			onstart: function (event, from, to, msg) {
 				RoundStart();
 			},
-			onend: function (event, from, to, msg) {
-				RoundEnd(msg);
+			onend: function (event, from, to, winningTeam, msg) {
+				RoundEnd(winningTeam, msg);
 			},
 			onintermission: function (event, from, to, msg) {
 				RoundIntermission();
@@ -15084,6 +15084,13 @@ function CheckRoundRules() {
  * RoundRunWaiting
  */
 function RoundRunWaiting() {
+	var state = level.arena.state;
+
+	if (TimelimitHit()) {
+		state.end(null, 'Timelimit hit.');
+		return;
+	}
+
 	var count1 = function () {
 		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
 	};
@@ -15093,7 +15100,7 @@ function RoundRunWaiting() {
 
 	if (level.arena.gametype === GT.CLANARENA) {
 		if (count1() >= 1 && count2() >= 1) {
-			level.arena.state.ready();
+			state.ready();
 		}
 	} else if (level.arena.gametype === GT.ROCKETARENA) {
 		// Spawn in the next team.
@@ -15127,7 +15134,7 @@ function RoundRunWaiting() {
 		}
 
 		if (count1() >= 1 && count2() >= 1) {
-			level.arena.state.ready();
+			state.ready();
 		}
 	} else {
 		error('Unsupported gametype.');
@@ -15154,6 +15161,13 @@ function RoundReady() {
  * RoundRunCountdown
  */
 function RoundRunCountdown() {
+	var state = level.arena.state;
+
+	if (TimelimitHit()) {
+		state.end(null, 'Timelimit hit.');
+		return;
+	}
+
 	var count1 = function () {
 		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
 	};
@@ -15162,11 +15176,11 @@ function RoundRunCountdown() {
 	};
 
 	if (!count1() || !count2()) {
-		level.arena.state.wait();
+		state.wait();
 	}
 
 	if (level.time > level.arena.warmupTime) {
-		level.arena.state.start();
+		state.start();
 	}
 }
 
@@ -15185,6 +15199,13 @@ function RoundStart() {
  * RoundRunActive
  */
 function RoundRunActive() {
+	var state = level.arena.state;
+
+	if (TimelimitHit()) {
+		state.end(null, 'Timelimit hit.');
+		return;
+	}
+
 	// Practice arena is always actice.
 	if (level.arena.gametype === GT.PRACTICEARENA) {
 		return;
@@ -15194,19 +15215,25 @@ function RoundRunActive() {
 	var alive2 = TeamAliveCount(TEAM.BLUE);
 
 	if (!alive1 && !alive2) {
-		level.arena.state.end(null);
+		state.end(null);
 	} else if (!alive1) {
-		level.arena.state.end(TEAM.BLUE);
+		state.end(TEAM.BLUE);
 	} else if (!alive2) {
-		level.arena.state.end(TEAM.RED);
+		state.end(TEAM.RED);
 	}
 }
 
 /**
  * RoundEnd
  */
-function RoundEnd(winningTeam) {
-	log('RoundEnd', winningTeam);
+function RoundEnd(winningTeam, msg) {
+	log('RoundEnd', winningTeam, msg);
+
+	if (winningTeam == null && msg) {
+		// Timelimit hit.
+		QueueIntermission(msg);
+		return;
+	}
 
 	if (level.arena.gametype === GT.CLANARENA && winningTeam !== null) {
 		level.arena.teamScores[winningTeam] += 1;
@@ -15272,6 +15299,7 @@ function RoundRunOver() {
  */
 function RoundIntermission() {
 	log('RoundIntermission');
+
 	BeginIntermission();
 }
 
@@ -15280,6 +15308,11 @@ function RoundIntermission() {
  */
 function RoundRunIntermission() {
 	if (CheckIntermissionExit()) {
+		if (TimelimitHit()) {
+			ExitIntermission();
+			return;
+		}
+
 		// Reset scores.
 		for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
 			level.arena.teamScores[i] = 0;
@@ -15565,7 +15598,7 @@ function IntermissionStarted() {
 function QueueIntermission(msg) {
 	level.arena.intermissionTime = level.time + INTERMISSION_DELAY_TIME;
 
-	SV.SendServerCommand(null, 'print', msg);
+	SendArenaCommand('print', msg);
 
 	// FIXME make part of arena info
 	// // This will keep the clients from playing any voice sounds
