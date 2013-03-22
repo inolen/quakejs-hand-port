@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1126;
+var GAME_VERSION = 0.1127;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -14385,9 +14385,6 @@ function Frame(levelTime) {
 			continue;
 		}
 
-		// Set the global arena.
-		SetCurrentArena(ent.s.arenaNum);
-
 		// Clear events that are too old.
 		if (level.time - ent.eventTime > EVENT_VALID_MSEC) {
 			if (ent.s.event) {
@@ -14418,6 +14415,9 @@ function Frame(levelTime) {
 		if (!ent.r.linked && ent.neverFree) {
 			continue;
 		}
+
+		// Set the global arena.
+		SetCurrentArena(ent.s.arenaNum);
 
 		if (ent.s.eType === ET.MISSILE) {
 			RunMissile(ent);
@@ -14607,11 +14607,9 @@ function InitArenas() {
  * it's a lot better than subclassing half of the game code for now.
  */
 function SetCurrentArena(arenaNum) {
-	// FIXME Stop spawning body queue ents with AREANNUM_NONE so we
-	// can enable this.
-	// if (!level.arenas[arenaNum]) {
-	// 	error('SetCurrentArena: Bad arena number \'' + arenaNum + '\'');
-	// }
+	if (!level.arenas[arenaNum]) {
+		error('SetCurrentArena: Bad arena number \'' + arenaNum + '\'');
+	}
 
 	level.arena = level.arenas[arenaNum];
 }
@@ -14628,7 +14626,7 @@ function RunArenas() {
 
 	// Run the gameplay logic for each arena.
 	for (var i = 0; i < level.arenas.length; i++) {
-		level.arena = level.arenas[i];
+		SetCurrentArena(i);
 
 		// Run the frame callback for the state machine.
 		if (level.arena.state) {
@@ -18220,10 +18218,10 @@ function SetArena(ent, arenaNum) {
 	}
 
 	// Push off old arena.
-	var oldArena = level.arena;
+	var oldArenaNum = level.arena.arenaNum;
 
 	// Temporarily update while spawning the client.
-	level.arena = level.arenas[arenaNum];
+	SetCurrentArena(arenaNum);
 
 	// Change arena and kick to spec.
 	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
@@ -18233,7 +18231,7 @@ function SetArena(ent, arenaNum) {
 	SendScoreboardMessage(ent);
 
 	// Pop back.
-	level.arena = oldArena;
+	SetCurrentArena(oldArenaNum);
 
 	// Recalculate ranks for the old arena now.
 	CalculateRanks();
@@ -27840,7 +27838,7 @@ function NetListen(addr, opts) {
  */
 function NetSendLoopPacket(socket, view) {
 	// Copy buffer to loopback view.
-	var loopbackView = new Uint8Array(socket.msgs[socket.send++ % MAX_LOOPBACK]);
+	var loopbackView = new Uint8Array(socket.msgs[socket.send++ % MAX_LOOPBACK], 0, view.length);
 	for (var i = 0; i < view.length; i++) {
 		loopbackView[i] = view[i];
 	}
