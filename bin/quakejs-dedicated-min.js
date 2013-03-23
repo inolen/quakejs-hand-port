@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1131;
+var GAME_VERSION = 0.1132;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -15756,11 +15756,19 @@ function CheckIntermissionExit() {
  * or moved to a new level based on the "nextmap" cvar.
  */
 function ExitIntermission() {
-	var nextmap = Cvar.AddCvar('nextmap');
+	// FIXME This is a terrible hack. We need to figure out how to
+	// properly handle intermissions due to a timelimit hit on MA
+	// maps. This hack just prevents ExitIntermission() from being
+	// called multiple times (once per arena).
+	if (!level.arena.intermissionTime) {
+		return;
+	}
 
 	level.arena.intermissionTime = 0;
 
 	// If no nextmap is specified, let the default map restart occur.
+	var nextmap = Cvar.AddCvar('nextmap');
+
 	if (!nextmap.get()) {
 		return;
 	}
