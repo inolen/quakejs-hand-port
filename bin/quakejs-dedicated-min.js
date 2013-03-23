@@ -5462,7 +5462,7 @@ return {
 define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1132;
+var GAME_VERSION = 0.1133;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -13985,7 +13985,6 @@ var GameLocals = function () {
 	this.arena                  = null;                    // current arena, set in Frame()
 	                                                       // and by the various Client* funcs
 	                                                       // invoked directly by the server.
-	this.rocketarena            = false;
 
 	for (var i = 0; i < MAX_CLIENTS; i++) {
 		this.clients[i] = new GameClient();
@@ -15756,20 +15755,20 @@ function CheckIntermissionExit() {
  * or moved to a new level based on the "nextmap" cvar.
  */
 function ExitIntermission() {
-	// FIXME This is a terrible hack. We need to figure out how to
-	// properly handle intermissions due to a timelimit hit on MA
-	// maps. This hack just prevents ExitIntermission() from being
-	// called multiple times (once per arena).
-	if (!level.arena.intermissionTime) {
+	// FIXME Prevents ExitIntermission() from being called multiple times
+	// in MA mode.
+	if (level.restarted) {
 		return;
 	}
 
+	level.restarted = true;
 	level.arena.intermissionTime = 0;
 
 	// If no nextmap is specified, let the default map restart occur.
 	var nextmap = Cvar.AddCvar('nextmap');
 
 	if (!nextmap.get()) {
+		SV.ExecuteBuffer('map_restart 0');
 		return;
 	}
 
@@ -27085,7 +27084,7 @@ function CheckSaveConfig() {
  * LoadConfig
  */
 function LoadConfig(callback) {
-	ExecuteFile('user.cfg', function (err) {
+	ExecuteFile('~/user.cfg', function (err) {
 		// If any archived cvars are modified after this, we will trigger a
 		// writing of the config file.
 		Cvar.ClearModified(Cvar.FLAGS.ARCHIVE);
@@ -27098,7 +27097,7 @@ function LoadConfig(callback) {
  * SaveConfig
  */
 function SaveConfig() {
-	var filename = 'user.cfg';
+	var filename = '~/user.cfg';
 
 	log('Saving config to', filename);
 
@@ -28077,17 +28076,14 @@ var MetaSocket = function (handle) {
 var proxies = {};
 
 /**
- * IsLocalFile
- *
- * Load files in root from local machine
- * (e.g. user.cfg and custom .cfg files).
+ * ToLocalPath
  */
-function IsLocalFile(path) {
-	if (!path.match(/[\\\/]+/)) {
-		return true;
+function ToLocalPath(path) {
+	if (!path.match(/~\//)) {
+		return null;
 	}
 
-	return false;
+	return path.replace('~/', '');
 }
 
 /**
@@ -28136,8 +28132,10 @@ function ReadFile(path, encoding, callback, namespace) {
 		callback = ProxyFileCallback(namespace, callback);
 	}
 
-	if (IsLocalFile(path)) {
-		ReadLocalFile(path, encoding, callback);
+	var localPath = ToLocalPath(path);
+
+	if (localPath) {
+		ReadLocalFile(localPath, encoding, callback);
 	} else {
 		ReadRemoteFile(path, encoding, callback);
 	}
@@ -28151,14 +28149,14 @@ function WriteFile(path, data, encoding, callback, namespace) {
 		callback = ProxyFileCallback(namespace, callback);
 	}
 
-	var local = IsLocalFile(path);
+	var localPath = ToLocalPath(path);
 
-	if (!local) {
+	if (!localPath) {
 		error('Can\'t write to remote files.');
 		return;
 	}
 
-	WriteLocalFile(path, data, encoding, callback);
+	WriteLocalFile(localPath, data, encoding, callback);
 }
 	var net = require('net');
 var readline = require('readline');
@@ -28302,12 +28300,16 @@ function GetExports() {
 }
 	var fs = require('fs');
 var http = require('http');
+var path = require('path');
 
 /**
  * ReadLocalFile
  */
-function ReadLocalFile(path, encoding, callback) {
-	fs.readFile(path, encoding, function (err, data) {
+function ReadLocalFile(filename, encoding, callback) {
+	// Load all local files from usr/ subdir.
+	filename = path.join('usr', filename);
+
+	fs.readFile(filename, encoding, function (err, data) {
 		if (err) {
 			log(err);
 			return callback(err);
@@ -28320,15 +28322,15 @@ function ReadLocalFile(path, encoding, callback) {
 /**
  * ReadRemoteFile
  */
-function ReadRemoteFile(path, encoding, callback) {
+function ReadRemoteFile(filename, encoding, callback) {
 	var binary = encoding === 'binary';
 
 	var com_filecdn = Cvar.AddCvar('com_filecdn');
-	path = com_filecdn.get() + '/assets/' + path + '?v=' + QS.GAME_VERSION;
+	filename = com_filecdn.get() + '/assets/' + filename + '?v=' + QS.GAME_VERSION;
 
-	http.get(path, function (res) {
+	http.get(filename, function (res) {
 		if (res.statusCode !== 200) {
-			return callback(new Error('Failed to read remote file at \'' + path + '\'. Invalid HTTP response code ' + res.statusCode));
+			return callback(new Error('Failed to read remote file at \'' + filename + '\'. Invalid HTTP response code ' + res.statusCode));
 		}
 
 		if (binary) {
@@ -28353,15 +28355,18 @@ function ReadRemoteFile(path, encoding, callback) {
 			});
 		}
 	}).on('error', function (err) {
-		callback(new Error('Failed to read file: ' + path));
+		callback(new Error('Failed to read file: ' + filename));
 	});
 }
 
 /**
  * WriteLocalFile
  */
-function WriteLocalFile(path, data, encoding, callback) {
-	fs.writeFile(path, data, encoding, function (err) {
+function WriteLocalFile(filename, data, encoding, callback) {
+	// Load all local files from usr/ subdir.
+	filename = path.join('usr', filename);
+
+	fs.writeFile(filename, data, encoding, function (err) {
 		if (err) {
 			return callback(err);
 		}
