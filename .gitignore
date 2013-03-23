@@ -1,7 +1,8 @@
 .*
 !/.gitignore
-user.cfg
 /node_modules
 /assets/*
 /docs/*
+/usr/*
+!/usr/*.example.cfg
 *.tmp.js
