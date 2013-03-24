@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1134;
+var GAME_VERSION = 0.1135;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5902,7 +5902,6 @@ var TraceResults = function () {
 	this.surfaceFlags = 0;
 	this.contents     = 0;
 	this.entityNum    = 0;
-	this.shaderName   = null;                              // debugging
 };
 
 TraceResults.prototype.reset = function () {
@@ -6000,6 +5999,13 @@ function atob64(arr) {
 }
 
 /**
+ * EscapeColor
+ */
+function EscapeColor(color) {
+	return '^' + color;
+}
+
+/**
  * StripColors
  */
 function StripColors(text) {
@@ -6057,6 +6063,7 @@ return {
 	ASET:                  ASET,
 
 	atob64:                atob64,
+	EscapeColor:           EscapeColor,
 	StripColors:           StripColors
 };
 
@@ -6122,12 +6129,21 @@ BitView.prototype.getBits = function (offset, bits, signed) {
 		throw new Error('Cannot get ' + bits + ' bit(s) from offset ' + offset + ', ' + available + ' available');
 	}
 
-	// FIXME We could compare bits to offset's alignment
-	// and OR on entire byte if appropriate.
-
 	var value = 0;
-	for (var i = 0; i < bits; i++) {
-		value |= (this._getBit(offset++) << i);
+	for (var i = 0; i < bits;) {
+		var read;
+
+		// Read an entire byte if we can.
+		if ((bits - i) >= 8 && ((offset & 7) === 0)) {
+			value |= (this._view[offset >> 3] << i);
+			read = 8;
+		} else {
+			value |= (this._getBit(offset) << i);
+			read = 1;
+		}
+
+		offset += read;
+		i += read;
 	}
 
 	if (signed) {
@@ -6151,9 +6167,22 @@ BitView.prototype.setBits = function (offset, value, bits) {
 		throw new Error('Cannot set ' + bits + ' bit(s) from offset ' + offset + ', ' + available + ' available');
 	}
 
-	for (var i = 0; i < bits; i++) {
-		this._setBit(offset++, value & 0x1);
-		value = (value >> 1);
+	for (var i = 0; i < bits;) {
+		var wrote;
+
+		// Write an entire byte if we can.
+		if ((bits - i) >= 8 && ((offset & 7) === 0)) {
+			this._view[offset >> 3] = value & 0xFF;
+			wrote = 8;
+		} else {
+			this._setBit(offset, value & 0x1);
+			wrote = 1;
+		}
+
+		value = (value >> wrote);
+
+		offset += wrote;
+		i += wrote;
 	}
 };
 
@@ -6217,12 +6246,68 @@ BitView.prototype.setFloat64 = function (offset, value) {
  * to the underlying buffer.
  *
  **********************************************************/
+var reader = function (name, size) {
+	return function () {
+		var val = this._view[name](this._index);
+		this._index += size;
+		return val;
+	};
+};
+
+var writer = function (name, size) {
+	return function (value) {
+		this._view[name](this._index, value);
+		this._index += size;
+	};
+};
+
+function readASCIIString(stream, bytes) {
+	var i = 0;
+	var chars = [];
+	var append = true;
+
+	// Read while we still have space available, or until we've
+	// hit the fixed byte length passed in.
+	while (!bytes || (bytes && i < bytes)) {
+		var c = stream.readUint8();
+
+		// Stop appending chars once we hit 0x00
+		if (c === 0x00) {
+			append = false;
+
+			// If we don't have a fixed length to read, break out now.
+			if (!bytes) {
+				break;
+			}
+		}
+
+		if (append) {
+			chars.push(c);
+		}
+
+		i++;
+	}
+
+	// Convert char code array back to string.
+	return chars.map(function (x) {
+		return String.fromCharCode(x);
+	}).join('');
+};
+
+function writeASCIIString(stream, string, bytes) {
+	var length = bytes || string.length + 1;  // + 1 for NULL
+
+	for (var i = 0; i < length; i++) {
+		stream.writeUint8(i < string.length ? string.charCodeAt(i) : 0x00);
+	}
+}
+
 var BitStream = function (source, byteOffset, byteLength) {
 	var isBuffer = source instanceof ArrayBuffer ||
 		(typeof(Buffer) !== 'undefined' && source instanceof Buffer);
 
-	if (!(source instanceof BitView) && !isBuffer) {
-		throw new Error('Must specify a valid BitView, ArrayBuffer or Buffer');
+	if (!(source instanceof BitView) && !(source instanceof DataView) && !isBuffer) {
+		throw new Error('Must specify a valid BitView, DataView, ArrayBuffer or Buffer');
 	}
 
 	if (isBuffer) {
@@ -6230,6 +6315,7 @@ var BitStream = function (source, byteOffset, byteLength) {
 	} else {
 		this._view = source;
 	}
+
 	this._index = 0;
 };
 
@@ -6243,7 +6329,7 @@ Object.defineProperty(BitStream.prototype, 'byteIndex', {
 });
 
 Object.defineProperty(BitStream.prototype, 'buffer', {
-	get: function () { return this.view.buffer; },
+	get: function () { return this._view.buffer; },
 	enumerable: true,
 	configurable: false
 });
@@ -6253,21 +6339,6 @@ Object.defineProperty(BitStream.prototype, 'view', {
 	enumerable: true,
 	configurable: false
 });
-
-var reader = function (name, bits) {
-	return function () {
-		var val = this._view[name](this._index);
-		this._index += bits;
-		return val;
-	};
-};
-
-var writer = function (name, bits) {
-	return function (value) {
-		this._view[name](this._index, value);
-		this._index += bits;
-	};
-};
 
 BitStream.prototype.readBits = function (bits, signed) {
 	var val = this._view.getBits(this._index, bits, signed);
@@ -6299,45 +6370,12 @@ BitStream.prototype.writeFloat32 = writer('setFloat32', 32);
 BitStream.prototype.writeFloat64 = writer('setFloat64', 64);
 
 BitStream.prototype.readASCIIString = function (bytes) {
-	var i = 0;
-	var chars = [];
-	var append = true;
-
-	// Read while we still have space available, or until we've
-	// hit the fixed byte length passed in.
-	while (!bytes || (bytes && i < bytes)) {
-		var c = this.readUint8();
-
-		// Stop appending chars once we hit 0x00
-		if (c === 0x00) {
-			append = false;
-
-			// If we don't have a fixed length to read, break out now.
-			if (!bytes) {
-				break;
-			}
-		}
-
-		if (append) {
-			chars.push(c);
-		}
-
-		i++;
-	}
-
-	// Convert char code array back to string.
-	return chars.map(function (x) {
-		return String.fromCharCode(x);
-	}).join('');
+	return readASCIIString(this, bytes);
 };
 
-BitStream.prototype.writeASCIIString = function(string, bytes) {
-	var length = bytes || string.length + 1;  // + 1 for NULL
-
-	for (var i = 0; i < length; i++) {
-		this.writeUint8(i < string.length ? string.charCodeAt(i) : 0x00);
-	}
-}
+BitStream.prototype.writeASCIIString = function (string, bytes) {
+	writeASCIIString(this, string, bytes);
+};
 
 // AMD / RequireJS
 if (typeof define !== 'undefined' && define.amd) {
@@ -6354,11 +6392,6 @@ else if (typeof module !== 'undefined' && module.exports) {
 		BitView: BitView,
 		BitStream: BitStream
 	};
-}
-// included directly via <script> tag
-else {
-	root.BitView = BitView;
-	root.BitStream = BitStream;
 }
 
 }(this));
@@ -7264,7 +7297,7 @@ var ClipBrushSide = function () {
 };
 
 var ClipBrush = function () {
-	this.shader     = 0;                                    // the shader that determined the contents
+	this.shader     = null;                                // the shader that determined the contents
 	this.contents   = 0;
 	this.bounds     = [vec3.create(), vec3.create()];
 	this.firstSide  = 0;
@@ -9497,7 +9530,6 @@ function TraceThroughBrush(tw, brush) {
 			tw.trace.allSolid = true;
 			tw.trace.fraction = 0;
 			tw.trace.contents = brush.contents;
-			tw.trace.shaderName = brush.shader.shaderName;
 		}
 		return;
 	}
@@ -9509,9 +9541,8 @@ function TraceThroughBrush(tw, brush) {
 			}
 			tw.trace.fraction = enterFrac;
 			clipplane.clone(tw.trace.plane);
-			tw.trace.surfaceFlags = leadside.surfaceFlags;
 			tw.trace.contents = brush.contents;
-			tw.trace.shaderName = brush.shader.shaderName;
+			tw.trace.surfaceFlags = leadside.surfaceFlags;
 		}
 	}
 }
@@ -18421,9 +18452,9 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	}
 
 	// See if it's the player hurting the emeny flag carrier.
-	// if (g_gametype.integer === GT.CTF) {
-	// 	Team_CheckHurtCarrier(targ, attacker);
-	// }
+	if (level.arena.gametype === GT.CTF) {
+		Team_CheckHurtCarrier(targ, attacker);
+	}
 
 	if (targ.client) {
 		// Set the last client who damaged the target.
@@ -18687,8 +18718,8 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		AddScore(self, self.r.currentOrigin, -1);
 	}
 
-	// // Add team bonuses.
-	// Team_FragBonuses(self, inflictor, attacker);
+	// Add team bonuses.
+	Team_FragBonuses(self, inflictor, attacker);
 
 	// If I committed suicide, the flag does not fall, it returns.
 	if (meansOfDeath === MOD.SUICIDE) {
@@ -21592,12 +21623,11 @@ function Team_SetFlagStatus(team, status) {
 	if (modified) {
 		var st = new Array(4);
 
-		if(level.arena.gametype == GT.CTF) {
+		if (level.arena.gametype === GT.CTF) {
 			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
 			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
 			st[2] = 0;
-		}
-		else {		// GT_1FCTF
+		} else {  // GT.NFCTF
 			st[0] = oneFlagStatusRemap[teamgame.flagStatus];
 			st[1] = 0;
 		}
@@ -21785,6 +21815,224 @@ function Team_ForceGesture(team) {
 	}
 }
 
+
+/**
+ * Team_FragBonuses
+ *
+ * Calculate the bonuses for flag defense, flag carrier defense, etc.
+ * Note that bonuses are not cumulative. You get one, they are in importance
+ * order.
+ */
+function Team_FragBonuses(targ, inflictor, attacker) {
+	// No bonus for fragging yourself or team mates.
+	if (!targ.client || !attacker.client || targ === attacker || OnSameTeam(targ, attacker)) {
+		return;
+	}
+
+	var team = targ.client.sess.team;
+	var otherteam = OtherTeam(targ.client.sess.team);
+	if (otherteam < 0) {
+		return;  // whoever died isn't on a team
+	}
+
+	// Same team, if the flag at base, check to he has the enemy flag.
+	var flag_pw;
+	var enemy_flag_pw;
+
+	if (team === TEAM.RED) {
+		flag_pw = PW.REDFLAG;
+		enemy_flag_pw = PW.BLUEFLAG;
+	} else {
+		flag_pw = PW.BLUEFLAG;
+		enemy_flag_pw = PW.REDFLAG;
+	}
+
+	if (level.arena.gametype === GT.NFCTF) {
+		enemy_flag_pw = PW.NEUTRALFLAG;
+	}
+
+	// Did the attacker frag the flag carrier?
+	var tokens = 0;
+
+	if (targ.client.ps.powerups[enemy_flag_pw]) {
+		attacker.client.pers.teamState.lastfraggedcarrier = level.time;
+		AddScore(attacker, targ.r.currentOrigin, CTF_FRAG_CARRIER_BONUS);
+		attacker.client.pers.teamState.fragcarrier++;
+
+		SV.SendServerCommand(null, 'print', attacker.client.pers.name + QS.EscapeColor(QS.COLOR.WHITE) + ' fragged ' + TeamName(team) + '\'s flag carrier!');
+
+		// The target had the flag, clear the hurt carrier
+		// field on the other team.
+		for (var i = 0; i < level.maxclients.integer; i++) {
+			var ent = level.gentities[i];
+
+			if (ent.inuse && ent.client.sess.team === otherteam) {
+				ent.client.pers.teamState.lasthurtcarrier = 0;
+			}
+		}
+
+		return;
+	}
+
+	if (targ.client.pers.teamState.lasthurtcarrier &&
+		level.time - targ.client.pers.teamState.lasthurtcarrier < CTF_CARRIER_DANGER_PROTECT_TIMEOUT &&
+		!attacker.client.ps.powerups[flag_pw]) {
+		// Attacker is on the same team as the flag carrier and
+		// fragged a guy who hurt our flag carrier.
+		AddScore(attacker, targ.r.currentOrigin, CTF_CARRIER_DANGER_PROTECT_BONUS);
+
+		attacker.client.pers.teamState.carrierdefense++;
+		targ.client.pers.teamState.lasthurtcarrier = 0;
+
+		attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
+		// Add the sprite over the player's head.
+		attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+		attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
+		attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+
+		return;
+	}
+
+	if (targ.client.pers.teamState.lasthurtcarrier &&
+		level.time - targ.client.pers.teamState.lasthurtcarrier < CTF_CARRIER_DANGER_PROTECT_TIMEOUT) {
+		// Attacker is on the same team as the skull carrier and.
+		AddScore(attacker, targ.r.currentOrigin, CTF_CARRIER_DANGER_PROTECT_BONUS);
+
+		attacker.client.pers.teamState.carrierdefense++;
+		targ.client.pers.teamState.lasthurtcarrier = 0;
+
+		attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
+		// Add the sprite over the player's head.
+		attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+		attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
+		attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+
+		return;
+	}
+
+	// Flag and flag carrier area defense bonuses.
+
+	// We have to find the flag and carrier entities.
+
+	// Find the flag
+	var c;
+	switch (attacker.client.sess.team) {
+		case TEAM.RED:
+			c = "team_CTF_redflag";
+			break;
+		case TEAM.BLUE:
+			c = "team_CTF_blueflag";
+			break;
+		default:
+			return;
+	}
+
+	// Find attacker's team's flag carrier.
+	var carrier;
+	var flag;
+
+	for (var i = 0; i < level.maxclients; i++) {
+		carrier = level.gentities[i];
+
+		if (carrier.inuse && carrier.client.ps.powerups[flag_pw]) {
+			break;
+		}
+
+		carrier = null;
+	}
+
+	var flags = FindEntity({ classname: c });
+	for (var i = 0; i < flags.length; i++) {
+		flag = flags[i];
+
+		if (!(flag.flags & GFL.DROPPED_ITEM)) {
+			break;
+		}
+	}
+
+	if (!flag) {
+		return;  // can't find attacker's flag
+	}
+
+	// Ok we have the attackers flag and a pointer to the carrier.
+
+	// Check to see if we are defending the base's flag.
+	var v1 = vec3.subtract(targ.r.currentOrigin, flag.r.currentOrigin, vec3.create());
+	var v2 = vec3.subtract(attacker.r.currentOrigin, flag.r.currentOrigin, vec3.create());
+
+	if (((vec3.length(v1) < CTF_TARGET_PROTECT_RADIUS /*&&
+		trap_InPVS(flag.r.currentOrigin, targ.r.currentOrigin)*/) ||
+		(vec3.length(v2) < CTF_TARGET_PROTECT_RADIUS /*&&
+		trap_InPVS(flag.r.currentOrigin, attacker.r.currentOrigin)*/)) &&
+		attacker.client.sess.team !== targ.client.sess.team) {
+		// We defended the base flag.
+		AddScore(attacker, targ.r.currentOrigin, CTF_FLAG_DEFENSE_BONUS);
+		attacker.client.pers.teamState.basedefense++;
+
+		attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
+		// Add the sprite over the player's head.
+		attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+		attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
+		attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+
+		return;
+	}
+
+	if (carrier && carrier !== attacker) {
+		vec3.subtract(targ.r.currentOrigin, carrier.r.currentOrigin, v1);
+		vec3.subtract(attacker.r.currentOrigin, carrier.r.currentOrigin, v2);
+
+		if (((vec3.length(v1) < CTF_ATTACKER_PROTECT_RADIUS /*&&
+			trap_InPVS(carrier.r.currentOrigin, targ.r.currentOrigin)*/) ||
+			(vec3.length(v2) < CTF_ATTACKER_PROTECT_RADIUS /*&&
+			trap_InPVS(carrier.r.currentOrigin, attacker.r.currentOrigin)*/)) &&
+			attacker.client.sess.team !== targ.client.sess.team) {
+			AddScore(attacker, targ.r.currentOrigin, CTF_CARRIER_PROTECT_BONUS);
+			attacker.client.pers.teamState.carrierdefense++;
+
+			attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
+			// add the sprite over the player's head
+			attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
+			attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
+			attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
+
+			return;
+		}
+	}
+}
+
+/**
+ * Team_CheckHurtCarrier
+ *
+ * Check to see if attacker hurt the flag carrier.  Needed when handing out bonuses for assistance to flag
+ * carrier defense.
+ */
+function Team_CheckHurtCarrier(targ, attacker) {
+	if (!targ.client || !attacker.client) {
+		return;
+	}
+
+	var flag_pw;
+
+	if (targ.client.sess.team === TEAM.RED) {
+		flag_pw = PW.BLUEFLAG;
+	} else {
+		flag_pw = PW.REDFLAG;
+	}
+
+	// flags
+	if (targ.client.ps.powerups[flag_pw] &&
+		targ.client.sess.team != attacker.client.sess.team) {
+		attacker.client.pers.teamState.lasthurtcarrier = level.time;
+	}
+
+	// // skulls
+	// if (targ.client.ps.generic1 &&
+	// 	targ.client.sess.team != attacker.client.sess.team) {
+	// 	attacker.client.pers.teamState.lasthurtcarrier = level.time;
+	// }
+}
+
 /**
  * Team_ResetFlags
  */
@@ -21803,30 +22051,26 @@ function Team_ResetFlags() {
  */
 function Team_ResetFlag(team) {
 	var str;
-	var ents;
-	var rent;
-
 	switch (team) {
-	case TEAM.RED:
-		str = "team_CTF_redflag";
-		break;
-	case TEAM.BLUE:
-		str = "team_CTF_blueflag";
-		break;
-	case TEAM.FREE:
-		str = "team_CTF_neutralflag";
-		break;
-	default:
-		return null;
+		case TEAM.RED:
+			str = 'team_CTF_redflag';
+			break;
+		case TEAM.BLUE:
+			str = 'team_CTF_blueflag';
+			break;
+		case TEAM.FREE:
+			str = 'team_CTF_neutralflag';
+			break;
+		default:
+			return null;
 	}
 
-	ents = FindEntity({ classname: str });
+	var ents = FindEntity({ classname: str });
+	var rent;
 
 	for (var i = 0; i < ents.length; i++) {
-
 		if (ents[i].flags & GFL.DROPPED_ITEM) {
 			FreeEntity(ents[i]);
-
 		} else {
 			rent = ents[i];
 			RespawnItem(ents[i]);
@@ -21843,7 +22087,7 @@ function Team_ResetFlag(team) {
  */
 function Team_ReturnFlagSound(ent, team) {
 	if (!ent) {
-// 		G_Printf ("Warning:  NULL passed to Team_ReturnFlagSound\n");
+		log('Warning: NULL passed to Team_ReturnFlagSound');
 		return;
 	}
 
@@ -21861,12 +22105,12 @@ function Team_ReturnFlagSound(ent, team) {
  */
 function Team_TakeFlagSound(ent, team) {
 	if (!ent) {
-// 		G_Printf ("Warning:  NULL passed to Team_TakeFlagSound\n");
+		log('Warning: NULL passed to Team_TakeFlagSound');
 		return;
 	}
 
-	// only play sound when the flag was at the base
-	// or not picked up the last 10 seconds
+	// Only play sound when the flag was at the base
+	// or not picked up the last 10 seconds.
 	switch(team) {
 		case TEAM.RED:
 			if (teamgame.blueStatus != FLAG.ATBASE ) {
@@ -21902,7 +22146,7 @@ function Team_TakeFlagSound(ent, team) {
  */
 function Team_CaptureFlagSound(ent, team) {
 	if (!ent) {
-// 		G_Printf ("Warning:  NULL passed to Team_CaptureFlagSound\n");
+		log('Warning: NULL passed to Team_CaptureFlagSound');
 		return;
 	}
 
@@ -21959,13 +22203,14 @@ function Team_DroppedFlagThink(ent) {
 	}
 
 	Team_ReturnFlagSound(Team_ResetFlag(team), team);
+
 	// Reset Flag will delete this entity.
 }
 /**
  * Team_AddScore
  *
- * Used for gametype > GT_TEAM.
- * For gametype GT_TEAM the teamScores is updated in AddScore in g_combat.c
+ * Used for gametype > GT.TEAM.
+ * For gametype GT.TEAM the teamScores is updated in AddScore in g_combat.c
  */
 function Team_AddScore(team, origin, score) {
 	var tent = TempEntity(origin, EV.GLOBAL_TEAM_SOUND);
@@ -21996,7 +22241,7 @@ function Team_AddScore(team, origin, score) {
 		}
 	}
 
-	level.teamScores[team] += score;
+	level.arena.teamScores[team] += score;
 }
 
 /**
@@ -22004,6 +22249,7 @@ function Team_AddScore(team, origin, score) {
  */
 function SelectCTFSpawnPoint(team, teamstate, origin, angles) {
 	var classname;
+
 	if (teamstate == TEAM_STATE.BEGIN) {
 		if (team == TEAM.RED) {
 			classname = 'team_CTF_redplayer';
@@ -22017,6 +22263,7 @@ function SelectCTFSpawnPoint(team, teamstate, origin, angles) {
 			classname = 'team_CTF_bluespawn';
 		}
 	}
+
 	if (!classname) {
 		return SelectSpawnPoint(QMath.vec3origin, origin, angles);
 	}
