@@ -99,8 +99,8 @@ shaders = []
 textures = []
 
 for dir in subdirs(ASSET_DIR):
-	src_dir = ASSET_DIR + '/' + dir + '/src'
-	out_dir = ASSET_DIR + '/' + dir + '/built'
+	src_dir = ASSET_DIR + '/' + dir
+	out_dir = ASSET_DIR + '/' + dir + '/.built'
 	addAudio(audio, src_dir, out_dir)
 	addImages(images, src_dir, out_dir)
 	addMaps(maps, src_dir, out_dir)

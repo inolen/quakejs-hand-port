@@ -66,7 +66,7 @@ AssetMap.prototype._refresh = function () {
 		}
 
 		// We only care about the built subdirectory of each.
-		file = path.join(file, 'built');
+		file = path.join(file, '.built');
 		stat = fs.statSync(file);
 		if (!stat.isDirectory()) {
 			return;
