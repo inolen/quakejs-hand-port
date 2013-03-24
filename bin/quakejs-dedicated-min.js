@@ -5057,7 +5057,7 @@ function BaseWindingForPlane(normal, dist) {
 	}
 
 	if (x === -1) {
-		throw new Exception('BaseWindingForPlane: no axis found');
+		throw new Error('BaseWindingForPlane: no axis found');
 	}
 
 	var vup = vec3.create();
@@ -5208,11 +5208,11 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 	}
 
 	if (f.p.length > maxpts) {
-		throw new Exception('ClipWinding: points exceeded estimate');
+		throw new Error('ClipWinding: points exceeded estimate');
 	}
 
 	if (f.p.length > MAX_POINTS_ON_WINDING) {
-		throw new Exception('ClipWinding: MAX_POINTS_ON_WINDING');
+		throw new Error('ClipWinding: MAX_POINTS_ON_WINDING');
 	}
 
 	f.clone(inout);
@@ -5459,10 +5459,12 @@ return {
 });
 /*global vec3: true, mat4: true */
 
-define('common/qshared', ['common/qmath'], function (QMath) {
+define('common/qshared',['require','common/qmath'],function (require) {
+
+var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1133;
+var GAME_VERSION = 0.1134;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -6362,7 +6364,7 @@ else {
 }(this));
 /*global vec3: true */
 
-define('common/bsp-serializer',['require','vendor/bit-buffer','common/qmath'],function (require) {
+define('common/bsp-loader',['require','vendor/bit-buffer','common/qmath'],function (require) {
 
 var BitStream = require('vendor/bit-buffer').BitStream;
 var QMath = require('common/qmath');
@@ -6537,10 +6539,8 @@ var dsurface_t = function () {
 };
 dsurface_t.size = 104;
 
-/**
- * LoadBsp
- */
-function LoadBsp(data) {
+
+function load(data) {
 	var bb = new BitStream(data);
 
 	// Parse the header.
@@ -6558,31 +6558,28 @@ function LoadBsp(data) {
 
 	var bsp = new Bsp();
 
-	LoadEntities(bsp, data, header.lumps[LUMP.ENTITIES]);
-	LoadShaders(bsp, data, header.lumps[LUMP.SHADERS]);
-	LoadPlanes(bsp, data, header.lumps[LUMP.PLANES]);
-	LoadNodes(bsp, data, header.lumps[LUMP.NODES]);
-	LoadLeafs(bsp, data, header.lumps[LUMP.LEAFS]);
-	LoadLeafSurfaces(bsp, data, header.lumps[LUMP.LEAFSURFACES]);
-	LoadLeafBrushes(bsp, data, header.lumps[LUMP.LEAFBRUSHES]);
-	LoadBrushModels(bsp, data, header.lumps[LUMP.MODELS]);
-	LoadBrushes(bsp, data, header.lumps[LUMP.BRUSHES]);
-	LoadBrushSides(bsp, data, header.lumps[LUMP.BRUSHSIDES]);
-	LoadVerts(bsp, data, header.lumps[LUMP.DRAWVERTS]);
-	LoadIndexes(bsp, data, header.lumps[LUMP.DRAWINDEXES]);
-	LoadFogs(bsp, data, header.lumps[LUMP.FOGS]);
-	LoadSurfaces(bsp, data, header.lumps[LUMP.SURFACES]);
-	LoadLightmaps(bsp, data, header.lumps[LUMP.LIGHTMAPS]);
-	LoadLightGrid(bsp, data, header.lumps[LUMP.LIGHTGRID]);
-	LoadVisibility(bsp, data, header.lumps[LUMP.VISIBILITY]);
+	loadEntities(bsp, data, header.lumps[LUMP.ENTITIES]);
+	loadShaders(bsp, data, header.lumps[LUMP.SHADERS]);
+	loadPlanes(bsp, data, header.lumps[LUMP.PLANES]);
+	loadNodes(bsp, data, header.lumps[LUMP.NODES]);
+	loadLeafs(bsp, data, header.lumps[LUMP.LEAFS]);
+	loadLeafSurfaces(bsp, data, header.lumps[LUMP.LEAFSURFACES]);
+	loadLeafBrushes(bsp, data, header.lumps[LUMP.LEAFBRUSHES]);
+	loadBrushModels(bsp, data, header.lumps[LUMP.MODELS]);
+	loadBrushes(bsp, data, header.lumps[LUMP.BRUSHES]);
+	loadBrushSides(bsp, data, header.lumps[LUMP.BRUSHSIDES]);
+	loadVerts(bsp, data, header.lumps[LUMP.DRAWVERTS]);
+	loadIndexes(bsp, data, header.lumps[LUMP.DRAWINDEXES]);
+	loadFogs(bsp, data, header.lumps[LUMP.FOGS]);
+	loadSurfaces(bsp, data, header.lumps[LUMP.SURFACES]);
+	loadLightmaps(bsp, data, header.lumps[LUMP.LIGHTMAPS]);
+	loadLightGrid(bsp, data, header.lumps[LUMP.LIGHTGRID]);
+	loadVisibility(bsp, data, header.lumps[LUMP.VISIBILITY]);
 
 	return bsp;
 }
 
-/**
- * LoadEntities
- */
-function LoadEntities(bsp, buffer, lump) {
+function loadEntities(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6617,10 +6614,7 @@ function LoadEntities(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadShaders
- */
-function LoadShaders(bsp, buffer, lump) {
+function loadShaders(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6635,10 +6629,7 @@ function LoadShaders(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadPlanes
- */
-function LoadPlanes(bsp, buffer, lump) {
+function loadPlanes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6656,10 +6647,7 @@ function LoadPlanes(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadNodes
- */
-function LoadNodes(bsp, buffer, lump) {
+function loadNodes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6680,10 +6668,7 @@ function LoadNodes(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadLeafs
- */
-function LoadLeafs(bsp, buffer, lump) {
+function loadLeafs(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6707,10 +6692,7 @@ function LoadLeafs(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadLeafSurfaces
- */
-function LoadLeafSurfaces(bsp, buffer, lump) {
+function loadLeafSurfaces(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6721,10 +6703,7 @@ function LoadLeafSurfaces(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadLeafBrushes
- */
-function LoadLeafBrushes(bsp, buffer, lump) {
+function loadLeafBrushes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6735,10 +6714,7 @@ function LoadLeafBrushes(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadBrushModels
- */
-function LoadBrushModels(bsp, buffer, lump) {
+function loadBrushModels(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6762,10 +6738,7 @@ function LoadBrushModels(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadBrushes
- */
-function LoadBrushes(bsp, buffer, lump) {
+function loadBrushes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6780,10 +6753,7 @@ function LoadBrushes(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadBrushSides
- */
-function LoadBrushSides(bsp, buffer, lump) {
+function loadBrushSides(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6797,10 +6767,7 @@ function LoadBrushSides(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadVerts
- */
-function LoadVerts(bsp, buffer, lump) {
+function loadVerts(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6826,10 +6793,7 @@ function LoadVerts(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadIndexes
- */
-function LoadIndexes(bsp, buffer, lump) {
+function loadIndexes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6840,10 +6804,7 @@ function LoadIndexes(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadFogs
- */
-function LoadFogs(bsp, buffer, lump) {
+function loadFogs(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6858,10 +6819,7 @@ function LoadFogs(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadSurfaces
- */
-function LoadSurfaces(bsp, buffer, lump) {
+function loadSurfaces(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6902,7 +6860,7 @@ function LoadSurfaces(bsp, buffer, lump) {
 /**
  * LoadLightmaps
  */
-function LoadLightmaps(bsp, buffer, lump) {
+function loadLightmaps(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6913,10 +6871,7 @@ function LoadLightmaps(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadLightGrid
- */
-function LoadLightGrid(bsp, buffer, lump) {
+function loadLightGrid(bsp, buffer, lump) {
 	bsp.lightGridInverseSize[0] = 1 / bsp.lightGridSize[0];
 	bsp.lightGridInverseSize[1] = 1 / bsp.lightGridSize[1];
 	bsp.lightGridInverseSize[2] = 1 / bsp.lightGridSize[2];
@@ -6948,10 +6903,7 @@ function LoadLightGrid(bsp, buffer, lump) {
 	}
 }
 
-/**
- * LoadVisibility
- */
-function LoadVisibility(bsp, buffer, lump) {
+function loadVisibility(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6981,7 +6933,7 @@ return {
 	drawVert_t:   drawVert_t,
 	dsurface_t:   dsurface_t,
 
-	deserialize:  LoadBsp
+	load:         load
 };
 
 });
@@ -7254,12 +7206,12 @@ define('common/surfaceflags',['require'],function (require) {
 });
 /*global vec3: true, vec4: true, mat4: true */
 
-define('clipmap/cm',['require','vendor/gl-matrix','common/bsp-serializer','common/qmath','common/qshared','common/surfaceflags'],function (require) {
-	var glmatrix      = require('vendor/gl-matrix');
-	var BspSerializer = require('common/bsp-serializer');
-	var QMath         = require('common/qmath');
-	var QS            = require('common/qshared');
-	var SURF          = require('common/surfaceflags');
+define('clipmap/cm',['require','vendor/gl-matrix','common/bsp-loader','common/qmath','common/qshared','common/surfaceflags'],function (require) {
+	var glmatrix  = require('vendor/gl-matrix');
+	var BSPLoader = require('common/bsp-loader');
+	var QMath     = require('common/qmath');
+	var QS        = require('common/qshared');
+	var SURF      = require('common/surfaceflags');
 
 	function ClipMap(imp) {
 		var log = imp.log;
@@ -7303,7 +7255,7 @@ var ClipWorld = function () {
 var ClipModel = function () {
 	this.mins = vec3.create();
 	this.maxs = vec3.create();
-	this.leaf = new BspSerializer.dleaf_t();               // submodels don't reference the main tree
+	this.leaf = new BSPLoader.dleaf_t();               // submodels don't reference the main tree
 };
 
 var ClipBrushSide = function () {
@@ -7818,6 +7770,20 @@ function TransposeGrid(grid) {
  *
  **********************************************************/
 
+// It's ok to re-use these statically (FF is slow to allocate
+// these and will show unresponsive errors otherwise).
+var gridPlanes = new Array(MAX_GRID_SIZE);
+
+(function () {
+for (var i = 0; i < MAX_GRID_SIZE; i++) {
+	gridPlanes[i] = new Array(MAX_GRID_SIZE);
+
+	for (var j = 0; j < MAX_GRID_SIZE; j++) {
+		gridPlanes[i][j] = new Array(2);
+	}
+}
+})();
+
 /**
  * PatchCollideFromGrid
  */
@@ -7826,14 +7792,6 @@ function PatchCollideFromGrid(grid, pc) {
 	var p1, p2, p3;
 	var borders = [0, 0, 0, 0];
 	var noAdjust = [0, 0, 0, 0];
-
-	var gridPlanes = new Array(MAX_GRID_SIZE);
-	for (i = 0; i < MAX_GRID_SIZE; i++) {
-		gridPlanes[i] = new Array(MAX_GRID_SIZE);
-		for (j = 0; j < MAX_GRID_SIZE; j++) {
-			gridPlanes[i][j] = new Array(2);
-		}
-	}
 
 	// Find the planes for each triangle of the grid.
 	for (i = 0; i < grid.width - 1; i++) {
@@ -9940,7 +9898,7 @@ function LoadPatches(surfaces, verts) {
 
 	for (var i = 0; i < surfaces.length; i++) {
 		var surface = surfaces[i];
-		if (surface.surfaceType !== BspSerializer.MST.PATCH) {
+		if (surface.surfaceType !== BSPLoader.MST.PATCH) {
 			continue;  // ignore other surfaces
 		}
 
@@ -10002,7 +9960,7 @@ function InitBoxHull() {
 		var side = i & 1;
 
 		// Brush sides.
-		var s = new BspSerializer.dbrushside_t();
+		var s = new BSPLoader.dbrushside_t();
 		s.plane = box_planes[i * 2 + side];
 		s.surfaceFlags = 0;
 
@@ -13661,7 +13619,7 @@ function ForceLegsAnim(anim) {
 		quantity: 0,
 		giType: IT.TEAM,
 		giTag: PW.BLUEFLAG
-	},
+	}// ,
 	// /**
 	//  * 1FCTF
 	//  */
@@ -26510,15 +26468,15 @@ define('client/cl',[],function () {
 });
 /*global vec3: true, mat4: true */
 
-define('common/com',['require','vendor/async','vendor/bit-buffer','common/qmath','common/qshared','common/bsp-serializer','common/cvar','server/sv','client/cl'],function (require) {
-	var async         = require('vendor/async');
-	var BitStream     = require('vendor/bit-buffer').BitStream;
-	var QMath         = require('common/qmath');
-	var QS            = require('common/qshared');
-	var BspSerializer = require('common/bsp-serializer');
-	var Cvar          = require('common/cvar');
-	var Server        = require('server/sv');
-	var Client        = require('client/cl');
+define('common/com',['require','vendor/async','vendor/bit-buffer','common/qmath','common/qshared','common/bsp-loader','common/cvar','server/sv','client/cl'],function (require) {
+	var async     = require('vendor/async');
+	var BitStream = require('vendor/bit-buffer').BitStream;
+	var QMath     = require('common/qmath');
+	var QS        = require('common/qshared');
+	var BSPLoader = require('common/bsp-loader');
+	var Cvar      = require('common/cvar');
+	var Server    = require('server/sv');
+	var Client    = require('client/cl');
 
 	var MAX_MAP_AREA_BYTES = 32;  // bit vector of area visibility
 
@@ -28007,7 +27965,7 @@ function LoadBsp(mapname, callback) {
 		}
 
 		try {
-			var world = BspSerializer.deserialize(data);
+			var world = BSPLoader.load(data);
 			callback(null, world);
 		} catch (e) {
 			callback(e);
