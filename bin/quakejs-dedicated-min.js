@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1136;
+var GAME_VERSION = 0.1137;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -27943,7 +27943,7 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	var idx, field, fromF, toF, func;
 
 	if (number < 0 || number >= QS.MAX_GENTITIES) {
-		error('Bad delta entity number: ', number);
+		error('Bad delta entity number: ' + number);
 	}
 
 	// Check for a remove.
