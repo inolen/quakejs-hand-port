@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1135;
+var GAME_VERSION = 0.1136;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
