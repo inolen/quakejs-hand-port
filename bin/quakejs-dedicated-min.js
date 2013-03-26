@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1141;
+var GAME_VERSION = 0.1142;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -26051,7 +26051,7 @@ function WriteSnapshotToClient(client, msg) {
 		lastframe = 0;
 	} else if (client.netchan.outgoingSequence - client.deltaMessage >= (COM.PACKET_BACKUP - 3)) {
 		// Client hasn't gotten a good message through in a long time.
-		// log(client.name, ': Delta request from out of date packet.');
+		log(client.name, ': Delta request from out of date packet.');
 		oldframe = null;
 		lastframe = 0;
 	} else {
@@ -26834,7 +26834,7 @@ function CmdUnset(name, value) {
 		return;
 	}
 
-	cvar(cvar.defaultValue());
+	cvar.set(cvar.defaultValue());
 }
 
 /**
