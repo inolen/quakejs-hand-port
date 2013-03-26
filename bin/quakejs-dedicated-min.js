@@ -1,34 +1,21 @@
 
-/*global setImmediate: false, setTimeout: false, console: false */
+/*global setTimeout: false, console: false */
 (function () {
 
     var async = {};
 
     // global on the server, window in the browser
-    var root, previous_async;
-
-    root = this;
-    if (root != null) {
-      previous_async = root.async;
-    }
+    var root = this,
+        previous_async = root.async;
 
     async.noConflict = function () {
         root.async = previous_async;
         return async;
     };
 
-    function only_once(fn) {
-        var called = false;
-        return function() {
-            if (called) throw new Error("Callback was already called.");
-            called = true;
-            fn.apply(root, arguments);
-        }
-    }
-
     //// cross-browser compatiblity functions ////
 
-    var _each = function (arr, iterator) {
+    var _forEach = function (arr, iterator) {
         if (arr.forEach) {
             return arr.forEach(iterator);
         }
@@ -42,7 +29,7 @@
             return arr.map(iterator);
         }
         var results = [];
-        _each(arr, function (x, i, a) {
+        _forEach(arr, function (x, i, a) {
             results.push(iterator(x, i, a));
         });
         return results;
@@ -52,7 +39,7 @@
         if (arr.reduce) {
             return arr.reduce(iterator, memo);
         }
-        _each(arr, function (x, i, a) {
+        _forEach(arr, function (x, i, a) {
             memo = iterator(memo, x, i, a);
         });
         return memo;
@@ -75,46 +62,37 @@
 
     //// nextTick implementation with browser-compatible fallback ////
     if (typeof process === 'undefined' || !(process.nextTick)) {
-        if (typeof setImmediate === 'function') {
-            async.setImmediate = setImmediate;
-            async.nextTick = setImmediate;
-        }
-        else {
-            async.nextTick = function (fn) {
-                setTimeout(fn, 0);
-            };
-            async.setImmediate = async.nextTick;
-        }
+        async.nextTick = function (fn) {
+            setTimeout(fn, 0);
+        };
     }
     else {
         async.nextTick = process.nextTick;
-        async.setImmediate = setImmediate;
     }
 
-    async.each = function (arr, iterator, callback) {
+    async.forEach = function (arr, iterator, callback) {
         callback = callback || function () {};
         if (!arr.length) {
             return callback();
         }
         var completed = 0;
-        _each(arr, function (x) {
-            iterator(x, only_once(function (err) {
+        _forEach(arr, function (x) {
+            iterator(x, function (err) {
                 if (err) {
                     callback(err);
                     callback = function () {};
                 }
                 else {
                     completed += 1;
-                    if (completed >= arr.length) {
+                    if (completed === arr.length) {
                         callback(null);
                     }
                 }
-            }));
+            });
         });
     };
-    async.forEach = async.each;
 
-    async.eachSeries = function (arr, iterator, callback) {
+    async.forEachSeries = function (arr, iterator, callback) {
         callback = callback || function () {};
         if (!arr.length) {
             return callback();
@@ -128,7 +106,7 @@
                 }
                 else {
                     completed += 1;
-                    if (completed >= arr.length) {
+                    if (completed === arr.length) {
                         callback(null);
                     }
                     else {
@@ -139,71 +117,55 @@
         };
         iterate();
     };
-    async.forEachSeries = async.eachSeries;
 
-    async.eachLimit = function (arr, limit, iterator, callback) {
-        var fn = _eachLimit(limit);
-        fn.apply(null, [arr, iterator, callback]);
-    };
-    async.forEachLimit = async.eachLimit;
+    async.forEachLimit = function (arr, limit, iterator, callback) {
+        callback = callback || function () {};
+        if (!arr.length || limit <= 0) {
+            return callback();
+        }
+        var completed = 0;
+        var started = 0;
+        var running = 0;
 
-    var _eachLimit = function (limit) {
-
-        return function (arr, iterator, callback) {
-            callback = callback || function () {};
-            if (!arr.length || limit <= 0) {
+        (function replenish () {
+            if (completed === arr.length) {
                 return callback();
             }
-            var completed = 0;
-            var started = 0;
-            var running = 0;
 
-            (function replenish () {
-                if (completed >= arr.length) {
-                    return callback();
-                }
-
-                while (running < limit && started < arr.length) {
-                    started += 1;
-                    running += 1;
-                    iterator(arr[started - 1], function (err) {
-                        if (err) {
-                            callback(err);
-                            callback = function () {};
+            while (running < limit && started < arr.length) {
+                started += 1;
+                running += 1;
+                iterator(arr[started - 1], function (err) {
+                    if (err) {
+                        callback(err);
+                        callback = function () {};
+                    }
+                    else {
+                        completed += 1;
+                        running -= 1;
+                        if (completed === arr.length) {
+                            callback();
                         }
                         else {
-                            completed += 1;
-                            running -= 1;
-                            if (completed >= arr.length) {
-                                callback();
-                            }
-                            else {
-                                replenish();
-                            }
+                            replenish();
                         }
-                    });
-                }
-            })();
-        };
+                    }
+                });
+            }
+        })();
     };
 
 
     var doParallel = function (fn) {
         return function () {
             var args = Array.prototype.slice.call(arguments);
-            return fn.apply(null, [async.each].concat(args));
-        };
-    };
-    var doParallelLimit = function(limit, fn) {
-        return function () {
-            var args = Array.prototype.slice.call(arguments);
-            return fn.apply(null, [_eachLimit(limit)].concat(args));
+            return fn.apply(null, [async.forEach].concat(args));
         };
     };
     var doSeries = function (fn) {
         return function () {
             var args = Array.prototype.slice.call(arguments);
-            return fn.apply(null, [async.eachSeries].concat(args));
+            return fn.apply(null, [async.forEachSeries].concat(args));
         };
     };
 
@@ -224,18 +186,12 @@
     };
     async.map = doParallel(_asyncMap);
     async.mapSeries = doSeries(_asyncMap);
-    async.mapLimit = function (arr, limit, iterator, callback) {
-        return _mapLimit(limit)(arr, iterator, callback);
-    };
 
-    var _mapLimit = function(limit) {
-        return doParallelLimit(limit, _asyncMap);
-    };
 
     // reduce only has a series version, as doing reduce in parallel won't
     // work in many situations.
     async.reduce = function (arr, memo, iterator, callback) {
-        async.eachSeries(arr, function (x, callback) {
+        async.forEachSeries(arr, function (x, callback) {
             iterator(memo, x, function (err, v) {
                 memo = v;
                 callback(err);
@@ -326,7 +282,7 @@
     async.detectSeries = doSeries(_detect);
 
     async.some = function (arr, iterator, main_callback) {
-        async.each(arr, function (x, callback) {
+        async.forEach(arr, function (x, callback) {
             iterator(x, function (v) {
                 if (v) {
                     main_callback(true);
@@ -342,7 +298,7 @@
     async.any = async.some;
 
     async.every = function (arr, iterator, main_callback) {
-        async.each(arr, function (x, callback) {
+        async.forEach(arr, function (x, callback) {
             iterator(x, function (v) {
                 if (!v) {
                     main_callback(false);
@@ -405,7 +361,7 @@
             }
         };
         var taskComplete = function () {
-            _each(listeners.slice(0), function (fn) {
+            _forEach(listeners.slice(0), function (fn) {
                 fn();
             });
         };
@@ -417,26 +373,21 @@
             }
         });
 
-        _each(keys, function (k) {
+        _forEach(keys, function (k) {
             var task = (tasks[k] instanceof Function) ? [tasks[k]]: tasks[k];
             var taskCallback = function (err) {
-                var args = Array.prototype.slice.call(arguments, 1);
-                if (args.length <= 1) {
-                    args = args[0];
-                }
                 if (err) {
-                    var safeResults = {};
-                    _each(_keys(results), function(rkey) {
-                        safeResults[rkey] = results[rkey];
-                    });
-                    safeResults[k] = args;
-                    callback(err, safeResults);
+                    callback(err);
                     // stop subsequent errors hitting callback multiple times
                     callback = function () {};
                 }
                 else {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (args.length <= 1) {
+                        args = args[0];
+                    }
                     results[k] = args;
-                    async.setImmediate(taskComplete);
+                    taskComplete();
                 }
             };
             var requires = task.slice(0, Math.abs(task.length - 1)) || [];
@@ -462,17 +413,13 @@
 
     async.waterfall = function (tasks, callback) {
         callback = callback || function () {};
-        if (tasks.constructor !== Array) {
-          var err = new Error('First argument to waterfall must be an array of functions');
-          return callback(err);
-        }
         if (!tasks.length) {
             return callback();
         }
         var wrapIterator = function (iterator) {
             return function (err) {
                 if (err) {
-                    callback.apply(null, arguments);
+                    callback(err);
                     callback = function () {};
                 }
                 else {
@@ -484,7 +431,7 @@
                     else {
                         args.push(callback);
                     }
-                    async.setImmediate(function () {
+                    async.nextTick(function () {
                         iterator.apply(null, args);
                     });
                 }
@@ -493,10 +440,10 @@
         wrapIterator(async.iterator(tasks))();
     };
 
-    var _parallel = function(eachfn, tasks, callback) {
+    async.parallel = function (tasks, callback) {
         callback = callback || function () {};
         if (tasks.constructor === Array) {
-            eachfn.map(tasks, function (fn, callback) {
+            async.map(tasks, function (fn, callback) {
                 if (fn) {
                     fn(function (err) {
                         var args = Array.prototype.slice.call(arguments, 1);
@@ -510,7 +457,7 @@
         }
         else {
             var results = {};
-            eachfn.each(_keys(tasks), function (k, callback) {
+            async.forEach(_keys(tasks), function (k, callback) {
                 tasks[k](function (err) {
                     var args = Array.prototype.slice.call(arguments, 1);
                     if (args.length <= 1) {
@@ -523,14 +470,6 @@
                 callback(err, results);
             });
         }
-    };
-
-    async.parallel = function (tasks, callback) {
-        _parallel({ map: async.map, each: async.each }, tasks, callback);
-    };
-
-    async.parallelLimit = function(tasks, limit, callback) {
-        _parallel({ map: _mapLimit(limit), each: _eachLimit(limit) }, tasks, callback);
     };
 
     async.series = function (tasks, callback) {
@@ -550,7 +489,7 @@
         }
         else {
             var results = {};
-            async.eachSeries(_keys(tasks), function (k, callback) {
+            async.forEachSeries(_keys(tasks), function (k, callback) {
                 tasks[k](function (err) {
                     var args = Array.prototype.slice.call(arguments, 1);
                     if (args.length <= 1) {
@@ -618,20 +557,6 @@
         }
     };
 
-    async.doWhilst = function (iterator, test, callback) {
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
-            }
-            if (test()) {
-                async.doWhilst(iterator, test, callback);
-            }
-            else {
-                callback();
-            }
-        });
-    };
-
     async.until = function (test, iterator, callback) {
         if (!test()) {
             iterator(function (err) {
@@ -646,47 +571,7 @@
         }
     };
 
-    async.doUntil = function (iterator, test, callback) {
-        iterator(function (err) {
-            if (err) {
-                return callback(err);
-            }
-            if (!test()) {
-                async.doUntil(iterator, test, callback);
-            }
-            else {
-                callback();
-            }
-        });
-    };
-
     async.queue = function (worker, concurrency) {
-        if (concurrency === undefined) {
-            concurrency = 1;
-        }
-        function _insert(q, data, pos, callback) {
-          if(data.constructor !== Array) {
-              data = [data];
-          }
-          _each(data, function(task) {
-              var item = {
-                  data: task,
-                  callback: typeof callback === 'function' ? callback : null
-              };
-
-              if (pos) {
-                q.tasks.unshift(item);
-              } else {
-                q.tasks.push(item);
-              }
-
-              if (q.saturated && q.tasks.length === concurrency) {
-                  q.saturated();
-              }
-              async.setImmediate(q.process);
-          });
-        }
-
         var workers = 0;
         var q = {
             tasks: [],
@@ -695,30 +580,33 @@
             empty: null,
             drain: null,
             push: function (data, callback) {
-              _insert(q, data, false, callback);
-            },
-            unshift: function (data, callback) {
-              _insert(q, data, true, callback);
+                if(data.constructor !== Array) {
+                    data = [data];
+                }
+                _forEach(data, function(task) {
+                    q.tasks.push({
+                        data: task,
+                        callback: typeof callback === 'function' ? callback : null
+                    });
+                    if (q.saturated && q.tasks.length == concurrency) {
+                        q.saturated();
+                    }
+                    async.nextTick(q.process);
+                });
             },
             process: function () {
                 if (workers < q.concurrency && q.tasks.length) {
                     var task = q.tasks.shift();
-                    if (q.empty && q.tasks.length === 0) {
-                        q.empty();
-                    }
+                    if(q.empty && q.tasks.length == 0) q.empty();
                     workers += 1;
-                    var next = function () {
+                    worker(task.data, function () {
                         workers -= 1;
                         if (task.callback) {
                             task.callback.apply(task, arguments);
                         }
-                        if (q.drain && q.tasks.length + workers === 0) {
-                            q.drain();
-                        }
+                        if(q.drain && q.tasks.length + workers == 0) q.drain();
                         q.process();
-                    };
-                    var cb = only_once(next);
-                    worker(task.data, cb);
+                    });
                 }
             },
             length: function () {
@@ -729,71 +617,6 @@
             }
         };
         return q;
-    };
-
-    async.cargo = function (worker, payload) {
-        var working     = false,
-            tasks       = [];
-
-        var cargo = {
-            tasks: tasks,
-            payload: payload,
-            saturated: null,
-            empty: null,
-            drain: null,
-            push: function (data, callback) {
-                if(data.constructor !== Array) {
-                    data = [data];
-                }
-                _each(data, function(task) {
-                    tasks.push({
-                        data: task,
-                        callback: typeof callback === 'function' ? callback : null
-                    });
-                    if (cargo.saturated && tasks.length === payload) {
-                        cargo.saturated();
-                    }
-                });
-                async.setImmediate(cargo.process);
-            },
-            process: function process() {
-                if (working) return;
-                if (tasks.length === 0) {
-                    if(cargo.drain) cargo.drain();
-                    return;
-                }
-
-                var ts = typeof payload === 'number'
-                            ? tasks.splice(0, payload)
-                            : tasks.splice(0);
-
-                var ds = _map(ts, function (task) {
-                    return task.data;
-                });
-
-                if(cargo.empty) cargo.empty();
-                working = true;
-                worker(ds, function () {
-                    working = false;
-
-                    var args = arguments;
-                    _each(ts, function (data) {
-                        if (data.callback) {
-                            data.callback.apply(null, args);
-                        }
-                    });
-
-                    process();
-                });
-            },
-            length: function () {
-                return tasks.length;
-            },
-            running: function () {
-                return working;
-            }
-        };
-        return cargo;
     };
 
     var _console_fn = function (name) {
@@ -808,7 +631,7 @@
                         }
                     }
                     else if (console[name]) {
-                        _each(args, function (x) {
+                        _forEach(args, function (x) {
                             console[name](x);
                         });
                     }
@@ -850,7 +673,6 @@
                 }]));
             }
         };
-        memoized.memo = memo;
         memoized.unmemoized = fn;
         return memoized;
     };
@@ -861,78 +683,9 @@
       };
     };
 
-    async.times = function (count, iterator, callback) {
-        var counter = [];
-        for (var i = 0; i < count; i++) {
-            counter.push(i);
-        }
-        return async.map(counter, iterator, callback);
-    };
-
-    async.timesSeries = function (count, iterator, callback) {
-        var counter = [];
-        for (var i = 0; i < count; i++) {
-            counter.push(i);
-        }
-        return async.mapSeries(counter, iterator, callback);
-    };
-
-    async.compose = function (/* functions... */) {
-        var fns = Array.prototype.reverse.call(arguments);
-        return function () {
-            var that = this;
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args.pop();
-            async.reduce(fns, args, function (newargs, fn, cb) {
-                fn.apply(that, newargs.concat([function () {
-                    var err = arguments[0];
-                    var nextargs = Array.prototype.slice.call(arguments, 1);
-                    cb(err, nextargs);
-                }]))
-            },
-            function (err, results) {
-                callback.apply(that, [err].concat(results));
-            });
-        };
-    };
-
-    var _applyEach = function (eachfn, fns /*args...*/) {
-        var go = function () {
-            var that = this;
-            var args = Array.prototype.slice.call(arguments);
-            var callback = args.pop();
-            return eachfn(fns, function (fn, cb) {
-                fn.apply(that, args.concat([cb]));
-            },
-            callback);
-        };
-        if (arguments.length > 2) {
-            var args = Array.prototype.slice.call(arguments, 2);
-            return go.apply(this, args);
-        }
-        else {
-            return go;
-        }
-    };
-    async.applyEach = doParallel(_applyEach);
-    async.applyEachSeries = doSeries(_applyEach);
-
-    async.forever = function (fn, callback) {
-        function next(err) {
-            if (err) {
-                if (callback) {
-                    return callback(err);
-                }
-                throw err;
-            }
-            fn(next);
-        }
-        next();
-    };
-
     // AMD / RequireJS
     if (typeof define !== 'undefined' && define.amd) {
-        define('vendor/async',[], function () {
+        define('async', [], function () {
             return async;
         });
     }
@@ -946,6 +699,7 @@
     }
 
 }());
+
 /**
  * @fileoverview gl-matrix - High performance matrix and vector operations for WebGL
  * @author Brandon Jones
@@ -986,7 +740,7 @@
         module.exports = factory(global);
     } else if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define('vendor/gl-matrix',[], function () {
+        define('glmatrix',[], function () {
             return factory(root);
         });
     } else {
@@ -4405,9 +4159,7 @@
 
 /*global vec3: true, mat4: true */
 
-define('common/qmath',['require','vendor/gl-matrix'],function (require) {
-
-var glmatrix = require('vendor/gl-matrix');
+define('common/qmath', ['glmatrix'], function (glmatrix) {
 
 var vec3origin  = vec3.create();
 var axisDefault = [
@@ -5057,7 +4809,7 @@ function BaseWindingForPlane(normal, dist) {
 	}
 
 	if (x === -1) {
-		throw new Error('BaseWindingForPlane: no axis found');
+		throw new Exception('BaseWindingForPlane: no axis found');
 	}
 
 	var vup = vec3.create();
@@ -5208,11 +4960,11 @@ function ChopWindingInPlace(inout, normal, dist, epsilon) {
 	}
 
 	if (f.p.length > maxpts) {
-		throw new Error('ClipWinding: points exceeded estimate');
+		throw new Exception('ClipWinding: points exceeded estimate');
 	}
 
 	if (f.p.length > MAX_POINTS_ON_WINDING) {
-		throw new Error('ClipWinding: MAX_POINTS_ON_WINDING');
+		throw new Exception('ClipWinding: MAX_POINTS_ON_WINDING');
 	}
 
 	f.clone(inout);
@@ -5459,12 +5211,10 @@ return {
 });
 /*global vec3: true, mat4: true */
 
-define('common/qshared',['require','common/qmath'],function (require) {
-
-var QMath = require('common/qmath');
+define('common/qshared', ['common/qmath'], function (QMath) {
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1139;
+var GAME_VERSION = 0.1114;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5615,10 +5365,6 @@ var MAX_PS_EVENTS           = 2;
 var PMOVEFRAMECOUNTBITS     = 6;
 
 var PlayerState = function () {
-	this.reset();
-};
-
-PlayerState.prototype.reset = function () {
 	this.clientNum           = 0;                          // ranges from 0 to MAX_CLIENTS-1
 	this.arenaNum            = ARENANUM_NONE;
 	this.commandTime         = 0;                          // cmd->serverTime of last executed command
@@ -5902,6 +5648,7 @@ var TraceResults = function () {
 	this.surfaceFlags = 0;
 	this.contents     = 0;
 	this.entityNum    = 0;
+	this.shaderName   = null;                              // debugging
 };
 
 TraceResults.prototype.reset = function () {
@@ -5998,20 +5745,6 @@ function atob64(arr) {
 	return btoa(str);
 }
 
-/**
- * EscapeColor
- */
-function EscapeColor(color) {
-	return '^' + color;
-}
-
-/**
- * StripColors
- */
-function StripColors(text) {
-	return text.replace(/\^(\d)(.*?)(?=\^|$)/g, '$2');
-}
-
 return {
 	GAME_VERSION:          GAME_VERSION,
 	PROTOCOL_VERSION:      PROTOCOL_VERSION,
@@ -6062,9 +5795,7 @@ return {
 	AGET:                  AGET,
 	ASET:                  ASET,
 
-	atob64:                atob64,
-	EscapeColor:           EscapeColor,
-	StripColors:           StripColors
+	atob64:                atob64
 };
 
 });
@@ -6104,12 +5835,6 @@ Object.defineProperty(BitView.prototype, 'buffer', {
 	configurable: false
 });
 
-Object.defineProperty(BitView.prototype, 'byteLength', {
-	get: function () { return this._view.length; },
-	enumerable: true,
-	configurable: false
-});
-
 BitView.prototype._getBit = function (offset) {
 	return this._view[offset >> 3] >> (offset & 7) & 0x1;
 };
@@ -6129,21 +5854,12 @@ BitView.prototype.getBits = function (offset, bits, signed) {
 		throw new Error('Cannot get ' + bits + ' bit(s) from offset ' + offset + ', ' + available + ' available');
 	}
 
+	// FIXME We could compare bits to offset's alignment
+	// and OR on entire byte if appropriate.
+
 	var value = 0;
-	for (var i = 0; i < bits;) {
-		var read;
-
-		// Read an entire byte if we can.
-		if ((bits - i) >= 8 && ((offset & 7) === 0)) {
-			value |= (this._view[offset >> 3] << i);
-			read = 8;
-		} else {
-			value |= (this._getBit(offset) << i);
-			read = 1;
-		}
-
-		offset += read;
-		i += read;
+	for (var i = 0; i < bits; i++) {
+		value |= (this._getBit(offset++) << i);
 	}
 
 	if (signed) {
@@ -6167,22 +5883,9 @@ BitView.prototype.setBits = function (offset, value, bits) {
 		throw new Error('Cannot set ' + bits + ' bit(s) from offset ' + offset + ', ' + available + ' available');
 	}
 
-	for (var i = 0; i < bits;) {
-		var wrote;
-
-		// Write an entire byte if we can.
-		if ((bits - i) >= 8 && ((offset & 7) === 0)) {
-			this._view[offset >> 3] = value & 0xFF;
-			wrote = 8;
-		} else {
-			this._setBit(offset, value & 0x1);
-			wrote = 1;
-		}
-
-		value = (value >> wrote);
-
-		offset += wrote;
-		i += wrote;
+	for (var i = 0; i < bits; i++) {
+		this._setBit(offset++, value & 0x1);
+		value = (value >> 1);
 	}
 };
 
@@ -6246,68 +5949,12 @@ BitView.prototype.setFloat64 = function (offset, value) {
  * to the underlying buffer.
  *
  **********************************************************/
-var reader = function (name, size) {
-	return function () {
-		var val = this._view[name](this._index);
-		this._index += size;
-		return val;
-	};
-};
-
-var writer = function (name, size) {
-	return function (value) {
-		this._view[name](this._index, value);
-		this._index += size;
-	};
-};
-
-function readASCIIString(stream, bytes) {
-	var i = 0;
-	var chars = [];
-	var append = true;
-
-	// Read while we still have space available, or until we've
-	// hit the fixed byte length passed in.
-	while (!bytes || (bytes && i < bytes)) {
-		var c = stream.readUint8();
-
-		// Stop appending chars once we hit 0x00
-		if (c === 0x00) {
-			append = false;
-
-			// If we don't have a fixed length to read, break out now.
-			if (!bytes) {
-				break;
-			}
-		}
-
-		if (append) {
-			chars.push(c);
-		}
-
-		i++;
-	}
-
-	// Convert char code array back to string.
-	return chars.map(function (x) {
-		return String.fromCharCode(x);
-	}).join('');
-};
-
-function writeASCIIString(stream, string, bytes) {
-	var length = bytes || string.length + 1;  // + 1 for NULL
-
-	for (var i = 0; i < length; i++) {
-		stream.writeUint8(i < string.length ? string.charCodeAt(i) : 0x00);
-	}
-}
-
 var BitStream = function (source, byteOffset, byteLength) {
 	var isBuffer = source instanceof ArrayBuffer ||
 		(typeof(Buffer) !== 'undefined' && source instanceof Buffer);
 
-	if (!(source instanceof BitView) && !(source instanceof DataView) && !isBuffer) {
-		throw new Error('Must specify a valid BitView, DataView, ArrayBuffer or Buffer');
+	if (!(source instanceof BitView) && !isBuffer) {
+		throw new Error('Must specify a valid BitView, ArrayBuffer or Buffer');
 	}
 
 	if (isBuffer) {
@@ -6315,7 +5962,6 @@ var BitStream = function (source, byteOffset, byteLength) {
 	} else {
 		this._view = source;
 	}
-
 	this._index = 0;
 };
 
@@ -6329,7 +5975,7 @@ Object.defineProperty(BitStream.prototype, 'byteIndex', {
 });
 
 Object.defineProperty(BitStream.prototype, 'buffer', {
-	get: function () { return this._view.buffer; },
+	get: function () { return this.view.buffer; },
 	enumerable: true,
 	configurable: false
 });
@@ -6339,6 +5985,21 @@ Object.defineProperty(BitStream.prototype, 'view', {
 	enumerable: true,
 	configurable: false
 });
+
+var reader = function (name, bits) {
+	return function () {
+		var val = this._view[name](this._index);
+		this._index += bits;
+		return val;
+	};
+};
+
+var writer = function (name, bits) {
+	return function (value) {
+		this._view[name](this._index, value);
+		this._index += bits;
+	};
+};
 
 BitStream.prototype.readBits = function (bits, signed) {
 	var val = this._view.getBits(this._index, bits, signed);
@@ -6370,16 +6031,49 @@ BitStream.prototype.writeFloat32 = writer('setFloat32', 32);
 BitStream.prototype.writeFloat64 = writer('setFloat64', 64);
 
 BitStream.prototype.readASCIIString = function (bytes) {
-	return readASCIIString(this, bytes);
+	var i = 0;
+	var chars = [];
+	var append = true;
+
+	// Read while we still have space available, or until we've
+	// hit the fixed byte length passed in.
+	while (!bytes || (bytes && i < bytes)) {
+		var c = this.readUint8();
+
+		// Stop appending chars once we hit 0x00
+		if (c === 0x00) {
+			append = false;
+
+			// If we don't have a fixed length to read, break out now.
+			if (!bytes) {
+				break;
+			}
+		}
+
+		if (append) {
+			chars.push(c);
+		}
+
+		i++;
+	}
+
+	// Convert char code array back to string.
+	return chars.map(function (x) {
+		return String.fromCharCode(x);
+	}).join('');
 };
 
-BitStream.prototype.writeASCIIString = function (string, bytes) {
-	writeASCIIString(this, string, bytes);
-};
+BitStream.prototype.writeASCIIString = function(string, bytes) {
+	var length = bytes || string.length + 1;  // + 1 for NULL
+
+	for (var i = 0; i < length; i++) {
+		this.writeUint8(i < string.length ? string.charCodeAt(i) : 0x00);
+	}
+}
 
 // AMD / RequireJS
 if (typeof define !== 'undefined' && define.amd) {
-	define('vendor/bit-buffer',[],function () {
+	define('BitBuffer',[],function () {
 		return {
 			BitView: BitView,
 			BitStream: BitStream
@@ -6393,14 +6087,20 @@ else if (typeof module !== 'undefined' && module.exports) {
 		BitStream: BitStream
 	};
 }
+// included directly via <script> tag
+else {
+	root.BitView = BitView;
+	root.BitStream = BitStream;
+}
 
 }(this));
 /*global vec3: true */
 
-define('common/bsp-loader',['require','vendor/bit-buffer','common/qmath'],function (require) {
+define('common/bsp-serializer',
+['BitBuffer', 'common/qmath'],
+function (BitBuffer, QMath) {
 
-var BitStream = require('vendor/bit-buffer').BitStream;
-var QMath = require('common/qmath');
+var BitStream = BitBuffer.BitStream;
 
 var MAX_QPATH = 64;
 
@@ -6572,8 +6272,10 @@ var dsurface_t = function () {
 };
 dsurface_t.size = 104;
 
-
-function load(data) {
+/**
+ * LoadBsp
+ */
+function LoadBsp(data) {
 	var bb = new BitStream(data);
 
 	// Parse the header.
@@ -6591,28 +6293,31 @@ function load(data) {
 
 	var bsp = new Bsp();
 
-	loadEntities(bsp, data, header.lumps[LUMP.ENTITIES]);
-	loadShaders(bsp, data, header.lumps[LUMP.SHADERS]);
-	loadPlanes(bsp, data, header.lumps[LUMP.PLANES]);
-	loadNodes(bsp, data, header.lumps[LUMP.NODES]);
-	loadLeafs(bsp, data, header.lumps[LUMP.LEAFS]);
-	loadLeafSurfaces(bsp, data, header.lumps[LUMP.LEAFSURFACES]);
-	loadLeafBrushes(bsp, data, header.lumps[LUMP.LEAFBRUSHES]);
-	loadBrushModels(bsp, data, header.lumps[LUMP.MODELS]);
-	loadBrushes(bsp, data, header.lumps[LUMP.BRUSHES]);
-	loadBrushSides(bsp, data, header.lumps[LUMP.BRUSHSIDES]);
-	loadVerts(bsp, data, header.lumps[LUMP.DRAWVERTS]);
-	loadIndexes(bsp, data, header.lumps[LUMP.DRAWINDEXES]);
-	loadFogs(bsp, data, header.lumps[LUMP.FOGS]);
-	loadSurfaces(bsp, data, header.lumps[LUMP.SURFACES]);
-	loadLightmaps(bsp, data, header.lumps[LUMP.LIGHTMAPS]);
-	loadLightGrid(bsp, data, header.lumps[LUMP.LIGHTGRID]);
-	loadVisibility(bsp, data, header.lumps[LUMP.VISIBILITY]);
+	LoadEntities(bsp, data, header.lumps[LUMP.ENTITIES]);
+	LoadShaders(bsp, data, header.lumps[LUMP.SHADERS]);
+	LoadPlanes(bsp, data, header.lumps[LUMP.PLANES]);
+	LoadNodes(bsp, data, header.lumps[LUMP.NODES]);
+	LoadLeafs(bsp, data, header.lumps[LUMP.LEAFS]);
+	LoadLeafSurfaces(bsp, data, header.lumps[LUMP.LEAFSURFACES]);
+	LoadLeafBrushes(bsp, data, header.lumps[LUMP.LEAFBRUSHES]);
+	LoadBrushModels(bsp, data, header.lumps[LUMP.MODELS]);
+	LoadBrushes(bsp, data, header.lumps[LUMP.BRUSHES]);
+	LoadBrushSides(bsp, data, header.lumps[LUMP.BRUSHSIDES]);
+	LoadVerts(bsp, data, header.lumps[LUMP.DRAWVERTS]);
+	LoadIndexes(bsp, data, header.lumps[LUMP.DRAWINDEXES]);
+	LoadFogs(bsp, data, header.lumps[LUMP.FOGS]);
+	LoadSurfaces(bsp, data, header.lumps[LUMP.SURFACES]);
+	LoadLightmaps(bsp, data, header.lumps[LUMP.LIGHTMAPS]);
+	LoadLightGrid(bsp, data, header.lumps[LUMP.LIGHTGRID]);
+	LoadVisibility(bsp, data, header.lumps[LUMP.VISIBILITY]);
 
 	return bsp;
 }
 
-function loadEntities(bsp, buffer, lump) {
+/**
+ * LoadEntities
+ */
+function LoadEntities(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6647,7 +6352,10 @@ function loadEntities(bsp, buffer, lump) {
 	}
 }
 
-function loadShaders(bsp, buffer, lump) {
+/**
+ * LoadShaders
+ */
+function LoadShaders(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6662,7 +6370,10 @@ function loadShaders(bsp, buffer, lump) {
 	}
 }
 
-function loadPlanes(bsp, buffer, lump) {
+/**
+ * LoadPlanes
+ */
+function LoadPlanes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6680,7 +6391,10 @@ function loadPlanes(bsp, buffer, lump) {
 	}
 }
 
-function loadNodes(bsp, buffer, lump) {
+/**
+ * LoadNodes
+ */
+function LoadNodes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6701,7 +6415,10 @@ function loadNodes(bsp, buffer, lump) {
 	}
 }
 
-function loadLeafs(bsp, buffer, lump) {
+/**
+ * LoadLeafs
+ */
+function LoadLeafs(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6725,7 +6442,10 @@ function loadLeafs(bsp, buffer, lump) {
 	}
 }
 
-function loadLeafSurfaces(bsp, buffer, lump) {
+/**
+ * LoadLeafSurfaces
+ */
+function LoadLeafSurfaces(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6736,7 +6456,10 @@ function loadLeafSurfaces(bsp, buffer, lump) {
 	}
 }
 
-function loadLeafBrushes(bsp, buffer, lump) {
+/**
+ * LoadLeafBrushes
+ */
+function LoadLeafBrushes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6747,7 +6470,10 @@ function loadLeafBrushes(bsp, buffer, lump) {
 	}
 }
 
-function loadBrushModels(bsp, buffer, lump) {
+/**
+ * LoadBrushModels
+ */
+function LoadBrushModels(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6771,7 +6497,10 @@ function loadBrushModels(bsp, buffer, lump) {
 	}
 }
 
-function loadBrushes(bsp, buffer, lump) {
+/**
+ * LoadBrushes
+ */
+function LoadBrushes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6786,7 +6515,10 @@ function loadBrushes(bsp, buffer, lump) {
 	}
 }
 
-function loadBrushSides(bsp, buffer, lump) {
+/**
+ * LoadBrushSides
+ */
+function LoadBrushSides(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6800,7 +6532,10 @@ function loadBrushSides(bsp, buffer, lump) {
 	}
 }
 
-function loadVerts(bsp, buffer, lump) {
+/**
+ * LoadVerts
+ */
+function LoadVerts(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6826,7 +6561,10 @@ function loadVerts(bsp, buffer, lump) {
 	}
 }
 
-function loadIndexes(bsp, buffer, lump) {
+/**
+ * LoadIndexes
+ */
+function LoadIndexes(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6837,7 +6575,10 @@ function loadIndexes(bsp, buffer, lump) {
 	}
 }
 
-function loadFogs(bsp, buffer, lump) {
+/**
+ * LoadFogs
+ */
+function LoadFogs(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6852,7 +6593,10 @@ function loadFogs(bsp, buffer, lump) {
 	}
 }
 
-function loadSurfaces(bsp, buffer, lump) {
+/**
+ * LoadSurfaces
+ */
+function LoadSurfaces(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6893,7 +6637,7 @@ function loadSurfaces(bsp, buffer, lump) {
 /**
  * LoadLightmaps
  */
-function loadLightmaps(bsp, buffer, lump) {
+function LoadLightmaps(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6904,7 +6648,10 @@ function loadLightmaps(bsp, buffer, lump) {
 	}
 }
 
-function loadLightGrid(bsp, buffer, lump) {
+/**
+ * LoadLightGrid
+ */
+function LoadLightGrid(bsp, buffer, lump) {
 	bsp.lightGridInverseSize[0] = 1 / bsp.lightGridSize[0];
 	bsp.lightGridInverseSize[1] = 1 / bsp.lightGridSize[1];
 	bsp.lightGridInverseSize[2] = 1 / bsp.lightGridSize[2];
@@ -6936,7 +6683,10 @@ function loadLightGrid(bsp, buffer, lump) {
 	}
 }
 
-function loadVisibility(bsp, buffer, lump) {
+/**
+ * LoadVisibility
+ */
+function LoadVisibility(bsp, buffer, lump) {
 	var bb = new BitStream(buffer);
 	bb.byteIndex = lump.fileofs;
 
@@ -6966,7 +6716,7 @@ return {
 	drawVert_t:   drawVert_t,
 	dsurface_t:   dsurface_t,
 
-	load:         load
+	deserialize:  LoadBsp
 };
 
 });
@@ -7239,12 +6989,12 @@ define('common/surfaceflags',['require'],function (require) {
 });
 /*global vec3: true, vec4: true, mat4: true */
 
-define('clipmap/cm',['require','vendor/gl-matrix','common/bsp-loader','common/qmath','common/qshared','common/surfaceflags'],function (require) {
-	var glmatrix  = require('vendor/gl-matrix');
-	var BSPLoader = require('common/bsp-loader');
-	var QMath     = require('common/qmath');
-	var QS        = require('common/qshared');
-	var SURF      = require('common/surfaceflags');
+define('clipmap/cm',['require','glmatrix','common/bsp-serializer','common/qmath','common/qshared','common/surfaceflags'],function (require) {
+	var glmatrix      = require('glmatrix');
+	var BspSerializer = require('common/bsp-serializer');
+	var QMath         = require('common/qmath');
+	var QS            = require('common/qshared');
+	var SURF          = require('common/surfaceflags');
 
 	function ClipMap(imp) {
 		var log = imp.log;
@@ -7288,7 +7038,7 @@ var ClipWorld = function () {
 var ClipModel = function () {
 	this.mins = vec3.create();
 	this.maxs = vec3.create();
-	this.leaf = new BSPLoader.dleaf_t();               // submodels don't reference the main tree
+	this.leaf = new BspSerializer.dleaf_t();               // submodels don't reference the main tree
 };
 
 var ClipBrushSide = function () {
@@ -7297,7 +7047,7 @@ var ClipBrushSide = function () {
 };
 
 var ClipBrush = function () {
-	this.shader     = null;                                // the shader that determined the contents
+	this.shader     = 0;                                    // the shader that determined the contents
 	this.contents   = 0;
 	this.bounds     = [vec3.create(), vec3.create()];
 	this.firstSide  = 0;
@@ -7803,20 +7553,6 @@ function TransposeGrid(grid) {
  *
  **********************************************************/
 
-// It's ok to re-use these statically (FF is slow to allocate
-// these and will show unresponsive errors otherwise).
-var gridPlanes = new Array(MAX_GRID_SIZE);
-
-(function () {
-for (var i = 0; i < MAX_GRID_SIZE; i++) {
-	gridPlanes[i] = new Array(MAX_GRID_SIZE);
-
-	for (var j = 0; j < MAX_GRID_SIZE; j++) {
-		gridPlanes[i][j] = new Array(2);
-	}
-}
-})();
-
 /**
  * PatchCollideFromGrid
  */
@@ -7825,6 +7561,14 @@ function PatchCollideFromGrid(grid, pc) {
 	var p1, p2, p3;
 	var borders = [0, 0, 0, 0];
 	var noAdjust = [0, 0, 0, 0];
+
+	var gridPlanes = new Array(MAX_GRID_SIZE);
+	for (i = 0; i < MAX_GRID_SIZE; i++) {
+		gridPlanes[i] = new Array(MAX_GRID_SIZE);
+		for (j = 0; j < MAX_GRID_SIZE; j++) {
+			gridPlanes[i][j] = new Array(2);
+		}
+	}
 
 	// Find the planes for each triangle of the grid.
 	for (i = 0; i < grid.width - 1; i++) {
@@ -9530,6 +9274,7 @@ function TraceThroughBrush(tw, brush) {
 			tw.trace.allSolid = true;
 			tw.trace.fraction = 0;
 			tw.trace.contents = brush.contents;
+			tw.trace.shaderName = brush.shader.shaderName;
 		}
 		return;
 	}
@@ -9541,8 +9286,9 @@ function TraceThroughBrush(tw, brush) {
 			}
 			tw.trace.fraction = enterFrac;
 			clipplane.clone(tw.trace.plane);
-			tw.trace.contents = brush.contents;
 			tw.trace.surfaceFlags = leadside.surfaceFlags;
+			tw.trace.contents = brush.contents;
+			tw.trace.shaderName = brush.shader.shaderName;
 		}
 	}
 }
@@ -9929,7 +9675,7 @@ function LoadPatches(surfaces, verts) {
 
 	for (var i = 0; i < surfaces.length; i++) {
 		var surface = surfaces[i];
-		if (surface.surfaceType !== BSPLoader.MST.PATCH) {
+		if (surface.surfaceType !== BspSerializer.MST.PATCH) {
 			continue;  // ignore other surfaces
 		}
 
@@ -9991,7 +9737,7 @@ function InitBoxHull() {
 		var side = i & 1;
 
 		// Brush sides.
-		var s = new BSPLoader.dbrushside_t();
+		var s = new BspSerializer.dbrushside_t();
 		s.plane = box_planes[i * 2 + side];
 		s.surfaceFlags = 0;
 
@@ -10316,7 +10062,7 @@ function LeafArea(leafNum) {
   //===========================================================================
 
   if ("function" === typeof define) {
-    define('vendor/state-machine',['require'],function(require) { return StateMachine; });
+    define('state-machine',['require'],function(require) { return StateMachine; });
   }
   else {
     window.StateMachine = StateMachine;
@@ -10327,8 +10073,8 @@ function LeafArea(leafNum) {
 
 /*global vec3: true, mat4: true */
 
-define('game/bg',['require','vendor/gl-matrix','common/qmath','common/qshared','common/surfaceflags'],function (require) {
-	var glmatrix = require('vendor/gl-matrix');
+define('game/bg',['require','glmatrix','common/qmath','common/qshared','common/surfaceflags'],function (require) {
+	var glmatrix = require('glmatrix');
 	var QMath    = require('common/qmath');
 	var QS       = require('common/qshared');
 	var SURF     = require('common/surfaceflags');
@@ -13650,7 +13396,7 @@ function ForceLegsAnim(anim) {
 		quantity: 0,
 		giType: IT.TEAM,
 		giTag: PW.BLUEFLAG
-	}// ,
+	},
 	// /**
 	//  * 1FCTF
 	//  */
@@ -13802,9 +13548,9 @@ function FindItemForHoldable(pw) {
 
 /*global mat4: true, vec3: true */
 
-define('game/gm',['require','vendor/gl-matrix','vendor/state-machine','common/qmath','common/qshared','common/surfaceflags','common/cvar','game/bg'],function (require) {
-	var glmatrix     = require('vendor/gl-matrix');
-	var StateMachine = require('vendor/state-machine');
+define('game/gm',['require','glmatrix','state-machine','common/qmath','common/qshared','common/surfaceflags','common/cvar','game/bg'],function (require) {
+	var glmatrix     = require('glmatrix');
+	var StateMachine = require('state-machine');
 	var QMath        = require('common/qmath');
 	var QS           = require('common/qshared');
 	var SURF         = require('common/surfaceflags');
@@ -13974,6 +13720,7 @@ var GameLocals = function () {
 	this.arena                  = null;                    // current arena, set in Frame()
 	                                                       // and by the various Client* funcs
 	                                                       // invoked directly by the server.
+	this.rocketarena            = false;
 
 	for (var i = 0; i < MAX_CLIENTS; i++) {
 		this.clients[i] = new GameClient();
@@ -14123,8 +13870,6 @@ GameClient.prototype.reset = function () {
 	this.lastCmdTime       = 0;                            // level.time of last usercmd_t, for EF_CONNECTION
 	                                                       // we can't just use pers.lastCommand.time, because
 	                                                       // of the g_sycronousclients case
-	this.buttons           = 0;
-	this.oldbuttons        = 0;
 
 	this.oldOrigin         = vec3.create();
 
@@ -14137,7 +13882,7 @@ GameClient.prototype.reset = function () {
 	this.damage_fromWorld  = false;                        // if true, don't use the damage_from vector
 
 	// Awards
-	this.accurate_count    = 0;                            // for "impressive" reward sound
+	this.impressive_count  = 0;                            // for "impressive" reward sound
 	this.accuracy_shots    = 0;                            // total number of shots
 	this.accuracy_hits     = 0;                            // total number of hits
 
@@ -14154,10 +13899,6 @@ GameClient.prototype.reset = function () {
 	this.airOutTime        = 0;
 	this.switchTeamTime    = 0;                            // time the player switched teams
 	this.switchArenaTime   = 0;                            // time the player switched arenas
-
-	// timeResidual is used to handle events that happen every second
-	// like health / armor countdowns and regeneration
-	this.timeResidual      = 0;
 };
 
 var PlayerTeamState = function () {
@@ -14373,6 +14114,9 @@ function Frame(levelTime) {
 			continue;
 		}
 
+		// Set the global arena.
+		SetCurrentArena(ent.s.arenaNum);
+
 		// Clear events that are too old.
 		if (level.time - ent.eventTime > EVENT_VALID_MSEC) {
 			if (ent.s.event) {
@@ -14403,9 +14147,6 @@ function Frame(levelTime) {
 		if (!ent.r.linked && ent.neverFree) {
 			continue;
 		}
-
-		// Set the global arena.
-		SetCurrentArena(ent.s.arenaNum);
 
 		if (ent.s.eType === ET.MISSILE) {
 			RunMissile(ent);
@@ -14595,10 +14336,6 @@ function InitArenas() {
  * it's a lot better than subclassing half of the game code for now.
  */
 function SetCurrentArena(arenaNum) {
-	if (!level.arenas[arenaNum]) {
-		error('SetCurrentArena: Bad arena number \'' + arenaNum + '\'');
-	}
-
 	level.arena = level.arenas[arenaNum];
 }
 
@@ -14614,7 +14351,7 @@ function RunArenas() {
 
 	// Run the gameplay logic for each arena.
 	for (var i = 0; i < level.arenas.length; i++) {
-		SetCurrentArena(i);
+		level.arena = level.arenas[i];
 
 		// Run the frame callback for the state machine.
 		if (level.arena.state) {
@@ -15002,12 +14739,12 @@ function CreateRoundMachine() {
 			defer: true
 		},
 		events: [
-			{ name: 'wait',         from: ['none', GS.COUNTDOWN],                to: GS.WAITING      },
-			{ name: 'ready',        from: GS.WAITING,                            to: GS.COUNTDOWN },
-			{ name: 'start',        from: GS.COUNTDOWN,                          to: GS.ACTIVE    },
-			{ name: 'end',          from: [GS.WAITING, GS.COUNTDOWN, GS.ACTIVE], to: GS.OVER      },
-			{ name: 'intermission', from: GS.OVER,                               to: GS.INTERMISSION },
-			{ name: 'restart',      from: [GS.OVER, GS.INTERMISSION],            to: GS.WAITING   }
+			{ name: 'wait',         from: ['none', GS.COUNTDOWN],     to: GS.WAITING      },
+			{ name: 'ready',        from: GS.WAITING,                 to: GS.COUNTDOWN },
+			{ name: 'start',        from: GS.COUNTDOWN,               to: GS.ACTIVE    },
+			{ name: 'end',          from: GS.ACTIVE,                  to: GS.OVER      },
+			{ name: 'intermission', from: GS.OVER,                    to: GS.INTERMISSION },
+			{ name: 'restart',      from: [GS.OVER, GS.INTERMISSION], to: GS.WAITING   }
 		],
 		callbacks: {
 			onwait: function (event, from, to, msg) {
@@ -15018,8 +14755,8 @@ function CreateRoundMachine() {
 			onstart: function (event, from, to, msg) {
 				RoundStart();
 			},
-			onend: function (event, from, to, winningTeam, msg) {
-				RoundEnd(winningTeam, msg);
+			onend: function (event, from, to, msg) {
+				RoundEnd(msg);
 			},
 			onintermission: function (event, from, to, msg) {
 				RoundIntermission();
@@ -15072,13 +14809,6 @@ function CheckRoundRules() {
  * RoundRunWaiting
  */
 function RoundRunWaiting() {
-	var state = level.arena.state;
-
-	if (TimelimitHit()) {
-		state.end(null, 'Timelimit hit.');
-		return;
-	}
-
 	var count1 = function () {
 		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
 	};
@@ -15088,7 +14818,7 @@ function RoundRunWaiting() {
 
 	if (level.arena.gametype === GT.CLANARENA) {
 		if (count1() >= 1 && count2() >= 1) {
-			state.ready();
+			level.arena.state.ready();
 		}
 	} else if (level.arena.gametype === GT.ROCKETARENA) {
 		// Spawn in the next team.
@@ -15122,7 +14852,7 @@ function RoundRunWaiting() {
 		}
 
 		if (count1() >= 1 && count2() >= 1) {
-			state.ready();
+			level.arena.state.ready();
 		}
 	} else {
 		error('Unsupported gametype.');
@@ -15149,13 +14879,6 @@ function RoundReady() {
  * RoundRunCountdown
  */
 function RoundRunCountdown() {
-	var state = level.arena.state;
-
-	if (TimelimitHit()) {
-		state.end(null, 'Timelimit hit.');
-		return;
-	}
-
 	var count1 = function () {
 		return TeamCount(TEAM.RED, ENTITYNUM_NONE);
 	};
@@ -15164,11 +14887,11 @@ function RoundRunCountdown() {
 	};
 
 	if (!count1() || !count2()) {
-		state.wait();
+		level.arena.state.wait();
 	}
 
 	if (level.time > level.arena.warmupTime) {
-		state.start();
+		level.arena.state.start();
 	}
 }
 
@@ -15187,13 +14910,6 @@ function RoundStart() {
  * RoundRunActive
  */
 function RoundRunActive() {
-	var state = level.arena.state;
-
-	if (TimelimitHit()) {
-		state.end(null, 'Timelimit hit.');
-		return;
-	}
-
 	// Practice arena is always actice.
 	if (level.arena.gametype === GT.PRACTICEARENA) {
 		return;
@@ -15203,25 +14919,19 @@ function RoundRunActive() {
 	var alive2 = TeamAliveCount(TEAM.BLUE);
 
 	if (!alive1 && !alive2) {
-		state.end(null);
+		level.arena.state.end(null);
 	} else if (!alive1) {
-		state.end(TEAM.BLUE);
+		level.arena.state.end(TEAM.BLUE);
 	} else if (!alive2) {
-		state.end(TEAM.RED);
+		level.arena.state.end(TEAM.RED);
 	}
 }
 
 /**
  * RoundEnd
  */
-function RoundEnd(winningTeam, msg) {
-	log('RoundEnd', winningTeam, msg);
-
-	if (winningTeam == null && msg) {
-		// Timelimit hit.
-		QueueIntermission(msg);
-		return;
-	}
+function RoundEnd(winningTeam) {
+	log('RoundEnd', winningTeam);
 
 	if (level.arena.gametype === GT.CLANARENA && winningTeam !== null) {
 		level.arena.teamScores[winningTeam] += 1;
@@ -15287,7 +14997,6 @@ function RoundRunOver() {
  */
 function RoundIntermission() {
 	log('RoundIntermission');
-
 	BeginIntermission();
 }
 
@@ -15296,11 +15005,6 @@ function RoundIntermission() {
  */
 function RoundRunIntermission() {
 	if (CheckIntermissionExit()) {
-		if (TimelimitHit()) {
-			ExitIntermission();
-			return;
-		}
-
 		// Reset scores.
 		for (var i = 0; i < TEAM.NUM_TEAMS; i++) {
 			level.arena.teamScores[i] = 0;
@@ -15463,7 +15167,7 @@ function ForceTeam(ent, team) {
 
 	TossClientItems(ent);
 
-	ClientUserinfoChanged(ent.s.number);
+	ClientUserinfoChanged(ent.client.ps.clientNum);
 	ClientSpawn(ent);
 
 	CalculateRanks();
@@ -15518,7 +15222,7 @@ function PopClientFromQueue() {
 		return null;
 	}
 
-	log('Popping client', nextInLine.s.number, 'from end of queue');
+	log('Popping client', nextInLine.client.ps.clientNum, 'from end of queue');
 
 	return nextInLine;
 }
@@ -15531,7 +15235,7 @@ function PopClientFromQueue() {
 function PushClientToQueue(ent) {
 	var client = ent.client;
 
-	log('Pushing client', ent.s.number, 'to beginning of queue');
+	log('Pushing client', client.ps.clientNum, 'to beginning of queue');
 
 	for (var i = 0; i < level.maxclients; i++) {
 		var cur = level.gentities[i];
@@ -15586,7 +15290,7 @@ function IntermissionStarted() {
 function QueueIntermission(msg) {
 	level.arena.intermissionTime = level.time + INTERMISSION_DELAY_TIME;
 
-	SendArenaCommand('print', msg);
+	SV.SendServerCommand(null, 'print', msg);
 
 	// FIXME make part of arena info
 	// // This will keep the clients from playing any voice sounds
@@ -15744,20 +15448,12 @@ function CheckIntermissionExit() {
  * or moved to a new level based on the "nextmap" cvar.
  */
 function ExitIntermission() {
-	// FIXME Prevents ExitIntermission() from being called multiple times
-	// in MA mode.
-	if (level.restarted) {
-		return;
-	}
+	var nextmap = Cvar.AddCvar('nextmap');
 
-	level.restarted = true;
 	level.arena.intermissionTime = 0;
 
 	// If no nextmap is specified, let the default map restart occur.
-	var nextmap = Cvar.AddCvar('nextmap');
-
 	if (!nextmap.get()) {
-		SV.ExecuteBuffer('map_restart 0');
 		return;
 	}
 
@@ -16119,15 +15815,6 @@ function ClientBegin(clientNum) {
 	client.pers.enterTime = level.time;
 	client.pers.teamState.state = TEAM_STATE.BEGIN;
 
-	// Save eflags around this, because changing teams will
-	// cause this to happen with a valid entity, and we
-	// want to make sure the teleport bit is set right
-	// so the viewpoint doesn't interpolate through the
-	// world to the new position.
-	var flags = client.ps.eFlags;
-	client.ps.reset();
-	client.ps.eFlags = flags;
-
 	ClientSpawn(ent);
 
 	if (client.sess.team !== TEAM.SPECTATOR) {
@@ -16158,14 +15845,14 @@ function ClientDisconnect(clientNum) {
 	// Set the global arena.
 	SetCurrentArena(ent.s.arenaNum);
 
-	// Stop any following clients.
-	for (var i = 0; i < level.maxclients; i++) {
-		if ( level.clients[i].sess.sessionTeam === TEAM.SPECTATOR &&
-			level.clients[i].sess.spectatorState === SPECTATOR.FOLLOW &&
-			level.clients[i].sess.spectatorClient === clientNum) {
-			StopFollowing(level.gentities[i]);
-		}
-	}
+	// // Stop any following clients.
+	// for ( i = 0 ; i < level.maxclients ; i++ ) {
+	// 	if ( level.clients[i].sess.sessionTeam == TEAM_SPECTATOR
+	// 		&& level.clients[i].sess.spectatorState == SPECTATOR_FOLLOW
+	// 		&& level.clients[i].sess.spectatorClient == clientNum ) {
+	// 		StopFollowing( &g_entities[i] );
+	// 	}
+	// }
 
 	// Send effect if they were completely connected.
 	if (ent.client.pers.connected === CON.CONNECTED &&
@@ -16180,13 +15867,12 @@ function ClientDisconnect(clientNum) {
 
 	log('ClientDisconnect: ' + clientNum);
 
-	// FIXME - add to gm-arena logic
-	// // If we are playing in tourney mode and losing, give a win to the other player.
-	// if (level.arena.gametype === GT.TOURNAMENT &&
-	// 	level.arena.gamestate === GS.ACTIVE &&
-	// 	level.sortedClients[1] === clientNum) {
-	// 	level.clients[level.sortedClients[0]].sess.wins++;
-	// 	ClientUserinfoChanged(level.sortedClients[0]);
+	// If we are playing in tourney mode and losing, give a win to the other player.
+	// if (g_gametype.integer == GT_TOURNAMENT
+	// 	&& !level.intermissiontime
+	// 	&& !level.warmupTime && level.sortedClients[1] == clientNum ) {
+	// 	level.clients[ level.sortedClients[0] ].sess.wins++;
+	// 	ClientUserinfoChanged( level.sortedClients[0] );
 	// }
 
 	// if( g_gametype.integer == GT_TOURNAMENT &&
@@ -16223,7 +15909,6 @@ function ClientSpawn(ent) {
 	// Auto-eliminate if joining post warmup.
 	if ((level.arena.gametype === GT.CLANARENA || level.arena.gametype === GT.ROCKETARENA) &&
 	    level.arena.state.current > GS.COUNTDOWN) {
-		client.sess.spectatorState = SPECTATOR.FREE;
 		client.pers.teamState.state = TEAM_STATE.ELIMINATED;
 	}
 
@@ -16360,7 +16045,7 @@ function ClientSpawn(ent) {
 	vec3.set(spawnOrigin, client.ps.origin);
 	SetClientViewAngle(ent, spawnAngles);
 
-	SV.GetUserCmd(ent.s.number, ent.client.pers.cmd);
+	SV.GetUserCmd(client.ps.clientNum, ent.client.pers.cmd);
 
 	// The respawned flag will be cleared after the attack and jump keys come up.
 	client.ps.pm_flags |= PMF.RESPAWNED;
@@ -16407,17 +16092,17 @@ function ClientSpawn(ent) {
 		MoveClientToIntermission(ent);
 	}
 
-	// Clear entity state values.
-	BG.PlayerStateToEntityState(client.ps, ent.s);
-
 	// Run a client frame to drop exactly to the floor,
 	// initialize weapon, animations and other things.
 	client.ps.commandTime = level.time - 100;
 	client.pers.cmd.serverTime = level.time;
-	ClientThink(ent.s.number);
+	ClientThink(client.ps.clientNum);
 
 	// Run the presend to set anything else.
 	ClientEndFrame(ent);
+
+	// Clear entity state values.
+	BG.PlayerStateToEntityState(client.ps, ent.s);
 }
 
 /**
@@ -16479,19 +16164,19 @@ function ClientThink(clientNum) {
  */
 function ClientThink_real(ent) {
 	var client = ent.client;
-	var ucmd = client.pers.cmd;
+	var cmd = client.pers.cmd;
 
 	// Sanity check the command time to prevent speedup cheating.
-	if (ucmd.serverTime > level.time + 200) {
-		ucmd.serverTime = level.time + 200;
+	if (cmd.serverTime > level.time + 200) {
+		cmd.serverTime = level.time + 200;
 	}
-	if (ucmd.serverTime < level.time - 1000) {
-		ucmd.serverTime = level.time - 1000;
+	if (cmd.serverTime < level.time - 1000) {
+		cmd.serverTime = level.time - 1000;
 	}
 
 	// Following others may result in bad times, but we still want
 	// to check for follow toggles.
-	var msec = ucmd.serverTime - client.ps.commandTime;
+	var msec = cmd.serverTime - client.ps.commandTime;
 	if (msec < 1 && client.sess.spectatorState !== SPECTATOR.FOLLOW) {
 		return;
 	} else if (msec > 200) {
@@ -16505,7 +16190,7 @@ function ClientThink_real(ent) {
 	}
 
 	if (pmove_fixed.get()) {
-		ucmd.serverTime = Math.floor((ucmd.serverTime + pmove_msec.get() - 1) / pmove_msec.get()) * pmove_msec.get();
+		cmd.serverTime = Math.floor((cmd.serverTime + pmove_msec.get() - 1) / pmove_msec.get()) * pmove_msec.get();
 	}
 
 	// // Check for exiting intermission.
@@ -16516,12 +16201,11 @@ function ClientThink_real(ent) {
 
 	// Spectators don't do much.
 	if (client.sess.team === TEAM.SPECTATOR ||
-		// Ignore eliminated players if they're still in the death state.
-		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.sess.spectatorState !== SPECTATOR.NOT)) {
+		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.ps.pm_type !== PM.DEAD)) {
 		if (client.sess.spectatorState === SPECTATOR.SCOREBOARD) {
 			return;
 		}
-		ClientSpectatorThink(ent, ucmd);
+		ClientSpectatorThink(ent, cmd);
 		return;
 	}
 
@@ -16563,7 +16247,7 @@ function ClientThink_real(ent) {
 	var oldEventSequence = client.ps.eventSequence;
 	var pm = new BG.PmoveInfo();
 	pm.ps = client.ps;
-	ucmd.clone(pm.cmd);
+	cmd.clone(pm.cmd);
 	pm.trace = Trace;
 	pm.pointContents = PointContents;
 	pm.pmove_fixed = pmove_fixed.get();
@@ -16578,7 +16262,7 @@ function ClientThink_real(ent) {
 	// Check for the hit-scan gauntlet, don't let the action
 	// go through as an attack unless it actually hits something.
 	if (client.ps.weapon === WP.GAUNTLET && !(client.ps.pm_flags & PMF.NO_ATTACK) &&
-		!(ucmd.buttons & BUTTON.TALK) && (ucmd.buttons & BUTTON.ATTACK) &&
+		!(cmd.buttons & BUTTON.TALK) && (cmd.buttons & BUTTON.ATTACK) &&
 		client.ps.weaponTime <= 0) {
 		pm.gauntletHit = CheckGauntletAttack(ent);
 	}
@@ -16593,7 +16277,6 @@ function ClientThink_real(ent) {
 	BG.Pmove(pm);
 
 	BG.PlayerStateToEntityState(client.ps, ent.s);
-
 	// We need to set the eventTime for predicted events added through BG.
 	// However, if there is an externalEvent, the predicted event is going
 	// to be sent out by SendPendingPredictableEvents and we shouldn't muck
@@ -16631,9 +16314,10 @@ function ClientThink_real(ent) {
 		ent.eventTime = level.time;
 	}
 
-	// Swap and latch button actions.
-	client.oldbuttons = client.buttons;
-	client.buttons = ucmd.buttons;
+	// // Swap and latch button actions.
+	// client.oldbuttons = client.buttons;
+	// client.buttons = ucmd.buttons;
+	// client.latched_buttons |= client.buttons & ~client.oldbuttons;
 
 	// Check for respawning.
 	if (client.ps.pm_type === PM.DEAD) {
@@ -16647,87 +16331,15 @@ function ClientThink_real(ent) {
 			}
 
 			// Pressing attack or use is the normal respawn method
-			if (ucmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
+			if (cmd.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE)) {
 				ClientRespawn(ent);
 			}
 		}
 		return;
 	}
 
-	// Perform once-a-second actions, in all modes excepting CA and RA.
-	if (level.arena.gametype < GT.CLANARENA) {
-		ClientTimerActions(ent, msec);
-	}
-}
-
-// /**
-//  * ClientInactivityTimer
-//  *
-//  * Returns false if the client is dropped.
-//  */
-// function ClientInactivityTimer(client) {
-// 	if ( ! g_inactivity.integer ) {
-// 		// give everyone some time, so if the operator sets g_inactivity during
-// 		// gameplay, everyone isn't kicked
-// 		client->inactivityTime = level.time + 60 * 1000;
-// 		client->inactivityWarning = qfalse;
-// 	} else if ( client->pers.cmd.forwardmove ||
-// 		client->pers.cmd.rightmove ||
-// 		client->pers.cmd.upmove ||
-// 		(client->pers.cmd.buttons & BUTTON_ATTACK) ) {
-// 		client->inactivityTime = level.time + g_inactivity.integer * 1000;
-// 		client->inactivityWarning = qfalse;
-// 	} else if ( !client->pers.localClient ) {
-// 		if ( level.time > client->inactivityTime ) {
-// 			trap_DropClient( client - level.clients, "Dropped due to inactivity" );
-// 			return qfalse;
-// 		}
-// 		if ( level.time > client->inactivityTime - 10000 && !client->inactivityWarning ) {
-// 			client->inactivityWarning = qtrue;
-// 			trap_SendServerCommand( client - level.clients, "cp \"Ten seconds until inactivity drop!\n\"" );
-// 		}
-// 	}
-// 	return qtrue;
-// }
-
-/**
- * ClientTimerActions
- *
- * Actions that happen once a second.
- */
-function ClientTimerActions(ent, msec) {
-	var client = ent.client;
-
-	client.timeResidual += msec;
-
-	while (client.timeResidual >= 1000) {
-		client.timeResidual -= 1000;
-		// Regenerate.
-		if (client.ps.powerups[PW.REGEN]) {
-			if (ent.health < client.ps.stats[STAT.MAX_HEALTH]) {
-				ent.health += 15;
-				if (ent.health > client.ps.stats[STAT.MAX_HEALTH] * 1.1) {
-					ent.health = client.ps.stats[STAT.MAX_HEALTH] * 1.1;
-				}
-				AddEvent( ent, EV.POWERUP_REGEN, 0 );
-			} else if (ent.health < client.ps.stats[STAT.MAX_HEALTH] * 2) {
-				ent.health += 5;
-				if (ent.health > client.ps.stats[STAT.MAX_HEALTH] * 2) {
-					ent.health = client.ps.stats[STAT.MAX_HEALTH] * 2;
-				}
-				AddEvent(ent, EV.POWERUP_REGEN, 0);
-			}
-		} else {
-			// Count down health when over max.
-			if (ent.health > client.ps.stats[STAT.MAX_HEALTH]) {
-				ent.health--;
-			}
-		}
-		// Count down armor when over max.
-		if (client.ps.stats[STAT.ARMOR] > client.ps.stats[STAT.MAX_HEALTH]) {
-			client.ps.stats[STAT.ARMOR]--;
-		}
-	}
+	// Perform once-a-second actions.
+	// ClientTimerActions(ent, msec);
 }
 
 /**
@@ -16772,7 +16384,6 @@ function ClientIntermissionThink(client) {
 	// Swap and latch button actions.
 	client.oldbuttons = client.buttons;
 	client.buttons = client.pers.cmd.buttons;
-
 	if (client.buttons & (BUTTON.ATTACK | BUTTON.USE_HOLDABLE) & (client.oldbuttons ^ client.buttons)) {
 		// This used to be an ^1 but once a player says ready, it should stick.
 		client.readyToExit = 1;
@@ -16807,13 +16418,13 @@ function ClientSpectatorThink(ent, ucmd) {
 		SV.UnlinkEntity(ent);
 	}
 
-	client.oldbuttons = client.buttons;
-	client.buttons = ucmd.buttons;
+	// client.oldbuttons = client.buttons;
+	// client.buttons = ucmd.buttons;
 
-	// Attack button cycles through spectators.
-	if ((client.buttons & BUTTON.ATTACK) && !(client.oldbuttons & BUTTON.ATTACK)) {
-		ClientCmdFollowCycle(ent, 1);
-	}
+	// // attack button cycles through spectators
+	// if ( ( client.buttons & BUTTON_ATTACK ) && ! ( client.oldbuttons & BUTTON_ATTACK ) ) {
+	// 	Cmd_FollowCycle_f( ent, 1 );
+	// }
 }
 
 /**
@@ -16905,8 +16516,7 @@ function ClientEndFrame(ent) {
 	var client = ent.client;
 
 	if (client.sess.team === TEAM.SPECTATOR ||
-		// Ignore eliminated players if they're still in the death state.
-		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.sess.spectatorState !== SPECTATOR.NOT)) {
+		(client.pers.teamState.state === TEAM_STATE.ELIMINATED && client.ps.pm_type !== PM.DEAD)) {
 		SpectatorClientEndFrame(ent);
 		return;
 	}
@@ -16940,7 +16550,6 @@ function ClientEndFrame(ent) {
 	SetClientSound(ent);
 
 	BG.PlayerStateToEntityState(client.ps, ent.s);
-
 	SendPendingPredictableEvents(client.ps);
 }
 
@@ -16962,10 +16571,10 @@ function SpectatorClientEndFrame(ent) {
 		}
 
 		if (clientNum >= 0) {
-			var cl = level.clients[clientNum];
-			if (cl.pers.connected === CON.CONNECTED && cl.ps.pm_type !== PM.SPECTATOR) {
-				var flags = (cl.ps.eFlags & ~(EF.VOTED | EF.TEAMVOTED)) | (client.ps.eFlags & (EF.VOTED | EF.TEAMVOTED));
-				cl.ps.clone(client.ps);
+			var client = level.clients[clientNum];
+			if (client.pers.connected === CON.CONNECTED && client.ps.pm_type !== PM.SPECTATOR) {
+				var flags = (client.ps.eFlags & ~(EF.VOTED | EF.TEAMVOTED)) | (client.ps.eFlags & (EF.VOTED | EF.TEAMVOTED));
+				client.ps = client.ps;
 				client.ps.pm_flags |= PMF.FOLLOW;
 				client.ps.eFlags = flags;
 				return;
@@ -17297,7 +16906,6 @@ function InitBodyQueue() {
 
 	for (var i = 0; i < BODY_QUEUE_SIZE; i++) {
 		var ent = SpawnEntity();
-
 		ent.classname = 'bodyqueue';
 		ent.neverFree = true;
 
@@ -17614,7 +17222,6 @@ function KillBox(ent) {
 		Damage(hit, ent, ent, null, null, 100000, DAMAGE.NO_PROTECTION, MOD.TELEFRAG);
 	}
 }
-
 		/**
  * ClientCommand
  */
@@ -17680,16 +17287,18 @@ function ClientCommand(clientNum, cmd) {
 	// 	Cmd_TeamTask_f (ent);
 	// else if (Q_stricmp (cmd, "levelshot") == 0)
 	// 	Cmd_LevelShot_f (ent);
-	else if (name === 'follow') {
-		ClientCmdFollow(ent, args[0]);
-	} else if (name === 'follownext') {
-		ClientCmdFollowCycle(ent, 1);
-	} else if (name === 'followprev') {
-		ClientCmdFollowCycle(ent, -1);
-	} else if (name === 'team') {
+	// else if (Q_stricmp (cmd, "follow") == 0)
+	// 	Cmd_Follow_f (ent);
+	// else if (Q_stricmp (cmd, "follownext") == 0)
+	// 	Cmd_FollowCycle_f (ent, 1);
+	// else if (Q_stricmp (cmd, "followprev") == 0)
+	// 	Cmd_FollowCycle_f (ent, -1);
+	else if (name === 'team') {
 		ClientCmdTeam(ent, args[0]);
-	} else if (name === 'arena') {
+	}
+	else if (name === 'arena') {
 		ClientCmdArena(ent, args[0]);
+	}
 	// else if (Q_stricmp (cmd, "where") == 0)
 	// 	Cmd_Where_f (ent);
 	// else if (Q_stricmp (cmd, "callvote") == 0)
@@ -17706,9 +17315,8 @@ function ClientCommand(clientNum, cmd) {
 	// 	Cmd_SetViewpos_f( ent );
 	// else if (Q_stricmp (cmd, "stats") == 0)
 	// 	Cmd_Stats_f( ent );
-	} else {
-		SV.SendServerCommand(clientNum, 'print', 'Unknown client command \'' + name + '\'');
-	}
+	// else
+	// 	trap_SendServerCommand( clientNum, va("print \"unknown cmd %s\n\"", cmd ) );
 }
 
 /**
@@ -17720,185 +17328,6 @@ function ClientCmdSay(ent, mode, text) {
 	}
 
 	Say(ent, null, mode, text);
-}
-
-/**
- * ClientCmdFollow
- */
-function ClientCmdFollow(ent, follow) {
-	if (typeof(follow) === 'undefined') {
-		if (ent.client.sess.spectatorState === SPECTATOR.FOLLOW) {
-			StopFollowing(ent);
-		}
-		return;
-	}
-
-	var i = ClientNumberFromString(ent, follow);
-	if (i === -1) {
-		return;
-	}
-
-	// Can't follow self.
-	if (level.clients[i] === ent.client) {
-		return;
-	}
-
-	// Can't follow people in other arenas.
-	if (level.gentities[i].s.arenaNum !== ent.s.arenaNum) {
-		return;
-	}
-
-	// Can't follow another spectator.
-	if (level.clients[i].sess.team === TEAM.SPECTATOR ||
-		level.clients[i].pers.teamState.state === TEAM_STATE.ELIMINATED) {
-		return;
-	}
-
-	// If they are playing a tournement game, count as a loss
-	if (level.arena.gametype === GT.TOURNAMENT &&
-		ent.client.sess.team === TEAM.FREE) {
-		ent.client.sess.losses++;
-	}
-
-	// First set them to spectator.
-	if (ent.client.sess.team !== TEAM.SPECTATOR &&
-		ent.client.pers.teamState.state !== TEAM_STATE.ELIMINATED) {
-		SetTeam(ent, 'spectator');
-	}
-
-	ent.client.sess.spectatorState = SPECTATOR.FOLLOW;
-	ent.client.sess.spectatorClient = i;
-}
-
-/**
- * ClientNumberFromString
- *
- * Returns a player number for either a number or name string
- * Returns -1 if invalid
- */
-function ClientNumberFromString(to, s) {
-	var id;
-
-	// Numeric values are just slot numbers.
-	id = parseInt(s, 10);
-	if (!isNaN(id)) {
-		if (id < 0 || id >= level.maxclients) {
-			SV.SendServerCommand(to.s.number, 'print', 'Bad client slot: ' + id);
-			return -1;
-		}
-
-		var cl = level.clients[id];
-		if (cl.pers.connected !== CON.CONNECTED ) {
-			SV.SendServerCommand(to.s.number, 'print', 'Client ' + id + ' is not active');
-			return -1;
-		}
-
-		return id;
-	}
-
-	// Check for a name match
-	for (id = 0; id < level.maxclients; id++) {
-		var cl = level.clients[id];
-		if (cl.pers.connected !== CON.CONNECTED) {
-			continue;
-		}
-
-		var cleanName = QS.StripColors(cl.pers.name);
-
-		if (cleanName === s) {
-			return id;
-		}
-	}
-
-	SV.SendServerCommand(to.s.number, 'print', 'User ' + s + ' is not on the server');
-	return -1;
-}
-
-/**
- * StopFollowing
- *
- * If the client being followed leaves the game, or you just want to drop
- * to free floating spectator mode.
- */
-function StopFollowing(ent) {
-	ent.client.ps.persistant[PERS.TEAM] = TEAM.SPECTATOR;
-	ent.client.sess.team = TEAM.SPECTATOR;
-	ent.client.sess.spectatorState = SPECTATOR.FREE;
-	ent.client.ps.pm_flags &= ~PMF.FOLLOW;
-	// ent.r.svFlags &= ~SVF_BOT;
-	ent.client.ps.clientNum = ent.s.number;
-}
-
-/**
- * ClientCmdFollowCycle
- */
-function ClientCmdFollowCycle(ent, dir) {
-	// If they are playing a tournement game, count as a loss.
-	if (level.arena.gametype === GT.TOURNAMENT &&
-		ent.client.sess.team === TEAM.FREE) {
-		ent.client.sess.losses++;
-	}
-
-	// First set them to spectator.
-	if (ent.client.sess.team !== TEAM.SPECTATOR &&
-		// Ignore eliminated players if they're still in the death state.
-		!(ent.client.pers.teamState.state === TEAM_STATE.ELIMINATED && ent.client.sess.spectatorState !== SPECTATOR.NOT)) {
-		return;
-		// SetTeam(ent, 'spectator');
-	}
-
-	if (dir !== 1 && dir !== -1) {
-		error('followcycle: bad dir ' + dir);
-	}
-
-	// If dedicated follow client, just switch between the two auto clients.
-	if (ent.client.sess.spectatorClient < 0) {
-		if (ent.client.sess.spectatorClient === -1) {
-			ent.client.sess.spectatorClient = -2;
-		} else if (ent.client.sess.spectatorClient === -2) {
-			ent.client.sess.spectatorClient = -1;
-		}
-		return;
-	}
-
-	var clientNum = ent.client.sess.spectatorClient;
-	var original = clientNum;
-
-	do {
-		clientNum += dir;
-		if (clientNum >= level.maxclients) {
-			clientNum = 0;
-		}
-		if (clientNum < 0) {
-			clientNum = level.maxclients - 1;
-		}
-
-		// Can only follow connected clients.
-		if (level.clients[clientNum].pers.connected !== CON.CONNECTED) {
-			continue;
-		}
-
-		// Can't follow people in other arenas.
-		if (level.gentities[clientNum].s.arenaNum !== ent.s.arenaNum) {
-			continue;
-		}
-
-		// Can't follow another spectator.
-		if (level.clients[clientNum].sess.team === TEAM.SPECTATOR ||
-			level.clients[clientNum].pers.teamState.state === TEAM_STATE.ELIMINATED) {
-			continue;
-		}
-
-		// This is good, we can use it.
-		ent.client.sess.spectatorClient = clientNum;
-		ent.client.sess.spectatorState = SPECTATOR.FOLLOW;
-
-		log('CmdFollowCycle (' + ent.s.number + '): now following ' + clientNum);
-
-		return;
-	} while (clientNum !== original);
-
-	// Leave it where it was.
 }
 
 /**
@@ -18117,7 +17546,7 @@ function ClientCmdTeam(ent, teamName) {
  */
 function SetTeam(ent, teamName) {
 	var client = ent.client;
-	var clientNum = ent.s.number;
+	var clientNum = client.ps.clientNum;
 
 	//
 	// See what change is requested
@@ -18156,7 +17585,6 @@ function SetTeam(ent, teamName) {
 			team = TEAM.BLUE;
 		} else {
 			team = TEAM.SPECTATOR;
-			specState = SPECTATOR.FREE;
 		}
 
 		// Make sure we can actually join this group.
@@ -18179,12 +17607,13 @@ function SetTeam(ent, teamName) {
 		team = TEAM.FREE;
 	}
 
-	//
-	// Decide if we will allow the change.
-	//
-	if (team === oldTeam && team !== TEAM.SPECTATOR) {
-		return;
-	}
+	// AP - Why would this matter?
+	// //
+	// // Decide if we will allow the change.
+	// //
+	// if (team === oldTeam && team !== TEAM.SPECTATOR) {
+	// 	return;
+	// }
 
 	//
 	// Execute the team change
@@ -18247,20 +17676,27 @@ function SetArena(ent, arenaNum) {
 	}
 
 	// Push off old arena.
-	var oldArenaNum = level.arena.arenaNum;
+	var oldArena = level.arena;
 
 	// Temporarily update while spawning the client.
-	SetCurrentArena(arenaNum);
+	level.arena = level.arenas[arenaNum];
 
 	// Change arena and kick to spec.
 	ent.s.arenaNum = ent.client.ps.arenaNum = arenaNum;
-	SetTeam(ent, 's');
+	ent.client.sess.group = null;
+
+	// Reset persistant playerstate info on arena change (e.g. scores).
+	for (var i = 0; i < MAX_PERSISTANT; i++) {
+		ent.client.ps.persistant[i] = 0;
+	}
+
+	ForceTeam(ent, TEAM.SPECTATOR);
 
 	// Update scores.
 	SendScoreboardMessage(ent);
 
 	// Pop back.
-	SetCurrentArena(oldArenaNum);
+	level.arena = oldArena;
 
 	// Recalculate ranks for the old arena now.
 	CalculateRanks();
@@ -18452,9 +17888,9 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 	}
 
 	// See if it's the player hurting the emeny flag carrier.
-	if (level.arena.gametype === GT.CTF) {
-		Team_CheckHurtCarrier(targ, attacker);
-	}
+	// if (g_gametype.integer === GT.CTF) {
+	// 	Team_CheckHurtCarrier(targ, attacker);
+	// }
 
 	if (targ.client) {
 		// Set the last client who damaged the target.
@@ -18718,8 +18154,8 @@ function PlayerDie(self, inflictor, attacker, damage, meansOfDeath) {
 		AddScore(self, self.r.currentOrigin, -1);
 	}
 
-	// Add team bonuses.
-	Team_FragBonuses(self, inflictor, attacker);
+	// // Add team bonuses.
+	// Team_FragBonuses(self, inflictor, attacker);
 
 	// If I committed suicide, the flag does not fall, it returns.
 	if (meansOfDeath === MOD.SUICIDE) {
@@ -18995,7 +18431,7 @@ function TossClientItems(self) {
 	var weapon = self.s.weapon;
 
 	// Make a special check to see if they are changing to a new
-	// weapon that isn't the mg or gauntlet. Without this, a client
+	// weapon that isn't the mg or gauntlet.  Without this, a client
 	// can pick up a weapon, be killed, and not drop the weapon because
 	// their weapon change hasn't completed yet and they are still holding the MG.
 	if (weapon === WP.MACHINEGUN || weapon === WP.GRAPPLING_HOOK) {
@@ -19090,7 +18526,7 @@ function SpawnEntity() {
 
 		ent.inuse = true;
 		ent.s.number = i;
-		// ARENANUM_NONE used by body queue during init.
+		// ARENANUM_NONE used by body queue.
 		ent.s.arenaNum = level.arena ? level.arena.arenaNum : ARENANUM_NONE;
 
 		return ent;
@@ -19112,13 +18548,6 @@ function FreeEntity(ent) {
 	ent.inuse = false;
 	ent.classname = 'freed';
 	ent.freeTime = level.time;
-}
-
-/**
- * GetEntityNum
- */
-function GetEntityNum(ent) {
-	return level.gentities.indexOf(ent);
 }
 
 /**
@@ -19192,16 +18621,13 @@ function SpawnEntityFromDef(def) {
 		}
 	}
 
-	// Don't spawn items in CA modes.
-	if (level.arena.gametype < GT.CLANARENA) {
-		// See if we should spawn this as an item.
-		for (var i = 1; i < BG.ItemList.length; i++) {
-			var item = BG.ItemList[i];
+	// See if we should spawn this as an item.
+	for (var i = 1; i < BG.ItemList.length; i++) {
+		var item = BG.ItemList[i];
 
-			if (item.classname === ent.classname) {
-				SpawnItem(ent, item);
-				return;
-			}
+		if (item.classname === ent.classname) {
+			SpawnItem(ent, item);
+			return;
 		}
 	}
 
@@ -20742,22 +20168,22 @@ function RunMoverTeam(ent) {
 		}
 	}
 
-	// if (part) {
-	// 	// Go back to the previous position.
-	// 	for (part = ent; part; part = part.teamchain) {
-	// 		part.s.pos.trTime += level.time - level.previousTime;
-	// 		part.s.apos.trTime += level.time - level.previousTime;
-	// 		BG.EvaluateTrajectory(part.s.pos, level.time, part.r.currentOrigin);
-	// 		BG.EvaluateTrajectory(part.s.apos, level.time, part.r.currentAngles);
-	// 		SV.LinkEntity(part);
-	// 	}
+	if (part) {
+		// Go back to the previous position.
+		for (part = ent; part; part = part.teamchain) {
+			part.s.pos.trTime += level.time - level.previousTime;
+			part.s.apos.trTime += level.time - level.previousTime;
+			BG.EvaluateTrajectory(part.s.pos, level.time, part.r.currentOrigin);
+			BG.EvaluateTrajectory(part.s.apos, level.time, part.r.currentAngles);
+			SV.LinkEntity(part);
+		}
 
-	// 	// If the pusher has a "blocked" function, call it.
-	// 	if (ent.blocked) {
-	// 		ent.blocked(ent, obstacle);
-	// 	}
-	// 	return;
-	// }
+		// If the pusher has a "blocked" function, call it.
+		if (ent.blocked) {
+			ent.blocked(ent, obstacle);
+		}
+		return;
+	}
 
 	// The move succeeded
 	for (part = ent; part; part = part.teamchain) {
@@ -20820,8 +20246,8 @@ function MoverPush(pusher, move, amove) {
 	var entityNums = FindEntitiesInBox(totalMins, totalMaxs);
 
 	// Move the pusher to its final position.
-	// vec3.add(pusher.r.currentOrigin, move);
-	// vec3.add(pusher.r.currentAngles, amove);
+	vec3.add(pusher.r.currentOrigin, move);
+	vec3.add(pusher.r.currentAngles, amove);
 	SV.LinkEntity(pusher);
 
 	// See if any solid entities are inside the final position.
@@ -21051,7 +20477,6 @@ function SetMoverState(ent, moverState, time) {
 			vec3.subtract(ent.pos2, ent.pos1, delta);
 			f = 1000.0 / ent.s.pos.trDuration;
 			vec3.scale(delta, f, ent.s.pos.trDelta);
-			log('SetMoverState delta: ' + vec3.str(ent.s.pos.trDelta));
 			ent.s.pos.trType = TR.LINEAR_STOP;
 			break;
 		case MOVER.TWOTOONE:
@@ -21246,21 +20671,19 @@ function WriteWorldSession() {
  * Called on a first-time connect.
  */
 function InitSessionData(client, userinfo) {
-	var clientNum = level.clients.indexOf(client);
 	var sess = client.sess;
 
 	var value = userinfo['team'];
-
 	if (value === 's') {
 		// A willing spectator, not a waiting-in-line.
 		sess.team = TEAM.SPECTATOR;
 	} else {
 		if (level.arena.gametype === GT.TOURNAMENT) {
-			sess.team = PickTeam(clientNum);
+			sess.team = PickTeam(client.ps.clientNum);
 		} else if (level.arena.gametype >= GT.TEAM) {
 			// Always auto-join for practice arena.
 			if (level.arena.gametype === GT.PRACTICEARENA) {
-				sess.team = PickTeam(clientNum);
+				sess.team = PickTeam(client.ps.clientNum);
 			} else {
 				// Always spawn as spectator in team games.
 				sess.team = TEAM.SPECTATOR;
@@ -21270,9 +20693,7 @@ function InitSessionData(client, userinfo) {
 		}
 	}
 
-	sess.spectatorState = sess.team === TEAM.SPECTATOR ? SPECTATOR.FREE : SPECTATOR.NOT;
-
-	PushClientToQueue(level.gentities[clientNum]);
+	PushClientToQueue(level.gentities[client.ps.clientNum]);
 
 	WriteSessionData(client);
 }
@@ -21283,7 +20704,7 @@ function InitSessionData(client, userinfo) {
  * Called on a reconnect.
  */
 function ReadSessionData(client) {
-	var name = 'session' + level.clients.indexOf(client);
+	var name = 'session' + client.ps.clientNum;
 	var cvar = Cvar.GetCvar(name);
 
 	if (!cvar) {
@@ -21307,7 +20728,7 @@ function ReadSessionData(client) {
  * Called on game shutdown
  */
 function WriteSessionData(client) {
-	var name = 'session' + level.clients.indexOf(client);
+	var name = 'session' + client.ps.clientNum;
 	var val = JSON.stringify(client.sess);
 
 	var cvar = Cvar.AddCvar(name);
@@ -21624,11 +21045,12 @@ function Team_SetFlagStatus(team, status) {
 	if (modified) {
 		var st = new Array(4);
 
-		if (level.arena.gametype === GT.CTF) {
+		if(level.arena.gametype == GT.CTF) {
 			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
 			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
 			st[2] = 0;
-		} else {  // GT.NFCTF
+		}
+		else {		// GT_1FCTF
 			st[0] = oneFlagStatusRemap[teamgame.flagStatus];
 			st[1] = 0;
 		}
@@ -21816,224 +21238,6 @@ function Team_ForceGesture(team) {
 	}
 }
 
-
-/**
- * Team_FragBonuses
- *
- * Calculate the bonuses for flag defense, flag carrier defense, etc.
- * Note that bonuses are not cumulative. You get one, they are in importance
- * order.
- */
-function Team_FragBonuses(targ, inflictor, attacker) {
-	// No bonus for fragging yourself or team mates.
-	if (!targ.client || !attacker.client || targ === attacker || OnSameTeam(targ, attacker)) {
-		return;
-	}
-
-	var team = targ.client.sess.team;
-	var otherteam = OtherTeam(targ.client.sess.team);
-	if (otherteam < 0) {
-		return;  // whoever died isn't on a team
-	}
-
-	// Same team, if the flag at base, check to he has the enemy flag.
-	var flag_pw;
-	var enemy_flag_pw;
-
-	if (team === TEAM.RED) {
-		flag_pw = PW.REDFLAG;
-		enemy_flag_pw = PW.BLUEFLAG;
-	} else {
-		flag_pw = PW.BLUEFLAG;
-		enemy_flag_pw = PW.REDFLAG;
-	}
-
-	if (level.arena.gametype === GT.NFCTF) {
-		enemy_flag_pw = PW.NEUTRALFLAG;
-	}
-
-	// Did the attacker frag the flag carrier?
-	var tokens = 0;
-
-	if (targ.client.ps.powerups[enemy_flag_pw]) {
-		attacker.client.pers.teamState.lastfraggedcarrier = level.time;
-		AddScore(attacker, targ.r.currentOrigin, CTF_FRAG_CARRIER_BONUS);
-		attacker.client.pers.teamState.fragcarrier++;
-
-		SV.SendServerCommand(null, 'print', attacker.client.pers.name + QS.EscapeColor(QS.COLOR.WHITE) + ' fragged ' + TeamName(team) + '\'s flag carrier!');
-
-		// The target had the flag, clear the hurt carrier
-		// field on the other team.
-		for (var i = 0; i < level.maxclients.integer; i++) {
-			var ent = level.gentities[i];
-
-			if (ent.inuse && ent.client.sess.team === otherteam) {
-				ent.client.pers.teamState.lasthurtcarrier = 0;
-			}
-		}
-
-		return;
-	}
-
-	if (targ.client.pers.teamState.lasthurtcarrier &&
-		level.time - targ.client.pers.teamState.lasthurtcarrier < CTF_CARRIER_DANGER_PROTECT_TIMEOUT &&
-		!attacker.client.ps.powerups[flag_pw]) {
-		// Attacker is on the same team as the flag carrier and
-		// fragged a guy who hurt our flag carrier.
-		AddScore(attacker, targ.r.currentOrigin, CTF_CARRIER_DANGER_PROTECT_BONUS);
-
-		attacker.client.pers.teamState.carrierdefense++;
-		targ.client.pers.teamState.lasthurtcarrier = 0;
-
-		attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
-		// Add the sprite over the player's head.
-		attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
-		attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
-		attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
-
-		return;
-	}
-
-	if (targ.client.pers.teamState.lasthurtcarrier &&
-		level.time - targ.client.pers.teamState.lasthurtcarrier < CTF_CARRIER_DANGER_PROTECT_TIMEOUT) {
-		// Attacker is on the same team as the skull carrier and.
-		AddScore(attacker, targ.r.currentOrigin, CTF_CARRIER_DANGER_PROTECT_BONUS);
-
-		attacker.client.pers.teamState.carrierdefense++;
-		targ.client.pers.teamState.lasthurtcarrier = 0;
-
-		attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
-		// Add the sprite over the player's head.
-		attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
-		attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
-		attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
-
-		return;
-	}
-
-	// Flag and flag carrier area defense bonuses.
-
-	// We have to find the flag and carrier entities.
-
-	// Find the flag
-	var c;
-	switch (attacker.client.sess.team) {
-		case TEAM.RED:
-			c = "team_CTF_redflag";
-			break;
-		case TEAM.BLUE:
-			c = "team_CTF_blueflag";
-			break;
-		default:
-			return;
-	}
-
-	// Find attacker's team's flag carrier.
-	var carrier;
-	var flag;
-
-	for (var i = 0; i < level.maxclients; i++) {
-		carrier = level.gentities[i];
-
-		if (carrier.inuse && carrier.client.ps.powerups[flag_pw]) {
-			break;
-		}
-
-		carrier = null;
-	}
-
-	var flags = FindEntity({ classname: c });
-	for (var i = 0; i < flags.length; i++) {
-		flag = flags[i];
-
-		if (!(flag.flags & GFL.DROPPED_ITEM)) {
-			break;
-		}
-	}
-
-	if (!flag) {
-		return;  // can't find attacker's flag
-	}
-
-	// Ok we have the attackers flag and a pointer to the carrier.
-
-	// Check to see if we are defending the base's flag.
-	var v1 = vec3.subtract(targ.r.currentOrigin, flag.r.currentOrigin, vec3.create());
-	var v2 = vec3.subtract(attacker.r.currentOrigin, flag.r.currentOrigin, vec3.create());
-
-	if (((vec3.length(v1) < CTF_TARGET_PROTECT_RADIUS /*&&
-		trap_InPVS(flag.r.currentOrigin, targ.r.currentOrigin)*/) ||
-		(vec3.length(v2) < CTF_TARGET_PROTECT_RADIUS /*&&
-		trap_InPVS(flag.r.currentOrigin, attacker.r.currentOrigin)*/)) &&
-		attacker.client.sess.team !== targ.client.sess.team) {
-		// We defended the base flag.
-		AddScore(attacker, targ.r.currentOrigin, CTF_FLAG_DEFENSE_BONUS);
-		attacker.client.pers.teamState.basedefense++;
-
-		attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
-		// Add the sprite over the player's head.
-		attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
-		attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
-		attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
-
-		return;
-	}
-
-	if (carrier && carrier !== attacker) {
-		vec3.subtract(targ.r.currentOrigin, carrier.r.currentOrigin, v1);
-		vec3.subtract(attacker.r.currentOrigin, carrier.r.currentOrigin, v2);
-
-		if (((vec3.length(v1) < CTF_ATTACKER_PROTECT_RADIUS /*&&
-			trap_InPVS(carrier.r.currentOrigin, targ.r.currentOrigin)*/) ||
-			(vec3.length(v2) < CTF_ATTACKER_PROTECT_RADIUS /*&&
-			trap_InPVS(carrier.r.currentOrigin, attacker.r.currentOrigin)*/)) &&
-			attacker.client.sess.team !== targ.client.sess.team) {
-			AddScore(attacker, targ.r.currentOrigin, CTF_CARRIER_PROTECT_BONUS);
-			attacker.client.pers.teamState.carrierdefense++;
-
-			attacker.client.ps.persistant[PERS.DEFEND_COUNT]++;
-			// add the sprite over the player's head
-			attacker.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
-			attacker.client.ps.eFlags |= EF.AWARD_DEFEND;
-			attacker.client.rewardTime = level.time + REWARD_SPRITE_TIME;
-
-			return;
-		}
-	}
-}
-
-/**
- * Team_CheckHurtCarrier
- *
- * Check to see if attacker hurt the flag carrier.  Needed when handing out bonuses for assistance to flag
- * carrier defense.
- */
-function Team_CheckHurtCarrier(targ, attacker) {
-	if (!targ.client || !attacker.client) {
-		return;
-	}
-
-	var flag_pw;
-
-	if (targ.client.sess.team === TEAM.RED) {
-		flag_pw = PW.BLUEFLAG;
-	} else {
-		flag_pw = PW.REDFLAG;
-	}
-
-	// flags
-	if (targ.client.ps.powerups[flag_pw] &&
-		targ.client.sess.team != attacker.client.sess.team) {
-		attacker.client.pers.teamState.lasthurtcarrier = level.time;
-	}
-
-	// // skulls
-	// if (targ.client.ps.generic1 &&
-	// 	targ.client.sess.team != attacker.client.sess.team) {
-	// 	attacker.client.pers.teamState.lasthurtcarrier = level.time;
-	// }
-}
-
 /**
  * Team_ResetFlags
  */
@@ -22052,26 +21256,30 @@ function Team_ResetFlags() {
  */
 function Team_ResetFlag(team) {
 	var str;
-	switch (team) {
-		case TEAM.RED:
-			str = 'team_CTF_redflag';
-			break;
-		case TEAM.BLUE:
-			str = 'team_CTF_blueflag';
-			break;
-		case TEAM.FREE:
-			str = 'team_CTF_neutralflag';
-			break;
-		default:
-			return null;
-	}
-
-	var ents = FindEntity({ classname: str });
+	var ents;
 	var rent;
 
+	switch (team) {
+	case TEAM.RED:
+		str = "team_CTF_redflag";
+		break;
+	case TEAM.BLUE:
+		str = "team_CTF_blueflag";
+		break;
+	case TEAM.FREE:
+		str = "team_CTF_neutralflag";
+		break;
+	default:
+		return null;
+	}
+
+	ents = FindEntity({ classname: str });
+
 	for (var i = 0; i < ents.length; i++) {
+
 		if (ents[i].flags & GFL.DROPPED_ITEM) {
 			FreeEntity(ents[i]);
+
 		} else {
 			rent = ents[i];
 			RespawnItem(ents[i]);
@@ -22088,7 +21296,7 @@ function Team_ResetFlag(team) {
  */
 function Team_ReturnFlagSound(ent, team) {
 	if (!ent) {
-		log('Warning: NULL passed to Team_ReturnFlagSound');
+// 		G_Printf ("Warning:  NULL passed to Team_ReturnFlagSound\n");
 		return;
 	}
 
@@ -22106,12 +21314,12 @@ function Team_ReturnFlagSound(ent, team) {
  */
 function Team_TakeFlagSound(ent, team) {
 	if (!ent) {
-		log('Warning: NULL passed to Team_TakeFlagSound');
+// 		G_Printf ("Warning:  NULL passed to Team_TakeFlagSound\n");
 		return;
 	}
 
-	// Only play sound when the flag was at the base
-	// or not picked up the last 10 seconds.
+	// only play sound when the flag was at the base
+	// or not picked up the last 10 seconds
 	switch(team) {
 		case TEAM.RED:
 			if (teamgame.blueStatus != FLAG.ATBASE ) {
@@ -22147,7 +21355,7 @@ function Team_TakeFlagSound(ent, team) {
  */
 function Team_CaptureFlagSound(ent, team) {
 	if (!ent) {
-		log('Warning: NULL passed to Team_CaptureFlagSound');
+// 		G_Printf ("Warning:  NULL passed to Team_CaptureFlagSound\n");
 		return;
 	}
 
@@ -22204,14 +21412,13 @@ function Team_DroppedFlagThink(ent) {
 	}
 
 	Team_ReturnFlagSound(Team_ResetFlag(team), team);
-
 	// Reset Flag will delete this entity.
 }
 /**
  * Team_AddScore
  *
- * Used for gametype > GT.TEAM.
- * For gametype GT.TEAM the teamScores is updated in AddScore in g_combat.c
+ * Used for gametype > GT_TEAM.
+ * For gametype GT_TEAM the teamScores is updated in AddScore in g_combat.c
  */
 function Team_AddScore(team, origin, score) {
 	var tent = TempEntity(origin, EV.GLOBAL_TEAM_SOUND);
@@ -22242,7 +21449,7 @@ function Team_AddScore(team, origin, score) {
 		}
 	}
 
-	level.arena.teamScores[team] += score;
+	level.teamScores[team] += score;
 }
 
 /**
@@ -22250,7 +21457,6 @@ function Team_AddScore(team, origin, score) {
  */
 function SelectCTFSpawnPoint(team, teamstate, origin, angles) {
 	var classname;
-
 	if (teamstate == TEAM_STATE.BEGIN) {
 		if (team == TEAM.RED) {
 			classname = 'team_CTF_redplayer';
@@ -22264,7 +21470,6 @@ function SelectCTFSpawnPoint(team, teamstate, origin, angles) {
 			classname = 'team_CTF_bluespawn';
 		}
 	}
-
 	if (!classname) {
 		return SelectSpawnPoint(QMath.vec3origin, origin, angles);
 	}
@@ -22859,12 +22064,12 @@ function RailgunFire(ent) {
 	// Give the shooter a reward sound if they have made two railgun hits in a row.
 	if (hits === 0) {
 		// Complete miss.
-		ent.client.accurate_count = 0;
+		ent.client.accurateCount = 0;
 	} else {
 		// Check for "impressive" reward sound.
-		ent.client.accurate_count += hits;
-		if (ent.client.accurate_count >= 2) {
-			ent.client.accurate_count -= 2;
+		ent.client.accurateCount += hits;
+		if (ent.client.accurateCount >= 2) {
+			ent.client.accurateCount -= 2;
 			ent.client.ps.persistant[PERS.IMPRESSIVE_COUNT]++;
 			// Add the sprite over the player's head.
 			ent.client.ps.eFlags &= ~(EF.AWARD_IMPRESSIVE | EF.AWARD_EXCELLENT | EF.AWARD_GAUNTLET | EF.AWARD_ASSIST | EF.AWARD_DEFEND | EF.AWARD_CAP );
@@ -23332,34 +22537,6 @@ function TouchPlatCenterTrigger(ent, other) {
 		UseBinaryMover(ent.parent, ent, other);
 	}
 }
-		spawnFuncs['func_rotating'] = function (ent) {
-	if (!ent.speed) {
-		ent.speed = 100;
-	}
-
-	// Set the axis of rotation.
-	ent.s.apos.trType = TR.LINEAR;
-	if (ent.spawnflags & 4) {
-		ent.s.apos.trDelta[2] = ent.speed;
-	} else if (ent.spawnflags & 8) {
-		ent.s.apos.trDelta[0] = ent.speed;
-	} else {
-		ent.s.apos.trDelta[1] = ent.speed;
-	}
-
-	if (!ent.damage) {
-		ent.damage = 2;
-	}
-
-	SV.SetBrushModel(ent, ent.model);
-	InitMover(ent);
-
-	vec3.set(ent.s.origin, ent.s.pos.trBase);
-	vec3.set(ent.s.pos.trBase, ent.r.currentOrigin);
-	vec3.set(ent.s.apos.trBase, ent.r.currentAngles);
-
-	SV.LinkEntity(ent);
-}
 		spawnFuncs['func_static'] = function (self) {
 	SV.SetBrushModel(self, self.model);
 	InitMover(self);
@@ -23385,6 +22562,7 @@ var TRAIN_TOGGLE      = 2;
 var TRAIN_BLOCK_STOPS = 4;
 
 spawnFuncs['func_train'] = function (self) {
+	console.log('SPAWANING func_train');
 	self.s.angles[0] = self.s.angles[1] = self.s.angles[2] = 0;
 
 	if (self.spawnflags & TRAIN_BLOCK_STOPS) {
@@ -23399,11 +22577,6 @@ spawnFuncs['func_train'] = function (self) {
 
 	if (!self.target) {
 		log('func_train without a target at', self.r.absmin);
-		FreeEntity(self);
-		return;
-	}
-
-	if (self.model !== '*3') {
 		FreeEntity(self);
 		return;
 	}
@@ -23427,35 +22600,36 @@ spawnFuncs['func_train'] = function (self) {
 function TrainSetupTargets(ent) {
 	var entities = FindEntity({ targetName: ent.target });
 	if (!entities.length) {
-		log('func_train at' + vec3.str(ent.r.absmin) + 'with an unfound target');
+		log('func_train at', ent.r.absmin, 'with an unfound target');
 		return;
 	}
 	ent.nextTrain = entities[0];
 
-	var path, start, next;
-
-	for (path = ent.nextTrain; path !== start; path = next) {
+	var start;
+	for (var path = ent.nextTrain; path !== start; path = next) {
 		if (!start) {
 			start = path;
 		}
 
 		if (!path.target) {
-			log('Train corner at' + vec3.str(path.s.origin) + 'without a target');
+			log('Train corner at', path.s.origin, 'without a target');
 			return;
 		}
-
-		log('TrainSetupTargets', path.target);
 
 		// Find a path_corner among the targets.
 		// There may also be other targets that get fired when the corner
 		// is reached.
-		entities = FindEntity({ classname: 'path_corner', targetName: path.target });
+		entities = FindEntity({ targetName: path.target });
+		var next;
 
-		if (!entities.length) {
-			log('Train corner at ' + vec3.str(path.s.origin) + ' without a target path_corner');
+		for (var i = 0; i < entities.length; i++) {
+			next = entities[i++];
+			if (next.classname === 'path_corner') {
+				break;
+			}
 		}
 
-		path.nextTrain = next = entities[0];
+		path.nextTrain = next;
 	}
 
 	// Start the train moving from the first corner.
@@ -23491,8 +22665,6 @@ function TrainReached(ent) {
 	var length = vec3.length(move);
 
 	ent.s.pos.trDuration = length * 1000 / speed;
-
-	log('TrainReached - currently: ' + ent.nextTrain.targetName + ', next: ' + next.nextTrain.targetName + ', d: ' + ent.s.pos.trDuration);
 
 	// Tequila comment: Be sure to send to clients after any fast move case.
 	ent.r.svFlags &= ~SVF.NOCLIENT;
@@ -23545,9 +22717,6 @@ function TrainBeginMoving(ent) {
 		spawnFuncs['info_player_deathmatch'] = function (self) {
 };
 		spawnFuncs['info_player_intermission'] = function (self) {
-};
-		spawnFuncs['info_player_start'] = function (self) {
-	self.classname = 'info_player_deathmatch';
 };
 		/**
  * QUAKED light (0 1 0) (-8 -8 -8) (8 8 8) linear
@@ -24097,8 +23266,8 @@ spawnFuncs['worldspawn'] = function (self) {
 
 /*global mat4: true, vec3: true */
 
-define('server/sv',['require','vendor/bit-buffer','common/qmath','common/qshared','common/surfaceflags','common/cvar','clipmap/cm','game/gm'],function (require) {
-	var BitStream  = require('vendor/bit-buffer').BitStream;
+define('server/sv',['require','BitBuffer','common/qmath','common/qshared','common/surfaceflags','common/cvar','clipmap/cm','game/gm'],function (require) {
+	var BitStream  = require('BitBuffer').BitStream;
 	var QMath      = require('common/qmath');
 	var QS         = require('common/qshared');
 	var SURF       = require('common/surfaceflags');
@@ -24296,7 +23465,7 @@ function RegisterCvars() {
 	// Many hosts supporting WebSockets require you to access the app through
 	// a different external port than what you bind to internally.
 	sv_externalPort = Cvar.AddCvar('sv_externalPort', 0,                    Cvar.FLAGS.ARCHIVE, true);
-	sv_master       = Cvar.AddCvar('sv_master',       '',                   Cvar.FLAGS.ARCHIVE);
+	sv_master       = Cvar.AddCvar('sv_master',       'master.quakejs.com', Cvar.FLAGS.ARCHIVE);
 	sv_name         = Cvar.AddCvar('sv_name',         'Anonymous',          Cvar.FLAGS.ARCHIVE);
 	sv_serverid     = Cvar.AddCvar('sv_serverid',     0,                    Cvar.FLAGS.SYSTEMINFO | Cvar.FLAGS.ROM);
 	sv_mapname      = Cvar.AddCvar('sv_mapname',      'nomap',              Cvar.FLAGS.SERVERINFO);
@@ -24377,11 +23546,6 @@ function Frame(msec) {
 
 		// Let everything in the world think and move.
 		GM.Frame(sv.time);
-
-		// If the server started to shutdown during this frame, early out.
-		if (!Running()) {
-			return;
-		}
 	}
 
 	// Check for timeouts.
@@ -24447,13 +23611,13 @@ function CalcPings() {
 /**
  * CheckTimeouts
  *
- * If a packet has not been received from a client for sv_timeout
- * seconds, drop the connection. Server time is used instead of
+ * If a packet has not been received from a client for timeout->integer
+ * seconds, drop the conneciton. Server time is used instead of
  * realtime to avoid dropping the local client while debugging.
  *
  * When a client is normally dropped, the client_t goes into a zombie state
  * for a few seconds to make sure any final reliable message gets resent
- * if necessary.
+ * if necessary
  */
 function CheckTimeouts() {
 	var droppoint = svs.time - 1000 * sv_timeout.get();
@@ -24495,10 +23659,8 @@ function CheckTimeouts() {
 var HEARTBEAT_MSEC = 30 * 1000;
 
 function SendMasterHeartbeat() {
-	var master = sv_master.get();
-
 	// Only dedicated servers send heart beats.
-	if (!dedicated || !master) {
+	if (!dedicated) {
 		return;
 	}
 
@@ -24509,13 +23671,13 @@ function SendMasterHeartbeat() {
 
 	svs.nextHeartbeatTime = svs.time + HEARTBEAT_MSEC;
 
-	var addr = COM.StringToAddr(master);
+	var addr = COM.StringToAddr(sv_master.get());
 	if (!addr) {
-		error('Failed to parse server address', master);
+		error('Failed to parse server address', sv_master.get());
 		return;
 	}
 
-	log('SendMasterHeartbeat', master);
+	log('SendMasterHeartbeat', sv_master.get());
 
 	var socket = COM.NetConnect(addr, {
 		onopen: function () {
@@ -24548,17 +23710,10 @@ function PacketEvent(socket, source) {
 		length = source.byteLength;
 	}
 
-	// Copy the supplied buffer over to our internal fixed size buffer.
-	// var view = new Uint8Array(svs.msgBuffer, 0, COM.MAX_MSGLEN);
-	// var view2 = new Uint8Array(buffer, 0, length);
-	// for (var i = 0; i < length; i++) {
-	// 	view[i] = view2[i];
-	// }
-
 	var msg = new BitStream(buffer, 0, length);
 
 	// Peek in and see if this is a string message.
-	if (msg.view.byteLength >= 4 && msg.view.getInt32(0) === -1) {
+	if (msg.view.getInt32(0) === -1) {
 		OutOfBandPacket(socket, msg);
 		return;
 	}
@@ -24585,34 +23740,29 @@ function PacketEvent(socket, source) {
 /**
  * OutOfBandPacket
  *
- * A connectionless packet has four leading 0xff
- * characters to distinguish it from a game channel.
- * Clients that are in the game can still send
- * connectionless packets.
+ * This is silly being that we're on TCP.
  */
 function OutOfBandPacket(socket, msg) {
 	msg.readInt32();  // Skip the -1.
 
-	var packet;
+	var str = msg.readASCIIString();
+	var message;
+
 	try {
-		var str;
-		str = msg.readASCIIString();
-		packet = JSON.parse(str);
+		message = JSON.parse(str);
 	} catch (e) {
-		log('Failed to parse oob packet from ' + SYS.SockToString(socket));
 		COM.NetClose(socket);
 		return;
 	}
 
-	if (packet.type === 'rcon') {
-		RemoteCommand(socket, packet.data[0], packet.data[1]);
-	} else if (packet.type === 'getinfo') {
+	var cmd = message.type;
+
+	if (cmd === 'rcon') {
+		RemoteCommand(socket, message.data[0], message.data[1]);
+	} else if (cmd === 'getinfo') {
 		ServerInfo(socket);
-	} else if (packet.type === 'connect') {
-		ClientEnterServer(socket, packet.data);
-	} else {
-		log('Bad packet type from ' + SYS.SockToString(socket) + ': ' + packet.type);
-		COM.NetClose(socket);
+	} else if (cmd === 'connect') {
+		ClientEnterServer(socket, message.data);
 	}
 }
 
@@ -24683,8 +23833,6 @@ function RemoteCommand(socket, password, cmd) {
  */
 function ServerInfo(socket) {
 	var info = {};
-
-	log('Received getinfo request from ' + SYS.SockToString(socket));
 
 	var g_gametype = Cvar.AddCvar('g_gametype');
 
@@ -25102,14 +24250,14 @@ function ClientEnterServer(socket, data) {
 
 	// Find a slot for the client.
 	var clientNum;
-	for (var i = 0; i < sv_maxClients.get(); i++) {
+	for (var i = 0; i < QS.MAX_CLIENTS; i++) {
 		if (svs.clients[i].state === CS.FREE) {
 			clientNum = i;
 			break;
 		}
 	}
 	if (clientNum === undefined) {
-		COM.NetOutOfBandPrint(socket, 'print', 'Server is full.');
+		COM.NetOutOfBandPrint(netchan.socket, 'print', 'Server is full.');
 		log('Rejected a connection.');
 		return;
 	}
@@ -25117,7 +24265,7 @@ function ClientEnterServer(socket, data) {
 	var com_protocol = Cvar.AddCvar('com_protocol');
 	var version = data.protocol;
 	if(version !== com_protocol.get()) {
-		COM.NetOutOfBandPrint(socket, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
+		COM.NetOutOfBandPrint(netchan.socket, 'print', 'Server uses protocol version ' + com_protocol.get() + ' (yours is ' + version + ').');
 		log('Rejected connect from version', version);
 		return;
 	}
@@ -25212,6 +24360,9 @@ function DropClient(client, reason) {
 	// Kill the connection.
 	COM.NetClose(client.netchan.socket);
 
+	// Nuke user info..
+	//SV_SetUserinfo( drop - svs.clients, "" );
+
 	log('Going to CS_ZOMBIE for', client.name);
 	client.state = CS.ZOMBIE;  // become free in a few seconds
 }
@@ -25251,10 +24402,6 @@ function UserMove(client, msg, delta) {
 		log('UserMove cmd count < 1');
 		return;
 	}
-	if (count > QS.MAX_PACKET_USERCMDS) {
-		log('cmdCount > MAX_PACKET_USERCMDS');
-		return;
-	}
 
 	// NOTE: Only delta the user cmd from another user cmd
 	// in this message. If we delta across old commands (e.g.
@@ -25285,9 +24432,6 @@ function UserMove(client, msg, delta) {
 		return; // shouldn't happen
 	}
 
-	// Usually, the first couple commands will be duplicates
-	// of ones we have previously received, but the servertimes
-	// in the commands will cause them to be immediately discarded.
 	for (var i = 0; i < cmds.length; i++) {
 		var cmd = cmds[i];
 
@@ -25335,38 +24479,24 @@ function SendClientGameState(client) {
 	msg.writeInt32(client.reliableSequence);
 
 	// Write the configstrings.
-	var written = 0;
-	try {
-		for (var key in sv.configstrings) {
-			if (!sv.configstrings.hasOwnProperty(key)) {
-				continue;
-			}
-
-			msg.writeInt8(COM.SVM.configstring);
-			msg.writeASCIIString(JSON.stringify({ k: key, v: GetConfigstring(key) }));
+	for (var key in sv.configstrings) {
+		if (!sv.configstrings.hasOwnProperty(key)) {
+			continue;
 		}
 
-		// Write the baselines.
-		var nullstate = new QS.EntityState();
-		for (var i = 0; i < QS.MAX_GENTITIES; i++) {
-			var base = sv.svEntities[i].baseline;
-			if (!base.number) {
-				continue;
-			}
-			written++;
-			msg.writeInt8(COM.SVM.baseline);
-			COM.WriteDeltaEntityState(msg, nullstate, base, true);
-		}
+		msg.writeInt8(COM.SVM.configstring);
+		msg.writeASCIIString(JSON.stringify({ k: key, v: GetConfigstring(key) }));
 	}
-	catch (e) {
-		log('SendClientGameState error!');
-		log('Entities: ' + written);
-		log('Configstrings: ' + JSON.stringify(sv.configstrings));
 
-		console.log(e);
-		console.trace();
-
-		throw e;
+	// Write the baselines.
+	var nullstate = new QS.EntityState();
+	for (var i = 0; i < QS.MAX_GENTITIES; i++) {
+		var base = sv.svEntities[i].baseline;
+		if (!base.number) {
+			continue;
+		}
+		msg.writeInt8(COM.SVM.baseline);
+		COM.WriteDeltaEntityState(msg, nullstate, base, true);
 	}
 
 	msg.writeInt8(COM.SVM.EOF);
@@ -25523,10 +24653,10 @@ function ExecuteClientMessage(client, msg) {
  */
 function ParseClientCommand(client, msg) {
 	var sequence = msg.readInt32();
+	var str = msg.readASCIIString();
 
 	var cmd;
 	try {
-		var str = msg.readASCIIString();
 		cmd = JSON.parse(str);
 	} catch (e) {
 		DropClient(client, 'Failed to parse command');
@@ -25545,22 +24675,6 @@ function ParseClientCommand(client, msg) {
 		return false;
 	}
 
-	// // Malicious users may try using too many string commands
-	// // to lag other players. If we decide that we want to stall
-	// // the command, we will stop processing the rest of the packet,
-	// // including the usercmd. This causes flooders to lag themselves
-	// // but not other people.
-	// // We don't do this when the client hasn't been active yet since it's
-	// // normal to spam a lot of commands when downloading.
-	// if ( !com_cl_running->integer &&
-	// 	cl->state >= CS_ACTIVE &&
-	// 	sv_floodProtect->integer &&
-	// 	svs.time < cl->nextReliableTime ) {
-	// 	// ignore any other text messages from this client but let them keep playing
-	// 	// TTimo - moved the ignored verbose to the actual processing in SV_ExecuteClientCommand, only printing if the core doesn't intercept
-	// 	clientOk = qfalse;
-	// }
-
 	// Don't allow another command for one second.
 	client.nextReliableTime = svs.time + 1000;
 
@@ -25577,7 +24691,6 @@ function ParseClientCommand(client, msg) {
 function ExecuteClientCommand(client, cmd) {
 	if (cmd.type === 'userinfo') {
 		UpdateUserinfo(client, cmd.data);
-		return;
 	}
 	// Since we're on TCP the disconnect is handled as a result
 	// of a socket close event.
@@ -25918,7 +25031,7 @@ function AddEntitiesVisibleFromPoint(arenaNum, origin, frame, eNums) {
 		}
 
 		if (ent.s.number !== i) {
-			error('Entity number does not match: ent.s.number: ' + ent.s.number + ', i: ' + i);
+			error('Entity number does not match.. WTF' + ent.s.number + ', ' + i);
 		}
 
 		// Entities can be flagged to explicitly not be sent to the client.
@@ -26749,15 +25862,15 @@ define('client/cl',[],function () {
 });
 /*global vec3: true, mat4: true */
 
-define('common/com',['require','vendor/async','vendor/bit-buffer','common/qmath','common/qshared','common/bsp-loader','common/cvar','server/sv','client/cl'],function (require) {
-	var async     = require('vendor/async');
-	var BitStream = require('vendor/bit-buffer').BitStream;
-	var QMath     = require('common/qmath');
-	var QS        = require('common/qshared');
-	var BSPLoader = require('common/bsp-loader');
-	var Cvar      = require('common/cvar');
-	var Server    = require('server/sv');
-	var Client    = require('client/cl');
+define('common/com',['require','async','BitBuffer','common/qmath','common/qshared','common/bsp-serializer','common/cvar','server/sv','client/cl'],function (require) {
+	var async         = require('async');
+	var BitStream     = require('BitBuffer').BitStream;
+	var QMath         = require('common/qmath');
+	var QS            = require('common/qshared');
+	var BspSerializer = require('common/bsp-serializer');
+	var Cvar          = require('common/cvar');
+	var Server        = require('server/sv');
+	var Client        = require('client/cl');
 
 	var MAX_MAP_AREA_BYTES = 32;  // bit vector of area visibility
 
@@ -26923,11 +26036,6 @@ function log() {
 		return;
 	}
 
-	if (CL) {
-		var str = Array.prototype.join.call(arguments, ' ');
-		CL.PrintConsole(str);
-	}
-
 	Function.apply.call(console.log, console, arguments);
 }
 
@@ -26940,7 +26048,6 @@ function error(str) {
 	if (CL) {
 		CL.Disconnect();
 	}
-
 	SV.Kill();
 
 	SYS.Error(str);
@@ -27323,7 +26430,7 @@ function CheckSaveConfig() {
  * LoadConfig
  */
 function LoadConfig(callback) {
-	ExecuteFile('~/user.cfg', function (err) {
+	ExecuteFile('user.cfg', function (err) {
 		// If any archived cvars are modified after this, we will trigger a
 		// writing of the config file.
 		Cvar.ClearModified(Cvar.FLAGS.ARCHIVE);
@@ -27336,7 +26443,7 @@ function LoadConfig(callback) {
  * SaveConfig
  */
 function SaveConfig() {
-	var filename = '~/user.cfg';
+	var filename = 'user.cfg';
 
 	log('Saving config to', filename);
 
@@ -27438,7 +26545,7 @@ function fnread(bits) {
 		case UINT32:
 			return 'readUint32';
 		default:
-			error('fnread: bad bit count ' + bits);
+			throw new Error('fnread: bad bit count ' + bits);
 	}
 }
 
@@ -27455,7 +26562,7 @@ function fnwrite(bits) {
 		case UINT32:
 			return 'writeUint32';
 		default:
-			error('fnwrite: bad bit count ' + bits);
+			throw new Error('fnwrite: bad bit count ' + bits);
 	}
 }
 
@@ -27909,7 +27016,7 @@ function WriteDeltaEntityState(msg, from, to, force) {
 
 	// Sanity check.
 	if (to.number < 0 || to.number >= QS.MAX_GENTITIES) {
-		error('WriteDeltaEntityState: Bad entity number: ', to.number);
+		throw new Error('WriteDeltaEntityState: Bad entity number: ', to.number);
 	}
 
 	// Figure out the number of fields that have changed.
@@ -27977,7 +27084,7 @@ function ReadDeltaEntityState(msg, from, to, number) {
 	var idx, field, fromF, toF, func;
 
 	if (number < 0 || number >= QS.MAX_GENTITIES) {
-		error('Bad delta entity number: ' + number);
+		throw new Error('Bad delta entity number: ', number);
 	}
 
 	// Check for a remove.
@@ -28130,8 +27237,8 @@ function NetListen(addr, opts) {
  * NetSendLoopPacket
  */
 function NetSendLoopPacket(socket, view) {
-	// Copy buffer to loopback view.
-	var loopbackView = new Uint8Array(socket.msgs[socket.send++ % MAX_LOOPBACK], 0, view.length);
+	// Copy buffer to loopback buffer.
+	var loopbackView = new Uint8Array(socket.msgs[socket.send++ % MAX_LOOPBACK]);
 	for (var i = 0; i < view.length; i++) {
 		loopbackView[i] = view[i];
 	}
@@ -28246,7 +27353,7 @@ function LoadBsp(mapname, callback) {
 		}
 
 		try {
-			var world = BSPLoader.load(data);
+			var world = BspSerializer.deserialize(data);
 			callback(null, world);
 		} catch (e) {
 			callback(e);
@@ -28289,8 +27396,8 @@ function LoadBsp(mapname, callback) {
 // simplified CommonJS module definition syntax we use for all other
 // modules, so here we use the standard AMD definition.
 define('system/dedicated/sys',[
-	'vendor/async',
-	'vendor/gl-matrix',
+	'async',
+	'glmatrix',
 	'common/qshared',
 	'common/com',
 	'common/cvar'
@@ -28315,14 +27422,17 @@ var MetaSocket = function (handle) {
 var proxies = {};
 
 /**
- * ToLocalPath
+ * IsLocalFile
+ *
+ * Load files in root from local machine
+ * (e.g. user.cfg and custom .cfg files).
  */
-function ToLocalPath(path) {
-	if (!path.match(/~\//)) {
-		return null;
+function IsLocalFile(path) {
+	if (!path.match(/[\\\/]+/)) {
+		return true;
 	}
 
-	return path.replace('~/', '');
+	return false;
 }
 
 /**
@@ -28371,10 +27481,8 @@ function ReadFile(path, encoding, callback, namespace) {
 		callback = ProxyFileCallback(namespace, callback);
 	}
 
-	var localPath = ToLocalPath(path);
-
-	if (localPath) {
-		ReadLocalFile(localPath, encoding, callback);
+	if (IsLocalFile(path)) {
+		ReadLocalFile(path, encoding, callback);
 	} else {
 		ReadRemoteFile(path, encoding, callback);
 	}
@@ -28388,14 +27496,14 @@ function WriteFile(path, data, encoding, callback, namespace) {
 		callback = ProxyFileCallback(namespace, callback);
 	}
 
-	var localPath = ToLocalPath(path);
+	var local = IsLocalFile(path);
 
-	if (!localPath) {
+	if (!local) {
 		error('Can\'t write to remote files.');
 		return;
 	}
 
-	WriteLocalFile(localPath, data, encoding, callback);
+	WriteLocalFile(path, data, encoding, callback);
 }
 	var net = require('net');
 var readline = require('readline');
@@ -28539,16 +27647,12 @@ function GetExports() {
 }
 	var fs = require('fs');
 var http = require('http');
-var path = require('path');
 
 /**
  * ReadLocalFile
  */
-function ReadLocalFile(filename, encoding, callback) {
-	// Load all local files from usr/ subdir.
-	filename = path.join('usr', filename);
-
-	fs.readFile(filename, encoding, function (err, data) {
+function ReadLocalFile(path, encoding, callback) {
+	fs.readFile(path, encoding, function (err, data) {
 		if (err) {
 			log(err);
 			return callback(err);
@@ -28561,15 +27665,15 @@ function ReadLocalFile(filename, encoding, callback) {
 /**
  * ReadRemoteFile
  */
-function ReadRemoteFile(filename, encoding, callback) {
+function ReadRemoteFile(path, encoding, callback) {
 	var binary = encoding === 'binary';
 
 	var com_filecdn = Cvar.AddCvar('com_filecdn');
-	filename = com_filecdn.get() + '/assets/' + filename + '?v=' + QS.GAME_VERSION;
+	path = com_filecdn.get() + '/assets/' + path + '?v=' + QS.GAME_VERSION;
 
-	http.get(filename, function (res) {
+	http.get(path, function (res) {
 		if (res.statusCode !== 200) {
-			return callback(new Error('Failed to read remote file at \'' + filename + '\'. Invalid HTTP response code ' + res.statusCode));
+			return callback(new Error('Failed to read remote file at \'' + path + '\'. Invalid HTTP response code ' + res.statusCode));
 		}
 
 		if (binary) {
@@ -28594,18 +27698,15 @@ function ReadRemoteFile(filename, encoding, callback) {
 			});
 		}
 	}).on('error', function (err) {
-		callback(new Error('Failed to read file: ' + filename));
+		callback(new Error('Failed to read file: ' + path));
 	});
 }
 
 /**
  * WriteLocalFile
  */
-function WriteLocalFile(filename, data, encoding, callback) {
-	// Load all local files from usr/ subdir.
-	filename = path.join('usr', filename);
-
-	fs.writeFile(filename, data, encoding, function (err) {
+function WriteLocalFile(path, data, encoding, callback) {
+	fs.writeFile(path, data, encoding, function (err) {
 		if (err) {
 			return callback(err);
 		}
