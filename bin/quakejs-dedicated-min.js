@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1137;
+var GAME_VERSION = 0.1138;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -24515,13 +24515,13 @@ function PacketEvent(socket, source) {
 	}
 
 	// Copy the supplied buffer over to our internal fixed size buffer.
-	var view = new Uint8Array(svs.msgBuffer, 0, COM.MAX_MSGLEN);
-	var view2 = new Uint8Array(buffer, 0, length);
-	for (var i = 0; i < length; i++) {
-		view[i] = view2[i];
-	}
+	// var view = new Uint8Array(svs.msgBuffer, 0, COM.MAX_MSGLEN);
+	// var view2 = new Uint8Array(buffer, 0, length);
+	// for (var i = 0; i < length; i++) {
+	// 	view[i] = view2[i];
+	// }
 
-	var msg = new BitStream(svs.msgBuffer);
+	var msg = new BitStream(buffer, 0, length);
 
 	// Peek in and see if this is a string message.
 	if (msg.view.byteLength >= 4 && msg.view.getInt32(0) === -1) {
