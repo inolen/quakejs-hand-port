@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1138;
+var GAME_VERSION = 0.1139;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -20742,22 +20742,22 @@ function RunMoverTeam(ent) {
 		}
 	}
 
-	if (part) {
-		// Go back to the previous position.
-		for (part = ent; part; part = part.teamchain) {
-			part.s.pos.trTime += level.time - level.previousTime;
-			part.s.apos.trTime += level.time - level.previousTime;
-			BG.EvaluateTrajectory(part.s.pos, level.time, part.r.currentOrigin);
-			BG.EvaluateTrajectory(part.s.apos, level.time, part.r.currentAngles);
-			SV.LinkEntity(part);
-		}
+	// if (part) {
+	// 	// Go back to the previous position.
+	// 	for (part = ent; part; part = part.teamchain) {
+	// 		part.s.pos.trTime += level.time - level.previousTime;
+	// 		part.s.apos.trTime += level.time - level.previousTime;
+	// 		BG.EvaluateTrajectory(part.s.pos, level.time, part.r.currentOrigin);
+	// 		BG.EvaluateTrajectory(part.s.apos, level.time, part.r.currentAngles);
+	// 		SV.LinkEntity(part);
+	// 	}
 
-		// If the pusher has a "blocked" function, call it.
-		if (ent.blocked) {
-			ent.blocked(ent, obstacle);
-		}
-		return;
-	}
+	// 	// If the pusher has a "blocked" function, call it.
+	// 	if (ent.blocked) {
+	// 		ent.blocked(ent, obstacle);
+	// 	}
+	// 	return;
+	// }
 
 	// The move succeeded
 	for (part = ent; part; part = part.teamchain) {
@@ -20820,8 +20820,8 @@ function MoverPush(pusher, move, amove) {
 	var entityNums = FindEntitiesInBox(totalMins, totalMaxs);
 
 	// Move the pusher to its final position.
-	vec3.add(pusher.r.currentOrigin, move);
-	vec3.add(pusher.r.currentAngles, amove);
+	// vec3.add(pusher.r.currentOrigin, move);
+	// vec3.add(pusher.r.currentAngles, amove);
 	SV.LinkEntity(pusher);
 
 	// See if any solid entities are inside the final position.
@@ -21051,6 +21051,7 @@ function SetMoverState(ent, moverState, time) {
 			vec3.subtract(ent.pos2, ent.pos1, delta);
 			f = 1000.0 / ent.s.pos.trDuration;
 			vec3.scale(delta, f, ent.s.pos.trDelta);
+			log('SetMoverState delta: ' + vec3.str(ent.s.pos.trDelta));
 			ent.s.pos.trType = TR.LINEAR_STOP;
 			break;
 		case MOVER.TWOTOONE:
@@ -23331,6 +23332,34 @@ function TouchPlatCenterTrigger(ent, other) {
 		UseBinaryMover(ent.parent, ent, other);
 	}
 }
+		spawnFuncs['func_rotating'] = function (ent) {
+	if (!ent.speed) {
+		ent.speed = 100;
+	}
+
+	// Set the axis of rotation.
+	ent.s.apos.trType = TR.LINEAR;
+	if (ent.spawnflags & 4) {
+		ent.s.apos.trDelta[2] = ent.speed;
+	} else if (ent.spawnflags & 8) {
+		ent.s.apos.trDelta[0] = ent.speed;
+	} else {
+		ent.s.apos.trDelta[1] = ent.speed;
+	}
+
+	if (!ent.damage) {
+		ent.damage = 2;
+	}
+
+	SV.SetBrushModel(ent, ent.model);
+	InitMover(ent);
+
+	vec3.set(ent.s.origin, ent.s.pos.trBase);
+	vec3.set(ent.s.pos.trBase, ent.r.currentOrigin);
+	vec3.set(ent.s.apos.trBase, ent.r.currentAngles);
+
+	SV.LinkEntity(ent);
+}
 		spawnFuncs['func_static'] = function (self) {
 	SV.SetBrushModel(self, self.model);
 	InitMover(self);
@@ -23356,7 +23385,6 @@ var TRAIN_TOGGLE      = 2;
 var TRAIN_BLOCK_STOPS = 4;
 
 spawnFuncs['func_train'] = function (self) {
-	console.log('SPAWANING func_train');
 	self.s.angles[0] = self.s.angles[1] = self.s.angles[2] = 0;
 
 	if (self.spawnflags & TRAIN_BLOCK_STOPS) {
@@ -23371,6 +23399,11 @@ spawnFuncs['func_train'] = function (self) {
 
 	if (!self.target) {
 		log('func_train without a target at', self.r.absmin);
+		FreeEntity(self);
+		return;
+	}
+
+	if (self.model !== '*3') {
 		FreeEntity(self);
 		return;
 	}
@@ -23394,36 +23427,35 @@ spawnFuncs['func_train'] = function (self) {
 function TrainSetupTargets(ent) {
 	var entities = FindEntity({ targetName: ent.target });
 	if (!entities.length) {
-		log('func_train at', ent.r.absmin, 'with an unfound target');
+		log('func_train at' + vec3.str(ent.r.absmin) + 'with an unfound target');
 		return;
 	}
 	ent.nextTrain = entities[0];
 
-	var start;
-	for (var path = ent.nextTrain; path !== start; path = next) {
+	var path, start, next;
+
+	for (path = ent.nextTrain; path !== start; path = next) {
 		if (!start) {
 			start = path;
 		}
 
 		if (!path.target) {
-			log('Train corner at', path.s.origin, 'without a target');
+			log('Train corner at' + vec3.str(path.s.origin) + 'without a target');
 			return;
 		}
+
+		log('TrainSetupTargets', path.target);
 
 		// Find a path_corner among the targets.
 		// There may also be other targets that get fired when the corner
 		// is reached.
-		entities = FindEntity({ targetName: path.target });
-		var next;
+		entities = FindEntity({ classname: 'path_corner', targetName: path.target });
 
-		for (var i = 0; i < entities.length; i++) {
-			next = entities[i++];
-			if (next.classname === 'path_corner') {
-				break;
-			}
+		if (!entities.length) {
+			log('Train corner at ' + vec3.str(path.s.origin) + ' without a target path_corner');
 		}
 
-		path.nextTrain = next;
+		path.nextTrain = next = entities[0];
 	}
 
 	// Start the train moving from the first corner.
@@ -23459,6 +23491,8 @@ function TrainReached(ent) {
 	var length = vec3.length(move);
 
 	ent.s.pos.trDuration = length * 1000 / speed;
+
+	log('TrainReached - currently: ' + ent.nextTrain.targetName + ', next: ' + next.nextTrain.targetName + ', d: ' + ent.s.pos.trDuration);
 
 	// Tequila comment: Be sure to send to clients after any fast move case.
 	ent.r.svFlags &= ~SVF.NOCLIENT;
