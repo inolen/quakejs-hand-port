@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1145;
+var GAME_VERSION = 0.1146;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -5937,9 +5937,9 @@ TraceResults.prototype.clone = function (to) {
 
 var FLAG = {
 	ATBASE:      0,
-	TAKEN:       1,     // CTF
-	TAKEN_RED:   2,     // One Flag CTF
-	TAKEN_BLUE:  3,     // One Flag CTF
+	TAKEN:       1,  // CTF
+	TAKEN_RED:   2,  // One Flag CTF
+	TAKEN_BLUE:  3,  // One Flag CTF
 	DROPPED:     4
 };
 
@@ -13632,7 +13632,9 @@ function ForceLegsAnim(anim) {
 			primary: 'models/flags/r_flag.md3'
 		},
 		gfx: {
-			icon: 'icons/iconf_red1'
+			icon0: 'icons/iconf_red1',
+			icon1: 'icons/iconf_red2',
+			icon2: 'icons/iconf_red3'
 		},
 		quantity: 0,
 		giType: IT.TEAM,
@@ -13645,7 +13647,9 @@ function ForceLegsAnim(anim) {
 			primary: 'models/flags/b_flag.md3'
 		},
 		gfx: {
-			icon: 'icons/iconf_blu1'
+			icon0: 'icons/iconf_blu1',
+			icon1: 'icons/iconf_blu2',
+			icon2: 'icons/iconf_blu3'
 		},
 		quantity: 0,
 		giType: IT.TEAM,
@@ -14627,10 +14631,10 @@ function RunArenas() {
  * ArenaInfoChanged
  */
 function ArenaInfoChanged() {
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':name', level.arena.name);
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gametype', g_gametype.at(level.arena.arenaNum).get());
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':playersPerTeam', g_playersPerTeam.at(level.arena.arenaNum).get());
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':roundlimit', g_roundlimit.at(level.arena.arenaNum).get());
+	SetArenaConfigstring('name', level.arena.name);
+	SetArenaConfigstring('gametype', g_gametype.at(level.arena.arenaNum).get());
+	SetArenaConfigstring('playersPerTeam', g_playersPerTeam.at(level.arena.arenaNum).get());
+	SetArenaConfigstring('roundlimit', g_roundlimit.at(level.arena.arenaNum).get());
 }
 
 /**
@@ -14651,7 +14655,16 @@ function SendArenaCommand(type, data) {
 }
 
 /**
+ * SetArenaConfigstring
+ */
+function SetArenaConfigstring(key, value) {
+	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':' + key, value);
+}
+
+/**
  * ArenaRestart
+ *
+ * FIXME: This is not a good replacement for map_restart in tourneys.
  */
 function ArenaRestart() {
 	// Respawn everybody.
@@ -14675,8 +14688,6 @@ function ArenaRestart() {
 
 		ClientSpawn(ent);
 	}
-
-	// FIXME clear out gentities.
 }
 
 /**********************************************************
@@ -14723,7 +14734,7 @@ function CreateTournamentMachine() {
 			},
 			// Called after all events.
 			onafterevent: function () {
-				SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gamestate', level.arena.state.current);
+				SetArenaConfigstring('gamestate', level.arena.state.current);
 			}
 		}
 	});
@@ -14905,7 +14916,7 @@ function TournamentReady() {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
 	}
 
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':warmupTime', level.arena.warmupTime);
+	SetArenaConfigstring('warmupTime', level.arena.warmupTime);
 }
 
 /**
@@ -14945,8 +14956,6 @@ function TournamentRestart() {
 	// If we are running a tournement map, kick the loser to spectator status,
 	// which will automatically grab the next spectator and restart.
 	if (level.arena.gametype === GT.TOURNAMENT) {
-		level.arena.intermissionTime = 0;
-
 		QueueTournamentLoser();
 		ArenaRestart();
 
@@ -15029,7 +15038,7 @@ function CreateRoundMachine() {
 			},
 			// Called after all events.
 			onafterevent: function () {
-				SV.SetConfigstring('arena:' + level.arena.arenaNum + ':gamestate', level.arena.state.current);
+				SetArenaConfigstring('gamestate', level.arena.state.current);
 			}
 		}
 	});
@@ -15142,7 +15151,7 @@ function RoundReady() {
 		level.arena.warmupTime = level.time + (g_warmup.get() - 1) * 1000;
 	}
 
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':warmupTime', level.arena.warmupTime);
+	SetArenaConfigstring('warmupTime', level.arena.warmupTime);
 }
 
 /**
@@ -15249,7 +15258,7 @@ function RoundEnd(winningTeam, msg) {
 		str = teamName + ' won the round.'
 	}
 
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':winningTeam', str);
+	SetArenaConfigstring('winningTeam', str);
 
 	// Go to intermission if the roundlimit was hit.
 	var roundlimit = g_roundlimit.at(level.arena.arenaNum).get();
@@ -15322,7 +15331,6 @@ function RoundRunIntermission() {
 function RoundRestart() {
 	log('RoundRestart');
 
-	level.arena.intermissionTime = 0;
 	level.arena.restartTime = 0;
 
 	if (level.arena.gametype === GT.ROCKETARENA) {
@@ -15573,11 +15581,7 @@ function TimelimitHit() {
  * IntermissionStarted
  */
 function IntermissionStarted() {
-	if (!level.arena.intermissionTime) {
-		return false;
-	}
-
-	return (level.time - level.arena.intermissionTime) >= 0;
+	return level.arena.intermissionTime && (level.time - level.arena.intermissionTime) >= 0;
 }
 
 /**
@@ -15586,12 +15590,11 @@ function IntermissionStarted() {
 function QueueIntermission(msg) {
 	level.arena.intermissionTime = level.time + INTERMISSION_DELAY_TIME;
 
-	SendArenaCommand('print', msg);
+	// This will keep the clients from playing any voice sounds
+	// that will get cut off when the queued intermission starts.
+	SetArenaConfigstring('intermission', 1);
 
-	// FIXME make part of arena info
-	// // This will keep the clients from playing any voice sounds
-	// // that will get cut off when the queued intermission starts.
-	// SV.SetConfigstring('intermission', 1);
+	SendArenaCommand('print', msg);
 }
 
 /**
@@ -15646,7 +15649,9 @@ function MoveClientToIntermission(ent) {
 	ent.client.ps.pm_type = PM.INTERMISSION;
 
 	// Clean up powerup info.
-// 	memset(ent.client.ps.powerups, 0, ent.client.ps.powerups.length);
+	for (var i = 0; i < QS.MAX_POWERUPS; i++) {
+		ent.client.ps.powerups[i] = 0;
+	}
 
 	ent.client.ps.eFlags = 0;
 	ent.s.eFlags = 0;
@@ -15744,14 +15749,15 @@ function CheckIntermissionExit() {
  * or moved to a new level based on the "nextmap" cvar.
  */
 function ExitIntermission() {
+	level.arena.intermissionTime = 0;
+	SetArenaConfigstring('intermission', 0);
+
 	// FIXME Prevents ExitIntermission() from being called multiple times
 	// in MA mode.
 	if (level.restarted) {
 		return;
 	}
-
 	level.restarted = true;
-	level.arena.intermissionTime = 0;
 
 	// If no nextmap is specified, let the default map restart occur.
 	var nextmap = Cvar.AddCvar('nextmap');
@@ -15934,8 +15940,8 @@ function CalculateRanks() {
 			};
 		}
 	}
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':score1', score1);
-	SV.SetConfigstring('arena:' + level.arena.arenaNum + ':score2', score2);
+	SetArenaConfigstring('score1', score1);
+	SetArenaConfigstring('score2', score2);
 
 	// If we are at the intermission, send the new info to everyone.
 	if (IntermissionStarted()) {
@@ -21347,13 +21353,13 @@ var TeamGame = function () {
 };
 
 TeamGame.prototype.reset = function () {
-	this.last_flag_capture       = 0;
-	this.last_capture_team       = 0;
-	this.redStatus               = 0;  // CTF
-	this.blueStatus              = 0;  // CTF
-	this.flagStatus              = 0;  // One Flag CTF
-	this.redTakenTime            = 0;
-	this.blueTakenTime           = 0;
+	this.last_flag_capture = 0;
+	this.last_capture_team = 0;
+	this.redStatus         = 0;  // CTF
+	this.blueStatus        = 0;  // CTF
+	this.neutralStatus     = 0;  // One Flag CTF
+	this.redTakenTime      = 0;
+	this.blueTakenTime     = 0;
 };
 
 var teamgame = new TeamGame();
@@ -21618,26 +21624,24 @@ function Team_SetFlagStatus(team, status) {
 		break;
 
 	case TEAM.FREE:	// One Flag CTF
-		if (teamgame.flagStatus != status) {
-			teamgame.flagStatus = status;
+		if (teamgame.neutralStatus != status) {
+			teamgame.neutralStatus = status;
 			modified = true;
 		}
 		break;
 	}
 
 	if (modified) {
-		var st = new Array(4);
+		var st = new Array(2);
 
 		if (level.arena.gametype === GT.CTF) {
 			st[0] = ctfFlagStatusRemap[teamgame.redStatus];
 			st[1] = ctfFlagStatusRemap[teamgame.blueStatus];
-			st[2] = 0;
 		} else {  // GT.NFCTF
-			st[0] = oneFlagStatusRemap[teamgame.flagStatus];
-			st[1] = 0;
+			st[0] = oneFlagStatusRemap[teamgame.neutralStatus];
 		}
 
-		SV.SetConfigstring('flagstatus', st);
+		SetArenaConfigstring('flagstatus', st);
 	}
 }
 
@@ -21784,15 +21788,29 @@ function Team_TouchOurFlag(ent, other, team) {
 function Team_TouchEnemyFlag(ent, other, team) {
 	var cl = other.client;
 
-	SV.SendServerCommand(null, 'print', other.client.pers.name + ' got the ' + TeamName(team) + ' flag!');
+	if (level.arena.gametype === GT.NFCTF) {
+		SV.SendServerCommand(null, 'print', other.client.pers.name + QS.EscapeColor(QS.COLOR.WHITE) + ' got the flag!');
 
-	if (team == TEAM.RED) {
-		cl.ps.powerups[PW.REDFLAG] = 0x1fffffff /*INT_MAX*/; // flags never expire
+		cl.ps.powerups[PW.NEUTRALFLAG] = 0x1fffffff; // flags never expire
+
+		if (team === TEAM.RED) {
+			Team_SetFlagStatus(TEAM.FREE, FLAG.TAKEN_RED);
+		} else {
+			Team_SetFlagStatus(TEAM.FREE, FLAG.TAKEN_BLUE);
+		}
 	} else {
-		cl.ps.powerups[PW.BLUEFLAG] = 0x1fffffff /*INT_MAX*/; // flags never expire
+		SV.SendServerCommand(null, 'print', other.client.pers.name + QS.EscapeColor(QS.COLOR.WHITE) + ' got the ' + TeamName(team) + ' flag!');
+
+		if (team === TEAM.RED) {
+			cl.ps.powerups[PW.REDFLAG] = 0x1fffffff /*INT_MAX*/; // flags never expire
+		} else {
+			cl.ps.powerups[PW.BLUEFLAG] = 0x1fffffff /*INT_MAX*/; // flags never expire
+		}
+
+		Team_SetFlagStatus(team, FLAG.TAKEN);
 	}
 
-	Team_SetFlagStatus(team, FLAG.TAKEN);
+	AddScore(other, ent.r.currentOrigin, CTF_FLAG_BONUS);
 
 	cl.pers.teamState.flagsince = level.time;
 	Team_TakeFlagSound(ent, team);

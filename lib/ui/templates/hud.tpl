@@ -13,12 +13,22 @@
 			<!-- /ko -->
 			<!-- ko if: isTeamGame() -->
 				<div class="score-wrapper score1 team-red" data-bind="css: { localplayer: score1.localplayer }">
+					<!-- ko if: gametype() === 'ctf' -->
+					<img class="flag-status" data-bind="img: redFlagIcon" />
+					<!-- /ko -->
+					<!-- ko if: gametype() !== 'ctf' -->
 					<span class="status"><i class="icon-user"></i> <span data-bind="text: score1.count"></span></span>
+					<!-- /ko -->
 					<span class="name" data-bind="text: score1.name"></span>
 					<span class="score" data-bind="text: score1.score"></span>
 				</div>
 				<div class="score-wrapper score2 team-blue" data-bind="css: { localplayer: score2.localplayer }">
+					<!-- ko if: gametype() === 'ctf' -->
+					<img class="flag-status" data-bind="img: blueFlagIcon" />
+					<!-- /ko -->
+					<!-- ko if: gametype() !== 'ctf' -->
 					<span class="status"><i class="icon-user"></i> <span data-bind="text: score2.count"></span></span>
+					<!-- /ko -->
 					<span class="name" data-bind="text: score2.name"></span>
 					<span class="score" data-bind="text: score2.score"></span>
 				</div>
@@ -55,6 +65,16 @@
 			<li class="weapon" data-bind="css: { selected: $index() === $parent.weaponSelect() }">
 				<span class="icon" data-bind="img: icon"></span>
 				<span class="ammo" data-bind="text: ammo() > -1 ? ammo() : '&nbsp'"></span>
+			</li>
+			<!-- /ko -->
+		</ul>
+	</div>
+
+	<div id="powerups-wrapper" data-bind="visible: alive">
+		<ul class="powerups" data-bind="foreach: powerups">
+			<!-- ko if: $data && icon -->
+			<li class="powerup">
+				<img class="icon" data-bind="img: icon"></span>
 			</li>
 			<!-- /ko -->
 		</ul>

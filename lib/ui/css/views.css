@@ -676,19 +676,19 @@ table thead th {
 }
 
 #scores-wrapper .score-wrapper {
-	padding: .2em .6em;
+	padding: .3em .6em;
 }
 
 #scores-wrapper .status {
 	display: inline-block;
 	padding: .2em .4em;
-	font-size: .8em;
+	font-size: 0.9em;
 }
 
 #scores-wrapper .status .player {
 	display: inline-block;
-	width: .8em;
-	height: .8em;
+	width: 1em;
+	height: 1em;
 }
 
 #scores-wrapper .name {
@@ -736,6 +736,11 @@ table thead th {
 #scores-wrapper .team-blue .status {
 	background: rgba(0, 0, 255, 0.4);
 	border-radius: .2em;
+}
+
+#scores-wrapper .flag-status {
+	height: 1.4em;
+	vertical-align: middle;
 }
 
 #events-wrapper {
@@ -921,6 +926,28 @@ table thead th {
 #health-text,
 #armor-text {
 	font-size: 4em;
+}
+
+#powerups-wrapper {
+	position: absolute;
+	top: 10em;
+	right: 0;
+}
+
+#powerups-wrapper .powerups {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+#powerups-wrapper .powerups li {
+	display: block;
+	padding: .3em .5em .3em 1em;
+}
+
+#powerups-wrapper .powerups li .icon {
+	float: right;
+	width: 2em;
 }
 
 #lagometer-wrapper {
