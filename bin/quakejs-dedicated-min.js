@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1144;
+var GAME_VERSION = 0.1145;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -18361,13 +18361,6 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 		}
 	}
 
-	// Free rocket jumps in CA.
-	if (level.arena.gametype >= GT.CLANARENA &&
-		targ === attacker &&
-		(inflictor.classname === 'rocket' || inflictor.classname === 'grenade')) {
-		return;
-	}
-
 	// Check for completely getting out of the damage.
 	if (!(dflags & DAMAGE.NO_PROTECTION)) {
 		// If TF_NO_FRIENDLY_FIRE is set, don't do damage to the target.
@@ -18387,6 +18380,15 @@ function Damage(targ, inflictor, attacker, dir, point, damage, dflags, mod) {
 		if ((level.arena.gametype >= GT.CLANARENA && level.arena.state.current <= GS.COUNTDOWN) ||
 		    level.arena.gametype === GT.PRACTICEARENA) {
 			return;
+		}
+
+		// Free splash damage / no falling damage in CA.
+		if (level.arena.gametype >= GT.CLANARENA) {
+			if (targ === attacker && (dflags & DAMAGE.RADIUS)) {
+				return;
+			} else if (mod === MOD.FALLING) {
+				return;
+			}
 		}
 	}
 
@@ -19047,23 +19049,23 @@ var fields = {
 	'angle':      { type: 'anglehack', aliases: [QS.FTA('s.angles')] },
 	'angles':     { type: 'vector', aliases: [QS.FTA('s.angles')] },
 	'arena':      { type: 'int' },
-	'classname':  { },  // just copy to ent
+	'classname':  { type: 'string' },
 	'count':      { type: 'int' },
 	'dmg':        { type: 'int', aliases: [QS.FTA('damage')] },
 	'health':     { type: 'int' },
-	'message':    { },
-	'model':      { },
-	'model2':     { },
+	'message':    { type: 'string' },
+	'model':      { type: 'string' },
+	'model2':     { type: 'string' },
 	'origin':     { type: 'vector', aliases: [QS.FTA('r.currentOrigin'), QS.FTA('s.origin'), QS.FTA('s.pos.trBase')] },
 	'random':     { type: 'float' },
 	'spawnflags': { type: 'int' },
 	'speed':      { type: 'float' },
-	'target':     { },
+	'target':     { type: 'string' },
 	'targetname': { aliases: [QS.FTA('targetName')] },
 	// TODO
 	// 'targetShaderName':    { },
 	// 'targetShaderNewName': { },
-	'team':       { },
+	'team':       { type: 'string' },
 	'wait':       { type: 'float' }
 };
 
@@ -19255,11 +19257,14 @@ function ParseField(ent, key, value) {
 	}
 
 	// Assign the value to the entity.
-	if (!fi.aliases) {
-		ent[key] = out;
-	} else {
-		for (var i = 0; i < fi.aliases.length; i++) {
-			var alias = fi.aliases[i];
+	var aliases = fi.aliases || [QS.FTA(key)];
+
+	for (var i = 0; i < aliases.length; i++) {
+		var alias = aliases[i];
+
+		if (fi.type === 'vector' || fi.type === 'anglehack') {
+			vec3.set(out, QS.AGET(ent, alias));
+		} else {
 			QS.ASET(ent, alias, out);
 		}
 	}
@@ -19376,7 +19381,7 @@ function ChainTeams() {
 		}
 	}
 
-	log(c, 'teams with', c2, 'entities');
+	log(c + ' teams with ' + c2 + ' entities');
 }
 
 /**
@@ -23331,6 +23336,34 @@ function TouchPlatCenterTrigger(ent, other) {
 		UseBinaryMover(ent.parent, ent, other);
 	}
 }
+		spawnFuncs['func_rotating'] = function (ent) {
+	if (!ent.speed) {
+		ent.speed = 100;
+	}
+
+	// Set the axis of rotation.
+	ent.s.apos.trType = TR.LINEAR;
+	if (ent.spawnflags & 4) {
+		ent.s.apos.trDelta[2] = ent.speed;
+	} else if (ent.spawnflags & 8) {
+		ent.s.apos.trDelta[0] = ent.speed;
+	} else {
+		ent.s.apos.trDelta[1] = ent.speed;
+	}
+
+	if (!ent.damage) {
+		ent.damage = 2;
+	}
+
+	SV.SetBrushModel(ent, ent.model);
+	InitMover(ent);
+
+	vec3.set(ent.s.origin, ent.s.pos.trBase);
+	vec3.set(ent.s.pos.trBase, ent.r.currentOrigin);
+	vec3.set(ent.s.apos.trBase, ent.r.currentAngles);
+
+	SV.LinkEntity(ent);
+}
 		spawnFuncs['func_static'] = function (self) {
 	SV.SetBrushModel(self, self.model);
 	InitMover(self);
@@ -23356,7 +23389,6 @@ var TRAIN_TOGGLE      = 2;
 var TRAIN_BLOCK_STOPS = 4;
 
 spawnFuncs['func_train'] = function (self) {
-	console.log('SPAWANING func_train');
 	self.s.angles[0] = self.s.angles[1] = self.s.angles[2] = 0;
 
 	if (self.spawnflags & TRAIN_BLOCK_STOPS) {
@@ -23394,36 +23426,33 @@ spawnFuncs['func_train'] = function (self) {
 function TrainSetupTargets(ent) {
 	var entities = FindEntity({ targetName: ent.target });
 	if (!entities.length) {
-		log('func_train at', ent.r.absmin, 'with an unfound target');
+		log('func_train at' + vec3.str(ent.r.absmin) + 'with an unfound target');
 		return;
 	}
 	ent.nextTrain = entities[0];
 
-	var start;
-	for (var path = ent.nextTrain; path !== start; path = next) {
+	var path, start, next;
+
+	for (path = ent.nextTrain; path !== start; path = next) {
 		if (!start) {
 			start = path;
 		}
 
 		if (!path.target) {
-			log('Train corner at', path.s.origin, 'without a target');
+			log('Train corner at' + vec3.str(path.s.origin) + 'without a target');
 			return;
 		}
 
 		// Find a path_corner among the targets.
 		// There may also be other targets that get fired when the corner
 		// is reached.
-		entities = FindEntity({ targetName: path.target });
-		var next;
+		entities = FindEntity({ classname: 'path_corner', targetName: path.target });
 
-		for (var i = 0; i < entities.length; i++) {
-			next = entities[i++];
-			if (next.classname === 'path_corner') {
-				break;
-			}
+		if (!entities.length) {
+			log('Train corner at ' + vec3.str(path.s.origin) + ' without a target path_corner');
 		}
 
-		path.nextTrain = next;
+		path.nextTrain = next = entities[0];
 	}
 
 	// Start the train moving from the first corner.
