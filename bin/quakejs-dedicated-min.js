@@ -5464,7 +5464,7 @@ define('common/qshared',['require','common/qmath'],function (require) {
 var QMath = require('common/qmath');
 
 // FIXME Remove this and add a more advanced checksum-based cachebuster to game.
-var GAME_VERSION = 0.1143;
+var GAME_VERSION = 0.1144;
 var PROTOCOL_VERSION = 1;
 
 var CMD_BACKUP   = 64;
@@ -25842,8 +25842,24 @@ function BuildClientSnapshot(client, msg) {
 	var svEnt = sv.svEntities[clientNum];
 	svEnt.snapshotCounter = sv.snapshotCounter;
 
+	// Find the client's viewpoint.
+	var org = vec3.create(ps.origin);
+	org[2] += ps.viewheight;
+
 	var entityNumbers = [];
-	AddEntitiesVisibleFromPoint(clent.s.arenaNum, frame.ps.origin, frame, entityNumbers, false);
+	AddEntitiesVisibleFromPoint(clent.s.arenaNum, org, frame, entityNumbers);
+
+	// If there were portals visible, there may be out of order entities
+	// in the list which will need to be resorted for the delta compression
+	// to work correctly. This also catches the error condition
+	// of an entity being included twice.
+	entityNumbers.sort(CompareEntityNumbers);
+
+	// // Now that all viewpoint's areabits have been OR'd together, invert
+	// // all of them to make it a mask vector, which is what the renderer wants.
+	// for ( i = 0 ; i < MAX_MAP_AREA_BYTES/4 ; i++ ) {
+	// 	((int *)frame->areabits)[i] = ((int *)frame->areabits)[i] ^ -1;
+	// }
 
 	frame.numEntities = 0;
 	frame.firstEntity = svs.nextSnapshotEntities;
@@ -25854,9 +25870,25 @@ function BuildClientSnapshot(client, msg) {
 		var state = svs.snapshotEntities[svs.nextSnapshotEntities % MAX_SNAPSHOT_ENTITIES];
 
 		ent.s.clone(state);
+
 		svs.nextSnapshotEntities++;
 		frame.numEntities++;
 	}
+}
+
+/**
+ * CompareEntityNumbers
+ */
+function CompareEntityNumbers(a, b) {
+	if (a === b) {
+		error('CompareEntityNumbers duplicated entity');
+	}
+
+	if (a < b) {
+		return -1;
+	}
+
+	return 1;
 }
 
 /**
@@ -26051,7 +26083,7 @@ function WriteSnapshotToClient(client, msg) {
 		lastframe = 0;
 	} else if (client.netchan.outgoingSequence - client.deltaMessage >= (COM.PACKET_BACKUP - 3)) {
 		// Client hasn't gotten a good message through in a long time.
-		log(client.name, ': Delta request from out of date packet.');
+		// log(client.name, ': Delta request from out of date packet.');
 		oldframe = null;
 		lastframe = 0;
 	} else {
@@ -26091,6 +26123,10 @@ function WriteSnapshotToClient(client, msg) {
 		snapFlags |= QS.SNAPFLAG_NOT_ACTIVE;
 	}
 	msg.writeInt32(snapFlags);
+
+	// // send over the areabits
+	// MSG_WriteByte (msg, frame->areabytes);
+	// MSG_WriteData (msg, frame->areabits, frame->areabytes);
 
 	// Delta encode the playerstate.
 	COM.WriteDeltaPlayerState(msg, oldframe ? oldframe.ps : null, frame.ps);
